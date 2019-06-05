@@ -1,0 +1,20 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.sshtools</groupId>
+		<artifactId>maverick-synergy</artifactId>
+		<version>3.0.0-SNAPSHOT</version>
+	</parent>
+	<artifactId>maverick-synergy-common</artifactId>
+	<name>Common API</name>
+	<description>The core components shared between the Maverick Synergy Client and Maverick Synergy Server SSH APIs</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.sshtools</groupId>
+			<artifactId>maverick-base</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+</project>

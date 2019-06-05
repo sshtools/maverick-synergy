@@ -1,0 +1,266 @@
+
+package com.sshtools.common.ssh;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+
+import com.sshtools.common.events.Event;
+import com.sshtools.common.events.EventException;
+import com.sshtools.common.events.EventListener;
+import com.sshtools.common.events.EventTrigger;
+import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.logger.Log;
+import com.sshtools.common.nio.SshEngine;
+
+public class Connection<T extends SshContext> implements EventTrigger, SshConnection {
+	
+	TransportProtocol<? extends Context> transport;
+	ConnectionProtocol<T> connection;
+	String username;
+	boolean closed = false;
+	Date startTime = new Date();
+	HashMap<String,Object> properties = new HashMap<String,Object>();
+	InetSocketAddress remoteAddress;
+	InetSocketAddress localAddress;
+	T context;
+	AuthenticatedFuture authenticatedFuture = new AuthenticatedFuture();
+	List<EventListener> listeners = new ArrayList<EventListener>();
+	Locale locale;
+	
+	public Connection(T context) {
+		this.context = context;
+	}
+	
+	public synchronized void addEventListener(EventListener listener) {
+		listeners.add(listener);
+	}
+	
+	public synchronized void removeEventListener(EventListener listener) {
+		listeners.remove(listener);
+	}
+
+    public synchronized void fireEvent(Event evt)
+    {
+        EventException lastException = null;
+        // Process global listeners
+        for(EventListener listener : listeners) {
+            try {
+                listener.processEvent(evt);
+            } catch(Throwable t) {
+                if(t instanceof EventException) {
+                    lastException = (EventException)t;
+                    }
+                else {
+                    if(Log.isWarnEnabled()) {
+                        Log.warn("Caught exception from event listener", t);
+                    }
+                }
+            }
+        }
+
+        if (lastException != null)
+            throw lastException;
+    }
+    
+	public AuthenticatedFuture getAuthenticatedFuture() {
+		return authenticatedFuture;
+	}
+	
+	public String getSessionId() {
+		return transport.getUUID();
+	}
+	
+	public String getRemoteIdentification() {
+		return transport.getRemoteIdentification();
+	}
+	
+	public void addTask(Runnable r) {
+		context.getExecutorService().execute(new ConnectionTaskWrapper(this, r));
+	}
+	
+	public <R> Future<R> executeTask(Callable<R> task) {
+		return context.getExecutorService().submit(task);
+	}
+	
+	public void executeTask(Runnable r) {
+		context.getExecutorService().submit(r);
+	}
+	
+	public String getUUID() {
+		return transport.getUUID();
+	}
+	
+	public String getUsername() {
+		return username;
+	}
+	
+	public Date getStartTime() {
+		return startTime;
+	}
+	
+	public long getTotalBytesIn() {
+		return transport.incomingBytes;
+	}
+	
+	public long getTotalBytesOut() {
+		return transport.outgoingBytes;
+	}
+	
+	public InetAddress getRemoteAddress() {
+   		return remoteAddress.getAddress();
+	}
+	
+	public int getRemotePort() {
+		return remoteAddress.getPort();
+	}
+	
+	public SocketAddress getRemoteSocketAddress(){ 
+		return remoteAddress;
+	}
+	
+	public SocketAddress getLocalSocketAddress() {
+		return localAddress;
+	}
+	
+	public InetAddress getLocalAddress() {
+		return localAddress.getAddress();
+    	
+	}
+	
+	public int getLocalPort() {
+		return localAddress.getPort();	
+	}
+	
+	public boolean isDisconnected() {
+		return closed;
+	}
+	
+	public void disconnect() {
+		disconnect("By Application");
+	}
+	
+	public void disconnect(String reason) {
+		if(!closed)
+			transport.disconnect(TransportProtocol.BY_APPLICATION, reason);
+	}
+	
+	public Object getProperty(String name) {
+		return properties.get(name);
+	}
+	
+	public void setProperty(String name, Object val) {
+		properties.put(name, val);
+	}
+	
+	public Set<String> getPropertyNames() {
+		return properties.keySet();
+	}
+	
+	public boolean isAuthenticated() {
+		return connection!=null;
+	}
+	
+	public T getContext() {
+		return context;
+	}
+
+	public boolean containsProperty(String name) {
+		return properties.containsKey(name);
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public ConnectionProtocol<T> getConnectionProtocol() {
+		return connection;
+	}
+
+	public void removeProperty(String name) {
+		properties.remove(name);
+	}
+	
+	public String getHostKeyAlgorithm() {
+		return transport.getHostKeyAlgorithm();
+	}
+	
+	public String getCipherInUseCS() {
+		return transport.getCipherCS();
+	}
+	
+	public String getCipherInUseSC() {
+		return transport.getCipherSC();
+	}
+	
+	public String getMacInUseCS() {
+		return transport.getMacCS();
+	}
+	
+	public String getMacInUseSC() {
+		return transport.getMacSC();
+	}
+	
+	public String getCompressionInUseCS() {
+		return transport.getCompressionCS();
+	}
+	
+	public String getCompressionInUseSC() {
+		return transport.getCompressionSC();
+	}
+
+	public void close() {
+		this.closed = true;
+	}
+
+	@Override
+	public Locale getLocale() {
+		return Objects.isNull(locale) ? context.getLocale() : locale;
+	}
+
+	@Override
+	public AbstractFileFactory<?> getFileFactory() {
+		return transport.getContext().getFileFactory();
+	}
+
+	@Override
+	public SshConnectionManager getConnectionManager() {
+		return context.getConnectionManager();
+	}
+
+	@Override
+	public boolean isConnected() {
+		return transport.isConnected();
+	}
+
+	@Override
+	public void addTask(Integer queue, ConnectionAwareTask r) {
+		transport.addTask(queue, r);
+	}
+
+	@Override
+	public void disconnect(int reason, String message) {
+		transport.disconnect(reason, message);
+	}
+
+	@Override
+	public String getServerVersion() {
+		return SshEngine.getVersion();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void openChannel(Channel channel) {
+		connection.openChannel((ChannelNG<T>)channel);
+	}
+
+}

@@ -1,0 +1,187 @@
+package com.sshtools.common.ssh.components;
+
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
+
+import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.SshKeyFingerprint;
+import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.common.util.ByteArrayWriter;
+
+import net.i2p.crypto.eddsa.EdDSAEngine;
+import net.i2p.crypto.eddsa.EdDSAPublicKey;
+import net.i2p.crypto.eddsa.Utils;
+import net.i2p.crypto.eddsa.math.GroupElement;
+import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
+import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
+
+public class SshEd25519PublicKey implements SshPublicKey {
+
+	public static final String ALGORITHM_NAME = "ssh-ed25519";
+	
+	EdDSAPublicKey publicKey;
+	
+	public SshEd25519PublicKey() {
+		
+	}
+	
+	public SshEd25519PublicKey(byte[] pk) {
+		EdDSAPublicKeySpec spec = new EdDSAPublicKeySpec(pk, EdDSANamedCurveTable.getByName("Ed25519"));
+		publicKey = new EdDSAPublicKey(spec);
+	}
+	
+	public SshEd25519PublicKey(PublicKey pub) {
+		if(!(pub instanceof EdDSAPublicKey)) {
+			throw new IllegalArgumentException("Invalid PublicKey type passed to SshEd25519PublicKey");
+		}
+		publicKey = (EdDSAPublicKey) pub;
+	}
+
+	public void init(byte[] blob, int start, int len) throws SshException {
+		
+		ByteArrayReader bar = new ByteArrayReader(blob, start, len);
+		
+		try {
+			String name = bar.readString();
+			
+			if(!name.equals(ALGORITHM_NAME)) {
+				throw new SshException("The encoded key is not ed25519",
+						SshException.INTERNAL_ERROR);
+			}
+			
+			byte[] pub = bar.readBinaryString();
+			EdDSAPublicKeySpec spec = new EdDSAPublicKeySpec(pub, EdDSANamedCurveTable.getByName("Ed25519"));
+			publicKey = new EdDSAPublicKey(spec);
+		  
+			if(Utils.equal(publicKey.getAbyte(), pub)==0) {
+				throw new IOException("Not sure how to encode yet");
+			}
+		} catch (IOException ioe) {
+			throw new SshException("Failed to read encoded key data",
+					SshException.INTERNAL_ERROR);
+		} finally {
+			bar.close();
+		}
+	}
+
+	public String getAlgorithm() {
+		return ALGORITHM_NAME;
+	}
+
+	public String getEncodingAlgorithm() {
+		return getAlgorithm();
+	}
+	
+	public int getBitLength() {
+		return 0;
+	}
+
+	public byte[] getEncoded() throws SshException {
+		ByteArrayWriter baw = new ByteArrayWriter();
+		try {
+
+			baw.writeString(getAlgorithm());
+			baw.writeBinaryString(publicKey.getAbyte());
+
+			return baw.toByteArray();
+		} catch (IOException ex) {
+			throw new SshException("Failed to encoded key data",
+					SshException.INTERNAL_ERROR, ex);
+		} finally {
+			try {
+				baw.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+
+	public byte[] getA() {
+		return publicKey.getAbyte();
+	}
+	
+	public GroupElement getGroupElement() {
+		return publicKey.getA();
+	}
+	
+	public String getFingerprint() throws SshException {
+		return SshKeyFingerprint.getFingerprint(getEncoded());
+	}
+
+	public boolean verifySignature(byte[] signature, byte[] data) throws SshException {
+
+		try {
+			ByteArrayReader bar = new ByteArrayReader(signature);
+			try {
+
+				long count = bar.readInt();
+				if (count > 0 && count == getAlgorithm().length()) {
+					bar.reset();
+					byte[] sig = bar.readBinaryString();
+					@SuppressWarnings("unused")
+					String header = new String(sig);
+					signature = bar.readBinaryString();
+				}
+			} finally {
+				bar.close();
+			}
+
+			return verifyJCESignature(signature, data);
+
+		} catch (Exception ex) {
+			throw new SshException(SshException.JCE_ERROR, ex);
+		}
+	}
+	
+	private boolean verifyJCESignature(byte[] signature, byte[] data) throws SshException {
+		try {
+			Signature sgr = new EdDSAEngine();
+			sgr.initVerify(publicKey);
+			sgr.update(data);
+			return sgr.verify(signature);
+		} catch (InvalidKeyException | SignatureException e) {
+			throw new SshException(e, SshException.INTERNAL_ERROR);
+		}
+//		
+//		try {
+//			return ed25519.checkvalid(signature, data, publicKey.getAbyte());
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//			return false;
+//		}
+	}
+
+	public boolean equals(Object obj) {
+		if (obj instanceof SshEd25519PublicKey) {
+			try {
+				return (((SshPublicKey) obj).getFingerprint()
+						.equals(getFingerprint()));
+			} catch (SshException ex) {
+			}
+		}
+
+		return false;
+	}
+
+	public int hashCode() {
+		try {
+			return getFingerprint().hashCode();
+		} catch (SshException ex) {
+			return 0;
+		}
+	}
+
+	@Override
+	public String getSigningAlgorithm() {
+		return getAlgorithm();
+	}
+
+	@Override
+	public String test() {
+		return "net.i2p.crypto/eddsa";
+	}
+}

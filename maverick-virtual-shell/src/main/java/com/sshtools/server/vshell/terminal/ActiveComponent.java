@@ -1,19 +1,21 @@
-/***
+/**
+ * (c) 2002-2019 JADAPTIVE Limited. All Rights Reserved.
  *
- * The contents of this package has been derived from the TelnetD library
- * available from http://sourceforge.net/projects/telnetd
+ * This file is part of the Maverick Synergy Java SSH API.
  *
- * The original license of the source code is as follows:
+ * Maverick Synergy is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * TelnetD library (embeddable telnet daemon)
- * Copyright (C) 2000 Dieter Wimberger
+ * Maverick Synergy is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
- * This library is free software; you can either redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 2.1,1999 as published by the Free Software Foundation
- * (see copy received along with the library), or under the terms of the
- * BSD-style license received along with this library.
- ***/
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package com.sshtools.server.vshell.terminal;
 
 public abstract class ActiveComponent

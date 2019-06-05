@@ -54,12 +54,12 @@ import com.sshtools.common.ssh.components.jce.Ssh2EcdsaSha2NistPublicKey;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPrivateCrtKey;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKey;
 
-class OpenSSHPrivateKeyFileBC
+public class OpenSSHPrivateKeyFileBC
    implements SshPrivateKeyFile {
 
   byte[] formattedkey;
 
-  OpenSSHPrivateKeyFileBC(byte[] formattedkey)
+  public OpenSSHPrivateKeyFileBC(byte[] formattedkey)
      throws IOException {
     if(!isFormatted(formattedkey)) {
       throw new IOException(
@@ -77,7 +77,7 @@ class OpenSSHPrivateKeyFileBC
 	}
   }
 
-  OpenSSHPrivateKeyFileBC(SshKeyPair pair, String passphrase)
+  public OpenSSHPrivateKeyFileBC(SshKeyPair pair, String passphrase)
      throws IOException {
     formattedkey = encryptKey(pair, passphrase);
   }

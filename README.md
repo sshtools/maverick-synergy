@@ -29,13 +29,13 @@ The core API has no third-party dependencies other than a Java 8 Runtime and the
 
 # Using the Client API
 In the first instance, for a no dependency Java SSH client API simply use the maven dependency
-
-	<dependency>
-	  <groupId>com.sshtools</groupId>
-	  <artifactId>maverick-synergy-client</artifactId>
-	  <version>3.0.0-SNAPSHOT</version>
-	</dependency>
-
+```xml
+<dependency>
+  <groupId>com.sshtools</groupId>
+  <artifactId>maverick-synergy-client</artifactId>
+  <version>3.0.0-SNAPSHOT</version>
+</dependency>
+```
 We have created a high level API that makes it easy to make calls to SSH servers and perform common tasks. For example, downloading a file over SFTP is as simple as:
 ```java	
 try(SshClient ssh = new SshClient("hostname", port, "username", password.toCharArray())) {		
@@ -46,21 +46,21 @@ try(SshClient ssh = new SshClient("hostname", port, "username", password.toCharA
 
 # Using the Server API
 Include the server module to develop your own SSH/SFTP server.
-
-	<dependency>
-	  <groupId>com.sshtools</groupId>
-	  <artifactId>maverick-synergy-server</artifactId>
-	  <version>3.0.0-SNAPSHOT</version>
-	</dependency>
-
+```xml
+<dependency>
+  <groupId>com.sshtools</groupId>
+  <artifactId>maverick-synergy-server</artifactId>
+  <version>3.0.0-SNAPSHOT</version>
+</dependency>
+```
 We also have done a lot of the hard work for you implementing a virtual file system that simply enables you to mount folders and remote file locations into a single file system.
-
-	<dependency>
-	  <groupId>com.sshtools</groupId>
-	  <artifactId>maverick-virtual-filesystem</artifactId>
-	  <version>3.0.0-SNAPSHOT</version>
-	</dependency>
-	
+```xml
+<dependency>
+  <groupId>com.sshtools</groupId>
+  <artifactId>maverick-virtual-filesystem</artifactId>
+  <version>3.0.0-SNAPSHOT</version>
+</dependency>
+```	
 Creating a server is made equally as easy as the client API. You just need to make a few desisions about how users authenticate and what they can do, for example, the code below creates a simple SFTP server that provides users with their own home folder. To the user, all they see is their own sandboxed home directoy.
 
 ```java

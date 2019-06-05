@@ -3,7 +3,7 @@ Maverick Synergy is the third generation Java SSH API developed by JADAPTIVE Lim
 
 Built upon the Java NIO framework, this third generation of the API for the first time provides a unified framework for developing both client and server solutions.
 
-# Features
+## Features
 Here are just some of the notable features of the APIs
 
 - SSH2 client and server implementations
@@ -27,7 +27,7 @@ Here are just some of the notable features of the APIs
 
 The core API has no third-party dependencies other than a Java 8 Runtime and the Java Cryptography Extensions. The project has been structured so that developers can choose the components they need without being forced to distribute third party libraries for features they do not require.
 
-# Using the Client API
+## Using the Client API
 In the first instance, for a no dependency Java SSH client API simply use the maven dependency
 ```xml
 <dependency>
@@ -44,7 +44,7 @@ try(SshClient ssh = new SshClient("hostname", port, "username", password.toCharA
 }
 ```
 
-# Using the Server API
+## Using the Server API
 Include the server module to develop your own SSH/SFTP server.
 ```xml
 <dependency>
@@ -81,6 +81,10 @@ Try running the above and connecting to port 2222 using and SFTP client
 
 	ssh -oPort=2222 admin@localhost
 
+
+## Further Information
 For more documentation on either the client or server API please visit our [Manpage](https://www.jadaptive.com/app/manpage/en/category/1559751/Maverick-Synergy). 
 
 If you cannot find the documentation for something you want to do with the API, it's hightly likely that it can already be done but we have just not got around to documenting it yet. If you cannot find what you are looking for please [Contact Us](mailto:support@jadaptive.com) with the details and we'll try our best to point you in the right direction.
+
+*SSH is a registered trademark and Secure Shell is a trademark of SSH Communications Security Corp (www.ssh.com)*

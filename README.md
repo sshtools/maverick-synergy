@@ -64,17 +64,22 @@ We also have done a lot of the hard work for you implementing a virtual file sys
 Creating a server is made equally as easy as the client API. You just need to make a few desisions about how users authenticate and what they can do, for example, the code below creates a simple SFTP server that provides users with their own home folder. To the user, all they see is their own sandboxed home directoy.
 
 ```java
-try(SshServer server = new SshServer(2222)) {
-			
-   server.addAuthenticator(new InMemoryPasswordAuthenticator()
-		.addUser("admin", "admin".toCharArray()));
-			
-   server.setFileFactory(new VirtualFileFactory(
-		new VirtualMountTemplate("/", "tmp/${username}", 
-			new VFSFileFactory())));
-			
-   server.start();
-   server.getShutdownFuture().waitForever();
+SshServer server = new SshServer(2222);
+		
+Runtime.getRuntime().addShutdownHook(new Thread() {
+   public void run() {
+      server.close();
+   }	
+});
+		
+server.addAuthenticator(new InMemoryPasswordAuthenticator()
+   .addUser("admin", "admin".toCharArray()));
+		
+server.setFileFactory(new VirtualFileFactory(
+   new VirtualMountTemplate("/", "tmp/${username}", 
+      new VFSFileFactory())));
+		
+server.start();
 }
 ```
 Try running the above and connecting to port 2222 using and SFTP client

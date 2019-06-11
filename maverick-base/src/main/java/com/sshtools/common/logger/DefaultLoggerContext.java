@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.sshtools.common.logger.Log.Level;
+import com.sshtools.common.util.IOUtil;
 
 public class DefaultLoggerContext implements LoggerContext {
 
@@ -82,9 +83,9 @@ public class DefaultLoggerContext implements LoggerContext {
 		
 		if("true".equalsIgnoreCase(loggingProperties.getProperty("maverick.log.file"))) {
 			enableFile(Level.valueOf(loggingProperties.getProperty("maverick.log.file.level", "INFO")),
-					new File(loggingProperties.getProperty("maverick.log.file.path", "application.log")),
+					new File(loggingProperties.getProperty("maverick.log.file.path", "synergy.log")),
 					Integer.parseInt(loggingProperties.getProperty("maverick.log.file.maxFiles", "10")),
-					Long.parseLong(loggingProperties.getProperty("maverick.log.file.maxSize", String.valueOf(1024 * 1024 * 20))));
+					IOUtil.fromByteSize(loggingProperties.getProperty("maverick.log.file.maxSize", "20MB")));
 		}
 		
 		log(Level.INFO, "Reloaded logging configuration %s", null, propertiesFile.getName());

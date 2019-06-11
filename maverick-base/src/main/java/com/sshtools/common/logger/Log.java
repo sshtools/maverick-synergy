@@ -32,8 +32,8 @@ public class Log {
 	
 	public enum Level {
 		NONE,
-		WARN,
 		ERROR,
+		WARN,
 		INFO,
 		DEBUG,
 		TRACE

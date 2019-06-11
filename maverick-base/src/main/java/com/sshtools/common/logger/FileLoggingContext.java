@@ -61,7 +61,7 @@ public class FileLoggingContext extends AbstractLoggingContext {
 	private void createLogFile() throws IOException {
 		currentFile = new RandomAccessFile(logFile, "rw");
 		currentFile.seek(currentFile.length());
-		currentWriter = new BufferedWriter(new OutputStreamWriter(new RandomAccessOutputStream(currentFile)));
+		currentWriter = new BufferedWriter(new OutputStreamWriter(new RandomAccessOutputStream(currentFile)), 65536);
 	}
 
 
@@ -72,13 +72,16 @@ public class FileLoggingContext extends AbstractLoggingContext {
 	
 	@Override
 	public void log(Level level, String msg, Throwable e, Object... args) {
-		logToFile(DefaultLoggerContext.prepareLog(level, msg, e, args));
+		logToFile(DefaultLoggerContext.prepareLog(level, msg, e, args), true);
 	}
 
-	private synchronized void logToFile(String msg) {
+	private synchronized void logToFile(String msg, boolean flush) {
 		try {
 			checkRollingLog();
 			currentWriter.write(msg);
+			if(flush) {
+				currentWriter.flush();
+			}
 		} catch (IOException e) {
 			System.err.println(String.format("Failed to log to %s", logFile.getName()));
 			e.printStackTrace();
@@ -106,12 +109,12 @@ public class FileLoggingContext extends AbstractLoggingContext {
 
 	@Override
 	public void raw(Level level, String msg) {
-		logToFile(DefaultLoggerContext.prepareLog(level, "", null));
-		logToFile(msg);
+		logToFile(DefaultLoggerContext.prepareLog(level, "", null), false);
+		logToFile(msg, true);
 	}
 
 	@Override
 	public void newline() {
-		logToFile(System.lineSeparator());
+		logToFile(System.lineSeparator(), true);
 	}
 }

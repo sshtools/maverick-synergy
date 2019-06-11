@@ -277,5 +277,24 @@ public class Utils {
 			throw new IllegalStateException("Your system does not appear to support UTF-8 character encoding!", e);
 		}
 	}
+
+	public static String join(String[] args, String str) {
+		StringBuffer buf = new StringBuffer();
+		for(String arg : args) {
+			if(buf.length() > 0) {
+				buf.append(str);
+			}
+			buf.append(arg);
+		}
+		return buf.toString();
+	}
+
+	public static String rightPad(String rendered, int minWidth) {
+		StringBuffer buf= new StringBuffer(rendered);
+		while(buf.length() < minWidth) {
+			buf.append(" ");
+		}
+		return buf.toString();
+	}
 	
 }

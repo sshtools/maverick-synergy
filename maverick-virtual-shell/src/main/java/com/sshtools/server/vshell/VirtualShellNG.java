@@ -26,10 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
-
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.server.AgentForwardingChannel;
 import com.sshtools.server.SessionChannelNG;
 import com.sshtools.server.SshServerContext;
@@ -115,7 +114,7 @@ public class VirtualShellNG extends SessionChannelNG {
 
 	protected boolean startShell() {
 		
-		if(StringUtils.isNotBlank(shellCommand)) {
+		if(Utils.isNotBlank(shellCommand)) {
 			return executeCommand(shellCommand);
 		}
 		

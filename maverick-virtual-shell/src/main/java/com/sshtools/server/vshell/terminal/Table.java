@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
+import com.sshtools.common.ssh.components.Utils;
 
 public class Table extends ArrayList<Row> {
 
@@ -229,7 +229,7 @@ public class Table extends ArrayList<Row> {
 			if (maxCellWidth != -1 && rendered.length() > maxCellWidth) {
 				rendered = rendered.substring(0, maxCellWidth);
 			} else if(minCellWidth != -1 && rendered.length() < minCellWidth) {
-				rendered = StringUtils.rightPad(rendered, minCellWidth);
+				rendered = Utils.rightPad(rendered, minCellWidth);
 			}
 			return rendered;
 		} else {

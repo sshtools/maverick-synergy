@@ -32,7 +32,6 @@ import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.lang.StringUtils;
 
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
@@ -40,11 +39,12 @@ import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.ChannelEventAdapter;
 import com.sshtools.common.ssh.Channel;
-import com.sshtools.common.ssh.SessionChannelServer;
+import com.sshtools.common.ssh.ChannelEventAdapter;
 import com.sshtools.common.ssh.SessionChannelHelper;
+import com.sshtools.common.ssh.SessionChannelServer;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.common.util.ProcessUtils;
 import com.sshtools.server.vshell.CmdLine.Condition;
 import com.sshtools.server.vshell.terminal.Console;
@@ -92,7 +92,7 @@ public class RootShell extends Msh {
 		
 		Console console = process.getConsole();
 		
-		if(StringUtils.isNotBlank(welcomeText)) {
+		if(Utils.isNotBlank(welcomeText)) {
 			welcomeText = welcomeText.replace("${hostname}",
 					java.net.InetAddress.getLocalHost().getHostName());
 			// Just in case its not set in the configuration we set it
@@ -129,7 +129,7 @@ public class RootShell extends Msh {
 			welcomeText = welcomeText.replace("${time}", tf.format(date));
 			welcomeText = welcomeText.replace("${year}", String.valueOf(Calendar.getInstance().get(Calendar.YEAR)));
 	
-			if (StringUtils.isNotBlank(welcomeText)) {
+			if (Utils.isNotBlank(welcomeText)) {
 				console.printStringNewline(welcomeText);
 				console.printNewline();
 			}

@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,14 +36,13 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.SessionChannelServer;
+import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.server.vshell.CmdLine.Condition;
 import com.sshtools.server.vshell.commands.Alias;
 import com.sshtools.server.vshell.terminal.Console;
@@ -347,12 +347,12 @@ public class Msh extends ShellCommand {
 				.checkPermission(process.getConnection(),
 						ShellPolicy.EXEC, cmd.getCommandName())) {
 			if(Log.isDebugEnabled()) {
-				Log.debug(String.format("Executing command %s", StringUtils.join(args, " ")));
+				Log.debug(String.format("Executing command %s", Utils.join(args, " ")));
 			}
 			return runCommandWithArgs(args, cmd, process, background);
 		} else {
 			if(Log.isDebugEnabled()) {
-				Log.debug(String.format("Cannot execute %s", StringUtils.join(args, " ")));
+				Log.debug(String.format("Cannot execute %s", Utils.join(args, " ")));
 			}
 			throw new SecurityException(
 					"You are not allowed to run the command "
@@ -374,7 +374,7 @@ public class Msh extends ShellCommand {
 		}
 
 		String name = args[0];
-		args = (String[])ArrayUtils.remove(args, 0);
+		args = (String[])Arrays.copyOfRange(args, 1, args.length-1);
 		
 		DefaultParser parser = new DefaultParser();
 		Options options = cmd.getOptions();

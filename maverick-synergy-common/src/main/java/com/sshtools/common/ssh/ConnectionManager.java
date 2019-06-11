@@ -20,12 +20,11 @@ package com.sshtools.common.ssh;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
@@ -35,28 +34,28 @@ import com.sshtools.common.logger.Log.Level;
  */
 public class ConnectionManager<T extends SshContext> implements SshConnectionManager {
 
-    private HashMap<String, Connection<T>> activeConnections = new HashMap<String, Connection<T>>();
+    private HashMap<String, Connection<T>> activeConnections = new HashMap<>();
     
-    private static List<ConnectionManager<?>> instances = new ArrayList<ConnectionManager<?>>();
+    private static Map<String,ConnectionManager<?>> instances = new HashMap<>();
     
     public static final String DEFAULT_NAME = "default";
     
     final String name;
 	ThreadLocal<SshConnection> currentConnection = new ThreadLocal<>();
 	ConnectionLoggingContext ctx;
-	
-	ConnectionManager() {
-		this(DEFAULT_NAME);
-	}
-	
+		
     public ConnectionManager(String name) {
     	this(name, Level.valueOf(
     			Log.getDefaultContext().getLoggingProperties().getProperty("maverick.log.connection.defaultLevel", "NONE")));
     }
     
     public ConnectionManager(String name, Level level) {
+    	
+    	if(instances.containsKey(name)) {
+    		throw new IllegalArgumentException(String.format("There is already a connection manager registered named %s", name));
+    	}
     	this.name = name;
-    	instances.add(this);
+    	instances.put(name, this);
     	ctx = new ConnectionLoggingContext(level, this);
     }
 
@@ -79,7 +78,7 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
 	}
 	
     public static Connection<?> getConnection(String id) {
-    	for(ConnectionManager<?> instance : instances) {
+    	for(ConnectionManager<?> instance : instances.values()) {
     		Connection<?> c = instance.getConnectionById(id);
     		if(c!=null) {
     			return c;

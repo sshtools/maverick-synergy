@@ -92,7 +92,7 @@ public class SshClientContext extends SshContext {
 	static ForwardingManager<SshClientContext> defaultForwardingManager 
 				= new ForwardingManager<SshClientContext>();
 	static ConnectionManager<SshClientContext> defaultConnectionManager 
-				= new ConnectionManager<SshClientContext>("default");
+				= new ConnectionManager<SshClientContext>("client");
 	
 	public SshClientContext(SshEngine daemon, ComponentManager componentManager) throws IOException {
 		super(componentManager);

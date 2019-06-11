@@ -34,15 +34,16 @@ import com.sshtools.common.logger.FileLoggingContext;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.logger.LoggerContext;
+import com.sshtools.common.util.IOUtil;
 
 public class ConnectionLoggingContext implements LoggerContext {
 
-	Level level;
+	Level defaultLevel;
 	Map<SshConnection, FileLoggingContext> activeLoggers = new HashMap<>();
 	ConnectionManager<?> cm;
 	
 	ConnectionLoggingContext(Level level, ConnectionManager<?> cm) {
-		this.level = level;
+		this.defaultLevel = level;
 		this.cm = cm;
 	}
 	
@@ -50,7 +51,7 @@ public class ConnectionLoggingContext implements LoggerContext {
 	public boolean isLogging(Level level) {
 		SshConnection currentConnection = cm.getCurrentConnection();
 		if(activeLoggers.containsKey(currentConnection)) {
-			return this.level != Level.NONE && this.level.ordinal() >= level.ordinal();
+			return this.defaultLevel != Level.NONE && this.defaultLevel.ordinal() >= level.ordinal();
 		} 
 		return false;
 	}
@@ -68,31 +69,28 @@ public class ConnectionLoggingContext implements LoggerContext {
 	}
 
 	private boolean isLoggingRemoteAddress(SshConnection con) {
-		return lookup(getPropertyKey(".remoteAddr"), con.getRemoteAddress().getHostAddress(), con);
+		return lookup(".remoteAddr", con.getRemoteAddress().getHostAddress(), con);
 	}
 	
 	private boolean isLoggingLocalAddress(SshConnection con) {
-		return lookup(getPropertyKey(".localAddr"), con.getLocalAddress().getHostAddress(), con);
+		return lookup(".localAddr", con.getLocalAddress().getHostAddress(), con);
 	}
 	
 	private boolean isLoggingRemotePort(SshConnection con) {
-		return lookup(getPropertyKey(".remotePort"), String.valueOf(con.getRemotePort()), con);
+		return lookup(".remotePort", String.valueOf(con.getRemotePort()), con);
 	}
 	
 	private boolean isLoggingLocalPort(SshConnection con) {
-		return lookup(getPropertyKey(".localPort"), String.valueOf(con.getLocalPort()), con);
+		return lookup(".localPort", String.valueOf(con.getLocalPort()), con);
 	}
 	
 	private boolean lookup(String key, String value, SshConnection con) {
-		Properties loggingProperties = Log.getDefaultContext().getLoggingProperties();
-		String v = loggingProperties.getProperty(key, "");
+		String v = getProperty(key, "");
 		if("".equals(v)) {
 			return true;
 		}
 		Set<String> addr = new HashSet<String>(Arrays.asList(v.split(",")));
-		return addr.isEmpty() 
-				|| addr.contains(con.getRemoteAddress().getHostAddress()) 
-				|| addr.contains(con.getRemoteAddress().getHostAddress());
+		return addr.isEmpty() || addr.contains(value);
 	}
 
 	
@@ -105,22 +103,17 @@ public class ConnectionLoggingContext implements LoggerContext {
 	
 	private void createLog(Connection<?> con) throws IOException {
 		
+		Level level = Level.valueOf(getProperty(".defaultLevel", defaultLevel.name()));
+		String filenameFormat = getProperty(".filenameFormat", "${timestamp}__${uuid}.log");
+		Integer maxFiles = Integer.parseInt(getProperty(".maxFiles", "10"));
+		Long maxSize = IOUtil.fromByteSize(getProperty(".maxSize", "20MB"));
+		String defaultTimestamp = getProperty(".timestampFormat", "yyyy-MM-dd-HH-mm-ss-SSS");
 		
-		Properties loggingProperties = Log.getDefaultContext().getLoggingProperties();
-		
-		this.level = Level.valueOf(loggingProperties.getProperty("maverick.log.connection.defaultLevel", "NONE"));
-		
-		Level level = Level.valueOf(loggingProperties.getProperty(getPropertyKey(".level"), this.level.name()));
-		String filenameFormat = loggingProperties.getProperty(getPropertyKey(".filenameFormat"), "${timestamp}__${uuid}.log");
-		Integer maxFiles = Integer.parseInt(loggingProperties.getProperty(getPropertyKey(".maxFiles"), "10"));
-		Long maxSize = Long.parseLong(loggingProperties.getProperty(getPropertyKey(".maxSize"), String.valueOf(1024 * 1024 * 20)));
-
 		String filename = filenameFormat
 				.replace("${timestamp}", LocalDateTime.now().format(
 						DateTimeFormatter.ofPattern(
-								loggingProperties.getProperty(
-										getPropertyKey(".timestampPattern"), 
-										"yyyy-MM-dd-HH-mm-ss-SSS"))))
+								getProperty(getPropertyKey(".timestampPattern"), 
+										defaultTimestamp))))
 				.replace("${uuid}", con.getUUID())
 				.replace("${remotePort}", String.valueOf(con.getRemotePort()))
 				.replace("${remoteAddr}", con.getRemoteAddress().getHostAddress())
@@ -139,7 +132,7 @@ public class ConnectionLoggingContext implements LoggerContext {
 		 * Default to the default log level
 		 */
 		if(!"true".equalsIgnoreCase(loggingProperties.getProperty(getPropertyKey(""), 
-				String.valueOf(!this.level.equals(Level.NONE))))) {
+				String.valueOf(!this.defaultLevel.equals(Level.NONE))))) {
 			return false;
 		}
 		
@@ -147,6 +140,12 @@ public class ConnectionLoggingContext implements LoggerContext {
 				&& isLoggingLocalAddress(con) && isLoggingLocalPort(con);
 	}
 
+	private String getProperty(String key, String defaultValue) {
+		Properties loggingProperties = Log.getDefaultContext().getLoggingProperties();
+		defaultValue = loggingProperties.getProperty(String.format("maverick.log.connection%s", key), defaultValue);
+		return loggingProperties.getProperty(getProperty(key, defaultValue));
+	}
+	
 	private String getPropertyKey(String key) {
 		return String.format("maverick.log.connection.%s%s", cm.getName(), key);
 	}

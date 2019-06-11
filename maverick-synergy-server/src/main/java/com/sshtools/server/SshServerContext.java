@@ -86,7 +86,7 @@ public class SshServerContext extends SshContext {
 	ForwardingManager<SshServerContext> forwardingManager;
 	ConnectionManager<SshServerContext> connectionManager;
 	static ForwardingManager<SshServerContext> globalForwardingManager = new ForwardingManager<>();
-	static ConnectionManager<SshServerContext> globalConnectionManager = new ConnectionManager<>("default");
+	static ConnectionManager<SshServerContext> globalConnectionManager = new ConnectionManager<>("server");
 		
 	Collection<ConnectionStateListener<SshServerContext>> stateListeners = new ArrayList<ConnectionStateListener<SshServerContext>>();
 	

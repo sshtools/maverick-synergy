@@ -28,4 +28,17 @@
   <artifactId>maverick-callback-server</artifactId>
   <name>Callback Server API</name>
   <description>An SSH server that accepts connections from Callback Clients but then switches to act as a client</description>
+  
+    <dependencies>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-synergy-client</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-synergy-server</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  </dependencies>
 </project>

@@ -24,7 +24,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
+import com.sshtools.common.publickey.SignatureGenerator;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.TransportProtocol;
@@ -46,8 +48,13 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 	Collection<SshPublicKey> publicKeys;
 	Collection<SshKeyPair> keypairs;
 	SshPublicKey authenticatingKey = null;
+	SignatureGenerator signatureGenerator;
 	
 	public PublicKeyAuthenticator() {
+	}
+	
+	public PublicKeyAuthenticator(SignatureGenerator signatureGenerator) {
+		this.signatureGenerator = signatureGenerator;
 	}
 	
 	public PublicKeyAuthenticator(SshKeyPair... keys) {
@@ -60,7 +67,7 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 	}
 
 	@Override
-	public void authenticate(TransportProtocolClient transport, String username) {
+	public void authenticate(TransportProtocolClient transport, String username) throws IOException {
 		
 		onStartAuthentication(transport.getConnection());
 		
@@ -68,6 +75,7 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 		this.username = username;
 
 		this.publicKeys = new ArrayList<SshPublicKey>(getSignatureGenerator(transport.getConnection()).getPublicKeys());
+		
 		doPublicKeyAuth();
 
 	}
@@ -138,7 +146,7 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 	
 			if (isAuthenticating) {
 	
-				byte[] signature = getSignatureGenerator(transport.getConnection()).sign(key, data);
+				byte[] signature = getSignatureGenerator(transport.getConnection()).sign(key, key.getSigningAlgorithm(), data);
 				
 				// Format the signature correctly
 				ByteArrayWriter sig = new ByteArrayWriter();
@@ -187,7 +195,7 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 	}
 
 	@Override
-	public byte[] sign(SshPublicKey key, byte[] data) throws SshException {
+	public byte[] sign(SshPublicKey key, String signingAlgorithm, byte[] data) throws SshException {
 		
 		SshKeyPair pair = null;
 		for(SshKeyPair p : keypairs) {
@@ -201,14 +209,14 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 			throw new IllegalStateException("Public key is not in the key pair list!");
 		}
 		try {
-			return pair.getPrivateKey().sign(data);
+			return pair.getPrivateKey().sign(data, signingAlgorithm);
 		} catch (IOException e) {
 			throw new SshException(e);
 		}
 	}
 	
 	public SignatureGenerator getSignatureGenerator(Connection<SshClientContext> con) {
-		return this;
+		return Objects.isNull(signatureGenerator)? this : signatureGenerator;
 	}
 
 	@Override

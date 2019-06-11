@@ -37,8 +37,9 @@ public interface ClientAuthenticator {
 	 * Start the authentication
 	 * @param transport
 	 * @param username
+	 * @throws IOException 
 	 */
-	void authenticate(TransportProtocolClient transport, String username);
+	void authenticate(TransportProtocolClient transport, String username) throws IOException;
 
 	/**
 	 * Process an authentication message.

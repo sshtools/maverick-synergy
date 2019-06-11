@@ -138,7 +138,12 @@ public class AuthenticationProtocolClient implements Service {
 								authenticators.addAll(auths);
 							}
 							if(canAuthenticate()) {
-								doNextAuthentication();
+								try {
+									doNextAuthentication();
+								} catch (IOException e) {
+									Log.error("I/O error during authentication", e);
+									transport.disconnect(TransportProtocolClient.BY_APPLICATION, "I/O error during authentication");
+								}
 							} 
 						}
 					}));
@@ -218,7 +223,7 @@ public class AuthenticationProtocolClient implements Service {
 		return  authIndex < authenticators.size();
 	}
 	
-	public void doNextAuthentication() {
+	public void doNextAuthentication() throws IOException {
 
 		if (canAuthenticate()) {
 			currentAuthenticator = authenticators.get(authIndex++);
@@ -249,7 +254,7 @@ public class AuthenticationProtocolClient implements Service {
 		return true;
 	}
 
-	public void doAuthentication(ClientAuthenticator authenticator) {
+	public void doAuthentication(ClientAuthenticator authenticator) throws IOException {
 		currentAuthenticator = authenticator;
 		currentAuthenticator.authenticate(transport, username);
 	}

@@ -335,7 +335,7 @@ public class SshClientContext extends SshContext {
 		this.hkv = hkv;
 	}
 
-	public AbstractRequestFuture authenticate(Connection<?> con, PasswordAuthenticator authenticator) {
+	public AbstractRequestFuture authenticate(Connection<?> con, PasswordAuthenticator authenticator) throws IOException {
 
 		if(transport==null) {
 			throw new IllegalStateException("You cannot call authenticate until the connection has been established");

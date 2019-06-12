@@ -192,7 +192,6 @@
 		<module>maverick-virtual-shell</module>
 		<module>maverick-callback-client</module>
 		<module>maverick-callback-server</module>
-		<module>maverick-sshagent</module>
 		<module>maverick-x509</module>
 		<module>maverick-openssh-certs</module>
 		<module>maverick-bc</module>
@@ -200,5 +199,6 @@
 		<module>maverick-android</module>
 		<module>maverick-ed25519</module>
 		<module>maverick-zip</module>
+		<module>maverick-sshagent</module>
 	</modules>
 </project>

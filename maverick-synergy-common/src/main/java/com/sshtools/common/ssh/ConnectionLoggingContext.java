@@ -30,13 +30,16 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 
+import com.sshtools.common.events.Event;
+import com.sshtools.common.events.EventCodes;
+import com.sshtools.common.events.EventListener;
 import com.sshtools.common.logger.FileLoggingContext;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.logger.LoggerContext;
 import com.sshtools.common.util.IOUtil;
 
-public class ConnectionLoggingContext implements LoggerContext {
+public class ConnectionLoggingContext implements LoggerContext, EventListener {
 
 	Level defaultLevel;
 	Map<SshConnection, FileLoggingContext> activeLoggers = new HashMap<>();
@@ -95,8 +98,8 @@ public class ConnectionLoggingContext implements LoggerContext {
 
 	
 	public void open(Connection<?> con) throws IOException {
-		
-		if(checkLogStatus(con)) {
+		con.addEventListener(this);
+		if(isLoggingConnection(con)) {
 			createLog(con);
 		}
 	}
@@ -123,7 +126,7 @@ public class ConnectionLoggingContext implements LoggerContext {
 		activeLoggers.put(con, new FileLoggingContext(level, new File(filename), maxFiles, maxSize));
 	}
 
-	private boolean checkLogStatus(Connection<?> con) {
+	private boolean isLoggingConnection(Connection<?> con) {
 		
 		Properties loggingProperties = Log.getDefaultContext().getLoggingProperties();
 		
@@ -136,8 +139,34 @@ public class ConnectionLoggingContext implements LoggerContext {
 			return false;
 		}
 		
-		return isLoggingRemoteAddress(con) && isLoggingRemotePort(con)
-				&& isLoggingLocalAddress(con) && isLoggingLocalPort(con);
+		return (isLoggingRemoteAddress(con) && isLoggingRemotePort(con)
+				&& isLoggingLocalAddress(con) && isLoggingLocalPort(con))
+				|| isLoggingIdentifier(con) || isLoggingUser(con);
+	}
+
+	private boolean isLoggingUser(Connection<?> con) {
+		if(!Objects.isNull(con.getUsername())) {		
+			String v = getProperty(".user", "");
+			if("".equals(v)) {
+				return false;
+			}
+			Set<String> users = new HashSet<String>(Arrays.asList(v.split(",")));
+			return users.contains(con.getUsername());
+		}
+		return false;
+	}
+
+	private boolean isLoggingIdentifier(Connection<?> con) {
+		if(con.getRemoteIdentification().length() > 0) {
+			String v = getProperty(".ident", "");
+			if("".equals(v)) {
+				return false;
+			}
+			Set<String> identifications = new HashSet<String>(Arrays.asList(v.split(",")));
+			return identifications.contains(con.getRemoteIdentification());
+		}
+		return false;
+		
 	}
 
 	private String getProperty(String key, String defaultValue) {
@@ -186,5 +215,27 @@ public class ConnectionLoggingContext implements LoggerContext {
 				ctx.newline();
 			}
 		}
+	}
+
+	@Override
+	public void processEvent(Event evt) {
+		
+		Connection<?> con = (Connection<?>) evt.getAttribute(EventCodes.ATTRIBUTE_CONNECTION);
+		switch(evt.getId()) {
+		case EventCodes.EVENT_NEGOTIATED_PROTOCOL:
+		case EventCodes.EVENT_USERAUTH_STARTED:
+			if(!activeLoggers.containsKey(con)) {
+				if(isLoggingConnection(con)) {
+					try {
+						createLog(con);
+					} catch (IOException e) {
+					}
+				}
+			}
+			break;
+		default:
+			break;
+		}
+		
 	}
 }

@@ -146,9 +146,8 @@ public class EventCodes {
 		
 		/** Connection attempt **/
 		public static final int EVENT_CONNECTION_ATTEMPT = 			0xFF000000;
-		
 		public static final int EVENT_CONNECTED = 					0xFF000001;
-		
+		public static final int EVENT_NEGOTIATED_PROTOCOL = 		0xFF00000A;
 		// Not very useful events
 		public static final int EVENT_HOSTKEY_RECEIVED	=			0xFF000002; 
 		public static final int EVENT_HOSTKEY_REJECTED 	=			0xFF000003;
@@ -161,6 +160,7 @@ public class EventCodes {
 		public static final int EVENT_FAILED_TO_NEGOTIATE_TRANSPORT_COMPONENT = 0xFF000008;
 		
 		// Useful events
+		public static final int EVENT_USERAUTH_STARTED = 			0xFF000013;
 		public static final int EVENT_USERAUTH_SUCCESS = 			0xFF000010;
 		public static final int EVENT_USERAUTH_FAILURE =  			0xFF000011;
 		public static final int EVENT_AUTHENTICATION_COMPLETE = 	0xFF000012;
@@ -230,6 +230,8 @@ public class EventCodes {
 		public static final int EVENT_SUBSYSTEM_STARTED = 			0x00FF1001;
 		public static final int EVENT_SFTP_FILE_CLOSED = 			0x00FF0025;
 		public static final int EVENT_SFTP_FILE_OPENED = 			0x00FF0026;
+
+		
 
 
 		public static Map<Integer,String> messageCodes=new HashMap<Integer,String>();

@@ -496,6 +496,18 @@ public abstract class TransportProtocol<T extends SshContext>
 
 			receivedRemoteIdentification = true;
 
+			EventServiceImplementation.getInstance().fireEvent(
+					(new Event(this, EventCodes.EVENT_NEGOTIATED_PROTOCOL, true))
+							.addAttribute(
+									EventCodes.ATTRIBUTE_CONNECTION,
+									con)
+							.addAttribute(
+									EventCodes.ATTRIBUTE_OPERATION_STARTED,
+									started)
+							.addAttribute(
+									EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+									new Date()));
+			
 			onRemoteIdentificationReceived(tmp);
 			
 			// Send our kex init

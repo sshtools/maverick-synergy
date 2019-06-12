@@ -70,7 +70,8 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	Date started = new Date();
 	String[] requiredAuthentications = null;
 	boolean authenticated = false;
-
+	boolean firstAttempt = false;
+	
 	/** The name of this service "ssh-userauth" */
 	static final String SERVICE_NAME = "ssh-userauth";
 
@@ -186,6 +187,34 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 			boolean canConnect = true;
 			Connection<SshServerContext> con = transport.getConnection();
 			con.setUsername(username);			
+			
+			if(!firstAttempt) {
+				
+				EventServiceImplementation
+				.getInstance()
+				.fireEvent(
+						new Event(
+								this,
+								EventCodes.EVENT_USERAUTH_STARTED,
+								true)
+								.addAttribute(
+										EventCodes.ATTRIBUTE_CONNECTION,
+										transport.getConnection())
+								.addAttribute(
+										EventCodes.ATTRIBUTE_ATTEMPTED_USERNAME,
+										username)
+								.addAttribute(
+										EventCodes.ATTRIBUTE_AUTHENTICATION_METHOD,
+										currentMethod)
+								.addAttribute(
+										EventCodes.ATTRIBUTE_OPERATION_STARTED,
+										started)
+								.addAttribute(
+										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+										new Date()));
+				
+				firstAttempt = true;
+			}
 			
 			if(requiredAuthentications == null
 					|| transport.getSshContext().getPolicy(AuthenticationPolicy.class).getRequiredAuthenticationStrategy()

@@ -44,15 +44,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.sshtools</groupId>
-			<artifactId>maverick</artifactId>
-			<version>1.9.0-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.sshtools</groupId>
-			<artifactId>maverick-synergy-client</artifactId>
+			<artifactId>maverick-base</artifactId>
 			<version>${project.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.kohlschutter.junixsocket</groupId>

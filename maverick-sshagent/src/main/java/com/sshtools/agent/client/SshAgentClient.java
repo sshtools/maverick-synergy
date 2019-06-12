@@ -1,4 +1,22 @@
-package com.maverick.agent.client;
+/**
+ * (c) 2002-2019 JADAPTIVE Limited. All Rights Reserved.
+ *
+ * This file is part of the Maverick Synergy Java SSH API.
+ *
+ * Maverick Synergy is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Maverick Synergy is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package com.sshtools.agent.client;
 
 import java.io.Closeable;
 import java.io.File;
@@ -15,30 +33,30 @@ import java.util.Map;
 import org.newsclub.net.unix.AFUNIXSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 
-import com.maverick.agent.AgentMessage;
-import com.maverick.agent.KeyConstraints;
-import com.maverick.agent.exceptions.AgentNotAvailableException;
-import com.maverick.agent.exceptions.InvalidMessageException;
-import com.maverick.agent.openssh.OpenSSHAgentMessages;
-import com.maverick.agent.openssh.OpenSshSignRequest;
-import com.maverick.agent.rfc.RFCAgentMessages;
-import com.maverick.agent.rfc.SshAgentAddKey;
-import com.maverick.agent.rfc.SshAgentAlive;
-import com.maverick.agent.rfc.SshAgentDeleteKey;
-import com.maverick.agent.rfc.SshAgentFailure;
-import com.maverick.agent.rfc.SshAgentForwardingNotice;
-import com.maverick.agent.rfc.SshAgentKeyList;
-import com.maverick.agent.rfc.SshAgentLock;
-import com.maverick.agent.rfc.SshAgentOperationComplete;
-import com.maverick.agent.rfc.SshAgentPing;
-import com.maverick.agent.rfc.SshAgentPrivateKeyOp;
-import com.maverick.agent.rfc.SshAgentRandom;
-import com.maverick.agent.rfc.SshAgentRandomData;
-import com.maverick.agent.rfc.SshAgentRequestVersion;
-import com.maverick.agent.rfc.SshAgentSuccess;
-import com.maverick.agent.rfc.SshAgentUnlock;
-import com.maverick.agent.rfc.SshAgentVersionResponse;
-import com.maverick.agent.win32.NamedPipeClient;
+import com.sshtools.agent.AgentMessage;
+import com.sshtools.agent.KeyConstraints;
+import com.sshtools.agent.exceptions.AgentNotAvailableException;
+import com.sshtools.agent.exceptions.InvalidMessageException;
+import com.sshtools.agent.openssh.OpenSSHAgentMessages;
+import com.sshtools.agent.openssh.OpenSshSignRequest;
+import com.sshtools.agent.rfc.RFCAgentMessages;
+import com.sshtools.agent.rfc.SshAgentAddKey;
+import com.sshtools.agent.rfc.SshAgentAlive;
+import com.sshtools.agent.rfc.SshAgentDeleteKey;
+import com.sshtools.agent.rfc.SshAgentFailure;
+import com.sshtools.agent.rfc.SshAgentForwardingNotice;
+import com.sshtools.agent.rfc.SshAgentKeyList;
+import com.sshtools.agent.rfc.SshAgentLock;
+import com.sshtools.agent.rfc.SshAgentOperationComplete;
+import com.sshtools.agent.rfc.SshAgentPing;
+import com.sshtools.agent.rfc.SshAgentPrivateKeyOp;
+import com.sshtools.agent.rfc.SshAgentRandom;
+import com.sshtools.agent.rfc.SshAgentRandomData;
+import com.sshtools.agent.rfc.SshAgentRequestVersion;
+import com.sshtools.agent.rfc.SshAgentSuccess;
+import com.sshtools.agent.rfc.SshAgentUnlock;
+import com.sshtools.agent.rfc.SshAgentVersionResponse;
+import com.sshtools.agent.win32.NamedPipeClient;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.SignatureGenerator;
 import com.sshtools.common.ssh.SshException;

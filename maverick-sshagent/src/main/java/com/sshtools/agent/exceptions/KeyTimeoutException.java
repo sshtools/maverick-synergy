@@ -1,30 +1,22 @@
-/*
- *  SSHTools - Java SSH2 API
+/**
+ * (c) 2002-2019 JADAPTIVE Limited. All Rights Reserved.
  *
- *  Copyright (C) 2002-2003 Lee David Painter and Contributors.
+ * This file is part of the Maverick Synergy Java SSH API.
  *
- *  Contributions made by:
+ * Maverick Synergy is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  Brett Smith
- *  Richard Pernavas
- *  Erwin Bolwidt
+ * Maverick Synergy is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Library General Public License
- *  as published by the Free Software Foundation; either version 2 of
- *  the License, or (at your option) any later version.
- *
- *  You may also distribute it and/or modify it under the terms of the
- *  Apache style J2SSH Software License. A copy of which should have
- *  been provided with the distribution.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  License document supplied with your distribution for more details.
- *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.maverick.agent.exceptions;
+package com.sshtools.agent.exceptions;
 
 public class KeyTimeoutException extends Exception {
 

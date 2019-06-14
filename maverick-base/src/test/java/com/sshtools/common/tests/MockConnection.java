@@ -18,6 +18,7 @@
  */
 package com.sshtools.common.tests;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.Context;
@@ -37,6 +39,7 @@ public class MockConnection implements SshConnection {
 	boolean connected = true;
 	String username;
 	String sessionId;
+	String remoteIdentification = "SSH-2.0-MockConnection";
 	InetSocketAddress localAddress;
 	InetSocketAddress remoteAddress;
 	Map<String,Object> properties = new HashMap<>();
@@ -167,6 +170,21 @@ public class MockConnection implements SshConnection {
 	@Override
 	public String getUUID() {
 		return sessionId;
+	}
+
+	@Override
+	public String getRemoteIdentification() {
+		return remoteIdentification;
+	}
+
+	@Override
+	public void startLogging() throws IOException {
+
+	}
+
+	@Override
+	public void startLogging(Level trace) throws IOException {
+		
 	}
 	
 

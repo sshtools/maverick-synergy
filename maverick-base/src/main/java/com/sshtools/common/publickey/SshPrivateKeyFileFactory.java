@@ -46,7 +46,9 @@ public class SshPrivateKeyFileFactory {
 	
 	
 	public static final int OPENSSH_FORMAT = 0;
+	@Deprecated
 	public static final int SSHTOOLS_FORMAT = 1;
+	@Deprecated
 	public static final int SSH1_FORMAT = 3;
 
 	/**
@@ -134,13 +136,11 @@ public class SshPrivateKeyFileFactory {
 
 	}
 
-	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase,
-			String comment) throws IOException {
-		return create(pair, passphrase, comment, SshPrivateKeyFileFactory.OPENSSH_FORMAT);
+	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase) throws IOException {
+		return create(pair, passphrase, SshPrivateKeyFileFactory.OPENSSH_FORMAT);
 	}
 	
-	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase,
-			String comment, int format) throws IOException {
+	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase, int format) throws IOException {
 
 		if (!(pair.getPrivateKey() instanceof SshRsaPrivateCrtKey)
 				&& format == SSH1_FORMAT) {
@@ -167,10 +167,6 @@ public class SshPrivateKeyFileFactory {
 				}
 			}
 			return new OpenSSHPrivateKeyFile(pair, passphrase);
-		case SSHTOOLS_FORMAT:
-			return new SshtoolsPrivateKeyFile(pair, passphrase, comment);
-		case SSH1_FORMAT:
-			return new Ssh1RsaPrivateKeyFile(pair, passphrase, comment);
 		default:
 			throw new IOException("Invalid key format!");
 		}
@@ -178,8 +174,8 @@ public class SshPrivateKeyFileFactory {
 	}
 
 	public static void createFile(SshKeyPair key, String passphrase,
-			String comment, File toFile) throws IOException {
-		createFile(key, passphrase, comment, OPENSSH_FORMAT, toFile);
+			File toFile) throws IOException {
+		createFile(key, passphrase, OPENSSH_FORMAT, toFile);
 	}
 	
 	/**
@@ -193,9 +189,9 @@ public class SshPrivateKeyFileFactory {
 	 * @throws IOException
 	 */
 	public static void createFile(SshKeyPair key, String passphrase,
-			String comment, int format, File toFile) throws IOException {
+			int format, File toFile) throws IOException {
 
-		SshPrivateKeyFile pub = create(key, passphrase, comment, format);
+		SshPrivateKeyFile pub = create(key, passphrase, format);
 
 		FileOutputStream out = new FileOutputStream(toFile);
 
@@ -217,13 +213,12 @@ public class SshPrivateKeyFileFactory {
 	 * @throws IOException
 	 * @throws InvalidPassphraseException
 	 */
-	public static void convertFile(File keyFile, String passphrase,
-			String comment, int toFormat, File toFile) throws IOException,
+	public static void convertFile(File keyFile, String passphrase, int toFormat, File toFile) throws IOException,
 			InvalidPassphraseException {
 
 		SshPrivateKeyFile pub = parse(new FileInputStream(keyFile));
 
-		createFile(pub.toKeyPair(passphrase), passphrase, comment, toFormat,
+		createFile(pub.toKeyPair(passphrase), passphrase, toFormat,
 				toFile);
 	}
 	

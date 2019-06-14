@@ -86,7 +86,7 @@ public abstract class AbstractPublicKeyTests extends TestCase {
 		SshKeyPair generated = testKeyGeneration(type, bits);
 		assertEquals(generated.getPublicKey().getBitLength(), bits);
 		assertEquals(getTestingJCE(), generated.getPublicKey().test());
-		byte[] formattedkey = saveKeyPair(generated, passphrase, comment, format);
+		byte[] formattedkey = saveKeyPair(generated, passphrase, format);
 		SshKeyPair loaded = loadKeyPair(formattedkey, passphrase);
 		assertEquals(getTestingJCE(), loaded.getPublicKey().test());
 		checkKeyPairs(generated, loaded);
@@ -97,8 +97,8 @@ public abstract class AbstractPublicKeyTests extends TestCase {
 		return SshKeyPairGenerator.generateKeyPair(type, bits);
 	}
 	
-	protected byte[] saveKeyPair(SshKeyPair pair, String passphrase, String comment, int format) throws IOException {
-		SshPrivateKeyFile file = SshPrivateKeyFileFactory.create(pair, passphrase, comment, format);
+	protected byte[] saveKeyPair(SshKeyPair pair, String passphrase, int format) throws IOException {
+		SshPrivateKeyFile file = SshPrivateKeyFileFactory.create(pair, passphrase, format);
 		return file.getFormattedKey();
 	}
 	

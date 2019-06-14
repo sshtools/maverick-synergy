@@ -474,8 +474,7 @@ public class SshServerContext extends SshContext {
 		
 		SshKeyPair pair = generateKey(type, bitlength);
 
-		SshPrivateKeyFile prvfile = SshPrivateKeyFileFactory.create(pair, "",
-				type + " host key");
+		SshPrivateKeyFile prvfile = SshPrivateKeyFileFactory.create(pair, "");
 		FileOutputStream fout = new FileOutputStream(keyFilename);
 		fout.write(prvfile.getFormattedKey());
 		fout.close();

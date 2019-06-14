@@ -46,7 +46,7 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
 		
     public ConnectionManager(String name) {
     	this(name, Level.valueOf(
-    			Log.getDefaultContext().getLoggingProperties().getProperty("maverick.log.connection.defaultLevel", "NONE")));
+    			Log.getDefaultContext().getLoggingProperties().getProperty("maverick.log.connection.level", "NONE")));
     }
     
     public ConnectionManager(String name, Level level) {
@@ -62,6 +62,14 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
     public String getName() {
     	return name;
     }
+    
+    public void startLogging(SshConnection con, Level level) throws IOException {
+    	ctx.startLogging(con, level);
+    }
+    
+	public void startLogging(SshConnection con) throws IOException {
+		ctx.startLogging(con);
+	}
     
     public void setupConnection(SshConnection con) {
 		currentConnection.set(con);

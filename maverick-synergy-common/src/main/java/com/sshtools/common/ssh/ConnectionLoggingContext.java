@@ -37,6 +37,7 @@ import com.sshtools.common.logger.FileLoggingContext;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.logger.LoggerContext;
+import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.common.util.IOUtil;
 
 public class ConnectionLoggingContext implements LoggerContext, EventListener {
@@ -54,7 +55,7 @@ public class ConnectionLoggingContext implements LoggerContext, EventListener {
 	public boolean isLogging(Level level) {
 		SshConnection currentConnection = cm.getCurrentConnection();
 		if(activeLoggers.containsKey(currentConnection)) {
-			return this.defaultLevel != Level.NONE && this.defaultLevel.ordinal() >= level.ordinal();
+			return activeLoggers.get(currentConnection).getLevel().ordinal() >= level.ordinal();
 		} 
 		return false;
 	}
@@ -100,13 +101,20 @@ public class ConnectionLoggingContext implements LoggerContext, EventListener {
 	public void open(Connection<?> con) throws IOException {
 		con.addEventListener(this);
 		if(isLoggingConnection(con)) {
-			createLog(con);
+			startLogging(con);
 		}
 	}
 	
-	private void createLog(Connection<?> con) throws IOException {
+	public void startLogging(SshConnection con) throws IOException {
+		startLogging(con, Level.valueOf(getProperty(".level", defaultLevel.name())));
+	}
+	
+	public void startLogging(SshConnection con, Level level) throws IOException {
+	
+		if(activeLoggers.containsKey(con)) {
+			return;
+		}
 		
-		Level level = Level.valueOf(getProperty(".defaultLevel", defaultLevel.name()));
 		String filenameFormat = getProperty(".filenameFormat", "${timestamp}__${uuid}.log");
 		Integer maxFiles = Integer.parseInt(getProperty(".maxFiles", "10"));
 		Long maxSize = IOUtil.fromByteSize(getProperty(".maxSize", "20MB"));
@@ -121,7 +129,9 @@ public class ConnectionLoggingContext implements LoggerContext, EventListener {
 				.replace("${remotePort}", String.valueOf(con.getRemotePort()))
 				.replace("${remoteAddr}", con.getRemoteAddress().getHostAddress())
 				.replace("${localPort}", String.valueOf(con.getLocalPort()))
-				.replace("${localAddr}", con.getLocalAddress().getHostAddress());
+				.replace("${localAddr}", con.getLocalAddress().getHostAddress())
+				.replace("${ident}", Utils.defaultString(con.getRemoteIdentification().trim(), ""))
+				.replace("${user}", Utils.defaultString(con.getUsername(), ""));
 		
 		activeLoggers.put(con, new FileLoggingContext(level, new File(filename), maxFiles, maxSize));
 	}
@@ -139,40 +149,55 @@ public class ConnectionLoggingContext implements LoggerContext, EventListener {
 			return false;
 		}
 		
-		return (isLoggingRemoteAddress(con) && isLoggingRemotePort(con)
-				&& isLoggingLocalAddress(con) && isLoggingLocalPort(con))
-				|| isLoggingIdentifier(con) || isLoggingUser(con);
+		return isLoggingRemoteAddress(con) && isLoggingRemotePort(con)
+				&& isLoggingLocalAddress(con) && isLoggingLocalPort(con)
+				&& isLoggingIdentifier(con) 
+				&& isLoggingUser(con);
 	}
 
 	private boolean isLoggingUser(Connection<?> con) {
-		if(!Objects.isNull(con.getUsername())) {		
-			String v = getProperty(".user", "");
-			if("".equals(v)) {
-				return false;
-			}
-			Set<String> users = new HashSet<String>(Arrays.asList(v.split(",")));
-			return users.contains(con.getUsername());
+			
+		String v = getProperty(".user", "");
+		if("".equals(v)) {
+			return false;
 		}
-		return false;
+		Set<String> users = new HashSet<String>(Arrays.asList(v.split(",")));
+		if(!Objects.isNull(con.getUsername())) {
+			return users.contains(con.getUsername());
+		} else {
+			return users.isEmpty();
+		}
 	}
 
 	private boolean isLoggingIdentifier(Connection<?> con) {
-		if(con.getRemoteIdentification().length() > 0) {
-			String v = getProperty(".ident", "");
-			if("".equals(v)) {
-				return false;
-			}
-			Set<String> identifications = new HashSet<String>(Arrays.asList(v.split(",")));
-			return identifications.contains(con.getRemoteIdentification());
+		
+		String v = getProperty(".ident", "");
+		if("".equals(v)) {
+			return false;
 		}
-		return false;
+		if(v.startsWith("SSH-2.0-")) {
+			v = v.substring(8);
+		}
+		Set<String> identifications = new HashSet<String>(Arrays.asList(v.split(",")));
+	
+		if(con.getRemoteIdentification().length() > 0) {
+			for(String ident : identifications) {
+				if(con.getRemoteIdentification().contains(ident)) {
+					return true;
+				}
+			}
+			return false;
+		} else {
+			return identifications.isEmpty();
+		}
+			
 		
 	}
 
 	private String getProperty(String key, String defaultValue) {
 		Properties loggingProperties = Log.getDefaultContext().getLoggingProperties();
 		defaultValue = loggingProperties.getProperty(String.format("maverick.log.connection%s", key), defaultValue);
-		return loggingProperties.getProperty(getProperty(key, defaultValue));
+		return loggingProperties.getProperty(getPropertyKey(key), defaultValue);
 	}
 	
 	private String getPropertyKey(String key) {
@@ -220,14 +245,14 @@ public class ConnectionLoggingContext implements LoggerContext, EventListener {
 	@Override
 	public void processEvent(Event evt) {
 		
-		Connection<?> con = (Connection<?>) evt.getAttribute(EventCodes.ATTRIBUTE_CONNECTION);
 		switch(evt.getId()) {
 		case EventCodes.EVENT_NEGOTIATED_PROTOCOL:
 		case EventCodes.EVENT_USERAUTH_STARTED:
+			Connection<?> con = (Connection<?>) evt.getAttribute(EventCodes.ATTRIBUTE_CONNECTION);
 			if(!activeLoggers.containsKey(con)) {
 				if(isLoggingConnection(con)) {
 					try {
-						createLog(con);
+						startLogging(con);
 					} catch (IOException e) {
 					}
 				}
@@ -238,4 +263,5 @@ public class ConnectionLoggingContext implements LoggerContext, EventListener {
 		}
 		
 	}
+
 }

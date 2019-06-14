@@ -36,5 +36,9 @@ public abstract class AbstractLoggingContext implements LoggerContext {
 	public boolean isLogging(Level level) {
 		return this.level.ordinal() >= level.ordinal();
 	}
+	
+	public Level getLevel() {
+		return level;
+	}
 
 }

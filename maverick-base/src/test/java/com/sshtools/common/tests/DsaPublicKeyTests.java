@@ -28,6 +28,7 @@ import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.common.ssh.SshException;
 
 @Ignore
+@SuppressWarnings("deprecation")
 public abstract class DsaPublicKeyTests extends AbstractPublicKeyTests {
 
 	

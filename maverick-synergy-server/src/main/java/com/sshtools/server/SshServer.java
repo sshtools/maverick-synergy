@@ -27,6 +27,7 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.Authenticator;
@@ -58,7 +59,6 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory(); 
 	
 	public SshServer() throws UnknownHostException {
-		this("::", 0);
 	}
 	
 	public SshServer(int port) throws UnknownHostException {
@@ -75,16 +75,26 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 		JCEComponentManager.getDefaultInstance();
 	}
 	
+	public void addInterface(String addressToBind, int portToBind) throws IOException {
+		engine.getContext().addListeningInterface(addressToBind, portToBind, this, true);
+	}
+	
 	public void start() throws IOException {
 		
 		beforeStart();
 		if(!engine.startup()) {
 			throw new IOException("Server failed to start");
 		}
-		this.port = engine.getContext().addListeningInterface(addressToBind, port, this, true).getActualPort();
+		if(!Objects.isNull(addressToBind)) {
+			this.port = engine.getContext().addListeningInterface(addressToBind, port, this, true).getActualPort();
+		} else if(engine.getContext().getListeningInterfaces().length > 0){
+			this.port = engine.getContext().getListeningInterfaces()[0].getActualPort();
+		}
+		
 		if(Log.isInfoEnabled()) {
 			Log.info("Listening on port %d", this.port);
 		}
+		
 		engine.addListener(new SshEngineListenerAdapter() {
 
 			@Override

@@ -68,10 +68,36 @@ import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 public class SshKeyPairGenerator {
 
 	public static final String SSH2_RSA = "ssh-rsa";
+	
+	@Deprecated
 	public static final String SSH2_DSA = "ssh-dss";
+	
 	public static final String ECDSA = "ecdsa";
 	public static final String ED25519 = "ed25519";
 
+	/**
+	 * Generate a new key pair using the default bit size.
+	 * 
+	 * @param algorithm
+	 * @return
+	 * @throws IOException
+	 * @throws SshException
+	 */
+	public static SshKeyPair generateKeyPair(String algorithm) throws IOException, SshException {
+		
+		switch(algorithm) {
+		case ECDSA:
+			return generateKeyPair(algorithm, 256);
+		case ED25519:
+			return generateKeyPair(algorithm, 0);
+		case SSH2_RSA:
+			return generateKeyPair(algorithm, 2048)	;
+		case SSH2_DSA:
+			return generateKeyPair(algorithm, 1024);
+		default:
+			throw new IOException(String.format("Unexpected key algorithm %s", algorithm));
+	}
+	}
 	/**
 	 * Generates a new key pair.
 	 * 

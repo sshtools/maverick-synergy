@@ -18,10 +18,12 @@
  */
 package com.sshtools.common.ssh;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Locale;
 
 import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.logger.Log.Level;
 
 public interface SshConnection {
 
@@ -69,5 +71,11 @@ public interface SshConnection {
 	void openChannel(Channel channel);
 
 	String getUUID();
+
+	String getRemoteIdentification();
+
+	void startLogging() throws IOException;
+	
+	void startLogging(Level trace) throws IOException;
 
 }

@@ -302,5 +302,12 @@ public class Utils {
 		}
 		return buf.toString();
 	}
+
+	public static String defaultString(String value, String defaultValue) {
+		if(Objects.isNull(value)) {
+			return defaultValue;
+		}
+		return value;
+	}
 	
 }

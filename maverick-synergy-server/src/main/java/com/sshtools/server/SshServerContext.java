@@ -372,16 +372,16 @@ public class SshServerContext extends SshContext {
 	 * @throws IOException
 	 * @throws SshException
 	 */
-	public void loadOrGenerateHostKey(File key, String type, int bitlength)
+	public SshKeyPair loadOrGenerateHostKey(File key, String type, int bitlength)
 			throws IOException, InvalidPassphraseException, SshException {
-		loadOrGenerateHostKey(key, type, bitlength,
+		return loadOrGenerateHostKey(key, type, bitlength,
 				SshPublicKeyFileFactory.SECSH_FORMAT, "");
 	}
 
-	public void loadOrGenerateHostKey(File key, String type, int bitlength,
+	public SshKeyPair loadOrGenerateHostKey(File key, String type, int bitlength,
 			String passPhrase) throws IOException, InvalidPassphraseException,
 			SshException {
-		loadOrGenerateHostKey(key, type, bitlength,
+		return loadOrGenerateHostKey(key, type, bitlength,
 				SshPublicKeyFileFactory.SECSH_FORMAT, passPhrase);
 	}
 
@@ -422,16 +422,20 @@ public class SshServerContext extends SshContext {
 	 * @throws IOException
 	 * @throws SshException
 	 */
-	public void loadOrGenerateHostKey(File key, String type, int bitlength,
+	public SshKeyPair loadOrGenerateHostKey(File key, String type, int bitlength,
 			int publicKeyFormat, String passPhrase)
 			throws IOException, InvalidPassphraseException, SshException {
 
+		SshKeyPair pair;
 		if (!key.exists()) {
-			addHostKey(generateKeyFiles(key, type, bitlength, 
-					publicKeyFormat));
+			pair = generateKeyFiles(key, type, bitlength, 
+					publicKeyFormat);
 		} else {
-			addHostKey(loadKey(key, passPhrase));
+			pair = loadKey(key, passPhrase);
 		}
+		
+		addHostKey(pair);
+		return pair;
 	}
 
 	public void loadHostKey(InputStream in, String type, int bitlength,

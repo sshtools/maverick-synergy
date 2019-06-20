@@ -113,7 +113,7 @@ public class SshEngineContext {
 	 * 
 	 * @return
 	 */
-	public SshEngine getServer() {
+	public SshEngine getEngine() {
 		return daemon;
 	}
 

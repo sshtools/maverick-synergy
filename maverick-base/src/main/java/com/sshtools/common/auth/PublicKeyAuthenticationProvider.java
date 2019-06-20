@@ -82,6 +82,8 @@ public interface PublicKeyAuthenticationProvider extends Authenticator {
 	 */
 	boolean isAuthorizedKey(SshPublicKey key, SshConnection con) throws IOException;
 
+	boolean checkKey(SshPublicKey key, SshConnection con) throws IOException;
+	
 	Iterator<SshPublicKeyFile> getKeys(SshConnection con)
 			throws PermissionDeniedException, IOException;
 

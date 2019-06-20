@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
@@ -119,6 +120,9 @@ public final class AbstractFileSystem {
 	}
 
 	protected AbstractFile resolveFile(String path, SshConnection con) throws PermissionDeniedException, IOException {
+		if(Objects.isNull(fileFactory)) {
+			throw new PermissionDeniedException("The user does not have access to a file system.");
+		}
 		if (defaultPaths.contains(path)) {
 			return fileFactory.getDefaultPath(con);
 		} else {
@@ -745,6 +749,10 @@ public final class AbstractFileSystem {
 	}
 
 	public void populateEvent(Event evt) {
+		if(Objects.isNull(fileFactory)) {
+			return;
+		}
+		
 		evt.addAttribute(EventCodes.ATTRIBUTE_FILE_FACTORY, fileFactory);
 		evt.addAttribute(EventCodes.ATTRIBUTE_CONNECTION, con);
 		byte[] handle = (byte[]) evt.getAttribute(EventCodes.ATTRIBUTE_HANDLE);

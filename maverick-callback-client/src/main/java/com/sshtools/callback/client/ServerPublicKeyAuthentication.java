@@ -19,17 +19,13 @@
 package com.sshtools.callback.client;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Set;
 
-import com.sshtools.common.auth.PublicKeyAuthenticationProvider;
-import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.publickey.SshPublicKeyFile;
+import com.sshtools.common.auth.AbstractPublicKeyAuthenticationProvider;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
 
-public class ServerPublicKeyAuthentication implements PublicKeyAuthenticationProvider {
+public class ServerPublicKeyAuthentication extends AbstractPublicKeyAuthenticationProvider {
 
 	
 	
@@ -53,24 +49,6 @@ public class ServerPublicKeyAuthentication implements PublicKeyAuthenticationPro
 			}
 		}
 		return false;
-	}
-
-	@Override
-	public Iterator<SshPublicKeyFile> getKeys(SshConnection con)
-			throws PermissionDeniedException, IOException {
-		throw new PermissionDeniedException("Unsupported");
-	}
-
-	@Override
-	public void remove(SshPublicKey key, SshConnection con)
-			throws IOException, PermissionDeniedException, SshException {
-		throw new PermissionDeniedException("Unsupported");
-	}
-
-	@Override
-	public void add(SshPublicKey key, String comment, SshConnection con)
-			throws IOException, PermissionDeniedException, SshException {
-		throw new PermissionDeniedException("Unsupported");
 	}
 
 }

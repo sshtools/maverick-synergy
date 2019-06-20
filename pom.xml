@@ -200,5 +200,6 @@
 		<module>maverick-ed25519</module>
 		<module>maverick-zip</module>
 		<module>maverick-sshagent</module>
+		<module>maverick-synergy-assembly</module>
 	</modules>
 </project>

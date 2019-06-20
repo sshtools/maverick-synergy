@@ -101,16 +101,7 @@ public class PublicKeyAuthentication<C extends Context> implements Authenticatio
 			
 			if(providers!=null) {
 				for(PublicKeyAuthenticationProvider provider : providers) {
-					/**
-					 * New interface defined for better feedback to customers authentication layer. 
-					 */
-					if(provider instanceof PublicKeyWithVerifyAuthenticationProvider && !verify) {
-						if(((PublicKeyWithVerifyAuthenticationProvider)provider).checkKey(key, con)) {
-							return key;
-						}
-						continue;
-					}
-					if (provider.isAuthorizedKey(
+					if (provider.checkKey(
 							key,
 							con)) {
 						con.setProperty(key.getFingerprint(), key);

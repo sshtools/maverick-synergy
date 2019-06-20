@@ -27,11 +27,13 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.Authenticator;
 import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ProtocolContextFactory;
 import com.sshtools.common.nio.SshEngine;
@@ -39,6 +41,8 @@ import com.sshtools.common.nio.SshEngineContext;
 import com.sshtools.common.nio.SshEngineListenerAdapter;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyPairGenerator;
+import com.sshtools.common.publickey.SshKeyUtils;
+import com.sshtools.common.scp.ScpCommand;
 import com.sshtools.common.ssh.AbstractRequestFuture;
 import com.sshtools.common.ssh.ChannelFactory;
 import com.sshtools.common.ssh.SshException;
@@ -50,12 +54,18 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 	SshEngine engine = new SshEngine();
 	InetAddress addressToBind;
 	int port;
-	
+	boolean enableScp;
 	ServerShutdownFuture shutdownFuture = new ServerShutdownFuture();
 	
 	Collection<SshKeyPair> hostKeys = new ArrayList<>();
 	Collection<Authenticator> providers = new ArrayList<>();
+	Collection<Authenticator> defaultProviders = 
+			Collections.unmodifiableCollection(
+					Arrays.asList(new NoOpPasswordAuthenticator(),
+							new NoOpPublicKeyAuthenticator()));
 	AbstractFileFactory<?> fileFactory;
+	ForwardingPolicy forwardingPolicy = new ForwardingPolicy();
+	
 	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory(); 
 	
 	public SshServer() throws UnknownHostException {
@@ -77,6 +87,18 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 	
 	public void addInterface(String addressToBind, int portToBind) throws IOException {
 		engine.getContext().addListeningInterface(addressToBind, portToBind, this, true);
+	}
+	
+	public void addInterface(InetAddress addressToBind, int portToBind, ProtocolContextFactory<SshServerContext> contextFactory) throws IOException {
+		engine.getContext().addListeningInterface(addressToBind, portToBind, contextFactory, true);
+	}
+	
+	public void addInterface(String addressToBind, int portToBind, ProtocolContextFactory<SshServerContext> contextFactory) throws IOException {
+		addInterface(addressToBind, portToBind, this);
+	}
+	
+	public void addInterface(InetAddress addressToBind, int portToBind) throws IOException {
+		addInterface(addressToBind, portToBind, this);
 	}
 	
 	public void start() throws IOException {
@@ -134,6 +156,14 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 		this.channelFactory = channelFactory;
 	}
 	
+	public void enableSCP() {
+		enableScp = true;
+	}
+	
+	public void disableSCP() {
+		enableScp = false;
+	}
+	
 	public int getPort() {
 		return port;
 	}
@@ -149,47 +179,75 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 	public AbstractRequestFuture getShutdownFuture() {
 		return shutdownFuture;
 	}
-	
-	protected void configureHostKeys(SshServerContext sshContext) throws IOException, SshException {
+		
+	protected void configureHostKeys(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
 		
 		if(!hostKeys.isEmpty()) {
 			sshContext.addHostKeys(hostKeys);
 		} else {
+			loadOrGenerateHostKey(sshContext, new File("ssh_host_rsa"), SshKeyPairGenerator.SSH2_RSA, 2048);
+			
 			try {
-				sshContext.loadOrGenerateHostKey(new File("ssh_host_rsa"), SshKeyPairGenerator.SSH2_RSA, 2048);
-				sshContext.loadOrGenerateHostKey(new File("ssh_host_ecdsa_256"), SshKeyPairGenerator.ECDSA, 256);
-				sshContext.loadOrGenerateHostKey(new File("ssh_host_ecdsa_384"), SshKeyPairGenerator.ECDSA, 384);
-				sshContext.loadOrGenerateHostKey(new File("ssh_host_ecdsa_521"), SshKeyPairGenerator.ECDSA, 521);
-				
-				/**
-				 * Because this requires a dependency and thus not installed by default
-				 */
-				if(JCEComponentManager.getDefaultInstance().supportedPublicKeys().contains(SshKeyPairGenerator.ED25519)) {
-					sshContext.loadOrGenerateHostKey(new File("ssh_host_ed25519"), SshKeyPairGenerator.ED25519, 0);
-				}
+				loadOrGenerateHostKey(sshContext, SshKeyUtils.getRSAPrivateKeyWithSHA256Signature(new File("ssh_host_rsa"), null));
 			} catch (InvalidPassphraseException e) {
-				/**
-				 * Should not happen because non of the above passes a passphrase.
-				 */
-				throw new SshException(e);
+			}
+			
+			try {
+				loadOrGenerateHostKey(sshContext, SshKeyUtils.getRSAPrivateKeyWithSHA512Signature(new File("ssh_host_rsa"), null));
+			} catch (InvalidPassphraseException e) {
+			}
+			
+			loadOrGenerateHostKey(sshContext, new File("ssh_host_ecdsa_256"), SshKeyPairGenerator.ECDSA, 256);
+			loadOrGenerateHostKey(sshContext, new File("ssh_host_ecdsa_384"), SshKeyPairGenerator.ECDSA, 384);
+			loadOrGenerateHostKey(sshContext, new File("ssh_host_ecdsa_521"), SshKeyPairGenerator.ECDSA, 521);
+			loadOrGenerateHostKey(sshContext, new File("ssh_host_ed25519"), SshKeyPairGenerator.ED25519, 0);
+			
+			if(hostKeys.isEmpty()) {
+				throw new IOException("There are no host keys available");
 			}
 		}
 	}
 	
-	protected void configureFilesystem(SshServerContext sshContext) throws IOException, SshException {
+	private void loadOrGenerateHostKey(SshServerContext context, File file, String type, int bitlength) {
+		try {
+			hostKeys.add(context.loadOrGenerateHostKey(file, type, bitlength));
+		} catch (IOException | InvalidPassphraseException | SshException e) {
+			Log.warn("Could not generate or load host key for algorithm %s", type);
+		}
+	}
+	
+	private void loadOrGenerateHostKey(SshServerContext context, SshKeyPair pair) throws IOException {
+		
+		context.addHostKey(pair);
+		hostKeys.add(pair);
+		
+	}
+	
+	protected void configureFilesystem(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
 		sshContext.setFileFactory(fileFactory);
+		if(enableScp) {
+			sshContext.addCommand("scp", ScpCommand.class);
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected void configureAuthentication(SshServerContext sshContext) throws IOException, SshException {
-		sshContext.getPolicy(AuthenticationMechanismFactory.class).addProviders(providers);
+	protected void configureAuthentication(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
+		if(providers.isEmpty()) {
+			sshContext.getPolicy(AuthenticationMechanismFactory.class).addProviders(defaultProviders);
+		} else {
+			sshContext.getPolicy(AuthenticationMechanismFactory.class).addProviders(providers);
+		}
 	}
 	
-	protected void configureChannels(SshServerContext sshContext) throws IOException, SshException {
+	protected void configureChannels(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
 		sshContext.setChannelFactory(channelFactory);
 	}
 	
-	protected void configure(SshServerContext sshContext) throws IOException, SshException {
+	protected void configureForwarding(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
+		sshContext.setForwardingPolicy(forwardingPolicy);
+	}
+	
+	protected void configure(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
 		
 	}
 	
@@ -197,17 +255,19 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 	public SshServerContext createContext(SshEngineContext daemonContext, SocketChannel sc)
 			throws IOException, SshException {
 		
-		SshServerContext sshContext = new SshServerContext(engine);
+		SshServerContext sshContext = new SshServerContext(daemonContext.getEngine());
 		
-		configureHostKeys(sshContext);
+		configureHostKeys(sshContext, sc);
 
-		configureAuthentication(sshContext);
+		configureAuthentication(sshContext, sc);
 		
-		configureChannels(sshContext);
+		configureChannels(sshContext, sc);
 		
-		configureFilesystem(sshContext);
+		configureFilesystem(sshContext, sc);
 
-		configure(sshContext);
+		configureForwarding(sshContext, sc);
+		
+		configure(sshContext, sc);
 		return sshContext;
 	}
 
@@ -224,5 +284,9 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 		public void stop() {
 			done(true);
 		}
+	}
+
+	public ForwardingPolicy getForwardingPolicy() {
+		return forwardingPolicy;
 	}
 }

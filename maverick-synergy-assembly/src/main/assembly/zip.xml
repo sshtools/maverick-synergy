@@ -1,0 +1,40 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+	<includeBaseDirectory>true</includeBaseDirectory>
+	<id>zip</id>
+	<formats>
+		<format>zip</format>
+	</formats>
+	<fileSets>
+		<fileSet>
+			<directory>${project.basedir}/notes</directory>
+			<outputDirectory></outputDirectory>
+		</fileSet>
+	</fileSets>
+
+	<moduleSets>
+		<moduleSet>
+
+			<useAllReactorProjects>true</useAllReactorProjects>
+			<!-- Now, select which projects to include in this module-set. -->
+			<includes>
+				<include>com.sshtools:*</include>
+			</includes>
+			<binaries>
+				<dependencySets>
+					<dependencySet>
+						<outputDirectory>lib</outputDirectory>
+						<excludes>
+							<exclude>com.sshtools:*</exclude>
+						</excludes>
+					</dependencySet>
+				</dependencySets>
+				<outputDirectory></outputDirectory>
+				<unpack>false</unpack>
+			</binaries>
+		</moduleSet>
+	</moduleSets>
+
+
+</assembly>

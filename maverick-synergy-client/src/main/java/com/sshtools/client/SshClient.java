@@ -31,6 +31,7 @@ import com.sshtools.client.tasks.AbstractCommandTask;
 import com.sshtools.client.tasks.DownloadFileTask;
 import com.sshtools.client.tasks.Task;
 import com.sshtools.client.tasks.UploadFileTask;
+import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.nio.ConnectRequestFuture;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.permissions.UnauthorizedException;
@@ -137,6 +138,10 @@ public class SshClient implements Closeable {
 
 	public Connection<SshClientContext> getConnection() {
 		return con;
+	}
+	
+	public ForwardingPolicy getForwardingPolicy() {
+		return con.getContext().getForwardingPolicy();
 	}
 	
 	public int startLocalForwarding(String addressToBind, int portToBind, String destinationHost, int destinationPort) throws UnauthorizedException, SshException {

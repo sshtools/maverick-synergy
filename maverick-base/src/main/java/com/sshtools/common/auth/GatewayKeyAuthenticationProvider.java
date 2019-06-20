@@ -111,4 +111,9 @@ public class GatewayKeyAuthenticationProvider implements PublicKeyAuthentication
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public boolean checkKey(SshPublicKey key, SshConnection con) throws IOException {
+		return isAuthorizedKey(key, con);
+	}
+
 }

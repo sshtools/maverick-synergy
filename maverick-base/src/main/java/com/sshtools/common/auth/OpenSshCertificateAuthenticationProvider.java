@@ -105,4 +105,9 @@ public class OpenSshCertificateAuthenticationProvider implements PublicKeyAuthen
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public boolean checkKey(SshPublicKey key, SshConnection con) throws IOException {
+		return isAuthorizedKey(key, con);
+	}
+
 }

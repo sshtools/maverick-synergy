@@ -44,6 +44,7 @@ public class DirectFile extends AbstractDirectFile<DirectFile> {
 		}
 		
 		SftpFileAttributes attrs = new SftpFileAttributes(getFileType(f), "UTF-8");
+		
 		attrs.setTimes(new UnsignedInteger64(f.lastModified() / 1000), 
 				new UnsignedInteger64(f.lastModified() / 1000));
 		
@@ -72,11 +73,11 @@ public class DirectFile extends AbstractDirectFile<DirectFile> {
 	public List<AbstractFile> getChildren() throws IOException {
 		
 		File[] files = f.listFiles();
-		List<AbstractFile> files2 = new ArrayList<AbstractFile>();
+		List<AbstractFile> results = new ArrayList<AbstractFile>();
 		for(File f : files) {
-			files2.add(new DirectFile(f.getAbsolutePath(), fileFactory, con, homeDir));
+			results.add(new DirectFile(f.getAbsolutePath(), fileFactory, con, homeDir));
 		}
-		return files2;
+		return results;
 	}
 
 	public AbstractFile resolveFile(String child) throws IOException,

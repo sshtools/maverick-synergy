@@ -61,11 +61,11 @@ public class VirtualMountManager {
 							homeMount.getRoot(), con), fileFactory, homeMount
 							.getActualFileFactory(), con, true, false));
 
-			if (!homeMount.getMount().equals("/")) {
-				// We need a root mount that is imaginary
-				mounts.add(new VirtualMount("/", "", fileFactory,
-						fileFactory.getDefaultFileFactory(), con, false, true));
-			}
+//			if (!homeMount.getMount().equals("/")) {
+//				// We need a root mount that is imaginary
+//				mounts.add(new VirtualMount("/", "", fileFactory,
+//						fileFactory.getDefaultFileFactory(), con, false, true));
+//			}
 		}
 
 		// Add any remaining templates
@@ -172,6 +172,7 @@ public class VirtualMountManager {
 
 		for (VirtualMount mount : mounts) {
 			String mountPath = FileUtils.checkEndsWithSlash(mount.getMount());
+			path = FileUtils.checkEndsWithSlash(path);
 			if (path.startsWith(mountPath)) {
 				return mount;
 			}

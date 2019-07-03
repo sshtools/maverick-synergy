@@ -374,7 +374,11 @@ public class Msh extends ShellCommand {
 		}
 
 		String name = args[0];
-		args = (String[])Arrays.copyOfRange(args, 1, args.length-1);
+		if(args.length > 1) {
+			args = (String[])Arrays.copyOfRange(args, 1, args.length-1);
+		} else {
+			args = new String[0];
+		}
 		
 		DefaultParser parser = new DefaultParser();
 		Options options = cmd.getOptions();

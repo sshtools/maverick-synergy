@@ -98,12 +98,12 @@ public class VirtualMountFile implements VirtualFile {
 			currentPath += "/";
 		if(mount.isFilesystemRoot()) {
 			for(VirtualMount m : mgr.getMounts()) {
-				if(!m.isFilesystemRoot() && m.getMount().startsWith(currentPath)) {
+				if(m.getMount().startsWith(currentPath)) {
 					if(m.getMount().equals(currentPath)) {
 						// We need to list the contents of the actual folder
 						VirtualMount actualMount = mgr.getMount(currentPath);
 						AbstractFile parent = actualMount.getActualFileFactory().getFile(actualMount.getRoot(), con);
-						return parent.getChildren();
+						files.addAll(parent.getChildren());
 					} else {
 						String child = m.getMount().substring(currentPath.length());
 						if(child.indexOf('/') > -1) {

@@ -27,7 +27,6 @@ import java.util.StringTokenizer;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.files.AbstractFileHomeFactory;
 import com.sshtools.common.files.FileSystemUtils;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -52,12 +51,12 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 				"virtualfs/home/${username}", defaultFileFactory);
 	}
 
-	public VirtualFileFactory(VirtualMountTemplate homeMount,
+	public VirtualFileFactory(VirtualMountTemplate defaultMount,
 			VirtualMountTemplate... additionalMounts) {
-		this.homeMountTemplate = homeMount;
+		this.homeMountTemplate = defaultMount;
 		if(Log.isDebugEnabled()) {
-			Log.debug("Virtual file factory created with home mount "
-					+ homeMount.getMount() + " to path " + homeMount.getRoot());
+			Log.debug("Virtual file factory created with default mount "
+					+ defaultMount.getMount() + " to path " + defaultMount.getRoot());
 		}
 		for (VirtualMountTemplate t : additionalMounts) {
 			mountTemplates.add(t);
@@ -192,7 +191,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
 	}
 
-	public VirtualMountTemplate getHomeMountTemplate() {
+	public VirtualMountTemplate getDefaultMount() {
 		return homeMountTemplate;
 	}
 
@@ -243,9 +242,4 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 			throws PermissionDeniedException, IOException {
 		return getFile("", con);
 	}
-
-	public void init(AbstractFileHomeFactory homeFactory) {
-
-	}
-
 }

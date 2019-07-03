@@ -223,7 +223,7 @@ public class Utils {
     }
 
 	public static boolean isBlank(String str) {
-		return Objects.isNull(str) || str.trim().length() > 0;
+		return Objects.isNull(str) || str.trim().length() == 0;
 	}
 	
 	public static boolean isNotBlank(String str) {

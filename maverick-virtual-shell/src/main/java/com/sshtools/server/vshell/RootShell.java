@@ -273,7 +273,7 @@ public class RootShell extends Msh {
 				}
 			});
 		} catch (IOException fse) {
-			Log.warn("No history. " + fse.getMessage());
+			Log.warn("No history. " + fse.getMessage(), fse);
 		}
 
 		return true;

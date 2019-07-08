@@ -36,7 +36,7 @@ public class ClientStateAdapter implements ClientStateListener {
 	}
 
 	@Override
-	public void authenticate(Connection<SshClientContext> con, 
+	public void authenticate(AuthenticationProtocolClient auth, Connection<SshClientContext> con, 
 			Set<String> supportedAuths, 
 			boolean moreRequired,
 			List<ClientAuthenticator> authsToTry) {

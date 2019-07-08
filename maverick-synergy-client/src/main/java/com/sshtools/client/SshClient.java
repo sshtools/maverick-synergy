@@ -39,17 +39,19 @@ import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionTaskWrapper;
+import com.sshtools.common.ssh.RequestFuture;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 
 public class SshClient implements Closeable {
 
 	Connection<SshClientContext> con;
+	SshClientContext sshContext;
 	SshEngine engine;
 	
 	public SshClient(String hostname, int port, String username, char[] password) throws IOException, SshException {
 		engine = SshEngine.getDefaultInstance();
-		SshClientContext sshContext = createContext(username);
+		sshContext = createContext(username);
 		sshContext.addAuthenticator(new PasswordAuthenticator(password));
 		doConnect(hostname, port, username, sshContext);
 	}
@@ -64,14 +66,14 @@ public class SshClient implements Closeable {
 	
 	public SshClient(String hostname, int port, String username, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
 		engine = SshEngine.getDefaultInstance();
-		SshClientContext sshContext = createContext(username);
+		sshContext = createContext(username);
 		sshContext.addAuthenticator(new PublicKeyAuthenticator(identities));
 		doConnect(hostname, port, username, sshContext);
 	}
 	
 	public SshClient(String hostname, int port, String username, char[] password, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
 		engine = SshEngine.getDefaultInstance();
-		SshClientContext sshContext = createContext(username);
+		sshContext = createContext(username);
 		if(Objects.isNull(password) || password.length > 0) {
 			sshContext.addAuthenticator(new PasswordAuthenticator(password));
 		}
@@ -81,6 +83,22 @@ public class SshClient implements Closeable {
 		doConnect(hostname, port, username, sshContext);
 	}
 	
+	public SshClient(String hostname, Integer port, String username, char[] password, File key, String passphrase) throws IOException, SshException, InvalidPassphraseException {
+		this(hostname, port, username, password, SshKeyUtils.getPrivateKey(key, passphrase));
+	}
+	
+	@SuppressWarnings("unchecked")
+	public SshClient(String hostname, Integer port, String username) throws IOException, SshException {
+		engine = SshEngine.getDefaultInstance();
+		sshContext = createContext(username);
+		ConnectRequestFuture future = engine.connect(hostname, port, sshContext);
+		future.waitForever();
+		if(!future.isSuccess()) {
+			throw new IOException(String.format("Failed to connect to %s:%d", hostname, port));
+		}
+		con = (Connection<SshClientContext>) future.getConnection();
+	}
+
 	@SuppressWarnings("unchecked")
 	protected void doConnect(String hostname, int port, String username, SshClientContext sshContext) throws SshException, IOException {
 		ConnectRequestFuture future = engine.connect(hostname, port, sshContext);
@@ -119,9 +137,9 @@ public class SshClient implements Closeable {
 			}
 
 			@Override
-			public void authenticate(Connection<SshClientContext> con, Set<String> supportedAuths,
+			public void authenticate(AuthenticationProtocolClient auth, Connection<SshClientContext> con, Set<String> supportedAuths,
 					boolean moreRequired, List<ClientAuthenticator> authsToTry) {
-				
+
 			}
 		});
 		return sshContext;
@@ -244,6 +262,22 @@ public class SshClient implements Closeable {
 		}, timeout);
 		
 		return buffer.toString();
+	}
+
+	public Set<String> getAuthenticationMethods() {
+		return sshContext.getAuthenticationClient().getSupportedAuthentications();
+	}
+	
+	public boolean authenticate(ClientAuthenticator authenticator, long timeout) throws IOException {
+		
+		sshContext.getAuthenticationClient().doAuthentication(authenticator);
+		authenticator.waitFor(timeout);
+		
+		return authenticator.isDone() && authenticator.isSuccess();
+	}
+
+	public boolean isAuthenticated() {
+		return con.getAuthenticatedFuture().isDone() && con.getAuthenticatedFuture().isSuccess();
 	}
 
 

@@ -83,6 +83,7 @@ public class SshClientContext extends SshContext {
 			.synchronizedMap(new HashMap<String, GlobalRequestHandler<SshClientContext>>());
 
 	SocketConnectionFactory socketConnectionFactory = new DefaultSocketConnectionFactory();
+	AuthenticationProtocolClient authenticationClient; 
 	
 	private HostKeyVerification hkv = null;
 
@@ -146,13 +147,17 @@ public class SshClientContext extends SshContext {
 	
 	public void keysExchanged(boolean first) {
 		if(first) {
-			transport.startService(new AuthenticationProtocolClient(
+			transport.startService(authenticationClient = new AuthenticationProtocolClient(
 					transport,
 					SshClientContext.this,
 					username));
 		}
 	}
 
+	public AuthenticationProtocolClient getAuthenticationClient() {
+		return authenticationClient;
+	}
+	
 	protected void configureKeyExchanges() {
 		
 		JCEComponentManager.getDefaultInstance().loadExternalComponents("kex-client.properties", keyExchanges);

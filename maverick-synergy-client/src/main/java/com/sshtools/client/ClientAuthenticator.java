@@ -20,12 +20,13 @@ package com.sshtools.client;
 
 import java.io.IOException;
 
+import com.sshtools.common.ssh.RequestFuture;
 import com.sshtools.common.util.ByteArrayReader;
 
 /**
  * Base interface for all client authentication methods.
  */
-public interface ClientAuthenticator {
+public interface ClientAuthenticator extends RequestFuture {
 
 	/**
 	 * The authentication mechanism name/.
@@ -58,4 +59,10 @@ public interface ClientAuthenticator {
 	 * Called by the API to indicate authentication failure.
 	 */
 	void failure();
+
+	boolean isMoreAuthenticationRequired();
+
+	String[] getAuthenticationMethods();
+
+	void success(boolean moreAuthenticationsRequired, String[] authenticationMethods);
 }

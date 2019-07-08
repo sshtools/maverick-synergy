@@ -26,5 +26,5 @@ import com.sshtools.common.ssh.ConnectionStateListener;
 
 public interface ClientStateListener extends ConnectionStateListener<SshClientContext>{
 
-	public void authenticate(Connection<SshClientContext> con, Set<String> supportedAuths, boolean moreRequired, List<ClientAuthenticator> authsToTry);
+	public void authenticate(AuthenticationProtocolClient auth, Connection<SshClientContext> con, Set<String> supportedAuths, boolean moreRequired, List<ClientAuthenticator> authsToTry);
 }

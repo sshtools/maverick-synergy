@@ -51,6 +51,7 @@ public class AuthenticationProtocolClient implements Service {
 	ClientAuthenticator currentAuthenticator;
 	Set<String> supportedAuths = null;
 	boolean authenticated = false;
+	NoneAuthenticator noneAuthenticator = new NoneAuthenticator();
 	
 	public AuthenticationProtocolClient(TransportProtocolClient transport,
 			SshClientContext context, String username) {
@@ -86,6 +87,7 @@ public class AuthenticationProtocolClient implements Service {
 					Log.debug("SSH_MSG_USERAUTH_SUCCESS received");
 				}
 	
+				transport.getConnection().getAuthenticatedFuture().authenticated(authenticated);
 				currentAuthenticator.success();
 				
 				ConnectionProtocol<SshClientContext> con = new ConnectionProtocolClient(
@@ -100,16 +102,6 @@ public class AuthenticationProtocolClient implements Service {
 				String auths = bar.readString();
 				final boolean partial = bar.readBoolean();
 				
-				if(currentAuthenticator==null) {
-					transport.getConnectFuture().connected(transport, transport.getConnection());
-				} else {
-					if(partial) {
-						currentAuthenticator.success();
-					} else {
-						currentAuthenticator.failure();
-					}
-				}
-				
 				if(Log.isDebugEnabled()) {
 					Log.debug("SSH_MSG_USERAUTH_FAILURE received auths=" + auths);
 				}
@@ -122,6 +114,17 @@ public class AuthenticationProtocolClient implements Service {
 				while(t.hasMoreTokens()) {
 					supportedAuths.add(t.nextToken());
 				}
+
+				if(currentAuthenticator.getName().equals("none")) {
+					transport.getConnectFuture().connected(transport, transport.getConnection());
+				} 
+				
+				if(partial) {
+					currentAuthenticator.success(true, auths.split(","));
+				} else {
+					currentAuthenticator.failure();
+				}
+				
 				
 				if(checkKBI) {
 					checkForKeyboardInteractiveAuthentication();
@@ -134,7 +137,7 @@ public class AuthenticationProtocolClient implements Service {
 						public void run() {
 							List<ClientAuthenticator> auths = new ArrayList<ClientAuthenticator>();
 							for (ClientStateListener stateListener : context.getStateListeners()) {
-								stateListener.authenticate(transport.getConnection(), supportedAuths, partial, auths);
+								stateListener.authenticate(AuthenticationProtocolClient.this, transport.getConnection(), supportedAuths, partial, auths);
 								authenticators.addAll(auths);
 							}
 							if(canAuthenticate()) {
@@ -170,6 +173,10 @@ public class AuthenticationProtocolClient implements Service {
 		} finally {
 			bar.close();
 		}
+	}
+	
+	public void waitForNoneAuthentication() {
+		noneAuthenticator.waitForever();
 	}
 
 	private void checkForKeyboardInteractiveAuthentication() {
@@ -210,13 +217,13 @@ public class AuthenticationProtocolClient implements Service {
 		authenticators = new ArrayList<ClientAuthenticator>(
 				context.getAuthenticators());
 
-		doNoneAuthentication();
+		try {
+			doAuthentication(noneAuthenticator);
+		} catch (IOException e) {
+			Log.error("Faild to send none authentication request", e);
+			transport.disconnected();
+		}
 
-	}
-
-	private void doNoneAuthentication() {
-		transport.postMessage(new AuthenticationMessage(username,
-				"ssh-connection", "none"));
 	}
 
 	private boolean canAuthenticate() {
@@ -235,7 +242,6 @@ public class AuthenticationProtocolClient implements Service {
 		if(Log.isDebugEnabled()) {
 			Log.debug("Stopping Authentication Protocol");
 		}
-		transport.getConnection().getAuthenticatedFuture().authenticated(authenticated);
 	}
 
 	@Override
@@ -257,6 +263,10 @@ public class AuthenticationProtocolClient implements Service {
 	public void doAuthentication(ClientAuthenticator authenticator) throws IOException {
 		currentAuthenticator = authenticator;
 		currentAuthenticator.authenticate(transport, username);
+	}
+	
+	public Set<String> getSupportedAuthentications() {
+		return supportedAuths;
 	}
 
 }

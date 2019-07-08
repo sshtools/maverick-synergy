@@ -29,12 +29,34 @@ import com.sshtools.common.util.ByteArrayReader;
  */
 public abstract class SimpleClientAuthenticator extends AbstractRequestFuture implements ClientAuthenticator {
 
+	boolean moreAuthenticationsRequired;
+	String[] authenticationMethods;
+	
 	@Override
 	public boolean processMessage(ByteArrayReader msg) throws IOException {
 		return false;
 	}
 
+	@Override
+	public boolean isMoreAuthenticationRequired() {
+		return moreAuthenticationsRequired;
+	}
+	
+	@Override
+	public String[] getAuthenticationMethods() {
+		return authenticationMethods;
+	}
+	
 	public void success() {
+		this.moreAuthenticationsRequired = false;
+		this.authenticationMethods = new String[0];
+		done(true);
+	}
+	
+	@Override
+	public void success(boolean moreAuthenticationsRequired, String[] authenticationMethods) {
+		this.moreAuthenticationsRequired = moreAuthenticationsRequired;
+		this.authenticationMethods = authenticationMethods;
 		done(true);
 	}
 	

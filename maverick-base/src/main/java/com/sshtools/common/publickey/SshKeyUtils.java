@@ -21,6 +21,7 @@ package com.sshtools.common.publickey;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -156,6 +157,17 @@ public class SshKeyUtils {
 		
 		SshPrivateKeyFile kf = SshPrivateKeyFileFactory.create(pair, passphrase);
 		IOUtil.writeUTF8StringToFile(file, new String(kf.getFormattedKey(), "UTF-8"));
+	}
+
+	public static boolean isPrivateKeyFile(File file) {
+		
+		try(InputStream in = new FileInputStream(file)) {
+			SshPrivateKeyFileFactory.parse(in);
+			return true;
+		} catch (IOException e) {
+
+		}
+		return false;
 	}
 
 }

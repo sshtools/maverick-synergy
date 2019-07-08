@@ -16,32 +16,30 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.ssh;
+package com.sshtools.server.vsession;
 
-import java.io.IOException;
 
-public interface Channel {
+public class ShellUtilities {
 
-	int getLocalWindow();
+	public static String padString(String s, int pad) {
+		String ret = s;
 
-	int getRemoteWindow();
+		if (ret.length() < pad) {
+			for (int i = 0; i < (pad - s.length()); i++) {
+				ret += " ";
+			}
+		}
 
-	int getLocalPacket();
+		return ret.substring(0, pad);
+	}
 
-	void close();
+	public static String repeat(String s, int len) {
+		String ret = "";
 
-	void sendData(byte[] array, int i, int size) throws IOException;
+		for (int i = 0; i < len; i += s.length()) {
+			ret += s;
+		}
 
-	void sendWindowAdjust(int bytesSinceLastWindowIssue);
-
-	boolean isClosed();
-
-	void addEventListener(ChannelEventListener listener);
-
-	void sendChannelRequest(String requestName, boolean wantReply, byte[] data);
-
-	void sendChannelRequest(String type, boolean wantreply,
-			byte[] requestdata, ChannelRequestFuture future);
-
-	SshConnection getConnection();
+		return ret;
+	}
 }

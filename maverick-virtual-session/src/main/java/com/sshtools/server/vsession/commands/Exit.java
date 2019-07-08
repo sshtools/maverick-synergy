@@ -16,32 +16,27 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.ssh;
+package com.sshtools.server.vsession.commands;
 
 import java.io.IOException;
 
-public interface Channel {
+import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.VirtualConsole;
 
-	int getLocalWindow();
+/**
+ * Usage: exit
+ * @author lee
+ *
+ */
+public class Exit extends ShellCommand {
 
-	int getRemoteWindow();
+	public Exit() {
+		super("exit", ShellCommand.SUBSYSTEM_SHELL, "Usage: exit", "Exits the current shell");
+		setDescription("Exits the current shell");
+		setBuiltIn(true);
+	}
 
-	int getLocalPacket();
-
-	void close();
-
-	void sendData(byte[] array, int i, int size) throws IOException;
-
-	void sendWindowAdjust(int bytesSinceLastWindowIssue);
-
-	boolean isClosed();
-
-	void addEventListener(ChannelEventListener listener);
-
-	void sendChannelRequest(String requestName, boolean wantReply, byte[] data);
-
-	void sendChannelRequest(String type, boolean wantreply,
-			byte[] requestdata, ChannelRequestFuture future);
-
-	SshConnection getConnection();
+	public void run(String[] args, VirtualConsole console) throws IOException {
+		console.getShell().exit();
+	}
 }

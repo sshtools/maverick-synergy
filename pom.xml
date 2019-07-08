@@ -35,7 +35,7 @@
 
 	<licenses>
 		<license>
-			<name>GNU General Public License</name>
+			<name>GNU Lesser General Public License</name>
 			<url>http://www.gnu.org/licenses/gpl.html</url>
 			<distribution>repo</distribution>
 		</license>
@@ -189,6 +189,7 @@
 		<module>maverick-base</module>
 		<module>maverick-synergy-server</module>
 		<module>maverick-virtual-filesystem</module>
+		<module>maverick-virtual-session</module>
 		<module>maverick-virtual-shell</module>
 		<module>maverick-callback-client</module>
 		<module>maverick-callback-server</module>

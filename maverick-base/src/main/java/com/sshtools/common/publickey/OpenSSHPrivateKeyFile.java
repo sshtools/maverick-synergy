@@ -70,7 +70,7 @@ class OpenSSHPrivateKeyFile
     this.formattedkey = formattedkey;
   }
 
-  OpenSSHPrivateKeyFile(SshKeyPair pair, String passphrase)
+  public OpenSSHPrivateKeyFile(SshKeyPair pair, String passphrase)
      throws IOException {
     formattedkey = encryptKey(pair, passphrase);
   }

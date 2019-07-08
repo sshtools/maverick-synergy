@@ -16,32 +16,25 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.ssh;
+package com.sshtools.server.vsession;
 
-import java.io.IOException;
+public abstract class ShellCommand extends AbstractCommand {
 
-public interface Channel {
+	public ShellCommand(String name, String subsystem, String signature, String description) {
+		super(name, subsystem, signature, description);
+	}
 
-	int getLocalWindow();
+	public final static String SUBSYSTEM_SHELL = "Shell";
+	public final static String SUBSYSTEM_SSHD = "Sshd";
+	public final static String SUBSYSTEM_HELP = "Help";
+	public static final String SUBSYSTEM_FILESYSTEM = "Filesystem";
+	public static final String SUBSYSTEM_POLICY = "Policy";
+	public static final String SUBSYSTEM_JVM = "JVM";
+	public static final String SUBSYSTEM_SYSTEM = "System";
+	public static final String SUBSYSTEM_TEXT_EDITING = "Text Editing";
+	public static final String SUBSYSTEM_CALLBACK = "Callback";
+	
+	
 
-	int getRemoteWindow();
 
-	int getLocalPacket();
-
-	void close();
-
-	void sendData(byte[] array, int i, int size) throws IOException;
-
-	void sendWindowAdjust(int bytesSinceLastWindowIssue);
-
-	boolean isClosed();
-
-	void addEventListener(ChannelEventListener listener);
-
-	void sendChannelRequest(String requestName, boolean wantReply, byte[] data);
-
-	void sendChannelRequest(String type, boolean wantreply,
-			byte[] requestdata, ChannelRequestFuture future);
-
-	SshConnection getConnection();
 }

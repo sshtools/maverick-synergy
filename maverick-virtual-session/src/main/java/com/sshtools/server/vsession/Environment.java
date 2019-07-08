@@ -16,32 +16,24 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.ssh;
+package com.sshtools.server.vsession;
 
-import java.io.IOException;
+import java.util.HashMap;
 
-public interface Channel {
+public class Environment extends HashMap<String, Object> {
 
-	int getLocalWindow();
+	private static final long serialVersionUID = 1L;
+	public final static String ENV_HOME = "HOME";
 
-	int getRemoteWindow();
+	public Environment(Environment environment) {
+		super(environment);
+	}
 
-	int getLocalPacket();
+	public Environment() {
+		super();
+	}
 
-	void close();
-
-	void sendData(byte[] array, int i, int size) throws IOException;
-
-	void sendWindowAdjust(int bytesSinceLastWindowIssue);
-
-	boolean isClosed();
-
-	void addEventListener(ChannelEventListener listener);
-
-	void sendChannelRequest(String requestName, boolean wantReply, byte[] data);
-
-	void sendChannelRequest(String type, boolean wantreply,
-			byte[] requestdata, ChannelRequestFuture future);
-
-	SshConnection getConnection();
+	public Object getOrDefault(String name, Object defaultValue) {
+		return containsKey(name) ? get(name) : defaultValue;
+	}
 }

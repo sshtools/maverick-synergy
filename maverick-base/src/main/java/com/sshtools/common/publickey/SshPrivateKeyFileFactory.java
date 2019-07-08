@@ -46,11 +46,13 @@ public class SshPrivateKeyFileFactory {
 	
 	
 	public static final int OPENSSH_FORMAT = 0;
+	
 	@Deprecated
 	public static final int SSHTOOLS_FORMAT = 1;
 	@Deprecated
 	public static final int SSH1_FORMAT = 3;
 
+	public static final int OPENSSL_FORMAT = 4;
 	/**
 	 * Parse formatted data and return a suitable <a
 	 * href="SshPrivateKeyFile.html">SshPrivateKeyFile</a> implementation.
@@ -142,28 +144,23 @@ public class SshPrivateKeyFileFactory {
 	
 	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase, int format) throws IOException {
 
-		if (!(pair.getPrivateKey() instanceof SshRsaPrivateCrtKey)
-				&& format == SSH1_FORMAT) {
-			throw new IOException("SSH1 format requires rsa key pair!");
-		}
-
 		switch (format) {
+		case OPENSSL_FORMAT:
+			if(!JCEProvider.isBCEnabled()) {
+				throw new IOException("OpenSSL format requires maverick-bc dependency and BouncyCastle JCE and PKIX dependencies");
+			}
+			
+			try {
+				return tryBC(pair, passphrase);
+			} catch(UnsupportedOperationException e) {
+					throw new IOException(e.getMessage(), e);
+			}
+			
 		case OPENSSH_FORMAT:
 			if(JCEProvider.isBCEnabled()) {
 				try {
-					/**
-					 * Try BouncyCastle based PEM / OpenSSH else failover to
-					 * previous implementation
-					 */
-					@SuppressWarnings("unchecked")
-					Class<SshPrivateKeyFile> clz = (Class<SshPrivateKeyFile>) Class.forName("com.sshtools.publickey.OpenSSHPrivateKeyFile" + JCEProvider.getBCProvider().getName());
-					
-					Constructor<SshPrivateKeyFile> c = clz.getDeclaredConstructor(SshKeyPair.class, String.class);
-					c.setAccessible(true);
-					SshPrivateKeyFile f = c.newInstance(pair, passphrase);
-					f.toKeyPair(passphrase);
-					return f;
-				} catch(Throwable t) {
+					return tryBC(pair, passphrase);
+				} catch(UnsupportedOperationException t) {
 				}
 			}
 			return new OpenSSHPrivateKeyFile(pair, passphrase);
@@ -171,6 +168,26 @@ public class SshPrivateKeyFileFactory {
 			throw new IOException("Invalid key format!");
 		}
 
+	}
+
+	private static SshPrivateKeyFile tryBC(SshKeyPair pair, String passphrase) throws UnsupportedOperationException {
+		
+		try {
+			/**
+			 * Try BouncyCastle based PEM / OpenSSH else failover to
+			 * previous implementation
+			 */
+			@SuppressWarnings("unchecked")
+			Class<SshPrivateKeyFile> clz = (Class<SshPrivateKeyFile>) Class.forName("com.sshtools.publickey.OpenSSHPrivateKeyFile" + JCEProvider.getBCProvider().getName());
+			
+			Constructor<SshPrivateKeyFile> c = clz.getDeclaredConstructor(SshKeyPair.class, String.class);
+			c.setAccessible(true);
+			SshPrivateKeyFile f = c.newInstance(pair, passphrase);
+			f.toKeyPair(passphrase);
+			return f;
+		} catch(Throwable t) {
+			throw new UnsupportedOperationException("");
+		}
 	}
 
 	public static void createFile(SshKeyPair key, String passphrase,

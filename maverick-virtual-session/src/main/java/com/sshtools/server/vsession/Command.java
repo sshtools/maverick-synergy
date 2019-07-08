@@ -16,32 +16,34 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.ssh;
+package com.sshtools.server.vsession;
 
 import java.io.IOException;
 
-public interface Channel {
+import org.jline.reader.Completer;
 
-	int getLocalWindow();
+import com.sshtools.common.permissions.PermissionDeniedException;
 
-	int getRemoteWindow();
+public interface Command extends Completer {
 
-	int getLocalPacket();
+	public static final int STILL_ACTIVE = Integer.MIN_VALUE;
+	
+	public abstract void run(String[] args, VirtualConsole console)
+			throws IOException, PermissionDeniedException, UsageException;
 
-	void close();
+	public abstract String getDescription();
 
-	void sendData(byte[] array, int i, int size) throws IOException;
+	public abstract String getSubsystem();
 
-	void sendWindowAdjust(int bytesSinceLastWindowIssue);
+	public abstract String getCommandName();
 
-	boolean isClosed();
+	public abstract String getUsage();
 
-	void addEventListener(ChannelEventListener listener);
+	public abstract boolean isBuiltIn();
 
-	void sendChannelRequest(String requestName, boolean wantReply, byte[] data);
+	public abstract int getExitCode();
 
-	void sendChannelRequest(String type, boolean wantreply,
-			byte[] requestdata, ChannelRequestFuture future);
+	public abstract boolean isHidden();
 
-	SshConnection getConnection();
+
 }

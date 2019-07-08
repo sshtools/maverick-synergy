@@ -16,32 +16,26 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.ssh;
+package com.sshtools.server.vsession;
 
-import java.io.IOException;
+import java.util.List;
 
-public interface Channel {
+import com.sshtools.common.ssh.SshConnection;
 
-	int getLocalWindow();
+public abstract class AbstractUUIDCommand extends ShellCommand {
 
-	int getRemoteWindow();
+	public AbstractUUIDCommand(String name, String subsystem, String signature, String description) {
+		super(name, subsystem, signature, description);
+	}
 
-	int getLocalPacket();
+	public int complete(String buffer, int cursor, List<String> candidates, VirtualConsole console) {
+		
+		for(SshConnection c : console.getConnection().getConnectionManager().getAllConnections()) {
+			if(buffer==null || c.getUUID().startsWith(buffer)) {
+				candidates.add(c.getUUID());
+			}
+		}
+		return 0;
+	}
 
-	void close();
-
-	void sendData(byte[] array, int i, int size) throws IOException;
-
-	void sendWindowAdjust(int bytesSinceLastWindowIssue);
-
-	boolean isClosed();
-
-	void addEventListener(ChannelEventListener listener);
-
-	void sendChannelRequest(String requestName, boolean wantReply, byte[] data);
-
-	void sendChannelRequest(String type, boolean wantreply,
-			byte[] requestdata, ChannelRequestFuture future);
-
-	SshConnection getConnection();
 }

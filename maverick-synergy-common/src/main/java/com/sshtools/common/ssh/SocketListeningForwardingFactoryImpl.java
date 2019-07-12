@@ -32,6 +32,8 @@ import java.util.List;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ClientAcceptor;
 import com.sshtools.common.nio.ListeningInterface;
+import com.sshtools.common.nio.WriteOperationRequest;
+import com.sshtools.common.util.IOUtil;
 
 /**
  * This class implements the standard socket based forwarding for the SSHD.
@@ -70,18 +72,25 @@ public abstract class SocketListeningForwardingFactoryImpl<T extends SshContext>
         addr = new InetSocketAddress(addressToBind, portToBind);
 
         this.socketChannel = ServerSocketChannel.open();
-        socketChannel.configureBlocking(false);
-        socketChannel.socket().setReuseAddress(true);
-        if(connection.getContext().getReceiveBufferSize() > 0) {
-        	socketChannel.socket().setReceiveBufferSize(
-        			connection.getContext().getReceiveBufferSize());
-        }
-        ServerSocket socket = socketChannel.socket();
-        socket.bind(addr, connection.getContext().getMaximumSocketsBacklogPerRemotelyForwardedConnection());
-
-        connection.getContext().getEngine().registerAcceptor(this, socketChannel);
         
-        return this.portToBind = socketChannel.socket().getLocalPort();
+        try {
+	        socketChannel.configureBlocking(false);
+	        socketChannel.socket().setReuseAddress(true);
+	        if(connection.getContext().getReceiveBufferSize() > 0) {
+	        	socketChannel.socket().setReceiveBufferSize(
+	        			connection.getContext().getReceiveBufferSize());
+	        }
+	        ServerSocket socket = socketChannel.socket();
+	        socket.bind(addr, connection.getContext().getMaximumSocketsBacklogPerRemotelyForwardedConnection());
+	
+	        connection.getContext().getEngine().registerAcceptor(this, socketChannel);
+	        
+	        return this.portToBind = socketChannel.socket().getLocalPort();
+        
+        } catch(IOException e) {
+			IOUtil.closeStream(socketChannel);
+			throw e;
+        }
     }
 
     public boolean finishAccept(SelectionKey key, ListeningInterface li) {

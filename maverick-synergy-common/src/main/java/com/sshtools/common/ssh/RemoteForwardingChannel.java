@@ -33,6 +33,7 @@ import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.IOUtil;
 
 /**
  * Implements a Remote forwarding channel for use with forwarding sockets from
@@ -215,17 +216,19 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 			connection.getContext().getEngine().registerConnector(this, socketChannel);
 
 
-			// Throw an WriteOperationRequest so that we can perform the
-			// channel open confirmation or failure when the socket has
-			// connected
-			throw new WriteOperationRequest();
-		} catch (IOException ex) {
+		} catch (Throwable ex) {
+			IOUtil.closeStream(socketChannel);
 			throw new ChannelOpenException(
 					"Failed to read channel request data" + ex.getMessage(),
 					ChannelOpenException.CONNECT_FAILED);
 		} finally {
 			bar.close();
 		}
+
+		// Throw an WriteOperationRequest so that we can perform the
+		// channel open confirmation or failure when the socket has
+		// connected
+		throw new WriteOperationRequest();
 	}
 
 	/**

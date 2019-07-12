@@ -174,10 +174,6 @@ public class AuthenticationProtocolClient implements Service {
 			bar.close();
 		}
 	}
-	
-	public void waitForNoneAuthentication() {
-		noneAuthenticator.waitForever();
-	}
 
 	private void checkForKeyboardInteractiveAuthentication() {
 		

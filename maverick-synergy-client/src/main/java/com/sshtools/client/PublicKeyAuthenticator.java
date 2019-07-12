@@ -116,7 +116,11 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 			SshException {
 
 		ByteArrayWriter baw = new ByteArrayWriter();
-		authenticatingKey = publicKeys.iterator().next();
+		
+		if(Objects.isNull(authenticatingKey)) {
+			authenticatingKey = publicKeys.iterator().next();
+		}
+		
 		try {
 			baw.writeBinaryString(transport.getSessionKey());
 			baw.write(AuthenticationProtocolClient.SSH_MSG_USERAUTH_REQUEST);
@@ -137,27 +141,37 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 	byte[] generateAuthenticationRequest(byte[] data) throws IOException, SshException {
 
 		ByteArrayWriter baw = new ByteArrayWriter();
-		SshPublicKey key = publicKeys.iterator().next();
+		
 		
 		try {
 			baw.writeBoolean(isAuthenticating);
-			baw.writeString(key.getAlgorithm());
-			baw.writeBinaryString(key.getEncoded());
+			baw.writeString(authenticatingKey.getAlgorithm());
+			baw.writeBinaryString(authenticatingKey.getEncoded());
 	
 			if (isAuthenticating) {
 	
-				byte[] signature = getSignatureGenerator(transport.getConnection()).sign(key, key.getSigningAlgorithm(), data);
-				
-				// Format the signature correctly
-				ByteArrayWriter sig = new ByteArrayWriter();
-	
-				try {
-					sig.writeString(key.getAlgorithm());
-					sig.writeBinaryString(signature);
-					baw.writeBinaryString(sig.toByteArray());
-				} finally {
-					sig.close();
+				if(Objects.isNull(signatureGenerator)) {
+
+					byte[] signature = sign(authenticatingKey, authenticatingKey.getSigningAlgorithm(), data);
+					
+					// Format the signature correctly
+					ByteArrayWriter sig = new ByteArrayWriter();
+		
+					try {
+						sig.writeString(authenticatingKey.getAlgorithm());
+						sig.writeBinaryString(signature);
+						baw.writeBinaryString(sig.toByteArray());
+					} finally {
+						sig.close();
+					}
+				} else {
+					
+					byte[] signature = getSignatureGenerator(
+							transport.getConnection()).sign(authenticatingKey, authenticatingKey.getSigningAlgorithm(), data);
+					
+					baw.writeBinaryString(signature);
 				}
+
 			}
 			
 			return baw.toByteArray();

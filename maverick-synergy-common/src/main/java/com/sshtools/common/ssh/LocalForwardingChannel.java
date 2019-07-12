@@ -30,6 +30,7 @@ import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.IOUtil;
 
 /**
  * Implements a Local forwarding channel for use with forwarding sockets from
@@ -147,11 +148,9 @@ public class LocalForwardingChannel<T extends SshContext> extends SocketForwardi
 			connection.getContext().getEngine()
 					.registerConnector(this, socketChannel);
 
-			// Throw an WriteOperationRequest so that we can perform the
-			// channel open confirmation or failure when the socket has
-			// connected
-			throw new WriteOperationRequest();
-		} catch (IOException ex) {
+
+		} catch (Throwable ex) {
+			IOUtil.closeStream(socketChannel);
 			throw new ChannelOpenException(
 					"Failed to read channel request data" + ex.getMessage(),
 					ChannelOpenException.CONNECT_FAILED);
@@ -159,6 +158,10 @@ public class LocalForwardingChannel<T extends SshContext> extends SocketForwardi
 			bar.close();
 		}
 
+		// Throw an WriteOperationRequest so that we can perform the
+		// channel open confirmation or failure when the socket has
+		// connected
+		throw new WriteOperationRequest();
 	}
 
 	protected boolean checkPermissions() {

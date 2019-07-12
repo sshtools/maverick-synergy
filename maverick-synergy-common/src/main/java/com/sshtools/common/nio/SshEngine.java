@@ -478,7 +478,7 @@ public class SshEngine {
 	
     public <K extends ProtocolContext> ConnectRequestFuture connect(String hostToConnect, int portToConnect, K protocolContext) throws SshException, IOException {
 		
-    		SocketChannel socketChannel = SocketChannel.open();
+    	SocketChannel socketChannel = SocketChannel.open();
 		
 	    socketChannel.configureBlocking(true);
 	    socketChannel.socket().setTcpNoDelay(true);

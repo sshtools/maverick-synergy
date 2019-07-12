@@ -59,9 +59,14 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 					con.getContext());
 		}
 		
-		throw new UnsupportedChannelException(String.format("%s is not a supported channel type", channeltype));
+		return onCreateChannel(channeltype, con);
 	}
 
+	protected ChannelNG<SshServerContext> onCreateChannel(String channeltype, Connection<SshServerContext> con) 
+			throws UnsupportedChannelException, PermissionDeniedException {
+		throw new UnsupportedChannelException(String.format("%s is not a supported channel type", channeltype));
+	}
+	
 	protected ChannelNG<SshServerContext> createSessionChannel(Connection<SshServerContext> con)
 			throws UnsupportedChannelException, PermissionDeniedException {
 		return new UnsupportedSession(con, con.getContext());

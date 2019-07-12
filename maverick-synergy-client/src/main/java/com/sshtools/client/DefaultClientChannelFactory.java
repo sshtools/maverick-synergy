@@ -22,8 +22,8 @@ import java.util.Map;
 
 import com.sshtools.common.command.ExecutableCommand;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.ChannelFactory;
+import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SessionChannel;
@@ -55,6 +55,11 @@ public class DefaultClientChannelFactory implements ChannelFactory<SshClientCont
 			return new RemoteForwardingClientChannel(con, con.getContext());
 		}
 		
+		return onCreateChannel(channeltype, con);
+	}
+
+	protected ChannelNG<SshClientContext> onCreateChannel(String channeltype, Connection<SshClientContext> con) 
+			throws UnsupportedChannelException, PermissionDeniedException {
 		throw new UnsupportedChannelException(String.format("%s is not a supported channel type", channeltype));
 	}
 	

@@ -1653,6 +1653,11 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 		
 		int msgId = msg[0];
+		
+		if(Log.isTraceEnabled()) {
+			Log.debug("Processing transport protocol message id %d", msgId);
+		}
+		
 		switch (msgId) {
 		case SSH_MSG_DISCONNECT: {
 
@@ -1721,9 +1726,17 @@ public abstract class TransportProtocol<T extends SshContext>
 				}
 			}
 			
+			if(Log.isTraceEnabled()) {
+				Log.trace("Posting mesage id %d to active service for processing", msgId);
+			}
+			
 			addTask(555, new ConnectionAwareTaskWrapper(con, new Runnable() {
 				public void run() {
 					try {
+						
+						if(Log.isTraceEnabled()) {
+							Log.trace("Processing active service message id %d", msgId);
+						}
 						
 						// Not a key exchange message so try the active service
 						if (activeService != null && activeService.processMessage(msg)) {

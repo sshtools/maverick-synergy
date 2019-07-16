@@ -653,7 +653,7 @@ public abstract class ConnectionProtocol<T extends SshContext> extends ExecutorO
 				
 				transport.postMessage(new ChannelFailureMessage(remoteid,
 						ChannelOpenException.UNKNOWN_CHANNEL_TYPE,
-						"Unknown channel type" + channeltype));
+						"Unknown channel type " + channeltype));
 				return;
 			} catch (PermissionDeniedException e) {
 				transport.postMessage(new ChannelFailureMessage(remoteid,

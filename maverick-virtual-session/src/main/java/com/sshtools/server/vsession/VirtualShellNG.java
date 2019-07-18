@@ -21,13 +21,19 @@ package com.sshtools.server.vsession;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ServiceLoader;
 
 import org.jline.reader.impl.LineReaderImpl;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.jline.terminal.spi.JansiSupport;
+import org.jline.terminal.spi.JnaSupport;
+import org.jline.terminal.spi.Pty;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshConnection;
@@ -98,6 +104,20 @@ public class VirtualShellNG extends SessionChannelNG {
 		}
 	}
 
+	@Override
+	protected void onChannelData(ByteBuffer data) {
+		byte[] tmp = new byte[data.remaining()];
+		data.get(tmp);
+		try {
+			((PosixChannelPtyTerminal)console.getTerminal()).in(tmp, 0, tmp.length);
+			evaluateWindowSpace();
+		} catch (IOException e) {
+			Log.error("Failed to send input to terminal.", e);
+			close();
+		}
+	}
+
+
 	public void onSessionOpen() {
 		shell.start();
 	}
@@ -137,13 +157,20 @@ public class VirtualShellNG extends SessionChannelNG {
 	
 	private VirtualConsole createConsole() throws IOException {
 		
-		Terminal terminal = TerminalBuilder.builder()
-		        .system(false)
-		        .streams(getInputStream(), getOutputStream())
-		        .build();
+//		Terminal terminal = TerminalBuilder.builder()
+//		        .system(false)
+//		        .streams(getInputStream(), getOutputStream())
+//		        .build();
+
+        Pty pty = load(JnaSupport.class).open(null, null);
+		Terminal terminal = new PosixChannelPtyTerminal("Maverick Terminal", "ansi", pty, this, Charset.forName("UTF-8"));
 		
 		return new VirtualConsole(this, env, terminal, new LineReaderImpl(terminal), shell);
 	}
+
+    private <S> S load(Class<S> clazz) {
+        return ServiceLoader.load(clazz, clazz.getClassLoader()).iterator().next();
+    }
 
 
 	@Override

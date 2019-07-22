@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.cli.ParseException;
 import org.jline.reader.Candidate;
+import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.ParsedLine;
 
@@ -119,6 +120,8 @@ public class Msh extends ShellCommand {
 				}
 			} catch (InterruptedIOException ie) {
 				console.println();
+			} catch(EndOfFileException eofe) {
+				exit = true;
 			}
 		}
 		

@@ -505,6 +505,14 @@ public class SshEngine {
 		return socketChannel;
 	}
 	
+	public boolean isStartupRequiresListeningInterfaces() {
+		return startupRequiresListeningInterfaces;
+	}
+
+	public void setStartupRequiresListeningInterfaces(boolean startupRequiresListeningInterfaces) {
+		this.startupRequiresListeningInterfaces = startupRequiresListeningInterfaces;
+	}
+
 	private <K extends ProtocolContext> ProtocolEngine registerClientConnection(K protocolContext, SocketChannel socketChannel, ConnectRequestFuture connectFuture) throws IOException {
 		SocketHandler connection = protocolContext.getSocketConnectionFactory().createSocketConnection(
 				context, 

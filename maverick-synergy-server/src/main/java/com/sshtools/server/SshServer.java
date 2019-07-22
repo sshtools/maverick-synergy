@@ -102,8 +102,15 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 	}
 	
 	public void start() throws IOException {
+		start(true);
+	}
+	
+	public void start(boolean requireListeningInterface) throws IOException {
 		
 		beforeStart();
+		
+		engine.setStartupRequiresListeningInterfaces(requireListeningInterface);
+		
 		if(!engine.startup()) {
 			throw new IOException("Server failed to start");
 		}

@@ -467,9 +467,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 						wait(5000);
 					} catch (InterruptedException e) {
 					}
-					if(isLocalEOF || isClosed()) {
-						throw new IOException("Channel has been closed");
-					}
+
 					continue;
 				}	
 

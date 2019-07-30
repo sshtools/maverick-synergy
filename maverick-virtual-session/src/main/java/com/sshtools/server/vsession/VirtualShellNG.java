@@ -105,7 +105,7 @@ public class VirtualShellNG extends SessionChannelNG {
 	}
 
 	@Override
-	protected void onChannelData(ByteBuffer data) {
+	protected void onSessionData(ByteBuffer data) {
 		byte[] tmp = new byte[data.remaining()];
 		data.get(tmp);
 		try {

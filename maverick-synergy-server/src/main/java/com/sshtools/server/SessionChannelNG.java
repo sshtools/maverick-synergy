@@ -571,7 +571,7 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	 * @param data
 	 *            byte[]
 	 */
-	protected void onChannelData(ByteBuffer data) {
+	protected final void onChannelData(ByteBuffer data) {
 
 		resetIdleState();
 
@@ -586,12 +586,15 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 				close();
 			}
 		} else {
-			synchronized (localWindow) {
-				cached.put(data);
-			}
+			onSessionData(data);
 		}
 	}
 
+	protected void onSessionData(ByteBuffer data) {
+		synchronized (localWindow) {
+			cached.put(data);
+		}		
+	}
 	/**
 	 * Called when extended data arrives on the channel - for a session channel
 	 * this would not normally be called.

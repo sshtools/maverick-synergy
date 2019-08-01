@@ -695,11 +695,17 @@ public class SftpFileAttributes {
 		this.atime = atime;
 		this.mtime = mtime;
 
-		// Set the flag
+		// Set the flags
 		if (atime != null) {
 			flags |= SSH_FILEXFER_ATTR_ACCESSTIME;
 		} else {
 			flags ^= SSH_FILEXFER_ATTR_ACCESSTIME;
+		}
+
+		if (mtime != null) {
+			flags |= SSH_FILEXFER_ATTR_MODIFYTIME;
+		} else {
+			flags ^= SSH_FILEXFER_ATTR_MODIFYTIME;
 		}
 	}
 

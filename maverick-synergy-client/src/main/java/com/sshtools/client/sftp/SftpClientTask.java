@@ -369,14 +369,17 @@ public abstract class SftpClientTask extends AbstractRequestFuture  implements R
 	}
 
 	public SftpFile openFile(String fileName) throws SftpStatusException,
+		SshException {
+		return openFile(fileName, AbstractSftpTask.OPEN_READ);
+	}
+
+	public SftpFile openFile(String fileName, int flags) throws SftpStatusException,
 			SshException {
 		if (transferMode == MODE_TEXT && sftp.getVersion() > 3) {
 			return sftp.openFile(resolveRemotePath(fileName),
-					AbstractSftpTask.OPEN_READ
-							| AbstractSftpTask.OPEN_TEXT);
+					flags | AbstractSftpTask.OPEN_TEXT);
 		}
-		return sftp.openFile(resolveRemotePath(fileName),
-				AbstractSftpTask.OPEN_READ);
+		return sftp.openFile(resolveRemotePath(fileName), flags);
 	}
 
 	/**

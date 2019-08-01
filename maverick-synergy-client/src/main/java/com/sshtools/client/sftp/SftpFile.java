@@ -22,6 +22,7 @@ package com.sshtools.client.sftp;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.util.UnsignedInteger64;
 
 /**
  * Represents an SFTP file object.
@@ -180,6 +181,48 @@ public class SftpFile {
     }
   }
 
+	/**
+	 * <p>
+	 * Read bytes directly from this file. This is a low-level operation,
+	 * you may only need to use {@link SftpClientTask#get(String)} methods instead if you just want
+	 * to download files.
+	 * </p>
+	 * 
+	 * @param offset offset in remote file to read from
+	 * @param output output buffer to place read bytes in
+	 * @param outputOffset offset in output buffer to write bytes to
+	 * @param len number of bytes to read
+	 * @return int number of bytes read
+	 * 
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	public int read(long offset, byte[] output, int outputOffset, int len) throws SftpStatusException, SshException {
+		if(handle == null)
+			throw new SftpStatusException(SftpStatusException.SSH_FX_FAILURE);
+		return sftp.readFile(handle, new UnsignedInteger64(offset), output, outputOffset, len);
+	}
+	
+	/**
+	 * <p>
+	 * Write bytes directly to this file. This is a low-level operation,
+	 * you may only need to use {@link SftpClientTask#put(String)} methods instead if you just want
+	 * to upload files.
+	 * </p>
+	 * 
+	 * @param offset offset in remote file to write to
+	 * @param input input buffer to retrieve bytes from to write
+	 * @param inputOffset offset in output buffer to write bytes to
+	 * @param len number of bytes to write
+	 * 
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	public void write(long offset, byte[] input, int inputOffset, int len) throws SftpStatusException, SshException {
+		if(handle == null)
+			throw new SftpStatusException(SftpStatusException.SSH_FX_FAILURE);
+		sftp.writeFile(handle, new UnsignedInteger64(offset), input, inputOffset, len);
+	}
 
   /**
    * Determine whether the user has write access to the file. This

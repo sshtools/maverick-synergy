@@ -28,6 +28,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.sshtools.client.tasks.AbstractCommandTask;
+import com.sshtools.client.tasks.AbstractShellTask;
 import com.sshtools.client.tasks.DownloadFileTask;
 import com.sshtools.client.tasks.Task;
 import com.sshtools.client.tasks.UploadFileTask;
@@ -278,6 +279,10 @@ public class SshClient implements Closeable {
 
 	public boolean isAuthenticated() {
 		return con.getAuthenticatedFuture().isDone() && con.getAuthenticatedFuture().isSuccess();
+	}
+
+	public <T extends Task> void runTask(T task, long timeout) throws IOException {
+		doTask(task, timeout);
 	}
 
 

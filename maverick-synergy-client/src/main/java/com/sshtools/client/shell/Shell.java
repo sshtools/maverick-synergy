@@ -110,35 +110,35 @@ public class Shell {
 
 	long startupTimeout;
 	long startupStarted;
-
+	
 	AbstractSessionTask<SessionChannelNG> session;
 	String characterEncoding = "UTF-8";
 	
-	public Shell(Connection<SshClientContext> con, AbstractSessionTask<SessionChannelNG> session) throws SshException, SshIOException,
+	public Shell(AbstractSessionTask<SessionChannelNG> session) throws SshException, SshIOException,
 			ChannelOpenException, IOException, ShellTimeoutException {
-		this(con, session, null, 30000, "dumb", 1024, 80);
+		this(session, null, 30000, "dumb", 1024, 80);
 	}
 
-	public Shell(Connection<SshClientContext> con, AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger)
+	public Shell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger)
 			throws SshException, SshIOException, ChannelOpenException,
 			IOException, ShellTimeoutException {
-		this(con, session, trigger, 30000, "dumb", 1024, 80);
+		this(session, trigger, 30000, "dumb", 1024, 80);
 	}
 
-	public Shell(Connection<SshClientContext> con, AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger, long startupTimeout)
+	public Shell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger, long startupTimeout)
 			throws SshException, SshIOException, ChannelOpenException,
 			IOException, ShellTimeoutException {
-		this(con, session, trigger, startupTimeout, "dumb", 1024, 80);
+		this(session, trigger, startupTimeout, "dumb", 1024, 80);
 	}
 
-	public Shell(Connection<SshClientContext> con, AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
+	public Shell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
 			long startupTimeout, String termtype) throws SshException,
 			SshIOException, ChannelOpenException, IOException,
 			ShellTimeoutException {
-		this(con, session, trigger, startupTimeout, termtype, 1024, 80);
+		this(session, trigger, startupTimeout, termtype, 1024, 80);
 	}
 
-	public Shell(Connection<SshClientContext> con, AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
+	public Shell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
 			long startupTimeout, String termtype, int cols, int rows)
 			throws SshException, SshIOException, ChannelOpenException,
 			IOException, ShellTimeoutException {
@@ -163,7 +163,7 @@ public class Shell {
 			}
 		}
 		
-		determineServerType(con);
+		determineServerType(session.getSession().getConnection());
 
 		init(session.getSession().getInputStream(), session.getSession().getOutputStream(), // true, trigger);
 		        (osType != OS_OPENVMS), trigger );

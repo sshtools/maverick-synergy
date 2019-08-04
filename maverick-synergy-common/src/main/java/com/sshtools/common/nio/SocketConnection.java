@@ -29,6 +29,7 @@ import java.util.LinkedList;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.ExecutorOperationQueues;
 import com.sshtools.common.ssh.SshContext;
 
 /**
@@ -36,7 +37,7 @@ import com.sshtools.common.ssh.SshContext;
  */
 public class SocketConnection implements SocketHandler {
 	
-    private static final Integer SOCKET_QUEUE = 0xFF400;
+    private static final Integer SOCKET_QUEUE = ExecutorOperationQueues.generateUniqueQueue("SocketConnection.in");
     
 	protected SocketChannel socketChannel;
     protected ProtocolEngine protocolEngine;

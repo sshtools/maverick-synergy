@@ -30,12 +30,10 @@ import com.sshtools.common.logger.Log;
 
 public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider> {
 
-	
-
-	public static final Integer MESSAGES_INCOMING = 0x01;
-	public static final Integer MESSAGES_OUTGOING = 0x02;
-	public static final Integer EVENTS = 0x04;
-	public static final Integer CALLBACKS = 0x08;
+	public static final Integer MESSAGES_INCOMING = ExecutorOperationQueues.generateUniqueQueue("ExecutorOperationSupport.in");
+	public static final Integer MESSAGES_OUTGOING = ExecutorOperationQueues.generateUniqueQueue("ExecutorOperationSupport.out");
+	public static final Integer EVENTS = ExecutorOperationQueues.generateUniqueQueue("ExecutorOperationSupport.events");
+	public static final Integer CALLBACKS = ExecutorOperationQueues.generateUniqueQueue("ExecutorOperationSupport.callbacks");
 	
 	boolean shutdown = false;
 	String queueName;

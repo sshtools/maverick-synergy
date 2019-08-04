@@ -19,6 +19,7 @@
 package com.sshtools.client.tasks;
 
 import com.sshtools.client.AbstractSessionChannel;
+import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.common.ssh.Connection;
 
@@ -29,6 +30,10 @@ public abstract class AbstractShellTask<T extends AbstractSessionChannel> extend
 
 	public AbstractShellTask(Connection<SshClientContext> con) {
 		super(con);
+	}
+	
+	public AbstractShellTask(SshClient ssh) {
+		super(ssh.getConnection());
 	}
 	
 	@Override

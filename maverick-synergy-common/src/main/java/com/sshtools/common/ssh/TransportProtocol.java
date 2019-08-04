@@ -251,6 +251,8 @@ public abstract class TransportProtocol<T extends SshContext>
 	/** Disconnect reason: The user's name is illegal */
 	public final static int ILLEGAL_USER_NAME = 15;
 
+	private static final Integer ACTIVE_SERVICE_IN = ExecutorOperationQueues.generateUniqueQueue("TransportProtocol.activeService.in");
+
 	IgnoreMessage ignoreMessage;
 	long lastKeepAlive = 0;
 
@@ -1730,7 +1732,7 @@ public abstract class TransportProtocol<T extends SshContext>
 				Log.trace("Posting mesage id %d to active service for processing", msgId);
 			}
 			
-			addTask(555, new ConnectionAwareTaskWrapper(con, new Runnable() {
+			addTask(ACTIVE_SERVICE_IN, new ConnectionAwareTaskWrapper(con, new Runnable() {
 				public void run() {
 					try {
 						

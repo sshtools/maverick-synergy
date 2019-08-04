@@ -19,6 +19,7 @@
 package com.sshtools.client.tasks;
 
 import com.sshtools.client.SessionChannelNG;
+import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.common.ssh.Connection;
 
@@ -28,8 +29,8 @@ public abstract class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		super(con);
 	}
 
-	@Override
-	protected void onOpenSession(SessionChannelNG session) {
+	public ShellTask(SshClient ssh) {
+		super(ssh);
 	}
 
 	@Override

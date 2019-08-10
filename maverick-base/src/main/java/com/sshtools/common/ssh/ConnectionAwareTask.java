@@ -22,7 +22,8 @@ import java.util.Objects;
 
 public abstract class ConnectionAwareTask extends AbstractRequestFuture implements Runnable {
 
-	SshConnection con;
+	protected final SshConnection con;
+	private Throwable lastError;
 	
 	public ConnectionAwareTask(SshConnection con) {
 		if(Objects.isNull(con)) {
@@ -31,7 +32,7 @@ public abstract class ConnectionAwareTask extends AbstractRequestFuture implemen
 		this.con = con;
 	}
 	
-	protected abstract void doTask();
+	protected abstract void doTask() throws Throwable;
 	
 	
 	public final void run() {
@@ -40,10 +41,16 @@ public abstract class ConnectionAwareTask extends AbstractRequestFuture implemen
 		
 		try {
 			doTask();
+			done(true);
+		} catch(Throwable t) { 
+			this.lastError = t;
+			done(false);
 		} finally {
 			con.getConnectionManager().clearConnection();
 		}
-
 	}
 
+	public Throwable getLastError() {
+		return lastError;
+	}
 }

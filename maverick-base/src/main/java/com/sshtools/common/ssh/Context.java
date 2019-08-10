@@ -41,4 +41,5 @@ public interface Context {
 	ByteBufferPool getByteBufferPool();
 	
 	ComponentManager getComponentManager();
+
 }

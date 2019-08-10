@@ -19,6 +19,7 @@
 package com.sshtools.common.sshd;
 
 import com.sshtools.common.nio.IdleStateListener;
+import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.Context;
 import com.sshtools.common.ssh.SshConnection;
 
@@ -38,7 +39,7 @@ public interface AbstractServerTransport<C extends Context> {
 
 	boolean isConnected();
 
-	void addTask(Integer messageQueue, Runnable r);
+	void addTask(Integer messageQueue, ConnectionAwareTask r);
 
 	void startService(Service<C> service);
 

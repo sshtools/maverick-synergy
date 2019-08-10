@@ -23,11 +23,16 @@ import java.util.Objects;
 public class Log {
 
 	
-	static DefaultLoggerContext defaultContext = new DefaultLoggerContext();
+	static DefaultLoggerContext defaultContext = null;
 	static ThreadLocal<LoggerContext> currentContext = new ThreadLocal<LoggerContext>();
 	
 	public static DefaultLoggerContext getDefaultContext() {
-		return defaultContext;
+		synchronized(Log.class) {
+			if(defaultContext==null) {
+				defaultContext = new DefaultLoggerContext();
+			}
+			return defaultContext;
+		}
 	}
 	
 	public enum Level {

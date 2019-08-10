@@ -30,9 +30,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import com.sshtools.common.logger.Log;
-
 import com.sshtools.common.ssh.components.SshKeyPair;
-import com.sshtools.common.ssh.components.SshRsaPrivateCrtKey;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
 
 /**

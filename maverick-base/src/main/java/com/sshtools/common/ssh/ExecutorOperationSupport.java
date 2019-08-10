@@ -55,22 +55,22 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 		listeners.remove(listener);
 	}
 	
-	public void addOutgoingTask(Runnable r) {
+	public void addOutgoingTask(ConnectionAwareTask r) {
 		addTask(MESSAGES_OUTGOING, r);
 	}
 	
-	public void addIncomingTask(Runnable r) {
+	public void addIncomingTask(ConnectionAwareTask r) {
 		addTask(MESSAGES_INCOMING, r);
 	}
 	
-	public void addTask(Integer queue, Runnable r) {
+	public void addTask(Integer queue, ConnectionAwareTask r) {
 		if(!operationQueues.containsKey(queue)) {
 			operationQueues.put(queue, new OperationTask());
 		}
 		operationQueues.get(queue).addTask(r);
 	}
 	
-	public void cleanupOperations(Runnable doCleanup) {
+	public void cleanupOperations(ConnectionAwareTask doCleanup) {
 		for(OperationTask task : operationQueues.values()) {
 			if(task.running) {
 				task.cleanupOperations();

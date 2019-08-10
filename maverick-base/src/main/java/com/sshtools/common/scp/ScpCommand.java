@@ -40,7 +40,7 @@ import com.sshtools.common.sftp.AbstractFileSystem;
 import com.sshtools.common.sftp.InvalidHandleException;
 import com.sshtools.common.sftp.SftpFile;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.ssh.ConnectionAwareTaskWrapper;
+import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.common.util.UnsignedInteger32;
@@ -159,7 +159,11 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 		if(Log.isDebugEnabled()) {
 			Log.debug("Adding SCP command to executor service");
 		}
-		session.getConnection().executeTask(new ConnectionAwareTaskWrapper(session.getConnection(), this));
+		session.getConnection().executeTask(new ConnectionAwareTask(session.getConnection()) {
+			protected void doTask() {
+				ScpCommand.this.run();
+			}
+		});
 		
 	}
 

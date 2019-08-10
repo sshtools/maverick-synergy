@@ -45,6 +45,10 @@ public class FileSystemPolicy extends Permissions {
 	List<SftpExtensionFactory> sftpExtensionFactories = new ArrayList<SftpExtensionFactory>();
 	boolean closeFileBeforeFailedTransferEvents = false;
 	
+	private int sftpMaxPacketSize = 65536;
+	private int sftpMaxWindowSize = 1024000;
+	private int sftpMinWindowSize = 131072;
+	
 	public FileSystemPolicy() {
 		sftpExtensionFactories.add(new DefaultSftpExtensionFactory());
 	}
@@ -183,4 +187,24 @@ public class FileSystemPolicy extends Permissions {
 	public void setSFTPCloseFileBeforeFailedTransferEvents(boolean closeFileBeforeFailedTransferEvents) {
 		this.closeFileBeforeFailedTransferEvents = closeFileBeforeFailedTransferEvents;
 	}
+	public int getSftpMaxPacketSize() {
+		return sftpMaxPacketSize;
+	}
+	public void setSftpMaxPacketSize(int sftpMaxPacketSize) {
+		this.sftpMaxPacketSize = sftpMaxPacketSize;
+	}
+	public int getSftpMaxWindowSize() {
+		return sftpMaxWindowSize;
+	}
+	public void setSftpMaxWindowSize(int sftpMaxWindowSize) {
+		this.sftpMaxWindowSize = sftpMaxWindowSize;
+	}
+	public int getSftpMinWindowSize() {
+		return sftpMinWindowSize;
+	}
+	public void setSftpMinWindowSize(int sftpMinWindowSize) {
+		this.sftpMinWindowSize = sftpMinWindowSize;
+	}
+
+	
 }

@@ -26,8 +26,9 @@ import java.nio.ByteBuffer;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.policy.AuthenticationPolicy;
 import com.sshtools.common.publickey.SshPublicKeyFileFactory;
-import com.sshtools.common.ssh.ExecutorOperationSupport;
+import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.Context;
+import com.sshtools.common.ssh.ExecutorOperationSupport;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.TransportProtocolSpecification;
@@ -84,7 +85,7 @@ public class PublicKeyAuthentication<C extends Context> implements Authenticatio
 
 	public boolean startRequest(String username, byte[] msg) throws IOException {
 
-		transport.addTask(ExecutorOperationSupport.EVENTS, new PublicKeyAuthenticationTask(username, msg));
+		transport.addTask(ExecutorOperationSupport.EVENTS, new PublicKeyAuthenticationTask(con, username, msg));
 		return true;
 	}
 
@@ -128,17 +129,18 @@ public class PublicKeyAuthentication<C extends Context> implements Authenticatio
 		return false;
 	}
 
-	class PublicKeyAuthenticationTask implements Runnable {
+	class PublicKeyAuthenticationTask extends ConnectionAwareTask {
 		
 		String username;
     	byte[] msg;
 		
-    	PublicKeyAuthenticationTask(String username, byte[] msg) {
+    	PublicKeyAuthenticationTask(SshConnection con, String username, byte[] msg) {
+    		super(con);
     		this.username = username;
     		this.msg = msg;
     	}
 		
-		public void run() {
+		protected void doTask() {
 			// Create ByteArrayReader so can read msg as if it was stream.
 			ByteArrayReader bar = new ByteArrayReader(msg);
 

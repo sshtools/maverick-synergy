@@ -890,39 +890,7 @@ public class SftpFileAttributes {
 			}
 
 			if (isFlagSet(SSH_FILEXFER_ATTR_PERMISSIONS, version)) {
-				
-				int oldType;
-				switch (type) {
-				case SSH_FILEXFER_TYPE_DIRECTORY:
-					oldType = S_IFDIR;
-					break;
-				case SSH_FILEXFER_TYPE_REGULAR:
-					oldType = S_IFREG;
-					break;
-				case SSH_FILEXFER_TYPE_SYMLINK:
-					oldType = S_IFLNK;
-					break;
-				case SSH_FILEXFER_TYPE_CHAR_DEVICE:
-					oldType = S_IFCHR;
-					break;
-				case SSH_FILEXFER_TYPE_BLOCK_DEVICE:
-					oldType = S_IFBLK;
-					break;
-				case SSH_FILEXFER_TYPE_FIFO:
-					oldType = S_IFIFO;
-					break;
-				case SSH_FILEXFER_TYPE_SOCKET:
-					oldType = S_IFSOCK;
-					break;
-				case SSH_FILEXFER_TYPE_SPECIAL:
-				case SSH_FILEXFER_TYPE_UNKNOWN:
-				default:
-					oldType = 0; // Unknown?
-					break;
-
-				}
-				
-				baw.writeInt((permissions.longValue() & S_MODE_MASK) | oldType);
+				baw.writeInt((permissions.longValue() & S_MODE_MASK) | getModeType());
 			}
 
 			if (version <= 3 && isFlagSet(SSH_FILEXFER_ATTR_ACCESSTIME, version)) {
@@ -1002,6 +970,31 @@ public class SftpFileAttributes {
 
 		} finally {
 			baw.close();
+		}
+	}
+
+	public long getModeType() {
+		
+		switch (type) {
+		case SSH_FILEXFER_TYPE_DIRECTORY:
+			return S_IFDIR;
+		case SSH_FILEXFER_TYPE_REGULAR:
+			return S_IFREG;
+		case SSH_FILEXFER_TYPE_SYMLINK:
+			return S_IFLNK;
+		case SSH_FILEXFER_TYPE_CHAR_DEVICE:
+			return S_IFCHR;
+		case SSH_FILEXFER_TYPE_BLOCK_DEVICE:
+			return S_IFBLK;
+		case SSH_FILEXFER_TYPE_FIFO:
+			return S_IFIFO;
+		case SSH_FILEXFER_TYPE_SOCKET:
+			return S_IFSOCK;
+		case SSH_FILEXFER_TYPE_SPECIAL:
+		case SSH_FILEXFER_TYPE_UNKNOWN:
+		default:
+			return 0;
+
 		}
 	}
 

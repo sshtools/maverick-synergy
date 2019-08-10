@@ -72,14 +72,14 @@ public class KeyboardInteractiveAuthentication<C extends Context> implements
 		if (msg[0] != SSH_MSG_USERAUTH_INFO_RESPONSE)
 			return false;
 		
-		con.addTask(ExecutorOperationSupport.EVENTS, new ProcessMessageTask(msg));
+		con.addTask(ExecutorOperationSupport.EVENTS, new ProcessMessageTask(con, msg));
 		
 		return true;
 	}
 
 	public boolean startRequest(String username, byte[] msg) throws IOException {
 		
-		con.addTask(ExecutorOperationSupport.EVENTS, new StartAuthenticationTask(username, msg));
+		con.addTask(ExecutorOperationSupport.EVENTS, new StartAuthenticationTask(con, username, msg));
 		return false;
 	}
 
@@ -135,7 +135,7 @@ public class KeyboardInteractiveAuthentication<C extends Context> implements
     	String username;
     	byte[] msg;
     	
-    	StartAuthenticationTask(String username, byte[] msg) {
+    	StartAuthenticationTask(SshConnection con, String username, byte[] msg) {
     		super(con);
     		this.username = username;
     		this.msg = msg;
@@ -198,7 +198,7 @@ public class KeyboardInteractiveAuthentication<C extends Context> implements
 		
 		byte[] msg;
 		
-		ProcessMessageTask(byte[] msg) {
+		ProcessMessageTask(SshConnection con, byte[] msg) {
 			super(con);
 			this.msg = msg;
 		}

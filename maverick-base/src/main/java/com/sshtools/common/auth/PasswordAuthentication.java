@@ -23,8 +23,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.ssh.ExecutorOperationSupport;
+import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.Context;
+import com.sshtools.common.ssh.ExecutorOperationSupport;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.TransportProtocolSpecification;
 import com.sshtools.common.sshd.AbstractServerTransport;
@@ -72,7 +73,7 @@ public class PasswordAuthentication<C extends Context> implements Authentication
     }
 
     public boolean startRequest(String username, byte[] msg) throws IOException {
-    	transport.addTask(ExecutorOperationSupport.EVENTS, new PasswordAuthenticationTask(username, msg));
+    	transport.addTask(ExecutorOperationSupport.EVENTS, new PasswordAuthenticationTask(con, username, msg));
         return true;
     }
 
@@ -81,15 +82,16 @@ public class PasswordAuthentication<C extends Context> implements Authentication
         return false;
     }
     
-    class PasswordAuthenticationTask implements Runnable {
+    class PasswordAuthenticationTask extends ConnectionAwareTask {
     	String username;
     	byte[] msg;
     	
-    	PasswordAuthenticationTask(String username, byte[] msg) {
+    	PasswordAuthenticationTask(SshConnection con, String username, byte[] msg) {
+    		super(con);
     		this.username = username;
     		this.msg = msg;
     	}
-    	public void run() {
+    	protected void doTask() {
     		
     		if(!hasProviders()) {
     			if(Log.isDebugEnabled()) {

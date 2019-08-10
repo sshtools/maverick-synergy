@@ -28,8 +28,6 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 
-import org.jline.reader.impl.LineReaderImpl;
-
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;

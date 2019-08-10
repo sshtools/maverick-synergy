@@ -30,8 +30,6 @@ import java.util.ServiceLoader;
 import org.jline.reader.impl.LineReaderImpl;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
-import org.jline.terminal.spi.JansiSupport;
 import org.jline.terminal.spi.JnaSupport;
 import org.jline.terminal.spi.Pty;
 

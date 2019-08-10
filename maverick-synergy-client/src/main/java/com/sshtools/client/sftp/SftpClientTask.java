@@ -868,6 +868,20 @@ public abstract class SftpClientTask extends AbstractRequestFuture  implements R
 		return get(path, (FileTransferProgress) null);
 	}
 
+	/**
+	 * Get the target path of a symbolic link.
+	 * 
+	 * @param linkpath
+	 * @return String
+	 * @throws SshException
+	 *             if the remote SFTP version is < 3 an exception is thrown as
+	 *             this feature is not supported by previous versions of the
+	 *             protocol.
+	 */
+	public String getSymbolicLinkTarget(String linkpath) throws SftpStatusException, SshException {
+		return sftp.getSymbolicLinkTarget(linkpath);
+	}
+
 	// private void transferFile(InputStream in, OutputStream out,
 	// FileTransferProgress progress) throws SftpStatusException,
 	// SshException, TransferCancelledException {

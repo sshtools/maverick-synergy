@@ -243,10 +243,6 @@ public abstract class SshContext extends ProtocolContext implements
 	protected int sessionMaxWindowSize = 1024000;
 	protected int sessionMinWindowSize = 131072;
 	
-	private int sftpMaxPacketSize = 65536;
-	private int sftpMaxWindowSize = 1024000;
-	private int sftpMinWindowSize = 131072;
-	
 	private int forwardingMaxPacketSize = 65536;
 	private int forwardingMaxWindowSize = 65536 * 5;
 	private int forwardingMinWindowSize = 32768;
@@ -1392,30 +1388,6 @@ public abstract class SshContext extends ProtocolContext implements
 
 	public void setSessionMinWindowSize(int sessionMinWindowSize) {
 		this.sessionMinWindowSize = sessionMinWindowSize;
-	}
-
-	public int getSftpMaxPacketSize() {
-		return sftpMaxPacketSize;
-	}
-
-	public void setSftpMaxPacketSize(int sftpMaxPacketSize) {
-		this.sftpMaxPacketSize = sftpMaxPacketSize;
-	}
-
-	public int getSftpMaxWindowSize() {
-		return sftpMaxWindowSize;
-	}
-
-	public void setSftpMaxWindowSize(int sftpMaxWindowSize) {
-		this.sftpMaxWindowSize = sftpMaxWindowSize;
-	}
-
-	public int getSftpMinWindowSize() {
-		return sftpMinWindowSize;
-	}
-
-	public void setSftpMinWindowSize(int sftpMinWindowSize) {
-		this.sftpMinWindowSize = sftpMinWindowSize;
 	}
 
 	public int getForwardingMaxPacketSize() {

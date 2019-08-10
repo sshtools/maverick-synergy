@@ -1314,8 +1314,8 @@ public abstract class TransportProtocol<T extends SshContext>
 					public void run() {
 						
 						synchronized (lock) {
-							cleanupOperations(new Runnable() {
-								public void run() {
+							cleanupOperations(new ConnectionAwareTask(con) {
+								protected void doTask() {
 									
 									EventServiceImplementation
 									.getInstance()
@@ -1732,8 +1732,8 @@ public abstract class TransportProtocol<T extends SshContext>
 				Log.trace("Posting mesage id %d to active service for processing", msgId);
 			}
 			
-			addTask(ACTIVE_SERVICE_IN, new ConnectionAwareTaskWrapper(con, new Runnable() {
-				public void run() {
+			addTask(ACTIVE_SERVICE_IN, new ConnectionAwareTask(con) {
+				protected void doTask() {
 					try {
 						
 						if(Log.isTraceEnabled()) {
@@ -1756,7 +1756,7 @@ public abstract class TransportProtocol<T extends SshContext>
 						disconnect(PROTOCOL_ERROR, e.getMessage());
 					}
 				}
-			}));
+			});
 			
 			
 		}

@@ -354,8 +354,8 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 					if(Log.isDebugEnabled()) {
 						log("Received EOF from forwarding socket");
 					}
-					getConnectionProtocol().addOutgoingTask(new Runnable() {
-						public void run() {
+					getConnectionProtocol().addOutgoingTask(new ConnectionAwareTask(con) {
+						protected void doTask() {
 							sendEOF();
 							evaluateClosure();
 						}
@@ -371,7 +371,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 				if(Log.isTraceEnabled())
 					log("Processing FORWARDING READ read=" + numBytesRead);
 
-				getConnectionProtocol().addOutgoingTask(new QueueChannelDataTask(numBytesRead));
+				getConnectionProtocol().addOutgoingTask(new QueueChannelDataTask(con, numBytesRead));
 			}
 
 		} catch (Throwable ex) {
@@ -380,8 +380,8 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 
 			socketEOF.set(true);
 			
-			getConnectionProtocol().addOutgoingTask(new Runnable() {
-				public void run() {
+			getConnectionProtocol().addOutgoingTask(new ConnectionAwareTask(con) {
+				protected void doTask() {
 					sendEOF();
 					evaluateClosure();
 				}
@@ -474,14 +474,15 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 		this.selectorThread = thread;
 	}
 
-	class QueueChannelDataTask implements Runnable {
+	class QueueChannelDataTask extends ConnectionAwareTask {
 
 		int count;
-		QueueChannelDataTask(int count) {
+		QueueChannelDataTask(SshConnection con, int count) {
+			super(con);
 			this.count = count;
 		}
 
-		public void run() {
+		protected void doTask() {
 			
 			try {
 
@@ -522,7 +523,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 		}
 	}
 
-	public void addTask(Runnable task) {
+	public void addTask(ConnectionAwareTask task) {
 		getConnectionProtocol().addTask(SOCKET_QUEUE & getLocalId(), task);;
 	}
 

@@ -32,7 +32,6 @@ import java.util.List;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ClientAcceptor;
 import com.sshtools.common.nio.ListeningInterface;
-import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.util.IOUtil;
 
 /**

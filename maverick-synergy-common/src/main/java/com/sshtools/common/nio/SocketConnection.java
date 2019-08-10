@@ -29,6 +29,7 @@ import java.util.LinkedList;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.ExecutorOperationQueues;
 import com.sshtools.common.ssh.SshContext;
 
@@ -401,7 +402,7 @@ public class SocketConnection implements SocketHandler {
 	}
 	
 	
-	public void addTask(Runnable task) {
+	public void addTask(ConnectionAwareTask task) {
 		protocolEngine.getExecutor().addTask(SOCKET_QUEUE, task);
 	}
 

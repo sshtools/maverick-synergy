@@ -20,6 +20,7 @@
 package com.sshtools.common.nio;
 
 import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshContext;
 
 /**
@@ -65,7 +66,7 @@ public interface SocketHandler extends SelectorRegistrationListener, SelectionKe
          * Add a task to the executor
          * @return
          */
-        public void addTask(Runnable task);
+        public void addTask(ConnectionAwareTask task);
 
         /**
          * Tell the selector that the handler wants to write.

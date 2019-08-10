@@ -4,7 +4,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +46,6 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 	
 	@Override
 	public int chmod(String path, @mode_t long mode) {
-		// TODO forgiveness / permission?
 		int ex = exists(path);
 		if (ex != -ErrorCodes.EEXIST())
 			return ex;
@@ -110,7 +108,6 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 
 	@Override
 	public int mkdir(String path, @mode_t long mode) {
-		// TODO forgiveness / permission?
 		int ex = exists(path);
 		if (ex != -ErrorCodes.ENOENT())
 			return ex;
@@ -128,19 +125,6 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 		}
 	}
 
-	// @Override
-	// public int readlink(String path, Pointer buf, long size) {
-	// try {
-	// SftpFileAttributes attr = sftp.statLink(path);
-	// return 0;
-	// } catch (SftpStatusException e) {
-	// Log.error(String.format("Failed to open %s", path), e);
-	// return toErr(e);
-	// } catch (SshException e) {
-	// Log.error(String.format("Failed to open %s", path), e);
-	// return -ErrorCodes.EFAULT();
-	// }
-	// }
 	@Override
 	public int open(String path, FuseFileInfo fi) {
 		try {
@@ -254,8 +238,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 	@Override
 	public int readlink(String path, Pointer buf, long size) {
 		try {
-			sftp.statLink(path);
-			buf.putString(0, "", 0, Charset.defaultCharset());
+			buf.putString(0, sftp.getSymbolicLinkTarget(path), 0, Charset.defaultCharset());
 			return 0;
 		} catch (SftpStatusException sftpse) {
 			if (Log.isDebugEnabled() && (Log.isTraceEnabled() || sftpse.getStatus() != SftpStatusException.SSH_FX_NO_SUCH_FILE))
@@ -405,7 +388,6 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 
 	@Override
 	public int symlink(String oldpath, String newpath) {
-		// TODO forgiveness / permission?
 		int ex = exists(oldpath);
 		if (ex != -ErrorCodes.EEXIST())
 			return ex;
@@ -425,7 +407,6 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 
 	@Override
 	public int unlink(String path) {
-		// TODO forgiveness / permission?
 		int ex = exists(path);
 		if (ex != -ErrorCodes.EEXIST())
 			return ex;

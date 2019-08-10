@@ -14,9 +14,6 @@ public class PathRandomAccessImpl implements AbstractFileRandomAccess {
 	protected Path f;
 	
 	public PathRandomAccessImpl(Path f, boolean writeAccess) throws IOException {
-		if(f.toString().endsWith(".Xauthority")) {
-			System.out.println("Brk!");
-		}
 		this.f = f;
 		if(writeAccess)
 			raf = FileChannel.open(f, StandardOpenOption.READ, StandardOpenOption.WRITE);

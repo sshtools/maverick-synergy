@@ -186,6 +186,7 @@
 	<modules>
 		<module>maverick-synergy-common</module>
 		<module>maverick-synergy-client</module>
+		<module>maverick-synergy-fuse-drive</module>
 		<module>maverick-base</module>
 		<module>maverick-synergy-server</module>
 		<module>maverick-virtual-filesystem</module>

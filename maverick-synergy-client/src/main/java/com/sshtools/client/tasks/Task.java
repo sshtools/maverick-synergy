@@ -27,5 +27,4 @@ public abstract class Task extends ConnectionAwareTask implements Runnable {
 		super(con);
 	}
 
-	public abstract Throwable getLastError();
 }

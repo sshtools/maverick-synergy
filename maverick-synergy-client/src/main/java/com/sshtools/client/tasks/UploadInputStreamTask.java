@@ -48,7 +48,7 @@ public class UploadInputStreamTask extends AbstractRequestFuture implements Runn
 		SftpClientTask task = new SftpClientTask(con) {
 			
 			@Override
-			protected void doTask() {
+			protected void doSftp() {
 				try {
 					put(in, path);
 				} catch (SftpStatusException | SshException | TransferCancelledException e) {

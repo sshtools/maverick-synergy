@@ -19,6 +19,9 @@
 
 package com.sshtools.client.sftp;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
@@ -34,7 +37,8 @@ public class SftpFile {
   AbstractSftpTask sftp;
   String absolutePath;
   String longname;
-
+  Map<String,Object> properties = new HashMap<>();
+  
   /**
    * Creates a new SftpFile object.
    *
@@ -447,4 +451,11 @@ public class SftpFile {
 	return false;
   }
 
+  public void setProperty(String key, Object value) {
+	  properties.put(key, value);
+  }
+  
+  public Object getProperty(String key) {
+	  return properties.get(key);
+  }
 }

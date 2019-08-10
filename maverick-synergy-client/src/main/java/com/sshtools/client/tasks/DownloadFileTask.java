@@ -52,7 +52,7 @@ public class DownloadFileTask extends Task {
 		SftpClientTask task = new SftpClientTask(con) {
 			
 			@Override
-			protected void doTask() {
+			protected void doSftp() {
 				try {
 					if(localFile==null) {
 						localFile = new File(lpwd(), FileSystemUtils.getFilename(path));
@@ -61,6 +61,12 @@ public class DownloadFileTask extends Task {
 				} catch (FileNotFoundException | SftpStatusException | SshException | TransferCancelledException e) {
 					DownloadFileTask.this.e = e;
 				}
+			}
+
+			@Override
+			public Throwable getLastError() {
+				// TODO Auto-generated method stub
+				return null;
 			}
 		};
 		

@@ -25,13 +25,13 @@ import java.io.UnsupportedEncodingException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
 import com.sshtools.client.SessionChannelNG;
-import com.sshtools.client.SshClientContext;
 import com.sshtools.client.tasks.AbstractSubsystemTask;
 import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.client.tasks.Message;
@@ -40,14 +40,15 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.sftp.ACL;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.ByteArrays;
-import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.Packet;
 import com.sshtools.common.ssh.PacketPool;
 import com.sshtools.common.ssh.RequestFuture;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.ByteArrayReader;
@@ -191,7 +192,7 @@ public abstract class AbstractSftpTask extends AbstractSubsystemTask {
 	public static final int SSH_FXP_RENAME_NATIVE    = 0x00000004;
 	
 	
-	public AbstractSftpTask(Connection<SshClientContext> con) {
+	public AbstractSftpTask(SshConnection con) {
 		super(con);
 	}
 
@@ -200,15 +201,15 @@ public abstract class AbstractSftpTask extends AbstractSubsystemTask {
 	}
 
 	protected int getMinimumWindowSize() {
-		return con.getContext().getSftpMinWindowSize();
+		return con.getContext().getPolicy(FileSystemPolicy.class).getSftpMinWindowSize();
 	}
 	
 	protected int getMaximumWindowSize() {
-		return con.getContext().getSftpMaxWindowSize();
+		return con.getContext().getPolicy(FileSystemPolicy.class).getSftpMaxWindowSize();
 	}
 	
 	protected int getMaximumPacketSize() {
-		return con.getContext().getSftpMaxPacketSize();
+		return con.getContext().getPolicy(FileSystemPolicy.class).getSftpMaxPacketSize();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1688,7 +1689,7 @@ public abstract class AbstractSftpTask extends AbstractSubsystemTask {
 	 * @throws SftpStatusException
 	 *             , SshException
 	 */
-	public int listChildren(SftpFile file, Vector<SftpFile> children)
+	public int listChildren(SftpFile file, List<SftpFile> children)
 			throws SftpStatusException, SshException {
 		if (file.isDirectory()) {
 			if (!isValidHandle(file.getHandle())) {
@@ -1720,7 +1721,7 @@ public abstract class AbstractSftpTask extends AbstractSubsystemTask {
 					SftpFile[] files = extractFiles(bar, file.getAbsolutePath());
 	
 					for (int i = 0; i < files.length; i++) {
-						children.addElement(files[i]);
+						children.add(files[i]);
 					}
 					return files.length;
 				} else if (bar.getType() == SSH_FXP_STATUS) {

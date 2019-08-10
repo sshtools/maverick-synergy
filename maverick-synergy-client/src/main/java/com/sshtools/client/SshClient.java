@@ -28,7 +28,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.sshtools.client.tasks.AbstractCommandTask;
-import com.sshtools.client.tasks.AbstractShellTask;
 import com.sshtools.client.tasks.DownloadFileTask;
 import com.sshtools.client.tasks.Task;
 import com.sshtools.client.tasks.UploadFileTask;
@@ -39,8 +38,6 @@ import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.Connection;
-import com.sshtools.common.ssh.ConnectionTaskWrapper;
-import com.sshtools.common.ssh.RequestFuture;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 
@@ -115,11 +112,11 @@ public class SshClient implements Closeable {
 		}
 	}
 	
-	public synchronized void addTask(Runnable task) throws IOException {
+	public synchronized void addTask(Task task) throws IOException {
 		if(con==null) {
 			throw new IOException("Client is no longer connected!");
 		}
-		con.addTask(new ConnectionTaskWrapper(getConnection(), task));
+		con.addTask(task);
 	}
 
 	protected SshClientContext createContext(String username) throws IOException {
@@ -186,7 +183,7 @@ public class SshClient implements Closeable {
 	protected <T extends Task> T doTask(T task, long timeout) throws IOException {
 		addTask(task);
 		if(timeout > 0) {
-		task.waitFor(timeout);
+			task.waitFor(timeout);
 		} else {
 			task.waitForever();
 		}
@@ -283,6 +280,10 @@ public class SshClient implements Closeable {
 
 	public <T extends Task> void runTask(T task, long timeout) throws IOException {
 		doTask(task, timeout);
+	}
+	
+	public <T extends Task> void runTask(T task) throws IOException {
+		doTask(task, 0L);
 	}
 
 

@@ -52,7 +52,7 @@ public class UploadFileTask extends Task {
 		SftpClientTask task = new SftpClientTask(con) {
 			
 			@Override
-			protected void doTask() {
+			protected void doSftp() {
 				try {
 					if(path==null) {
 						put(localFile.getAbsolutePath());

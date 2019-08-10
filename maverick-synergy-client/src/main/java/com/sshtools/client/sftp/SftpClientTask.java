@@ -31,22 +31,25 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
 import com.sshtools.client.SessionChannelNG;
+import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.tasks.FileTransferProgress;
+import com.sshtools.client.tasks.Task;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
-import com.sshtools.common.ssh.AbstractRequestFuture;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayWriter;
@@ -58,12 +61,9 @@ import com.sshtools.common.util.UnsignedInteger64;
 /**
  * An abstract task that implements an SFTP client.
  */
-public abstract class SftpClientTask extends AbstractRequestFuture  implements Runnable {
-
-	
+public abstract class SftpClientTask extends Task {
 
 	AbstractSftpTask sftp;
-	Connection<SshClientContext> con;
 
 	String cwd;
 	String lcwd;
@@ -119,10 +119,14 @@ public abstract class SftpClientTask extends AbstractRequestFuture  implements R
 	private int transferMode = MODE_BINARY;
 	
 	public SftpClientTask(Connection<SshClientContext> con) {
-		this.con = con;
+		super(con);
 	}
 	
-	public void run() {
+	public SftpClientTask(SshClient ssh) {
+		super(ssh.getConnection());
+	}
+	
+	protected void doTask() {
 		
 		sftp = new AbstractSftpTask(con) {
 			@Override
@@ -141,7 +145,7 @@ public abstract class SftpClientTask extends AbstractRequestFuture  implements R
 							new Event(this, EventCodes.EVENT_SFTP_SESSION_STARTED,
 									true));
 					
-					SftpClientTask.this.doTask();
+					SftpClientTask.this.doSftp();
 				
 					done(true);
 					
@@ -157,7 +161,7 @@ public abstract class SftpClientTask extends AbstractRequestFuture  implements R
 	}
 	
 	
-	protected abstract void doTask();
+	protected abstract void doSftp();
 	
 	
 	/**
@@ -382,6 +386,17 @@ public abstract class SftpClientTask extends AbstractRequestFuture  implements R
 		return sftp.openFile(resolveRemotePath(fileName), flags);
 	}
 
+	public SftpFile openDirectory(String path) throws SftpStatusException, SshException {
+		return sftp.openDirectory(path);
+	}
+
+	public List<SftpFile> readDirectory(SftpFile dir) throws SftpStatusException, SshException {
+		List<SftpFile> results = new ArrayList<>();
+		if(sftp.listChildren(dir, results) == -1) {
+			return null;
+		}
+		return results;
+	}
 	/**
 	 * <p>
 	 * Changes the working directory on the remote server, or the user's default

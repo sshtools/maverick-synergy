@@ -20,10 +20,9 @@ package com.sshtools.client;
 
 import java.io.File;
 
-import com.sshtools.common.logger.Log;
-import com.sshtools.common.ssh.ConnectionTaskWrapper;
 import com.sshtools.client.tasks.DownloadFileTask;
 import com.sshtools.client.tasks.UploadFileTask;
+import com.sshtools.common.logger.Log;
 
 public class Ssh {
 
@@ -35,7 +34,7 @@ public class Ssh {
 			DownloadFileTask task = new DownloadFileTask(client.getConnection(), 
 					fromPath,
 					toFile);
-			client.addTask(new ConnectionTaskWrapper(client.getConnection(), task));
+			client.addTask(task);
 			task.waitForever();
 			return task.isDone() && task.isSuccess();
 		} catch (Throwable e) {
@@ -50,7 +49,7 @@ public class Ssh {
 			UploadFileTask task = new UploadFileTask(client.getConnection(), 
 					fromFile,
 					toPath);
-			client.addTask(new ConnectionTaskWrapper(client.getConnection(), task));
+			client.addTask(task);
 			task.waitForever();
 			return task.isDone() && task.isSuccess();
 		} catch (Throwable e) {

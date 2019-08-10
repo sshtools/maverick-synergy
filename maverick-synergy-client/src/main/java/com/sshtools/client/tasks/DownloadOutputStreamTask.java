@@ -52,7 +52,7 @@ public class DownloadOutputStreamTask extends AbstractRequestFuture implements R
 		SftpClientTask task = new SftpClientTask(con) {
 			
 			@Override
-			protected void doTask() {
+			protected void doSftp() {
 				try {
 					get(path, localFile);
 				} catch (SftpStatusException | SshException | TransferCancelledException e) {

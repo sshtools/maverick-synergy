@@ -24,14 +24,14 @@ import java.io.IOException;
 import java.util.UUID;
 
 import com.sshtools.client.SessionChannelNG;
-import com.sshtools.client.SshClientContext;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ByteArrays;
-import com.sshtools.common.ssh.ChannelEventAdapter;
-import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.Channel;
+import com.sshtools.common.ssh.ChannelEventAdapter;
+import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.Packet;
 import com.sshtools.common.ssh.PacketPool;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.IOUtil;
@@ -39,21 +39,18 @@ import com.sshtools.common.util.IOUtil;
 /**
  * An abstract task for connecting to an SSH subsystem.
  */
-public abstract class AbstractSubsystemTask implements Runnable {
+public abstract class AbstractSubsystemTask extends ConnectionAwareTask {
 	
-	
-	
-	protected Connection<SshClientContext> con;
 	
 	protected long timeout = 60000;
 	DataInputStream in;
 	UUID taskUUID = UUID.randomUUID();
 	
-	public AbstractSubsystemTask(Connection<SshClientContext> con) {
-		this.con = con;
+	public AbstractSubsystemTask(SshConnection con) {
+		super(con);
 	}
 	
-	public void run() {
+	protected void doTask() {
 		
 		try {
 			SessionChannelNG session = getSession();
@@ -86,7 +83,7 @@ public abstract class AbstractSubsystemTask implements Runnable {
 
 		});
 
-		con.getConnectionProtocol().openChannel(session);
+		con.openChannel(session);
 		if(!session.getOpenFuture().waitFor(timeout).isSuccess()) {
 			throw new IllegalStateException(
 					"Could not open session channel");

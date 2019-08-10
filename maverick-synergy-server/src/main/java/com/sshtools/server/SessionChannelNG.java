@@ -35,6 +35,7 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.IdleStateListener;
 import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.CachingDataWindow;
 import com.sshtools.common.ssh.ChannelDataWindow;
@@ -404,9 +405,9 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 				}
 
 				if("sftp".equals(name)) {
-					localWindow.setMaximumWindowSpace(connection.getContext().getSftpMaxWindowSize()) ;
-					localWindow.setMinimumWindowSpace(connection.getContext().getSftpMinWindowSize());
-					localWindow.setMaxiumPacketSize(connection.getContext().getSftpMaxPacketSize());
+					localWindow.setMaximumWindowSpace(connection.getContext().getPolicy(FileSystemPolicy.class).getSftpMaxWindowSize()) ;
+					localWindow.setMinimumWindowSpace(connection.getContext().getPolicy(FileSystemPolicy.class).getSftpMinWindowSize());
+					localWindow.setMaxiumPacketSize(connection.getContext().getPolicy(FileSystemPolicy.class).getSftpMaxPacketSize());
 				} 
 					
 				sendWindowAdjust();

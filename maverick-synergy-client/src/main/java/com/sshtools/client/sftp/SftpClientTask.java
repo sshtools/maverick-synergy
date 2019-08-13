@@ -551,8 +551,9 @@ public abstract class SftpClientTask extends Task {
 	 * @param path
 	 * @return canonical form of path
 	 * @throws SftpStatusException
+	 * @throws SshException 
 	 */
-	private String resolveRemotePath(String path) throws SftpStatusException {
+	private String resolveRemotePath(String path) throws SftpStatusException, SshException {
 		verifyConnection();
 
 		String actual;
@@ -570,11 +571,10 @@ public abstract class SftpClientTask extends Task {
 		}
 	}
 
-	private void verifyConnection() throws SftpStatusException {
+	private void verifyConnection() throws SshException {
 		if (sftp.isClosed()) {
-			throw new SftpStatusException(
-					SftpStatusException.SSH_FX_CONNECTION_LOST,
-					"The SFTP connection has been closed");
+			throw new SshException("The SFTP connection has been closed",
+					SshException.REMOTE_HOST_DISCONNECTED);
 		}
 	}
 

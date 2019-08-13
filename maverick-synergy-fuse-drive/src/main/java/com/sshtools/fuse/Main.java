@@ -5,6 +5,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
@@ -12,6 +15,10 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
+import com.sshtools.client.KeyboardInteractiveAuthenticator;
+import com.sshtools.client.PasswordAuthenticator;
+import com.sshtools.client.PasswordOverKeyboardInteractiveCallback;
+import com.sshtools.client.PublicKeyAuthenticator;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.common.logger.Log;
@@ -22,11 +29,16 @@ import com.sshtools.common.publickey.SshKeyPairGenerator;
 import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshRsaPrivateKey;
 import com.sshtools.fuse.fs.FuseSFTP;
 
-public class Main {
+import ru.serce.jnrfuse.FuseFS;
 
+public class Main {
+	
+	FuseSFTP fuseFs = null;
+	
 	public static void main(String[] args) {
 		new Main().run(args);
 	}
@@ -34,8 +46,7 @@ public class Main {
 	public void run(String[] args) {
 
 		System.setProperty("maverick.log.config", "conf/logging.properties");
-		
-    	File mountDir = new File(System.getProperty("user.home"), ".synergy");
+
     	
 		try {
 			
@@ -55,48 +66,98 @@ public class Main {
 				saveConfiguration(cli, properties, confFile);
 			}
 			
+			String driveName = properties.getProperty("drive.name", "SynergyDrive");
+			File mountDir = new File(properties.getProperty("drive.path", "${home}/.synergy")
+					.replace("${home}", System.getProperty("user.home")));
+			
 			if(Log.isInfoEnabled()) {
-				Log.info("Creating virtual file system");
+				Log.info("Mounting {} on {}", driveName, mountDir.getAbsolutePath());
 			}
 			
-			try(SshClient ssh = new SshClient(properties.getProperty("hostname", "localhost"),
-					Integer.parseInt(properties.getProperty("port", "22")),
-							properties.getProperty("username", System.getProperty("user.name")),
-							properties.getProperty("password", "").toCharArray())) {
-				
-				ssh.runTask(new SftpClientTask(ssh) {
+			List<SshKeyPair> keys = new ArrayList<>();
+			if(properties.containsKey("privateKey")) {
+				try {
+					File keyfile = new File(properties.getProperty("privateKey"));
+					keys.add(SshKeyUtils.getPrivateKey(keyfile, 
+							properties.getProperty("passphrase")));
+				} catch (Exception e) {
+					Log.error("Failed to load private key", e);
+				}
+			}
+			
+			long timeout = Long.parseLong(properties.getProperty("authentication.timeout", "30000"));
+			long retryInterval = Long.parseLong(properties.getProperty("retry.interval", "5000"));
+			
+			boolean authenticated = false;
+			
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+				public void run() {
+					synchronized(Main.this) {
+						umount();
+					}
+				}
+			});
+			
+			do {
+				try(SshClient ssh = new SshClient(properties.getProperty("hostname", "localhost"),
+						Integer.parseInt(properties.getProperty("port", "22")),
+								properties.getProperty("username", System.getProperty("user.name")))) {
 					
-					@Override
-					protected void doSftp() {
+					if(!ssh.isAuthenticated() && properties.containsKey("password")) {
+						if(ssh.getAuthenticationMethods().contains("keyboard-interactive")) {
+							ssh.authenticate(new KeyboardInteractiveAuthenticator(
+									new PasswordOverKeyboardInteractiveCallback(
+											new PasswordAuthenticator(properties.getProperty("password")))), timeout);
+						}
 						
-						try(FuseSFTP memfs = new FuseSFTP(this)) {
-							
-							
-							if(Log.isInfoEnabled()) {
-								Log.info("Mounting virtual file system");
-							}
-							
-							Runtime.getRuntime().addShutdownHook(new Thread() {
-								public void run() {
-									synchronized(Main.this) {
-										memfs.umount();
-									}
-								}
-							});
-							
-							memfs.mount(mountDir.toPath(), 
-									true, 
-									Boolean.parseBoolean(properties.getProperty("debugFuse", "false")),
-									new String[] { "-o", "volname=SynergyDrive"});
-
-						} catch (SftpStatusException | IOException | SshException e) {
-							Log.error("SFTP error", e);
-						} finally {
-							ssh.disconnect();
+						if(!ssh.isAuthenticated() && ssh.getAuthenticationMethods().contains("password")) {
+							ssh.authenticate(new PasswordAuthenticator(properties.getProperty("password")), timeout);
 						}
 					}
-				});
-			}
+					
+					if(!ssh.isAuthenticated() && !keys.isEmpty()) {
+						ssh.authenticate(new PublicKeyAuthenticator(keys.toArray(new SshKeyPair[0])), timeout);
+					}
+
+					if(authenticated = ssh.isAuthenticated()) {
+						ssh.runTask(new SftpClientTask(ssh) {
+							
+							@Override
+							protected void doSftp() {
+								
+								try(FuseSFTP fuseFs = new FuseSFTP(this)) {
+									
+									
+									if(Log.isInfoEnabled()) {
+										Log.info("Mounting virtual file system");
+									}
+									
+									beforeMount(fuseFs);
+									
+									fuseFs.mount(mountDir.toPath(), 
+											true, 
+											Boolean.parseBoolean(properties.getProperty("debug.fuse", "false")),
+											new String[] { "-o", "volname=" + driveName});
+		
+								} catch (SftpStatusException | IOException | SshException e) {
+									Log.error("SFTP error", e);
+								} finally {
+									afterMount();
+									ssh.disconnect();
+								}
+							}
+						});
+						
+						if(ssh.isConnected()) {
+							ssh.disconnect();
+						}
+						
+						Thread.sleep(retryInterval);
+					}
+				} catch (Throwable e) {
+					Log.error("Operation error", e);
+				} 
+			} while(authenticated);
 
 		} catch (Throwable e) {
 			Log.error("Unexpected error", e);
@@ -108,6 +169,20 @@ public class Main {
 		}
 	}
 	
+	protected synchronized void beforeMount(FuseSFTP fuseFs) {
+		this.fuseFs = fuseFs;
+	}
+
+	protected synchronized void afterMount() {
+		fuseFs = null;
+	}
+
+	protected synchronized void umount() {
+		if(Objects.isNull(fuseFs)) {
+			fuseFs.umount();
+		}
+	}
+
 	private void loadConfiguration(Properties properties, File confFile) throws IOException {
 
 		if(Log.isInfoEnabled()) {

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.sshtools.client.sftp.AbstractSftpTask;
@@ -34,11 +35,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 	private static final int MAX_READ_BUFFER_SIZE = 65536;
 	private static final int MAX_WRITE_BUFFER_SIZE = 65536;
 	private AtomicLong fileHandle = new AtomicLong();
-	private Map<Long, SftpFile> handles = new HashMap<>();
-	private Map<Long, Integer> flags = new HashMap<>();
-	private Map<String, List<Long>> handlesByPath = new HashMap<>();
+	private Map<Long, SftpFile> handles = new ConcurrentHashMap<>();
+	private Map<Long, Integer> flags = new ConcurrentHashMap<>();
+	private Map<String, List<Long>> handlesByPath = new ConcurrentHashMap<>();
 	private SftpClientTask sftp;
-	private Object sftpLock = new Object();
 
 	public FuseSFTP(SftpClientTask sftp) throws SftpStatusException, IOException, SshException {
 		this.sftp = sftp;
@@ -50,9 +50,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 		if (ex != -ErrorCodes.EEXIST())
 			return ex;
 		try {
-			synchronized (sftpLock) {
-				sftp.chmod((int) mode, path);
-			}
+			sftp.chmod((int) mode, path);
 			return 0;
 		} catch (SftpStatusException e) {
 			Log.error(String.format("Failed to chmod %s to %d", path, mode), e);
@@ -83,12 +81,11 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 
 	@Override
 	public int create(String path, @mode_t long mode, FuseFileInfo fi) {
-		synchronized (sftpLock) {
-			int ex = exists(path);
-			if (ex == -ErrorCodes.EEXIST())
-				return ex;
-			fi.flags.set(fi.flags.get() | 0x0100);
-		}
+		int ex = exists(path);
+		if (ex == -ErrorCodes.EEXIST())
+			return ex;
+		fi.flags.set(fi.flags.get() | 0x0100);
+		
 		return open(path, fi);
 	}
 
@@ -112,9 +109,8 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 		if (ex != -ErrorCodes.ENOENT())
 			return ex;
 		try {
-			synchronized (sftpLock) {
-				sftp.mkdirs(path);
-			}
+			sftp.mkdirs(path);
+			
 			return 0;
 		} catch (SftpStatusException e) {
 			Log.error(String.format("Failed to create directory %s", path), e);
@@ -131,20 +127,19 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			long handle = fileHandle.getAndIncrement();
 			int flgs = convertFlags(fi.flags);
 			SftpFile file;
-			synchronized (sftpLock) {
-				file = sftp.openFile(path, flgs);
-			}
+			file = sftp.openFile(path, flgs);
+
 			fi.fh.set(handle);
-			synchronized (handles) {
-				handles.put(handle, file);
-				flags.put(handle, flgs);
-				List<Long> l = handlesByPath.get(path);
-				if (l == null) {
-					l = new ArrayList<Long>();
-					handlesByPath.put(path, l);
-				}
-				l.add(handle);
+
+			handles.put(handle, file);
+			flags.put(handle, flgs);
+			List<Long> l = handlesByPath.get(path);
+			if (l == null) {
+				l = new ArrayList<Long>();
+				handlesByPath.put(path, l);
 			}
+			l.add(handle);
+			
 			return 0;
 		} catch (SftpStatusException e) {
 			Log.error(String.format("Failed to open %s", path), e);
@@ -174,35 +169,31 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			 * If the file is not open then just truncate by opening a new file
 			 * with O_TRUN.
 			 */
-			synchronized (handles) {
-				List<Long> pathHandles = handlesByPath.get(path);
-				int idx = 0;
-				for (Long l : pathHandles) {
-					SftpFile file = handles.get(l);
-					file.close();
-					int flgs = flags.get(l);
-					if (idx == 0) {
-						// For the first handle, re-open with truncate,
-						synchronized (sftpLock) {
-							file = sftp.openFile(path, flgs | AbstractSftpTask.OPEN_TRUNCATE | AbstractSftpTask.OPEN_CREATE);
-						}
-						handles.put(l, file);
-					} else {
-						synchronized (sftpLock) {
-							file = sftp.openFile(path, flgs ^ AbstractSftpTask.OPEN_TRUNCATE ^ AbstractSftpTask.OPEN_CREATE);
-						}
-					}
-					handles.put(l, file);
-					idx++;
-				}
+
+			List<Long> pathHandles = handlesByPath.get(path);
+			int idx = 0;
+			for (Long l : pathHandles) {
+				SftpFile file = handles.get(l);
+				file.close();
+				int flgs = flags.get(l);
 				if (idx == 0) {
-					// No open files
-					synchronized (sftpLock) {
-						SftpFile file = sftp.openFile(path, AbstractSftpTask.OPEN_TRUNCATE | AbstractSftpTask.OPEN_CREATE);
-						file.close();
-					}
+					// For the first handle, re-open with truncate,
+
+					file = sftp.openFile(path, flgs | AbstractSftpTask.OPEN_TRUNCATE | AbstractSftpTask.OPEN_CREATE);
+
+					handles.put(l, file);
+				} else {
+					file = sftp.openFile(path, flgs ^ AbstractSftpTask.OPEN_TRUNCATE ^ AbstractSftpTask.OPEN_CREATE);
 				}
+				handles.put(l, file);
+				idx++;
 			}
+			if (idx == 0) {
+				// No open files
+				SftpFile file = sftp.openFile(path, AbstractSftpTask.OPEN_TRUNCATE | AbstractSftpTask.OPEN_CREATE);
+				file.close();
+			}
+			
 			return 0;
 		} catch (SftpStatusException e) {
 			Log.error(String.format("Failed to open %s", path), e);
@@ -221,9 +212,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 				return -ErrorCodes.ESTALE();
 			byte[] b = new byte[Math.min(MAX_READ_BUFFER_SIZE, (int) size)];
 			int read;
-			synchronized (sftpLock) {
-				read = file.read(offset, b, 0, b.length);
-			}
+			read = file.read(offset, b, 0, b.length);
 			buf.put(0, b, 0, read);
 			return read;
 		} catch (SftpStatusException e) {
@@ -256,20 +245,18 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			long handle = fileHandle.getAndIncrement();
 			int flgs = convertFlags(fi.flags);
 			SftpFile file;
-			synchronized (sftpLock) {
-				file = sftp.openDirectory(path);
-			}
+			file = sftp.openDirectory(path);
 			fi.fh.set(handle);
-			synchronized (handles) {
-				handles.put(handle, file);
-				flags.put(handle, flgs);
-				List<Long> l = handlesByPath.get(path);
-				if (l == null) {
-					l = new ArrayList<Long>();
-					handlesByPath.put(path, l);
-				}
-				l.add(handle);
+
+			handles.put(handle, file);
+			flags.put(handle, flgs);
+			List<Long> l = handlesByPath.get(path);
+			if (l == null) {
+				l = new ArrayList<Long>();
+				handlesByPath.put(path, l);
 			}
+			l.add(handle);
+			
 			return 0;
 		} catch (SftpStatusException e) {
 			Log.error(String.format("Failed to open dir %s", path), e);
@@ -306,19 +293,19 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 						if (!path.equals("/"))
 							filter.apply(buf, "..", null, ++offset);
 					}
-					synchronized (sftpLock) {
-						while(!results.isEmpty()) {
-							SftpFile f = results.remove(0);
-							if(filter.apply(buf, f.getFilename(), null, ++offset) == 1) {
-								/**
-								 * According to https://www.cs.hmc.edu/~geoff/classes/hmc.cs135.201001/homework/fuse/fuse_doc.html#readdir-details
-								 * we return zero when the buffer is full. We need to store the current page and offset for resumption
-								 */
-								file.setProperty("reeaddir_state", results);
-								return 0;
-							}
+
+					while(!results.isEmpty()) {
+						SftpFile f = results.remove(0);
+						if(filter.apply(buf, f.getFilename(), null, ++offset) == 1) {
+							/**
+							 * According to https://www.cs.hmc.edu/~geoff/classes/hmc.cs135.201001/homework/fuse/fuse_doc.html#readdir-details
+							 * we return zero when the buffer is full. We need to store the current page and offset for resumption
+							 */
+							file.setProperty("reeaddir_state", results);
+							return 0;
 						}
 					}
+					
 				}
 					
 				results = sftp.readDirectory(file);
@@ -338,20 +325,20 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 	@Override
 	public int release(String path, FuseFileInfo fi) {
 		try {
-			synchronized (handles) {
-				SftpFile file = handles.remove(fi.fh.longValue());
-				List<Long> l = handlesByPath.get(path);
-				flags.remove(fi.fh.longValue());
-				if (l != null) {
-					l.remove(fi.fh.longValue());
-					if (l.isEmpty())
-						handlesByPath.remove(path);
-				}
-				if (file == null)
-					return -ErrorCodes.ESTALE();
-				file.close();
-				return 0;
+
+			SftpFile file = handles.remove(fi.fh.longValue());
+			List<Long> l = handlesByPath.get(path);
+			flags.remove(fi.fh.longValue());
+			if (l != null) {
+				l.remove(fi.fh.longValue());
+				if (l.isEmpty())
+					handlesByPath.remove(path);
 			}
+			if (file == null)
+				return -ErrorCodes.ESTALE();
+			file.close();
+			return 0;
+			
 		} catch (SftpStatusException e) {
 			Log.error(String.format("Failed to open %s", path), e);
 			return toErr(e);
@@ -368,9 +355,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 		if (ex != -ErrorCodes.EEXIST())
 			return ex;
 		try {
-			synchronized (sftpLock) {
-				sftp.rename(oldpath, newpath);
-			}
+			sftp.rename(oldpath, newpath);
 			return 0;
 		} catch (SftpStatusException e) {
 			Log.error(String.format("Failed to rename %s to %s", oldpath, newpath), e);
@@ -392,9 +377,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 		if (ex != -ErrorCodes.EEXIST())
 			return ex;
 		try {
-			synchronized (sftpLock) {
-				sftp.symlink(oldpath, newpath);
-			}
+			sftp.symlink(oldpath, newpath);
 			return 0;
 		} catch (SftpStatusException e) {
 			Log.error(String.format("Failed to symlink %s to %s", oldpath, newpath), e);
@@ -411,9 +394,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 		if (ex != -ErrorCodes.EEXIST())
 			return ex;
 		try {
-			synchronized (sftpLock) {
-				sftp.rm(path);
-			}
+			sftp.rm(path);
 			return 0;
 		} catch (SftpStatusException e) {
 			Log.error(String.format("Failed to remove %s", path), e);
@@ -432,9 +413,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 				return -ErrorCodes.ESTALE();
 			byte[] b = new byte[Math.min(MAX_WRITE_BUFFER_SIZE, (int) size)];
 			buf.get(0, b, 0, b.length);
-			synchronized (sftpLock) {
-				file.write(offset, b, 0, b.length);
-			}
+			file.write(offset, b, 0, b.length);
 			return b.length;
 		} catch (SftpStatusException e) {
 			Log.error(String.format("Failed to open %s", path), e);

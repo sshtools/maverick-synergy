@@ -20,6 +20,7 @@ package com.sshtools.client;
 
 import java.io.IOException;
 
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.AbstractRequestFuture;
 import com.sshtools.common.util.ByteArrayReader;
 
@@ -48,6 +49,11 @@ public abstract class SimpleClientAuthenticator extends AbstractRequestFuture im
 	}
 	
 	public void success() {
+		
+		if(Log.isDebugEnabled()) {
+			Log.debug("%s authentication succeeded", getName());
+		}
+		
 		this.moreAuthenticationsRequired = false;
 		this.authenticationMethods = new String[0];
 		done(true);
@@ -55,12 +61,21 @@ public abstract class SimpleClientAuthenticator extends AbstractRequestFuture im
 	
 	@Override
 	public void success(boolean moreAuthenticationsRequired, String[] authenticationMethods) {
+
+		if(Log.isDebugEnabled()) {
+			Log.debug("%s authentication succeeded partial=%s", getName(), String.valueOf(moreAuthenticationsRequired));
+		}
+		
 		this.moreAuthenticationsRequired = moreAuthenticationsRequired;
 		this.authenticationMethods = authenticationMethods;
 		done(true);
 	}
 	
 	public void failure() {
+		
+		if(Log.isDebugEnabled()) {
+			Log.debug("%s authentication failed", getName());
+		}
 		done(false);
 	}
 }

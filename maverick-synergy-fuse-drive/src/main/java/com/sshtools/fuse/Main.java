@@ -33,8 +33,6 @@ import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshRsaPrivateKey;
 import com.sshtools.fuse.fs.FuseSFTP;
 
-import ru.serce.jnrfuse.FuseFS;
-
 public class Main {
 	
 	FuseSFTP fuseFs = null;
@@ -103,13 +101,16 @@ public class Main {
 						Integer.parseInt(properties.getProperty("port", "22")),
 								properties.getProperty("username", System.getProperty("user.name")))) {
 					
-					if(!ssh.isAuthenticated() && properties.containsKey("password")) {
-						if(ssh.getAuthenticationMethods().contains("keyboard-interactive")) {
-							ssh.authenticate(new KeyboardInteractiveAuthenticator(
-									new PasswordOverKeyboardInteractiveCallback(
-											new PasswordAuthenticator(properties.getProperty("password")))), timeout);
-						}
-						
+					if(Log.isInfoEnabled()) {
+						Log.info("Authenticating");
+					}
+					
+//					if(ssh.getAuthenticationMethods().contains("keyboard-interactive")) {
+//						ssh.authenticate(new KeyboardInteractiveAuthenticator(
+//								new PasswordOverKeyboardInteractiveCallback(
+//										new PasswordAuthenticator(properties.getProperty("password")))), timeout);
+//					} else
+						if(!ssh.isAuthenticated() && properties.containsKey("password")) {
 						if(!ssh.isAuthenticated() && ssh.getAuthenticationMethods().contains("password")) {
 							ssh.authenticate(new PasswordAuthenticator(properties.getProperty("password")), timeout);
 						}
@@ -119,7 +120,16 @@ public class Main {
 						ssh.authenticate(new PublicKeyAuthenticator(keys.toArray(new SshKeyPair[0])), timeout);
 					}
 
+					if(Log.isInfoEnabled()) {
+						Log.info("Completed Authentication");
+					}
+					
 					if(authenticated = ssh.isAuthenticated()) {
+
+						if(Log.isInfoEnabled()) {
+							Log.info("Authenticated");
+						}
+						
 						ssh.runTask(new SftpClientTask(ssh) {
 							
 							@Override
@@ -154,6 +164,10 @@ public class Main {
 						
 						Thread.sleep(retryInterval);
 					}
+					
+					if(Log.isInfoEnabled()) {
+						Log.info("Disconnecting client");
+					}
 				} catch (Throwable e) {
 					Log.error("Operation error", e);
 				} 
@@ -178,7 +192,7 @@ public class Main {
 	}
 
 	protected synchronized void umount() {
-		if(Objects.isNull(fuseFs)) {
+		if(!Objects.isNull(fuseFs)) {
 			fuseFs.umount();
 		}
 	}

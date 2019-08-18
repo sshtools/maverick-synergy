@@ -80,7 +80,6 @@ server.setFileFactory(new VirtualFileFactory(
       new VFSFileFactory())));
 		
 server.start();
-}
 ```
 Try running the above and connecting to port 2222 using and SFTP client
 

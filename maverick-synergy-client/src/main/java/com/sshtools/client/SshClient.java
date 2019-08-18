@@ -43,6 +43,8 @@ import com.sshtools.common.ssh.components.SshKeyPair;
 
 public class SshClient implements Closeable {
 
+	public static final int EXIT_CODE_NOT_RECEIVED = AbstractCommandTask.EXIT_CODE_NOT_RECEIVED;
+	
 	Connection<SshClientContext> con;
 	SshClientContext sshContext;
 	SshEngine engine;
@@ -208,6 +210,14 @@ public class SshClient implements Closeable {
 	public File getFile(String path, long timeout) throws IOException {
 		return doTask(new DownloadFileTask(getConnection(), path), timeout).getDownloadedFile();
 	}
+	
+	public void getFile(String path, File destination) throws IOException {
+		getFile(path, destination, 0L);
+	}
+	
+	public void getFile(String path, File destination, long timeout) throws IOException {
+		doTask(new DownloadFileTask(getConnection(), path, destination), timeout);
+	}
 
 	public void putFile(File file) throws IOException {
 		putFile(file, file.getName(), 0);
@@ -221,47 +231,59 @@ public class SshClient implements Closeable {
 		doTask(new UploadFileTask(getConnection(), file, path), timeout);
 	}
 
+	public String executeCommand(String cmd) throws IOException {
+		return executeCommand(cmd, 0, "UTF-8");
+	}
+	
 	public String executeCommand(String cmd, long timeout) throws IOException {
+		return executeCommand(cmd, timeout, "UTF-8");
+	}
+	
+	public String executeCommand(String cmd, String charset) throws IOException {
+		return executeCommand(cmd, 0, charset);
+	}
+	
+	public String executeCommand(String cmd, long timeout, String charset) throws IOException {
 
 		StringBuffer buffer = new StringBuffer();
-		doTask(new AbstractCommandTask(getConnection(), cmd) {
-			
-			Throwable e = null;
-			
-			@Override
-			protected void onOpenSession(SessionChannelNG session) {
-				
-				try {
-					BufferedReader reader = new BufferedReader(new InputStreamReader(session.getInputStream()));
-					String line;
-					while((line = reader.readLine()) != null) {
-						if(buffer.length() > 0) {
-							buffer.append(System.lineSeparator());
-						}
-						buffer.append(line);
-					}
-					done(true);
-				} catch (IOException e) {
-					this.e = e;
-					done(false);
-				}
-				session.close();
-			}
-			
-			@Override
-			protected void onCloseSession(SessionChannelNG session) {
-				
-			}
-
-			@Override
-			public Throwable getLastError() {
-				return e;
-			}
-		}, timeout);
-		
+		executeCommandWithResult(cmd, buffer, timeout, charset);
 		return buffer.toString();
 	}
 
+	public int executeCommandWithResult(String cmd, StringBuffer buffer) throws IOException {
+		return executeCommandWithResult(cmd, buffer, 0L);
+	}
+	
+	public int executeCommandWithResult(String cmd, StringBuffer buffer, long timeout) throws IOException {
+		return executeCommandWithResult(cmd, buffer, timeout, "UTF-8");
+	}
+	
+	public int executeCommandWithResult(String cmd, StringBuffer buffer, String charset) throws IOException {
+		return executeCommandWithResult(cmd, buffer, 0L, charset);
+	}
+	
+	public int executeCommandWithResult(String cmd, StringBuffer buffer, long timeout, String charset) throws IOException {
+		
+		AbstractCommandTask task = new AbstractCommandTask(getConnection(), cmd) {
+			
+			@Override
+			protected void onOpenSession(SessionChannelNG session) throws IOException {
+				
+				BufferedReader reader = new BufferedReader(new InputStreamReader(session.getInputStream(), charset));
+				String line;
+				while((line = reader.readLine()) != null) {
+					if(buffer.length() > 0) {
+						buffer.append(System.lineSeparator());
+					}
+					buffer.append(line);
+				}
+			}
+		};
+		
+		doTask(task, timeout);
+		return task.getExitCode();
+	}
+	
 	public Set<String> getAuthenticationMethods() {
 		return sshContext.getAuthenticationClient().getSupportedAuthentications();
 	}
@@ -285,6 +307,5 @@ public class SshClient implements Closeable {
 	public <T extends Task> void runTask(T task) throws IOException {
 		doTask(task, 0L);
 	}
-
 
 }

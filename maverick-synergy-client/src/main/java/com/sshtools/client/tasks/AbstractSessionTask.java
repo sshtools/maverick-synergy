@@ -18,10 +18,12 @@
  */
 package com.sshtools.client.tasks;
 
+import java.io.IOException;
+import java.util.Objects;
+
 import com.sshtools.client.AbstractSessionChannel;
 import com.sshtools.client.SshClientContext;
-import com.sshtools.common.ssh.Channel;
-import com.sshtools.common.ssh.ChannelEventAdapter;
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.Connection;
 
@@ -34,6 +36,7 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 	long timeout = 10000;
 	T session;
 	ChannelRequestFuture future;
+	Throwable lastError;
 	
 	public AbstractSessionTask(Connection<SshClientContext> con, ChannelRequestFuture future) {
 		super(con);
@@ -53,6 +56,10 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 		con.disconnect();
 	}
 	
+	public final Throwable getLastError() {
+		return lastError;
+	}
+	
 	public ChannelRequestFuture getChannelFuture() {
 		return future;
 	}
@@ -62,30 +69,42 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 
 		session = createSession(con);
 		
-		session.addEventListener(new ChannelEventAdapter() {
-
-			@Override
-			public void onChannelClose(Channel channel) {
-				onCloseSession(session);
-			}
-			
-		});
-		
 		con.getConnectionProtocol().openChannel(session);
 		if(!session.getOpenFuture().waitFor(timeout).isSuccess()) {
 			throw new IllegalStateException("Could not open session channel");
 		}
 		
 		setupSession(session);
-		onOpenSession(session);
 	
+
+		try {
+			if(Log.isDebugEnabled()) {
+				Log.debug("Starting session task");
+			}
+			onOpenSession(session);
+		} catch(Throwable ex) {
+			this.lastError = ex;
+		}
+	
+		if(Log.isDebugEnabled()) {
+			Log.debug("Closing session task");
+		}
+		
+		session.close();
+		onCloseSession(session);
+		
+		done(Objects.isNull(lastError));
+		
+		if(Log.isDebugEnabled()) {
+			Log.debug("Session task is done");
+		}
 	}
 	
 	protected abstract T createSession(Connection<SshClientContext> con);
 	
 	protected abstract void setupSession(T session);
 	
-	protected abstract void onOpenSession(T session);
+	protected abstract void onOpenSession(T session) throws IOException;
 	
 	protected abstract void onCloseSession(T session);
 

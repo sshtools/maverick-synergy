@@ -28,6 +28,7 @@ import java.util.Objects;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import com.sshtools.common.files.AbstractFileFactory;
@@ -1264,7 +1265,13 @@ public abstract class SshContext extends ProtocolContext implements
 
 	public ExecutorService getExecutorService() {
 		if (executor == null) {
-			ExecutorService executor = Executors.newCachedThreadPool();
+			ExecutorService executor = Executors.newCachedThreadPool(new ThreadFactory() {
+	            public Thread newThread(Runnable r) {
+	                Thread t = Executors.defaultThreadFactory().newThread(r);
+	                t.setDaemon(true);
+	                return t;
+	            }
+	        });
 			if(!Objects.isNull(daemon)) {
 				daemon.addShutdownHook(new Runnable() {
 					public void run() {

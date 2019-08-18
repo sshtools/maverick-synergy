@@ -93,6 +93,7 @@ public class SelectorThread extends Thread {
 		openSelector();
 
 		setName(impl.getName() + "-" + id);
+		setDaemon(true);
 
 	}
 	

@@ -192,7 +192,7 @@ public class DiffieHellmanGroupExchange extends SshKeyExchangeClient
 						maxSupportedSize = p.bitLength();
 						
 					} catch (Exception e) {
-						e.printStackTrace();
+						Log.warn("DH prime size %d will not be supported because %s", p.bitLength(), e.getMessage());
 						continue;
 					}
 			  	 }

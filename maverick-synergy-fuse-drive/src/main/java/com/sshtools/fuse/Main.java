@@ -33,9 +33,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
-import com.sshtools.client.KeyboardInteractiveAuthenticator;
 import com.sshtools.client.PasswordAuthenticator;
-import com.sshtools.client.PasswordOverKeyboardInteractiveCallback;
 import com.sshtools.client.PublicKeyAuthenticator;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.sftp.SftpClientTask;

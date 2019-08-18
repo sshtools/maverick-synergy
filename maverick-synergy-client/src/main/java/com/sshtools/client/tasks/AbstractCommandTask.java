@@ -28,7 +28,7 @@ import com.sshtools.common.ssh.Connection;
  */
 public abstract class AbstractCommandTask extends AbstractSessionTask<SessionChannelNG> {
 
-	static final int EXIT_CODE_NOT_RECEIVED = Integer.MIN_VALUE;
+	public static final int EXIT_CODE_NOT_RECEIVED = Integer.MIN_VALUE;
 	
 	String command;
 	String charset = "UTF-8";
@@ -64,6 +64,15 @@ public abstract class AbstractCommandTask extends AbstractSessionTask<SessionCha
 				con.getContext().getSessionMaxWindowSize(),
 				con.getContext().getSessionMinWindowSize(),
 				future);
+	}
+	
+	@Override
+	protected void onCloseSession(SessionChannelNG session) {
+		exitCode = session.getExitCode();
+	}
+
+	public int getExitCode() {
+		return exitCode;
 	}
 	
 	@Override

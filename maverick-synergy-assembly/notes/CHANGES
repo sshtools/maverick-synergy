@@ -3,7 +3,10 @@ Maverick Synergy 3.0.0 - TBC
 Features
     o Major refactor to support more shared code with the Maverick Legacy APIs.
     o Removed all dependencies from core maverick-synergy-client and maverick-synergy-server modules to enable clearer choice on third-party dependencies.
-    
+
+Bug Fixes
+    o Selector threads and executor service threads have now been marked as daemon threads.
+        
 =================
 =  HISTORY      =
 =================

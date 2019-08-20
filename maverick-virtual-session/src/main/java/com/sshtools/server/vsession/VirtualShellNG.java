@@ -14,7 +14,7 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+ * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
 /* HEADER */
 package com.sshtools.server.vsession;
@@ -141,11 +141,11 @@ public class VirtualShellNG extends SessionChannelNG {
 				
 			} catch (Exception e) {
 			}
-//			if(keyBindingsStream==null) {
-//				keyBindingsStream = getClass().getResource("/jline/vt100.properties").openStream();
-//			}
+			if(keyBindingsStream==null) {
+				keyBindingsStream = getClass().getResource("/jline/vt100.properties").openStream();
+			}
 			shell.startShell(getInputStream(), console = createConsole());
-//			this.shell.setKeyBindings(keyBindingsStream);
+			this.shell.setKeyBindings(keyBindingsStream);
 			return true;
 		} catch (Throwable t) {
 			Log.warn("Failed to start shell.", t);
@@ -155,13 +155,13 @@ public class VirtualShellNG extends SessionChannelNG {
 	
 	private VirtualConsole createConsole() throws IOException {
 		
-//		Terminal terminal = TerminalBuilder.builder()
-//		        .system(false)
-//		        .streams(getInputStream(), getOutputStream())
-//		        .build();
-
         Pty pty = load(JnaSupport.class).open(null, null);
-		Terminal terminal = new PosixChannelPtyTerminal("Maverick Terminal", "ansi", pty, this, Charset.forName("UTF-8"));
+
+        Terminal terminal = new PosixChannelPtyTerminal("Maverick Terminal", 
+				env.getOrDefault("TERM", "ansi").toString(), 
+				pty,
+				this,
+				Charset.forName("UTF-8"));
 		
 		return new VirtualConsole(this, env, terminal, new LineReaderImpl(terminal), shell);
 	}

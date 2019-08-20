@@ -14,7 +14,7 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+ * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
 package com.sshtools.server.vsession;
 
@@ -236,7 +236,7 @@ public class RootShell extends Msh {
 
 //	protected void setKeyBindings(InputStream keyBindings) throws IOException {
 //		if (keyBindings == null) {
-//			keyBindings = console.getTerminal()
+//			keyBindings = console.getTerminal().
 //					.getDefaultBindings();
 //		}
 //		console.getConsole().setKeyBindings(keyBindings);

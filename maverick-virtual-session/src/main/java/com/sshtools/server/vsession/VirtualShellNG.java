@@ -127,25 +127,8 @@ public class VirtualShellNG extends SessionChannelNG {
 		}
 		
 		try {
-			shell = commandFactory.createShell(con);
-			
-			// Look for a keybindings for the current terminal
-			InputStream keyBindingsStream = null;
-			try {
-				String type = (String) env.getOrDefault("TERM", "dumb");
-				if(type.startsWith("xterm")) {
-					type = "xterm";
-				}
-				String keyBindingsResource = "/jline/" + type + ".properties";
-				keyBindingsStream = getClass().getResource(keyBindingsResource).openStream();
-				
-			} catch (Exception e) {
-			}
-			if(keyBindingsStream==null) {
-				keyBindingsStream = getClass().getResource("/jline/vt100.properties").openStream();
-			}
+			shell = commandFactory.createShell(con);			
 			shell.startShell(getInputStream(), console = createConsole());
-			this.shell.setKeyBindings(keyBindingsStream);
 			return true;
 		} catch (Throwable t) {
 			Log.warn("Failed to start shell.", t);

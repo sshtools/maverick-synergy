@@ -102,7 +102,7 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 	}
 	
 	public void start() throws IOException {
-		start(true);
+		start(false);
 	}
 	
 	public void start(boolean requireListeningInterface) throws IOException {

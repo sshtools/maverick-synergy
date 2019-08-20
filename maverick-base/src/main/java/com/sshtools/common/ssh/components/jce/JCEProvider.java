@@ -285,7 +285,8 @@ public class JCEProvider implements JCEAlgorithms {
 		try {
 			return JCEProvider.getProviderForAlgorithm(JCEAlgorithms.JCE_DH_KEY_AGREEMENT)==null ? 
 			  		  KeyPairGenerator.getInstance(JCEAlgorithms.JCE_DH) : 
-			  	      KeyPairGenerator.getInstance(JCEAlgorithms.JCE_DH, JCEProvider.getProviderForAlgorithm(JCEAlgorithms.JCE_DH_KEY_AGREEMENT));
+			  	      KeyPairGenerator.getInstance(JCEAlgorithms.JCE_DH, 
+			  	    		  JCEProvider.getProviderForAlgorithm(JCEAlgorithms.JCE_DH_KEY_AGREEMENT));
 		} catch (NoSuchAlgorithmException e) {
 			return KeyPairGenerator.getInstance(JCEAlgorithms.JCE_DH);
 		}

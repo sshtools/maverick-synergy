@@ -576,13 +576,13 @@ public class SshServerContext extends SshContext {
 		}
 
 		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanEcdhNistp521.DIFFIE_HELLMAN_ECDH_NISTP_521, DiffieHellmanEcdhNistp256.class)) {
-			keyExchanges.add(DiffieHellmanEcdhNistp521.DIFFIE_HELLMAN_ECDH_NISTP_521, DiffieHellmanEcdhNistp256.class);
+				DiffieHellmanEcdhNistp521.DIFFIE_HELLMAN_ECDH_NISTP_521, DiffieHellmanEcdhNistp521.class)) {
+			keyExchanges.add(DiffieHellmanEcdhNistp521.DIFFIE_HELLMAN_ECDH_NISTP_521, DiffieHellmanEcdhNistp521.class);
 		}
 		
 		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanEcdhNistp384.DIFFIE_HELLMAN_ECDH_NISTP_384, DiffieHellmanEcdhNistp256.class)) {
-			keyExchanges.add(DiffieHellmanEcdhNistp384.DIFFIE_HELLMAN_ECDH_NISTP_384, DiffieHellmanEcdhNistp256.class);
+				DiffieHellmanEcdhNistp384.DIFFIE_HELLMAN_ECDH_NISTP_384, DiffieHellmanEcdhNistp384.class)) {
+			keyExchanges.add(DiffieHellmanEcdhNistp384.DIFFIE_HELLMAN_ECDH_NISTP_384, DiffieHellmanEcdhNistp384.class);
 		}
 		
 		if(testServerKeyExchangeAlgorithm(

@@ -1582,6 +1582,17 @@ public abstract class TransportProtocol<T extends SshContext>
 							remoteSCCompressions),
 					localCompressionSC);
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Negotiated Key Exchange: %s", keyExchangeAlgorithm);
+				Log.debug("Negotiated Public Key: %s", publicKey);
+				Log.debug("Negotiated Cipher CS: %s", cipherCS);
+				Log.debug("Negotiated Cipher SC: %s", cipherSC);
+				Log.debug("Negotiated Mac CS: %s", macCS);
+				Log.debug("Negotiated Mac SC: %s", macSC);
+				Log.debug("Negotiated Compression CS: %s", compressionCS);
+				Log.debug("Negotiated Compression SC: %s", compressionSC);
+			}
+			
 			keyExchangeInitialized();
 
 		} catch (SshException ex) {

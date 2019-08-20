@@ -42,6 +42,7 @@ import com.sshtools.common.ssh.components.SshKeyExchange;
 import com.sshtools.common.ssh.components.SshPrivateKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.jce.ECUtils;
+import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
@@ -166,7 +167,7 @@ public class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 			
 			ECPublicKey ec = (ECPublicKey) keyPair.getPublic();
 			
-			Q_C = ECUtils.toByteArray(ec.getW(), ec.getParams().getCurve());
+			Q_S = ECUtils.toByteArray(ec.getW(), ec.getParams().getCurve());
 
 			keyAgreement.doPhase(ECUtils.decodeKey(Q_C, curve), true);
 
@@ -238,10 +239,16 @@ public class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 	}
 	
 	private void initCrypto() throws InvalidKeyException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, SshException {
-		ComponentManager.getDefaultInstance().supportedDigests().getInstance(getHashAlgorithm());		
+		ComponentManager.getInstance().supportedDigests().getInstance(getHashAlgorithm());
 		
-		keyGen = JCEProvider.getDHKeyGenerator();
-		keyAgreement = JCEProvider.getDHKeyAgreement();
+		keyGen = JCEProvider.getProviderForAlgorithm(JCEProvider.getECDSAAlgorithmName())==null ? 
+				KeyPairGenerator.getInstance(JCEProvider.getECDSAAlgorithmName()) : 
+					KeyPairGenerator.getInstance(JCEProvider.getECDSAAlgorithmName(), 
+							JCEProvider.getProviderForAlgorithm(JCEProvider.getECDSAAlgorithmName()));
+		keyAgreement = JCEProvider.getProviderForAlgorithm(JCEAlgorithms.JCE_ECDH)==null ? 
+				KeyAgreement.getInstance(JCEAlgorithms.JCE_ECDH) : 
+					KeyAgreement.getInstance(JCEAlgorithms.JCE_ECDH, 
+							JCEProvider.getProviderForAlgorithm(JCEAlgorithms.JCE_ECDH));
 
 		
 		ECGenParameterSpec namedSpec = new ECGenParameterSpec(curve);

@@ -14,7 +14,7 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+ * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
 //     _           _             _   _           
 //    (_) __ _  __| | __ _ _ __ | |_(_)_   _____ 

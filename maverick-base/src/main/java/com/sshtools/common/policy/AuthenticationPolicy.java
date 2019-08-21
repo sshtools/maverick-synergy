@@ -33,6 +33,7 @@ public class AuthenticationPolicy extends Permissions {
 	boolean publicKeyVerificationIsFailedAuth = false;
 	RequiredAuthenticationStrategy requiredAuthenticationStrategy = RequiredAuthenticationStrategy.ONCE_PER_CONNECTION;
 	List<String> required = new ArrayList<String>();
+	protected int maxAuthentications = 10;
 	
 	/**
 	 * Get the authentication banner to display to connecting clients.
@@ -105,5 +106,25 @@ public class AuthenticationPolicy extends Permissions {
 	
 	public Collection<String> getRequiredMechanisms() {
 		return Collections.unmodifiableCollection(required);
+	}
+	
+	/**
+	 * Get the maximum number of failed authentications allowed for each
+	 * connection.
+	 * 
+	 * @return int
+	 */
+	public int getMaxAuthentications() {
+		return maxAuthentications;
+	}
+
+	/**
+	 * Set the maximum number of failed authentications allowed for each
+	 * connection.
+	 * 
+	 * @param maxAuthentications
+	 */
+	public void setMaxAuthentications(int maxAuthentications) {
+		this.maxAuthentications = maxAuthentications;
 	}
 }

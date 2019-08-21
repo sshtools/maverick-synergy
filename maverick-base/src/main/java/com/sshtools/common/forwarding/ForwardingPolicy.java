@@ -36,6 +36,10 @@ public class ForwardingPolicy extends Permissions {
 	
 	List<String> permit = new ArrayList<String>();
 	
+	private int forwardingMaxPacketSize = 65536;
+	private int forwardingMaxWindowSize = 65536 * 5;
+	private int forwardingMinWindowSize = 32768;
+	
 	public ForwardingPolicy() {
 	}
 	
@@ -140,4 +144,30 @@ public class ForwardingPolicy extends Permissions {
 	public void denyForwarding() {
 		remove(ALLOW_FORWARDING);
 	}
+
+	public int getForwardingMaxPacketSize() {
+		return forwardingMaxPacketSize;
+	}
+
+	public void setForwardingMaxPacketSize(int forwardingMaxPacketSize) {
+		this.forwardingMaxPacketSize = forwardingMaxPacketSize;
+	}
+
+	public int getForwardingMaxWindowSize() {
+		return forwardingMaxWindowSize;
+	}
+
+	public void setForwardingMaxWindowSize(int forwardingMaxWindowSize) {
+		this.forwardingMaxWindowSize = forwardingMaxWindowSize;
+	}
+
+	public int getForwardingMinWindowSize() {
+		return forwardingMinWindowSize;
+	}
+
+	public void setForwardingMinWindowSize(int forwardingMinWindowSize) {
+		this.forwardingMinWindowSize = forwardingMinWindowSize;
+	}
+	
+	
 }

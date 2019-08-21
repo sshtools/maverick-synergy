@@ -28,6 +28,9 @@ public class ShellPolicy extends Permissions {
 	public static final int SUBSYSTEM						  = 0x00004000;
 	
 	int sessionTimeoutSeconds = 0;
+	protected int sessionMaxPacketSize = 65536;
+	protected int sessionMaxWindowSize = 1024000;
+	protected int sessionMinWindowSize = 131072;
 	
 	public ShellPolicy() {
 		permissions = SHELL
@@ -61,4 +64,38 @@ public class ShellPolicy extends Permissions {
 	public void setSessionTimeout(int sessionTimeoutSeconds) {
 		this.sessionTimeoutSeconds = sessionTimeoutSeconds;
 	}
+
+	public int getSessionTimeoutSeconds() {
+		return sessionTimeoutSeconds;
+	}
+
+	public void setSessionTimeoutSeconds(int sessionTimeoutSeconds) {
+		this.sessionTimeoutSeconds = sessionTimeoutSeconds;
+	}
+
+	public int getSessionMaxPacketSize() {
+		return sessionMaxPacketSize;
+	}
+
+	public void setSessionMaxPacketSize(int sessionMaxPacketSize) {
+		this.sessionMaxPacketSize = sessionMaxPacketSize;
+	}
+
+	public int getSessionMaxWindowSize() {
+		return sessionMaxWindowSize;
+	}
+
+	public void setSessionMaxWindowSize(int sessionMaxWindowSize) {
+		this.sessionMaxWindowSize = sessionMaxWindowSize;
+	}
+
+	public int getSessionMinWindowSize() {
+		return sessionMinWindowSize;
+	}
+
+	public void setSessionMinWindowSize(int sessionMinWindowSize) {
+		this.sessionMinWindowSize = sessionMinWindowSize;
+	}
+	
+	
 }

@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Locale;
 
-import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.logger.Log.Level;
 
 public interface SshConnection {
@@ -54,8 +53,6 @@ public interface SshConnection {
 
 	boolean isAuthenticated();
 
-	AbstractFileFactory<?> getFileFactory();
-
 	Context getContext();
 
 	void executeTask(Runnable r);
@@ -77,5 +74,7 @@ public interface SshConnection {
 	void startLogging() throws IOException;
 	
 	void startLogging(Level trace) throws IOException;
+
+	void disconnect();
 
 }

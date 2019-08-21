@@ -43,6 +43,7 @@ import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.files.FileUtils;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.UnsignedInteger32;
@@ -102,7 +103,7 @@ public final class AbstractFileSystem {
 	final String protocolInUse;
 
 	public AbstractFileSystem(SshConnection con, String protocolInUse) {
-		this.fileFactory = con.getFileFactory();
+		this.fileFactory = con.getContext().getPolicy(FileSystemPolicy.class).getFileFactory();
 		this.con = con;
 		this.protocolInUse = protocolInUse;
 

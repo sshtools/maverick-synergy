@@ -26,10 +26,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.logger.Log.Level;
-import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.Channel;
+import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.Context;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshConnectionManager;
@@ -122,12 +121,6 @@ public class MockConnection implements SshConnection {
 	}
 
 	@Override
-	public AbstractFileFactory<?> getFileFactory() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public Context getContext() {
 		// TODO Auto-generated method stub
 		return null;
@@ -185,6 +178,11 @@ public class MockConnection implements SshConnection {
 	@Override
 	public void startLogging(Level trace) throws IOException {
 		
+	}
+
+	@Override
+	public void disconnect() {
+		disconnect("By Application");
 	}
 	
 

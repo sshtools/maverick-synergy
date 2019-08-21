@@ -34,6 +34,7 @@ import java.util.List;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.publickey.SshPublicKeyFile;
 import com.sshtools.common.publickey.SshPublicKeyFileFactory;
 import com.sshtools.common.ssh.SshConnection;
@@ -226,7 +227,7 @@ public class AuthorizedKeysPublicKeyAuthenticationProvider extends
 
 	protected AbstractFile getFile(SshConnection connection)
 			throws PermissionDeniedException, IOException {
-		AbstractFileFactory<?> s = connection.getFileFactory();
+		AbstractFileFactory<?> s = connection.getContext().getPolicy(FileSystemPolicy.class).getFileFactory();
 		AbstractFile file = authorizedKeysFile.startsWith("/") ? s.getFile(
 				authorizedKeysFile, connection) : s.getDefaultPath(connection)
 				.resolveFile(authorizedKeysFile);

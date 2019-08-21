@@ -27,6 +27,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
 import com.sshtools.common.files.AbstractFile;
+import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
 import com.sshtools.server.vsession.ShellCommandWithOptions;
 import com.sshtools.server.vsession.VirtualConsole;
@@ -36,20 +37,19 @@ import com.sshtools.server.vsession.VirtualConsole;
  * @author lee
  *
  */
-public class Alias<T extends AbstractFile> extends ShellCommandWithOptions {
+public class Alias<T extends AbstractFile> extends ShellCommand {
 	public static Map<String, Map<String, String>> userlist = new HashMap<String, Map<String, String>>();
 	public static Map<String, String> predefined = new HashMap<String, String>();
 
 	public Alias() {
 		super("alias", ShellCommand.SUBSYSTEM_SHELL, 
 				"Usage: alias [-p] [name=[value] ...]",
-				"Set an alias to abbreviate long commands.",
-				new Option("p", false, "Print current values"));
+				"Set an alias to abbreviate long commands.");
 		setBuiltIn(true);
 	}
 
-	public void run(CommandLine cli, VirtualConsole process) throws IOException {
-		String username = process.getSessionChannel().getConnection().getUsername();
+	public void run(String[] args, VirtualConsole console) throws IOException {
+		String username = console.getConnection().getUsername();
 
 		Map<String, String> aliaslist;
 		if (!userlist.containsKey(username)) {
@@ -58,9 +58,9 @@ public class Alias<T extends AbstractFile> extends ShellCommandWithOptions {
 		aliaslist = userlist.get(username);
 		
 		
-		if (!cli.hasOption("p") && cli.getArgList().size() > 1) {
+		if (!CliHelper.hasShortOption(args, 'p') && args.length > 1) {
 			boolean skip = true;
-			for(String arg : cli.getArgList()) {
+			for(String arg : args) {
 				if(skip) {
 					skip = false;
 					continue;
@@ -71,7 +71,7 @@ public class Alias<T extends AbstractFile> extends ShellCommandWithOptions {
 					String value = arg.substring(idx+1);
 					
 					if(name.equalsIgnoreCase("alias") || name.equalsIgnoreCase("unalias")) {
-						process.println("alias: cannot use '" + name + "' as alias");
+						console.println("alias: cannot use '" + name + "' as alias");
 					} else {
 						aliaslist.put(name, value);
 					}
@@ -79,9 +79,9 @@ public class Alias<T extends AbstractFile> extends ShellCommandWithOptions {
 					
 					String value = aliaslist.get(arg);
 					if(value==null) {
-						process.println("alias: " + arg + ": not found");
+						console.println("alias: " + arg + ": not found");
 					} else {
-						process.println("alias " + arg + "='"+ value + "'");
+						console.println("alias " + arg + "='"+ value + "'");
 					}
 				}
 			}
@@ -94,11 +94,11 @@ public class Alias<T extends AbstractFile> extends ShellCommandWithOptions {
 					.iterator();
 				while (it.hasNext()) {
 					entry = it.next();
-					process.println("alias " + entry.getKey() + "='"
+					console.println("alias " + entry.getKey() + "='"
 						+ entry.getValue() + "'");
 				}
 			} else {
-				process.println("No aliases set");
+				console.println("No aliases set");
 			}
 		} 
 	}
@@ -126,23 +126,4 @@ public class Alias<T extends AbstractFile> extends ShellCommandWithOptions {
 		}
 		return null;
 	}
-
-
-
-//	public List<String> getCollection(int i, VirtualConsole process) throws Exception {
-//
-//		List<String> l = null;
-//
-//		if (i == 2) {
-//			Set<String> s = process.getMsh().getCommandFactory().getSupportedCommands();
-//			String[] st = new String[s.size()];
-//
-//			process.getMsh().getCommandFactory().getSupportedCommands()
-//				.toArray(st);
-//			l = Arrays.asList(st);
-//		}
-//
-//		return l;
-//	}
-
 }

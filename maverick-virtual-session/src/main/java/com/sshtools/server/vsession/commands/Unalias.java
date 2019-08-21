@@ -22,11 +22,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-
+import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
-import com.sshtools.server.vsession.ShellCommandWithOptions;
 import com.sshtools.server.vsession.VirtualConsole;
 
 /**
@@ -34,17 +31,16 @@ import com.sshtools.server.vsession.VirtualConsole;
  * @author lee
  *
  */
-public class Unalias extends ShellCommandWithOptions {
+public class Unalias extends ShellCommand {
 	
 
 	public Unalias() {
 		super("unalias", ShellCommand.SUBSYSTEM_SHELL, "Usage: unalias [-a] name [name ...]", 
-				"Unset an alias that has previously been set.",
-				new Option("a", false, "Print current values"));
+				"Unset an alias that has previously been set.");
 		setBuiltIn(true);
 	}
 
-	public void run(CommandLine cli, VirtualConsole console) throws IOException {
+	public void run(String[] args, VirtualConsole console) throws IOException {
 		String username = console.getConnection().getUsername();
 
 
@@ -54,8 +50,7 @@ public class Unalias extends ShellCommandWithOptions {
 		}
 		aliaslist = Alias.userlist.get(username);
 		
-		String[] args = cli.getArgs();
-		if (!cli.hasOption('a') && args.length > 1) {
+		if (!CliHelper.hasShortOption(args, 'a') && args.length > 1) {
 			boolean skip = true;
 			for(String arg : args) {
 				if(skip) {

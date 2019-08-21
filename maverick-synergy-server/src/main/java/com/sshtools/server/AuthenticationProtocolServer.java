@@ -460,7 +460,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 				failed++;
 			}
 
-			if (failed >= transport.getSshContext().getMaxAuthentications()) {
+			if (failed >= transport.getSshContext().getPolicy(AuthenticationPolicy.class).getMaxAuthentications()) {
 				transport.disconnect(TransportProtocol.BY_APPLICATION,
 						"Too many bad authentication attempts!");
 				return;
@@ -569,7 +569,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	}
 
 	public boolean canContinue() {
-		return failed <= getContext().getMaxAuthentications();
+		return failed <= getContext().getPolicy(AuthenticationPolicy.class).getMaxAuthentications();
 	}
 	
 	public void markFailed() {

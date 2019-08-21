@@ -39,6 +39,7 @@ import com.sshtools.common.nio.ProtocolContextFactory;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.nio.SshEngineContext;
 import com.sshtools.common.nio.SshEngineListenerAdapter;
+import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyPairGenerator;
 import com.sshtools.common.publickey.SshKeyUtils;
@@ -231,7 +232,7 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 	}
 	
 	protected void configureFilesystem(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
-		sshContext.setFileFactory(fileFactory);
+		sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(fileFactory);
 		if(enableScp) {
 			sshContext.addCommand("scp", ScpCommand.class);
 		}
@@ -251,7 +252,7 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 	}
 	
 	protected void configureForwarding(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
-		sshContext.setForwardingPolicy(forwardingPolicy);
+		sshContext.setPolicy(ForwardingPolicy.class, forwardingPolicy);
 	}
 	
 	protected void configure(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {

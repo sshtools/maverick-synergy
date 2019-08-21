@@ -28,10 +28,10 @@ import com.sshtools.common.ssh.SshIOException;
 
 public class ShellProcess {
 
-	Shell shell;
+	ExpectShell shell;
 	ShellInputStream in;
 	BufferedInputStream bin;
-	ShellProcess(Shell shell, ShellInputStream in) {
+	ShellProcess(ExpectShell shell, ShellInputStream in) {
 		this.shell = shell;
 		this.in = in;
 		this.bin = new BufferedInputStream(in);
@@ -74,12 +74,13 @@ public class ShellProcess {
 		return in.getCommandOutput();
 	}
 
-	public Shell getShell() {
+	public ExpectShell getShell() {
 		return shell;
 	}
 	
-	public void drain() throws IOException {
+	public ShellProcess drain() throws IOException {
 		while(in.read() > -1);
+		return this;
 	}
 
 

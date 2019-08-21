@@ -302,4 +302,9 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 		return disconnectFuture;
 	}
 
+	public boolean hasAuthenticators() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

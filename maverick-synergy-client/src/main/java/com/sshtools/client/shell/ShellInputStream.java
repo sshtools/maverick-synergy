@@ -35,15 +35,15 @@ class ShellInputStream extends InputStream {
 	private String cmd;
 	private StringBuffer commandOutput = new StringBuffer();
 	private boolean expectingEcho = true;
-	private int exitCode = Shell.EXIT_CODE_PROCESS_ACTIVE;
-	private Shell shell;
+	private int exitCode = ExpectShell.EXIT_CODE_PROCESS_ACTIVE;
+	private ExpectShell shell;
 	private BufferedInputStream sessionIn;
 	private boolean active = true;
 	private boolean matchPromptMarker;
 
 	private static boolean verboseDebug = Boolean.getBoolean("maverick.shell.verbose");
 	
-	ShellInputStream(Shell shell, String beginCommandMarker, String endCommandMarker, String cmd, boolean matchPromptMarker, String promptMarker) {
+	ShellInputStream(ExpectShell shell, String beginCommandMarker, String endCommandMarker, String cmd, boolean matchPromptMarker, String promptMarker) {
 		this.beginCommandMarker = beginCommandMarker;
 		this.endCommandMarker = endCommandMarker.getBytes();
 		this.matchPromptMarker = matchPromptMarker;
@@ -58,7 +58,7 @@ class ShellInputStream extends InputStream {
 	}
 	
 	public boolean isComplete() {
-		return exitCode==Shell.EXIT_CODE_PROCESS_ACTIVE;
+		return exitCode==ExpectShell.EXIT_CODE_PROCESS_ACTIVE;
 	}
 	
 	public boolean hasSucceeded() {
@@ -213,9 +213,9 @@ class ShellInputStream extends InputStream {
 		if(collectExitCode)
 			exitCode = collectExitCode();
 		else
-			exitCode = Shell.EXIT_CODE_UNKNOWN;
+			exitCode = ExpectShell.EXIT_CODE_UNKNOWN;
 		
-		shell.state = Shell.WAITING_FOR_COMMAND;
+		shell.state = ExpectShell.WAITING_FOR_COMMAND;
 		active = false;
 	}
 	
@@ -244,7 +244,7 @@ class ShellInputStream extends InputStream {
 		} catch (NumberFormatException e) {
 			if(Log.isDebugEnabled())
 				Log.debug(cmd + ": Failed to get exit code: " + tmp.toString().trim());
-			exitCode = Shell.EXIT_CODE_UNKNOWN;
+			exitCode = ExpectShell.EXIT_CODE_UNKNOWN;
 		}
 		return exitCode;
 		

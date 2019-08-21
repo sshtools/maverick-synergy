@@ -35,6 +35,10 @@ public abstract class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		super(ssh);
 	}
 
+	protected void beforeStartShell(SessionChannelNG session) {
+		session.allocatePseudoTerminal("dumb", 1000, 99);
+	}
+	
 	@Override
 	protected void onCloseSession(SessionChannelNG session) {
 	}

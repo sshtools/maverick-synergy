@@ -103,6 +103,10 @@ public class SshClientContext extends SshContext {
 	public SshClientContext(SshEngine daemon) throws IOException {
 		this(daemon, ComponentManager.getDefaultInstance());
 	}
+	
+	public SshClientContext() throws IOException {
+		this(SshEngine.getDefaultInstance());
+	}
 
 	public ProtocolEngine createEngine(ConnectRequestFuture connectFuture) throws IOException {
 		return transport = new TransportProtocolClient(this, connectFuture);
@@ -116,8 +120,9 @@ public class SshClientContext extends SshContext {
 	 * Set the username for this connection.
 	 * @param username
 	 */
-	public void setUsername(String username) {
+	public SshClientContext setUsername(String username) {
 		this.username = username;
+		return this;
 	}
 	
 	/**
@@ -128,8 +133,9 @@ public class SshClientContext extends SshContext {
 		return username;
 	}
 
-	public void addStateListener(ClientStateListener stateListener) {
+	public SshClientContext addStateListener(ClientStateListener stateListener) {
 		this.stateListeners.add(stateListener);
+		return this;
 	}
 
 	public Collection<ClientStateListener> getStateListeners() {
@@ -141,8 +147,9 @@ public class SshClientContext extends SshContext {
 		return forwardingManager == null ? defaultForwardingManager : forwardingManager;
 	}
 	
-	public void setForwardingManager(ForwardingManager<SshClientContext> forwardingManager) {
+	public SshClientContext setForwardingManager(ForwardingManager<SshClientContext> forwardingManager) {
 		this.forwardingManager = forwardingManager;
+		return this;
 	}
 	
 	public void keysExchanged(boolean first) {
@@ -269,13 +276,15 @@ public class SshClientContext extends SshContext {
 		return connectionManager == null ? defaultConnectionManager : connectionManager;
 	}
 
-	public void setConnectionManager(
+	public SshClientContext setConnectionManager(
 			ConnectionManager<SshClientContext> connectionManager) {
 		this.connectionManager = connectionManager;
+		return this;
 	}
 
-	public void addAuthenticator(ClientAuthenticator auth) {
+	public SshClientContext addAuthenticator(ClientAuthenticator auth) {
 		authenticators.add(auth);
+		return this;
 	}
 
 	public List<ClientAuthenticator> getAuthenticators() {
@@ -286,16 +295,18 @@ public class SshClientContext extends SshContext {
 		return bannerDisplay;
 	}
 
-	public void setBannerDisplay(BannerDisplay bannerDisplay) {
+	public SshClientContext setBannerDisplay(BannerDisplay bannerDisplay) {
 		this.bannerDisplay = bannerDisplay;
+		return this;
 	}
 
 	public int getSubsystemCacheSize() {
 		return subsystemCacheSize;
 	}
 	
-	public void setSubsystemCacheSize(int subsystemCacheSize) {
+	public SshClientContext setSubsystemCacheSize(int subsystemCacheSize) {
 		this.subsystemCacheSize = subsystemCacheSize;
+		return this;
 	}
 
 	@Override
@@ -308,10 +319,11 @@ public class SshClientContext extends SshContext {
 		return daemon.getContext();
 	}
 
-	public void addGlobalRequestHandler(GlobalRequestHandler<SshClientContext> handler) {
+	public SshClientContext addGlobalRequestHandler(GlobalRequestHandler<SshClientContext> handler) {
 		for (int i = 0; i < handler.supportedRequests().length; i++) {
 			globalRequestHandlers.put(handler.supportedRequests()[i], handler);
 		}
+		return this;
 	}
 
 	@Override
@@ -328,8 +340,9 @@ public class SshClientContext extends SshContext {
 		return hkv;
 	}
 
-	public void setHostKeyVerification(HostKeyVerification  hkv) {
+	public SshClientContext setHostKeyVerification(HostKeyVerification  hkv) {
 		this.hkv = hkv;
+		return this;
 	}
 
 	public AbstractRequestFuture authenticate(Connection<?> con, PasswordAuthenticator authenticator) throws IOException {

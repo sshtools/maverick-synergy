@@ -23,9 +23,11 @@ import java.util.Objects;
 
 import com.sshtools.client.AbstractSessionChannel;
 import com.sshtools.client.SshClient;
+import com.sshtools.client.shell.ShellTimeoutException;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.ssh.SshException;
 
 /**
  * An abstract task for using the SSH session
@@ -90,7 +92,7 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 		}
 	
 		if(Log.isDebugEnabled()) {
-			Log.debug("Closing session task");
+			Log.debug("Ending session task");
 		}
 		
 		session.close();
@@ -99,7 +101,7 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 		done(Objects.isNull(lastError));
 		
 		if(Log.isDebugEnabled()) {
-			Log.debug("Session task is done");
+			Log.debug("Session task is done success=%s", String.valueOf(Objects.isNull(lastError)));
 		}
 	}
 	
@@ -107,7 +109,7 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 	
 	protected abstract void setupSession(T session);
 	
-	protected abstract void onOpenSession(T session) throws IOException;
+	protected abstract void onOpenSession(T session) throws IOException, SshException, ShellTimeoutException;
 	
 	protected abstract void onCloseSession(T session);
 

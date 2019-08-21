@@ -29,13 +29,13 @@ import com.sshtools.common.ssh.SshIOException;
 
 public class ShellController implements ShellReader, ShellWriter {
 
-	protected Shell shell;
+	protected ExpectShell shell;
 	protected ShellMatcher matcher = null;
 	protected int readlimit = 32768;
 	protected InputStream in;
 	
 	
-	ShellController(Shell shell, ShellMatcher matcher, InputStream in) {
+	ShellController(ExpectShell shell, ShellMatcher matcher, InputStream in) {
 		this.shell = shell;
 		this.matcher = matcher;
 		this.in = in;

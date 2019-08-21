@@ -23,7 +23,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -33,7 +32,6 @@ import com.sshtools.client.tasks.Task;
 import com.sshtools.client.tasks.UploadFileTask;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.nio.ConnectRequestFuture;
-import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyUtils;
@@ -47,13 +45,9 @@ public class SshClient implements Closeable {
 	
 	Connection<SshClientContext> con;
 	SshClientContext sshContext;
-	SshEngine engine;
 	
-	public SshClient(String hostname, int port, String username, char[] password) throws IOException, SshException {
-		engine = SshEngine.getDefaultInstance();
-		sshContext = createContext(username);
-		sshContext.addAuthenticator(new PasswordAuthenticator(password));
-		doConnect(hostname, port, username, sshContext);
+	public SshClient(String hostname, int port, String username, char[] password) throws IOException, SshException, InvalidPassphraseException {
+		this(hostname, port, username, new SshClientContext(), password);
 	}
 	
 	public SshClient(String hostname, int port, String username, File key) throws IOException, SshException, InvalidPassphraseException {
@@ -65,15 +59,32 @@ public class SshClient implements Closeable {
 	}
 	
 	public SshClient(String hostname, int port, String username, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
-		engine = SshEngine.getDefaultInstance();
-		sshContext = createContext(username);
-		sshContext.addAuthenticator(new PublicKeyAuthenticator(identities));
-		doConnect(hostname, port, username, sshContext);
+		this(hostname, port, username, new SshClientContext(), identities);
+	}
+
+	public SshClient(String hostname, int port, String username, SshClientContext sshContext, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
+		this(hostname, port, username, sshContext, null, identities);
 	}
 	
 	public SshClient(String hostname, int port, String username, char[] password, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
-		engine = SshEngine.getDefaultInstance();
-		sshContext = createContext(username);
+		this(hostname, port, username, new SshClientContext(), password, identities);
+	}
+
+	public SshClient(String hostname, Integer port, String username, char[] password, File key, String passphrase) throws IOException, SshException, InvalidPassphraseException {
+		this(hostname, port, username, password, SshKeyUtils.getPrivateKey(key, passphrase));
+	}
+	
+	public SshClient(String hostname, Integer port, String username) throws IOException, SshException, InvalidPassphraseException {
+		this(hostname, port, username, new SshClientContext());
+	}
+
+	public SshClient(String hostname, Integer port, String username, SshClientContext sshContext) throws IOException, SshException, InvalidPassphraseException {
+		this(hostname, port, username, sshContext, (char[])null);
+	}
+	
+	public SshClient(String hostname, int port, String username, SshClientContext sshContext, char[] password, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
+		this.sshContext = sshContext;
+		sshContext.setUsername(username);
 		if(Objects.isNull(password) || password.length > 0) {
 			sshContext.addAuthenticator(new PasswordAuthenticator(password));
 		}
@@ -82,35 +93,21 @@ public class SshClient implements Closeable {
 		}
 		doConnect(hostname, port, username, sshContext);
 	}
-	
-	public SshClient(String hostname, Integer port, String username, char[] password, File key, String passphrase) throws IOException, SshException, InvalidPassphraseException {
-		this(hostname, port, username, password, SshKeyUtils.getPrivateKey(key, passphrase));
-	}
-	
-	@SuppressWarnings("unchecked")
-	public SshClient(String hostname, Integer port, String username) throws IOException, SshException {
-		engine = SshEngine.getDefaultInstance();
-		sshContext = createContext(username);
-		ConnectRequestFuture future = engine.connect(hostname, port, sshContext);
-		future.waitForever();
-		if(!future.isSuccess()) {
-			throw new IOException(String.format("Failed to connect to %s:%d", hostname, port));
-		}
-		con = (Connection<SshClientContext>) future.getConnection();
-	}
 
 	@SuppressWarnings("unchecked")
 	protected void doConnect(String hostname, int port, String username, SshClientContext sshContext) throws SshException, IOException {
-		ConnectRequestFuture future = engine.connect(hostname, port, sshContext);
+		ConnectRequestFuture future = sshContext.getEngine().connect(hostname, port, sshContext);
 		future.waitForever();
 		if(!future.isSuccess()) {
 			throw new IOException(String.format("Failed to connect to %s:%d", hostname, port));
 		}
 		con = (Connection<SshClientContext>) future.getConnection();
-		con.getAuthenticatedFuture().waitForever();
-		if(!con.getAuthenticatedFuture().isSuccess()) {
-			throw new IOException(
-					String.format("Failed to authenticate user %s at %s:%d", username, hostname, port));
+		if(!sshContext.getAuthenticators().isEmpty()) {
+			con.getAuthenticatedFuture().waitForever();
+			if(!con.getAuthenticatedFuture().isSuccess()) {
+				throw new IOException(
+						String.format("Failed to authenticate user %s at %s:%d", username, hostname, port));
+			}
 		}
 	}
 	
@@ -119,31 +116,6 @@ public class SshClient implements Closeable {
 			throw new IOException("Client is no longer connected!");
 		}
 		con.addTask(task);
-	}
-
-	protected SshClientContext createContext(String username) throws IOException {
-		SshClientContext sshContext = new SshClientContext(engine);
-		sshContext.setUsername(username);
-		sshContext.addStateListener(new ClientStateListener() {
-
-			@Override
-			public void connected(Connection<SshClientContext> con) {
-				
-			}
-
-			@Override
-			public void disconnected(Connection<SshClientContext> con) {
-
-			}
-
-			@Override
-			public void authenticate(AuthenticationProtocolClient auth, Connection<SshClientContext> con, Set<String> supportedAuths,
-					boolean moreRequired, List<ClientAuthenticator> authsToTry) {
-
-			}
-		});
-
-		return sshContext;
 	}
 
 	@Override

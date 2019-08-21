@@ -37,7 +37,7 @@ import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 
-public class Shell {
+public class ExpectShell {
 
 	/** Windows operating system **/
 	public static final int OS_WINDOWS = 1;
@@ -114,33 +114,31 @@ public class Shell {
 	AbstractSessionTask<SessionChannelNG> session;
 	String characterEncoding = "UTF-8";
 	
-	public Shell(AbstractSessionTask<SessionChannelNG> session) throws SshException, SshIOException,
-			ChannelOpenException, IOException, ShellTimeoutException {
+	public ExpectShell(AbstractSessionTask<SessionChannelNG> session) throws SshException, IOException, ShellTimeoutException {
 		this(session, null, 30000, "dumb", 1024, 80);
 	}
 
-	public Shell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger)
-			throws SshException, SshIOException, ChannelOpenException,
+	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger)
+			throws SshException,
 			IOException, ShellTimeoutException {
 		this(session, trigger, 30000, "dumb", 1024, 80);
 	}
 
-	public Shell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger, long startupTimeout)
-			throws SshException, SshIOException, ChannelOpenException,
+	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger, long startupTimeout)
+			throws SshException,
 			IOException, ShellTimeoutException {
 		this(session, trigger, startupTimeout, "dumb", 1024, 80);
 	}
 
-	public Shell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
-			long startupTimeout, String termtype) throws SshException,
-			SshIOException, ChannelOpenException, IOException,
+	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
+			long startupTimeout, String termtype) throws SshException, IOException,
 			ShellTimeoutException {
 		this(session, trigger, startupTimeout, termtype, 1024, 80);
 	}
 
-	public Shell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
+	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
 			long startupTimeout, String termtype, int cols, int rows)
-			throws SshException, SshIOException, ChannelOpenException,
+			throws SshException,
 			IOException, ShellTimeoutException {
 
 		this.startupTimeout = startupTimeout;
@@ -152,7 +150,7 @@ public class Shell {
 
 		closeHooks.add(new Runnable() {
 			public void run() {
-				Shell.this.session.close();
+				ExpectShell.this.session.close();
 			}
 		});
 		// Allow the shell to initialize before we start sending data
@@ -170,8 +168,8 @@ public class Shell {
 	}
 
 	
-	Shell(InputStream in, OutputStream out, String eol, String echoCmd,
-			String exitCodeVar, int osType, String osDescription, Shell parentShell)
+	ExpectShell(InputStream in, OutputStream out, String eol, String echoCmd,
+			String exitCodeVar, int osType, String osDescription, ExpectShell parentShell)
 			throws SshIOException, SshException, IOException,
 			ShellTimeoutException {
 		this.EOL = eol;
@@ -244,25 +242,25 @@ public class Shell {
 		return startupController;
 	}
 
-	public Shell su(String cmd, String password) throws SshIOException,
+	public ExpectShell su(String cmd, String password) throws SshIOException,
 			SshException, IOException, ShellTimeoutException {
 		return su(cmd, password, passwordPrompt, new ShellDefaultMatcher());
 	}
 
-	public Shell su(String cmd, String password, String promptExpression)
+	public ExpectShell su(String cmd, String password, String promptExpression)
 			throws SshException, SshIOException, IOException,
 			ShellTimeoutException {
 		return su(cmd, password, promptExpression, new ShellDefaultMatcher());
 	}
 
-	public Shell su(String cmd) throws SshException, SshIOException,
+	public ExpectShell su(String cmd) throws SshException, SshIOException,
 			IOException, ShellTimeoutException {
 		ShellProcess process = executeCommand(cmd, false, false);
-		return new Shell(process.getInputStream(), process.getOutputStream(),
+		return new ExpectShell(process.getInputStream(), process.getOutputStream(),
 				EOL, ECHO_COMMAND, EXIT_CODE_VARIABLE, osType, osDescription, this);
 	}
 
-	public Shell su(String cmd, String password, String promptExpression,
+	public ExpectShell su(String cmd, String password, String promptExpression,
 			ShellMatcher matcher) throws SshException, SshIOException,
 			IOException, ShellTimeoutException {
 		ShellProcess process = executeCommand(cmd, false, false);
@@ -286,7 +284,7 @@ public class Shell {
 		}
 
 		if (process.isActive()) {
-			return new Shell(process.getInputStream(),
+			return new ExpectShell(process.getInputStream(),
 					process.getOutputStream(), EOL, ECHO_COMMAND,
 					EXIT_CODE_VARIABLE, osType, osDescription, this);
 		} else {
@@ -486,6 +484,10 @@ public class Shell {
                         + "; echo \"" + endCommand + EXIT_CODE_VARIABLE + "\"" + EOL;
 			}
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Executing raw command: %s", echoCmd);
+			}
+			
 			sessionOut.write(echoCmd.getBytes(charset));
 
 			numCommandsExecuted++;
@@ -617,7 +619,7 @@ public class Shell {
 			this.detectSettings = detectSettings;
 			this.marker1 = marker1str.toCharArray();
 
-			startupController = new ShellController(Shell.this,
+			startupController = new ShellController(ExpectShell.this,
 					new ShellDefaultMatcher(), this);
 
 			// As we are attempting to detect settings we don't use an END

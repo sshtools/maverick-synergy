@@ -31,7 +31,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ConnectRequestFuture;
@@ -202,7 +201,7 @@ public abstract class SshContext extends ProtocolContext implements
 	protected String prefPublicKey = PUBLIC_KEY_ECDSA_SHA2_NISPTP_256;
 
 	protected int maxChannels = 100;
-	protected int maxAuthentications = 10;
+
 	protected int compressionLevel = 6;
 	protected int maximumPacketLength = 131072 + 256; // Add overhead to support clients
 											// using 128k file blocks
@@ -211,7 +210,7 @@ public abstract class SshContext extends ProtocolContext implements
 	
 	protected SshEngine daemon;
 
-	protected String softwareVersionComments = "MaverickNG";
+	protected String softwareVersionComments = "MaverickSynergy";
 
 	protected boolean killTunnelsOnRemoteForwardingCancel = false;
 	
@@ -223,11 +222,8 @@ public abstract class SshContext extends ProtocolContext implements
 
 	protected static ExecutorService executor;
 	
-	protected int forwardingBufferMaxQueueCount = 10;
 	protected Locale locale = Locale.getDefault();
 	protected ByteBufferPool byteBufferPool = null;
-	
-	protected ForwardingPolicy forwardingPolicy = new ForwardingPolicy();
 	
 	protected int minDHGroupExchangeKeySize = 2048;
 	protected int preferredDHGroupExchangeKeySize = 2048;
@@ -239,16 +235,6 @@ public abstract class SshContext extends ProtocolContext implements
 	
 	boolean httpRedirect;
 	String httpRedirectUrl;
-	
-	protected int sessionMaxPacketSize = 65536;
-	protected int sessionMaxWindowSize = 1024000;
-	protected int sessionMinWindowSize = 131072;
-	
-	private int forwardingMaxPacketSize = 65536;
-	private int forwardingMaxWindowSize = 65536 * 5;
-	private int forwardingMinWindowSize = 32768;
-	
-	AbstractFileFactory<?> fileFactory;
 	
 	Map<Class<?>,Object> policies = new HashMap<>();
 	
@@ -397,25 +383,7 @@ public abstract class SshContext extends ProtocolContext implements
 		return maxChannels;
 	}
 
-	/**
-	 * Get the maximum number of failed authentications allowed for each
-	 * connection.
-	 * 
-	 * @return int
-	 */
-	public int getMaxAuthentications() {
-		return maxAuthentications;
-	}
 
-	/**
-	 * Set the maximum number of failed authentications allowed for each
-	 * connection.
-	 * 
-	 * @param maxAuthentications
-	 */
-	public void setMaxAuthentications(int maxAuthentications) {
-		this.maxAuthentications = maxAuthentications;
-	}
 
 
 	/**
@@ -1306,14 +1274,6 @@ public abstract class SshContext extends ProtocolContext implements
 		return byteBufferPool;
 	}
 
-	public ForwardingPolicy getForwardingPolicy() {
-		return forwardingPolicy;
-	}
-
-	public void setForwardingPolicy(ForwardingPolicy forwardingPolicy) {
-		this.forwardingPolicy = forwardingPolicy;
-	}
-
 	public SshEngineContext getDaemonContext() {
 		return daemon.getContext();
 	}
@@ -1373,54 +1333,6 @@ public abstract class SshContext extends ProtocolContext implements
 		this.httpRedirectUrl = httpRedirectUrl;
 	}
 
-	public int getSessionMaxPacketSize() {
-		return sessionMaxPacketSize;
-	}
-
-	public void setSessionMaxPacketSize(int sessionMaxPacketSize) {
-		this.sessionMaxPacketSize = sessionMaxPacketSize;
-	}
-
-	public int getSessionMaxWindowSize() {
-		return sessionMaxWindowSize;
-	}
-
-	public void setSessionMaxWindowSize(int sessionMaxWindowSize) {
-		this.sessionMaxWindowSize = sessionMaxWindowSize;
-	}
-
-	public int getSessionMinWindowSize() {
-		return sessionMinWindowSize;
-	}
-
-	public void setSessionMinWindowSize(int sessionMinWindowSize) {
-		this.sessionMinWindowSize = sessionMinWindowSize;
-	}
-
-	public int getForwardingMaxPacketSize() {
-		return forwardingMaxPacketSize;
-	}
-
-	public void setForwardingMaxPacketSize(int forwardingMaxPacketSize) {
-		this.forwardingMaxPacketSize = forwardingMaxPacketSize;
-	}
-
-	public int getForwardingMaxWindowSize() {
-		return forwardingMaxWindowSize;
-	}
-
-	public void setForwardingMaxWindowSize(int forwardingMaxWindowSize) {
-		this.forwardingMaxWindowSize = forwardingMaxWindowSize;
-	}
-
-	public int getForwardingMinWindowSize() {
-		return forwardingMinWindowSize;
-	}
-
-	public void setForwardingMinWindowSize(int forwardingMinWindowSize) {
-		this.forwardingMinWindowSize = forwardingMinWindowSize;
-	}
-
 	public int getPreferredDHGroupExchangeKeySize() {
 		return preferredDHGroupExchangeKeySize;
 	}
@@ -1436,12 +1348,8 @@ public abstract class SshContext extends ProtocolContext implements
 	public void setMaxDHGroupExchangeKeySize(int maxDHGroupExchangeKeySize) {
 		this.maxDHGroupExchangeKeySize = maxDHGroupExchangeKeySize;
 	}
-
-	public AbstractFileFactory<?> getFileFactory() {
-		return fileFactory;
-	}
-
-	public void setFileFactory(AbstractFileFactory<?> fileFactory) {
-		this.fileFactory = fileFactory;
+	
+	public ForwardingPolicy getForwardingPolicy() {
+		return getPolicy(ForwardingPolicy.class);
 	}
 }

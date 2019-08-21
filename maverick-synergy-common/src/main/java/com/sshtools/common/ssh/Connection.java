@@ -38,7 +38,6 @@ import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventException;
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.events.EventTrigger;
-import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.nio.DisconnectRequestFuture;
@@ -258,11 +257,6 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	@Override
 	public Locale getLocale() {
 		return Objects.isNull(locale) ? context.getLocale() : locale;
-	}
-
-	@Override
-	public AbstractFileFactory<?> getFileFactory() {
-		return transport.getContext().getFileFactory();
 	}
 
 	@Override

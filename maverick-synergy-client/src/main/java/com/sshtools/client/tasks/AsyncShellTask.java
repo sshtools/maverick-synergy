@@ -20,6 +20,7 @@ package com.sshtools.client.tasks;
 
 import com.sshtools.client.AsyncSessionChannel;
 import com.sshtools.client.SshClientContext;
+import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.Connection;
 
 public abstract class AsyncShellTask extends AbstractShellTask<AsyncSessionChannel> {
@@ -39,10 +40,10 @@ public abstract class AsyncShellTask extends AbstractShellTask<AsyncSessionChann
 	protected AsyncSessionChannel createSession(Connection<SshClientContext> con) {
 		return new AsyncSessionChannel(
 				con,
-				con.getContext().getSessionMaxPacketSize(), 
-				con.getContext().getSessionMaxWindowSize(),
-				con.getContext().getSessionMaxWindowSize(),
-				con.getContext().getSessionMinWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
 				future);
 	}
 }

@@ -22,6 +22,7 @@ import java.util.Map;
 
 import com.sshtools.common.command.ExecutableCommand;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.ChannelFactory;
 import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.ChannelRequestFuture;
@@ -70,17 +71,17 @@ public class DefaultClientChannelFactory implements ChannelFactory<SshClientCont
 	 * @return
 	 */
 	protected ChannelNG<SshClientContext> createSessionChannel(Connection<SshClientContext> con) {
-		return new SessionChannelNG(con, con.getContext().getSessionMaxPacketSize(), 
-				con.getContext().getSessionMaxWindowSize(),
-				con.getContext().getSessionMaxWindowSize(),
-				con.getContext().getSessionMinWindowSize());
+		return new SessionChannelNG(con, con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize());
 	}
 	
 	protected ChannelNG<SshClientContext> createSessionChannel(Connection<SshClientContext> con, ChannelRequestFuture future) {
-		return new SessionChannelNG(con, con.getContext().getSessionMaxPacketSize(), 
-				con.getContext().getSessionMaxWindowSize(), 				
-				con.getContext().getSessionMaxWindowSize(),
-				con.getContext().getSessionMinWindowSize(),
+		return new SessionChannelNG(con, con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(), 				
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
 				future);
 	}
 

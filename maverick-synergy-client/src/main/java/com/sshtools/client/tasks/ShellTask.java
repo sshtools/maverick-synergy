@@ -21,7 +21,9 @@ package com.sshtools.client.tasks;
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
+import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.SshConnection;
 
 public abstract class ShellTask extends AbstractShellTask<SessionChannelNG> {
 
@@ -37,13 +39,13 @@ public abstract class ShellTask extends AbstractShellTask<SessionChannelNG> {
 	protected void onCloseSession(SessionChannelNG session) {
 	}
 
-	protected SessionChannelNG createSession(Connection<SshClientContext> con) {
+	protected SessionChannelNG createSession(SshConnection con) {
 		return new SessionChannelNG(
 				con,
-				con.getContext().getSessionMaxPacketSize(), 
-				con.getContext().getSessionMaxWindowSize(),
-				con.getContext().getSessionMaxWindowSize(),
-				con.getContext().getSessionMinWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
 				future);
 	}
 }

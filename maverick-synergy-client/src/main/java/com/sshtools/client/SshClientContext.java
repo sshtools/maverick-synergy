@@ -324,14 +324,6 @@ public class SshClientContext extends SshContext {
 		return socketConnectionFactory;
 	}
 
-	public int getSessionMaxPacketSize() {
-		return sessionMaxPacketSize;
-	}
-
-	public int getSessionMaxWindowSize() {
-		return sessionMaxWindowSize;
-	}
-
 	public HostKeyVerification getHostKeyVerification() {
 		return hkv;
 	}

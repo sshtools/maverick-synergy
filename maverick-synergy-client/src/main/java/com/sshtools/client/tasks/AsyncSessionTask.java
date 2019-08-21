@@ -22,11 +22,12 @@ import java.io.OutputStream;
 
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClientContext;
+import com.sshtools.common.shell.ShellPolicy;
+import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventAdapter;
 import com.sshtools.common.ssh.ChannelOutputStream;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.Connection;
-import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.SessionChannel;
 
 /**
@@ -67,10 +68,10 @@ public abstract class AsyncSessionTask implements Runnable {
 
 		session = new SessionChannelNG(
 				con,
-				con.getContext().getSessionMaxPacketSize(), 
-				con.getContext().getSessionMaxWindowSize(),
-				con.getContext().getSessionMaxWindowSize(),
-				con.getContext().getSessionMinWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
 				future);
 		session.addEventListener(new ChannelEventAdapter() {
 

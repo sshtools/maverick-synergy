@@ -22,29 +22,32 @@ import java.io.IOException;
 import java.util.Objects;
 
 import com.sshtools.client.AbstractSessionChannel;
-import com.sshtools.client.SshClientContext;
+import com.sshtools.client.SshClient;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ChannelRequestFuture;
-import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.SshConnection;
 
 /**
  * An abstract task for using the SSH session
  */
 public abstract class AbstractSessionTask<T extends AbstractSessionChannel> extends Task {
 
-	Connection<SshClientContext> con;
 	long timeout = 10000;
 	T session;
 	ChannelRequestFuture future;
 	Throwable lastError;
 	
-	public AbstractSessionTask(Connection<SshClientContext> con, ChannelRequestFuture future) {
-		super(con);
-		this.con = con;
+	public AbstractSessionTask(SshClient ssh, ChannelRequestFuture future) {
+		super(ssh);
 		this.future = future;
 	}
 	
-	public AbstractSessionTask(Connection<SshClientContext> con) {
+	public AbstractSessionTask(SshConnection con, ChannelRequestFuture future) {
+		super(con);
+		this.future = future;
+	}
+	
+	public AbstractSessionTask(SshConnection con) {
 		this(con, new ChannelRequestFuture());
 	}
 
@@ -69,7 +72,7 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 
 		session = createSession(con);
 		
-		con.getConnectionProtocol().openChannel(session);
+		con.openChannel(session);
 		if(!session.getOpenFuture().waitFor(timeout).isSuccess()) {
 			throw new IllegalStateException("Could not open session channel");
 		}
@@ -100,7 +103,7 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 		}
 	}
 	
-	protected abstract T createSession(Connection<SshClientContext> con);
+	protected abstract T createSession(SshConnection con);
 	
 	protected abstract void setupSession(T session);
 	

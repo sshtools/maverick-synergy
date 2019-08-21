@@ -258,7 +258,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 			@Override
 			public void messageSent(Long sequenceNo) {
 				if(Log.isDebugEnabled()) {
-					Log.debug("Sent SSH_MSG_SERVICE_REQUEST %s", service);
+					Log.debug("Sent SSH_MSG_SERVICE_REQUEST %s", service.getName());
 				}
 			}
 		});

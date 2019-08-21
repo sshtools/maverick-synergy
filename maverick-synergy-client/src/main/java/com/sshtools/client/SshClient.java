@@ -142,6 +142,7 @@ public class SshClient implements Closeable {
 
 			}
 		});
+
 		return sshContext;
 	}
 
@@ -167,9 +168,29 @@ public class SshClient implements Closeable {
 		return client.startLocalForwarding(addressToBind, portToBind, destinationHost, destinationPort);
 	}
 	
+	public void stopLocalForwarding(String addressToBind, int portToBind) {
+		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
+		client.stopLocalForwarding(addressToBind, portToBind);
+	}
+	
+	public void stopLocalForwarding() {
+		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
+		client.stopLocalForwarding();
+	}
+	
 	public int startRemoteForwarding(String addressToBind, int portToBind, String destinationHost, int destinationPort) throws SshException {
 		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
 		return client.startRemoteForwarding(addressToBind, portToBind, destinationHost, destinationPort);
+	}
+	
+	public void stopRemoteForwarding(String addressToBind, int portToBind) throws SshException {
+		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
+		client.stopRemoteForwarding(addressToBind, portToBind);
+	}
+	
+	public void stopRemoteForwarding() {
+		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
+		client.stopRemoteForwarding();
 	}
 
 	public boolean isConnected() {

@@ -87,7 +87,6 @@ public class AuthenticationProtocolClient implements Service {
 					Log.debug("SSH_MSG_USERAUTH_SUCCESS received");
 				}
 	
-				transport.getConnection().getAuthenticatedFuture().authenticated(authenticated);
 				currentAuthenticator.success();
 				
 				ConnectionProtocol<SshClientContext> con = new ConnectionProtocolClient(

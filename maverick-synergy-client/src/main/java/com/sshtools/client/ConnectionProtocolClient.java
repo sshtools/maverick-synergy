@@ -126,6 +126,50 @@ public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContex
 		getContext().getForwardingManager().stopForwarding(key, getConnection());
 	}
 	
+	public void stopRemoteForwarding(String addressToBind, int portToBind) throws SshException {
+		
+		if(Log.isInfoEnabled()) {
+			Log.info("Canceling remote forwarding from " + addressToBind + ":" + portToBind);
+		}
+		ByteArrayWriter msg = new ByteArrayWriter();
+		try {
+			msg.writeString(addressToBind);
+			msg.writeInt(portToBind);
+
+			
+			GlobalRequest request = new GlobalRequest("cancel-tcpip-forward", con, msg.toByteArray());
+
+			sendGlobalRequest(request, true);
+			request.waitForever();
+			
+			if(request.isSuccess()) {
+				
+				if(Log.isInfoEnabled()) {
+					Log.info("Remote forwarding cancelled on remote interface " + addressToBind + ":" + portToBind);
+				}
+				
+				remoteForwards.remove(addressToBind + ":" + portToBind);
+				getConnection().setProperty("remoteForwards", remoteForwards);
+
+			} else {
+				throw new SshException("Cancel remote forwarding on interface " 
+							+ addressToBind + ":" + portToBind + " failed", SshException.FORWARDING_ERROR);
+			}
+		} catch (IOException e) {
+			throw new SshException(SshException.INTERNAL_ERROR, e);
+		} finally {
+			try {
+				msg.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+
+	public void stopRemoteForwarding() {
+		// TODO Auto-generated method stub
+		
+	}
+	
 	/**
 	 * Start remote port forwarding. Requests that the server starts a listening socket on the remote network and delivers
 	 * data to a host on the local network.

@@ -23,13 +23,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
-import com.sshtools.server.vsession.ShellCommandWithOptions;
 import com.sshtools.server.vsession.VirtualConsole;
 
 /**

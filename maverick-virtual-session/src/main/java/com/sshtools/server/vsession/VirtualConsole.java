@@ -27,6 +27,7 @@ import org.jline.utils.InfoCmp.Capability;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.Context;
 import com.sshtools.common.ssh.SshConnection;
@@ -99,7 +100,7 @@ public class VirtualConsole {
 
 	public AbstractFile getCurrentDirectory() {
 		try {
-			return getContext().getFileFactory().getFile((String)env.getOrDefault("HOME", ""), con);
+			return getContext().getPolicy(FileSystemPolicy.class).getFileFactory().getFile((String)env.getOrDefault("HOME", ""), con);
 		} catch (PermissionDeniedException | IOException e) {
 			throw new IllegalStateException(e.getMessage(), e);
 		}

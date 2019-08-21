@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.KeyboardInteractiveAuthenticationProvider;
 import com.sshtools.common.auth.KeyboardInteractiveProvider;
-import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ConnectRequestFuture;
 import com.sshtools.common.nio.DisconnectRequestFuture;
@@ -67,7 +66,6 @@ public abstract class CallbackClient<T extends CallbackConfiguration> implements
 	String hostname;
 	int port;
 	boolean onDemand = false;
-	ForwardingPolicy forwardingPolicy = new ForwardingPolicy();
 	Map<String,Object> attributes = new HashMap<String,Object>();
 	int numberOfAuthenticationErrors = 0;
 	
@@ -78,7 +76,6 @@ public abstract class CallbackClient<T extends CallbackConfiguration> implements
 		this.hostname = hostname;
 		this.port = port;
 		serverAuthenticationProvider = new ServerPublicKeyAuthentication(config.getAuthorizedKeys());
-		forwardingPolicy.allowForwarding();
 	}
 	
 	public void run() {
@@ -310,7 +307,7 @@ public abstract class CallbackClient<T extends CallbackConfiguration> implements
 
 		});
 		
-		sshContext.setForwardingPolicy(forwardingPolicy);
+		sshContext.getForwardingPolicy().allowForwarding();
 		
 		configureContext(sshContext);
 		
@@ -343,10 +340,6 @@ public abstract class CallbackClient<T extends CallbackConfiguration> implements
 	
 	private void brokerConnection(String hostname, int port) throws IOException {
 		app.start(app.createClient(config, hostname, port, true));
-	}
-	
-	public ForwardingPolicy getForwardingPolicy() {
-		return forwardingPolicy;
 	}
 	
 	public boolean hasAttribute(String key) {

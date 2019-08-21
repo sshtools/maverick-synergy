@@ -39,6 +39,7 @@ import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventAdapter;
 import com.sshtools.common.ssh.SessionChannelHelper;
@@ -72,7 +73,7 @@ public class RootShell extends Msh {
 		super(commandFactory);
 		this.con = con; 
 		this.welcomeText = welcomeText;
-		this.homeDir = con.getContext().getFileFactory().getDefaultPath(con);
+		this.homeDir = con.getContext().getPolicy(FileSystemPolicy.class).getFileFactory().getDefaultPath(con);
 	}
 
 	public SshConnection getConnection() {

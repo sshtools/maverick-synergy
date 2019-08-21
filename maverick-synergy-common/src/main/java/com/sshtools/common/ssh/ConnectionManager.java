@@ -103,6 +103,7 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
     	else {
     		throw new IllegalArgumentException("Cannot set connection instance on non-existent transport!");
     	}
+    	con.getAuthenticatedFuture().done(true);
     	return con;
     }
 

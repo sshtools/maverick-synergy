@@ -34,12 +34,14 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import com.sshtools.common.events.Event;
+import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventException;
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.events.EventTrigger;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
+import com.sshtools.common.nio.DisconnectRequestFuture;
 import com.sshtools.common.nio.SshEngine;
 
 public class Connection<T extends SshContext> implements EventTrigger, SshConnection {
@@ -54,11 +56,22 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	InetSocketAddress localAddress;
 	T context;
 	AuthenticatedFuture authenticatedFuture = new AuthenticatedFuture();
+	DisconnectRequestFuture disconnectFuture = new DisconnectRequestFuture();
+	
 	List<EventListener> listeners = new ArrayList<EventListener>();
 	Locale locale;
 	
 	public Connection(T context) {
 		this.context = context;
+		listeners.add(new EventListener() {
+			
+			@Override
+			public void processEvent(Event evt) {
+				if(evt.getId()==EventCodes.EVENT_DISCONNECTED) {
+					disconnectFuture.disconnected();
+				}
+			}
+		});
 	}
 	
 	public synchronized void addEventListener(EventListener listener) {
@@ -289,6 +302,10 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	
 	public void startLogging() throws IOException {
 		context.getConnectionManager().startLogging(this);
+	}
+
+	public AbstractRequestFuture getDisconnectFuture() {
+		return disconnectFuture;
 	}
 
 }

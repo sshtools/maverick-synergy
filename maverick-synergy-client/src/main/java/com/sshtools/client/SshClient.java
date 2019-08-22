@@ -96,6 +96,7 @@ public class SshClient implements Closeable {
 
 	@SuppressWarnings("unchecked")
 	protected void doConnect(String hostname, int port, String username, SshClientContext sshContext) throws SshException, IOException {
+		configure(sshContext);
 		ConnectRequestFuture future = sshContext.getEngine().connect(hostname, port, sshContext);
 		future.waitForever();
 		if(!future.isSuccess()) {
@@ -111,6 +112,10 @@ public class SshClient implements Closeable {
 		}
 	}
 	
+	protected void configure(SshClientContext sshContext) {
+		
+	}
+
 	public synchronized void addTask(Task task) throws IOException {
 		if(con==null) {
 			throw new IOException("Client is no longer connected!");

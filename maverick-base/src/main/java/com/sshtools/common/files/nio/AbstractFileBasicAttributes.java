@@ -1,10 +1,7 @@
 package com.sshtools.common.files.nio;
 import java.io.IOException;
-import java.nio.file.FileSystemException;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.sshtools.common.files.AbstractFile;

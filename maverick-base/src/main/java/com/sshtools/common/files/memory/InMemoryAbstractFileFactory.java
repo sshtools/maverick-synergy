@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.commons.tests.util.fileSystem;
+package com.sshtools.common.files.memory;
 
 import java.io.IOException;
 
@@ -27,20 +27,10 @@ import com.sshtools.common.ssh.SshConnection;
 
 public class InMemoryAbstractFileFactory implements AbstractFileFactory<InMemoryAbstractFile> {
 	
-	InMemoryFileSystem fs = new InMemoryFileSystem();
-	InMemoryFile home = null;
+	InMemoryFileSystem fs;
 	
-	public InMemoryAbstractFileFactory() {
-		try {
-			boolean isHome = this.fs.exists("/home");
-			if (this.home == null && isHome) {
-				this.home = this.fs.getFile("/home");
-			} else if (this.home == null && !isHome) {
-				this.home = this.fs.createFolder(this.fs.root(), "home");
-			}
-		} catch (Exception e) {
-			throw new RuntimeException(e.getMessage(), e);
-		}
+	public InMemoryAbstractFileFactory(InMemoryFileSystem fs) {
+		this.fs = fs;
 	} 
 
 	/**
@@ -49,47 +39,21 @@ public class InMemoryAbstractFileFactory implements AbstractFileFactory<InMemory
 	@Override
 	public InMemoryAbstractFile getFile(String path, SshConnection con) throws PermissionDeniedException, IOException {
 		if (path.startsWith("/")) {
-			return createFile(path, con);
+			return new InMemoryAbstractFile(path, fs, this, con);
+		} else if(path.equals("") || path.equals(".")){
+			return new InMemoryAbstractFile("/", fs, this, con);
 		} else {
-			String username = con.getUsername();
-			String userFolderPath = String.format("/home/%s", username);
-			boolean isUserFolder = this.fs.exists(userFolderPath);
-
-			if (!isUserFolder) {
-				this.fs.createFolder(this.home, username);
-			}
-			
-			String filePath = userFolderPath + InMemoryFile.getPathSeperator() + path;
-			return createFile(filePath, con);
+			return new InMemoryAbstractFile("/" + path, fs, this, con);
 		}
 	}
 	
 	@Override
 	public Event populateEvent(Event evt) {
-		return null;
+		return evt;
 	}
 
 	@Override
 	public InMemoryAbstractFile getDefaultPath(SshConnection con) throws PermissionDeniedException, IOException {
-		return null;
+		return getFile("", con);
 	}
-	
-	private InMemoryAbstractFile createFile(String path, SshConnection con) throws IOException {
-		if (this.fs.exists(path)) {
-			return new InMemoryAbstractFile(this.fs.getFile(path), this, con);
-		}
-		String parent = InMemoryFileSystem.computeParentPath(path);
-		String fileName = InMemoryFileSystem.computeFileName(path);
-		InMemoryFile parentFileObject = this.fs.getFile(parent);
-		InMemoryFile fileObject = null;
-		if (fileName.contains(".")) {
-			fileObject = this.fs.createFile(parentFileObject, fileName);
-		} else {
-			fileObject = this.fs.createFolder(parentFileObject, fileName);
-		}
-		return new InMemoryAbstractFile(fileObject, this, con);
-	}
-
-	
-
 }

@@ -25,17 +25,18 @@ import java.util.UUID;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.files.memory.InMemoryAbstractFile;
+import com.sshtools.common.files.memory.InMemoryAbstractFileFactory;
+import com.sshtools.common.files.memory.InMemoryFile;
+import com.sshtools.common.files.memory.InMemoryFileSystem;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.commons.tests.util.fileSystem.InMemoryFile;
-import com.sshtools.commons.tests.util.fileSystem.InMemoryAbstractFileFactory;
-import com.sshtools.commons.tests.util.fileSystem.InMemoryAbstractFile;
 
 public class InMemoryFileTest extends AbstractFileTest {
 
-	private AbstractFileFactory<InMemoryAbstractFile> factory = new InMemoryAbstractFileFactory();
+	private AbstractFileFactory<InMemoryAbstractFile> factory = new InMemoryAbstractFileFactory(new InMemoryFileSystem());
 	private SshConnection sshConnection = new MockConnection("Doe", UUID.randomUUID().toString(), 
-			new InetSocketAddress("127.0.0.1", 22), new InetSocketAddress("127.0.0.1", 5555));
+			new InetSocketAddress("127.0.0.1", 22), new InetSocketAddress("127.0.0.1", 5555), new MockContext());
 	
 	@Override
 	public AbstractFile getAbstractFile(String path, SshConnection con) throws PermissionDeniedException, IOException {

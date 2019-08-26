@@ -42,12 +42,14 @@ public class MockConnection implements SshConnection {
 	InetSocketAddress localAddress;
 	InetSocketAddress remoteAddress;
 	Map<String,Object> properties = new HashMap<>();
+	Context context;
 	
-	public MockConnection(String username, String sessionId, InetSocketAddress localAddress, InetSocketAddress remoteAddress) {
+	public MockConnection(String username, String sessionId, InetSocketAddress localAddress, InetSocketAddress remoteAddress, Context context) {
 		this.username = username;
 		this.sessionId = sessionId;
 		this.localAddress = localAddress;
 		this.remoteAddress = remoteAddress;
+		this.context = context;
 	}
 	
 	@Override
@@ -122,8 +124,7 @@ public class MockConnection implements SshConnection {
 
 	@Override
 	public Context getContext() {
-		// TODO Auto-generated method stub
-		return null;
+		return context;
 	}
 
 	@Override

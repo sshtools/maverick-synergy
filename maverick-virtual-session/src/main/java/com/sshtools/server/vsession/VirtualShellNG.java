@@ -141,6 +141,8 @@ public class VirtualShellNG extends SessionChannelNG {
         Terminal terminal = new PosixChannelPtyTerminal("Maverick Terminal", 
 				env.getOrDefault("TERM", "ansi").toString(), 
 				pty,
+				(int) env.getOrDefault("COLS", 80),
+				(int) env.getOrDefault("ROWS", 25),
 				this,
 				Charset.forName("UTF-8"));
 		

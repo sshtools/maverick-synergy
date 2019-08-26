@@ -20,8 +20,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javax.tools.FileObject;
-
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
@@ -191,6 +189,10 @@ public class AbstractFileNIOFileSystem extends FileSystem {
 
 	public AbstractFilePath getRootPath() {
 		return new AbstractFilePath(this, new ArrayList<>(), true);
+	}
+
+	public SshConnection getConnection() {
+		return con;
 	}
 
 }

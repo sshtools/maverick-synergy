@@ -16,7 +16,10 @@ public class AbstractFileAttributeView implements BasicFileAttributeView {
 		if (type == null)
 			throw new NullPointerException();
 		if (type == BasicFileAttributeView.class)
-			return (V) new AbstractFileBasicAttributes(path.getAbstractFile());
+			try {
+				return (V) new AbstractFileBasicAttributes(path.getAbstractFile());
+			} catch (IOException e) {
+			}
 		return null;
 	}
 	

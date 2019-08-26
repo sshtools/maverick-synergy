@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
+import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.policy.FileSystemPolicy;
 
 
 public class AbstractFilePath implements Path {
@@ -242,7 +244,7 @@ public class AbstractFilePath implements Path {
 	@Override
 	public URI toUri() {
 		fileSystem.assertOpen();
-		return AbstractFileURI.create(elements.toArray(new String[elements.size()]));
+		return AbstractFileURI.create(fileSystem.getConnection(), elements.toArray(new String[elements.size()]));
 	}
 
 	@Override
@@ -360,14 +362,18 @@ public class AbstractFilePath implements Path {
 		return new AbstractFilePath(fileSystem, elements, absolute);
 	}
 
-	public AbstractFile getAbstractFile() {
-		// TODO Auto-generated method stub
-		return null;
+	public AbstractFile getAbstractFile() throws IOException{
+		try {
+			return fileSystem.getConnection().getContext().getPolicy(
+						FileSystemPolicy.class).getFileFactory().getFile(toString(),
+							fileSystem.getConnection());
+		} catch (PermissionDeniedException e) {
+			throw new IOException(e.getMessage(), e);
+		}
 	}
 
-	public AbstractFileBasicAttributes getAttributes() {
-		// TODO Auto-generated method stub
-		return null;
+	public AbstractFileBasicAttributes getAttributes() throws IOException {
+		return new AbstractFileBasicAttributes(getAbstractFile());
 	}
 	
 	Map<String, Object> readAttributes(String attributes, LinkOption... options) throws IOException {

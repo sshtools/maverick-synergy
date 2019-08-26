@@ -290,6 +290,7 @@ public class Msh extends ShellCommand {
 				lastError = t;
 			}
 			Log.error("Failed to run command line " + args[0], t);
+			console.println();
 			console.println(lastError.getMessage() == null 
 					? lastError.getClass().getName() : lastError.getMessage());
 			return 99;
@@ -358,6 +359,7 @@ public class Msh extends ShellCommand {
 			try {
 				cmd.run(args, console);
 			} catch(UsageException e) {
+				console.println();
 				console.println(cmd.getUsage());
 			}
 			return cmd.getExitCode();

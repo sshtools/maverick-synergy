@@ -28,6 +28,7 @@ import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.jline.terminal.Size;
 import org.jline.terminal.impl.AbstractPosixTerminal;
 import org.jline.terminal.spi.Pty;
 import org.jline.utils.ClosedException;
@@ -52,16 +53,17 @@ public class PosixChannelPtyTerminal extends AbstractPosixTerminal {
     private Thread outputPumpThread;
     private boolean paused = true;
     private ByteArrayOutputStream pauseBuffer = new ByteArrayOutputStream();
-
-    public PosixChannelPtyTerminal(String name, String type, Pty pty, ChannelNG<?> out, Charset encoding) throws IOException {
-        this(name, type, pty, out, encoding, SignalHandler.SIG_DFL);
+    Size size;
+    
+    public PosixChannelPtyTerminal(String name, String type, Pty pty, int cols, int rows, ChannelNG<?> out, Charset encoding) throws IOException {
+        this(name, type, pty, cols, rows, out, encoding, SignalHandler.SIG_DFL);
     }
 
-    public PosixChannelPtyTerminal(String name, String type, Pty pty, ChannelNG<?> out, Charset encoding, SignalHandler signalHandler) throws IOException {
-        this(name, type, pty, out, encoding, signalHandler, false);
+    public PosixChannelPtyTerminal(String name, String type, Pty pty, int cols, int rows, ChannelNG<?> out, Charset encoding, SignalHandler signalHandler) throws IOException {
+        this(name, type, pty, cols, rows, out, encoding, signalHandler, false);
     }
 
-    public PosixChannelPtyTerminal(String name, String type, Pty pty, ChannelNG<?> out, Charset encoding, SignalHandler signalHandler, boolean paused) throws IOException {
+    public PosixChannelPtyTerminal(String name, String type, Pty pty, int cols, int rows, ChannelNG<?> out, Charset encoding, SignalHandler signalHandler, boolean paused) throws IOException {
         super(name, type, pty, encoding, signalHandler);
         this.out = Objects.requireNonNull(out);
         this.masterInput = pty.getMasterInput();
@@ -70,10 +72,15 @@ public class PosixChannelPtyTerminal extends AbstractPosixTerminal {
         this.output = pty.getSlaveOutput();
         this.reader = NonBlocking.nonBlocking(name, input, encoding());
         this.writer = new PrintWriter(new OutputStreamWriter(output, encoding()));
+        this.size = new Size(cols, rows);
         parseInfoCmp();
         if (!paused) {
             resume();
         }
+    }
+    
+    public Size getSize() {
+       return size;
     }
 
 	public void in(byte[] buf, int off, int len) throws IOException {

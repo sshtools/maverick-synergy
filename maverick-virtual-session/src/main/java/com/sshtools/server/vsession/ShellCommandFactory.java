@@ -37,6 +37,7 @@ import com.sshtools.server.vsession.commands.Exit;
 import com.sshtools.server.vsession.commands.Help;
 import com.sshtools.server.vsession.commands.Kill;
 import com.sshtools.server.vsession.commands.Mem;
+import com.sshtools.server.vsession.commands.Nano;
 import com.sshtools.server.vsession.commands.ShowLastError;
 import com.sshtools.server.vsession.commands.Sleep;
 import com.sshtools.server.vsession.commands.Unalias;
@@ -78,7 +79,7 @@ public class ShellCommandFactory extends CommandFactory<ShellCommand> {
 		commands.put("catch", Catch.class);
 		
 		commands.put("mem", Mem.class);
-//		commands.put("nano", Nano.class);
+		commands.put("nano", Nano.class);
 	}
 	
 	protected void installFactory(ShellCommandFactory factory) {

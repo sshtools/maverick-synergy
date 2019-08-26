@@ -16,76 +16,92 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.commons.tests.util.fileSystem;
+package com.sshtools.common.files.memory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.AbstractFileRandomAccess;
+import com.sshtools.common.files.FileUtils;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.FileSystemUtils;
+import com.sshtools.common.util.UnsignedInteger64;
 
 public class InMemoryAbstractFile implements AbstractFile {
 
-    private final InMemoryFile file;
+	private String path;
+	private InMemoryFileSystem fs;
     private SftpFileAttributes attrs;
     private AbstractFileFactory<InMemoryAbstractFile> fileFactory;
     private SshConnection sshConnection;
     
-    
-    public InMemoryAbstractFile(InMemoryFile file, AbstractFileFactory<InMemoryAbstractFile> fileFactory, SshConnection sshConnection) {
-    	this.file = file;
+    public InMemoryAbstractFile(String path, InMemoryFileSystem fs, AbstractFileFactory<InMemoryAbstractFile> fileFactory, SshConnection sshConnection) {
+    	this.path = path;
+    	this.fs = fs;
     	this.fileFactory = fileFactory;
     	this.sshConnection = sshConnection;
 	}
 	
 	@Override
 	public String getName() {
-		return this.file.getName();
+		return FileSystemUtils.getFilename(path);
+	}
+	
+	private InMemoryFile getFile() throws IOException {
+		return fs.getFile(path);
 	}
 
 	@Override
 	public InputStream getInputStream() throws IOException {
-		return this.file.getInputStream();
+		return getFile().getInputStream();
 	}
 
 	@Override
 	public boolean exists() throws IOException {
-		return this.file.exists();
+		return fs.exists(path);
 	}
 
 	@Override
 	public List<AbstractFile> getChildren() throws IOException, PermissionDeniedException {
-		return this.file.getChildren().stream().map((fo) -> {
-			return new InMemoryAbstractFile(fo, InMemoryAbstractFile.this.fileFactory, InMemoryAbstractFile.this.sshConnection);
+		return getFile().getChildren().stream().map((fo) -> {
+			return new InMemoryAbstractFile(fo.getPath(), fs, InMemoryAbstractFile.this.fileFactory, InMemoryAbstractFile.this.sshConnection);
 		}).collect(Collectors.toList());
 	}
 
 	@Override
 	public String getAbsolutePath() throws IOException, PermissionDeniedException {
-		return this.file.getPath();
+		return path;
 	}
 
 	@Override
 	public boolean isDirectory() throws IOException {
-		return this.file.isFolder();
+		return getFile().isFolder();
 	}
 
 	@Override
 	public boolean isFile() throws IOException {
-		return this.file.isFile();
+		return getFile().isFile();
 	}
 
 	@Override
 	public OutputStream getOutputStream() throws IOException {
-		return this.file.getOutputStream();
+		if(!exists()) {
+			try {
+				createNewFile();
+			} catch (PermissionDeniedException e) {
+				throw new IOException(e);
+			}
+		}
+		return getFile().getOutputStream();
 	}
 
 	@Override
@@ -95,8 +111,16 @@ public class InMemoryAbstractFile implements AbstractFile {
 
 	@Override
 	public boolean createFolder() throws PermissionDeniedException, IOException {
-		// FileObject is all ready in created
-		return true;
+		if(exists()) {
+			return false;
+		}
+		
+		try {
+			fs.createFolder(fs.getFile(FileUtils.getParentPath(path)), FileSystemUtils.getFilename(path));
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
 	@Override
@@ -107,34 +131,64 @@ public class InMemoryAbstractFile implements AbstractFile {
 	@Override
 	public void copyFrom(AbstractFile src) throws IOException, PermissionDeniedException {
 		String srcPath = src.getAbsolutePath();
-		InMemoryFile sourceFileObject = this.file.getfileSystem().getFile(srcPath);
+		InMemoryFile sourceFileObject = fs.getFile(srcPath);
 		if (!sourceFileObject.exists()) {
 			throw new IOException(String.format("Source file %s is not present in filesystem create it first.", srcPath));
 		}
 		
-		this.file.copyFrom(sourceFileObject);
+		getFile().copyFrom(sourceFileObject);
 	}
 
 	@Override
 	public void moveTo(AbstractFile target) throws IOException, PermissionDeniedException {
 		String targetPath = target.getAbsolutePath();
-		InMemoryFile targetFileObject = this.file.getfileSystem().getFile(targetPath);
+		InMemoryFile targetFileObject = fs.getFile(targetPath);
 		if (!targetFileObject.exists()) {
 			throw new IOException(String.format("Target file %s is not present in filesystem create it first.", targetPath));
 		}
 		
-		this.file.moveTo(targetFileObject);
+		getFile().moveTo(targetFileObject);
 	}
 
 	@Override
 	public boolean delete(boolean recursive) throws IOException, PermissionDeniedException {
-		this.file.delete();
+		getFile().delete();
 		return true;
 	}
 
-	@Override
-	public SftpFileAttributes getAttributes() throws FileNotFoundException, IOException, PermissionDeniedException {
-		return this.attrs;
+	public SftpFileAttributes getAttributes() throws IOException {
+		
+		if(!exists()) {
+			throw new FileNotFoundException();
+		}
+		
+		if(Objects.isNull(this.attrs)) {
+			attrs = new SftpFileAttributes(getFileType(), "UTF-8");
+			
+			attrs.setTimes(new UnsignedInteger64(lastModified() / 1000), 
+					new UnsignedInteger64(lastModified() / 1000));
+			
+			attrs.setPermissions(String.format("%s%s-------", (isReadable() ? "r"
+					: "-"), (isWritable() ? "w" : "-")));
+			
+			
+			
+			if(!isDirectory()) {
+				attrs.setSize(new UnsignedInteger64(length()));
+			}
+		}
+		  
+	    return attrs;
+	}
+
+	private int getFileType() throws IOException {
+		if(isDirectory()) {
+			return SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY;
+		} else if(exists()) {
+			return SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR;
+		} else {
+			return SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN;
+		}
 	}
 
 	@Override
@@ -143,12 +197,12 @@ public class InMemoryAbstractFile implements AbstractFile {
 
 	@Override
 	public long lastModified() throws IOException {
-		return this.file.getLastModified().getTime();
+		return getFile().getLastModified().getTime();
 	}
 
 	@Override
 	public long length() throws IOException {
-		return this.file.getLength();
+		return getFile().getLength();
 	}
 
 	@Override
@@ -158,13 +212,22 @@ public class InMemoryAbstractFile implements AbstractFile {
 
 	@Override
 	public boolean createNewFile() throws PermissionDeniedException, IOException {
-		// FileObject is already in created state
-		return true;
+		
+		if(exists()) {
+			return false;
+		}
+		
+		try {
+			fs.createFile(fs.getFile(FileUtils.getParentPath(path)), FileSystemUtils.getFilename(path));
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
 	@Override
 	public void truncate() throws PermissionDeniedException, IOException {
-		this.file.truncate();
+		getFile().truncate();
 	}
 
 	@Override
@@ -174,7 +237,7 @@ public class InMemoryAbstractFile implements AbstractFile {
 
 	@Override
 	public String getCanonicalPath() throws IOException, PermissionDeniedException {
-		return this.file.getPath();
+		return getFile().getPath();
 	}
 
 	@Override
@@ -184,12 +247,19 @@ public class InMemoryAbstractFile implements AbstractFile {
 
 	@Override
 	public AbstractFileRandomAccess openFile(boolean writeAccess) throws IOException {
-		return this.file.openFile(writeAccess);
+		return getFile().openFile(writeAccess);
 	}
 
 	@Override
 	public OutputStream getOutputStream(boolean append) throws IOException {
-		return append ? this.file.getAppendOutputStream() : this.file.getOutputStream();
+		if(!exists()) {
+			try {
+				createNewFile();
+			} catch (PermissionDeniedException e) {
+				throw new IOException(e);
+			}
+		}
+		return append ? getFile().getAppendOutputStream() : getFile().getOutputStream();
 	}
 
 	@Override
@@ -203,18 +273,10 @@ public class InMemoryAbstractFile implements AbstractFile {
 			path = child;
 		} else {
 			child = String.format("/%s", child);
-			path = String.format("%s%s", this.file.getPath(), child);
+			path = String.format("%s%s", getFile().getPath(), child);
 		}
 		
-		InMemoryFile fileObject = null;
-		
-		if (this.file.getfileSystem().exists(path)) { 
-			fileObject = this.file.getfileSystem().getFile(path);
-		} else {
-			fileObject = this.file.getfileSystem().createFileWithParents(path);
-		}
-		
-		return new InMemoryAbstractFile(fileObject, this.fileFactory, this.sshConnection);
+		return new InMemoryAbstractFile(path, fs, this.fileFactory, this.sshConnection);
 	}
 
 	@Override
@@ -224,7 +286,7 @@ public class InMemoryAbstractFile implements AbstractFile {
 	
 	@Override
 	public String toString() {
-		return this.file.getPath();
+		return path;
 	}
 
 }

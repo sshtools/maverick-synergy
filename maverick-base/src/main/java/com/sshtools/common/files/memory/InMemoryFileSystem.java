@@ -16,8 +16,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.commons.tests.util.fileSystem;
+package com.sshtools.common.files.memory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.Stack;
 import java.util.WeakHashMap;
 import java.util.concurrent.Callable;
@@ -228,17 +228,7 @@ public class InMemoryFileSystem {
 			throw new IOException("File instance does not have any children..");
 		}
 		return read(() ->  {
-			String path = fileObject.getPath();
-			Set<Entry<String, InMemoryFile>> entrySet = InMemoryFileSystem.this.fileSystem.entrySet();
-			
-			List<InMemoryFile> result = new ArrayList<>();
-			
-			for (Entry<String, InMemoryFile> entry : entrySet) {
-				if (entry.getKey().startsWith(path) && !entry.getKey().equals(path)) {
-					result.add(entry.getValue());
-				}
-			}
-			return result;
+			return fileObject.getChildren();
 		});
 	}
 	
@@ -255,7 +245,7 @@ public class InMemoryFileSystem {
 	public InMemoryFile getFile(String path) throws IOException {
 		return read(() -> {
 			if (!InMemoryFileSystem.this.exists(path)) {
-				throw new IOException(String.format("File by path %s does not exists.", path));
+				throw new FileNotFoundException(String.format("File by path %s does not exists.", path));
 			}
 			return InMemoryFileSystem.this.fileSystem.get(path);
 		});

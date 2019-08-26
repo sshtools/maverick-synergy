@@ -1,5 +1,6 @@
 package com.sshtools.common.files.nio;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,6 +23,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -33,6 +35,10 @@ import com.sshtools.common.ssh.SshConnection;
 
 public class AbstractFileNIOProvider extends FileSystemProvider {
 
+	static Map<String,FileSystem> existingFilesystems = new HashMap<>();
+	
+	public AbstractFileNIOProvider() {}
+
 	@Override
 	public String getScheme() {
 		return AbstractFileURI.URI_SCHEME;
@@ -41,11 +47,22 @@ public class AbstractFileNIOProvider extends FileSystemProvider {
 	@Override
 	public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
 		
+		
+		if(Objects.isNull(uri.getAuthority())) {
+			throw new IOException("Missing connection id in URI authority");
+		}
+		
 		SshConnection con = (SshConnection) env.get("connection");
 		if(Objects.isNull(con)) {
-			throw new IOException("Missing connection object in FileSystem environment");
+			throw new IOException("Missing connection object in file system environment");
 		}
-		return new AbstractFileNIOFileSystem(con, uri, this);
+		
+		if(!con.getUUID().equals(uri.getAuthority())) {
+			throw new IOException("Incorrect connection id in URI authority");
+		}
+		
+		existingFilesystems.put(con.getUUID(), new AbstractFileNIOFileSystem(con, uri, this));
+		return existingFilesystems.get(con.getUUID());
 	}
 
 	static final AbstractFilePath toAbstractFilePath(Path path) {
@@ -64,7 +81,7 @@ public class AbstractFileNIOProvider extends FileSystemProvider {
 	@Override
 	public Path getPath(URI uri) {
 		AbstractFileURI parsedUri = AbstractFileURI.parse(uri);
-		return fileSystems.get(parsedUri.pathToVault()).getPath(parsedUri.pathInsideVault());
+		return existingFilesystems.get(parsedUri.getConnectionId()).getPath(parsedUri.getPath());
 	}
 
 	@Override
@@ -85,6 +102,11 @@ public class AbstractFileNIOProvider extends FileSystemProvider {
 		if (optlist.contains(StandardOpenOption.CREATE_NEW) && fo.exists())
 			throw new IOException(
 					String.format("%s already exists, and the option %s was specified.", fo, StandardOpenOption.CREATE_NEW));
+		try {
+			fo.createNewFile();
+		} catch (PermissionDeniedException e) {
+			throw new IOException(e);
+		}
 		checkAccess(path, AccessMode.WRITE);
 		return fo.getOutputStream(optlist.contains(StandardOpenOption.APPEND));
 	}
@@ -92,13 +114,12 @@ public class AbstractFileNIOProvider extends FileSystemProvider {
 	@Override
 	public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
 			throws IOException {
-		throw new UnsupportedOperationException();
+		return new AbstractFileSeekableByteChannel(toAbstractFilePath(path).getAbstractFile());
 	}
 
 	@Override
 	public DirectoryStream<Path> newDirectoryStream(Path dir, Filter<? super Path> filter) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		return new AbstractFileDirectoryStream(toAbstractFilePath(dir), filter);
 	}
 
 	@Override
@@ -168,6 +189,9 @@ public class AbstractFileNIOProvider extends FileSystemProvider {
 		
 		AbstractFilePath p = toAbstractFilePath(path);
 		AbstractFile file = p.getAbstractFile();
+		if(file==null || !file.exists()) {
+			throw new FileNotFoundException();
+		}
 		for (AccessMode m : modes) {
 			switch (m) {
 //			case EXECUTE:
@@ -194,6 +218,7 @@ public class AbstractFileNIOProvider extends FileSystemProvider {
 		return AbstractFileAttributeView.get(toAbstractFilePath(path), type);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options)
 			throws IOException {

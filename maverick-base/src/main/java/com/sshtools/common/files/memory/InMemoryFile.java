@@ -16,13 +16,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.commons.tests.util.fileSystem;
+package com.sshtools.common.files.memory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -32,7 +33,7 @@ import com.sshtools.common.files.AbstractFileRandomAccess;
 
 public class InMemoryFile {
 	
-	private static final int DEFAULT_FILE_SIZE = 1024;
+	public static final int DEFAULT_FILE_SIZE = 1024;
 	
 	private InMemoryFile parent;
 	private final InMemoryFileSystem fileSystem;
@@ -42,6 +43,7 @@ public class InMemoryFile {
 	private final Date created = new Date();
 	private Date lastModified = new Date();
 	private byte[] data;
+	private List<InMemoryFile> children = new ArrayList<>();
 	
 	public InMemoryFile(InMemoryFile parent, InMemoryFileSystem fileSystem, String name, boolean folder) {
 		this.parent = parent;
@@ -49,6 +51,9 @@ public class InMemoryFile {
 		this.name = name;
 		this.folder = folder;
 		
+		if(parent!=null) {
+			this.parent.children.add(this);
+		}
 		if (this.folder) {
 			this.data = new byte[0];
 		} else {
@@ -97,10 +102,6 @@ public class InMemoryFile {
 		return this.lastModified;
 	}
 	
-	public InMemoryFileSystem getfileSystem() {
-		return this.fileSystem;
-	}
-	
 	public InMemoryFile getParent() {
 		return this.parent;
 	}
@@ -111,10 +112,11 @@ public class InMemoryFile {
 	
 	public void delete() throws IOException {
 		this.fileSystem.delete(this);
+		parent.children.remove(this);
 	}
 	
 	public List<InMemoryFile> getChildren() throws IOException {
-		return this.fileSystem.getChildren(this);
+		return children;
 	}
 	
 	public int getLength() {
@@ -160,13 +162,11 @@ public class InMemoryFile {
 			@Override
 			public synchronized void write(int data) {
 				super.write(data);
-				setUpData();
 			}
 			
 			@Override
 			public synchronized void write(byte[] data, int off, int len) {
 				super.write(data, off, len);
-				setUpData();
 			}
 			
 			@Override
@@ -179,13 +179,10 @@ public class InMemoryFile {
 				try {
 					super.close();
 				} finally {
+					InMemoryFile.this.data = this.toByteArray();
+					InMemoryFile.this.lastModified = new Date();
 					InMemoryFile.this.fileSystem.releaseLock(InMemoryFile.this.getPath());
 				}
-			}
-			
-			private void setUpData() {
-				InMemoryFile.this.data = Arrays.copyOf(this.buf, this.size());
-				InMemoryFile.this.lastModified = new Date();
 			}
 		};
 	}

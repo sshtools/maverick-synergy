@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
@@ -59,6 +60,16 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
     	ctx = new ConnectionLoggingContext(level, this);
     }
 
+    public static SshConnection searchConnectionsById(String uuid) {
+    	for(ConnectionManager<?> mgr : instances.values()) {
+    		SshConnection con = mgr.getConnectionById(uuid);
+    		if(!Objects.isNull(con)) {
+    			return con;
+    		}
+    	}
+    	return null;
+    }
+    
     public String getName() {
     	return name;
     }

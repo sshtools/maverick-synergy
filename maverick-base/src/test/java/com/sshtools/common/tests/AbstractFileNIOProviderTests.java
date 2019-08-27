@@ -30,7 +30,7 @@ import com.sshtools.common.files.nio.AbstractFileURI;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.Arrays;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 
 public class AbstractFileNIOProviderTests {
 
@@ -127,7 +127,7 @@ public class AbstractFileNIOProviderTests {
 		InputStream in = Files.newInputStream(path);
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		
-		IOUtil.copy(in, bout);
+		IOUtils.copy(in, bout);
 		
 		Assert.assertTrue(Arrays.areEqual(tmp, bout.toByteArray()));
 	}
@@ -150,7 +150,7 @@ public class AbstractFileNIOProviderTests {
 		InputStream in = Files.newInputStream(path);
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		
-		IOUtil.copy(in, bout);
+		IOUtils.copy(in, bout);
 		
 		Assert.assertTrue(Arrays.areEqual(tmp, bout.toByteArray()));
 	}

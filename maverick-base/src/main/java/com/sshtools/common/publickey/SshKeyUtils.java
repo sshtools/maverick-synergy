@@ -31,7 +31,7 @@ import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA256;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA512;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 
 public class SshKeyUtils {
 
@@ -136,26 +136,26 @@ public class SshKeyUtils {
 		
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try {
-			IOUtil.copy(in, out);
-			IOUtil.closeStream(in);
+			IOUtils.copy(in, out);
+			IOUtils.closeStream(in);
 		
 			return new String(out.toByteArray(), "UTF-8");
 		} finally {
-			IOUtil.closeStream(out);
+			IOUtils.closeStream(out);
 		}
 	}	
 
 	public static void createPublicKeyFile(SshPublicKey publicKey, String comment, File file) throws IOException {
 		
 		SshPublicKeyFile kf = SshPublicKeyFileFactory.create(publicKey, comment, SshPublicKeyFileFactory.OPENSSH_FORMAT);
-		IOUtil.writeUTF8StringToFile(file, new String(kf.getFormattedKey(), "UTF-8"));
+		IOUtils.writeUTF8StringToFile(file, new String(kf.getFormattedKey(), "UTF-8"));
 		
 	}
 
 	public static void createPrivateKeyFile(SshKeyPair pair, String passphrase, File file) throws IOException {
 		
 		SshPrivateKeyFile kf = SshPrivateKeyFileFactory.create(pair, passphrase);
-		IOUtil.writeUTF8StringToFile(file, new String(kf.getFormattedKey(), "UTF-8"));
+		IOUtils.writeUTF8StringToFile(file, new String(kf.getFormattedKey(), "UTF-8"));
 	}
 
 	public static boolean isPrivateKeyFile(File file) {

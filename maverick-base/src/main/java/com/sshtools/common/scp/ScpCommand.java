@@ -42,9 +42,9 @@ import com.sshtools.common.sftp.SftpFile;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
+import com.sshtools.common.util.Utils;
 
 /**
  * Provides support for the SCP command. To enable this support add this class

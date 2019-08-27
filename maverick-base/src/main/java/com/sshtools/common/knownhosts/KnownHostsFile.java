@@ -29,7 +29,7 @@ import com.sshtools.common.logger.Log;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 
 public class KnownHostsFile extends KnownHostsKeyVerification {
 
@@ -44,7 +44,7 @@ public class KnownHostsFile extends KnownHostsKeyVerification {
 	}
 	
 	public void store() throws IOException {
-		IOUtil.writeStringToFile(file, toString(), "UTF-8");
+		IOUtils.writeStringToFile(file, toString(), "UTF-8");
 	}
 	
 	public File getKnownHostsFile() {

@@ -40,7 +40,7 @@ import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.shell.ShellPolicy;
-import com.sshtools.common.ssh.components.Utils;
+import com.sshtools.common.util.Utils;
 import com.sshtools.server.vsession.CmdLine.Condition;
 import com.sshtools.server.vsession.commands.Alias;
 

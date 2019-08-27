@@ -34,7 +34,7 @@ import com.sshtools.common.ssh.PacketPool;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 
 /**
  * An abstract task for connecting to an SSH subsystem.
@@ -77,7 +77,7 @@ public abstract class AbstractSubsystemTask extends ConnectionAwareTask {
 
 			@Override
 			public void onChannelClose(Channel channel) {
-				IOUtil.closeStream(in);
+				IOUtils.closeStream(in);
 				onCloseSession((SessionChannelNG) channel);
 			}
 

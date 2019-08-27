@@ -47,8 +47,8 @@ import com.sshtools.common.ssh.SessionChannelServer;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.Subsystem;
 import com.sshtools.common.ssh.UnsupportedChannelException;
-import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.common.util.Utils;
 
 /**
  * <p>

@@ -33,7 +33,7 @@ import java.util.Set;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 
 /**
  * <p>
@@ -532,7 +532,7 @@ public abstract class ComponentManager {
 					} catch(IOException ex) {
 						Log.error("Error processing %s", ex, componentFile);
 					} finally {
-						IOUtil.closeStream(in);
+						IOUtils.closeStream(in);
 					}
 				}
 				

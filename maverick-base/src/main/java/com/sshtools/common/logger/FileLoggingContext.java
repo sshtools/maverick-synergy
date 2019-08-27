@@ -26,7 +26,7 @@ import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
 
 import com.sshtools.common.logger.Log.Level;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.RandomAccessOutputStream;
 
 public class FileLoggingContext extends AbstractLoggingContext {
@@ -90,15 +90,15 @@ public class FileLoggingContext extends AbstractLoggingContext {
 	}
 
 	private void closeLog() {
-		IOUtil.closeStream(currentWriter);
-		IOUtil.closeStream(currentOut);
+		IOUtils.closeStream(currentWriter);
+		IOUtils.closeStream(currentOut);
 	}
 	
 	private void checkRollingLog() throws IOException {
 
 		if(currentFile.length() > maxSize) {
 			closeLog();
-			IOUtil.rollover(logFile, maxFiles);
+			IOUtils.rollover(logFile, maxFiles);
 			createLogFile();
 		}
 	}

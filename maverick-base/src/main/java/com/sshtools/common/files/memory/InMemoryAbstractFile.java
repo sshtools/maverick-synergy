@@ -29,11 +29,10 @@ import java.util.stream.Collectors;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.AbstractFileRandomAccess;
-import com.sshtools.common.files.FileUtils;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.common.util.FileSystemUtils;
+import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.UnsignedInteger64;
 
 public class InMemoryAbstractFile implements AbstractFile {
@@ -53,7 +52,7 @@ public class InMemoryAbstractFile implements AbstractFile {
 	
 	@Override
 	public String getName() {
-		return FileSystemUtils.getFilename(path);
+		return FileUtils.getFilename(path);
 	}
 	
 	private InMemoryFile getFile() throws IOException {
@@ -116,7 +115,7 @@ public class InMemoryAbstractFile implements AbstractFile {
 		}
 		
 		try {
-			fs.createFolder(fs.getFile(FileUtils.getParentPath(path)), FileSystemUtils.getFilename(path));
+			fs.createFolder(fs.getFile(FileUtils.getParentPath(path)), FileUtils.getFilename(path));
 			return true;
 		} catch (Exception e) {
 			return false;
@@ -218,7 +217,7 @@ public class InMemoryAbstractFile implements AbstractFile {
 		}
 		
 		try {
-			fs.createFile(fs.getFile(FileUtils.getParentPath(path)), FileSystemUtils.getFilename(path));
+			fs.createFile(fs.getFile(FileUtils.getParentPath(path)), FileUtils.getFilename(path));
 			return true;
 		} catch (Exception e) {
 			return false;

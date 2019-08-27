@@ -38,7 +38,7 @@ import org.jline.reader.LineReaderBuilder;
 import com.sshtools.common.files.nio.AbstractFileURI;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.common.ssh.components.Utils;
+import com.sshtools.common.util.Utils;
 import com.sshtools.server.AgentForwardingChannel;
 import com.sshtools.server.SessionChannelNG;
 import com.sshtools.server.SshServerContext;

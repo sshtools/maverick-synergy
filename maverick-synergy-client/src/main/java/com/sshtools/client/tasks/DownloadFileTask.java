@@ -27,7 +27,7 @@ import com.sshtools.client.sftp.TransferCancelledException;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.util.FileSystemUtils;
+import com.sshtools.common.util.FileUtils;
 
 public class DownloadFileTask extends Task {
 
@@ -55,7 +55,7 @@ public class DownloadFileTask extends Task {
 			protected void doSftp() {
 				try {
 					if(localFile==null) {
-						localFile = new File(lpwd(), FileSystemUtils.getFilename(path));
+						localFile = new File(lpwd(), FileUtils.getFilename(path));
 					}
 					get(path, localFile.getAbsolutePath());
 				} catch (FileNotFoundException | SftpStatusException | SshException | TransferCancelledException e) {

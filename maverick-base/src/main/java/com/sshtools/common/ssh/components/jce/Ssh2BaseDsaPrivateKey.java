@@ -25,8 +25,8 @@ import java.security.Signature;
 
 import com.sshtools.common.ssh.components.SshDsaPublicKey;
 import com.sshtools.common.ssh.components.SshPrivateKey;
-import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.common.util.SimpleASNReader;
+import com.sshtools.common.util.Utils;
 
 public abstract class Ssh2BaseDsaPrivateKey extends Ssh2BaseJCEPrivateKey implements SshPrivateKey {
 

@@ -22,7 +22,6 @@ import java.io.UnsupportedEncodingException;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.Digest;
-import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 

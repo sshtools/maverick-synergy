@@ -20,7 +20,7 @@ package com.sshtools.common.tests;
 
 import java.io.IOException;
 
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 
 public abstract class ForwardingConfiguration extends TestConfiguration {
 
@@ -49,7 +49,7 @@ public abstract class ForwardingConfiguration extends TestConfiguration {
 	}
 	
 	public long getForwardingDataAmount() {
-		return IOUtil.fromByteSize(properties.getProperty("forwardingDataAmount", "100mb"));
+		return IOUtils.fromByteSize(properties.getProperty("forwardingDataAmount", "100mb"));
 	}
 
 	public int getForwardingChannelsPerClientCount() {

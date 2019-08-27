@@ -40,12 +40,12 @@ import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.AbstractFileRandomAccess;
-import com.sshtools.common.files.FileUtils;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshIOException;
+import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
 

@@ -28,7 +28,7 @@ import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.util.Arrays;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 
 public class TestConfiguration {
 
@@ -74,7 +74,7 @@ public class TestConfiguration {
 	}
 
 	public long getKeyExchangeLimit() {
-		return IOUtil.fromByteSize(properties.getProperty("keyExchangeLimit", "10mb"));
+		return IOUtils.fromByteSize(properties.getProperty("keyExchangeLimit", "10mb"));
 	}
 
 	public boolean enableLogging() {

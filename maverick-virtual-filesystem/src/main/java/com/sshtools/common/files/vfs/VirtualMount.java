@@ -23,9 +23,9 @@ import java.io.IOException;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.files.FileSystemUtils;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.FileUtils;
 
 public class VirtualMount extends AbstractMount {
 
@@ -65,9 +65,9 @@ public class VirtualMount extends AbstractMount {
 	}
 
 	public String getResolvePath(String path) {
-		if (path.length() > FileSystemUtils.addTrailingSlash(mount).length()) {
-			return FileSystemUtils.addTrailingSlash(this.path)
-					+ path.substring(FileSystemUtils.addTrailingSlash(mount)
+		if (path.length() > FileUtils.addTrailingSlash(mount).length()) {
+			return FileUtils.addTrailingSlash(this.path)
+					+ path.substring(FileUtils.addTrailingSlash(mount)
 							.length());
 		} else {
 			return this.path;

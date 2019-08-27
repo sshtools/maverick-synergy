@@ -27,10 +27,10 @@ import java.util.StringTokenizer;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.files.FileSystemUtils;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.FileUtils;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
@@ -115,7 +115,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		}
 
 		if (!ret.startsWith("/")) {
-			ret = FileSystemUtils
+			ret = FileUtils
 					.addTrailingSlash(homeMountTemplate.getMount()) + ret;
 		}
 		return ret;
@@ -138,16 +138,16 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
 		VirtualMount[] mounts = mgr.getMounts(virtualPath);
 		if (!virtualPath.equals("") && mounts.length > 0) {
-			String mountPath = FileSystemUtils.addTrailingSlash(virtualPath);
+			String mountPath = FileUtils.addTrailingSlash(virtualPath);
 
 			if (!mountPath.equals("/")) {
 				for (VirtualMount m : mounts) {
-					String thisMountPath = FileSystemUtils.addTrailingSlash(m
+					String thisMountPath = FileUtils.addTrailingSlash(m
 							.getMount());
 					if (thisMountPath.startsWith(mountPath)
 							&& !thisMountPath.equals(mountPath)) {
 						return new VirtualMountFile(
-								FileSystemUtils
+								FileUtils
 										.removeTrailingSlash(virtualPath),
 								mgr.getMount(virtualPath), mgr, con);
 					}
@@ -169,7 +169,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		}
 
 		if (!virtualPath.equals("/")) {
-			virtualPath = FileSystemUtils.removeTrailingSlash(virtualPath);
+			virtualPath = FileUtils.removeTrailingSlash(virtualPath);
 		}
 
 		VirtualMount m = getMountManager(con).getMount(virtualPath);

@@ -27,11 +27,10 @@ import java.util.List;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.files.FileSystemUtils;
-import com.sshtools.common.files.FileUtils;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.FileUtils;
 
 public class VirtualMountManager {
 
@@ -142,8 +141,8 @@ public class VirtualMountManager {
 		}
 
 		for (VirtualMount mount : mounts) {
-			if (FileSystemUtils.addTrailingSlash(mount.getMount()).equals(
-					FileSystemUtils.addTrailingSlash(path))) {
+			if (FileUtils.addTrailingSlash(mount.getMount()).equals(
+					FileUtils.addTrailingSlash(path))) {
 				return true;
 			}
 		}
@@ -185,11 +184,11 @@ public class VirtualMountManager {
 			return new VirtualMount[] { defaultMount };
 		}
 
-		path = FileSystemUtils.addTrailingSlash(path);
+		path = FileUtils.addTrailingSlash(path);
 
 		List<VirtualMount> matched = new ArrayList<VirtualMount>();
 		for (VirtualMount m : mounts) {
-			String mountPath = FileSystemUtils.addTrailingSlash(m.getMount());
+			String mountPath = FileUtils.addTrailingSlash(m.getMount());
 			if (path.startsWith(mountPath) || mountPath.startsWith(path)) {
 				matched.add(m);
 			}

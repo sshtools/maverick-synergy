@@ -21,7 +21,7 @@ package com.sshtools.common.files.vfs;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.sshtools.common.files.FileSystemUtils;
+import com.sshtools.common.util.FileUtils;
 
 public class AbstractMount {
 
@@ -56,9 +56,9 @@ public class AbstractMount {
 			boolean isImaginary) {
 
 		this.filesystemRoot = mount.equals("/");
-		this.mount = mount.equals("/") ? mount : FileSystemUtils
+		this.mount = mount.equals("/") ? mount : FileUtils
 				.removeTrailingSlash(mount);
-		this.path = FileSystemUtils.removeTrailingSlash(path);
+		this.path = FileUtils.removeTrailingSlash(path);
 		this.isDefault = isDefault;
 		this.isImaginary = isImaginary;
 	}

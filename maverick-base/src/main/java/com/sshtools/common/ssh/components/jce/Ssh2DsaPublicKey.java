@@ -35,10 +35,10 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshKeyFingerprint;
 import com.sshtools.common.ssh.components.SshDsaPublicKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.SimpleASNWriter;
+import com.sshtools.common.util.Utils;
 
 /**
  * A DSA public key implementation which uses a JCE provider.

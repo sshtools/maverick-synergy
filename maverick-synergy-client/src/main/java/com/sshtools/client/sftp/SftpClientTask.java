@@ -54,7 +54,7 @@ import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.EOLProcessor;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
 
@@ -2809,7 +2809,7 @@ public abstract class SftpClientTask extends Task {
 							recurseMarkForDeletion(f2, op);
 
 							if (commit) {
-								IOUtil.recurseDeleteDirectory(f2);
+								IOUtils.recurseDeleteDirectory(f2);
 							}
 						} else if (commit) {
 							f2.delete();

@@ -32,7 +32,7 @@ import java.util.List;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ClientAcceptor;
 import com.sshtools.common.nio.ListeningInterface;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 
 /**
  * This class implements the standard socket based forwarding for the SSHD.
@@ -87,7 +87,7 @@ public abstract class SocketListeningForwardingFactoryImpl<T extends SshContext>
 	        return this.portToBind = socketChannel.socket().getLocalPort();
         
         } catch(IOException e) {
-			IOUtil.closeStream(socketChannel);
+			IOUtils.closeStream(socketChannel);
 			throw e;
         }
     }

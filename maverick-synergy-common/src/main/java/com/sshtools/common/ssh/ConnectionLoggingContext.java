@@ -37,8 +37,8 @@ import com.sshtools.common.logger.FileLoggingContext;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.logger.LoggerContext;
-import com.sshtools.common.ssh.components.Utils;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
+import com.sshtools.common.util.Utils;
 
 public class ConnectionLoggingContext implements LoggerContext, EventListener {
 
@@ -117,7 +117,7 @@ public class ConnectionLoggingContext implements LoggerContext, EventListener {
 		
 		String filenameFormat = getProperty(".filenameFormat", "${timestamp}__${uuid}.log");
 		Integer maxFiles = Integer.parseInt(getProperty(".maxFiles", "10"));
-		Long maxSize = IOUtil.fromByteSize(getProperty(".maxSize", "20MB"));
+		Long maxSize = IOUtils.fromByteSize(getProperty(".maxSize", "20MB"));
 		String defaultTimestamp = getProperty(".timestampFormat", "yyyy-MM-dd-HH-mm-ss-SSS");
 		
 		String filename = filenameFormat

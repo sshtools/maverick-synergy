@@ -24,10 +24,10 @@ import java.util.List;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileAdapter;
-import com.sshtools.common.files.FileSystemUtils;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.FileUtils;
 
 public class VirtualMappedFile extends AbstractFileAdapter implements
 		VirtualFile {
@@ -155,14 +155,14 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 		String parent = translateCanonicalPath(parentMount.getRoot(), parentMount.getRoot());
 		int idx = actualPath.indexOf(parent);
 		String relative = actualPath.substring(idx + parent.length());
-		String virtualPath = FileSystemUtils.addTrailingSlash(parentMount
-				.getMount()) + FileSystemUtils.removeStartingSlash(relative);
+		String virtualPath = FileUtils.addTrailingSlash(parentMount
+				.getMount()) + FileUtils.removeStartingSlash(relative);
 
 		if(Log.isDebugEnabled()) {
 			Log.debug("Translate Success: " + virtualPath);
 		}
 
-		return virtualPath.equals("/") ? virtualPath : FileSystemUtils
+		return virtualPath.equals("/") ? virtualPath : FileUtils
 				.removeTrailingSlash(virtualPath);
 	}
 
@@ -173,7 +173,7 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 			return fileFactory.getFile(child, con);
 		} else {
 			return fileFactory
-					.getFile(FileSystemUtils.addTrailingSlash(absolutePath)
+					.getFile(FileUtils.addTrailingSlash(absolutePath)
 							+ child, con);
 		}
 	}
@@ -207,15 +207,15 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 			virtualPath = parentMount.getMount();
 		} else if (virtualPath.startsWith("./")) {
 			virtualPath = virtualPath.replaceFirst("./",
-					FileSystemUtils.addTrailingSlash(parentMount.getMount()));
+					FileUtils.addTrailingSlash(parentMount.getMount()));
 		} else if (!virtualPath.startsWith("/")) {
-			virtualPath = FileSystemUtils.addTrailingSlash(parentMount
+			virtualPath = FileUtils.addTrailingSlash(parentMount
 					.getMount()) + virtualPath;
 		}
 
 		String str;
 		if (virtualPath.length() > parentMount.getMount().length()) {
-			str = FileSystemUtils.addTrailingSlash(parentMount.getRoot())
+			str = FileUtils.addTrailingSlash(parentMount.getRoot())
 					+ virtualPath.substring(parentMount.getMount().length());
 		} else {
 			str = parentMount.getRoot();
@@ -259,13 +259,13 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 			// Verify that the canonical path does not exit out of the mount
 			if (canonical.startsWith(canonical2)) {
 				if(Log.isDebugEnabled()) {
-					Log.debug("          Translate Success: " + FileSystemUtils.removeTrailingSlash(canonical));
+					Log.debug("          Translate Success: " + FileUtils.removeTrailingSlash(canonical));
 				}
-				return FileSystemUtils.removeTrailingSlash(canonical);
+				return FileUtils.removeTrailingSlash(canonical);
 			}
 
 			if(Log.isDebugEnabled()) {
-				Log.debug("          Translate Failed: " + FileSystemUtils.removeTrailingSlash(canonical));
+				Log.debug("          Translate Failed: " + FileUtils.removeTrailingSlash(canonical));
 			}
 
 			throw new FileNotFoundException("Path " + path

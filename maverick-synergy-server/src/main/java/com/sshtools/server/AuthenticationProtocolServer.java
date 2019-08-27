@@ -42,9 +42,9 @@ import com.sshtools.common.ssh.Service;
 import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.ssh.UnsupportedChannelException;
-import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.common.util.Utils;
 
 /**
  * This class implements the SSH Authentication Protocol. The only required

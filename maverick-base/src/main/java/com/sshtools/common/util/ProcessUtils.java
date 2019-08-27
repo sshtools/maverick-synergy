@@ -35,7 +35,7 @@ public class ProcessUtils {
 		 InputStream in = process.getInputStream();
 		 
 		 try {
-			 IOUtil.copy(in, out);
+			 IOUtils.copy(in, out);
 		 } finally {
 			 in.close();
 		 }

@@ -42,7 +42,7 @@ import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.Utils;
+import com.sshtools.common.util.Utils;
 
 /**
  * This class provides an abstract daemon for servicing any number of protocol

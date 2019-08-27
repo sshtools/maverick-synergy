@@ -39,7 +39,7 @@ import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.Arrays;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 
 import junit.framework.TestCase;
 
@@ -237,12 +237,12 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 				new Thread(String.format(name + "_output")) {
 					public void run() {
 						try {
-							IOUtil.copy(in, out);
+							IOUtils.copy(in, out);
 						} catch (Throwable e) {
 							e.printStackTrace();
 							writeError = e;
 						} finally {
-							log(String.format("Random client %s has completed %s output", name, IOUtil.toByteSize(totalDataAmount)));
+							log(String.format("Random client %s has completed %s output", name, IOUtils.toByteSize(totalDataAmount)));
 						}
 					}
 				}.start();
@@ -252,7 +252,7 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 				while(din.read() > -1 && ++t < totalDataAmount) {
 					if(t % (1000000) == 0) {
 						log(String.format("Random client %s has received %s of data of %s",
-									name, IOUtil.toByteSize(t), IOUtil.toByteSize(totalDataAmount)));
+									name, IOUtils.toByteSize(t), IOUtils.toByteSize(totalDataAmount)));
 					}
 				}
 				
@@ -261,7 +261,7 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 				checksumMatches = Arrays.areEqual(din.getMessageDigest().digest(), in.digest.digest());
 				
 				log(String.format("Random client %s has completed and received %s with checksums %s",
-						name, IOUtil.toByteSize(totalDataAmount), checksumMatches ? "matching" : "NOT matching"));
+						name, IOUtils.toByteSize(totalDataAmount), checksumMatches ? "matching" : "NOT matching"));
 				
 			} catch (Throwable e) {
 				e.printStackTrace();
@@ -407,7 +407,7 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 			try {
 				DigestInputStream in = new DigestInputStream(s.getInputStream(), MessageDigest.getInstance("MD5"));
 				DigestOutputStream out = new DigestOutputStream(s.getOutputStream(), MessageDigest.getInstance("MD5"));
-				IOUtil.copy(in, out);
+				IOUtils.copy(in, out);
 				
 				matchingChecksums = Arrays.areEqual(in.getMessageDigest().digest(), out.getMessageDigest().digest());
 			} catch (Throwable e) {

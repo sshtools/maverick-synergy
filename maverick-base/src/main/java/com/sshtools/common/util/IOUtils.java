@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
  *
  * @author $author$
  */
-public class IOUtil {
+public class IOUtils {
 
     /**
      * Default buffer size for stream utility methods
@@ -375,8 +375,8 @@ public class IOUtil {
 
 	public static void rollover(File logFile, int maxFiles) {
 		
-		String fileExtension = IOUtil.getFilenameExtension(logFile.getName());
-		String fileName = IOUtil.getFilenameWithoutExtension(logFile.getName());
+		String fileExtension = IOUtils.getFilenameExtension(logFile.getName());
+		String fileName = IOUtils.getFilenameWithoutExtension(logFile.getName());
 		if(!Objects.isNull(fileExtension)) {
 			fileExtension = String.format(".%s", fileExtension);
 		} else {
@@ -418,7 +418,7 @@ public class IOUtil {
 	
 	public static String readStringFromStream(InputStream in, String charset) throws IOException {
 		try(ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-			IOUtil.copy(in, out);
+			IOUtils.copy(in, out);
 			return new String(out.toByteArray(), charset);	
 		} 
 	}

@@ -50,11 +50,11 @@ import com.sshtools.common.ssh.components.Digest;
 import com.sshtools.common.ssh.components.SshCipher;
 import com.sshtools.common.ssh.components.SshHmac;
 import com.sshtools.common.ssh.components.SshKeyExchange;
-import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.common.ssh.compression.SshCompression;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.Utils;
 
 /**
  * This class implements the SSH Transport Protocol for the SSHD server.

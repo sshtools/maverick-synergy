@@ -37,6 +37,8 @@ public class AdminCommandFactory extends CommandFactory<ShellCommand> {
 		commands.put("threads", Threads.class);
 		commands.put("shutdown", Shutdown.class);
 		commands.put("con", Connections.class);
+		commands.put("mem", Mem.class);
+		commands.put("threaddump", ThreadDump.class);
 	}
 
 	@Override

@@ -43,11 +43,11 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshTransport;
 import com.sshtools.common.ssh.components.SshPrivateKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.common.util.Utils;
 
 /**
  * Implementation of the required SSH Transport Protocol key exchange method

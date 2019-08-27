@@ -16,18 +16,55 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.files;
+package com.sshtools.common.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class FileUtils {
 
+	public static String addTrailingSlash(String str) {
+		if(!str.endsWith("/")) {
+			return str + "/";
+		} else {
+			return str;
+		}	
+	}
+	
+	public static String removeTrailingSlash(String str) {
+		if(str.endsWith("/")) {
+			return str.substring(0, str.length()-1);
+		} else {
+			return str;
+		}	
+	}
+
+	public static String removeStartingSlash(String str) {
+		if(str.startsWith("/")) {
+			return str.substring(1);
+		}
+		return str;
+	}
+	
+	public static String addStartingSlash(String str) {
+		if(str.startsWith("/")) {
+			return str;
+		}
+		return "/" + str;
+	}
+
+	public static String getFilename(String path) {
+		int idx = path.indexOf("/");
+		if(idx > -1) {
+			return path.substring(idx+1);
+		} else {
+			return path;
+		}
+	}
+	
 	static SimpleDateFormat dateFormat = new SimpleDateFormat(
 			"dd MMM yyyy HH:mm");
 
@@ -111,24 +148,6 @@ public class FileUtils {
 		}
 	}
 
-	public static void closeQuietly(InputStream in) {
-		try {
-			if (in != null) {
-				in.close();
-			}
-		} catch (IOException e) {
-		}
-	}
-
-	public static void closeQuietly(OutputStream out) {
-		try {
-			if (out != null) {
-				out.close();
-			}
-		} catch (IOException e) {
-		}
-	}
-
 	public static void deleteFolder(File folder) {
 
 		if (folder != null) {
@@ -200,5 +219,4 @@ public class FileUtils {
 	public static boolean hasParents(String sourcePath) {
 		return sourcePath.indexOf('/') > -1;
 	}
-
 }

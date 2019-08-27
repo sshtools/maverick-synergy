@@ -39,7 +39,7 @@ import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventAdapter;
 import com.sshtools.common.ssh.SessionChannelHelper;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.common.ssh.components.Utils;
+import com.sshtools.common.util.Utils;
 import com.sshtools.server.vsession.CmdLine.Condition;
 
 public class RootShell extends Msh {

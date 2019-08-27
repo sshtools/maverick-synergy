@@ -25,6 +25,8 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.util.Arrays;
 
+import com.sshtools.common.util.Utils;
+
 import net.i2p.crypto.eddsa.EdDSAEngine;
 import net.i2p.crypto.eddsa.EdDSAPrivateKey;
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;

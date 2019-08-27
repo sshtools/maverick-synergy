@@ -30,7 +30,7 @@ import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 
 /**
  * Implements a Local forwarding channel for use with forwarding sockets from
@@ -150,7 +150,7 @@ public class LocalForwardingChannel<T extends SshContext> extends SocketForwardi
 
 
 		} catch (Throwable ex) {
-			IOUtil.closeStream(socketChannel);
+			IOUtils.closeStream(socketChannel);
 			throw new ChannelOpenException(
 					"Failed to read channel request data" + ex.getMessage(),
 					ChannelOpenException.CONNECT_FAILED);

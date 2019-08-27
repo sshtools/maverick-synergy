@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.ssh.components;
+package com.sshtools.common.util;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
@@ -228,35 +228,6 @@ public class Utils {
 	
 	public static boolean isNotBlank(String str) {
 		return !isBlank(str);
-	}
-	
-	public static void main(String[] args) {
-		
-		for(String str : Utils.splitToArgsArray("start this is a \"string that contains quotes\" end")) {
-			System.out.println(str);
-		}
-		
-		System.out.println();
-		for(String str : Utils.splitToArgsArray("start \"this is a string that contains quotes\" end")) {
-			System.out.println(str);
-		}
-		
-		System.out.println();
-		for(String str : Utils.splitToArgsArray("\"start this is a string that contains quotes end\"")) {
-			System.out.println(str);
-		}
-		
-		System.out.println();
-		for(String str : Utils.splitToArgsArray("start this is a string that contains quotes end\"")) {
-			System.out.println(str);
-		}
-		
-		System.out.println();
-		for(String str : Utils.splitToArgsArray("\"start this is a string that contains quotes end")) {
-			System.out.println(str);
-		}
-		
-		System.out.println(Utils.mergeToArgsString(new String[] { "nospace", "  with space", "with\ttab"}));
 	}
 
 	public static String mergeToArgsString(String[] args) {

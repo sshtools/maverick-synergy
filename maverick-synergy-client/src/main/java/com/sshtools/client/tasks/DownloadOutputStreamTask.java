@@ -28,7 +28,7 @@ import com.sshtools.common.ssh.AbstractRequestFuture;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionTaskWrapper;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 
 public class DownloadOutputStreamTask extends AbstractRequestFuture implements Runnable {
 
@@ -65,7 +65,7 @@ public class DownloadOutputStreamTask extends AbstractRequestFuture implements R
 			con.addTask(new ConnectionTaskWrapper(con, task));
 			task.waitForever();
 		} finally {
-			IOUtil.closeStream(localFile);
+			IOUtils.closeStream(localFile);
 			done(task.isDone() && task.isSuccess());
 		}
 	}

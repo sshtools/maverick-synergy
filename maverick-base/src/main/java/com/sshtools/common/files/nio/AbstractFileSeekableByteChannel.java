@@ -10,7 +10,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 
 import com.sshtools.common.files.AbstractFile;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
 
 public class AbstractFileSeekableByteChannel implements SeekableByteChannel {
 
@@ -33,7 +33,7 @@ public class AbstractFileSeekableByteChannel implements SeekableByteChannel {
 		tmp.close();
 		try(OutputStream out = file.getOutputStream()) {
 			try(InputStream in = new FileInputStream(tmpfile)) {
-				IOUtil.copy(in, out);
+				IOUtils.copy(in, out);
 			}
 		}
 	}

@@ -26,9 +26,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 
 import com.sshtools.common.ssh.CachingDataWindow;
-import com.sshtools.common.ssh.components.Utils;
 import com.sshtools.common.util.Arrays;
-import com.sshtools.common.util.IOUtil;
+import com.sshtools.common.util.IOUtils;
+import com.sshtools.common.util.Utils;
 
 import junit.framework.TestCase;
 
@@ -125,8 +125,8 @@ public class CachingDataWindowTests extends TestCase {
 			}
 		}
 		
-		IOUtil.closeStream(input);
-		IOUtil.closeStream(output);
+		IOUtils.closeStream(input);
+		IOUtils.closeStream(output);
 		
 		assertTrue("Source and Target digest must be equal",
 				Arrays.areEqual(input.getMessageDigest().digest(), output.getMessageDigest().digest()));

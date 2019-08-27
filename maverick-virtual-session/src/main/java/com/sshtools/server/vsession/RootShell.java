@@ -34,6 +34,7 @@ import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventAdapter;
 import com.sshtools.common.ssh.SessionChannelHelper;
@@ -192,12 +193,7 @@ public class RootShell extends Msh {
 //		// Load history
 //		AbstractFile history = console.getCurrentDirectory().resolveFile(".history");
 //		if (history.exists()) {
-//			InputStream inputStream = history.getInputStream();
-//			try {
-//				console.getHistory().
-//			} finally {
-//				inputStream.close();
-//			}
+//			console.getLineReader().getHistory()
 //		}
 
 		// Fire event
@@ -223,7 +219,7 @@ public class RootShell extends Msh {
 											true)
 											.addAttribute(
 													EventCodes.ATTRIBUTE_NFS,
-													console.getCurrentDirectory().getFileFactory())
+													channel.getContext().getPolicy(FileSystemPolicy.class).getFileFactory())
 											.addAttribute(
 													EventCodes.ATTRIBUTE_CONNECTION,
 													console.getConnection()));

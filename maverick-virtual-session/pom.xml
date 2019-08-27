@@ -28,6 +28,7 @@
 		<artifactId>maverick-synergy</artifactId>
 		<version>3.0.0-SNAPSHOT</version>
 	</parent>
+	<packaging>jar</packaging>
 	<artifactId>maverick-virtual-session</artifactId>
 	<name>Virtual Sessions</name>
 	<description>Support for a virtual sessions, custom command execution etc.</description>

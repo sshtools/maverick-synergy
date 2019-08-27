@@ -18,7 +18,9 @@
  */
 package com.sshtools.server.vsession;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Objects;
 
 import org.jline.reader.History;
 import org.jline.reader.LineReader;
@@ -40,6 +42,7 @@ public class VirtualConsole {
 	SshConnection con;
 	Channel channel;
 	Msh shell;
+	AbstractFile cwd;
 	
 	VirtualConsole(Channel channel, Environment env, Terminal terminal, LineReader reader, Msh shell) {
 		this.channel = channel;
@@ -71,6 +74,11 @@ public class VirtualConsole {
         terminal.flush();
 	}
 	
+	public void print(char ch) {
+		terminal.writer().print(ch);
+		terminal.writer().flush();
+	}
+	
 	public void print(String str) {
 		terminal.writer().print(str);
 		terminal.writer().flush();
@@ -98,14 +106,6 @@ public class VirtualConsole {
 		return reader.readLine();
 	}
 
-	public AbstractFile getCurrentDirectory() {
-		try {
-			return getContext().getPolicy(FileSystemPolicy.class).getFileFactory().getFile((String)env.getOrDefault("HOME", ""), con);
-		} catch (PermissionDeniedException | IOException e) {
-			throw new IllegalStateException(e.getMessage(), e);
-		}
-	}
-
 	public Channel getSessionChannel() {
 		return channel;
 	}
@@ -126,6 +126,30 @@ public class VirtualConsole {
 
 	public Msh getShell() {
 		return shell;
+	}
+
+	public void setCurrentDirectory(String currentDirectory) throws IOException, PermissionDeniedException {
+		if(Objects.isNull(cwd)) {
+			cwd = getContext().getPolicy(FileSystemPolicy.class).getFileFactory().getFile((String)env.getOrDefault("HOME", ""), con);
+		} 
+		
+		AbstractFile file = cwd.resolveFile(currentDirectory);
+		if(!file.exists()) {
+			throw new FileNotFoundException(String.format("%s does not exist"));
+		}
+		if(!file.isDirectory()) {
+			throw new IOException(String.format("%s is not a directory"));
+		}
+		
+		this.cwd = file;
+		env.put("CWD", currentDirectory);
+	}
+	
+	public AbstractFile getCurrentDirectory() throws IOException, PermissionDeniedException {
+		if(Objects.isNull(cwd)) {
+			setCurrentDirectory("");
+		}
+		return cwd;
 	}
 	
 }

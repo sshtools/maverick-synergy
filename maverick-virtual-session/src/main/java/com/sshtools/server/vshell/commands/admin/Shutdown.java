@@ -16,34 +16,24 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.ssh;
+package com.sshtools.server.vshell.commands.admin;
 
 import java.io.IOException;
 
-public interface Channel {
+import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.VirtualConsole;
 
-	int getLocalWindow();
+public class Shutdown extends ShellCommand {
+	public Shutdown() {
+		super("shutdown", SUBSYSTEM_JVM, "[<exitValue>]", "Exit the JVM");
+		setBuiltIn(false);
+	}
 
-	int getRemoteWindow();
+	public void run(String[] args, VirtualConsole process) throws IOException {
 
-	int getLocalPacket();
-
-	void close();
-
-	void sendData(byte[] array, int i, int size) throws IOException;
-
-	void sendWindowAdjust(int bytesSinceLastWindowIssue);
-
-	boolean isClosed();
-
-	void addEventListener(ChannelEventListener listener);
-
-	void sendChannelRequest(String requestName, boolean wantReply, byte[] data);
-
-	void sendChannelRequest(String type, boolean wantreply,
-			byte[] requestdata, ChannelRequestFuture future);
-
-	SshConnection getConnection();
-
-	Context getContext();
+		if (args.length > 2) {
+			throw new IOException("Incorrect number of arguments.");
+		}
+		System.exit(args.length == 1 ? 0 : Integer.parseInt(args[1]));
+	}
 }

@@ -21,16 +21,21 @@ package com.sshtools.server.vsession;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
 
-import org.jline.reader.impl.LineReaderImpl;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.spi.JnaSupport;
 import org.jline.terminal.spi.Pty;
-
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import com.sshtools.common.files.nio.AbstractFileURI;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.components.Utils;
@@ -146,7 +151,16 @@ public class VirtualShellNG extends SessionChannelNG {
 				this,
 				Charset.forName("UTF-8"));
 		
-		return new VirtualConsole(this, env, terminal, new LineReaderImpl(terminal), shell);
+        Map<String,Object> env = new HashMap<>();
+		env.put("connection", getConnection());
+		FileSystem fs = FileSystems.newFileSystem(AbstractFileURI.create(getConnection(), ""), env);
+		
+        final LineReaderBuilder lineReaderBuilder = LineReaderBuilder.builder()
+                .terminal(terminal)
+                .variable(LineReader.HISTORY_SIZE, 1000)
+                .variable(LineReader.HISTORY_FILE, fs.getPath(".history"));
+        
+		return new VirtualConsole(this, this.env, terminal, lineReaderBuilder.build(), shell);
 	}
 
     private <S> S load(Class<S> clazz) {
@@ -200,7 +214,5 @@ public class VirtualShellNG extends SessionChannelNG {
 
 	@Override
 	protected void onChannelClosed() {
-		// TODO Auto-generated method stub
-		
 	}
 }

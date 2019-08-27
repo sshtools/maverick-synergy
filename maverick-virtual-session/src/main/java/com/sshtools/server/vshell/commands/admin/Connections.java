@@ -16,34 +16,27 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.ssh;
+package com.sshtools.server.vshell.commands.admin;
 
 import java.io.IOException;
 
-public interface Channel {
+import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.VirtualConsole;
 
-	int getLocalWindow();
+public class Connections extends ShellCommand {
 
-	int getRemoteWindow();
+	public Connections() {
+		super("con", ShellCommand.SUBSYSTEM_SSHD, "", "Show active connections");
+	}
 
-	int getLocalPacket();
+	public void run(String[] args, VirtualConsole process)
+			throws IOException, PermissionDeniedException {
 
-	void close();
+		for(SshConnection c : process.getConnection().getConnectionManager().getAllConnections()) {
+			process.println(String.format("%s %16s %s", c.getUUID(), c.getRemoteAddress().getAddress(), c.getUsername()));
+		}
+	}
 
-	void sendData(byte[] array, int i, int size) throws IOException;
-
-	void sendWindowAdjust(int bytesSinceLastWindowIssue);
-
-	boolean isClosed();
-
-	void addEventListener(ChannelEventListener listener);
-
-	void sendChannelRequest(String requestName, boolean wantReply, byte[] data);
-
-	void sendChannelRequest(String type, boolean wantreply,
-			byte[] requestdata, ChannelRequestFuture future);
-
-	SshConnection getConnection();
-
-	Context getContext();
 }

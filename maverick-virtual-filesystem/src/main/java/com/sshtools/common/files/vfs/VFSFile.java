@@ -109,8 +109,9 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 		}
 		SftpFileAttributes attr = new SftpFileAttributes(getFileType(file), "UTF-8");
 		
-		if (attr.isDirectory())
+		if (!attr.isDirectory())
 			attr.setSize(new UnsignedInteger64(length()));
+		
 		try {
 			attr.setTimes(new UnsignedInteger64(lastModified() / 1000),
 					new UnsignedInteger64(lastModified() / 1000));

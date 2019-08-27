@@ -171,7 +171,6 @@
 		<module>maverick-synergy-server</module>
 		<module>maverick-virtual-filesystem</module>
 		<module>maverick-virtual-session</module>
-		<module>maverick-virtual-shell</module>
 		<module>maverick-callback-client</module>
 		<module>maverick-callback-server</module>
 		<module>maverick-x509</module>

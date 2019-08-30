@@ -30,6 +30,10 @@
   <name>Assembly</name>
   <description>Build an archive of all the available jar files</description>
    
+  <properties>
+		<distributionFileName>maverick-synergy-${project.version}</distributionFileName>
+  </properties>
+	
   <dependencies>
   	<dependency>
   		<groupId>com.sshtools</groupId>
@@ -97,6 +101,7 @@
                        <descriptors>
                            <descriptor>src/main/assembly/zip.xml</descriptor>
                        </descriptors>
+                       <finalName>${distributionFileName}</finalName>
                    </configuration>
                </execution>
            </executions>

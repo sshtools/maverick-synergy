@@ -25,26 +25,27 @@
 	<id>zip</id>
 	<formats>
 		<format>zip</format>
+		<format>tar.gz</format>
 	</formats>
 	<fileSets>
 		<fileSet>
 			<directory>${project.basedir}/notes</directory>
-			<outputDirectory></outputDirectory>
+			<outputDirectory>${distributionFileName}</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>../templates</directory>
-			<outputDirectory>sources/templates</outputDirectory>
+			<outputDirectory>${distributionFileName}/sources/templates</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>..</directory>
 			<includes>
 				<include>pom.xml</include>
 			</includes>
-			<outputDirectory>sources</outputDirectory>
+			<outputDirectory>${distributionFileName}/sources</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>${project.basedir}/target/third-party</directory>
-			<outputDirectory>third-party</outputDirectory>
+			<outputDirectory>${distributionFileName}/third-party</outputDirectory>
 		</fileSet>
 	</fileSets>
 
@@ -61,12 +62,12 @@
 		          	<excludes>
 		          		<exclude>target/</exclude>
 		          	</excludes>
-		            <outputDirectory>sources/${module.artifactId}</outputDirectory>
+		            <outputDirectory>${distributionFileName}/sources/${module.artifactId}</outputDirectory>
 		          </fileSet>
 		        </fileSets>
 			</sources>
 			<binaries>
-				<outputDirectory>/dist</outputDirectory>
+				<outputDirectory>${distributionFileName}/dist</outputDirectory>
 				<unpack>false</unpack>
 				<includeDependencies>false</includeDependencies>
 			</binaries>

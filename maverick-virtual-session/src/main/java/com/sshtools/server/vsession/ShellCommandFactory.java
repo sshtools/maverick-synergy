@@ -39,7 +39,6 @@ import com.sshtools.server.vsession.commands.Kill;
 import com.sshtools.server.vsession.commands.ShowLastError;
 import com.sshtools.server.vsession.commands.Sleep;
 import com.sshtools.server.vsession.commands.Unalias;
-import com.sshtools.server.vshell.commands.admin.Mem;
 
 
 public class ShellCommandFactory extends CommandFactory<ShellCommand> {

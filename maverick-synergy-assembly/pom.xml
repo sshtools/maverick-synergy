@@ -29,7 +29,36 @@
   <artifactId>maverick-synergy-assembly</artifactId>
   <name>Assembly</name>
   <description>Build an archive of all the available jar files</description>
- 
+   
+  <dependencies>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-ed25519</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-sshagent</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-virtual-filesystem</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-virtual-session</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-zip</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  </dependencies>
+  
+  
   <build>
   <pluginManagement>
       <plugins>

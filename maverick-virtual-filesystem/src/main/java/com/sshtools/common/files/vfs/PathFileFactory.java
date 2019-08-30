@@ -21,16 +21,13 @@ package com.sshtools.common.files.vfs;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.sshtools.common.events.Event;
 import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
 
 public class PathFileFactory implements AbstractFileFactory<PathFile> {
-	final static Logger LOG = LoggerFactory.getLogger(PathFileFactory.class);
 	
 	private Path base;
 
@@ -40,8 +37,8 @@ public class PathFileFactory implements AbstractFileFactory<PathFile> {
 
 	@Override
 	public PathFile getFile(String path, SshConnection con) throws PermissionDeniedException, IOException {
-		if(LOG.isTraceEnabled())
-			LOG.trace(String.format("Resolving path '%s' in '%s'", path, base));
+		if(Log.isTraceEnabled())
+			Log.trace(String.format("Resolving path '%s' in '%s'", path, base));
 		Path p;
 		if(path.toString().startsWith(base.toString()))
 			path = path.substring(base.toString().length());
@@ -56,8 +53,8 @@ public class PathFileFactory implements AbstractFileFactory<PathFile> {
 		else {
 			p = base.resolve(path);
 		}
-		if(LOG.isTraceEnabled())
-			LOG.trace(String.format("Resolved path '%s' as '%s' in '%s'", path, p, base));
+		if(Log.isTraceEnabled())
+			Log.trace(String.format("Resolved path '%s' as '%s' in '%s'", path, p, base));
 		return new PathFile(p, this);
 	}
 

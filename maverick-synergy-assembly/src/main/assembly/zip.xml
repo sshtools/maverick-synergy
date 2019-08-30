@@ -21,7 +21,7 @@
 <assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
-	<includeBaseDirectory>true</includeBaseDirectory>
+	<includeBaseDirectory>false</includeBaseDirectory>
 	<id>zip</id>
 	<formats>
 		<format>zip</format>
@@ -31,30 +31,48 @@
 			<directory>${project.basedir}/notes</directory>
 			<outputDirectory></outputDirectory>
 		</fileSet>
+		<fileSet>
+			<directory>../templates</directory>
+			<outputDirectory>sources/templates</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>..</directory>
+			<includes>
+				<include>pom.xml</include>
+			</includes>
+			<outputDirectory>sources</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>${project.basedir}/target/third-party</directory>
+			<outputDirectory>third-party</outputDirectory>
+		</fileSet>
 	</fileSets>
 
 	<moduleSets>
 		<moduleSet>
-
 			<useAllReactorProjects>true</useAllReactorProjects>
-			<!-- Now, select which projects to include in this module-set. -->
 			<includes>
 				<include>com.sshtools:*</include>
 			</includes>
+			<sources>
+				<includeModuleDirectory>false</includeModuleDirectory>
+				<fileSets>
+		          <fileSet>
+		          	<excludes>
+		          		<exclude>target/</exclude>
+		          	</excludes>
+		            <outputDirectory>sources/${module.artifactId}</outputDirectory>
+		          </fileSet>
+		        </fileSets>
+			</sources>
 			<binaries>
-				<dependencySets>
-					<dependencySet>
-						<outputDirectory>lib</outputDirectory>
-						<excludes>
-							<exclude>com.sshtools:*</exclude>
-						</excludes>
-					</dependencySet>
-				</dependencySets>
-				<outputDirectory></outputDirectory>
+				<outputDirectory>/dist</outputDirectory>
 				<unpack>false</unpack>
+				<includeDependencies>false</includeDependencies>
 			</binaries>
 		</moduleSet>
 	</moduleSets>
+
 
 
 </assembly>

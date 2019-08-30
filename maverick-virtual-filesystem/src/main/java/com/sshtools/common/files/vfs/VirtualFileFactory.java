@@ -20,7 +20,10 @@ package com.sshtools.common.files.vfs;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Stack;
 import java.util.StringTokenizer;
 
@@ -32,9 +35,7 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.FileUtils;
 
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Element;
+
 
 public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
@@ -75,20 +76,6 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		this.cached = cached;
 	}
 
-	private Cache getCache(SshConnection con) {
-		if (cached) {
-			return null;
-		}
-		if (!con.containsProperty(CACHE)) {
-			CacheManager cacheManager = CacheManager.getInstance();
-			int oneHour = 60 * 60;
-			cacheManager.addCache(new Cache(con.getSessionId(), 16384, false, false,
-					oneHour, oneHour));
-			con.setProperty(CACHE, cacheManager);
-		}
-		return ((CacheManager) con.getProperty(CACHE))
-				.getCache(con.getSessionId());
-	}
 
 	private String canonicalisePath(String path) {
 		StringTokenizer t = new StringTokenizer(path, "/", true);
@@ -173,22 +160,36 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		}
 
 		VirtualMount m = getMountManager(con).getMount(virtualPath);
-		Cache cache = getCache(con);
-		if(m.isCached()) {
-			if(cache != null) {
-				Element e = cache.get(virtualPath);
-				if (e != null) {
-					System.out.println("**** " + virtualPath + " (" + path + ") comes from cache");
-					return (VirtualFile) e.getObjectValue();
-				}
-			}
+		VirtualFile cached = getCachedObject(virtualPath, con);
+		if(Objects.nonNull(cached)) {
+			return cached;
 		}
 		VirtualFile f = new VirtualMappedFile(virtualPath, con, m, this);
 		if (m.isCached()) {
-			cache.put(new Element(virtualPath, f));
+			cacheObject(f, con);
 		}
 		return f;
 
+	}
+
+	@SuppressWarnings("unchecked")
+	private void cacheObject(VirtualFile f, SshConnection con) throws IOException, PermissionDeniedException {
+		Map<String,VirtualFile> cache = (Map<String,VirtualFile>) con.getProperty(CACHE);
+		if(Objects.isNull(cache)) {
+			cache = new HashMap<>();
+			con.setProperty(CACHE, cache);
+		}
+		
+		cache.put(f.getAbsolutePath(), f);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected VirtualFile getCachedObject(String virtualPath, SshConnection con) {
+		Map<String,VirtualFile> cache = (Map<String,VirtualFile>) con.getProperty(CACHE);
+		if(Objects.nonNull(cache)) {
+			cache.get(virtualPath);
+		}
+		return null;
 	}
 
 	public VirtualMountTemplate getDefaultMount() {

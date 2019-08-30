@@ -33,6 +33,19 @@
 			<outputDirectory>${distributionFileName}</outputDirectory>
 		</fileSet>
 		<fileSet>
+			<directory>${project.basedir}/target</directory>
+			<includes>
+				<include>maverick-synergy-${project.version}-all.jar</include>
+				<include>maverick-synergy-client-${project.version}-all.jar</include>
+				<include>maverick-synergy-server-${project.version}-all.jar</include>
+			</includes>
+			<outputDirectory>${distributionFileName}/opt</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>${project.basedir}/target/apidocs</directory>
+			<outputDirectory>${distributionFileName}/javadocs</outputDirectory>
+		</fileSet>
+		<fileSet>
 			<directory>../templates</directory>
 			<outputDirectory>${distributionFileName}/sources/templates</outputDirectory>
 		</fileSet>
@@ -61,6 +74,7 @@
 		          <fileSet>
 		          	<excludes>
 		          		<exclude>target/</exclude>
+		          		<exclude>.settings/</exclude>
 		          	</excludes>
 		            <outputDirectory>${distributionFileName}/sources/${module.artifactId}</outputDirectory>
 		          </fileSet>

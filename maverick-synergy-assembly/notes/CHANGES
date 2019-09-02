@@ -3,6 +3,8 @@ Maverick Synergy 3.0.0 - TBC
 Features
     o Major refactor to support more shared code with the Maverick Legacy APIs.
     o Removed all dependencies from core maverick-synergy-client and maverick-synergy-server modules to enable clearer choice on third-party dependencies.
+    o CBC ciphers have been deprecated. You can enable CBC ciphers by calling ComponentManager.enableCBCCiphers();
+    o DSA keys have been deprecated. We will no longer generate them, but you can enable support for using them if remote server requires them with ComponentManager.getInstance().enableAlgorithm("ssh-dss");
 
 Bug Fixes
     o Selector threads and executor service threads have now been marked as daemon threads.

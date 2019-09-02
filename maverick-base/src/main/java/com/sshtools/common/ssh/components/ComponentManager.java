@@ -52,9 +52,14 @@ public abstract class ComponentManager {
 	private static boolean PerContextAlgorithmPreferences = false;
 	private static boolean enableNoneCipher = false;
 	private static boolean enableNoneMac = false;
+	protected static boolean enableCbc = false;
 	
 	Set<String> disabledAlgorithms = new HashSet<String>();
 	Map<String,Map<String,Class<?>>> cachedExternalComponents = new HashMap<>();
+	
+	protected ComponentManager() {
+		disabledAlgorithms.add("ssh-dss");
+	}
 	
 	public void disableAlgorithm(String algorithm) {
 		disabledAlgorithms.add(algorithm);
@@ -83,7 +88,14 @@ public abstract class ComponentManager {
 	public static void setEnableNoneMac(boolean enableNoneCipher) {
 		ComponentManager.enableNoneMac = enableNoneCipher;
 	}
-
+	
+	public static void enableCBCCiphers() {
+		enableCbc = true;
+	}
+	
+	public static void disableCBCCiphers() {
+		enableCbc = false;
+	}
 	
 	public static void setPerContextAlgorithmPreferences(boolean enable) {
 		PerContextAlgorithmPreferences = enable;

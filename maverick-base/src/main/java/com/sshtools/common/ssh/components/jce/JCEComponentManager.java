@@ -83,7 +83,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 
 	
 	SecureRND rnd;
-	
+
 	public JCEComponentManager() {
 		
 		if (System.getProperty("maverick.enableBCProvider", "true").equalsIgnoreCase("false") || JCEProvider.isBCDisabled()) {
@@ -193,7 +193,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 	}
 
 	public SshDsaPublicKey createDsaPublicKey() {
-		return new Ssh2DsaPublicKey();
+		throw new UnsupportedOperationException();
 	}
 
 	public SshRsaPrivateCrtKey createRsaPrivateCrtKey(BigInteger modulus, BigInteger publicExponent,
@@ -472,27 +472,29 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 			ciphers.add("3des-ctr", TripleDesCtr.class);
 		}
 		
-		if (testJCECipher("3des-cbc", TripleDesCbc.class)) {
-			ciphers.add("3des-cbc", TripleDesCbc.class);
-		}
-
-		if (testJCECipher("blowfish-cbc", BlowfishCbc.class)) {
-			ciphers.add("blowfish-cbc", BlowfishCbc.class);
-		}
-
-		if (testJCECipher("aes128-cbc", AES128Cbc.class)) {
-			ciphers.add("aes128-cbc", AES128Cbc.class);
-			ciphers.remove("aes128-cbc");
-		}
-
-		if (testJCECipher("aes192-cbc", AES192Cbc.class)) {
-			ciphers.add("aes192-cbc", AES192Cbc.class);
-			ciphers.remove("aes192-cbc");
-		}
-
-		if (testJCECipher("aes256-cbc", AES256Cbc.class)) {
-			ciphers.add("aes256-cbc", AES256Cbc.class);
-			ciphers.remove("aes256-cbc");
+		if(enableCbc) {
+			if (testJCECipher("3des-cbc", TripleDesCbc.class)) {
+				ciphers.add("3des-cbc", TripleDesCbc.class);
+			}
+	
+			if (testJCECipher("blowfish-cbc", BlowfishCbc.class)) {
+				ciphers.add("blowfish-cbc", BlowfishCbc.class);
+			}
+	
+			if (testJCECipher("aes128-cbc", AES128Cbc.class)) {
+				ciphers.add("aes128-cbc", AES128Cbc.class);
+				ciphers.remove("aes128-cbc");
+			}
+	
+			if (testJCECipher("aes192-cbc", AES192Cbc.class)) {
+				ciphers.add("aes192-cbc", AES192Cbc.class);
+				ciphers.remove("aes192-cbc");
+			}
+	
+			if (testJCECipher("aes256-cbc", AES256Cbc.class)) {
+				ciphers.add("aes256-cbc", AES256Cbc.class);
+				ciphers.remove("aes256-cbc");
+			}
 		}
 
 		if (testJCECipher("arcfour", ArcFour.class)) {

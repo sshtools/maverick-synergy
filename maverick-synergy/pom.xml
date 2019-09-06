@@ -54,7 +54,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.sshtools</groupId>
-			<artifactId>maverick-virtual-shell</artifactId>
+			<artifactId>maverick-virtual-filesystem</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

@@ -198,6 +198,12 @@ public class MockConnection implements SshConnection {
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void addTask(ConnectionAwareTask r) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 
 }

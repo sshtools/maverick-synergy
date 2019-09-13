@@ -82,4 +82,6 @@ public interface SshConnection {
 
 	void removeEventListener(EventListener listener);
 
+	void addTask(ConnectionAwareTask r);
+
 }

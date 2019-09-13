@@ -24,30 +24,30 @@ import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.client.sftp.TransferCancelledException;
 import com.sshtools.common.sftp.SftpStatusException;
-import com.sshtools.common.ssh.AbstractRequestFuture;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionTaskWrapper;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.IOUtils;
 
-public class DownloadOutputStreamTask extends AbstractRequestFuture implements Runnable {
+public class DownloadOutputStreamTask extends Task {
 
-	Connection<SshClientContext> con;
 	String path;
 	OutputStream localFile = null;
 	Throwable e;
 	
-	public DownloadOutputStreamTask(Connection<SshClientContext> con, String path, OutputStream localFile) {
-		this.con = con;
+	public DownloadOutputStreamTask(SshConnection con, String path, OutputStream localFile) {
+		super(con);
 		this.path = path;
 		this.localFile = localFile;
 	}
 	
-	public DownloadOutputStreamTask(Connection<SshClientContext> con, String path) {
+	public DownloadOutputStreamTask(SshConnection con, String path) {
 		this(con, path, null);
 	}
 
-	public void run() {
+	@Override
+	protected void doTask() {
 		
 		SftpClientTask task = new SftpClientTask(con) {
 			

@@ -118,6 +118,11 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 		return transport.getRemoteIdentification();
 	}
 	
+	@Override
+	public void addTask(ConnectionAwareTask r) {
+		context.getExecutorService().execute(r);
+	}
+	
 	public void addTask(Runnable r) {
 		context.getExecutorService().execute(new ConnectionTaskWrapper(this, r));
 	}

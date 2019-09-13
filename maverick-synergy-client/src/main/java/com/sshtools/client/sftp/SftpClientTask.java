@@ -41,7 +41,6 @@ import java.util.Vector;
 
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClient;
-import com.sshtools.client.SshClientContext;
 import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.client.tasks.Task;
 import com.sshtools.common.events.Event;
@@ -50,7 +49,7 @@ import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
-import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.EOLProcessor;
@@ -118,7 +117,7 @@ public abstract class SftpClientTask extends Task {
 	
 	private int transferMode = MODE_BINARY;
 	
-	public SftpClientTask(Connection<SshClientContext> con) {
+	public SftpClientTask(SshConnection con) {
 		super(con);
 	}
 	

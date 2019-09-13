@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
+import com.sshtools.common.events.EventListener;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ConnectionAwareTask;
@@ -184,6 +185,18 @@ public class MockConnection implements SshConnection {
 	@Override
 	public void disconnect() {
 		disconnect("By Application");
+	}
+
+	@Override
+	public void addEventListener(EventListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void removeEventListener(EventListener listener) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 

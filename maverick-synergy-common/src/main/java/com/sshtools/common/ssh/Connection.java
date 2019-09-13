@@ -73,10 +73,12 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 		});
 	}
 	
+	@Override
 	public synchronized void addEventListener(EventListener listener) {
 		listeners.add(listener);
 	}
 	
+	@Override
 	public synchronized void removeEventListener(EventListener listener) {
 		listeners.remove(listener);
 	}

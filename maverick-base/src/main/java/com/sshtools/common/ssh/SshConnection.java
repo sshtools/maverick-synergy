@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Locale;
 
+import com.sshtools.common.events.EventListener;
 import com.sshtools.common.logger.Log.Level;
 
 public interface SshConnection {
@@ -76,5 +77,9 @@ public interface SshConnection {
 	void startLogging(Level trace) throws IOException;
 
 	void disconnect();
+
+	void addEventListener(EventListener listener);
+
+	void removeEventListener(EventListener listener);
 
 }

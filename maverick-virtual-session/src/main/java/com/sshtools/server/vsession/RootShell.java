@@ -190,12 +190,6 @@ public class RootShell extends Msh {
 			source(console, homeProfile);
 		}
 
-//		// Load history
-//		AbstractFile history = console.getCurrentDirectory().resolveFile(".history");
-//		if (history.exists()) {
-//			console.getLineReader().getHistory()
-//		}
-
 		// Fire event
 		EventServiceImplementation.getInstance().fireEvent(
 				new Event(this, EventCodes.EVENT_ROOT_SHELL_STARTED,

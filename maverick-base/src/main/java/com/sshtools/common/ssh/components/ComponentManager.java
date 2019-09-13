@@ -548,7 +548,7 @@ public abstract class ComponentManager {
 					}
 				}
 				
-			} catch(IOException ex) {
+			} catch(Throwable ex) {
 				Log.error("Error processing %s", ex, componentFile);
 			}
 		}

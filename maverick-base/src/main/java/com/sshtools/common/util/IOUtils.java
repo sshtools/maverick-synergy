@@ -19,6 +19,7 @@
 /* HEADER */
 package com.sshtools.common.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
@@ -423,7 +424,7 @@ public class IOUtils {
 		} 
 	}
 	
-	public static InputStream toInputStream(String value, String charset) {
+	public static InputStream toInputStream(String value, String charset) throws IOException {
 		return new ByteArrayInputStream(value.getBytes(charset));
 	}
 }

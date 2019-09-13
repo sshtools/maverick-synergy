@@ -422,4 +422,8 @@ public class IOUtils {
 			return new String(out.toByteArray(), charset);	
 		} 
 	}
+	
+	public static InputStream toInputStream(String value, String charset) {
+		return new ByteArrayInputStream(value.toByteArray(charset));
+	}
 }

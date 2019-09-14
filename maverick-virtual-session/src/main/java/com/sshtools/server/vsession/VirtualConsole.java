@@ -44,7 +44,7 @@ public class VirtualConsole {
 	Msh shell;
 	AbstractFile cwd;
 	
-	VirtualConsole(Channel channel, Environment env, Terminal terminal, LineReader reader, Msh shell) {
+	public VirtualConsole(Channel channel, Environment env, Terminal terminal, LineReader reader, Msh shell) {
 		this.channel = channel;
 		this.con = channel.getConnection();
 		this.env = env;

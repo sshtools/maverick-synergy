@@ -311,7 +311,6 @@ public abstract class TransportProtocol<T extends SshContext>
 	
 	protected abstract void onDisconnected();
 	
-	@SuppressWarnings("unchecked")
 	public void onSocketConnect(SocketConnection connection) {
 
 		this.socketConnection = connection;

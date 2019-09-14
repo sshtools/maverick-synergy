@@ -37,11 +37,11 @@ import org.jline.utils.NonBlocking;
 import org.jline.utils.NonBlockingInputStream;
 import org.jline.utils.NonBlockingReader;
 
-import com.sshtools.common.ssh.ChannelNG;
+import com.sshtools.common.ssh.Channel;
 
 public class PosixChannelPtyTerminal extends AbstractPosixTerminal {
 
-    private final ChannelNG<?> out;
+    private final Channel out;
     private final InputStream masterInput;
     private final OutputStream masterOutput;
     private final NonBlockingInputStream input;
@@ -55,15 +55,15 @@ public class PosixChannelPtyTerminal extends AbstractPosixTerminal {
     private ByteArrayOutputStream pauseBuffer = new ByteArrayOutputStream();
     Size size;
     
-    public PosixChannelPtyTerminal(String name, String type, Pty pty, int cols, int rows, ChannelNG<?> out, Charset encoding) throws IOException {
+    public PosixChannelPtyTerminal(String name, String type, Pty pty, int cols, int rows, Channel out, Charset encoding) throws IOException {
         this(name, type, pty, cols, rows, out, encoding, SignalHandler.SIG_DFL);
     }
 
-    public PosixChannelPtyTerminal(String name, String type, Pty pty, int cols, int rows, ChannelNG<?> out, Charset encoding, SignalHandler signalHandler) throws IOException {
+    public PosixChannelPtyTerminal(String name, String type, Pty pty, int cols, int rows, Channel out, Charset encoding, SignalHandler signalHandler) throws IOException {
         this(name, type, pty, cols, rows, out, encoding, signalHandler, false);
     }
 
-    public PosixChannelPtyTerminal(String name, String type, Pty pty, int cols, int rows, ChannelNG<?> out, Charset encoding, SignalHandler signalHandler, boolean paused) throws IOException {
+    public PosixChannelPtyTerminal(String name, String type, Pty pty, int cols, int rows, Channel  out, Charset encoding, SignalHandler signalHandler, boolean paused) throws IOException {
         super(name, type, pty, encoding, signalHandler);
         this.out = Objects.requireNonNull(out);
         this.masterInput = pty.getMasterInput();
@@ -211,7 +211,7 @@ public class PosixChannelPtyTerminal extends AbstractPosixTerminal {
                     input.close();
                     break;
                 }
-                out.sendChannelDataAndBlock(buf, 0, b, null);
+                out.sendData(buf, 0, b);
             }
         } catch (IOException e) {
             e.printStackTrace();

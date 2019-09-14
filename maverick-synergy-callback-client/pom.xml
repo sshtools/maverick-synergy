@@ -25,11 +25,11 @@
     <artifactId>maverick-synergy-group</artifactId>
     <version>3.0.0-SNAPSHOT</version>
   </parent>
-  <artifactId>maverick-callback-server</artifactId>
-  <name>Callback Server API</name>
-  <description>An SSH server that accepts connections from Callback Clients but then switches to act as a client</description>
+  <artifactId>maverick-synergy-callback-client</artifactId>
+  <name>Callback Client API</name>
+  <description>An SSH client that connects to a Callback Server but switches to act as a server</description>
   
-    <dependencies>
+  <dependencies>
   	<dependency>
   		<groupId>com.sshtools</groupId>
   		<artifactId>maverick-synergy-client</artifactId>

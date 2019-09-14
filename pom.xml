@@ -204,15 +204,17 @@
 	</dependencies>
 	
 	<modules>
+		<module>maverick-base</module>
+		
 		<module>maverick-synergy-common</module>
 		<module>maverick-synergy-client</module>
 		<module>maverick-synergy-fuse-drive</module>
-		<module>maverick-base</module>
 		<module>maverick-synergy-server</module>
+		<module>maverick-synergy-callback-client</module>
+		<module>maverick-synergy-callback-server</module>
+		
 		<module>maverick-virtual-filesystem</module>
 		<module>maverick-virtual-session</module>
-		<module>maverick-callback-client</module>
-		<module>maverick-callback-server</module>
 		<module>maverick-x509</module>
 		<module>maverick-openssh-certs</module>
 		<module>maverick-bc</module>
@@ -221,6 +223,7 @@
 		<module>maverick-ed25519</module>
 		<module>maverick-zip</module>
 		<module>maverick-sshagent</module>
+
 		<module>maverick-synergy</module>
 		<module>maverick-synergy-assembly</module>
 	</modules>

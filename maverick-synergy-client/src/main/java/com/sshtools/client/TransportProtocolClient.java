@@ -279,7 +279,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 
 	@Override
 	protected void onConnected() {
-		getContext().getConnectionManager().registerTransport(this, sshContext);
+		this.con = getContext().getConnectionManager().registerTransport(this, sshContext);
 	}
 
 	@Override

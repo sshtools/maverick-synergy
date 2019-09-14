@@ -735,6 +735,16 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 							+ connection.isConnected() + " forceClose="
 							+ forceClose);
 			}
+			
+			if(forceClose) {
+				
+				for (ChannelEventListener listener : eventListeners) {
+					listener.onChannelDisconnect(this);
+				}
+				
+				onChannelDisconnect();
+			}
+			
 			completeClose();
 		} else if (receivedClose) {
 			if(Log.isTraceEnabled()) {
@@ -1281,5 +1291,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 			}
 		
 		}
+	}
+
+	protected void onChannelDisconnect() {
+		// TODO Auto-generated method stub
+		
 	}
 }

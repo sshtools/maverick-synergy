@@ -112,8 +112,7 @@ public abstract class CallbackClient<T extends CallbackConfiguration> implements
 						createContext(app.getSshEngine().getContext(), null));;
 				future.waitFor(30000L);
 				if(future.isDone() && future.isSuccess()) {
-					TransportProtocol<?> transport = (TransportProtocol<?>)future.getTransport();
-					currentConnection = transport.getConnection();
+					currentConnection = future.getConnection();
 					currentConnection.getAuthenticatedFuture().waitFor(30000L);
 					if(currentConnection.getAuthenticatedFuture().isDone() && currentConnection.getAuthenticatedFuture().isSuccess()) {
 						currentConnection.setProperty("callbackClient", this);
@@ -149,7 +148,7 @@ public abstract class CallbackClient<T extends CallbackConfiguration> implements
 				Log.error(String.format("%s on %s:%d", 
 						e.getMessage(),
 						config.getServerHost(), 
-						config.getServerPort()));
+						config.getServerPort()), e);
 				long interval = config.getReconnectIntervalMs() * Math.min(count, 12 * 60);
 				if(Log.isInfoEnabled()) {
 					Log.info(String.format("Reconnecting to %s:%d in %d seconds", hostname, port, interval / 1000));

@@ -44,5 +44,9 @@ public class ChannelEventAdapter implements ChannelEventListener {
   public void onWindowAdjust(Channel channel, long currentWindowSpace) {
 	  
   }
+  
+  public void onChannelDisconnect(Channel channel) {
+		
+  }
 
 }

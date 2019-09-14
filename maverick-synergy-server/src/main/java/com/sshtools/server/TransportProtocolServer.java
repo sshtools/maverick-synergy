@@ -252,7 +252,7 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 
 	@Override
 	protected void onConnected() {
-		getContext().getConnectionManager().registerTransport(this, getContext());
+		this.con = getContext().getConnectionManager().registerTransport(this, getContext());
 		getConnectFuture().connected(this, con);
 	}
 

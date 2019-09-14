@@ -100,8 +100,6 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 			}
 			transport.getConnection().getAuthenticatedFuture().authenticated(authenticated);
 		}
-		
-		transport = null;
 	}
 
 	/**

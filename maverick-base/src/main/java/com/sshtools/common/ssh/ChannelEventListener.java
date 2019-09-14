@@ -47,6 +47,13 @@ public interface ChannelEventListener {
 
 
   /**
+   * Called when a channel is disconnected because of a connection loss. You may still receive onChannelClose 
+   * event after this.
+   */
+  public void onChannelDisconnect(Channel channel);
+  
+ 
+  /**
    * The channel is closing, but has not sent its SSH_MSG_CHANNEL_CLOSE
    * @param channel Channel
    */

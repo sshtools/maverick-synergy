@@ -129,7 +129,7 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
         return Collections.unmodifiableCollection(activeConnections.values());
     }
 
-    public synchronized void registerTransport(TransportProtocol<T> transport, T sshContext) {
+    public synchronized Connection<T> registerTransport(TransportProtocol<T> transport, T sshContext) {
     	Connection<T> con = new Connection<T>(transport.getContext());
     	con.transport = transport;
     	con.remoteAddress = (InetSocketAddress)transport.getRemoteAddress();
@@ -148,6 +148,8 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+        
+        return con;
     }
     
     public synchronized void unregisterTransport(TransportProtocol<T> transport) {

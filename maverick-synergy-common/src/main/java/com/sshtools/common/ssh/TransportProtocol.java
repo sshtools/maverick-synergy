@@ -333,8 +333,6 @@ public abstract class TransportProtocol<T extends SshContext>
 		
 		onConnected();
 		
-		con = (Connection<T>) sshContext.getConnectionManager().getConnectionById(getUUID());
-		
 		this.incomingSwap = new byte[sshContext.getMaximumPacketLength()];
 
 		if (!sentLocalIdentification) {

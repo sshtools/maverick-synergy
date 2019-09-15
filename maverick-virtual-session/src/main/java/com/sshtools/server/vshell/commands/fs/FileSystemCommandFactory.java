@@ -44,7 +44,7 @@ public class FileSystemCommandFactory extends CommandFactory<ShellCommand> {
 		commands.put("mkdir", Mkdir.class);
 		commands.put("ls", Ls.class);
 		commands.put("cat", Cat.class);
-		commands.put("edit", Nano.class);
+		commands.put("nano", Nano.class);
 		commands.put("follow", Follow.class);
 		
 	}

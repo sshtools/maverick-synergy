@@ -75,6 +75,10 @@ public abstract class AbstractCommandTask extends AbstractSessionTask<SessionCha
 		return exitCode;
 	}
 	
+	public String getCommand() {
+		return command;
+	}
+	
 	@Override
 	protected final void setupSession(SessionChannelNG session) {
 		beforeExecuteCommand(session);

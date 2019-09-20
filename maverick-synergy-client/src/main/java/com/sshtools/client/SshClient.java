@@ -85,7 +85,7 @@ public class SshClient implements Closeable {
 	public SshClient(String hostname, int port, String username, SshClientContext sshContext, char[] password, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
 		this.sshContext = sshContext;
 		sshContext.setUsername(username);
-		if(Objects.isNull(password) || password.length > 0) {
+		if(Objects.nonNull(password) && password.length > 0) {
 			sshContext.addAuthenticator(new PasswordAuthenticator(password));
 		}
 		if(identities.length > 0) {

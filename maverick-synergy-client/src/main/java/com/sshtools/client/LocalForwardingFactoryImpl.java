@@ -59,7 +59,7 @@ public class LocalForwardingFactoryImpl extends
 	protected ForwardingChannel<SshClientContext> createChannel(String channelType,
 			SshConnection con, 
 			String addressToBind, int portToBind, SocketChannel sc, SshClientContext context) {
-		return new LocalForwardingChannel<SshClientContext>(getChannelType(), con, hostToConnect, portToConnect, sc, context);
+		return new LocalForwardingChannel<SshClientContext>(getChannelType(), con, hostToConnect, portToConnect, sc);
 	}
 
 }

@@ -25,10 +25,11 @@ import com.sshtools.common.command.ExecutableCommand;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpSubsystem;
-import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.ChannelFactory;
+import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SessionChannel;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.Subsystem;
 import com.sshtools.common.ssh.UnsupportedChannelException;
@@ -44,7 +45,7 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 	public DefaultServerChannelFactory() {
 	}
 
-	public final ChannelNG<SshServerContext> createChannel(String channeltype, Connection<SshServerContext> con)
+	public final ChannelNG<SshServerContext> createChannel(String channeltype, SshConnection con)
 			throws UnsupportedChannelException, PermissionDeniedException {
 
 		
@@ -55,21 +56,20 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 		if(channeltype.equals(LOCAL_FORWARDING_CHANNEL_TYPE)) {
 			return new com.sshtools.common.ssh.LocalForwardingChannel<SshServerContext>(
 					LOCAL_FORWARDING_CHANNEL_TYPE,
-					con,
-					con.getContext());
+					con);
 		}
 		
 		return onCreateChannel(channeltype, con);
 	}
 
-	protected ChannelNG<SshServerContext> onCreateChannel(String channeltype, Connection<SshServerContext> con) 
+	protected ChannelNG<SshServerContext> onCreateChannel(String channeltype, SshConnection con) 
 			throws UnsupportedChannelException, PermissionDeniedException {
 		throw new UnsupportedChannelException(String.format("%s is not a supported channel type", channeltype));
 	}
 	
-	protected ChannelNG<SshServerContext> createSessionChannel(Connection<SshServerContext> con)
+	protected ChannelNG<SshServerContext> createSessionChannel(SshConnection con)
 			throws UnsupportedChannelException, PermissionDeniedException {
-		return new UnsupportedSession(con, con.getContext());
+		return new UnsupportedSession(con);
 	}
 
 	@Override

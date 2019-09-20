@@ -42,8 +42,8 @@ public class LocalForwardingChannel<T extends SshContext> extends SocketForwardi
 
 	boolean hasConnected = false;
 
-	public LocalForwardingChannel(String channelType, SshConnection con, T context) {
-		super(channelType, context, con);
+	public LocalForwardingChannel(String channelType, SshConnection con) {
+		super(channelType, con);
 	}
 
 	/**
@@ -57,8 +57,8 @@ public class LocalForwardingChannel<T extends SshContext> extends SocketForwardi
 	 *            SocketChannel
 	 */
 	public LocalForwardingChannel(String channelType, SshConnection con, String addressToBind, int portToBind,
-			SocketChannel socketChannel, T context) {
-		super(channelType, context, con);
+			SocketChannel socketChannel) {
+		super(channelType,  con);
 		this.socketChannel = socketChannel;
 		this.hostToConnect = addressToBind;
 		this.portToConnect = portToBind;

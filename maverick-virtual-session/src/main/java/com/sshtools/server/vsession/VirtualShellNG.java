@@ -29,19 +29,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.spi.JnaSupport;
 import org.jline.terminal.spi.Pty;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
+
 import com.sshtools.common.files.nio.AbstractFileURI;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.Utils;
 import com.sshtools.server.AgentForwardingChannel;
 import com.sshtools.server.SessionChannelNG;
-import com.sshtools.server.SshServerContext;
 
 public class VirtualShellNG extends SessionChannelNG {
 
@@ -49,10 +49,9 @@ public class VirtualShellNG extends SessionChannelNG {
 	Environment env = new Environment();
 	
 	public VirtualShellNG(SshConnection con,
-			SshServerContext context,
 			ShellCommandFactory commandFactory, 
 			String shellCommand) {
-		this(con, context, commandFactory);
+		this(con, commandFactory);
 		this.shellCommand = shellCommand;
 	}
 	
@@ -68,9 +67,8 @@ public class VirtualShellNG extends SessionChannelNG {
 	List<WindowSizeChangeListener> listeners = new ArrayList<WindowSizeChangeListener>();
 	
 	public VirtualShellNG(SshConnection con,
-			SshServerContext context,
 			ShellCommandFactory commandFactory) {
-		super(context, con);
+		super(con);
 		this.commandFactory = commandFactory;
 	}
 

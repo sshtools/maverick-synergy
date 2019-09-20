@@ -28,6 +28,7 @@ import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SessionChannel;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.Subsystem;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 
@@ -45,21 +46,21 @@ public class DefaultClientChannelFactory implements ChannelFactory<SshClientCont
 	/**
 	 * Called when a channel needs to be created.
 	 */
-	public final ChannelNG<SshClientContext> createChannel(String channeltype, Connection<SshClientContext> con)
+	public final ChannelNG<SshClientContext> createChannel(String channeltype, SshConnection con)
 			throws UnsupportedChannelException, PermissionDeniedException {
 		
 		if(channeltype.equals("session")) {
-			return createSessionChannel((Connection<SshClientContext>)con);
+			return createSessionChannel(con);
 		}
 		
 		if(channeltype.equals(RemoteForwardingClientChannel.REMOTE_FORWARDING_CHANNEL_TYPE)) {
-			return new RemoteForwardingClientChannel(con, con.getContext());
+			return new RemoteForwardingClientChannel(con);
 		}
 		
 		return onCreateChannel(channeltype, con);
 	}
 
-	protected ChannelNG<SshClientContext> onCreateChannel(String channeltype, Connection<SshClientContext> con) 
+	protected ChannelNG<SshClientContext> onCreateChannel(String channeltype, SshConnection con) 
 			throws UnsupportedChannelException, PermissionDeniedException {
 		throw new UnsupportedChannelException(String.format("%s is not a supported channel type", channeltype));
 	}
@@ -70,7 +71,7 @@ public class DefaultClientChannelFactory implements ChannelFactory<SshClientCont
 	 * @param con
 	 * @return
 	 */
-	protected ChannelNG<SshClientContext> createSessionChannel(Connection<SshClientContext> con) {
+	protected ChannelNG<SshClientContext> createSessionChannel(SshConnection con) {
 		return new SessionChannelNG(con, con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),

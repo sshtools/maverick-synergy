@@ -52,7 +52,7 @@ public class RemoteForwardingFactoryImpl extends
 	protected ForwardingChannel<SshServerContext> createChannel(String channelType,
 			SshConnection con, 
 			String addressToBind, int portToBind, SocketChannel sc, SshServerContext context) {
-		return new RemoteForwardingChannel<SshServerContext>(con, addressToBind, portToBind, sc, context);
+		return new RemoteForwardingChannel<SshServerContext>(con, addressToBind, portToBind, sc);
 	}
 
 }

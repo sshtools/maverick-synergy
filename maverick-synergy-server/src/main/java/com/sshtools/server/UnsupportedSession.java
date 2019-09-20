@@ -38,8 +38,8 @@ public class UnsupportedSession extends SessionChannelNG {
     String message = "This server does not support an interactive session.\r\nGoodbye.\r\n";
 
     
-    public UnsupportedSession(SshConnection con, SshServerContext context) {
-    	super(context, con);
+    public UnsupportedSession(SshConnection con) {
+    	super(con);
     }
     
     protected void processStdinData(ByteBuffer data) {

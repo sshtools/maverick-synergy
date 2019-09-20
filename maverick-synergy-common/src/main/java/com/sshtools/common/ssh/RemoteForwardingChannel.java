@@ -54,15 +54,15 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 	 * @param socketChannel
 	 *            SocketChannel
 	 */
-	public RemoteForwardingChannel(SshConnection con, String addressToBind, int portToBind, SocketChannel socketChannel, T context) {
-		super(REMOTE_FORWARDING_CHANNEL_TYPE, context, con);
+	public RemoteForwardingChannel(SshConnection con, String addressToBind, int portToBind, SocketChannel socketChannel) {
+		super(REMOTE_FORWARDING_CHANNEL_TYPE, con);
 		this.socketChannel = socketChannel;
 		this.hostToConnect = addressToBind;
 		this.portToConnect = portToBind;
 	}
 
-	protected RemoteForwardingChannel(SshConnection con, T context) {
-		super(REMOTE_FORWARDING_CHANNEL_TYPE, context, con);
+	protected RemoteForwardingChannel(SshConnection con) {
+		super(REMOTE_FORWARDING_CHANNEL_TYPE, con);
 	}
 
 	/**
@@ -73,7 +73,7 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 	 * @param socketChannel
 	 */
 	public RemoteForwardingChannel(String name, SshConnection con, String addressToBind, int portToBind, SocketChannel socketChannel, T context) {
-		super(name, context, con);
+		super(name, con);
 		this.socketChannel = socketChannel;
 		this.hostToConnect = addressToBind;
 		this.portToConnect = portToBind;

@@ -26,8 +26,8 @@ import com.sshtools.common.ssh.SshConnection;
  */
 public class RemoteForwardingClientChannel extends RemoteForwardingChannel<SshClientContext> {
 
-	public RemoteForwardingClientChannel(SshConnection con, SshClientContext context) {
-		super(con, context);
+	public RemoteForwardingClientChannel(SshConnection con) {
+		super(con);
 	}
 
 }

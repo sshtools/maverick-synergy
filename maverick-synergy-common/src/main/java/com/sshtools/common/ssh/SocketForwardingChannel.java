@@ -26,6 +26,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ProtocolEngine;
 import com.sshtools.common.nio.SelectorThread;
@@ -68,12 +69,12 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 	 *
 	 * @param channeltype the type of channel i.e. "forwarded-tcpip"
 	 */
-	public SocketForwardingChannel(String channeltype, T context, SshConnection con) {
+	public SocketForwardingChannel(String channeltype, SshConnection con) {
 		super(channeltype, con, 
-				context.getForwardingPolicy().getForwardingMaxPacketSize(),
-				context.getForwardingPolicy().getForwardingMaxWindowSize(),
-				context.getForwardingPolicy().getForwardingMaxWindowSize(), 
-				context.getForwardingPolicy().getForwardingMinWindowSize());
+				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
+				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
+				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(), 
+				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize());
 	}
 
 	@Override

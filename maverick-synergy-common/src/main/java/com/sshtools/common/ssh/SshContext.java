@@ -317,6 +317,17 @@ public abstract class SshContext extends ProtocolContext implements
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
+	public <P> P getPolicy(Class<P> clz, P defaultValue) {
+
+		if(!policies.containsKey(clz)) {
+			policies.put(clz, defaultValue);
+		}
+		
+		return (P) policies.get(clz);
+
+	}
+	
 	@Override
 	public <P> void setPolicy(Class<P> clz, P policy) {
 		policies.put(clz, policy);

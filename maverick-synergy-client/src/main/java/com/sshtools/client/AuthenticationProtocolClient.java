@@ -87,13 +87,15 @@ public class AuthenticationProtocolClient implements Service {
 					Log.debug("SSH_MSG_USERAUTH_SUCCESS received");
 				}
 	
-				currentAuthenticator.success();
+				
 				
 				ConnectionProtocol<SshClientContext> con = new ConnectionProtocolClient(
 						transport, username);
 				stop();
 				transport.setActiveService(con);
 				con.start();
+				
+				currentAuthenticator.success();
 				
 				return true;
 			case SSH_MSG_USERAUTH_FAILURE:

@@ -32,7 +32,6 @@ public class DownloadOutputStreamTask extends Task {
 
 	String path;
 	OutputStream localFile = null;
-	Throwable e;
 	
 	public DownloadOutputStreamTask(SshConnection con, String path, OutputStream localFile) {
 		super(con);
@@ -54,7 +53,7 @@ public class DownloadOutputStreamTask extends Task {
 				try {
 					get(path, localFile);
 				} catch (SftpStatusException | SshException | TransferCancelledException e) {
-					DownloadOutputStreamTask.this.e = e;
+					throw new IllegalStateException(e.getMessage(), e);
 				}
 			}
 		};
@@ -66,9 +65,5 @@ public class DownloadOutputStreamTask extends Task {
 			IOUtils.closeStream(localFile);
 			done(task.isDone() && task.isSuccess());
 		}
-	}
-
-	public Throwable getError() {
-		return e;
 	}
 }

@@ -34,7 +34,6 @@ public class UploadFileTask extends Task {
 	Connection<SshClientContext> con;
 	String path;
 	File localFile = null;
-	Exception e;
 	
 	public UploadFileTask(Connection<SshClientContext> con, File localFile, String path) {
 		super(con);
@@ -60,7 +59,7 @@ public class UploadFileTask extends Task {
 						put(localFile.getAbsolutePath(), path);
 					}
 				} catch (FileNotFoundException | SftpStatusException | SshException | TransferCancelledException e) {
-					UploadFileTask.this.e = e;
+					throw new IllegalStateException(e.getMessage(), e);
 				}
 			}
 		};
@@ -72,10 +71,4 @@ public class UploadFileTask extends Task {
 			done(task.isDone() && task.isSuccess());
 		}
 	}
-
-	@Override
-	public Throwable getLastError() {
-		return e;
-	}
-
 }

@@ -19,31 +19,24 @@
 package com.sshtools.client.tasks;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
-import com.sshtools.client.sftp.TransferCancelledException;
+import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.util.FileUtils;
 
-public class DownloadFileTask extends Task {
+public class StatTask extends Task {
 
 	Connection<SshClientContext> con;
 	String path;
-	File localFile = null;
+	SftpFileAttributes attrs = null;
 	
-	public DownloadFileTask(Connection<SshClientContext> con, String path, File localFile) {
+	public StatTask(Connection<SshClientContext> con, String path) {
 		super(con);
 		this.con = con;
 		this.path = path;
-		this.localFile = localFile;
-	}
-	
-	public DownloadFileTask(Connection<SshClientContext> con, String path) {
-		this(con, path, null);
 	}
 
 	public void doTask() {
@@ -53,11 +46,9 @@ public class DownloadFileTask extends Task {
 			@Override
 			protected void doSftp() {
 				try {
-					if(localFile==null) {
-						localFile = new File(lpwd(), FileUtils.getFilename(path));
-					}
-					get(path, localFile.getAbsolutePath());
-				} catch (FileNotFoundException | SftpStatusException | SshException | TransferCancelledException e) {
+
+					attrs = stat(path);
+				} catch (SftpStatusException | SshException e) {
 					throw new IllegalStateException(e.getMessage(), e);
 				}
 			}
@@ -71,8 +62,8 @@ public class DownloadFileTask extends Task {
 		}
 	}
 
-	public File getDownloadedFile() {
-		return localFile;
+	public SftpFileAttributes getAttributes() {
+		return attrs;
 	}
 
 }

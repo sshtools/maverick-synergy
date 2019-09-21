@@ -31,8 +31,6 @@ public class UploadInputStreamTask extends Task {
 
 	String path;
 	InputStream in = null;
-	Throwable e;
-
 	
 	public UploadInputStreamTask(SshConnection con, InputStream in, String path) {
 		super(con);
@@ -49,7 +47,7 @@ public class UploadInputStreamTask extends Task {
 				try {
 					put(in, path);
 				} catch (SftpStatusException | SshException | TransferCancelledException e) {
-					UploadInputStreamTask.this.e = e;
+					throw new IllegalStateException(e.getMessage(), e);
 				}
 			}
 		};
@@ -61,9 +59,4 @@ public class UploadInputStreamTask extends Task {
 			done(task.isDone() && task.isSuccess());
 		}
 	}
-
-	public Throwable getError() {
-		return e;
-	}
-
 }

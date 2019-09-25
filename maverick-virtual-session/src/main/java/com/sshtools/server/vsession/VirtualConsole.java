@@ -135,10 +135,10 @@ public class VirtualConsole {
 		
 		AbstractFile file = cwd.resolveFile(currentDirectory);
 		if(!file.exists()) {
-			throw new FileNotFoundException(String.format("%s does not exist"));
+			throw new FileNotFoundException(String.format("%s does not exist", file.getName()));
 		}
 		if(!file.isDirectory()) {
-			throw new IOException(String.format("%s is not a directory"));
+			throw new IOException(String.format("%s is not a directory", file.getName()));
 		}
 		
 		this.cwd = file;

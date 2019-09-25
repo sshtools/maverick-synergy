@@ -33,7 +33,7 @@ public class VirtualChannelFactory extends DefaultServerChannelFactory {
 	public VirtualChannelFactory(CommandFactory<? extends ShellCommand>... factories) {
 		this.factories = factories;
 	}
-	
+	 
 	@Override
 	protected ChannelNG<SshServerContext> createSessionChannel(SshConnection con)
 			throws UnsupportedChannelException, PermissionDeniedException {

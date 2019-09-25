@@ -69,7 +69,7 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 	
 	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory(); 
 	
-	public SshServer() throws UnknownHostException {
+	public SshServer() {
 	}
 	
 	public SshServer(int port) throws UnknownHostException {

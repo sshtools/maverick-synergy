@@ -46,7 +46,7 @@ public class SshClient implements Closeable {
 	Connection<SshClientContext> con;
 	SshClientContext sshContext;
 	
-	public SshClient(String hostname, int port, String username, char[] password) throws IOException, SshException, InvalidPassphraseException {
+	public SshClient(String hostname, int port, String username, char[] password) throws IOException, SshException {
 		this(hostname, port, username, new SshClientContext(), password);
 	}
 	
@@ -62,11 +62,11 @@ public class SshClient implements Closeable {
 		this(hostname, port, username, new SshClientContext(), identities);
 	}
 
-	public SshClient(String hostname, int port, String username, SshClientContext sshContext, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
+	public SshClient(String hostname, int port, String username, SshClientContext sshContext, SshKeyPair... identities) throws IOException, SshException {
 		this(hostname, port, username, sshContext, null, identities);
 	}
 	
-	public SshClient(String hostname, int port, String username, char[] password, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
+	public SshClient(String hostname, int port, String username, char[] password, SshKeyPair... identities) throws IOException, SshException {
 		this(hostname, port, username, new SshClientContext(), password, identities);
 	}
 
@@ -74,15 +74,15 @@ public class SshClient implements Closeable {
 		this(hostname, port, username, password, SshKeyUtils.getPrivateKey(key, passphrase));
 	}
 	
-	public SshClient(String hostname, Integer port, String username) throws IOException, SshException, InvalidPassphraseException {
+	public SshClient(String hostname, Integer port, String username) throws IOException, SshException {
 		this(hostname, port, username, new SshClientContext());
 	}
 
-	public SshClient(String hostname, Integer port, String username, SshClientContext sshContext) throws IOException, SshException, InvalidPassphraseException {
+	public SshClient(String hostname, Integer port, String username, SshClientContext sshContext) throws IOException, SshException {
 		this(hostname, port, username, sshContext, (char[])null);
 	}
 	
-	public SshClient(String hostname, int port, String username, SshClientContext sshContext, char[] password, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
+	public SshClient(String hostname, int port, String username, SshClientContext sshContext, char[] password, SshKeyPair... identities) throws IOException, SshException {
 		this.sshContext = sshContext;
 		sshContext.setUsername(username);
 		if(Objects.nonNull(password) && password.length > 0) {

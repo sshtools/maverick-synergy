@@ -20,6 +20,7 @@ package com.sshtools.client.tasks;
 
 import java.io.InputStream;
 
+import com.sshtools.client.SshClient;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.client.sftp.TransferCancelledException;
 import com.sshtools.common.sftp.SftpStatusException;
@@ -31,6 +32,10 @@ public class UploadInputStreamTask extends Task {
 
 	String path;
 	InputStream in = null;
+	
+	public UploadInputStreamTask(SshClient ssh, InputStream in, String path) {
+		this(ssh.getConnection(), in, path);
+	}
 	
 	public UploadInputStreamTask(SshConnection con, InputStream in, String path) {
 		super(con);

@@ -22,9 +22,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import com.sshtools.common.events.Event;
+import com.sshtools.common.events.EventCodes;
+import com.sshtools.common.events.EventListener;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ConnectionProtocol;
 import com.sshtools.common.ssh.ConnectionTaskWrapper;
@@ -58,6 +62,24 @@ public class AuthenticationProtocolClient implements Service {
 		this.transport = transport;
 		this.context = context;
 		this.username = username;
+		
+		transport.getConnection().addEventListener(new EventListener() {
+			@Override
+			public void processEvent(Event evt) {
+				switch(evt.getId()) {
+				case EventCodes.EVENT_DISCONNECTED:
+					
+					if(Objects.nonNull(currentAuthenticator)) {
+						if(!currentAuthenticator.isDone()) {
+							currentAuthenticator.failure();
+						}
+					}
+					break;
+				default:
+					break;
+				}
+			}
+		});
 	}
 
 	@Override

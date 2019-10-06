@@ -88,7 +88,7 @@ public class DefaultLoggerContext implements LoggerContext {
 					IOUtils.fromByteSize(loggingProperties.getProperty("maverick.log.file.maxSize", "20MB")));
 		}
 		
-		log(Level.INFO, "Reloaded logging configuration %s", null, propertiesFile.getName());
+		log(Level.INFO, "Reloaded logging configuration %s [%s]", null, propertiesFile.getName(), propertiesFile.getAbsolutePath());
 	}
 
 	public synchronized Properties getLoggingProperties() {
@@ -104,6 +104,7 @@ public class DefaultLoggerContext implements LoggerContext {
 		}
 		if(enable) {
 			contexts.add(new ConsoleLoggingContext(level));
+			log(Level.INFO, "Console logging enabled", null);
 		}
 	}
 

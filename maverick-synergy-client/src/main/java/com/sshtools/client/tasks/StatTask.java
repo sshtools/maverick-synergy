@@ -18,8 +18,6 @@
  */
 package com.sshtools.client.tasks;
 
-import java.io.File;
-
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.common.sftp.SftpFileAttributes;

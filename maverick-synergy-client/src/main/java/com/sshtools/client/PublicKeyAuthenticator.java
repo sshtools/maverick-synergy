@@ -114,14 +114,16 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 	
 	byte[] generateSignatureData() throws IOException,
 			SshException {
-
-		ByteArrayWriter baw = new ByteArrayWriter();
 		
-		if(Objects.isNull(authenticatingKey)) {
+		if(Objects.isNull(authenticatingKey) && !publicKeys.isEmpty()) {
 			authenticatingKey = publicKeys.iterator().next();
 		}
+	
+		if(Objects.isNull(authenticatingKey)) {
+			throw new IOException("No suitable key found");
+		}
 		
-		try {
+		try(ByteArrayWriter baw = new ByteArrayWriter()) {
 			baw.writeBinaryString(transport.getSessionKey());
 			baw.write(AuthenticationProtocolClient.SSH_MSG_USERAUTH_REQUEST);
 			baw.writeString(username);
@@ -133,9 +135,7 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 
 			return baw.toByteArray();
 
-		} finally {
-			baw.close();
-		}
+		} 
 	}
 
 	byte[] generateAuthenticationRequest(byte[] data) throws IOException, SshException {

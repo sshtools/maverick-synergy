@@ -1314,6 +1314,10 @@ public abstract class TransportProtocol<T extends SshContext>
 							cleanupOperations(new ConnectionAwareTask(con) {
 								protected void doTask() {
 									
+									disconnected();
+									onDisconnected();
+									disconnectFuture.disconnected();
+									
 									EventServiceImplementation
 									.getInstance()
 									.fireEvent(
@@ -1331,9 +1335,7 @@ public abstract class TransportProtocol<T extends SshContext>
 															EventCodes.ATTRIBUTE_OPERATION_FINISHED,
 															new Date()));
 									
-									disconnected();
-									onDisconnected();
-									disconnectFuture.disconnected();
+
 								}
 							});
 						}

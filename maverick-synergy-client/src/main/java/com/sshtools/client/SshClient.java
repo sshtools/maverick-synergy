@@ -30,6 +30,9 @@ import com.sshtools.client.tasks.AbstractCommandTask;
 import com.sshtools.client.tasks.DownloadFileTask;
 import com.sshtools.client.tasks.Task;
 import com.sshtools.client.tasks.UploadFileTask;
+import com.sshtools.common.events.Event;
+import com.sshtools.common.events.EventCodes;
+import com.sshtools.common.events.EventListener;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.nio.ConnectRequestFuture;
 import com.sshtools.common.permissions.UnauthorizedException;
@@ -103,6 +106,18 @@ public class SshClient implements Closeable {
 			throw new IOException(String.format("Failed to connect to %s:%d", hostname, port));
 		}
 		con = (Connection<SshClientContext>) future.getConnection();
+		con.addEventListener(new EventListener() {
+			@Override
+			public void processEvent(Event evt) {
+				switch(evt.getId()) {
+				case EventCodes.EVENT_DISCONNECTED:
+					disconnect();
+					break;
+				default:
+					break;
+				}
+			}
+		});
 		if(!sshContext.getAuthenticators().isEmpty()) {
 			con.getAuthenticatedFuture().waitForever();
 			if(!con.getAuthenticatedFuture().isSuccess()) {
@@ -112,7 +127,7 @@ public class SshClient implements Closeable {
 		}
 	}
 	
-	protected void configure(SshClientContext sshContext) {
+	protected void configure(SshClientContext sshContext) throws SshException, IOException {
 		
 	}
 

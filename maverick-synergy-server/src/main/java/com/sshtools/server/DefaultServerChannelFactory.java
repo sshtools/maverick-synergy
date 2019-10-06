@@ -27,7 +27,6 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpSubsystem;
 import com.sshtools.common.ssh.ChannelFactory;
 import com.sshtools.common.ssh.ChannelNG;
-import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;

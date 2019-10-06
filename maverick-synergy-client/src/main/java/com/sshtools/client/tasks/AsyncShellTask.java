@@ -18,26 +18,37 @@
  */
 package com.sshtools.client.tasks;
 
+import java.io.IOException;
+
 import com.sshtools.client.AsyncSessionChannel;
+import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
+import com.sshtools.client.shell.ShellTimeoutException;
 import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.ssh.SshException;
 
 public abstract class AsyncShellTask extends AbstractShellTask<AsyncSessionChannel> {
 
 	public AsyncShellTask(Connection<SshClientContext> con) {
 		super(con);
 	}
+	
+	public AsyncShellTask(SshClient ssh) {
+		super(ssh.getConnection());
+	}
 
 	@Override
-	protected void onOpenSession(AsyncSessionChannel session) {
+	protected void onOpenSession(AsyncSessionChannel session) throws IOException, SshException, ShellTimeoutException {
 	}
 
 	@Override
 	protected void onCloseSession(AsyncSessionChannel session) {
+
 	}
 
-	protected AsyncSessionChannel createSession(Connection<SshClientContext> con) {
+	protected AsyncSessionChannel createSession(SshConnection con) {
 		return new AsyncSessionChannel(
 				con,
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 

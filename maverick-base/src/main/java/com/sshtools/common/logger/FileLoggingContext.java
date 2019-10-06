@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
+import java.util.Objects;
 
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.util.IOUtils;
@@ -62,6 +63,7 @@ public class FileLoggingContext extends AbstractLoggingContext {
 		currentFile = new RandomAccessFile(logFile, "rw");
 		currentFile.seek(currentFile.length());
 		currentWriter = new BufferedWriter(new OutputStreamWriter(new RandomAccessOutputStream(currentFile)), 65536);
+		log(Level.INFO, String.format("Logging file %s", logFile.getAbsolutePath()), null);
 	}
 
 
@@ -78,9 +80,11 @@ public class FileLoggingContext extends AbstractLoggingContext {
 	private synchronized void logToFile(String msg, boolean flush) {
 		try {
 			checkRollingLog();
-			currentWriter.write(msg);
-			if(flush) {
-				currentWriter.flush();
+			if(currentFile.getChannel().isOpen()) {
+				currentWriter.write(msg);
+				if(flush) {
+					currentWriter.flush();
+				}
 			}
 		} catch (IOException e) {
 			System.err.println(String.format("Failed to log to %s", logFile.getName()));
@@ -94,16 +98,18 @@ public class FileLoggingContext extends AbstractLoggingContext {
 		IOUtils.closeStream(currentOut);
 	}
 	
-	private void checkRollingLog() throws IOException {
+	private synchronized void checkRollingLog() throws IOException {
 
-		if(currentFile.length() > maxSize) {
-			closeLog();
-			IOUtils.rollover(logFile, maxFiles);
-			createLogFile();
+		if(currentFile.getChannel().isOpen()) {
+			if(currentFile.length() > maxSize) {
+				closeLog();
+				IOUtils.rollover(logFile, maxFiles);
+				createLogFile();
+			}
 		}
 	}
 
-	public void close() {
+	public synchronized void close() {
 		closeLog();
 	}
 

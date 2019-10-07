@@ -39,6 +39,8 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.util.IOUtils;
@@ -47,7 +49,7 @@ public class DefaultLoggerContext implements LoggerContext {
 
 	Collection<LoggerContext> contexts = new ArrayList<>();
 	static DateFormat df = new SimpleDateFormat("dd MMM yyyy HH:mm:ss,SSS");
-	Properties loggingProperties; 
+	Properties props; 
 	File propertiesFile;
 	FileWatcher watcher;
 	
@@ -58,6 +60,33 @@ public class DefaultLoggerContext implements LoggerContext {
 		watcher.start();
 	}
 	
+	public String getProperty(String key, String defaultValue) {
+		return processTokenReplacements(props.getProperty(key, defaultValue), System.getProperties());
+	}
+	
+	public String processTokenReplacements(String value, Properties tokenResolver) {
+		
+		Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
+		Matcher matcher = pattern.matcher(value);
+
+		StringBuilder builder = new StringBuilder();
+		int i = 0;
+		while (matcher.find()) {
+			String attributeName = matcher.group(1);
+			String attributeValue = tokenResolver.getProperty(attributeName);
+			if(attributeValue==null) {
+				continue;
+			}
+		    builder.append(value.substring(i, matcher.start()));
+		    builder.append(attributeValue);
+		    i = matcher.end();
+		}
+		
+	    builder.append(value.substring(i, value.length()));
+		
+		return builder.toString();
+	}
+
 	private synchronized void loadFile() {
 
 		for(LoggerContext ctx : contexts) {
@@ -67,32 +96,28 @@ public class DefaultLoggerContext implements LoggerContext {
 		contexts.clear();
 
 		if(propertiesFile.exists()) {
-			loggingProperties = new Properties();
+			props = new Properties();
 			try(InputStream in  = new FileInputStream(propertiesFile)) {
-				loggingProperties.load(in);
+				props.load(in);
 			} catch(IOException e) {
 				e.printStackTrace();
 			}
 		} else {
-			loggingProperties = System.getProperties();
+			props = System.getProperties();
 		}
 		
-		if("true".equalsIgnoreCase(loggingProperties.getProperty("maverick.log.console"))) {
-			enableConsole(Level.valueOf(loggingProperties.getProperty("maverick.log.console.level", "INFO")));
+		if("true".equalsIgnoreCase(getProperty("maverick.log.console", "false"))) {
+			enableConsole(Level.valueOf(getProperty("maverick.log.console.level", "INFO")));
 		}
 		
-		if("true".equalsIgnoreCase(loggingProperties.getProperty("maverick.log.file"))) {
-			enableFile(Level.valueOf(loggingProperties.getProperty("maverick.log.file.level", "INFO")),
-					new File(loggingProperties.getProperty("maverick.log.file.path", "synergy.log")),
-					Integer.parseInt(loggingProperties.getProperty("maverick.log.file.maxFiles", "10")),
-					IOUtils.fromByteSize(loggingProperties.getProperty("maverick.log.file.maxSize", "20MB")));
+		if("true".equalsIgnoreCase(getProperty("maverick.log.file", "false"))) {
+			enableFile(Level.valueOf(getProperty("maverick.log.file.level", "INFO")),
+					new File(getProperty("maverick.log.file.path", "synergy.log")),
+					Integer.parseInt(getProperty("maverick.log.file.maxFiles", "10")),
+					IOUtils.fromByteSize(getProperty("maverick.log.file.maxSize", "20MB")));
 		}
 		
 		log(Level.INFO, "Reloaded logging configuration %s [%s]", null, propertiesFile.getName(), propertiesFile.getAbsolutePath());
-	}
-
-	public synchronized Properties getLoggingProperties() {
-		return loggingProperties;
 	}
 	
 	public synchronized void enableConsole(Level level) {

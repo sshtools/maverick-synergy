@@ -47,7 +47,7 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
 		
     public ConnectionManager(String name) {
     	this(name, Level.valueOf(
-    			Log.getDefaultContext().getLoggingProperties().getProperty("maverick.log.connection.level", "NONE")));
+    			Log.getDefaultContext().getProperty("maverick.log.connection.level", "NONE")));
     }
     
     public ConnectionManager(String name, Level level) {

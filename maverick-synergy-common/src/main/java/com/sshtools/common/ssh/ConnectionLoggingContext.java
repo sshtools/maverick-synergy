@@ -138,13 +138,11 @@ public class ConnectionLoggingContext implements LoggerContext, EventListener {
 
 	private boolean isLoggingConnection(Connection<?> con) {
 		
-		Properties loggingProperties = Log.getDefaultContext().getLoggingProperties();
-		
 		/**
 		 * Get maverick.log.connection.<name> property to determine if logging is enabled.
 		 * Default to the default log level
 		 */
-		if(!"true".equalsIgnoreCase(loggingProperties.getProperty(getPropertyKey(""), 
+		if(!"true".equalsIgnoreCase(Log.getDefaultContext().getProperty(getPropertyKey(""), 
 				String.valueOf(!this.defaultLevel.equals(Level.NONE))))) {
 			return false;
 		}
@@ -195,9 +193,8 @@ public class ConnectionLoggingContext implements LoggerContext, EventListener {
 	}
 
 	private String getProperty(String key, String defaultValue) {
-		Properties loggingProperties = Log.getDefaultContext().getLoggingProperties();
-		defaultValue = loggingProperties.getProperty(String.format("maverick.log.connection%s", key), defaultValue);
-		return loggingProperties.getProperty(getPropertyKey(key), defaultValue);
+		defaultValue = Log.getDefaultContext().getProperty(String.format("maverick.log.connection%s", key), defaultValue);
+		return Log.getDefaultContext().getProperty(getPropertyKey(key), defaultValue);
 	}
 	
 	private String getPropertyKey(String key) {

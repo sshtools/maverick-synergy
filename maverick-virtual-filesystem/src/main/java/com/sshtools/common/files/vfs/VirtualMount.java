@@ -43,7 +43,7 @@ public class VirtualMount extends AbstractMount {
 		this.virtualFileFactory = virtualFileFactory;
 		if (!isImaginary()) {
 			AbstractFile f = actualFileFactory.getFile(path, con);
-			if (!f.isFile()) {
+			if (!f.exists()) {
 				f.createFolder();
 			}
 			this.path = f.getAbsolutePath();

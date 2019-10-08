@@ -67,6 +67,7 @@ public abstract class AbstractSubsystem {
 		});
 
 		con.openChannel(session);
+		in = new DataInputStream(session.getInputStream());
 		if(!session.getOpenFuture().waitFor(timeout).isSuccess()) {
 			throw new IllegalStateException(
 					"Could not open session channel");

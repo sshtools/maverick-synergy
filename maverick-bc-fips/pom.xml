@@ -38,13 +38,13 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.bc</groupId>
+			<groupId>org.bouncycastle</groupId>
 			<artifactId>bc-fips</artifactId>
 			<version>1.0.1</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.bc</groupId>
+			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcpkix-fips</artifactId>
 			<version>1.0.1</version>
 			<scope>provided</scope>

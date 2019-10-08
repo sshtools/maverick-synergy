@@ -34,7 +34,7 @@ import com.sshtools.common.util.UnsignedInteger32;
 public class SftpFileInputStream extends InputStream {
 
 	SftpFile file;
-	AbstractSftpTask sftp;
+	SftpChannel sftp;
 	long position;
 	Vector<UnsignedInteger32> outstandingRequests = new Vector<UnsignedInteger32>();
 	SftpMessage currentMessage;
@@ -148,9 +148,9 @@ public class SftpFileInputStream extends InputStream {
 
 			currentMessage = sftp.getResponse(requestid);
 
-			if (currentMessage.getType() == AbstractSftpTask.SSH_FXP_DATA) {
+			if (currentMessage.getType() == SftpChannel.SSH_FXP_DATA) {
 				currentMessageRemaining = (int) currentMessage.readInt();
-			} else if (currentMessage.getType() == AbstractSftpTask.SSH_FXP_STATUS) {
+			} else if (currentMessage.getType() == SftpChannel.SSH_FXP_STATUS) {
 				
 				try {
 					int status = (int) currentMessage.readInt();

@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.sshtools.client.sftp.AbstractSftpTask;
+import com.sshtools.client.sftp.SftpChannel;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.client.sftp.SftpFile;
 import com.sshtools.common.logger.Log;
@@ -196,18 +196,18 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 				if (idx == 0) {
 					// For the first handle, re-open with truncate,
 
-					file = sftp.openFile(path, flgs | AbstractSftpTask.OPEN_TRUNCATE | AbstractSftpTask.OPEN_CREATE);
+					file = sftp.openFile(path, flgs | SftpChannel.OPEN_TRUNCATE | SftpChannel.OPEN_CREATE);
 
 					handles.put(l, file);
 				} else {
-					file = sftp.openFile(path, flgs ^ AbstractSftpTask.OPEN_TRUNCATE ^ AbstractSftpTask.OPEN_CREATE);
+					file = sftp.openFile(path, flgs ^ SftpChannel.OPEN_TRUNCATE ^ SftpChannel.OPEN_CREATE);
 				}
 				handles.put(l, file);
 				idx++;
 			}
 			if (idx == 0) {
 				// No open files
-				SftpFile file = sftp.openFile(path, AbstractSftpTask.OPEN_TRUNCATE | AbstractSftpTask.OPEN_CREATE);
+				SftpFile file = sftp.openFile(path, SftpChannel.OPEN_TRUNCATE | SftpChannel.OPEN_CREATE);
 				file.close();
 			}
 			
@@ -461,19 +461,19 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 		int f = 0;
 		int fv = flags.get();
 		if ((fv & 0x0001) > 0 || (fv & 0x0002) > 0)
-			f = f | AbstractSftpTask.OPEN_WRITE;
+			f = f | SftpChannel.OPEN_WRITE;
 		if ((fv & 0x0008) > 0)
-			f = f | AbstractSftpTask.OPEN_TEXT;
+			f = f | SftpChannel.OPEN_TEXT;
 		if ((fv & 0x0100) > 0)
-			f = f | AbstractSftpTask.OPEN_CREATE;
+			f = f | SftpChannel.OPEN_CREATE;
 		if ((fv & 0x0200) > 0)
-			f = f | AbstractSftpTask.OPEN_EXCLUSIVE;
+			f = f | SftpChannel.OPEN_EXCLUSIVE;
 		if ((fv & 0x0800) > 0)
-			f = f | AbstractSftpTask.OPEN_TRUNCATE;
+			f = f | SftpChannel.OPEN_TRUNCATE;
 		if ((fv & 0x1000) > 0)
-			f = f | AbstractSftpTask.OPEN_APPEND;
+			f = f | SftpChannel.OPEN_APPEND;
 		if (f == 0 || fv == 0 || (fv & 0x0002) > 0)
-			f = f | AbstractSftpTask.OPEN_READ;
+			f = f | SftpChannel.OPEN_READ;
 		return f;
 	}
 

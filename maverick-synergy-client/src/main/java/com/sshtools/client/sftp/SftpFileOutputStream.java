@@ -34,7 +34,7 @@ import com.sshtools.common.util.UnsignedInteger32;
 public class SftpFileOutputStream
     extends OutputStream {
   SftpFile file;
-  AbstractSftpTask sftp;
+  SftpChannel sftp;
   long position;
   Vector<UnsignedInteger32> outstandingRequests = new Vector<UnsignedInteger32>();
   boolean error = false;

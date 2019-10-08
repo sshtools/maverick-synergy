@@ -32,7 +32,7 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 
 import com.sshtools.client.SessionChannelNG;
-import com.sshtools.client.tasks.AbstractSubsystemTask;
+import com.sshtools.client.tasks.AbstractSubsystem;
 import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.client.tasks.Message;
 import com.sshtools.client.tasks.MessageHolder;
@@ -58,9 +58,8 @@ import com.sshtools.common.util.UnsignedInteger64;
 /**
  * Abstract task implementing SFTP operations.
  */
-public abstract class AbstractSftpTask extends AbstractSubsystemTask {
+public class SftpChannel extends AbstractSubsystem {
 
-	
 	
 	private String CHARSET_ENCODING = "UTF-8";
 	
@@ -192,8 +191,9 @@ public abstract class AbstractSftpTask extends AbstractSubsystemTask {
 	public static final int SSH_FXP_RENAME_NATIVE    = 0x00000004;
 	
 	
-	public AbstractSftpTask(SshConnection con) {
+	public SftpChannel(SshConnection con) throws SshException {
 		super(con);
+		con.setProperty("sftpVersion", initializeSftp(session));
 	}
 
 	public int getVersion() {
@@ -215,15 +215,6 @@ public abstract class AbstractSftpTask extends AbstractSubsystemTask {
 	@SuppressWarnings("unchecked")
 	public Map<String, byte[]> getExtensions() {
 		return (Map<String, byte[]>) con.getProperty("sftpExtensions");
-	}
-	
-	protected abstract void doTask(SessionChannelNG session);
-	
-	@Override
-	protected final void doSubsystemTask(SessionChannelNG session)
-			throws SshException {
-		con.setProperty("sftpVersion", initializeSftp(session));
-		doTask(session);
 	}
 	
 	private int initializeSftp(SessionChannelNG session) throws SshException {

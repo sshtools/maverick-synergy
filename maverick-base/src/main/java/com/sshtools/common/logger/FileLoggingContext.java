@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
-import java.util.Objects;
 
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.util.IOUtils;

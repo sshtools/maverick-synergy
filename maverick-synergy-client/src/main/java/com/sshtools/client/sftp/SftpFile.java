@@ -34,7 +34,7 @@ public class SftpFile {
   String filename;
   byte[] handle;
   SftpFileAttributes attrs;
-  AbstractSftpTask sftp;
+  SftpChannel sftp;
   String absolutePath;
   String longname;
   Map<String,Object> properties = new HashMap<>();
@@ -296,7 +296,7 @@ public class SftpFile {
    *
    * @param sftp
    */
-  void setSFTPSubsystem(AbstractSftpTask sftp) {
+  void setSFTPSubsystem(SftpChannel sftp) {
     this.sftp = sftp;
   }
 
@@ -305,7 +305,7 @@ public class SftpFile {
    *
    * @return SftpSubsystemChannel
    */
-  public AbstractSftpTask getSFTPChannel() {
+  public SftpChannel getSFTPChannel() {
     return sftp;
   }
 

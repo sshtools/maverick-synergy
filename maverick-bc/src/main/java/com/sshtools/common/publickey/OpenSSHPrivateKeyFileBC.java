@@ -44,6 +44,9 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.bouncycastle.openssl.jcajce.JcePEMEncryptorBuilder;
+import org.bouncycastle.operator.InputDecryptorProvider;
+import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
+import org.bouncycastle.pkcs.jcajce.JcePKCSPBEInputDecryptorProviderBuilder;
 
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
@@ -119,6 +122,17 @@ public class OpenSSHPrivateKeyFileBC
 	    
 	    SshKeyPair pair = new SshKeyPair();
 	    
+	    if(obj instanceof PKCS8EncryptedPrivateKeyInfo) {
+	    	if(passphrase==null || passphrase.equals("")) {
+	    		throw new InvalidPassphraseException();
+	    	}
+	    	PKCS8EncryptedPrivateKeyInfo encPrivKeyInfo = (PKCS8EncryptedPrivateKeyInfo) obj;
+	    	InputDecryptorProvider pkcs8Prov = new JcePKCSPBEInputDecryptorProviderBuilder()
+		    	    .setProvider(JCEProvider.getBCProvider().getName()).build(passphrase.toCharArray());
+		    JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider(JCEProvider.getBCProvider().getName());
+		    obj = converter.getPrivateKey(encPrivKeyInfo.decryptPrivateKeyInfo(pkcs8Prov));
+	    }
+	    
 	    if(obj instanceof PEMEncryptedKeyPair) {
 	    	if(passphrase==null || passphrase.equals("")) {
 	    		throw new InvalidPassphraseException();
@@ -176,7 +190,9 @@ public class OpenSSHPrivateKeyFileBC
 	    }
 	    throw new IOException("Unsupported type");
 
-    } catch(EncryptionException ex) { 
+    } catch(InvalidPassphraseException | IOException e) {
+    	throw e;
+    } catch(Throwable ex) { 
     	return new OpenSSHPrivateKeyFile(formattedkey).toKeyPair(passphrase);
     } finally {
     	pem.close();

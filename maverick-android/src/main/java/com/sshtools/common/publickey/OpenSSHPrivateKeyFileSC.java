@@ -43,6 +43,9 @@ import org.spongycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.spongycastle.openssl.jcajce.JcaPEMWriter;
 import org.spongycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.spongycastle.openssl.jcajce.JcePEMEncryptorBuilder;
+import org.spongycastle.operator.InputDecryptorProvider;
+import org.spongycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
+import org.spongycastle.pkcs.jcajce.JcePKCSPBEInputDecryptorProviderBuilder;
 
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.ECUtils;
@@ -119,6 +122,17 @@ public class OpenSSHPrivateKeyFileSC
 	    
 	    SshKeyPair pair = new SshKeyPair();
 	    
+	    if(obj instanceof PKCS8EncryptedPrivateKeyInfo) {
+	    	if(passphrase==null || passphrase.equals("")) {
+	    		throw new InvalidPassphraseException();
+	    	}
+	    	PKCS8EncryptedPrivateKeyInfo encPrivKeyInfo = (PKCS8EncryptedPrivateKeyInfo) obj;
+	    	InputDecryptorProvider pkcs8Prov = new JcePKCSPBEInputDecryptorProviderBuilder()
+		    	    .setProvider(JCEProvider.getBCProvider().getName()).build(passphrase.toCharArray());
+		    JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider(JCEProvider.getBCProvider().getName());
+		    obj = converter.getPrivateKey(encPrivKeyInfo.decryptPrivateKeyInfo(pkcs8Prov));
+	    }
+	    
 	    if(obj instanceof PEMEncryptedKeyPair) {
 	    	if(passphrase==null || passphrase.equals("")) {
 	    		throw new InvalidPassphraseException();
@@ -153,7 +167,7 @@ public class OpenSSHPrivateKeyFileSC
 		    	pair.setPublicKey(new Ssh2DsaPublicKey((DSAPublicKey)p.getPublic()));    
 		    	return pair;
 		    }
-	    } else if(obj instanceof DSAPrivateKey) {
+	    } else if(obj instanceof DSPrivateKey) {
 	    	DSAPrivateKey d = (DSAPrivateKey) obj;
 	    	try {
 	    		Ssh2DsaPrivateKey dsa = new Ssh2DsaPrivateKey(d);
@@ -176,7 +190,9 @@ public class OpenSSHPrivateKeyFileSC
 	    }
 	    throw new IOException("Unsupported type");
 
-    } catch(EncryptionException ex) { 
+    } catch(InvalidPassphraseException | IOException e) {
+    	throw e;
+    } catch(Throwable ex) { 
     	return new OpenSSHPrivateKeyFile(formattedkey).toKeyPair(passphrase);
     } finally {
     	pem.close();

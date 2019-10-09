@@ -35,7 +35,6 @@ import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.interfaces.RSAPublicKey;
 
 import org.spongycastle.asn1.pkcs.PrivateKeyInfo;
-import org.spongycastle.openssl.EncryptionException;
 import org.spongycastle.openssl.PEMEncryptedKeyPair;
 import org.spongycastle.openssl.PEMKeyPair;
 import org.spongycastle.openssl.PEMParser;
@@ -167,7 +166,7 @@ public class OpenSSHPrivateKeyFileSC
 		    	pair.setPublicKey(new Ssh2DsaPublicKey((DSAPublicKey)p.getPublic()));    
 		    	return pair;
 		    }
-	    } else if(obj instanceof DSPrivateKey) {
+	    } else if(obj instanceof DSAPrivateKey) {
 	    	DSAPrivateKey d = (DSAPrivateKey) obj;
 	    	try {
 	    		Ssh2DsaPrivateKey dsa = new Ssh2DsaPrivateKey(d);

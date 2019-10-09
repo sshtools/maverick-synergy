@@ -32,13 +32,15 @@ import com.sun.jna.platform.win32.WinNT.HANDLE;
 public class NamedPipeServer extends AbstractNamedPipe {
     
 	HANDLE hNextHandle = null;
-	
+	boolean closed;
 	
 	public NamedPipeServer(String pipeName) throws IOException {
         super(pipeName);
     }
 	
-	public void close() {
+	public synchronized void close() {
+		
+		closed = true;
 		if(hNextHandle!=null) {
 			if(Log.isInfoEnabled()) {
 				Log.info(String.format("Closing pipe server %s handle=%s", pipeName, hNextHandle.toString()));
@@ -53,6 +55,10 @@ public class NamedPipeServer extends AbstractNamedPipe {
 	
 	public NamedPipeSession accept() throws IOException {
 
+		if(closed) {
+			throw new IOException("Named pipe has been closed!");
+		}
+		
     	if(Log.isInfoEnabled()) {
 			Log.info(String.format("Waiting for client on pipe %s", this.pipeName));
 		}
@@ -83,7 +89,7 @@ public class NamedPipeServer extends AbstractNamedPipe {
 	        
 	        synchronized(this) {
 	        	try {
-	        	return new NamedPipeSession(hNextHandle);
+	        		return new NamedPipeSession(hNextHandle);
 	        	} finally {
 	        		hNextHandle = null;
 	        	}

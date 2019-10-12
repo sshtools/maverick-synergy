@@ -122,4 +122,8 @@ public class CachingDataWindow extends ChannelDataWindow {
 	public synchronized boolean isOpen() {
 		return open || cache.hasRemaining();
 	}
+
+	public synchronized void waitFor(long i) throws InterruptedException {
+		wait(i);
+	}
 }

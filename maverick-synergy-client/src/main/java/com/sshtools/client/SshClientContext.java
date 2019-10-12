@@ -314,6 +314,10 @@ public class SshClientContext extends SshContext {
 		return channelFactory;
 	}
 
+	public void setChannelFactory(ChannelFactory<SshClientContext> channelFactory) {
+		this.channelFactory = channelFactory;
+	}
+
 	@Override
 	public SshEngineContext getDaemonContext() {
 		return daemon.getContext();

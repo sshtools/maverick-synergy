@@ -1280,7 +1280,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 					}
 					
 					try {
-						cache.wait(1000);
+						cache.waitFor(1000);
 					} catch (InterruptedException e) {
 					}
 				}

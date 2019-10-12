@@ -1230,6 +1230,8 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	protected class ChannelInputStream extends InputStream {
 
 		CachingDataWindow cache;
+		boolean streamClosed;
+		
 		public ChannelInputStream(CachingDataWindow cache) {
 			this.cache = cache;
 		}
@@ -1249,6 +1251,16 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		}
 
 		@Override
+		public void close() throws IOException {
+			if(!streamClosed) {
+				streamClosed = true;
+				synchronized(cache) {
+					cache.notify();
+				}
+			}
+		}
+
+		@Override
 		public int read(byte[] b, int off, int len) throws IOException {
 			
 			long start = System.currentTimeMillis();
@@ -1263,7 +1275,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 						&& (timeout==0 
 							|| (System.currentTimeMillis() - start) < timeout)) {
 				
-					if(isClosed() || isRemoteEOF()) {
+					if(streamClosed || isClosed() || isRemoteEOF()) {
 						return -1;
 					}
 					
@@ -1274,7 +1286,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 				}
 				
 				if(!cache.hasRemaining()) {
-					if(isClosed() || isRemoteEOF()) {
+					if(streamClosed || isClosed() || isRemoteEOF()) {
 						return -1;
 					}
 					throw new InterruptedIOException("No data received within the timeout threshold");

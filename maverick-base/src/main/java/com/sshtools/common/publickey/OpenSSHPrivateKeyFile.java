@@ -42,6 +42,7 @@ import com.sshtools.common.ssh.components.SshDsaPublicKey;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshRsaPrivateCrtKey;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
+import com.sshtools.common.ssh.components.jce.AES128Cbc;
 import com.sshtools.common.ssh.components.jce.ECUtils;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.ssh.components.jce.Ssh2DsaPrivateKey;
@@ -241,7 +242,10 @@ class OpenSSHPrivateKeyFile
 			  
 			  if(!cipherName.equals("none")) {
 				  
-				  SshCipher cipher = (SshCipher) ComponentManager.getInstance().supportedSsh2CiphersCS().getInstance(cipherName);
+				  /**
+				   * Cipher name is currently fixed above.
+				   */
+				  SshCipher cipher = new AES128Cbc();
 				  
 				  byte[] iv = new byte[cipher.getBlockSize()];
 				  byte[] key = new byte[cipher.getKeyLength()];

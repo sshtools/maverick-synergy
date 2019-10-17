@@ -50,6 +50,7 @@ import com.sshtools.common.ssh.components.Digest;
 import com.sshtools.common.ssh.components.SshCipher;
 import com.sshtools.common.ssh.components.SshHmac;
 import com.sshtools.common.ssh.components.SshKeyExchange;
+import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.compression.SshCompression;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
@@ -179,7 +180,8 @@ public abstract class TransportProtocol<T extends SshContext>
 	SshHmac incomingMac;
 	SshCompression outgoingCompression;
 	SshCompression incomingCompression;
-
+	
+	protected SshPublicKey hostKey;
 	
 	// C=Client
 	// S=Server
@@ -191,6 +193,15 @@ public abstract class TransportProtocol<T extends SshContext>
 	protected String compressionSC;
 	protected String keyExchangeAlgorithm;
 	protected String publicKey;
+	
+	String remoteKeyExchanges;
+	String remotePublicKeys;
+	String remoteCiphersCS;
+	String remoteCiphersSC;
+	String remoteCSMacs;
+	String remoteSCMacs;
+	String remoteCSCompressions;
+	String remoteSCCompressions;
 	
 	long outgoingSequence = 0;
 	long incomingSequence = 0;
@@ -1018,8 +1029,15 @@ public abstract class TransportProtocol<T extends SshContext>
 				return new SocketWriteCallback() {
 
 					public void completedWrite() {
-						if (msg != null)
-							msg.messageSent(sequenceNo);
+						
+							try {
+								if (msg != null) {
+									msg.messageSent(sequenceNo);
+								}
+							} catch (SshException e) {
+								Log.error("Failed during messageSent", e);
+								disconnect(PROTOCOL_ERROR, "Internal error");
+							}
 					}
 				};
 			} // End kexlock
@@ -1402,18 +1420,18 @@ public abstract class TransportProtocol<T extends SshContext>
 			bar = new ByteArrayReader(remotekex, 0, remotekex.length);
 			bar.skip(17);
 
-			String remoteKeyExchanges = checkValidString("key exchange",
+			remoteKeyExchanges = checkValidString("key exchange",
 					bar.readString());
-			String remotePublicKeys = checkValidString("public key",
+			remotePublicKeys = checkValidString("public key",
 					bar.readString());
-			String remoteCiphersCS = checkValidString("client->server cipher",
+			remoteCiphersCS = checkValidString("client->server cipher",
 					bar.readString());
-			String remoteCiphersSC = checkValidString("server->client cipher",
+			remoteCiphersSC = checkValidString("server->client cipher",
 					bar.readString());
-			String remoteCSMacs = bar.readString();
-			String remoteSCMacs = bar.readString();
-			String remoteCSCompressions = bar.readString();
-			String remoteSCCompressions = bar.readString();
+			remoteCSMacs = bar.readString();
+			remoteSCMacs = bar.readString();
+			remoteCSCompressions = bar.readString();
+			remoteSCCompressions = bar.readString();
 
 			// Read language strings and ignore as don't support other languages
 			String lang = bar.readString();
@@ -1638,7 +1656,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	
 	protected abstract void onNewKeysReceived();
 	
-	protected abstract boolean processTransportMessage(int msgid, byte[] msg) throws IOException;
+	protected abstract boolean processTransportMessage(int msgid, byte[] msg) throws IOException, SshException;
 	
 	
 	/**
@@ -1762,7 +1780,7 @@ public abstract class TransportProtocol<T extends SshContext>
 							Log.debug("Unimplemented Message id=%d", msg[0]);
 						}
 						postMessage(new UnimplementedMessage(sequenceNo));
-					} catch (IOException e) {
+					} catch (IOException | SshException e) {
 						disconnect(PROTOCOL_ERROR, e.getMessage());
 					}
 				}
@@ -1998,14 +2016,14 @@ public abstract class TransportProtocol<T extends SshContext>
 
 				// Generate a new set of context components
 				encryption = (SshCipher) sshContext.supportedCiphersSC()
-						.getInstance(cipherSC);
+						.getInstance(cipherCS);
 				// Create the new keys and initialize all the components
 				encryption.init(SshCipher.ENCRYPT_MODE, makeSshKey('A', encryption.getBlockSize()),
 						makeSshKey('C', encryption.getKeyLength()));
 				
 				if(!encryption.isMAC()) {
 					outgoingMac = (SshHmac) sshContext.supportedMacsSC()
-						.getInstance(macSC);
+						.getInstance(macCS);
 					outgoingMac.init(makeSshKey('E', outgoingMac.getMacSize()));
 				}
 				
@@ -2014,7 +2032,7 @@ public abstract class TransportProtocol<T extends SshContext>
 				if (!compressionSC.equals(SshContext.COMPRESSION_NONE)) {
 					outgoingCompression = (SshCompression) sshContext
 							.supportedCompressionsSC().getInstance(
-									compressionSC);
+									compressionCS);
 					outgoingCompression.init(SshCompression.DEFLATER,
 							getSshContext().getCompressionLevel());
 				}
@@ -2046,14 +2064,14 @@ public abstract class TransportProtocol<T extends SshContext>
 
 				// Generate a new set of context components
 				decryption = (SshCipher) sshContext.supportedCiphersCS()
-						.getInstance(cipherCS);
+						.getInstance(cipherSC);
 				// Put the incoming components into use
 				decryption.init(SshCipher.DECRYPT_MODE, makeSshKey('B', decryption.getBlockSize()),
 						makeSshKey('D', decryption.getKeyLength()));
 				
 				if(!decryption.isMAC()) {
 					incomingMac = (SshHmac) sshContext.supportedMacsCS()
-						.getInstance(macCS);
+						.getInstance(macSC);
 					incomingMac.init(makeSshKey('F', incomingMac.getMacSize()));
 					incomingMacLength = incomingMac.getMacLength();
 				} else {
@@ -2065,7 +2083,7 @@ public abstract class TransportProtocol<T extends SshContext>
 				if (!compressionCS.equals(SshContext.COMPRESSION_NONE)) {
 					incomingCompression = (SshCompression) sshContext
 							.supportedCompressionsCS().getInstance(
-									compressionCS);
+									compressionSC);
 					incomingCompression.init(SshCompression.INFLATER,
 							getSshContext().getCompressionLevel());
 				}
@@ -2337,8 +2355,44 @@ public abstract class TransportProtocol<T extends SshContext>
 		return publicKey;
 	}
 	
+	public SshPublicKey getHostKey() {
+		return hostKey;
+	}
+	
 	public String getKeyExchangeAlgorithm() {
 		return keyExchangeAlgorithm;
+	}
+	
+	public String[] getRemoteKeyExchanges() {
+		return remoteKeyExchanges.split(",");
+	}
+
+	public String[] getRemotePublicKeys() {
+		return remotePublicKeys.split(",");
+	}
+
+	public String[] getRemoteCiphersCS() {
+		return remoteCiphersCS.split(",");
+	}
+
+	public String[] getRemoteCiphersSC() {
+		return remoteCiphersSC.split(",");
+	}
+
+	public String[] getRemoteMacsCS() {
+		return remoteCSMacs.split(",");
+	}
+
+	public String[] getRemoteMacsSC() {
+		return remoteSCMacs.split(",");
+	}
+
+	public String[] getRemoteCompressionsCS() {
+		return remoteCSCompressions.split(",");
+	}
+
+	public String[] getRemoteCompressionsSC() {
+		return remoteSCCompressions.split(",");
 	}
 	
 	public boolean hasCompletedKeyExchange() {
@@ -2367,5 +2421,13 @@ public abstract class TransportProtocol<T extends SshContext>
 
 	public boolean isSelectorThread() {
 		return Thread.currentThread().equals(getSocketConnection().getSelectorThread());
+	}
+
+	public String getKeyExchangeInUse() {
+		return keyExchangeAlgorithm;
+	}
+
+	public String getHostKeyInUse() {
+		return publicKey;
 	}
 }

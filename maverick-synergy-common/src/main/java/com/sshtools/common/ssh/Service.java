@@ -37,13 +37,15 @@ public interface Service {
      * @return <tt>true</tt> if the message was processed, otherwise
      *         <tt>false</tt>
      * @throws IOException
+     * @throws SshException 
      */
-    public boolean processMessage(byte[] msg) throws IOException;
+    public boolean processMessage(byte[] msg) throws IOException, SshException;
 
     /**
      * Start the service.
+     * @throws SshException 
      */
-    public void start();
+    public void start() throws SshException;
 
     /**
      * Stop the service

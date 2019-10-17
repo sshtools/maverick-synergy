@@ -121,6 +121,14 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		return state == CHANNEL_CLOSED;
 	}
 
+	public int getMaxiumRemoteWindowSize() {
+		return remoteWindow.getMaximumWindowSpace();
+	}
+	
+	public int getMaxiumRemotePacketSize() {
+		return remoteWindow.getMaximumPacketSize();
+	}
+	
 	/**
 	 * Indicates that the channel is EOF (it will not be receiving any more data
 	 * from the remote side).

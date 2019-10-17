@@ -42,6 +42,7 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.nio.DisconnectRequestFuture;
 import com.sshtools.common.nio.SshEngine;
+import com.sshtools.common.ssh.components.SshPublicKey;
 
 public class Connection<T extends SshContext> implements EventTrigger, SshConnection {
 	
@@ -311,9 +312,58 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 		return disconnectFuture;
 	}
 
-	public boolean hasAuthenticators() {
-		// TODO Auto-generated method stub
-		return false;
+	public SshPublicKey getHostKey() {
+		return transport.getHostKey();
+	}
+
+	@Override
+	public String[] getRemotePublicKeys() {
+		return transport.getRemotePublicKeys();
+	}
+
+	@Override
+	public String[] getRemoteKeyExchanges() {
+		return transport.getRemoteKeyExchanges();
+	}
+
+	@Override
+	public String[] getRemoteCompressionsCS() {
+		return transport.getRemoteCompressionsCS();
+	}
+
+	@Override
+	public String[] getRemoteCompressionsSC() {	
+		return transport.getRemoteCompressionsSC();
+	}
+
+	@Override
+	public String[] getRemoteCiphersCS() {
+		return transport.getRemoteCiphersCS();
+	}
+
+	@Override
+	public String[] getRemoteCiphersSC() {
+		return transport.getRemoteCiphersSC();
+	}
+
+	@Override
+	public String[] getRemoteMacsCS() {
+		return transport.getRemoteMacsCS();
+	}
+
+	@Override
+	public String[] getRemoteMacsSC() {
+		return transport.getRemoteMacsSC();
+	}
+
+	@Override
+	public String getKeyExchangeInUse() {
+		return transport.getKeyExchangeInUse();
+	}
+
+	@Override
+	public String getHostKeyInUse() {
+		return transport.getHostKeyInUse();
 	}
 
 }

@@ -28,8 +28,6 @@ import com.sshtools.common.permissions.Permissions;
 import com.sshtools.common.ssh.SshConnection;
 
 public class ForwardingPolicy extends Permissions {
-
-	
 	
 	public static final int ALLOW_FORWARDING         = 0x00000001;
 	public static final int GATEWAY_FORWARDING       = 0x00000002;

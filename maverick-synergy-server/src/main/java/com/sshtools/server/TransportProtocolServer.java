@@ -149,6 +149,7 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 			boolean useFirstPacket) throws IOException, SshException {
 
 		SshKeyPair pair = getContext().getHostKey(publicKey);
+		hostKey = pair.getPublicKey();
 		keyExchange.init(this, remoteIdentification.toString().trim(), localIdentification.trim(), remotekex, localkex,
 				pair.getPrivateKey(), pair.getPublicKey(), firstPacketFollows, useFirstPacket);
 
@@ -214,7 +215,7 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 						return true;
 					}
 
-					public void messageSent(Long sequenceNo) {
+					public void messageSent(Long sequenceNo) throws SshException {
 						if(Log.isDebugEnabled())
 							Log.debug("Sent SSH_MSG_SERVICE_ACCEPT");
 						activeService.start();
@@ -230,7 +231,7 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 
 	}
 
-	void startService(Service activeService) {
+	void startService(Service activeService) throws SshException {
 
 		this.activeService.stop();
 		this.activeService = activeService;

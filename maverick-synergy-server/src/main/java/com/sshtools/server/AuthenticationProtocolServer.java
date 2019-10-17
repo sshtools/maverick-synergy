@@ -40,6 +40,7 @@ import com.sshtools.common.ssh.ConnectionProtocol;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
 import com.sshtools.common.ssh.Service;
 import com.sshtools.common.ssh.SshContext;
+import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.sshd.SshMessage;
@@ -316,7 +317,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 					return true;
 				}
 
-				public void messageSent(Long sequenceNo) {
+				public void messageSent(Long sequenceNo) throws SshException {
 					// Start the new service
 					if(Log.isDebugEnabled()) {
 						Log.debug("Sent SSH_MSG_USERAUTH_SUCCESS method="

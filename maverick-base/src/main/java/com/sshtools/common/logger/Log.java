@@ -35,6 +35,10 @@ public class Log {
 		}
 	}
 	
+	public static void enableConsole(Level level) {
+		getDefaultContext().enableConsole(level);
+	}
+	
 	public enum Level {
 		NONE,
 		ERROR,

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -56,6 +57,8 @@ public class Msh extends ShellCommand {
 	private long nextJobId = 1;
 	public static final String LOGIN_CONTEXT = "loginContext";
 
+	private List<MshListener> listeners = new ArrayList<>();
+	
 	public Msh(CommandFactory<ShellCommand> commandFactory) {
 		super("msh", SUBSYSTEM_SHELL, "Usage: msh [script]", "A basic interactive shell for executing commands.");
 		setBuiltIn(false);
@@ -67,6 +70,10 @@ public class Msh extends ShellCommand {
 		setBuiltIn(false);
 	}
 
+	public void addListener(MshListener listener) {
+		listeners.add(listener);
+	}
+	
 	protected void setCommandFactory(CommandFactory<ShellCommand> commandFactory) {
 		this.commandFactory = commandFactory;
 	}
@@ -239,7 +246,6 @@ public class Msh extends ShellCommand {
 				expandAliases(console, lineParser, l.getArgs(), exitCode);
 				
 				l.setExitCode(exitCode = spawn(console, l.getArgArray(), l.isBackground()));
-//				reader.getHistory().addToHistory(line);
 			}
 
 		}
@@ -356,11 +362,18 @@ public class Msh extends ShellCommand {
 
 			return 0;
 		} else {
+			for(MshListener listener : listeners) {
+				listener.commandStarted(cmd, args, console);
+			}
 			try {
 				cmd.run(args, console);
 			} catch(UsageException e) {
 				console.println();
 				console.println(cmd.getUsage());
+			} finally {
+				for(MshListener listener : listeners) {
+					listener.commandFinished(cmd, args, console);
+				}
 			}
 			return cmd.getExitCode();
 		}
@@ -395,11 +408,18 @@ public class Msh extends ShellCommand {
 
 		public void run() {
 
+			for(MshListener listener : listeners) {
+				listener.commandStarted(cmd, args, console);
+			}
 			try {
 				cmd.run(args, console);
 			} catch (Throwable t) {
 				lastError = t;
-			} 
+			} finally {
+				for(MshListener listener : listeners) {
+					listener.commandFinished(cmd, args, console);
+				}
+			}
 
 			running = false;
 			runningJobs.remove(id);

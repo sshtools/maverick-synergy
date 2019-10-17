@@ -38,6 +38,7 @@ import org.jline.terminal.spi.Pty;
 
 import com.sshtools.common.files.nio.AbstractFileURI;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.Utils;
 import com.sshtools.server.AgentForwardingChannel;
@@ -90,7 +91,7 @@ public class VirtualShellNG extends SessionChannelNG {
 		} catch (Exception e) {
 			if(Log.isErrorEnabled())
 				Log.error("Failed to execute command " + cmd, e);
-		}
+		} 
 		return false;
 	}
 
@@ -128,13 +129,17 @@ public class VirtualShellNG extends SessionChannelNG {
 		}
 		
 		try {
-			shell = commandFactory.createShell(con);			
+			shell = createShell(con);			
 			shell.startShell(getInputStream(), console = createConsole());
 			return true;
 		} catch (Throwable t) {
 			Log.warn("Failed to start shell.", t);
-		}
+		} 
 		return false;
+	}
+
+	protected RootShell createShell(SshConnection con) throws PermissionDeniedException, IOException {
+		return commandFactory.createShell(con);
 	}
 	
 	private VirtualConsole createConsole() throws IOException {

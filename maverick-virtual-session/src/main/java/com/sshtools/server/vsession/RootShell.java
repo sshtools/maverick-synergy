@@ -46,7 +46,7 @@ public class RootShell extends Msh {
 
 	private List<CmdLine> commands;
 	private VirtualConsole console;
-	
+
 	public RootShell(CommandFactory<ShellCommand> commandFactory,
 			SshConnection con) throws PermissionDeniedException,
 			IOException {
@@ -200,7 +200,7 @@ public class RootShell extends Msh {
 								console.getConnection()));
 
 
-			console.getSessionChannel().addEventListener(new ChannelEventAdapter() {
+		console.getSessionChannel().addEventListener(new ChannelEventAdapter() {
 				@Override
 				public void onChannelClose(Channel channel) {
 

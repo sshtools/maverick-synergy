@@ -55,6 +55,7 @@ import com.sshtools.common.ssh.ConnectionManager;
 import com.sshtools.common.ssh.ForwardingManager;
 import com.sshtools.common.ssh.GlobalRequestHandler;
 import com.sshtools.common.ssh.SshContext;
+import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.ComponentFactory;
 import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.ssh.components.SshKeyExchange;
@@ -270,6 +271,11 @@ public class SshClientContext extends SshContext {
 	public String getPreferredPublicKey() {
 		return prefPublicKey;
 	}
+	
+
+	public void setPreferredPublicKey(String prefPublicKey) {
+		this.prefPublicKey = prefPublicKey;
+	}
 
 	@Override
 	public ConnectionManager<SshClientContext> getConnectionManager() {
@@ -349,7 +355,7 @@ public class SshClientContext extends SshContext {
 		return this;
 	}
 
-	public AbstractRequestFuture authenticate(Connection<?> con, PasswordAuthenticator authenticator) throws IOException {
+	public AbstractRequestFuture authenticate(Connection<?> con, PasswordAuthenticator authenticator) throws IOException, SshException {
 
 		if(transport==null) {
 			throw new IllegalStateException("You cannot call authenticate until the connection has been established");

@@ -34,6 +34,7 @@ import com.sshtools.common.ssh.ConnectionProtocol;
 import com.sshtools.common.ssh.ConnectionTaskWrapper;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
 import com.sshtools.common.ssh.Service;
+import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.util.ByteArrayReader;
 
@@ -83,7 +84,7 @@ public class AuthenticationProtocolClient implements Service {
 	}
 
 	@Override
-	public boolean processMessage(byte[] msg) throws IOException {
+	public boolean processMessage(byte[] msg) throws IOException, SshException {
 
 		ByteArrayReader bar = new ByteArrayReader(msg);
 		
@@ -166,7 +167,7 @@ public class AuthenticationProtocolClient implements Service {
 							if(canAuthenticate()) {
 								try {
 									doNextAuthentication();
-								} catch (IOException e) {
+								} catch (IOException | SshException e) {
 									Log.error("I/O error during authentication", e);
 									transport.disconnect(TransportProtocolClient.BY_APPLICATION, "I/O error during authentication");
 								}
@@ -227,7 +228,7 @@ public class AuthenticationProtocolClient implements Service {
 		
 	}
 
-	public void start() {
+	public void start() throws SshException {
 
 		if(Log.isDebugEnabled()) {
 			Log.debug("Starting Authentication Protocol");
@@ -249,7 +250,7 @@ public class AuthenticationProtocolClient implements Service {
 		return  authIndex < authenticators.size();
 	}
 	
-	public void doNextAuthentication() throws IOException {
+	public void doNextAuthentication() throws IOException, SshException {
 
 		if (canAuthenticate()) {
 			currentAuthenticator = authenticators.get(authIndex++);
@@ -279,7 +280,7 @@ public class AuthenticationProtocolClient implements Service {
 		return true;
 	}
 
-	public void doAuthentication(ClientAuthenticator authenticator) throws IOException {
+	public void doAuthentication(ClientAuthenticator authenticator) throws IOException, SshException {
 		currentAuthenticator = authenticator;
 		currentAuthenticator.authenticate(transport, username);
 	}

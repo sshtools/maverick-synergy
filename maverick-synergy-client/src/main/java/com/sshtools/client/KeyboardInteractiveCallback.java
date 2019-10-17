@@ -18,7 +18,7 @@
  */
 package com.sshtools.client;
 
-import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.SshConnection;
 
 /**
  * Callback interface for keyboard-interactive authentication. Will be called when the server sends
@@ -26,7 +26,7 @@ import com.sshtools.common.ssh.Connection;
  */
 public interface KeyboardInteractiveCallback {
 	
-	public void init(Connection<SshClientContext> connection);
+	public void init(SshConnection connection);
 	
 	public void showPrompts(String name, String instruction,
 			KeyboardInteractivePrompt[] prompts, 

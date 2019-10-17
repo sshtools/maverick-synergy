@@ -63,7 +63,7 @@ public class SftpClient {
 	String lcwd;
 
 	private int blocksize = 16384;
-	private int asyncRequests = 100;
+	private int asyncRequests = 16;
 	private int buffersize = 1024000;
 
 	// Default permissions is determined by default_permissions ^ umask
@@ -114,6 +114,8 @@ public class SftpClient {
 	
 	public SftpClient(SshConnection con) throws SshException {
 		this.sftp = new SftpChannel(con);
+		this.cwd = "";
+		this.lcwd = System.getProperty("user.home");
 	}
 	
 	public SftpClient(SshClient ssh) throws SshException {
@@ -395,15 +397,6 @@ public class SftpClient {
 
 		cwd = actual;
 	}
-
-	// protected void finalize() throws Throwable {
-	//
-	// if(sftp!=null)
-	// sftp.close();
-	// sftp = null;
-	// super.finalize();
-	//
-	// }
 
 	/**
 	 * <p>

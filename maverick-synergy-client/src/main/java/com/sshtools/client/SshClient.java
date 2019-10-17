@@ -48,6 +48,7 @@ public class SshClient implements Closeable {
 	
 	Connection<SshClientContext> con;
 	SshClientContext sshContext;
+	String remotePublicKeys = "";
 	
 	public SshClient(String hostname, int port, String username, char[] password) throws IOException, SshException {
 		this(hostname, port, username, new SshClientContext(), password);
@@ -110,6 +111,9 @@ public class SshClient implements Closeable {
 			@Override
 			public void processEvent(Event evt) {
 				switch(evt.getId()) {
+				case EventCodes.EVENT_KEY_EXCHANGE_INIT:
+					remotePublicKeys = (String) evt.getAttribute(EventCodes.ATTRIBUTE_REMOTE_PUBLICKEYS);
+					break;
 				case EventCodes.EVENT_DISCONNECTED:
 					disconnect();
 					break;
@@ -301,7 +305,7 @@ public class SshClient implements Closeable {
 		return sshContext.getAuthenticationClient().getSupportedAuthentications();
 	}
 	
-	public boolean authenticate(ClientAuthenticator authenticator, long timeout) throws IOException {
+	public boolean authenticate(ClientAuthenticator authenticator, long timeout) throws IOException, SshException {
 		
 		sshContext.getAuthenticationClient().doAuthentication(authenticator);
 		authenticator.waitFor(timeout);
@@ -319,6 +323,14 @@ public class SshClient implements Closeable {
 	
 	public <T extends Task> void runTask(T task) throws IOException {
 		doTask(task, 0L);
+	}
+
+	public String[] getRemotePublicKeys() {
+		return remotePublicKeys.split(",");
+	}
+
+	public String getRemoteIdentification() {
+		return con.getRemoteIdentification();
 	}
 
 }

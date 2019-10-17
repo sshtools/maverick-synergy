@@ -19,7 +19,9 @@
 package com.sshtools.client;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
+import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.EncodingUtils;
 
 /**
@@ -49,7 +51,14 @@ public class PasswordAuthenticator extends SimpleClientAuthenticator {
 	}
 	
 	@Override
-	public void authenticate(TransportProtocolClient transport, String username) {
+	public void authenticate(TransportProtocolClient transport, String username) throws SshException {
+		
+		
+		byte[] tmp = getPasswordBytes();
+		if(Objects.isNull(tmp)) {
+			throw new SshException("Password not set!",
+					SshException.BAD_API_USAGE);
+		}
 		
 		transport.postMessage(new AuthenticationMessage(username, "ssh-connection", "password") {
 
@@ -67,6 +76,7 @@ public class PasswordAuthenticator extends SimpleClientAuthenticator {
 				return true;
 			}			
 		});
+		
 	}
 	
 

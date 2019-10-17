@@ -18,7 +18,7 @@
  */
 package com.sshtools.client;
 
-import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.SshConnection;
 
 /**
  * Implements a keyboard-interactive callback that answers a single password prompt.
@@ -33,7 +33,7 @@ public class PasswordOverKeyboardInteractiveCallback
 			password = pwdAuth.getPassword();
 		}
 
-		public void init(Connection<SshClientContext> con) {
+		public void init(SshConnection con) {
 		}
 		
 		/**

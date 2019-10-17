@@ -21,6 +21,7 @@ package com.sshtools.client;
 import java.io.IOException;
 
 import com.sshtools.common.ssh.RequestFuture;
+import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayReader;
 
 /**
@@ -39,8 +40,9 @@ public interface ClientAuthenticator extends RequestFuture {
 	 * @param transport
 	 * @param username
 	 * @throws IOException 
+	 * @throws SshException 
 	 */
-	void authenticate(TransportProtocolClient transport, String username) throws IOException;
+	void authenticate(TransportProtocolClient transport, String username) throws IOException, SshException;
 
 	/**
 	 * Process an authentication message.

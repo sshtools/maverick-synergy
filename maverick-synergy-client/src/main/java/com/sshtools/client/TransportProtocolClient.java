@@ -114,7 +114,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 
 		try {
 			
-			SshPublicKey hostkey = SshPublicKeyFileFactory.decodeSSH2PublicKey(keyExchange.getHostKey());
+			hostKey = SshPublicKeyFileFactory.decodeSSH2PublicKey(keyExchange.getHostKey());
 			
 			if(getContext().getHostKeyVerification()!=null) {
 				
@@ -127,7 +127,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 				}
 				
 				if (!getContext().getHostKeyVerification()
-						.verifyHost(host, hostkey)) {
+						.verifyHost(host, hostKey)) {
 					EventServiceImplementation
 							.getInstance()
 							.fireEvent(
@@ -141,7 +141,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 									.addAttribute(EventCodes.ATTRIBUTE_HOST_KEY,
 											new String(keyExchange.getHostKey()))
 									.addAttribute(EventCodes.ATTRIBUTE_HOST_PUBLIC_KEY,
-													hostkey));
+											hostKey));
 					disconnect(
 							TransportProtocol.HOST_KEY_NOT_VERIFIABLE,
 							"Host key not accepted");
@@ -150,7 +150,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 							SshException.CANCELLED_CONNECTION);
 				}
 	
-				if (!hostkey.verifySignature(
+				if (!hostKey.verifySignature(
 						keyExchange.getSignature(),
 						keyExchange.getExchangeHash())) {
 					EventServiceImplementation
@@ -161,7 +161,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 											EventCodes.ATTRIBUTE_CONNECTION,
 											getConnection())
 									.addAttribute(EventCodes.ATTRIBUTE_HOST_KEY, new String(keyExchange.getHostKey()))
-									.addAttribute(EventCodes.ATTRIBUTE_HOST_PUBLIC_KEY, hostkey));
+									.addAttribute(EventCodes.ATTRIBUTE_HOST_PUBLIC_KEY, hostKey));
 					disconnect(
 							TransportProtocol.HOST_KEY_NOT_VERIFIABLE,
 							"Invalid host key signature");
@@ -179,7 +179,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 									EventCodes.ATTRIBUTE_CONNECTION,
 									getConnection())
 					             .addAttribute(EventCodes.ATTRIBUTE_HOST_KEY, new String(keyExchange.getHostKey()))
-								.addAttribute(EventCodes.ATTRIBUTE_HOST_PUBLIC_KEY, hostkey));
+								.addAttribute(EventCodes.ATTRIBUTE_HOST_PUBLIC_KEY, hostKey));
 		
 			boolean first = !completedFirstKeyExchange;
 			super.completeKeyExchange(keyExchange);
@@ -215,7 +215,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 	
 	@Override
 	protected boolean processTransportMessage(int msgid, byte[] msg)
-			throws IOException {
+			throws IOException, SshException {
 		
 		switch(msgid) {
 		case SSH_MSG_SERVICE_ACCEPT:

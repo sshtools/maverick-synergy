@@ -529,8 +529,7 @@ public class SftpChannel extends AbstractSubsystem {
 				// Read the next response message
 				if (sync.requestBlock(requestId, holder)) {
 					msg = new SftpMessage(nextMessage());
-					responses.put(new UnsignedInteger32(msg.getMessageId()),
-							msg);
+					responses.put(new UnsignedInteger32(msg.getMessageId()),msg);
 					if(Log.isTraceEnabled()) {
 						Log.trace("There are " + responses.size() + " SFTP responses waiting to be processed");
 					}
@@ -867,6 +866,8 @@ public class SftpChannel extends AbstractSubsystem {
 				blocksize = getSession().getMaximumRemotePacketLength() - overhead;
 			}
 			
+			System.setProperty("maverick.write.optimizedBlock", String.valueOf(blocksize));
+			
 			if(Log.isTraceEnabled()) {
 				Log.trace("Performing optimized write length=" + in.available()
 						+ " postion=" + position + " blocksize=" + blocksize
@@ -889,9 +890,29 @@ public class SftpChannel extends AbstractSubsystem {
 
 			byte[] buf = new byte[blocksize];
 
+
+			
+			
+			
 			long transfered = position;
 			int buffered = 0;
 
+			buffered = in.read(buf);
+			
+			long time = System.currentTimeMillis();
+			writeFile(handle, new UnsignedInteger64(0), buf, 0, buf.length);
+			time = System.currentTimeMillis() - time;
+			
+			System.setProperty("maverick.write.blockRoundtrip", String.valueOf(time));
+			
+			transfered += buffered;
+
+			if (progress != null) {
+				if (progress.isCancelled())
+					throw new TransferCancelledException();
+				progress.progressed(transfered);
+			}
+			
 			Vector<UnsignedInteger32> requests = new Vector<UnsignedInteger32>();
 			// BufferedInputStream is not in J2ME, whatever type of input stream
 			// has been passed in can be used in conjunction with the abstract
@@ -919,12 +940,10 @@ public class SftpChannel extends AbstractSubsystem {
 
 			}
 
-			for (Enumeration<UnsignedInteger32> e = requests.elements(); e
-					.hasMoreElements();) {
-				getOKRequestStatus(e.nextElement());
+			while(requests.size() > 0) {
+				getOKRequestStatus(requests.remove(0));
 			}
 
-			requests.removeAllElements();
 		} catch (IOException ex) {
 			throw new TransferCancelledException();
 		} catch (OutOfMemoryError ex) {
@@ -1018,6 +1037,8 @@ public class SftpChannel extends AbstractSubsystem {
 			blocksize = getSession().getMaximumLocalPacketLength() - overhead;
 		}
 		
+		System.setProperty("maverick.read.optimizedBlock", String.valueOf(blocksize));
+		
 		if(Log.isTraceEnabled()) {
 			Log.trace("Performing optimized read length=" + length
 					+ " postion=" + position + " blocksize=" + blocksize
@@ -1048,8 +1069,11 @@ public class SftpChannel extends AbstractSubsystem {
 
 		byte[] tmp = new byte[blocksize];
 
-		int i = readFile(handle, new UnsignedInteger64(0), tmp, 0,
-				tmp.length);
+		long time = System.currentTimeMillis();
+		int i = readFile(handle, new UnsignedInteger64(0), tmp, 0, tmp.length);
+		time = System.currentTimeMillis() - time;
+		
+		System.setProperty("maverick.read.blockRoundtrip", String.valueOf(time));
 
 		// if i=-1 then eof so return, maybe should throw exception on null
 		// files?
@@ -1085,6 +1109,8 @@ public class SftpChannel extends AbstractSubsystem {
 			blocksize = i;
 		}
 
+		System.setProperty("maverick.read.finalBlock", String.valueOf(blocksize));
+		
 		tmp = null;
 
 		long numBlocks = length / blocksize;
@@ -2525,7 +2551,22 @@ public class SftpChannel extends AbstractSubsystem {
 		}
 
 	public boolean isClosed() {
-		// TODO Auto-generated method stub
 		return getSession().isClosed();
+	}
+
+	public int getMaximumLocalWindowSize() {
+		return getMaximumWindowSize();
+	}
+
+	public int getMaximumLocalPacketLength() {
+		return getMaximumPacketSize();
+	}
+
+	public int getMaximumRemoteWindowSize() {
+		return session.getMaxiumRemoteWindowSize();
+	}
+
+	public int getMaximumRemotePacketLength() {
+		return session.getMaxiumRemotePacketSize();
 	}
 }

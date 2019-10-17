@@ -33,6 +33,7 @@ import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.Context;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshConnectionManager;
+import com.sshtools.common.ssh.components.SshPublicKey;
 
 public class MockConnection implements SshConnection {
 
@@ -203,6 +204,108 @@ public class MockConnection implements SshConnection {
 	public void addTask(ConnectionAwareTask r) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public String[] getRemotePublicKeys() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String[] getRemoteKeyExchanges() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String[] getRemoteCompressionsCS() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String[] getRemoteCompressionsSC() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String[] getRemoteCiphersCS() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String[] getRemoteCiphersSC() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String[] getRemoteMacsCS() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String[] getRemoteMacsSC() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SshPublicKey getHostKey() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getKeyExchangeInUse() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getHostKeyInUse() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getCipherInUseCS() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getCipherInUseSC() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getMacInUseCS() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getMacInUseSC() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getCompressionInUseCS() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getCompressionInUseSC() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 

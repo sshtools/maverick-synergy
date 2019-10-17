@@ -21,6 +21,8 @@ package com.sshtools.common.sshd;
 
 import java.nio.ByteBuffer;
 
+import com.sshtools.common.ssh.SshException;
+
 /**
  * This interface provides a callback for writing SSH messages into the outgoing
  * buffer. When a message is to be sent you should call
@@ -75,5 +77,5 @@ public interface SshMessage {
      */
     public boolean writeMessageIntoBuffer(ByteBuffer buf);
 
-    public void messageSent(Long sequenceNo);
+    public void messageSent(Long sequenceNo) throws SshException;
 }

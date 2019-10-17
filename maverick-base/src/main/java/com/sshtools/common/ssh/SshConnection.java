@@ -24,6 +24,7 @@ import java.util.Locale;
 
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.logger.Log.Level;
+import com.sshtools.common.ssh.components.SshPublicKey;
 
 public interface SshConnection {
 
@@ -83,5 +84,39 @@ public interface SshConnection {
 	void removeEventListener(EventListener listener);
 
 	void addTask(ConnectionAwareTask r);
+
+	String[] getRemotePublicKeys();
+
+	String[] getRemoteKeyExchanges();
+
+	String[] getRemoteCompressionsCS();
+
+	String[] getRemoteCompressionsSC();
+
+	String[] getRemoteCiphersCS();
+
+	String[] getRemoteCiphersSC();
+
+	String[] getRemoteMacsCS();
+
+	String[] getRemoteMacsSC();
+
+	SshPublicKey getHostKey();
+
+	String getKeyExchangeInUse();
+
+	String getHostKeyInUse();
+
+	String getCipherInUseCS();
+
+	String getCipherInUseSC();
+
+	String getMacInUseCS();
+
+	String getMacInUseSC();
+
+	String getCompressionInUseCS();
+
+	String getCompressionInUseSC();
 
 }

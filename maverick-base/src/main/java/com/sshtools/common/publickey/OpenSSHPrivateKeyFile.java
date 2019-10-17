@@ -294,7 +294,11 @@ class OpenSSHPrivateKeyFile
 					  throw new IOException(String.format("Unsupported KDF type %s", kdfName));
 				  }
 				 
-				  cipher = (SshCipher) ComponentManager.getInstance().supportedSsh2CiphersCS().getInstance(cipherName);
+				  if("aes128-cbc".equals(cipherName)) {
+					  cipher = new AES128Cbc();
+				  } else {
+					  cipher = (SshCipher) ComponentManager.getInstance().supportedSsh2CiphersCS().getInstance(cipherName);
+				  }
 				  
 				  byte[] salt = optionsReader.readBinaryString();
 				  int rounds = (int) optionsReader.readInt();

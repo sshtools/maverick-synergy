@@ -18,14 +18,14 @@
  */
 package com.sshtools.client;
 
-import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.SshConnection;
 
 public abstract class AbstractKeyboardInteractiveCallback implements KeyboardInteractiveCallback {
 
-	protected Connection<SshClientContext> connection;
+	protected SshConnection connection;
 	
 	@Override
-	public void init(Connection<SshClientContext> connection) {
+	public void init(SshConnection connection) {
 		this.connection = connection;
 	}
 }

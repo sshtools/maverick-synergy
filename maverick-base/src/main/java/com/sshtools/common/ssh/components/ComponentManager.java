@@ -49,7 +49,6 @@ import com.sshtools.common.util.IOUtils;
  */
 public abstract class ComponentManager {
 
-	private static boolean PerContextAlgorithmPreferences = false;
 	private static boolean enableNoneCipher = false;
 	private static boolean enableNoneMac = false;
 	protected static boolean enableCbc = false;
@@ -95,14 +94,6 @@ public abstract class ComponentManager {
 	
 	public static void disableCBCCiphers() {
 		enableCbc = false;
-	}
-	
-	public static void setPerContextAlgorithmPreferences(boolean enable) {
-		PerContextAlgorithmPreferences = enable;
-	}
-
-	public static boolean getPerContextAlgorithmPreferences() {
-		return PerContextAlgorithmPreferences;
 	}
 
 	protected static ComponentManager instance;
@@ -261,10 +252,7 @@ public abstract class ComponentManager {
 	 */
 	@SuppressWarnings("unchecked")
 	public ComponentFactory<SshCipher> supportedSsh1CiphersSC() {
-		if (PerContextAlgorithmPreferences) {
-			return (ComponentFactory<SshCipher>) ssh1ciphersSC.clone();
-		}
-		return ssh1ciphersSC;
+		return (ComponentFactory<SshCipher>) ssh1ciphersSC.clone();
 	}
 
 	/**
@@ -274,10 +262,7 @@ public abstract class ComponentManager {
 	 */
 	@SuppressWarnings("unchecked")
 	public ComponentFactory<SshCipher> supportedSsh1CiphersCS() {
-		if (PerContextAlgorithmPreferences) {
-			return (ComponentFactory<SshCipher>) ssh1ciphersCS.clone();
-		}
-		return ssh1ciphersCS;
+		return (ComponentFactory<SshCipher>) ssh1ciphersCS.clone();
 	}
 
 	/**
@@ -287,10 +272,7 @@ public abstract class ComponentManager {
 	 */
 	@SuppressWarnings("unchecked")
 	public ComponentFactory<SshCipher> supportedSsh2CiphersSC() {
-		if (PerContextAlgorithmPreferences) {
-			return (ComponentFactory<SshCipher>) ssh2ciphersSC.clone();
-		}
-		return ssh2ciphersSC;
+		return (ComponentFactory<SshCipher>) ssh2ciphersSC.clone();
 	}
 
 	/**
@@ -300,10 +282,7 @@ public abstract class ComponentManager {
 	 */
 	@SuppressWarnings("unchecked")
 	public ComponentFactory<SshCipher> supportedSsh2CiphersCS() {
-		if (PerContextAlgorithmPreferences) {
-			return (ComponentFactory<SshCipher>) ssh2ciphersCS.clone();
-		}
-		return ssh2ciphersCS;
+		return (ComponentFactory<SshCipher>) ssh2ciphersCS.clone();
 	}
 
 	/**
@@ -313,10 +292,7 @@ public abstract class ComponentManager {
 	 */
 	@SuppressWarnings("unchecked")
 	public ComponentFactory<SshHmac> supportedHMacsSC() {
-		if (PerContextAlgorithmPreferences) {
-			return (ComponentFactory<SshHmac>) hmacsSC.clone();
-		}
-		return hmacsSC;
+		return (ComponentFactory<SshHmac>) hmacsSC.clone();
 	}
 
 	/**
@@ -326,10 +302,7 @@ public abstract class ComponentManager {
 	 */
 	@SuppressWarnings("unchecked")
 	public ComponentFactory<SshHmac> supportedHMacsCS() {
-		if (PerContextAlgorithmPreferences) {
-			return (ComponentFactory<SshHmac>) hmacsCS.clone();
-		}
-		return hmacsCS;
+		return (ComponentFactory<SshHmac>) hmacsCS.clone();
 	}
 	
 	/**
@@ -339,10 +312,7 @@ public abstract class ComponentManager {
 	 */
 	@SuppressWarnings("unchecked")
 	public ComponentFactory<SshPublicKey> supportedPublicKeys() {
-		if (PerContextAlgorithmPreferences) {
-			return (ComponentFactory<SshPublicKey>) publickeys.clone();
-		}
-		return publickeys;
+		return (ComponentFactory<SshPublicKey>) publickeys.clone();
 	}
 
 	/**
@@ -352,10 +322,7 @@ public abstract class ComponentManager {
 	 */
 	@SuppressWarnings("unchecked")
 	public ComponentFactory<Digest> supportedDigests() {
-		if (PerContextAlgorithmPreferences) {
-			return (ComponentFactory<Digest>) digests.clone();
-		}
-		return digests;
+		return (ComponentFactory<Digest>) digests.clone();
 	}
 
 	/**

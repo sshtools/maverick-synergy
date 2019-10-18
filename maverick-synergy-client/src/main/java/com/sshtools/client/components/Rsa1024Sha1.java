@@ -93,7 +93,7 @@ public class Rsa1024Sha1 extends SshKeyExchangeClient implements AbstractKeyExch
 	}
 
 	public String getProvider() {
-		return "";
+		return cipher.getProvider().getName();
 	}
 
 	public void test() {

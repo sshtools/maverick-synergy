@@ -21,10 +21,12 @@ package com.sshtools.common.ssh;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -228,10 +230,10 @@ public abstract class SshContext extends ProtocolContext implements
 	protected int minDHGroupExchangeKeySize = 2048;
 	protected int preferredDHGroupExchangeKeySize = 2048;
 	protected int maxDHGroupExchangeKeySize = 8192;
-
+	
 	List<ExecutorOperationListener> listeners = new ArrayList<ExecutorOperationListener>();
 	
-	ComponentManager componentManager;
+	protected ComponentManager componentManager;
 	
 	boolean httpRedirect;
 	String httpRedirectUrl;

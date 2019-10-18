@@ -37,8 +37,6 @@ import com.sshtools.common.util.UnsignedInteger32;
 
 public class DiffieHellmanGroups {
 
-	
-	
 	static final BigInteger TWO = new BigInteger("2");
 	
 	public static final BigInteger group1 = new BigInteger(

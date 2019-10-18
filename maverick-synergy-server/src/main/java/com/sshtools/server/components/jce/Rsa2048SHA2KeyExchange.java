@@ -151,7 +151,7 @@ public class Rsa2048SHA2KeyExchange extends SshKeyExchangeServer implements Abst
 	}
 
 	public String getProvider() {
-		return "";
+		return cipher.getProvider().getName();
 	}
 
 	public boolean processMessage(byte[] msg) throws SshException, IOException {

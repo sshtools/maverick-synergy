@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.sshtools.client.SshClientContext;
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.DefaultAuthenticationMechanismFactory;
 import com.sshtools.common.command.ExecutableCommand;
@@ -54,6 +55,7 @@ import com.sshtools.common.ssh.ForwardingManager;
 import com.sshtools.common.ssh.GlobalRequestHandler;
 import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.ComponentFactory;
 import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.ssh.components.SshKeyExchange;
 import com.sshtools.common.ssh.components.SshKeyPair;
@@ -99,6 +101,7 @@ public class SshServerContext extends SshContext {
 
 	int maxDHGroupSize = 2048;
 	
+	private static ComponentFactory<SshKeyExchange<SshServerContext>> verifiedKeyExchanges;
 	
 	public SshServerContext(SshEngine engine, ComponentManager componentManager) throws IOException {
 		super(engine, componentManager);
@@ -554,81 +557,95 @@ public class SshServerContext extends SshContext {
 		return allowKeyExchangeForDeniedConnection;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	protected void configureKeyExchanges() {
+	protected synchronized void configureKeyExchanges() {
+		
+		if(Objects.nonNull(verifiedKeyExchanges)) {
+			keyExchanges = (ComponentFactory<SshKeyExchange<? extends SshContext>>)verifiedKeyExchanges.clone();
+			return;
+		}
+		
+		if(Log.isInfoEnabled()) {
+			Log.info("Initializing server key exchanges");
+		}
+		
+		verifiedKeyExchanges = new ComponentFactory<SshKeyExchange<SshServerContext>>(componentManager);
 		
 		JCEComponentManager.getDefaultInstance().loadExternalComponents("/kex-server.properties", keyExchanges);
 		
 		if(testServerKeyExchangeAlgorithm(
 				DiffieHellmanGroupExchangeSha256JCE.DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA256, DiffieHellmanGroupExchangeSha256JCE.class)) {
-			keyExchanges.add(DiffieHellmanGroupExchangeSha256JCE.DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA256, DiffieHellmanGroupExchangeSha256JCE.class);
+			verifiedKeyExchanges.add(DiffieHellmanGroupExchangeSha256JCE.DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA256, DiffieHellmanGroupExchangeSha256JCE.class);
 		}
 
 		if(testServerKeyExchangeAlgorithm(
 				DiffieHellmanGroup14Sha256JCE.DIFFIE_HELLMAN_GROUP14_SHA256, DiffieHellmanGroup14Sha256JCE.class)) {
-			keyExchanges.add(DiffieHellmanGroup14Sha256JCE.DIFFIE_HELLMAN_GROUP14_SHA256, DiffieHellmanGroup14Sha256JCE.class);
+			verifiedKeyExchanges.add(DiffieHellmanGroup14Sha256JCE.DIFFIE_HELLMAN_GROUP14_SHA256, DiffieHellmanGroup14Sha256JCE.class);
 		}
 		if(testServerKeyExchangeAlgorithm(
 				DiffieHellmanGroup15Sha512JCE.DIFFIE_HELLMAN_GROUP15_SHA512, DiffieHellmanGroup15Sha512JCE.class)) {
-			keyExchanges.add(DiffieHellmanGroup15Sha512JCE.DIFFIE_HELLMAN_GROUP15_SHA512, DiffieHellmanGroup15Sha512JCE.class);
+			verifiedKeyExchanges.add(DiffieHellmanGroup15Sha512JCE.DIFFIE_HELLMAN_GROUP15_SHA512, DiffieHellmanGroup15Sha512JCE.class);
 		}
 		if(testServerKeyExchangeAlgorithm(
 				DiffieHellmanGroup16Sha512JCE.DIFFIE_HELLMAN_GROUP16_SHA512, DiffieHellmanGroup16Sha512JCE.class)) {
-			keyExchanges.add(DiffieHellmanGroup16Sha512JCE.DIFFIE_HELLMAN_GROUP16_SHA512, DiffieHellmanGroup16Sha512JCE.class);
+			verifiedKeyExchanges.add(DiffieHellmanGroup16Sha512JCE.DIFFIE_HELLMAN_GROUP16_SHA512, DiffieHellmanGroup16Sha512JCE.class);
 		}
 		if(testServerKeyExchangeAlgorithm(
 				DiffieHellmanGroup17Sha512JCE.DIFFIE_HELLMAN_GROUP17_SHA512, DiffieHellmanGroup17Sha512JCE.class)) {
-			keyExchanges.add(DiffieHellmanGroup17Sha512JCE.DIFFIE_HELLMAN_GROUP17_SHA512, DiffieHellmanGroup17Sha512JCE.class);
+			verifiedKeyExchanges.add(DiffieHellmanGroup17Sha512JCE.DIFFIE_HELLMAN_GROUP17_SHA512, DiffieHellmanGroup17Sha512JCE.class);
 		}
 		if(testServerKeyExchangeAlgorithm(
 				DiffieHellmanGroup18Sha512JCE.DIFFIE_HELLMAN_GROUP18_SHA512, DiffieHellmanGroup18Sha512JCE.class)) {
-			keyExchanges.add(DiffieHellmanGroup18Sha512JCE.DIFFIE_HELLMAN_GROUP18_SHA512, DiffieHellmanGroup18Sha512JCE.class);
+			verifiedKeyExchanges.add(DiffieHellmanGroup18Sha512JCE.DIFFIE_HELLMAN_GROUP18_SHA512, DiffieHellmanGroup18Sha512JCE.class);
 		}
 
 		if(testServerKeyExchangeAlgorithm(
 				DiffieHellmanGroup14Sha1JCE.DIFFIE_HELLMAN_GROUP14_SHA1, DiffieHellmanGroup14Sha1JCE.class)) {
-			keyExchanges.add(DiffieHellmanGroup14Sha1JCE.DIFFIE_HELLMAN_GROUP14_SHA1, DiffieHellmanGroup14Sha1JCE.class);
+			verifiedKeyExchanges.add(DiffieHellmanGroup14Sha1JCE.DIFFIE_HELLMAN_GROUP14_SHA1, DiffieHellmanGroup14Sha1JCE.class);
 		}
 
 		if(testServerKeyExchangeAlgorithm(
 				DiffieHellmanEcdhNistp521.DIFFIE_HELLMAN_ECDH_NISTP_521, DiffieHellmanEcdhNistp521.class)) {
-			keyExchanges.add(DiffieHellmanEcdhNistp521.DIFFIE_HELLMAN_ECDH_NISTP_521, DiffieHellmanEcdhNistp521.class);
+			verifiedKeyExchanges.add(DiffieHellmanEcdhNistp521.DIFFIE_HELLMAN_ECDH_NISTP_521, DiffieHellmanEcdhNistp521.class);
 		}
 		
 		if(testServerKeyExchangeAlgorithm(
 				DiffieHellmanEcdhNistp384.DIFFIE_HELLMAN_ECDH_NISTP_384, DiffieHellmanEcdhNistp384.class)) {
-			keyExchanges.add(DiffieHellmanEcdhNistp384.DIFFIE_HELLMAN_ECDH_NISTP_384, DiffieHellmanEcdhNistp384.class);
+			verifiedKeyExchanges.add(DiffieHellmanEcdhNistp384.DIFFIE_HELLMAN_ECDH_NISTP_384, DiffieHellmanEcdhNistp384.class);
 		}
 		
 		if(testServerKeyExchangeAlgorithm(
 				DiffieHellmanEcdhNistp256.DIFFIE_HELLMAN_ECDH_NISTP_256, DiffieHellmanEcdhNistp256.class)) {
-			keyExchanges.add(DiffieHellmanEcdhNistp256.DIFFIE_HELLMAN_ECDH_NISTP_256, DiffieHellmanEcdhNistp256.class);
+			verifiedKeyExchanges.add(DiffieHellmanEcdhNistp256.DIFFIE_HELLMAN_ECDH_NISTP_256, DiffieHellmanEcdhNistp256.class);
 		}
 		
 		if(testServerKeyExchangeAlgorithm(
 				Rsa2048SHA2KeyExchange.RSA_2048_SHA2, Rsa2048SHA2KeyExchange.class)) {
-			keyExchanges.add(Rsa2048SHA2KeyExchange.RSA_2048_SHA2, Rsa2048SHA2KeyExchange.class);
+			verifiedKeyExchanges.add(Rsa2048SHA2KeyExchange.RSA_2048_SHA2, Rsa2048SHA2KeyExchange.class);
 		}
 		
 		if(testServerKeyExchangeAlgorithm(
 				Rsa1024SHA1KeyExchange.RSA_1024_SHA1, Rsa1024SHA1KeyExchange.class)) {
-			keyExchanges.add(Rsa1024SHA1KeyExchange.RSA_1024_SHA1, Rsa1024SHA1KeyExchange.class);
+			verifiedKeyExchanges.add(Rsa1024SHA1KeyExchange.RSA_1024_SHA1, Rsa1024SHA1KeyExchange.class);
 		}
 		
 		if(testServerKeyExchangeAlgorithm(
 				DiffieHellmanGroupExchangeSha1JCE.DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA1,  DiffieHellmanGroupExchangeSha1JCE.class)) {
-			keyExchanges.add(DiffieHellmanGroupExchangeSha1JCE.DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA1,  DiffieHellmanGroupExchangeSha1JCE.class);
+			verifiedKeyExchanges.add(DiffieHellmanGroupExchangeSha1JCE.DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA1,  DiffieHellmanGroupExchangeSha1JCE.class);
 		}
 		
 		if(testServerKeyExchangeAlgorithm(
 				DiffieHellmanGroup1Sha1JCE.DIFFIE_HELLMAN_GROUP1_SHA1, DiffieHellmanGroup1Sha1JCE.class)) {
-			keyExchanges.add(DiffieHellmanGroup1Sha1JCE.DIFFIE_HELLMAN_GROUP1_SHA1, DiffieHellmanGroup1Sha1JCE.class);
+			verifiedKeyExchanges.add(DiffieHellmanGroup1Sha1JCE.DIFFIE_HELLMAN_GROUP1_SHA1, DiffieHellmanGroup1Sha1JCE.class);
 		}
+		
+		keyExchanges = (ComponentFactory<SshKeyExchange<? extends SshContext>>)verifiedKeyExchanges.clone();
 		
 	}
 	
 	public boolean testServerKeyExchangeAlgorithm(String name, Class<? extends SshKeyExchange<? extends SshContext>> cls) {
-
+		
 		SshKeyExchange<? extends SshContext> c = null;
 		try {
 
@@ -638,6 +655,7 @@ public class SshServerContext extends SshContext {
 				throw new Exception("Hash algorithm " + c.getHashAlgorithm() + " is not supported");
 
 			c.test();
+			
 		} catch (Exception e) {
 			if(Log.isDebugEnabled())
 				Log.debug("   " + name + " (server) will not be supported: " + e.getMessage());

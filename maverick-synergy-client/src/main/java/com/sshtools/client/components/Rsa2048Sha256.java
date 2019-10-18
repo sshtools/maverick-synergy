@@ -93,7 +93,7 @@ public class Rsa2048Sha256 extends SshKeyExchangeClient implements AbstractKeyEx
 	}
 
 	public String getProvider() {
-		return "";
+		return cipher.getProvider().getName();
 	}
 
 	public void test() {

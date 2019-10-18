@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.sshtools.client.components.DiffieHellmanEcdhNistp256;
 import com.sshtools.client.components.DiffieHellmanEcdhNistp384;
@@ -96,6 +97,8 @@ public class SshClientContext extends SshContext {
 	static ConnectionManager<SshClientContext> defaultConnectionManager 
 				= new ConnectionManager<SshClientContext>("client");
 	
+	private static ComponentFactory<SshKeyExchange<SshClientContext>> verifiedKeyExchanges;
+	
 	public SshClientContext(SshEngine daemon, ComponentManager componentManager) throws IOException {
 		super(componentManager);
 		this.daemon = daemon;
@@ -166,66 +169,81 @@ public class SshClientContext extends SshContext {
 		return authenticationClient;
 	}
 	
-	protected void configureKeyExchanges() {
+	@SuppressWarnings("unchecked")
+	protected synchronized void configureKeyExchanges() {
 		
-		JCEComponentManager.getDefaultInstance().loadExternalComponents("kex-client.properties", keyExchanges);
+		if(Objects.nonNull(verifiedKeyExchanges)) {
+			keyExchanges = (ComponentFactory<SshKeyExchange<? extends SshContext>>)verifiedKeyExchanges.clone();
+			return;
+		}
+		
+		if(Log.isInfoEnabled()) {
+			Log.info("Initializing client key exchanges");
+		}
+		
+		verifiedKeyExchanges = new ComponentFactory<SshKeyExchange<SshClientContext>>(componentManager);
+		
+		JCEComponentManager.getDefaultInstance().loadExternalComponents("kex-client.properties", verifiedKeyExchanges);
 		
 		if (testClientKeyExchangeAlgorithm("diffie-hellman-group-exchange-sha256",
 				DiffieHellmanGroupExchangeSha256JCE.class)) {
-			keyExchanges.add("diffie-hellman-group-exchange-sha256", DiffieHellmanGroupExchangeSha256JCE.class);
+			verifiedKeyExchanges.add("diffie-hellman-group-exchange-sha256", DiffieHellmanGroupExchangeSha256JCE.class);
 		}
 		
 		if (testClientKeyExchangeAlgorithm("diffie-hellman-group14-sha256", DiffieHellmanGroup14Sha256JCE.class)) {
-			keyExchanges.add("diffie-hellman-group14-sha256", DiffieHellmanGroup14Sha256JCE.class);
+			verifiedKeyExchanges.add("diffie-hellman-group14-sha256", DiffieHellmanGroup14Sha256JCE.class);
 		}
 		
 		if (testClientKeyExchangeAlgorithm("diffie-hellman-group15-sha512", DiffieHellmanGroup15Sha512JCE.class)) {
-			keyExchanges.add("diffie-hellman-group15-sha512", DiffieHellmanGroup15Sha512JCE.class);
+			verifiedKeyExchanges.add("diffie-hellman-group15-sha512", DiffieHellmanGroup15Sha512JCE.class);
 		}
 		
 		if (testClientKeyExchangeAlgorithm("diffie-hellman-group16-sha512", DiffieHellmanGroup16Sha512JCE.class)) {
-			keyExchanges.add("diffie-hellman-group16-sha512", DiffieHellmanGroup16Sha512JCE.class);
+			verifiedKeyExchanges.add("diffie-hellman-group16-sha512", DiffieHellmanGroup16Sha512JCE.class);
 		}
 		
 		if (testClientKeyExchangeAlgorithm("diffie-hellman-group17-sha512", DiffieHellmanGroup17Sha512JCE.class)) {
-			keyExchanges.add("diffie-hellman-group17-sha512", DiffieHellmanGroup17Sha512JCE.class);
+			verifiedKeyExchanges.add("diffie-hellman-group17-sha512", DiffieHellmanGroup17Sha512JCE.class);
 		}
 		
 		if (testClientKeyExchangeAlgorithm("diffie-hellman-group18-sha512", DiffieHellmanGroup18Sha512JCE.class)) {
-			keyExchanges.add("diffie-hellman-group18-sha512", DiffieHellmanGroup18Sha512JCE.class);
+			verifiedKeyExchanges.add("diffie-hellman-group18-sha512", DiffieHellmanGroup18Sha512JCE.class);
 		}
 		
 		if (testClientKeyExchangeAlgorithm("diffie-hellman-group14-sha1", DiffieHellmanGroup14Sha1JCE.class)) {
-			keyExchanges.add("diffie-hellman-group14-sha1", DiffieHellmanGroup14Sha1JCE.class);
+			verifiedKeyExchanges.add("diffie-hellman-group14-sha1", DiffieHellmanGroup14Sha1JCE.class);
 		}
 		
 		if (testClientKeyExchangeAlgorithm("ecdh-sha2-nistp256", DiffieHellmanEcdhNistp256.class)) {
-			keyExchanges.add("ecdh-sha2-nistp256", DiffieHellmanEcdhNistp256.class);
+			verifiedKeyExchanges.add("ecdh-sha2-nistp256", DiffieHellmanEcdhNistp256.class);
 		}
 		
 		if (testClientKeyExchangeAlgorithm("ecdh-sha2-nistp384", DiffieHellmanEcdhNistp384.class)) {
-			keyExchanges.add("ecdh-sha2-nistp384", DiffieHellmanEcdhNistp384.class);
+			verifiedKeyExchanges.add("ecdh-sha2-nistp384", DiffieHellmanEcdhNistp384.class);
 		}
 
 		if (testClientKeyExchangeAlgorithm("ecdh-sha2-nistp521", DiffieHellmanEcdhNistp521.class)) {
-			keyExchanges.add("ecdh-sha2-nistp521", DiffieHellmanEcdhNistp521.class);
+			verifiedKeyExchanges.add("ecdh-sha2-nistp521", DiffieHellmanEcdhNistp521.class);
 		}
 
 		if (testClientKeyExchangeAlgorithm(Rsa2048Sha256.RSA_2048_SHA256, Rsa2048Sha256.class)) {
-			keyExchanges.add(Rsa2048Sha256.RSA_2048_SHA256, Rsa2048Sha256.class);
+			verifiedKeyExchanges.add(Rsa2048Sha256.RSA_2048_SHA256, Rsa2048Sha256.class);
 		}
 		
 		if (testClientKeyExchangeAlgorithm("diffie-hellman-group-exchange-sha1", DiffieHellmanGroupExchangeSha1JCE.class)) {
-			keyExchanges.add("diffie-hellman-group-exchange-sha1", DiffieHellmanGroupExchangeSha1JCE.class);
+			verifiedKeyExchanges.add("diffie-hellman-group-exchange-sha1", DiffieHellmanGroupExchangeSha1JCE.class);
 		}
 		
 		if (testClientKeyExchangeAlgorithm("diffie-hellman-group1-sha1", DiffieHellmanGroup1Sha1JCE.class)) {
-			keyExchanges.add("diffie-hellman-group1-sha1", DiffieHellmanGroup1Sha1JCE.class);
+			verifiedKeyExchanges.add("diffie-hellman-group1-sha1", DiffieHellmanGroup1Sha1JCE.class);
 		}
 		
 		if (testClientKeyExchangeAlgorithm(Rsa1024Sha1.RSA_1024_SHA1, Rsa1024Sha1.class)) {
-			keyExchanges.add(Rsa1024Sha1.RSA_1024_SHA1, Rsa1024Sha1.class);
+			verifiedKeyExchanges.add(Rsa1024Sha1.RSA_1024_SHA1, Rsa1024Sha1.class);
 		}
+		
+		keyExchanges = (ComponentFactory<SshKeyExchange<? extends SshContext>>)verifiedKeyExchanges.clone();
+		
 
 	}
 
@@ -240,6 +258,7 @@ public class SshClientContext extends SshContext {
 				throw new Exception("Hash algorithm " + c.getHashAlgorithm() + " is not supported");
 
 			c.test();
+			
 		} catch (Exception e) {
 			if(Log.isDebugEnabled())
 				Log.debug("   " + name + " (client) will not be supported: " + e.getMessage());

@@ -108,8 +108,8 @@ public class DiffieHellmanGroup extends SshKeyExchangeClient {
     
 
        try {
-    	   		initCrypto();
-    	   	 	e = ((DHPublicKey)dhKeyPair.getPublic()).getY();
+    	   	initCrypto();
+    	   	 e = ((DHPublicKey)dhKeyPair.getPublic()).getY();
        } catch(Exception ex) {
          throw new IOException("Failed to generate DH value: " + ex.getMessage());
        } 

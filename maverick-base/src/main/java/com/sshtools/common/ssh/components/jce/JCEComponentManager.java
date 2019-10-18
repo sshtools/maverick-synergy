@@ -420,8 +420,6 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 
 	protected void initializePublicKeyFactory(ComponentFactory<SshPublicKey> publickeys) {
 
-		testPublicKey("ssh-dss", Ssh2DsaPublicKey.class, publickeys);
-		testPublicKey("ssh-rsa", Ssh2RsaPublicKey.class, publickeys);
 		testPublicKey("rsa-sha2-256", Ssh2RsaPublicKeySHA256.class, publickeys);
 		testPublicKey("rsa-sha2-512", Ssh2RsaPublicKeySHA512.class, publickeys);
 		testPublicKey("ecdsa-sha2-nistp256", Ssh2EcdsaSha2Nist256PublicKey.class, publickeys);
@@ -429,6 +427,9 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 		testPublicKey("ecdsa-sha2-nistp521", Ssh2EcdsaSha2Nist521PublicKey.class, publickeys);
 		
 		loadExternalComponents("publickey.properties", publickeys);
+		
+		testPublicKey("ssh-rsa", Ssh2RsaPublicKey.class, publickeys);
+		testPublicKey("ssh-dss", Ssh2DsaPublicKey.class, publickeys);
 
 	}
 

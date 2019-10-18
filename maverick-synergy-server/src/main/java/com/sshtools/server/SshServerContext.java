@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.sshtools.client.SshClientContext;
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.DefaultAuthenticationMechanismFactory;
 import com.sshtools.common.command.ExecutableCommand;

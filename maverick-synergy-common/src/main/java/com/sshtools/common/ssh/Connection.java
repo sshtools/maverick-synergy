@@ -40,7 +40,6 @@ import com.sshtools.common.events.EventListener;
 import com.sshtools.common.events.EventTrigger;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
-import com.sshtools.common.nio.DisconnectRequestFuture;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.ssh.components.SshPublicKey;
 
@@ -56,7 +55,6 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	InetSocketAddress localAddress;
 	T context;
 	AuthenticatedFuture authenticatedFuture = new AuthenticatedFuture();
-	DisconnectRequestFuture disconnectFuture = new DisconnectRequestFuture();
 	
 	List<EventListener> listeners = new ArrayList<EventListener>();
 	Locale locale;
@@ -68,7 +66,7 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 			@Override
 			public void processEvent(Event evt) {
 				if(evt.getId()==EventCodes.EVENT_DISCONNECTED) {
-					disconnectFuture.disconnected();
+					transport.getDisconnectFuture().disconnected();
 				}
 			}
 		});
@@ -309,7 +307,7 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	}
 
 	public AbstractRequestFuture getDisconnectFuture() {
-		return disconnectFuture;
+		return transport.disconnectFuture;
 	}
 
 	public SshPublicKey getHostKey() {

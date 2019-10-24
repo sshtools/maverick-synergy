@@ -21,6 +21,8 @@ package com.sshtools.common.ssh;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sshtools.common.logger.Log;
+
 public abstract class AbstractRequestFuture implements RequestFuture {
 
 	boolean done = false;
@@ -38,6 +40,9 @@ public abstract class AbstractRequestFuture implements RequestFuture {
 	}
 	
 	public synchronized void done(boolean success) {
+
+		if(Log.isDebugEnabled())
+			Log.debug("Future is done with success of " + getClass().getSimpleName() + " : " + success + " : " + hashCode());
 		this.done = true;
 		this.success = success;
 		
@@ -52,11 +57,13 @@ public abstract class AbstractRequestFuture implements RequestFuture {
 	public synchronized RequestFuture waitForever() {
 		
 		try {
+			Log.debug("Waiting forever "  + " : " + getClass().getSimpleName() + " : " + hashCode());
 			while(!done) {
 				wait(100);
 			}
 		} catch (InterruptedException e) {
 		}
+		Log.debug("Waiting forever done");
 		return this;
 	}
 

@@ -35,7 +35,6 @@ import com.sshtools.common.ssh.Service;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.ssh.components.SshKeyExchange;
-import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.sshd.SshMessage;
 
 //#ifdef LICENSE
@@ -189,7 +188,9 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 			if(Log.isErrorEnabled()) {
 				Log.error("Could not verify host key", e);
 			}
-			disconnect(HOST_KEY_NOT_VERIFIABLE, "The host key could not be verified.");
+			getConnectFuture().done(false);
+			if(disconnectStarted != null)
+				disconnect(HOST_KEY_NOT_VERIFIABLE, "The host key could not be verified.");
 		}
 		
 	}

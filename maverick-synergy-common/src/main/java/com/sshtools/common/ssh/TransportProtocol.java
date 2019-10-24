@@ -116,9 +116,10 @@ public abstract class TransportProtocol<T extends SshContext>
 	int numIncomingPacketsSinceKEX;
 
 	long lastActivity = System.currentTimeMillis();
-	Date disconnectStarted = null;
 	boolean closed = false;
+	
 	protected boolean completedFirstKeyExchange = false;
+	protected Date disconnectStarted = null;
 	
 	protected void transferState(TransportProtocol<? extends SshContext> transport) {
 		
@@ -1334,6 +1335,7 @@ public abstract class TransportProtocol<T extends SshContext>
 									
 									disconnected();
 									onDisconnected();
+									Log.debug("Notifying future");
 									disconnectFuture.disconnected();
 									
 									EventServiceImplementation
@@ -1944,7 +1946,9 @@ public abstract class TransportProtocol<T extends SshContext>
 			} catch (Throwable ex) {
 				if(Log.isDebugEnabled())
 					Log.debug("Failed to create transport component", ex);
-				disconnect(
+				connectFuture.done(false);
+				if(disconnectStarted != null)
+					disconnect(
 						TransportProtocol.PROTOCOL_ERROR,
 						"Failed to create a transport component! "
 								+ ex.getMessage());
@@ -1996,7 +2000,9 @@ public abstract class TransportProtocol<T extends SshContext>
 			} catch (Throwable ex) {
 				if(Log.isDebugEnabled())
 					Log.debug("Failed to create transport component", ex);
-				disconnect(
+				connectFuture.done(false);
+				if(disconnectStarted != null)
+					disconnect(
 						TransportProtocol.PROTOCOL_ERROR,
 						"Failed to create a transport component! "
 								+ ex.getMessage());
@@ -2044,7 +2050,9 @@ public abstract class TransportProtocol<T extends SshContext>
 			} catch (Throwable ex) {
 				if(Log.isErrorEnabled())
 					Log.error("Failed to create transport component", ex);
-				disconnect(
+				connectFuture.done(false);
+				if(disconnectStarted != null)
+					disconnect(
 						TransportProtocol.PROTOCOL_ERROR,
 						"Failed to create a transport component! "
 								+ ex.getMessage());
@@ -2097,7 +2105,9 @@ public abstract class TransportProtocol<T extends SshContext>
 			} catch (Throwable ex) {
 				if(Log.isErrorEnabled())
 					Log.error("Failed to create transport component", ex);
-				disconnect(
+				connectFuture.done(false);
+				if(disconnectStarted != null)
+					disconnect(
 						TransportProtocol.PROTOCOL_ERROR,
 						"Failed to create a transport component! "
 								+ ex.getMessage());

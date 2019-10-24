@@ -1335,7 +1335,6 @@ public abstract class TransportProtocol<T extends SshContext>
 									
 									disconnected();
 									onDisconnected();
-									Log.debug("Notifying future");
 									disconnectFuture.disconnected();
 									
 									EventServiceImplementation

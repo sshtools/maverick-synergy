@@ -1826,8 +1826,7 @@ public class SftpClient {
 						"Resume on text mode files is not supported");
 			}
 
-			file = sftp.openFile(remotePath, SftpChannel.OPEN_APPEND
-					| SftpChannel.OPEN_WRITE, attrs);
+			file = sftp.openFile(remotePath, SftpChannel.OPEN_WRITE, attrs);
 		} else {
 			if (transferMode == MODE_TEXT && sftp.getVersion() > 3) {
 				file = sftp.openFile(remotePath,

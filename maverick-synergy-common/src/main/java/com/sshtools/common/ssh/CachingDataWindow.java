@@ -112,7 +112,7 @@ public class CachingDataWindow extends ChannelDataWindow {
 	}
 	
 	public synchronized boolean isAdjustRequired() {
-		return windowSpace + remaining() < minimumWindowSpace;
+		return windowSpace + remaining() <= minimumWindowSpace;
 	}
 	
 	public synchronized int getAdjustCount() {

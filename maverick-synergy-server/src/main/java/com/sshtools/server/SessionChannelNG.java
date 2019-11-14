@@ -133,7 +133,7 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	}
 
 	protected boolean checkWindowSpace() {
-		return cached.getWindowSpace() + cached.remaining() < cached.getMinimumWindowSpace();
+		return cached.getWindowSpace() + cached.remaining() <= cached.getMinimumWindowSpace();
 	}
 	
 	public InputStream getInputStream() {

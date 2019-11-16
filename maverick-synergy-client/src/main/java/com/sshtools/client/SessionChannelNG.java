@@ -20,6 +20,7 @@ package com.sshtools.client;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 import com.sshtools.common.ssh.CachingDataWindow;
 import com.sshtools.common.ssh.ChannelRequestFuture;
@@ -57,6 +58,13 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 		return stderrInputStream;
 	}
 
+	protected boolean checkWindowSpace() {
+		return localWindow.getWindowSpace() 
+				+ (Objects.nonNull(cache) ? cache.remaining() : 0) 
+				+ (Objects.nonNull(extendedData) ? extendedData.remaining() : 0) 
+				<= localWindow.getMinimumWindowSpace();
+	}
+	
 	@Override
 	public int getMaximumWindowSpace() {
 		return localWindow.getMaximumWindowSpace();

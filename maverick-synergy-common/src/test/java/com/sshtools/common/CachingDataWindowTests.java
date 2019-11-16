@@ -42,12 +42,7 @@ public class CachingDataWindowTests extends TestCase {
 	public void testInputIsOutput() throws NoSuchAlgorithmException {
 		
 		
-		final CachingDataWindow window = new CachingDataWindow(1024000, 1024000, 131072, 32768);
-		window.enableBlocking();
-		
-		assertEquals(1024000, window.getWindowSpace());
-		assertEquals(1024000, window.getMaximumWindowSpace());
-		assertEquals(131072, window.getMinimumWindowSpace());
+		final CachingDataWindow window = new CachingDataWindow(1024000, true);
 
 		byte[] buffer = new byte[256];
 		byte[] buffer2 = new byte[256];
@@ -74,12 +69,7 @@ public class CachingDataWindowTests extends TestCase {
 	 */
 	public void testRandomRead() throws NoSuchAlgorithmException {
 		
-		final CachingDataWindow window = new CachingDataWindow(1024000, 1024000, 131072, 32768);
-		window.enableBlocking();
-		
-		assertEquals(1024000, window.getWindowSpace());
-		assertEquals(1024000, window.getMaximumWindowSpace());
-		assertEquals(131072, window.getMinimumWindowSpace());
+		final CachingDataWindow window = new CachingDataWindow(1024000, true);
 		
 
 		final DigestOutputStream input = new DigestOutputStream(new OutputStream() { 

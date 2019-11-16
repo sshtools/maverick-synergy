@@ -44,14 +44,14 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 
 
 	public AbstractSessionChannel(SshConnection con, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
-			int minimumWindowSpace) {
+			int minimumWindowSpace, boolean autoConsume) {
 		super("session", con, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace,
-				new ChannelRequestFuture());
+				new ChannelRequestFuture(), autoConsume);
 	}
 
 	public AbstractSessionChannel(SshConnection con, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
-			int minimumWindowSpace, ChannelRequestFuture closeFuture) {
-		super("session", con, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture);
+			int minimumWindowSpace, ChannelRequestFuture closeFuture, boolean autoConsume) {
+		super("session", con, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
 	}
 
 	@Override

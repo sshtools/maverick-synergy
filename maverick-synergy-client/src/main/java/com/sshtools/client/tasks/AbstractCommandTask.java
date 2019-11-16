@@ -63,7 +63,8 @@ public abstract class AbstractCommandTask extends AbstractSessionTask<SessionCha
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
-				future);
+				future, 
+				false);
 	}
 	
 	@Override

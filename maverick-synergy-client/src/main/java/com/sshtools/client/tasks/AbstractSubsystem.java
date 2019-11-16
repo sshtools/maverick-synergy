@@ -54,7 +54,8 @@ public abstract class AbstractSubsystem {
 				getMaximumPacketSize(),
 				getMaximumWindowSize(), 
 				getMaximumWindowSize(),
-				getMinimumWindowSize());
+				getMinimumWindowSize(),
+				false);
 		
 		session.addEventListener(new ChannelEventAdapter() {
 

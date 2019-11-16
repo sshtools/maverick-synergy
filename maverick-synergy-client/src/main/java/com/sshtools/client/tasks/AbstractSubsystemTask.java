@@ -71,7 +71,8 @@ public abstract class AbstractSubsystemTask extends ConnectionAwareTask {
 				getMaximumPacketSize(),
 				getMaximumWindowSize(), 
 				getMaximumWindowSize(),
-				getMinimumWindowSize());
+				getMinimumWindowSize(),
+				false);
 		
 		session.addEventListener(new ChannelEventAdapter() {
 

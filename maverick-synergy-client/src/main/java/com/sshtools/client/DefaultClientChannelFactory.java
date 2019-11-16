@@ -22,11 +22,8 @@ import java.util.Map;
 
 import com.sshtools.common.command.ExecutableCommand;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.ChannelFactory;
 import com.sshtools.common.ssh.ChannelNG;
-import com.sshtools.common.ssh.ChannelRequestFuture;
-import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.Subsystem;
@@ -48,10 +45,7 @@ public class DefaultClientChannelFactory implements ChannelFactory<SshClientCont
 	 */
 	public final ChannelNG<SshClientContext> createChannel(String channeltype, SshConnection con)
 			throws UnsupportedChannelException, PermissionDeniedException {
-		
-		if(channeltype.equals("session")) {
-			return createSessionChannel(con);
-		}
+
 		
 		if(channeltype.equals(RemoteForwardingClientChannel.REMOTE_FORWARDING_CHANNEL_TYPE)) {
 			return new RemoteForwardingClientChannel(con);
@@ -63,27 +57,6 @@ public class DefaultClientChannelFactory implements ChannelFactory<SshClientCont
 	protected ChannelNG<SshClientContext> onCreateChannel(String channeltype, SshConnection con) 
 			throws UnsupportedChannelException, PermissionDeniedException {
 		throw new UnsupportedChannelException(String.format("%s is not a supported channel type", channeltype));
-	}
-	
-	/**
-	 * Creates the session channel.
-	 * 
-	 * @param con
-	 * @return
-	 */
-	protected ChannelNG<SshClientContext> createSessionChannel(SshConnection con) {
-		return new SessionChannelNG(con, con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
-				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
-				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
-				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize());
-	}
-	
-	protected ChannelNG<SshClientContext> createSessionChannel(Connection<SshClientContext> con, ChannelRequestFuture future) {
-		return new SessionChannelNG(con, con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
-				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(), 				
-				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
-				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
-				future);
 	}
 
 	/**

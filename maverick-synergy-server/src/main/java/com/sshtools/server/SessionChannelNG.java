@@ -38,7 +38,6 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.CachingDataWindow;
-import com.sshtools.common.ssh.ChannelDataWindow;
 import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.ChannelOutputStream;
@@ -119,21 +118,9 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize());
 	}
 
-	@Override
-	protected ChannelDataWindow createLocalWindow(int initialWindowSize, int maximumWindowSpace,
-			int minimumWindowSpace, int maximumPacketSize) {
-		cached = new CachingDataWindow(initialWindowSize, maximumWindowSpace, minimumWindowSpace, maximumPacketSize);
-		channelInputStream = new ChannelInputStream(cached);
-		return cached;
-	}
-	
 	final protected byte[] createChannel() throws java.io.IOException {
 		registerExtendedDataType(SSH_EXTENDED_DATA_STDERR);
 		return null;
-	}
-
-	protected boolean checkWindowSpace() {
-		return cached.getWindowSpace() + cached.remaining() <= cached.getMinimumWindowSpace();
 	}
 	
 	public InputStream getInputStream() {

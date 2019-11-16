@@ -50,6 +50,7 @@ public abstract class ShellTask extends AbstractShellTask<SessionChannelNG> {
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
-				future);
+				future,
+				false);
 	}
 }

@@ -22,15 +22,15 @@ import java.nio.ByteBuffer;
 
 import com.sshtools.common.logger.Log;
 
-public class CachingDataWindow extends ChannelDataWindow {
+public class CachingDataWindow {
 
 	ByteBuffer cache;
 	boolean blocking = false;
 	boolean open = true;
 	
-	public CachingDataWindow(int initialWindowSpace, int maximumWindowSpace, int minimumWindowSpace, int maximumPacketSize) {
-		super(initialWindowSpace, maximumWindowSpace, minimumWindowSpace, maximumPacketSize);
-		cache = ByteBuffer.allocate(maximumWindowSpace);
+	public CachingDataWindow(int size, boolean blocking) {
+		this.blocking = blocking;
+		cache = ByteBuffer.allocate(size);
 		cache.flip();
 	}
 
@@ -109,14 +109,6 @@ public class CachingDataWindow extends ChannelDataWindow {
 	
 	public synchronized int remaining() {
 		return cache.remaining();
-	}
-	
-	public synchronized boolean isAdjustRequired() {
-		return windowSpace + remaining() <= minimumWindowSpace;
-	}
-	
-	public synchronized int getAdjustCount() {
-		return maximumWindowSpace - windowSpace - remaining();
 	}
 
 	public synchronized boolean isOpen() {

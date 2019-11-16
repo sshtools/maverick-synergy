@@ -57,7 +57,6 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 	/** flag indicating that the channel is being closed */
 	boolean closePending = false;
 
-	ForwardingDataWindow toSocket;
 	ByteBuffer toChannel;
 	
 	long totalIn;
@@ -77,15 +76,10 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize());
 	}
 
-	@Override
-	protected ChannelDataWindow createLocalWindow(int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace,
-			int maximumPacketSize) {
-		toChannel = ByteBuffer.allocate(1024000);
-		toChannel.flip();
-		return toSocket = new ForwardingDataWindow(initialWindowSize, maximumWindowSpace, minimumWindowSpace,
-				maximumPacketSize);
+	protected CachingDataWindow createCache(int maximumWindowSpace) {
+		return new ForwardingDataWindow(maximumWindowSpace);
 	}
-
+	
 	public void setSelectionKey(SelectionKey key) {
 		this.key = key;
 	}
@@ -136,7 +130,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 	 */
 	protected void onChannelData(ByteBuffer data) {
 		
-		toSocket.put(data);
+		super.onChannelData(data);
 		changeInterestedOps();
 		
 		if(socketEOF.get() && canClose()) {
@@ -213,7 +207,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 
 	protected synchronized boolean canClose() {
 		
-		if (!socketEOF.get() && toSocket.hasRemaining()) {
+		if (!socketEOF.get() && cache.hasRemaining()) {
 			if (Log.isTraceEnabled()) {
 				log("Not closing due to socket cache");
 			}
@@ -416,9 +410,9 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 
 		int written = 0;
 		try {
-			synchronized (toSocket) {
-				if (toSocket.hasRemaining()) {
-					written = toSocket.write(socketChannel);
+			synchronized (cache) {
+				if (cache.hasRemaining()) {
+					written = ((ForwardingDataWindow)cache).write(socketChannel);
 
 					if(Log.isTraceEnabled()) {
 						log(String.format("Processed FORWARDING WRITE written=%d", written));
@@ -431,7 +425,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 					log("Completed FORWARDING WRITE");
 				}
 				
-				if(toSocket.isAdjustRequired()) {
+				if(localWindow.isAdjustRequired()) {
 					sendWindowAdjust();
 				}
 			}
@@ -457,7 +451,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 
 	@Override
 	public boolean wantsWrite() {
-		return toSocket.hasRemaining();
+		return cache.hasRemaining();
 	}
 	
 	@Override
@@ -520,7 +514,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 		super.log();
 		if(Log.isInfoEnabled()) {
 			Log.info(String.format("socketCache=%d channelCache=%d closePending=%s connected=%s in=%d out=%d", 
-					toSocket.remaining(), toChannel.remaining(),
+					cache.remaining(), toChannel.remaining(),
 					closePending, socketChannel != null && socketChannel.isConnected(), 
 					totalIn,
 					totalOut));

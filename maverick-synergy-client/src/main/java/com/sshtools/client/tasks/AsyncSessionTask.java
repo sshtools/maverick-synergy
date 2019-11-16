@@ -18,6 +18,7 @@
  */
 package com.sshtools.client.tasks;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.sshtools.client.SessionChannelNG;
@@ -25,7 +26,6 @@ import com.sshtools.client.SshClientContext;
 import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventAdapter;
-import com.sshtools.common.ssh.ChannelOutputStream;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SessionChannel;
@@ -39,8 +39,6 @@ public abstract class AsyncSessionTask implements Runnable {
 	long timeout = 10000;
 	SessionChannelNG session;
 	ChannelRequestFuture future;
-	
-	ChannelOutputStream sessionOut;
 	
 	public AsyncSessionTask(Connection<SshClientContext> con, ChannelRequestFuture future) {
 		this.con = con;
@@ -72,7 +70,8 @@ public abstract class AsyncSessionTask implements Runnable {
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
-				future);
+				future,
+				false);
 		session.addEventListener(new ChannelEventAdapter() {
 
 			@Override
@@ -86,8 +85,6 @@ public abstract class AsyncSessionTask implements Runnable {
 			throw new IllegalStateException("Could not open session channel");
 		}
 		
-		this.sessionOut = new ChannelOutputStream(session);
-		
 		setupSession(session);
 
 		onOpenSession(session);
@@ -99,7 +96,11 @@ public abstract class AsyncSessionTask implements Runnable {
 	}
 	
 	public OutputStream getOutputStream() {
-		return sessionOut;
+		return session.getOutputStream();
+	}
+	
+	public InputStream getInputStream() {
+		return session.getInputStream();
 	}
 	
 	protected abstract void setupSession(SessionChannel session);

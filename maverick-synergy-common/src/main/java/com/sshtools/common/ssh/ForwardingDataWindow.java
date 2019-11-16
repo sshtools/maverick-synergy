@@ -23,8 +23,8 @@ import java.nio.channels.SocketChannel;
 
 public class ForwardingDataWindow extends CachingDataWindow {
 
-	ForwardingDataWindow(int initialWindowSpace, int maximumWindowSpace, int minimumWindowSpace, int maximumPacketSize) {
-		super(initialWindowSpace, maximumWindowSpace, minimumWindowSpace, maximumPacketSize);
+	ForwardingDataWindow(int maximumWindowSpace) {
+		super(maximumWindowSpace, false);
 	}
 
 	public synchronized int write(SocketChannel socketChannel) throws IOException {

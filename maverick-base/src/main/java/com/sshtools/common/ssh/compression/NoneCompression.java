@@ -24,24 +24,25 @@ import java.io.IOException;
 public class NoneCompression implements SshCompression {
 
 	public void init(int type, int level) {
-		// TODO Auto-generated method stub
-
 	}
 
 	public byte[] compress(byte[] data, int start, int len) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		return uncompress(data, start, len);
 	}
 
 	public byte[] uncompress(byte[] data, int start, int len)
 			throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		if(len != data.length || start != 0) {
+			byte[] arr = new byte[len];
+			System.arraycopy(data, start, arr, 0, len);
+			return arr;
+		}
+		else
+			return data;
 	}
 
 	public String getAlgorithm() {
-		// TODO Auto-generated method stub
-		return null;
+		return "none";
 	}
 
 }

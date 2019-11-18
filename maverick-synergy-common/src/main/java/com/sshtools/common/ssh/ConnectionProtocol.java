@@ -582,6 +582,13 @@ public abstract class ConnectionProtocol<T extends SshContext> extends ExecutorO
 							+ remoteid + " remotepacket=" + remotepacket + " remotewindow=" + remotewindow);
 				}
 				
+				if(remotepacket < 4096) {
+					transport.postMessage(new ChannelFailureMessage(remoteid,
+							ChannelOpenException.ADMINISTRATIVIVELY_PROHIBITED,
+							"Maximum remote packet size must be >= 4096 bytes"));
+					return;	
+				}
+				
 				synchronized (channel) {
 					channel.confirmOpen(remoteid, remotewindow, remotepacket);
 					// channel.notify();
@@ -643,6 +650,13 @@ public abstract class ConnectionProtocol<T extends SshContext> extends ExecutorO
 			if(Log.isDebugEnabled()) {
 				Log.debug("Received SSH_MSG_CHANNEL_OPEN channeltype=" + channeltype + " remote="
 						+ remoteid + " remotepacket=" + remotepacket + " window=" + remotewindow);
+			}
+			
+			if(remotepacket < 4096) {
+				transport.postMessage(new ChannelFailureMessage(remoteid,
+						ChannelOpenException.ADMINISTRATIVIVELY_PROHIBITED,
+						"Maximum remote packet size must be >= 4096 bytes"));
+				return;	
 			}
 
 			ChannelNG<T> channel;

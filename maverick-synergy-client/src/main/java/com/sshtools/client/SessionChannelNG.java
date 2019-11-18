@@ -24,6 +24,7 @@ import java.util.Objects;
 
 import com.sshtools.common.ssh.CachingDataWindow;
 import com.sshtools.common.ssh.ChannelRequestFuture;
+import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SshConnection;
 
@@ -45,6 +46,12 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 	public SessionChannelNG(SshConnection con, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
 			int minimumWindowSpace, boolean autoConsume) {
 		this(con, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, null, autoConsume);
+	}
+
+	public SessionChannelNG(SshConnection con, int maximumPacketSize,
+			int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace) {
+		this(con, maximumPacketSize, initialWindowSize,
+				maximumWindowSpace, minimumWindowSpace, null, false);
 	}
 
 	@Override

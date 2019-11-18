@@ -614,7 +614,9 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	 * 
 	 * @param data
 	 */
-	protected abstract void onExtendedData(ByteBuffer data, int type);
+	protected void onExtendedData(ByteBuffer data, int type) {
+		
+	}
 
 	void processChannelEOF() {
 		

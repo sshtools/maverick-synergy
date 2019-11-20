@@ -1269,6 +1269,13 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 			this.streamCache = streamCache;
 		}
 		
+	    public int available() throws IOException {
+			if(streamClosed || isClosed() || isRemoteEOF()) {
+				return -1;
+			}
+	        return streamCache.remaining();
+	    }
+		
 		@Override
 		public int read() throws IOException {
 			byte[] b = new byte[1];

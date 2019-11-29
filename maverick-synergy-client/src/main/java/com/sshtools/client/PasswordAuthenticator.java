@@ -69,9 +69,8 @@ public class PasswordAuthenticator extends SimpleClientAuthenticator {
 				
 				buf.put((byte)0);
 				
-				byte[] password = getPasswordBytes();
-				buf.putInt(password.length);
-				buf.put(password);
+				buf.putInt(tmp.length);
+				buf.put(tmp);
 				
 				return true;
 			}			

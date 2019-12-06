@@ -194,7 +194,7 @@ public class RootShell extends Msh {
 		EventServiceImplementation.getInstance().fireEvent(
 				new Event(this, EventCodes.EVENT_ROOT_SHELL_STARTED,
 						true)
-						.addAttribute(EventCodes.ATTRIBUTE_NFS,
+						.addAttribute(EventCodes.ATTRIBUTE_FILE_FACTORY,
 								console.getCurrentDirectory().getFileFactory())
 						.addAttribute(EventCodes.ATTRIBUTE_CONNECTION,
 								console.getConnection()));
@@ -212,7 +212,7 @@ public class RootShell extends Msh {
 											EventCodes.EVENT_ROOT_SHELL_STOPPED,
 											true)
 											.addAttribute(
-													EventCodes.ATTRIBUTE_NFS,
+													EventCodes.ATTRIBUTE_FILE_FACTORY,
 													channel.getContext().getPolicy(FileSystemPolicy.class).getFileFactory())
 											.addAttribute(
 													EventCodes.ATTRIBUTE_CONNECTION,

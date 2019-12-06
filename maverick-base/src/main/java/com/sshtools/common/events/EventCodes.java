@@ -126,7 +126,6 @@ public class EventCodes {
 		public static final String ATTRIBUTE_BYTES_WRITTEN = "BYTES_WRITTEN";
 		public static final String ATTRIBUTE_BYTES_TRANSFERED = "BYTES_TRANSFERED";
 		public static final String ATTRIBUTE_BYTES_EXPECTED = "BYTES_EXPECTED";
-		public static final String ATTRIBUTE_NFS = "NFS";
 		public static final String ATTRIBUTE_HANDLE = "HANDLE";
 		
 		public static final String ATTRIBUTE_OPERATION_STARTED = "OP_STARTED";

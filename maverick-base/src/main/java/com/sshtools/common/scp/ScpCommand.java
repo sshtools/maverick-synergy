@@ -617,8 +617,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 									EventCodes.ATTRIBUTE_BYTES_EXPECTED,
 									new Long(attr.getSize().longValue()))
 							.addAttribute(
-									EventCodes.ATTRIBUTE_NFS,
-									nfs)
+									EventCodes.ATTRIBUTE_FILE_FACTORY,
+									nfs.getFileFactory())
 							.addAttribute(
 									EventCodes.ATTRIBUTE_CONNECTION,
 									session.getConnection()));
@@ -650,8 +650,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 										EventCodes.ATTRIBUTE_BYTES_EXPECTED,
 										new Long(attr.getSize().longValue()))
 								.addAttribute(
-										EventCodes.ATTRIBUTE_NFS,
-										nfs)
+										EventCodes.ATTRIBUTE_FILE_FACTORY,
+										nfs.getFileFactory())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_HANDLE,
 										handle)
@@ -706,8 +706,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											EventCodes.ATTRIBUTE_HANDLE,
 											handle)
 									.addAttribute(
-											EventCodes.ATTRIBUTE_NFS,
-											nfs));
+											EventCodes.ATTRIBUTE_FILE_FACTORY,
+											nfs.getFileFactory()));
 						}
 						
 
@@ -744,8 +744,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 										EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
 										new Long(count))
 								.addAttribute(
-										EventCodes.ATTRIBUTE_NFS,
-										nfs)
+										EventCodes.ATTRIBUTE_FILE_FACTORY,
+										nfs.getFileFactory())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_HANDLE,
 										handle)
@@ -800,8 +800,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 								EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
 								new Long(count))
 						.addAttribute(
-								EventCodes.ATTRIBUTE_NFS,
-								nfs)
+								EventCodes.ATTRIBUTE_FILE_FACTORY,
+								nfs.getFileFactory())
 						.addAttribute(
 								EventCodes.ATTRIBUTE_HANDLE,
 								handle)
@@ -1009,8 +1009,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 										EventCodes.ATTRIBUTE_BYTES_EXPECTED,
 										new Long(length))
 								.addAttribute(
-										EventCodes.ATTRIBUTE_NFS,
-										nfs)
+										EventCodes.ATTRIBUTE_FILE_FACTORY,
+										nfs.getFileFactory())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_CONNECTION,
 										con));
@@ -1052,8 +1052,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											EventCodes.ATTRIBUTE_BYTES_EXPECTED,
 											new Long(length))
 									.addAttribute(
-											EventCodes.ATTRIBUTE_NFS,
-											nfs)
+											EventCodes.ATTRIBUTE_FILE_FACTORY,
+											nfs.getFileFactory())
 									.addAttribute(
 											EventCodes.ATTRIBUTE_HANDLE,
 											handle)
@@ -1125,8 +1125,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											EventCodes.ATTRIBUTE_HANDLE,
 											handle) 
 									.addAttribute(
-											EventCodes.ATTRIBUTE_NFS,
-											nfs));
+											EventCodes.ATTRIBUTE_FILE_FACTORY,
+											nfs.getFileFactory()));
 						}
 					}
 
@@ -1148,8 +1148,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
 											new Long(count))
 									.addAttribute(
-											EventCodes.ATTRIBUTE_NFS,
-											nfs)
+											EventCodes.ATTRIBUTE_FILE_FACTORY,
+											nfs.getFileFactory())
 									.addAttribute(
 											EventCodes.ATTRIBUTE_HANDLE,
 											handle)
@@ -1232,8 +1232,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 								EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
 								new Long(count))
 						.addAttribute(
-								EventCodes.ATTRIBUTE_NFS,
-								nfs)
+								EventCodes.ATTRIBUTE_FILE_FACTORY,
+								nfs.getFileFactory())
 						.addAttribute(
 								EventCodes.ATTRIBUTE_HANDLE,
 								handle)

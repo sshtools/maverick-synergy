@@ -142,7 +142,6 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			fireEvent(new Event(SftpSubsystem.this,
 					EventCodes.EVENT_SFTP_SESSION_STOPPING,
 					true)
-					.addAttribute(EventCodes.ATTRIBUTE_NFS, nfs)
 					.addAttribute(EventCodes.ATTRIBUTE_OPEN_FILE_HANDLES, fileHandles)
 					.addAttribute(EventCodes.ATTRIBUTE_OPEN_DIRECTORY_HANDLES, dirHandles)
 					.addAttribute(
@@ -513,8 +512,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										started)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-										new Date())
-								.addAttribute(EventCodes.ATTRIBUTE_NFS, nfs));
+										new Date()));
 	}
 
 	class SetFStatOperation extends FileSystemOperation {
@@ -693,8 +691,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										started)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-										new Date())
-								.addAttribute(EventCodes.ATTRIBUTE_NFS, nfs));
+										new Date()));
 	}
 
 	class RemoveDirectoryOperation extends FileSystemOperation {
@@ -762,8 +759,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										started)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-										new Date())
-								.addAttribute(EventCodes.ATTRIBUTE_NFS, nfs));
+										new Date()));
 	}
 
 	class RenameFileOperation extends FileSystemOperation {
@@ -834,8 +830,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										started)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-										new Date())
-								.addAttribute(EventCodes.ATTRIBUTE_NFS, nfs));
+										new Date()));
 	}
 
 	class RemoveFileOperation extends FileSystemOperation {
@@ -901,8 +896,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										started)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-										new Date())
-								.addAttribute(EventCodes.ATTRIBUTE_NFS, nfs));
+										new Date()));
 	}
 
 	class OpenFileOperation extends FileSystemOperation {
@@ -1032,9 +1026,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 											started)
 									.addAttribute(
 											EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-											new Date())
-									.addAttribute(EventCodes.ATTRIBUTE_NFS,
-											nfs));
+											new Date()));
 
 			// So does this
 		} else if ((flags.longValue() & AbstractFileSystem.OPEN_READ) == AbstractFileSystem.OPEN_READ
@@ -1059,9 +1051,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 											started)
 									.addAttribute(
 											EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-											new Date())
-									.addAttribute(EventCodes.ATTRIBUTE_NFS,
-											nfs));
+											new Date()));
 
 		} else {
 
@@ -1082,9 +1072,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 											started)
 									.addAttribute(
 											EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-											new Date())
-									.addAttribute(EventCodes.ATTRIBUTE_NFS,
-											nfs));
+											new Date()));
 		}
 	}
 	
@@ -1112,9 +1100,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 											started)
 									.addAttribute(
 											EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-											new Date())
-									.addAttribute(EventCodes.ATTRIBUTE_NFS,
-											nfs));
+											new Date()));
 
 			// So does this
 		} else if ((flags.longValue() & AbstractFileSystem.OPEN_READ) == AbstractFileSystem.OPEN_READ
@@ -1136,9 +1122,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 											started)
 									.addAttribute(
 											EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-											new Date())
-									.addAttribute(EventCodes.ATTRIBUTE_NFS,
-											nfs));
+											new Date()));
 
 		} else {
 
@@ -1156,9 +1140,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 											started)
 									.addAttribute(
 											EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-											new Date())
-									.addAttribute(EventCodes.ATTRIBUTE_NFS,
-											nfs));
+											new Date()));
 		}
 	}
 
@@ -1278,10 +1260,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												started)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-												new Date())
-										.addAttribute(
-												EventCodes.ATTRIBUTE_NFS,
-												nfs));
+												new Date()));
 							}
 							sendMessage(reply);
 							
@@ -1343,9 +1322,6 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 						.addAttribute(
 								EventCodes.ATTRIBUTE_OPERATION_FINISHED,
 								new Date())
-						.addAttribute(
-								EventCodes.ATTRIBUTE_NFS,
-								nfs)
 						.addAttribute(
 								EventCodes.ATTRIBUTE_THROWABLE,
 								evt.ex));
@@ -1426,10 +1402,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										started)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-										new Date())
-								.addAttribute(
-										EventCodes.ATTRIBUTE_NFS,
-										nfs));
+										new Date()));
 					}
 					sendStatusMessage(id, STATUS_FX_OK,
 							"The write completed successfully");
@@ -1480,9 +1453,6 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 						.addAttribute(
 								EventCodes.ATTRIBUTE_OPERATION_FINISHED,
 								new Date())
-						.addAttribute(
-								EventCodes.ATTRIBUTE_NFS,
-								nfs)
 						.addAttribute(
 								EventCodes.ATTRIBUTE_THROWABLE,
 								evt.ex));
@@ -1633,10 +1603,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												evt.started)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-												new Date())
-										.addAttribute(
-												EventCodes.ATTRIBUTE_NFS,
-												nfs));
+												new Date()));
 
 			} else if (evt.bytesWritten > 0 && evt.bytesRead <= 0) {
 				fireEvent(	new Event(
@@ -1660,10 +1627,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												evt.started)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-												new Date())
-										.addAttribute(
-												EventCodes.ATTRIBUTE_NFS,
-												nfs));
+												new Date()));
 			} else if (evt.bytesRead > 0 && evt.bytesWritten <= 0) {
 
 				fireEvent(	new Event(
@@ -1687,10 +1651,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												evt.started)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-												new Date())
-										.addAttribute(
-												EventCodes.ATTRIBUTE_NFS,
-												nfs));
+												new Date()));
 
 			} else if (evt.bytesRead <= 0
 					&& evt.bytesWritten <= 0
@@ -1724,10 +1685,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 													evt.started)
 											.addAttribute(
 													EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-													new Date())
-											.addAttribute(
-													EventCodes.ATTRIBUTE_NFS,
-													nfs));
+													new Date()));
 
 				} else {
 
@@ -1760,10 +1718,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 													evt.started)
 											.addAttribute(
 													EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-													new Date())
-											.addAttribute(
-													EventCodes.ATTRIBUTE_NFS,
-													nfs));
+													new Date()));
 
 					throw new SftpStatusEventException(
 							SftpStatusEventException.SSH_FX_FAILURE,
@@ -1797,10 +1752,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												evt.started)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-												new Date())
-										.addAttribute(
-												EventCodes.ATTRIBUTE_NFS,
-												nfs));
+												new Date()));
 
 			} else {
 				// Random access transfer
@@ -1828,10 +1780,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												evt.started)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-												new Date())
-										.addAttribute(
-												EventCodes.ATTRIBUTE_NFS,
-												nfs));
+												new Date()));
 			}
 		}
 	}
@@ -2088,8 +2037,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										started)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-										new Date())
-								.addAttribute(EventCodes.ATTRIBUTE_NFS, nfs));
+										new Date()));
 	}
 
 	public void sendStatusMessage(int id, int reason, String description) {
@@ -2355,8 +2303,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										started)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-										new Date())
-								.addAttribute(EventCodes.ATTRIBUTE_NFS, nfs));
+										new Date()));
 	}
 
 	private String checkDefaultPath(String path) throws IOException, PermissionDeniedException {

@@ -122,12 +122,6 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				SessionChannelHelper.sendExitStatus(channel, 0);
 			}
 		});
-		
-		fireEvent(
-				new Event(SftpSubsystem.this, EventCodes.EVENT_SFTP_SESSION_STARTED,
-						true).addAttribute(
-						EventCodes.ATTRIBUTE_CONNECTION,
-						con));
 	}
 	
 	protected void cleanupSubsystem() {
@@ -194,6 +188,13 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				nfs = new AbstractFileSystem(
 								con,
 								AbstractFileSystem.SFTP);
+
+				
+				fireEvent(
+						new Event(SftpSubsystem.this, EventCodes.EVENT_SFTP_SESSION_STARTED,
+								true).addAttribute(
+								EventCodes.ATTRIBUTE_CONNECTION,
+								con));
 				
 			} catch (Throwable t) {
 

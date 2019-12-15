@@ -897,50 +897,52 @@ public class SftpChannel extends AbstractSubsystem {
 			int buffered = 0;
 
 			buffered = in.read(buf);
+			if(buffered != -1) {
 			
-			long time = System.currentTimeMillis();
-			writeFile(handle, new UnsignedInteger64(0), buf, 0, buf.length);
-			time = System.currentTimeMillis() - time;
-			
-			System.setProperty("maverick.write.blockRoundtrip", String.valueOf(time));
-			
-			transfered += buffered;
-
-			if (progress != null) {
-				if (progress.isCancelled())
-					throw new TransferCancelledException();
-				progress.progressed(transfered);
-			}
-			
-			Vector<UnsignedInteger32> requests = new Vector<UnsignedInteger32>();
-			// BufferedInputStream is not in J2ME, whatever type of input stream
-			// has been passed in can be used in conjunction with the abstract
-			// InputStream class.
-			in = new BufferedInputStream(in, buffersize);
-
-			while (true) {
-
-				buffered = in.read(buf);
-				if (buffered == -1)
-					break;
-
-				requests.addElement(postWriteRequest(handle, transfered, buf,
-						0, buffered));
-
+				long time = System.currentTimeMillis();
+				writeFile(handle, new UnsignedInteger64(0), buf, 0, buffered);
+				time = System.currentTimeMillis() - time;
+				
+				System.setProperty("maverick.write.blockRoundtrip", String.valueOf(time));
+				
 				transfered += buffered;
-
+	
 				if (progress != null) {
-
 					if (progress.isCancelled())
 						throw new TransferCancelledException();
-
 					progress.progressed(transfered);
 				}
+				
+				Vector<UnsignedInteger32> requests = new Vector<UnsignedInteger32>();
+				// BufferedInputStream is not in J2ME, whatever type of input stream
+				// has been passed in can be used in conjunction with the abstract
+				// InputStream class.
+				in = new BufferedInputStream(in, buffersize);
+	
+				while (true) {
+	
+					buffered = in.read(buf);
+					if (buffered == -1)
+						break;
+	
+					requests.addElement(postWriteRequest(handle, transfered, buf,
+							0, buffered));
+	
+					transfered += buffered;
+	
+					if (progress != null) {
+	
+						if (progress.isCancelled())
+							throw new TransferCancelledException();
+	
+						progress.progressed(transfered);
+					}
+	
+				}
 
-			}
-
-			while(requests.size() > 0) {
-				getOKRequestStatus(requests.remove(0));
+				while(requests.size() > 0) {
+					getOKRequestStatus(requests.remove(0));
+				}
 			}
 
 		} catch (IOException ex) {

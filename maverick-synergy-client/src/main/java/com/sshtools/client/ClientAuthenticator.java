@@ -63,6 +63,10 @@ public interface ClientAuthenticator extends RequestFuture {
 	void failure();
 
 	boolean isMoreAuthenticationRequired();
+	
+	boolean isCancelled();
+	
+	void cancel();
 
 	String[] getAuthenticationMethods();
 

@@ -134,6 +134,7 @@ public class KeyboardInteractiveAuthenticator extends SimpleClientAuthenticator 
 						
 						@Override
 						public void cancel() {
+							KeyboardInteractiveAuthenticator.this.cancel();
 							transport.disconnect(TransportProtocol.AUTH_CANCELLED_BY_USER, "User cancelled auth.");
 						}
 						

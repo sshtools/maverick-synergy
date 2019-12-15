@@ -53,11 +53,10 @@ public class PasswordAuthenticator extends SimpleClientAuthenticator {
 	@Override
 	public void authenticate(TransportProtocolClient transport, String username) throws SshException {
 		
-		
 		byte[] tmp = getPasswordBytes();
 		if(Objects.isNull(tmp)) {
-			throw new SshException("Password not set!",
-					SshException.BAD_API_USAGE);
+			cancel();
+			return;
 		}
 		
 		transport.postMessage(new AuthenticationMessage(username, "ssh-connection", "password") {

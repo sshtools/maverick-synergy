@@ -309,7 +309,8 @@ public class SshClient implements Closeable {
 		
 		sshContext.getAuthenticationClient().doAuthentication(authenticator);
 		authenticator.waitFor(timeout);
-		
+		if(authenticator.isCancelled())
+			throw new SshException("Authentication cancelled.", SshException.CANCELLED_CONNECTION);
 		return authenticator.isDone() && authenticator.isSuccess();
 	}
 

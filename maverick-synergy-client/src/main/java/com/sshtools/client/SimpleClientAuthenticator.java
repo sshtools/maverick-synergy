@@ -32,6 +32,7 @@ public abstract class SimpleClientAuthenticator extends AbstractRequestFuture im
 
 	boolean moreAuthenticationsRequired;
 	String[] authenticationMethods;
+	boolean cancelled;
 	
 	@Override
 	public boolean processMessage(ByteArrayReader msg) throws IOException {
@@ -75,6 +76,20 @@ public abstract class SimpleClientAuthenticator extends AbstractRequestFuture im
 		
 		if(Log.isDebugEnabled()) {
 			Log.debug("%s authentication failed", getName());
+		}
+		done(false);
+	}
+
+	@Override
+	public boolean isCancelled() {
+		return cancelled;
+	}
+
+	@Override
+	public void cancel() {
+		cancelled = true;
+		if(Log.isDebugEnabled()) {
+			Log.debug("%s authentication cancelled", getName());
 		}
 		done(false);
 	}

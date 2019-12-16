@@ -900,7 +900,7 @@ public class SftpChannel extends AbstractSubsystem {
 			if(buffered != -1) {
 			
 				long time = System.currentTimeMillis();
-				writeFile(handle, new UnsignedInteger64(0), buf, 0, buffered);
+				writeFile(handle, new UnsignedInteger64(position), buf, 0, buffered);
 				time = System.currentTimeMillis() - time;
 				
 				System.setProperty("maverick.write.blockRoundtrip", String.valueOf(time));

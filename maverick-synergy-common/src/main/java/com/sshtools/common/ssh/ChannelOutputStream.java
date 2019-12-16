@@ -57,7 +57,7 @@ public class ChannelOutputStream extends OutputStream {
 		
 		public void close() {
 			synchronized(channel) {
-				if(!sentEOF && !channel.isClosed() && channel.isClosing()) {
+				if(!sentEOF && !channel.isClosed() && !channel.isClosing()) {
 					channel.sendEOF();
 					sentEOF = true;
 				}

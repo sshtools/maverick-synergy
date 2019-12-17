@@ -57,7 +57,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 	/** flag indicating that the channel is being closed */
 	boolean closePending = false;
 
-	ByteBuffer toChannel;
+	ForwardingDataWindow toChannel;
 	
 	long totalIn;
 	long totalOut;
@@ -74,7 +74,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(), 
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize());
-		toChannel = ByteBuffer.allocate(con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize());
+		toChannel = new ForwardingDataWindow(con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize());
 	}
 
 	protected CachingDataWindow createCache(int maximumWindowSpace) {
@@ -328,18 +328,8 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 
 		try {
 
-			int numBytesRead;
+			int numBytesRead = toChannel.read(socketChannel);
 			
-			synchronized(toChannel) {
-
-				toChannel.compact();
-				
-				try {
-					numBytesRead = socketChannel.read(toChannel);
-				} finally {
-					toChannel.flip();
-				}
-			}
 
 			if(Log.isTraceEnabled()) {
 				log(String.format("Processed FORWARDING READ read=%d", numBytesRead));
@@ -420,6 +410,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 					}
 					
 					totalOut += written;
+					
 				}
 
 				if(Log.isTraceEnabled()) {
@@ -488,12 +479,10 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 				byte[] tmp = new byte[getRemotePacket()];
 				int c;
 				while(count > 0) {
-
-					synchronized (toChannel) {
-						c = Math.min(Math.min(count, tmp.length), toChannel.remaining());
-						toChannel.get(tmp, 0, c);
-						count -= c;
-					}
+						
+					c = Math.min(Math.min(count, tmp.length), toChannel.remaining());
+					toChannel.get(tmp, 0, c);
+					count -= c;
 					
 					sendData(tmp, 0, c);
 				}

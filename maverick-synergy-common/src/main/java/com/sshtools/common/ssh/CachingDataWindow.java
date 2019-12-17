@@ -80,6 +80,32 @@ public class CachingDataWindow {
 		}
 	}
 
+	public synchronized int get(byte[] tmp, int offset, int length) {
+		
+		if(blocking) {
+			while(!cache.hasRemaining() && open) {
+				try {
+					wait(0);
+				} catch (InterruptedException e) {
+				}
+			}
+		}
+		
+		int count = Math.min(length, cache.remaining());
+		int limit = cache.limit();
+		cache.limit(cache.position() + count);
+		cache.get(tmp, offset, count);
+		cache.limit(limit);
+		if(Log.isDebugEnabled()) {
+			Log.trace(String.format("Read %d bytes from cached data window position=%d remaining=%d limit=%d", 
+					count, cache.position(), cache.remaining(), cache.limit()));
+		}
+		
+		notifyAll();
+		return count;
+		
+	}
+	
 	public synchronized int get(ByteBuffer buffer) {
 		
 			

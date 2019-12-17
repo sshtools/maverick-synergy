@@ -42,4 +42,27 @@ public class ForwardingDataWindow extends CachingDataWindow {
 			return c;
 		}
 	}
+	
+	public synchronized int read(SocketChannel socketChannel) throws IOException {
+		
+		cache.compact();
+		
+		try {
+			if(Boolean.getBoolean("maverick.disableMaximumWrite")) {
+				return socketChannel.read(cache);
+			} else {
+				int c = 0;
+				while(true) {
+					int r = socketChannel.read(cache);
+					if(r<=0) {
+						break;
+					}
+					c+=r;
+				}
+				return c;
+			}
+		} finally {
+			cache.flip();
+		}
+	}
 }

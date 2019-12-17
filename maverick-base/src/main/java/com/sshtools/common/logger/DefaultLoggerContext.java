@@ -45,7 +45,7 @@ import java.util.regex.Pattern;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.util.IOUtils;
 
-public class DefaultLoggerContext implements LoggerContext {
+public class DefaultLoggerContext implements RootLoggerContext {
 
 	Collection<LoggerContext> contexts = new ArrayList<>();
 	static DateFormat df = new SimpleDateFormat("dd MMM yyyy HH:mm:ss,SSS");

@@ -23,15 +23,21 @@ import java.util.Objects;
 public class Log {
 
 	
-	static DefaultLoggerContext defaultContext = null;
+	static RootLoggerContext defaultContext = null;
 	static ThreadLocal<LoggerContext> currentContext = new ThreadLocal<LoggerContext>();
 	
-	public static DefaultLoggerContext getDefaultContext() {
+	public static RootLoggerContext getDefaultContext() {
 		synchronized(Log.class) {
 			if(defaultContext==null) {
 				defaultContext = new DefaultLoggerContext();
 			}
 			return defaultContext;
+		}
+	}
+	
+	public static void setDefaultContext(RootLoggerContext loggerContext) {
+		synchronized(Log.class) {
+			defaultContext = loggerContext;
 		}
 	}
 	

@@ -74,6 +74,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(), 
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize());
+		toChannel = ByteBuffer.allocate(con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize());
 	}
 
 	protected CachingDataWindow createCache(int maximumWindowSpace) {
@@ -514,7 +515,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 		super.log();
 		if(Log.isInfoEnabled()) {
 			Log.info(String.format("socketCache=%d channelCache=%d closePending=%s connected=%s in=%d out=%d", 
-					cache.remaining(), toChannel.remaining(),
+					cache == null ? -1 : cache.remaining(), toChannel == null ? -1 : toChannel.remaining(),
 					closePending, socketChannel != null && socketChannel.isConnected(), 
 					totalIn,
 					totalOut));

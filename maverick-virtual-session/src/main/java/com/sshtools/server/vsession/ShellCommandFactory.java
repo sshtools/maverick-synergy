@@ -78,7 +78,7 @@ public class ShellCommandFactory extends CommandFactory<ShellCommand> {
 		
 	}
 	
-	protected void installFactory(ShellCommandFactory factory) {
+	public void installFactory(CommandFactory<ShellCommand> factory) {
 		factories.add(factory);
 	}
 	

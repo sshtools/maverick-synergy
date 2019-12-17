@@ -22,7 +22,9 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class FileUtils {
 
@@ -217,6 +219,15 @@ public class FileUtils {
 	}
 
 	public static boolean hasParents(String sourcePath) {
-		return sourcePath.indexOf('/') > -1;
+		return checkEndsWithNoSlash(sourcePath).indexOf('/') > -1;
+	}
+	
+	public static List<String> getParentPaths(String sourcePath) {
+		List<String> results = new ArrayList<>();
+		while(hasParents(sourcePath)) {
+			sourcePath = getParentPath(sourcePath);
+			results.add(sourcePath);
+		}
+		return results;
 	}
 }

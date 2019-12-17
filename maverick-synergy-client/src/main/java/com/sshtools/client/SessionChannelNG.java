@@ -24,7 +24,6 @@ import java.util.Objects;
 
 import com.sshtools.common.ssh.CachingDataWindow;
 import com.sshtools.common.ssh.ChannelRequestFuture;
-import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SshConnection;
 

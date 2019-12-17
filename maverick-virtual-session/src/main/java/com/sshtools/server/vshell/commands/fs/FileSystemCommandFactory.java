@@ -34,7 +34,6 @@ public class FileSystemCommandFactory extends CommandFactory<ShellCommand> {
 	
 	protected void installShellCommands() {
 		
-		commands.put("disks", Disks.class);
 		commands.put("pwd", Pwd.class);
 		commands.put("cd", Cd.class);
 		commands.put("rm", Rm.class);

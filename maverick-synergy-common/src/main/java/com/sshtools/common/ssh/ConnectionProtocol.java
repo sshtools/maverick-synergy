@@ -322,6 +322,8 @@ public abstract class ConnectionProtocol<T extends SshContext> extends ExecutorO
 					Log.error("Unexpected error reading global request " + request.getName() + " response");
 				}
 	
+			} else {
+				request.setData(new byte[0]);
 			}
 			request.complete(true);
 		} finally {

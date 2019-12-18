@@ -27,7 +27,7 @@ import com.sshtools.client.SessionChannelNG;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ByteArrays;
 import com.sshtools.common.ssh.Channel;
-import com.sshtools.common.ssh.ChannelEventAdapter;
+import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.Packet;
 import com.sshtools.common.ssh.PacketPool;
 import com.sshtools.common.ssh.SshConnection;
@@ -57,7 +57,7 @@ public abstract class AbstractSubsystem {
 				getMinimumWindowSize(),
 				false);
 		
-		session.addEventListener(new ChannelEventAdapter() {
+		session.addEventListener(new ChannelEventListener() {
 
 			@Override
 			public void onChannelClose(Channel channel) {

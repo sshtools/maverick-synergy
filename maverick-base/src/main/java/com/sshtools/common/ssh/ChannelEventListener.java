@@ -33,20 +33,23 @@ public interface ChannelEventListener {
    * The channel has been opened.
    * @param channel channel
    */
-  void onChannelOpen(Channel channel);
+  default void onChannelOpen(Channel channel) {
+  }
 
   /**
    * The channel has been closed
    * @param channel channel
    */
-  void onChannelClose(Channel channel);
+  default void onChannelClose(Channel channel) {
+  }
 
   /**
    * The channel has received an EOF from the remote client
    * @param channel
    * @param channel channel
    */
-  void onChannelEOF(Channel channel);
+  default void onChannelEOF(Channel channel) {
+  }
 
 
   /**
@@ -54,20 +57,23 @@ public interface ChannelEventListener {
    * event after this.
    * @param channel channel
    */
-  void onChannelDisconnect(Channel channel);
+  default void onChannelDisconnect(Channel channel) {
+  }
   
   /**
    * The channel is closing, but has not sent its SSH_MSG_CHANNEL_CLOSE
    * @param channel Channel
    */
-  void onChannelClosing(Channel channel);
+  default void onChannelClosing(Channel channel) {
+  }
 
   /**
    * When the remote side adjusts its window.
    * @param channel channel
    * @param currentWindowSpace current window space
    */
-  void onWindowAdjust(Channel channel, long currentWindowSpace);
+  default void onWindowAdjust(Channel channel, long currentWindowSpace) {
+  }
 
   /**
    * Data has been received on the channel. The buffer provided is the same buffer that will
@@ -76,7 +82,8 @@ public interface ChannelEventListener {
    * @param channel Channel
    * @param buffer buffer
    */
-  void onChannelDataIn(Channel channel, ByteBuffer buffer);
+  default void onChannelDataIn(Channel channel, ByteBuffer buffer) {
+  }
 
   /**
    * Data has been received on the extended channel. The buffer provided is the same buffer that will
@@ -85,7 +92,8 @@ public interface ChannelEventListener {
    * @param channel Channel
    * @param buffer buffer
    */
-  void onChannelDataExtended(Channel channel, ByteBuffer buffer);
+  default void onChannelDataExtended(Channel channel, ByteBuffer buffer) {
+  }
 
   /**
    * Data has been sent on the channel. The buffer provided is the same buffer that will
@@ -94,5 +102,6 @@ public interface ChannelEventListener {
    * @param channel Channel
    * @param buffer buffer
    */
-  void onChannelDataOut(Channel channel, ByteBuffer buffer);
+  default void onChannelDataOut(Channel channel, ByteBuffer buffer) {
+  }
 }

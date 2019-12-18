@@ -41,12 +41,12 @@ import com.sshtools.common.files.FileExistsException;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
-import com.sshtools.common.ssh.ChannelEventAdapter;
-import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.Channel;
+import com.sshtools.common.ssh.ChannelEventListener;
+import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.Context;
-import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.Packet;
+import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SessionChannelHelper;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
@@ -117,7 +117,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 		executeOperation(SFTP_QUEUE, new InitOperation());
 
 		// Add event listener
-		session.addEventListener(new ChannelEventAdapter() {
+		session.addEventListener(new ChannelEventListener() {
 			public void onChannelClosing(Channel channel) {
 				SessionChannelHelper.sendExitStatus(channel, 0);
 			}

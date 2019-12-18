@@ -25,7 +25,7 @@ import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.Channel;
-import com.sshtools.common.ssh.ChannelEventAdapter;
+import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SessionChannel;
@@ -72,7 +72,7 @@ public abstract class AsyncSessionTask implements Runnable {
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
 				future,
 				false);
-		session.addEventListener(new ChannelEventAdapter() {
+		session.addEventListener(new ChannelEventListener() {
 
 			@Override
 			public void onChannelClose(Channel channel) {

@@ -77,7 +77,7 @@ public abstract class Subsystem {
 		// We will manage our own data window
 		session.haltIncomingData();
 				
-		session.addEventListener(new ChannelEventAdapter() {
+		session.addEventListener(new ChannelEventListener() {
 
 			public void onChannelEOF(Channel channel) {
 				cleanup();

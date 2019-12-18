@@ -181,7 +181,7 @@ public abstract class SocketListeningForwardingFactoryImpl<T extends SshContext>
 		}
 	}
 
-	public static class ActiveTunnelManager<K extends SshContext> extends ChannelEventAdapter {
+	public static class ActiveTunnelManager<K extends SshContext> implements ChannelEventListener {
 
 		public interface TunnelListener<K extends SshContext> {
 

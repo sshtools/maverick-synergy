@@ -219,7 +219,7 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 		} catch (Throwable ex) {
 			IOUtils.closeStream(socketChannel);
 			throw new ChannelOpenException(
-					"Failed to read channel request data" + ex.getMessage(),
+					ex.getMessage(),
 					ChannelOpenException.CONNECT_FAILED);
 		} finally {
 			bar.close();

@@ -235,7 +235,7 @@ public class SocketConnection implements SocketHandler {
      *
      * @return boolean
      */
-    public boolean processReadEvent() {
+    public synchronized boolean processReadEvent() {
 
         if(Log.isTraceEnabled()) {
         	Log.trace("Processing socket READ event");
@@ -310,7 +310,7 @@ public class SocketConnection implements SocketHandler {
      *
      * @return boolean
      */
-    public boolean processWriteEvent() {
+    public synchronized boolean processWriteEvent() {
 
         if(Log.isTraceEnabled()) {
         	Log.trace("Processing socket WRITE event");
@@ -407,7 +407,7 @@ public class SocketConnection implements SocketHandler {
 	}
 
 	@Override
-	public boolean wantsWrite() {
+	public synchronized boolean wantsWrite() {
 		return (socketDataOut!=null && socketDataOut.hasRemaining()) || (protocolEngine!=null && protocolEngine.wantsToWrite());
 	}
 

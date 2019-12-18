@@ -36,12 +36,20 @@ import com.sshtools.common.ssh.SshException;
  * This class provides management of remote forwarding requests.
  */
 public class ForwardingManager<T extends SshContext> {
+	
+	public interface Listener {
+		
+	}
 
 	Map<Connection<T>, List<String>> portsByConnection = new HashMap<Connection<T>, List<String>>();
 	protected Map<String, ForwardingFactory<T>> listeningPorts = Collections
 			.synchronizedMap(new HashMap<String, ForwardingFactory<T>>());
 
 	public ForwardingManager() {
+	}
+	
+	public ForwardingFactory<T> getFactory(String addressToBind, int portToBind) {
+		return listeningPorts.get(addressToBind + ":" + portToBind);
 	}
 
 	/**
@@ -52,9 +60,11 @@ public class ForwardingManager<T extends SshContext> {
 	 * @return boolean
 	 */
 	public synchronized boolean isListening(int port) {
-		return listeningPorts.containsKey(String.valueOf(port))
-				|| listeningPorts.containsKey("0.0.0.0:" + port)
-				|| listeningPorts.containsKey("::" + port);
+		synchronized(listeningPorts) {
+			return listeningPorts.containsKey(String.valueOf(port))
+					|| listeningPorts.containsKey("0.0.0.0:" + port)
+					|| listeningPorts.containsKey("::" + port);
+		}
 	}
 
 	public synchronized int startListening(String addressToBind, int portToBind, Connection<T> con,

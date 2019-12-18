@@ -51,6 +51,10 @@ public abstract class SocketListeningForwardingFactoryImpl<T extends SshContext>
     public SocketListeningForwardingFactoryImpl() {
       super(null);
     }
+    
+    public ActiveTunnelManager<T> getActiveTunnelManager() {
+    	return activeRemoteForwardings;
+    }
 
     public boolean belongsTo(ConnectionProtocol<T> connection) {
         return this.connection!=null && this.connection.equals(connection);
@@ -176,41 +180,63 @@ public abstract class SocketListeningForwardingFactoryImpl<T extends SshContext>
 			Log.error("Error closing listening socket", e);
 		}
 	}
-  }
 
-  class ActiveTunnelManager<K extends SshContext> extends ChannelEventAdapter {
+	public static class ActiveTunnelManager<K extends SshContext> extends ChannelEventAdapter {
 
-          List<Channel> activeTunnels = Collections.synchronizedList(new ArrayList<>());
-          boolean killingTunnels = false;
+		public interface TunnelListener<K extends SshContext> {
 
-          public void killAllTunnels() {
+			void tunnelOpened(ForwardingChannel<K> channel);
+		}
 
-              synchronized(activeTunnels) {
-                  killingTunnels = true;
-                  for (Channel channel : activeTunnels) {
-                      try {
-                          channel.close();
-                      } catch(Throwable t) { }
-                  }
-                  activeTunnels.clear();
-              }
-          }
+		List<Channel> activeTunnels = Collections.synchronizedList(new ArrayList<>());
+		List<TunnelListener<K>> listeners = Collections.synchronizedList(new ArrayList<>());
+		boolean killingTunnels = false;
+		
+		public void addListener(TunnelListener<K> listener) {
+			listeners.add(listener);
+		}
+		
+		public void removeListener(TunnelListener<K> listener) {
+			listeners.remove(listener);
+		}
 
-          @Override
-          public void onChannelOpen(Channel channel) {
+		public List<Channel> getTunnels() {
+			return activeTunnels;
+		}
 
-              synchronized(activeTunnels) {
-                  if(!killingTunnels)
-                      activeTunnels.add(channel);
-              }
-          }
-          
-          @Override
-          public void onChannelClose(Channel channel) {
-              synchronized(activeTunnels) {
-                  if(!killingTunnels)
-                      activeTunnels.remove(channel);
-              }
-          }
-    }
+		public void killAllTunnels() {
 
+			synchronized (activeTunnels) {
+				killingTunnels = true;
+				for (Channel channel : activeTunnels) {
+					try {
+						channel.close();
+					} catch (Throwable t) {
+					}
+				}
+				activeTunnels.clear();
+			}
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public void onChannelOpen(Channel channel) {
+			synchronized (activeTunnels) {
+				if (!killingTunnels)
+					activeTunnels.add(channel);
+				for(int i = listeners.size() - 1 ; i >= 0 ; i--) 
+					listeners.get(i).tunnelOpened((ForwardingChannel<K>) channel);
+			}
+		}
+
+		@Override
+		public void onChannelClose(Channel channel) {
+			synchronized (activeTunnels) {
+				if (!killingTunnels)
+					activeTunnels.remove(channel);
+			}
+		}
+	}
+
+
+}

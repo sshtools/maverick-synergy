@@ -19,6 +19,8 @@
 /* HEADER */
 package com.sshtools.common.ssh;
 
+import java.nio.ByteBuffer;
+
 /**
  * Interface for receiving {@link Channel} events (currently only supports the
  * close event).
@@ -29,39 +31,68 @@ public interface ChannelEventListener {
 
   /**
    * The channel has been opened.
-   * @param channel
+   * @param channel channel
    */
-  public void onChannelOpen(Channel channel);
+  void onChannelOpen(Channel channel);
 
   /**
    * The channel has been closed
-   * @param channel
+   * @param channel channel
    */
-  public void onChannelClose(Channel channel);
+  void onChannelClose(Channel channel);
 
   /**
    * The channel has received an EOF from the remote client
    * @param channel
+   * @param channel channel
    */
-  public void onChannelEOF(Channel channel);
+  void onChannelEOF(Channel channel);
 
 
   /**
    * Called when a channel is disconnected because of a connection loss. You may still receive onChannelClose 
    * event after this.
+   * @param channel channel
    */
-  public void onChannelDisconnect(Channel channel);
+  void onChannelDisconnect(Channel channel);
   
- 
   /**
    * The channel is closing, but has not sent its SSH_MSG_CHANNEL_CLOSE
    * @param channel Channel
    */
-  public void onChannelClosing(Channel channel);
+  void onChannelClosing(Channel channel);
 
   /**
    * When the remote side adjusts its window.
-   * @param channel
+   * @param channel channel
+   * @param currentWindowSpace current window space
    */
-  public void onWindowAdjust(Channel channel, long currentWindowSpace);
+  void onWindowAdjust(Channel channel, long currentWindowSpace);
+
+  /**
+   * Data has been received on the channel. The buffer provided is the same buffer that will
+   * be passed on to any thread reading the channels streams.
+   * 
+   * @param channel Channel
+   * @param buffer buffer
+   */
+  void onChannelDataIn(Channel channel, ByteBuffer buffer);
+
+  /**
+   * Data has been received on the extended channel. The buffer provided is the same buffer that will
+   * be passed on to any thread reading the channels streams.
+   * 
+   * @param channel Channel
+   * @param buffer buffer
+   */
+  void onChannelDataExtended(Channel channel, ByteBuffer buffer);
+
+  /**
+   * Data has been sent on the channel. The buffer provided is the same buffer that will
+   * be passed on to any thread writing the channels streams.
+   * 
+   * @param channel Channel
+   * @param buffer buffer
+   */
+  void onChannelDataOut(Channel channel, ByteBuffer buffer);
 }

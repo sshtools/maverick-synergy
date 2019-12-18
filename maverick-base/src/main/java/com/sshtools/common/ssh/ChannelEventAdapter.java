@@ -19,6 +19,8 @@
 /* HEADER */
 package com.sshtools.common.ssh;
 
+import java.nio.ByteBuffer;
+
 /**
  * An adapter for the {@link ChannelEventListener} interface.
  *
@@ -47,6 +49,18 @@ public class ChannelEventAdapter implements ChannelEventListener {
   
   public void onChannelDisconnect(Channel channel) {
 		
+  }
+
+  public void onChannelDataIn(Channel channel, ByteBuffer buffer) {
+	  
+  }
+	
+  public void onChannelDataExtended(Channel channel, ByteBuffer buffer) {
+	  
+  }
+
+  public void onChannelDataOut(Channel channel, ByteBuffer buffer) {
+	  
   }
 
 }

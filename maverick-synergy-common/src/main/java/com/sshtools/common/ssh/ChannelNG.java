@@ -405,6 +405,9 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	}
 
 	protected void onChannelData(ByteBuffer data) {
+		for (ChannelEventListener listener : eventListeners) {
+			listener.onChannelDataIn(this, data);
+		}
 		if(Objects.nonNull(cache)) {
 			cache.put(data);
 		}
@@ -522,12 +525,18 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 								processedBuffer.remaining(), processedBuffer.position(), 
 								processedBuffer.limit(), processedBuffer.capacity()));
 					}
+					for (ChannelEventListener listener : eventListeners) {
+						listener.onChannelDataOut(this, processedBuffer);
+					}
 					connection.sendMessage(new ChannelData(processedBuffer, type, remoteWindow.getWindowSpace()));
 				} else {
 					
 					if(Log.isTraceEnabled()) {	
 						Log.trace(String.format("Final Buffer rem=%d pos=%d limit=%d, capacity=%d", 
 								buf.remaining(), buf.position(), buf.limit(), buf.capacity()));
+					}
+					for (ChannelEventListener listener : eventListeners) {
+						listener.onChannelDataOut(this, buf);
 					}
 					connection.sendMessage(lastMessage = new ChannelData(buf, type, remoteWindow.getWindowSpace()));
 				}
@@ -617,7 +626,9 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	 * @param data
 	 */
 	protected void onExtendedData(ByteBuffer data, int type) {
-		
+		for (ChannelEventListener listener : eventListeners) {
+			listener.onChannelDataExtended(this, data);
+		}
 	}
 
 	void processChannelEOF() {

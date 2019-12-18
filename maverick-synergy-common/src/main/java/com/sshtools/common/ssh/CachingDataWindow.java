@@ -58,7 +58,7 @@ public class CachingDataWindow {
 			if(blocking) {
 				while(cache.remaining() < data.remaining()) {
 					cache.flip();
-					wait(0);
+					wait(1000);
 					cache.compact();
 				}
 			}
@@ -85,7 +85,7 @@ public class CachingDataWindow {
 		if(blocking) {
 			while(!cache.hasRemaining() && open) {
 				try {
-					wait(0);
+					wait(1000);
 				} catch (InterruptedException e) {
 				}
 			}

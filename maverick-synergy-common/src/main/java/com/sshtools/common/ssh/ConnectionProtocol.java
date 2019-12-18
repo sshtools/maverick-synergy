@@ -44,6 +44,7 @@ import com.sshtools.common.util.ByteArrayWriter;
 public abstract class ConnectionProtocol<T extends SshContext> extends ExecutorOperationSupport<SshContext> implements Service {
 
 	
+	private static final Integer CHANNEL_DATA_IN = ExecutorOperationQueues.generateUniqueQueue("ConnectionProtocol.channelDataIn");
 
 	TransportProtocol<T> transport;
 	
@@ -452,12 +453,22 @@ public abstract class ConnectionProtocol<T extends SshContext> extends ExecutorO
 				try {
 					if (messageid == SSH_MSG_CHANNEL_DATA) {
 						int count = (int) bar.readInt();
-						channel.processChannelData(ByteBuffer.wrap(bar.array(), bar.getPosition(), count));
+						addTask(CHANNEL_DATA_IN, new ConnectionAwareTask(con) {
+							protected  void doTask() throws Throwable {
+								channel.processChannelData(ByteBuffer.wrap(bar.array(), bar.getPosition(), count));
+							}
+						});
+						
 					} else {
 						int type = (int) bar.readInt();
 						int count = (int) bar.readInt();
-						channel.processExtendedData(type,
-								ByteBuffer.wrap(bar.array(), bar.getPosition(), count));
+						addTask(CHANNEL_DATA_IN, new ConnectionAwareTask(con) {
+							protected  void doTask() throws Throwable {
+								channel.processExtendedData(type,
+										ByteBuffer.wrap(bar.array(), bar.getPosition(), count));
+							}
+						});
+						
 					}
 				} catch (IOException ex) {
 					Log.error("Error processing channel data", ex);

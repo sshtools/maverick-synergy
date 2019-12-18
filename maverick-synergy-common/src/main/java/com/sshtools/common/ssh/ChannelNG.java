@@ -414,15 +414,17 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		
 
 		lastActivity = System.currentTimeMillis();
+	
 		
+		// We have new data so reduce the available window space
+		consumeWindowSpace(data.remaining());
+	
 		if(Log.isDebugEnabled()) {
 			log("Received", String.format("SSH_MSG_CHANNEL_DATA len=%d", data.remaining()));
 		}
 		
-		// We have new data so reduce the available window space
-		consumeWindowSpace(data.remaining());
-		
 		// Process the data
+		
 		onChannelData(data);
 
 	}
@@ -1156,25 +1158,31 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	}
 	
 	protected void log(String action, String message) {
-		Log.debug(String.format("%s %s channel=%d remote=%d",
+		Log.debug(String.format("%s %s channel=%d remote=%d localWindow=%d remoteWindow=%d",
 				action,
 				message,
 				channelid, 
-				remoteid));
+				remoteid,
+				localWindow.getWindowSpace(),
+				remoteWindow.getWindowSpace()));
 	}
 	
 	protected void log(String message) {
-		Log.debug(String.format("%s channel=%d remote=%d", 
+		Log.debug(String.format("%s channel=%d remote=%d localWindow=%d remoteWindow=%d",
 				message,
 				channelid, 
-				remoteid));
+				remoteid,
+				localWindow.getWindowSpace(),
+				remoteWindow.getWindowSpace()));
 	}
 	
 	protected void log(String message, Throwable t) {
-		Log.debug(String.format("%s channel=%d remote=%d",  
+		Log.debug(String.format("%s channel=%d remote=%d localWindow=%d remoteWindow=%d",
 				message,
 				channelid, 
-				remoteid), t);
+				remoteid,
+				localWindow.getWindowSpace(),
+				remoteWindow.getWindowSpace()), t);
 	}
 	
 	class ChannelClose implements SshMessage {

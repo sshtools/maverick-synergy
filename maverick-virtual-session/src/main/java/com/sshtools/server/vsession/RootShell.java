@@ -36,7 +36,7 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.Channel;
-import com.sshtools.common.ssh.ChannelEventAdapter;
+import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.SessionChannelHelper;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.Utils;
@@ -200,7 +200,7 @@ public class RootShell extends Msh {
 								console.getConnection()));
 
 
-		console.getSessionChannel().addEventListener(new ChannelEventAdapter() {
+		console.getSessionChannel().addEventListener(new ChannelEventListener() {
 				@Override
 				public void onChannelClose(Channel channel) {
 

@@ -90,9 +90,10 @@ public interface ChannelEventListener {
    * be passed on to any thread reading the channels streams.
    * 
    * @param channel Channel
-   * @param buffer buffer
+ * @param buffer buffer
+ * @param type type
    */
-  default void onChannelDataExtended(Channel channel, ByteBuffer buffer) {
+  default void onChannelExtendedData(Channel channel, ByteBuffer buffer, int type) {
   }
 
   /**

@@ -627,7 +627,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	 */
 	protected void onExtendedData(ByteBuffer data, int type) {
 		for (ChannelEventListener listener : eventListeners) {
-			listener.onChannelDataExtended(this, data);
+			listener.onChannelExtendedData(this, data, type);
 		}
 	}
 

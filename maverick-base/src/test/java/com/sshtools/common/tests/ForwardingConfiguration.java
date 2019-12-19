@@ -45,7 +45,7 @@ public abstract class ForwardingConfiguration extends TestConfiguration {
 	}
 
 	public int getForwardingDataBlock() {
-		return Integer.parseInt(properties.getProperty("forwardingDataBlock", "65536"));
+		return Integer.parseInt(properties.getProperty("forwardingDataBlock", "4096"));
 	}
 	
 	public long getForwardingDataAmount() {

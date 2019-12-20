@@ -18,6 +18,7 @@
  */
 package com.sshtools.common.ssh;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -1290,7 +1291,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		
 	    public int available() throws IOException {
 			if(streamClosed || isClosed() || isRemoteEOF()) {
-				return -1;
+				throw new EOFException();
 			}
 	        return streamCache.remaining();
 	    }

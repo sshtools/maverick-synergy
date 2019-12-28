@@ -194,6 +194,19 @@ public class FileUtils {
 
 		return originalFilename;
 	}
+	
+	public static boolean hasParents(String sourcePath) {
+		return checkEndsWithNoSlash(sourcePath).indexOf('/') > -1;
+	}
+	
+	public static List<String> getParentPaths(String sourcePath) {
+		List<String> results = new ArrayList<>();
+		while(hasParents(sourcePath)) {
+			sourcePath = getParentPath(sourcePath);
+			results.add(sourcePath);
+		}
+		return results;
+	}
 
 	public static String stripPath(String originalFilename) {
 
@@ -218,16 +231,4 @@ public class FileUtils {
 		}
 	}
 
-	public static boolean hasParents(String sourcePath) {
-		return checkEndsWithNoSlash(sourcePath).indexOf('/') > -1;
-	}
-	
-	public static List<String> getParentPaths(String sourcePath) {
-		List<String> results = new ArrayList<>();
-		while(hasParents(sourcePath)) {
-			sourcePath = getParentPath(sourcePath);
-			results.add(sourcePath);
-		}
-		return results;
-	}
 }

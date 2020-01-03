@@ -23,7 +23,7 @@ public class ClassLoaderPolicy {
 	ClassLoader classLoader = null;
 	
 	public ClassLoader getClassLoader() {
-		return null;
+		return getClass().getClassLoader();
 	}
 	
 	public void setClassLoader(ClassLoader classLoader) {

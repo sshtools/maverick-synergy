@@ -39,6 +39,7 @@ import org.jline.terminal.spi.Pty;
 import com.sshtools.common.files.nio.AbstractFileURI;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.policy.ClassLoaderPolicy;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.Utils;
 import com.sshtools.server.AgentForwardingChannel;
@@ -156,7 +157,10 @@ public class VirtualShellNG extends SessionChannelNG {
 		
         Map<String,Object> env = new HashMap<>();
 		env.put("connection", getConnection());
-		FileSystem fs = FileSystems.newFileSystem(AbstractFileURI.create(getConnection(), ""), env);
+		FileSystem fs = FileSystems.newFileSystem(
+				AbstractFileURI.create(getConnection(), ""), 
+				env,
+				getContext().getPolicy(ClassLoaderPolicy.class).getClassLoader());
 		
         final LineReaderBuilder lineReaderBuilder = LineReaderBuilder.builder()
                 .terminal(terminal)

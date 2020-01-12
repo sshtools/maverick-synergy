@@ -35,12 +35,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.DefaultAuthenticationMechanismFactory;
 import com.sshtools.common.command.ExecutableCommand;
-import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ConnectRequestFuture;
 import com.sshtools.common.nio.ProtocolEngine;
 import com.sshtools.common.nio.SshEngine;
-import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyPairGenerator;
 import com.sshtools.common.publickey.SshPrivateKeyFile;
@@ -542,14 +540,6 @@ public class SshServerContext extends SshContext {
 	@SuppressWarnings("unchecked")
 	public AuthenticationMechanismFactory<SshServerContext> getAuthenticationMechanismFactory() {
 		return getPolicy(AuthenticationMechanismFactory.class, new DefaultAuthenticationMechanismFactory<SshServerContext>());
-	}
-	
-	public void setFileFactory(AbstractFileFactory<?> fileFactory) {
-		getPolicy(FileSystemPolicy.class).setFileFactory(fileFactory);
-	}
-	
-	public AbstractFileFactory<?> getFileFactory() {
-		return getPolicy(FileSystemPolicy.class).getFileFactory();
 	}
 
 	public boolean isEnsureGracefulDisconnect() {

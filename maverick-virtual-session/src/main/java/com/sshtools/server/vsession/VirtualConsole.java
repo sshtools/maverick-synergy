@@ -130,7 +130,9 @@ public class VirtualConsole {
 
 	public void setCurrentDirectory(String currentDirectory) throws IOException, PermissionDeniedException {
 		if(Objects.isNull(cwd)) {
-			cwd = getContext().getPolicy(FileSystemPolicy.class).getFileFactory().getFile((String)env.getOrDefault("HOME", ""), con);
+			cwd = getContext().getPolicy(FileSystemPolicy.class)
+					.getFileFactory(getConnection())
+						.getFile((String)env.getOrDefault("HOME", ""), con);
 		} 
 		
 		AbstractFile file = cwd.resolveFile(currentDirectory);

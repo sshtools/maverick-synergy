@@ -110,8 +110,8 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			CHARSET_ENCODING = "ISO-8859-1";
 		}
 
-		if(filePolicy.getFileFactory() instanceof SftpOperationWrapper) {
-			addWrapper((SftpOperationWrapper)filePolicy.getFileFactory());
+		if(filePolicy.getFileFactory(session.getConnection()) instanceof SftpOperationWrapper) {
+			addWrapper((SftpOperationWrapper)filePolicy.getFileFactory(session.getConnection()));
 		}
 		
 		executeOperation(SFTP_QUEUE, new InitOperation());

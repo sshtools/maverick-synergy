@@ -103,7 +103,7 @@ public final class AbstractFileSystem {
 	final String protocolInUse;
 
 	public AbstractFileSystem(SshConnection con, String protocolInUse) {
-		this.fileFactory = con.getContext().getPolicy(FileSystemPolicy.class).getFileFactory();
+		this.fileFactory = con.getContext().getPolicy(FileSystemPolicy.class).getFileFactory(con);
 		this.con = con;
 		this.protocolInUse = protocolInUse;
 

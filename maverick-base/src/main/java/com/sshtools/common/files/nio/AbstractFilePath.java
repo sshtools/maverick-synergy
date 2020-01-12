@@ -39,6 +39,7 @@ import java.util.Objects;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
+import com.sshtools.common.ssh.SshConnection;
 
 
 public class AbstractFilePath implements Path {
@@ -50,12 +51,14 @@ public class AbstractFilePath implements Path {
 	private final AbstractFileNIOFileSystem fileSystem;
 	private final List<String> elements;
 	private final boolean absolute;
-
+	private final SshConnection con;
+	
 	AbstractFilePath(AbstractFileNIOFileSystem fileSystem, List<String> elements, boolean absolute) {
 		fileSystem.assertOpen();
 		this.fileSystem = Objects.requireNonNull(fileSystem);
 		this.elements = Collections.unmodifiableList(elements);
 		this.absolute = Objects.requireNonNull(absolute);
+		this.con = fileSystem.getConnection();
 	}
 
 	static AbstractFilePath castAndAssertAbsolute(Path path) {
@@ -382,9 +385,9 @@ public class AbstractFilePath implements Path {
 
 	public AbstractFile getAbstractFile() throws IOException{
 		try {
-			return fileSystem.getConnection().getContext().getPolicy(
-						FileSystemPolicy.class).getFileFactory().getFile(toString(),
-							fileSystem.getConnection());
+			return con.getContext().getPolicy(
+						FileSystemPolicy.class).getFileFactory(con)
+							.getFile(toString(), con);
 		} catch (PermissionDeniedException e) {
 			throw new IOException(e.getMessage(), e);
 		}

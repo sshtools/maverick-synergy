@@ -27,6 +27,7 @@ import com.sshtools.common.permissions.Permissions;
 import com.sshtools.common.sftp.SftpExtension;
 import com.sshtools.common.sftp.SftpExtensionFactory;
 import com.sshtools.common.sftp.extensions.DefaultSftpExtensionFactory;
+import com.sshtools.common.ssh.SshConnection;
 
 public class FileSystemPolicy extends Permissions {
 
@@ -52,6 +53,7 @@ public class FileSystemPolicy extends Permissions {
 	public FileSystemPolicy() {
 		sftpExtensionFactories.add(new DefaultSftpExtensionFactory());
 	}
+	
 	public long getConnectionUploadQuota() {
 		return connectionUploadQuota;
 	}
@@ -96,7 +98,7 @@ public class FileSystemPolicy extends Permissions {
 	 * Get the file factory for this context.
 	 * @return
 	 */
-	public AbstractFileFactory<?> getFileFactory() {
+	public AbstractFileFactory<?> getFileFactory(SshConnection con) {
 		return fileFactory;
 	}
 	

@@ -19,9 +19,11 @@
 package com.sshtools.common.ssh.components.jce;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -59,11 +61,11 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 	UnsignedInteger64 serial;
 	int type;
 	String keyId;
-	Set<String> validPrincipals = new HashSet<String>();
+	Set<String> validPrincipals = new HashSet<>();
 	UnsignedInteger64 validAfter;
 	UnsignedInteger64 validBefore;
-	Map<String, String> criticalOptions = new HashMap<String, String>();
-	Set<String> extensions = new HashSet<String>();
+	Map<String, String> criticalOptions = new HashMap<>();
+	List<String> extensions = new ArrayList<>();
 	String reserved;
 	SshPublicKey signedBy;
 	byte[] signature;
@@ -149,9 +151,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		tmp = new ByteArrayReader(reader.readBinaryString());
 		while (tmp.available() > 0) {
 			String name = tmp.readString().trim();
-			if (!name.equals("")) {
-				extensions.add(name);
-			}
+			extensions.add(name);
 		}
 		tmp.close();
 		reserved = reader.readString();
@@ -179,7 +179,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		return validPrincipals;
 	}
 
-	public Set<String> getExtensions() {
+	public List<String> getExtensions() {
 		return extensions;
 	}
 

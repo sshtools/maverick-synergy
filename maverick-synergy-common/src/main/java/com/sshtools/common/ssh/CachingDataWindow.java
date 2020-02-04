@@ -18,6 +18,7 @@
  */
 package com.sshtools.common.ssh;
 
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 
 import com.sshtools.common.logger.Log;
@@ -64,6 +65,10 @@ public class CachingDataWindow {
 			}
 			
 			int remaining = data.remaining();
+			
+			if(remaining > cache.remaining()) {
+				throw new BufferOverflowException();
+			}
 			
 			cache.put(data);
 			cache.flip();

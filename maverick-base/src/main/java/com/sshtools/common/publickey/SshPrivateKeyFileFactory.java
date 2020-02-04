@@ -41,16 +41,9 @@ import com.sshtools.common.ssh.components.jce.JCEProvider;
  */
 public class SshPrivateKeyFileFactory {
 
-	
-	
 	public static final int OPENSSH_FORMAT = 0;
-	
-	@Deprecated
-	public static final int SSHTOOLS_FORMAT = 1;
-	@Deprecated
-	public static final int SSH1_FORMAT = 3;
-
 	public static final int OPENSSL_FORMAT = 4;
+	
 	/**
 	 * Parse formatted data and return a suitable <a
 	 * href="SshPrivateKeyFile.html">SshPrivateKeyFile</a> implementation.
@@ -136,11 +129,23 @@ public class SshPrivateKeyFileFactory {
 
 	}
 
+	public static SshPrivateKeyFile create(SshKeyPair pair) throws IOException {
+		return create(pair, null, SshPrivateKeyFileFactory.OPENSSH_FORMAT, null);
+	}
+	
 	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase) throws IOException {
-		return create(pair, passphrase, SshPrivateKeyFileFactory.OPENSSH_FORMAT);
+		return create(pair, passphrase, SshPrivateKeyFileFactory.OPENSSH_FORMAT, null);
 	}
 	
 	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase, int format) throws IOException {
+		return create(pair, passphrase, format, null);
+	}
+	
+	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase, String comment) throws IOException {
+		return create(pair, passphrase, SshPrivateKeyFileFactory.OPENSSH_FORMAT);
+	}
+	
+	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase, int format, String comment) throws IOException {
 
 		switch (format) {
 		case OPENSSL_FORMAT:
@@ -161,7 +166,7 @@ public class SshPrivateKeyFileFactory {
 				} catch(UnsupportedOperationException t) {
 				}
 			}
-			return new OpenSSHPrivateKeyFile(pair, passphrase);
+			return new OpenSSHPrivateKeyFile(pair, passphrase, comment);
 		default:
 			throw new IOException("Invalid key format!");
 		}
@@ -176,7 +181,7 @@ public class SshPrivateKeyFileFactory {
 			 * previous implementation
 			 */
 			@SuppressWarnings("unchecked")
-			Class<SshPrivateKeyFile> clz = (Class<SshPrivateKeyFile>) Class.forName("com.sshtools.publickey.OpenSSHPrivateKeyFile" + JCEProvider.getBCProvider().getName());
+			Class<SshPrivateKeyFile> clz = (Class<SshPrivateKeyFile>) Class.forName("com.sshtools.common.publickey.OpenSSHPrivateKeyFile" + JCEProvider.getBCProvider().getName());
 			
 			Constructor<SshPrivateKeyFile> c = clz.getDeclaredConstructor(SshKeyPair.class, String.class);
 			c.setAccessible(true);
@@ -184,7 +189,7 @@ public class SshPrivateKeyFileFactory {
 			f.toKeyPair(passphrase);
 			return f;
 		} catch(Throwable t) {
-			throw new UnsupportedOperationException("");
+			throw new UnsupportedOperationException(t);
 		}
 	}
 

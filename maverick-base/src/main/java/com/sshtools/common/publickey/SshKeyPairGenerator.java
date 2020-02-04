@@ -68,10 +68,6 @@ import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 public class SshKeyPairGenerator {
 
 	public static final String SSH2_RSA = "ssh-rsa";
-	
-	@Deprecated
-	public static final String SSH2_DSA = "ssh-dss";
-	
 	public static final String ECDSA = "ecdsa";
 	public static final String ED25519 = "ed25519";
 
@@ -92,8 +88,6 @@ public class SshKeyPairGenerator {
 			return generateKeyPair(algorithm, 0);
 		case SSH2_RSA:
 			return generateKeyPair(algorithm, 2048)	;
-		case SSH2_DSA:
-			return generateKeyPair(algorithm, 1024);
 		default:
 			throw new IOException(String.format("Unexpected key algorithm %s", algorithm));
 	}
@@ -115,8 +109,6 @@ public class SshKeyPairGenerator {
 			pair = ComponentManager.getDefaultInstance().generateEcdsaKeyPair(bits);
 		} else if (SSH2_RSA.equalsIgnoreCase(algorithm)) {
 			pair = ComponentManager.getDefaultInstance().generateRsaKeyPair(bits, 2);
-		} else if (SSH2_DSA.equals(algorithm)) {
-			pair = ComponentManager.getDefaultInstance().generateDsaKeyPair(bits);
 		} else {
 			
 			ComponentFactory<KeyGenerator> generators = new ComponentFactory<>(JCEComponentManager.getDefaultInstance());

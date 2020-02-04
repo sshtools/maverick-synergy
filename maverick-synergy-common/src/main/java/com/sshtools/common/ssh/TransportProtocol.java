@@ -487,7 +487,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			if(Log.isInfoEnabled()) {
 				Log.info("Connnection %s identifies itself as %s", 
 						getConnectionAddress().toString(),
-						remoteIdentification.toString());
+						remoteIdentification.toString().trim());
 			}
 
 			sendLocalIdentification(false, null);

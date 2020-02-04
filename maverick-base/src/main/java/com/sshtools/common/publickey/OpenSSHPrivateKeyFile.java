@@ -25,6 +25,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
@@ -43,6 +44,7 @@ import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshRsaPrivateCrtKey;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
 import com.sshtools.common.ssh.components.jce.AES128Cbc;
+import com.sshtools.common.ssh.components.jce.AES256Ctr;
 import com.sshtools.common.ssh.components.jce.ECUtils;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.ssh.components.jce.Ssh2DsaPrivateKey;
@@ -61,6 +63,7 @@ class OpenSSHPrivateKeyFile
 
   byte[] formattedkey;
   static final String AUTH_MAGIC = "openssh-key-v1";
+  String comment;
   
   OpenSSHPrivateKeyFile(byte[] formattedkey)
      throws IOException {
@@ -71,8 +74,9 @@ class OpenSSHPrivateKeyFile
     this.formattedkey = formattedkey;
   }
 
-  public OpenSSHPrivateKeyFile(SshKeyPair pair, String passphrase)
+  public OpenSSHPrivateKeyFile(SshKeyPair pair, String passphrase, String comment)
      throws IOException {
+	this.comment = comment;
     formattedkey = encryptKey(pair, passphrase);
   }
 
@@ -177,7 +181,7 @@ class OpenSSHPrivateKeyFile
 	  try(ByteArrayWriter options = new ByteArrayWriter()) {
 	  
 		  if(passphrase!=null && passphrase.length() > 0) {
-			  cipherName = "aes128-cbc";
+			  cipherName = "aes256-ctr";
 			  kdfName = "bcrypt";
 			  options.writeBinaryString(salt);
 			  options.writeInt(rounds);
@@ -237,15 +241,19 @@ class OpenSSHPrivateKeyFile
 		    	  break;
 			  }
 
-			  
-			  byte[] payload = privateKeyData.toByteArray();
+			  if(comment==null) {
+			      privateKeyData.writeString(String.format("%s@%s", 
+			  		 System.getProperty("user.name"), InetAddress.getLocalHost().getHostName()));
+			  } else {
+			      privateKeyData.writeString(comment);
+			  }
 			  
 			  if(!cipherName.equals("none")) {
 				  
 				  /**
 				   * Cipher name is currently fixed above.
 				   */
-				  SshCipher cipher = new AES128Cbc();
+				  SshCipher cipher = new AES256Ctr();
 				  
 				  byte[] iv = new byte[cipher.getBlockSize()];
 				  byte[] key = new byte[cipher.getKeyLength()];
@@ -258,13 +266,28 @@ class OpenSSHPrivateKeyFile
 				  
 				  cipher.init(SshCipher.ENCRYPT_MODE, iv, key);
 				  
+				  pad(privateKeyData, cipher.getBlockSize());
+				  byte[] payload = privateKeyData.toByteArray();
 				  cipher.transform(payload);
-			  }
-			  
-			  writer.writeBinaryString(payload);
-		  }
-	  }
-  }
+				  writer.writeBinaryString(payload);
+					
+				} else {
+				  pad(privateKeyData, 8);
+				  writer.writeBinaryString(privateKeyData.toByteArray());
+				}
+
+			}
+		}
+	}
+
+	private void pad(ByteArrayWriter privateKeyData, int blockSize) {
+		
+		int i = 0;
+		while(privateKeyData.size() % blockSize != 0) {
+			privateKeyData.write(++i);
+		}
+		
+	}
   
   private SshKeyPair getOpenSSHKeyPair(byte[] payload, String passphrase) throws IOException, InvalidPassphraseException, SshException {
 	

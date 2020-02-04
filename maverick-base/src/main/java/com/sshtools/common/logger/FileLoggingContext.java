@@ -48,6 +48,9 @@ public class FileLoggingContext extends AbstractLoggingContext {
 	public FileLoggingContext(Level level, File logFile, int maxFiles, long maxSize) throws IOException {
 		super(level);
 		this.logFile = logFile;
+		if(!logFile.exists()) {
+			logFile.getParentFile().mkdirs();
+		}
 		this.maxFiles = maxFiles;
 		this.maxSize = maxSize;
 		createLogFile();

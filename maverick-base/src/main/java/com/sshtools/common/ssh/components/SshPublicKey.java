@@ -19,6 +19,8 @@
 /* HEADER */
 package com.sshtools.common.ssh.components;
 
+import java.security.Key;
+
 import com.sshtools.common.ssh.SshException;
 
 
@@ -94,4 +96,6 @@ public interface SshPublicKey {
  * @return 
    */
   public String test();
+
+  public Key getJCEPublicKey();
 }

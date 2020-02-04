@@ -128,7 +128,7 @@ public class SshAgentAddKey extends AgentMessage {
         	SshKeyPair keyPair=new SshKeyPair();
         	keyPair.setPrivateKey(prvkey);
         	keyPair.setPublicKey(pubkey);
-        	baw.writeBinaryString(SshPrivateKeyFileFactory.create(keyPair,null).getFormattedKey()); //changed by Aruna, need to check with Lee
+        	baw.writeBinaryString(SshPrivateKeyFileFactory.create(keyPair,null,null).getFormattedKey()); //changed by Aruna, need to check with Lee
             baw.writeBinaryString(pubkey.getEncoded());
             baw.writeString(description);
             baw.write(constraints.toByteArray());

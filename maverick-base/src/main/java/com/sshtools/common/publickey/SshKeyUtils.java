@@ -53,6 +53,11 @@ public class SshKeyUtils {
 		return new String(file.getFormattedKey(), "UTF-8");
 	}
 	
+	public static String getFormattedKey(SshKeyPair pair, String passphrase) throws IOException {	
+		SshPrivateKeyFile kf = SshPrivateKeyFileFactory.create(pair, passphrase);
+		return new String(kf.getFormattedKey(), "UTF-8");
+	}
+	
 	public static SshPublicKey getPublicKey(File key) throws IOException {
 		return getPublicKey(toString(new FileInputStream(key)));
 	}
@@ -144,17 +149,24 @@ public class SshKeyUtils {
 			IOUtils.closeStream(out);
 		}
 	}	
-
 	public static void createPublicKeyFile(SshPublicKey publicKey, String comment, File file) throws IOException {
+		createPublicKeyFile(publicKey, comment, file, SshPublicKeyFileFactory.OPENSSH_FORMAT);
+	}
+	
+	public static void createPublicKeyFile(SshPublicKey publicKey, String comment, File file, int format) throws IOException {
 		
-		SshPublicKeyFile kf = SshPublicKeyFileFactory.create(publicKey, comment, SshPublicKeyFileFactory.OPENSSH_FORMAT);
+		SshPublicKeyFile kf = SshPublicKeyFileFactory.create(publicKey, comment, format);
 		IOUtils.writeUTF8StringToFile(file, new String(kf.getFormattedKey(), "UTF-8"));
 		
 	}
 
 	public static void createPrivateKeyFile(SshKeyPair pair, String passphrase, File file) throws IOException {
+		createPrivateKeyFile(pair, passphrase, file, SshPrivateKeyFileFactory.OPENSSH_FORMAT);
+	}
+	
+	public static void createPrivateKeyFile(SshKeyPair pair, String passphrase, File file, int format) throws IOException {
 		
-		SshPrivateKeyFile kf = SshPrivateKeyFileFactory.create(pair, passphrase);
+		SshPrivateKeyFile kf = SshPrivateKeyFileFactory.create(pair, passphrase, format);
 		IOUtils.writeUTF8StringToFile(file, new String(kf.getFormattedKey(), "UTF-8"));
 	}
 

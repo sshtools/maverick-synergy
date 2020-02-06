@@ -105,6 +105,10 @@ public class SshServerContext extends SshContext {
 		this(engine, SecurityLevel.STRONG);
 	}
 	
+	public SshServerContext(SshEngine engine, ComponentManager componentManager) throws IOException, SshException {
+		this(engine, componentManager, SecurityLevel.STRONG);
+	}
+	
 	public SshServerContext(SshEngine engine, ComponentManager componentManager, SecurityLevel securityLevel) throws IOException, SshException {
 		super(engine, componentManager, securityLevel);
 		setAuthenicationMechanismFactory(new DefaultAuthenticationMechanismFactory<>());

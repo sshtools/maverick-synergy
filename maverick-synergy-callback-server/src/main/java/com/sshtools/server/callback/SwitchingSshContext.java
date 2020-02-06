@@ -25,6 +25,7 @@ import com.sshtools.common.nio.ConnectRequestFuture;
 import com.sshtools.common.nio.ProtocolContextFactory;
 import com.sshtools.common.nio.ProtocolEngine;
 import com.sshtools.common.nio.SshEngine;
+import com.sshtools.common.ssh.SshException;
 import com.sshtools.server.SshServerContext;
 
 class SwitchingSshContext extends SshClientContext {
@@ -34,7 +35,7 @@ class SwitchingSshContext extends SshClientContext {
 	
 	SwitchingSshContext(SshEngine engine, 
 			String clientIdentifier,
-			ProtocolContextFactory<SshServerContext> serverFactory) throws IOException {
+			ProtocolContextFactory<SshServerContext> serverFactory) throws IOException, SshException {
 		super(engine);
 		this.clientIdentifier = clientIdentifier;
 		this.serverFactory = serverFactory;

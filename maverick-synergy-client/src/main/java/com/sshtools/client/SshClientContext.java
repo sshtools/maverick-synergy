@@ -109,6 +109,10 @@ public class SshClientContext extends SshContext {
 		this.daemon = daemon;
 	}
 	
+	public SshClientContext(SshEngine daemon) throws IOException, SshException {
+		this(daemon, ComponentManager.getDefaultInstance(), SecurityLevel.STRONG);
+	}
+	
 	public SshClientContext(SshEngine daemon, SecurityLevel securityLevel) throws IOException, SshException {
 		this(daemon, ComponentManager.getDefaultInstance(), securityLevel);
 	}

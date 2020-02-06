@@ -25,6 +25,7 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshKeyFingerprint;
 import com.sshtools.common.ssh.components.SshPublicKey;
@@ -58,6 +59,16 @@ public class SshEd25519PublicKey implements SshPublicKey {
 			throw new IllegalArgumentException("Invalid PublicKey type passed to SshEd25519PublicKey");
 		}
 		publicKey = (EdDSAPublicKey) pub;
+	}
+	
+	public SecurityLevel getSecurityLevel() {
+		return SecurityLevel.PARANOID;
+	}
+	
+
+	@Override
+	public int getPriority() {
+		return 5000;
 	}
 
 	public void init(byte[] blob, int start, int len) throws SshException {

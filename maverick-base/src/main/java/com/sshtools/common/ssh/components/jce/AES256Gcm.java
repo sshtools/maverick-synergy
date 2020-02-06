@@ -30,13 +30,15 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.sshtools.common.ssh.SecurityLevel;
+
 public class AES256Gcm extends AbstractJCECipher {
 
 	byte[] key;
 	byte[] nonce;
 	int mode;
 	public AES256Gcm() throws IOException {
-		super(JCEAlgorithms.JCE_AESGCMNOPADDING, "AES", 32, "aes256-gcm@openssh.com");
+		super(JCEAlgorithms.JCE_AESGCMNOPADDING, "AES", 32, "aes256-gcm@openssh.com", SecurityLevel.PARANOID, 6000);
 	}
 
 	public void init(int mode, byte[] iv, byte[] keydata) throws java.io.IOException {

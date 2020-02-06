@@ -43,6 +43,11 @@ public class Ssh2RsaPublicKeySHA256 extends Ssh2RsaPublicKey {
 	public Ssh2RsaPublicKeySHA256(SshRsaPublicKey publicKey) {
 		this((RSAPublicKey)publicKey.getJCEPublicKey());
 	}
+	
+	@Override
+	public int getPriority() {
+		return 2100;
+	}
 
 	@Override
 	public String getSigningAlgorithm() {

@@ -26,6 +26,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.ssh.SshTransport;
@@ -61,7 +62,7 @@ public class Curve25519SHA256Server extends SshKeyExchangeServer implements
 
 	
 	public Curve25519SHA256Server() {
-		super("SHA-256");
+		super("SHA-256", SecurityLevel.PARANOID, 5000);
 	}
 
 	@Override

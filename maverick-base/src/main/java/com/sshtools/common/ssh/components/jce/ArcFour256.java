@@ -26,10 +26,12 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.sshtools.common.ssh.SecurityLevel;
+
 public class ArcFour256 extends AbstractJCECipher {
 	
 	public ArcFour256() throws IOException {
-		super("ARCFOUR", "ARCFOUR", 32, "arcfour256");	
+		super("ARCFOUR", "ARCFOUR", 32, "arcfour256", SecurityLevel.WEAK, 1);	
 	}
 
 	public void init(int mode, byte[] iv, byte[] keydata) throws IOException {

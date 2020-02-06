@@ -30,7 +30,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 
 import com.sshtools.common.logger.Log;
-
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshKeyFingerprint;
 import com.sshtools.common.ssh.components.SshDsaPublicKey;
@@ -47,8 +47,7 @@ import com.sshtools.common.util.Utils;
  */
 public class Ssh2DsaPublicKey implements SshDsaPublicKey {
 
-	
-	
+
 	protected DSAPublicKey pubkey;
 
 	public Ssh2DsaPublicKey() {
@@ -58,6 +57,15 @@ public class Ssh2DsaPublicKey implements SshDsaPublicKey {
 		this.pubkey = pub;
 	}
 
+	public SecurityLevel getSecurityLevel() {
+		return SecurityLevel.WEAK;
+	}
+	
+	@Override
+	public int getPriority() {
+		return 0;
+	}
+	
 	public Ssh2DsaPublicKey(BigInteger p, BigInteger q, BigInteger g,
 			BigInteger y) throws NoSuchAlgorithmException,
 			InvalidKeySpecException {

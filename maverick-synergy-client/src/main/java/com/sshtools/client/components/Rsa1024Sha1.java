@@ -33,6 +33,7 @@ import com.sshtools.client.SshClientContext;
 import com.sshtools.client.SshKeyExchangeClient;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.SshPublicKeyFileFactory;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshTransport;
 import com.sshtools.common.ssh.TransportProtocol;
@@ -80,7 +81,7 @@ public class Rsa1024Sha1 extends SshKeyExchangeClient implements AbstractKeyExch
 	 * Construct an uninitialized instance.
 	 */
 	public Rsa1024Sha1() {
-		super("SHA-1");
+		super("SHA-1", SecurityLevel.WEAK, 1);
 	}
 
 	/**

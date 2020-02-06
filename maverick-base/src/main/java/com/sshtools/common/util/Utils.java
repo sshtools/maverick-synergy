@@ -22,11 +22,13 @@ import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 
 public class Utils {
@@ -279,6 +281,21 @@ public class Utils {
 			return defaultValue;
 		}
 		return value;
+	}
+	
+	public static String csv(String... elements) {
+		StringBuffer b = new StringBuffer();
+		for(String element : elements) {
+			if(b.length() > 0) {
+				b.append(",");
+			}
+			b.append(element);
+		}
+		return b.toString();
+	}
+
+	public static String randomAlphaNumericString(int length) {
+		 return new BigInteger(length * 8, new Random()).toString(32).substring(0,  length);
 	}
 	
 }

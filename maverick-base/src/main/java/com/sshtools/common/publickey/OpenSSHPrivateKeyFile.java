@@ -419,6 +419,8 @@ class OpenSSHPrivateKeyFile
 				    	  break;
 					  }
 					  
+					  this.comment = privateReader.readString();
+					  
 				  }
 				  
 				  return pair;

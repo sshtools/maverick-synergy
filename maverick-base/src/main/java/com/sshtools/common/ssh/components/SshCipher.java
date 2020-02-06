@@ -21,6 +21,9 @@ package com.sshtools.common.ssh.components;
 
 import java.io.IOException;
 
+import com.sshtools.common.ssh.SecureComponent;
+import com.sshtools.common.ssh.SecurityLevel;
+
 /**
  *
  * <p>Base class for all SSH protocol ciphers. The cipher
@@ -29,15 +32,26 @@ import java.io.IOException;
  *
  * @author Lee David Painter
  */
-public abstract class SshCipher implements SshComponent {
+public abstract class SshCipher implements SshComponent, SecureComponent {
 
-    String algorithm;
-
-    public SshCipher(String algorithm) {
+    final String algorithm;
+    final SecurityLevel securityLevel;
+    final int priority;
+    
+    public SshCipher(String algorithm, SecurityLevel securityLevel, int priority) {
         this.algorithm = algorithm;
+        this.securityLevel = securityLevel;
+        this.priority = priority;
     }
 
-
+    public SecurityLevel getSecurityLevel() {
+    	return securityLevel;
+    }
+    
+    public int getPriority() {
+    	return priority;
+    }
+    
     public String getAlgorithm() {
         return algorithm;
     }

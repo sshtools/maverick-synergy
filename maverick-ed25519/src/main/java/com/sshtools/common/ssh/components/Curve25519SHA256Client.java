@@ -28,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.SshKeyExchangeClient;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.ssh.SshTransport;
@@ -52,7 +53,7 @@ public class Curve25519SHA256Client extends SshKeyExchangeClient {
 	byte[] serverKexInit;
 
 	public Curve25519SHA256Client() {
-		super("SHA-256");
+		super("SHA-256", SecurityLevel.PARANOID, 5000);
 	}
 
 	@Override

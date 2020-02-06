@@ -18,6 +18,7 @@
  */
 package com.sshtools.common.ssh.components;
 
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 
 public class NoneHmac implements SshHmac {
@@ -56,5 +57,15 @@ public class NoneHmac implements SshHmac {
 
 	public boolean isETM() {
 		return false;
+	}
+
+	@Override
+	public SecurityLevel getSecurityLevel() {
+		return SecurityLevel.NONE;
+	}
+
+	@Override
+	public int getPriority() {
+		return 0;
 	}
 }

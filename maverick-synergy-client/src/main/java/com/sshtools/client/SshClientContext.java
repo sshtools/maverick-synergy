@@ -55,6 +55,7 @@ import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionManager;
 import com.sshtools.common.ssh.ForwardingManager;
 import com.sshtools.common.ssh.GlobalRequestHandler;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.ComponentFactory;
@@ -99,17 +100,21 @@ public class SshClientContext extends SshContext {
 	
 	private static ComponentFactory<SshKeyExchange<SshClientContext>> verifiedKeyExchanges;
 	
-	public SshClientContext(SshEngine daemon, ComponentManager componentManager) throws IOException {
-		super(componentManager);
+	public SshClientContext() throws IOException, SshException {
+		this(SecurityLevel.STRONG);
+	}
+	
+	public SshClientContext(SshEngine daemon, ComponentManager componentManager, SecurityLevel securityLevel) throws IOException, SshException {
+		super(componentManager, securityLevel);
 		this.daemon = daemon;
 	}
 	
-	public SshClientContext(SshEngine daemon) throws IOException {
-		this(daemon, ComponentManager.getDefaultInstance());
+	public SshClientContext(SshEngine daemon, SecurityLevel securityLevel) throws IOException, SshException {
+		this(daemon, ComponentManager.getDefaultInstance(), securityLevel);
 	}
 	
-	public SshClientContext() throws IOException {
-		this(SshEngine.getDefaultInstance());
+	public SshClientContext(SecurityLevel securityLevel) throws IOException, SshException {
+		this(SshEngine.getDefaultInstance(), securityLevel);
 	}
 
 	public ProtocolEngine createEngine(ConnectRequestFuture connectFuture) throws IOException {

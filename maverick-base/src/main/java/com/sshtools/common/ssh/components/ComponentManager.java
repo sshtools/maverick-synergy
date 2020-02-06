@@ -31,6 +31,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.util.IOUtils;
@@ -522,6 +523,38 @@ public abstract class ComponentManager {
 		
 		for(Map.Entry<String,Class<?>> e : cachedComponents.entrySet()) {
 			componentFactory.add(e.getKey(), (Class<? extends T>) e.getValue());
+		}
+	}
+	
+	public void setMinimumSecurityLevel(SecurityLevel securityLevel) throws SshException {
+
+		if(Log.isInfoEnabled()) {
+			Log.info("Configuring {} Security", securityLevel.name());
+		}
+		
+		setMinimumSecurityLevel(securityLevel, ssh2ciphersCS, "Client->Server Ciphers");
+		setMinimumSecurityLevel(securityLevel, ssh2ciphersSC, "Server->Client Ciphers");
+		setMinimumSecurityLevel(securityLevel, hmacsCS, "Client->Server Macs");
+		setMinimumSecurityLevel(securityLevel, hmacsSC, "Server->Client Macs");
+		setMinimumSecurityLevel(securityLevel, publickeys, "Public Keys");
+//		if (clientKeyexchanges.hasComponents()) {
+//			setMinimumSecurityLevel(securityLevel, clientKeyexchanges, "Client->Server KEX");
+//		}
+//		if (serverKeyexchanges.hasComponents()) {
+//			setMinimumSecurityLevel(securityLevel, serverKeyexchanges, "Server->Client KEX");
+//		}
+		
+	}
+
+	private void setMinimumSecurityLevel(SecurityLevel securityLevel, ComponentFactory<?> componentFactory, String name) throws SshException {
+		
+		if(Log.isInfoEnabled()) {
+			Log.info("Configuring {}", name);
+		}
+		componentFactory.configureSecurityLevel(securityLevel);
+		
+		if(Log.isInfoEnabled()) {
+			Log.info(componentFactory.list(""));
 		}
 	}
 }

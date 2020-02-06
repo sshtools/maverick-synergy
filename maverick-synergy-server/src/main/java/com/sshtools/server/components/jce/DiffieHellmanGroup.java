@@ -32,6 +32,7 @@ import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshTransport;
 import com.sshtools.common.ssh.TransportProtocol;
@@ -86,8 +87,8 @@ public class DiffieHellmanGroup extends SshKeyExchangeServer implements Abstract
 	/**
 	 * Construct an uninitialized instance.
 	 */
-	DiffieHellmanGroup(String kexAlgorithm, String hashAlgorithm, BigInteger p) {
-		super(hashAlgorithm);
+	DiffieHellmanGroup(String kexAlgorithm, String hashAlgorithm, BigInteger p, SecurityLevel securityLevel, int priority) {
+		super(hashAlgorithm, securityLevel, priority);
 		this.kexAlgorithm = kexAlgorithm;
 		this.p = p;
 	}

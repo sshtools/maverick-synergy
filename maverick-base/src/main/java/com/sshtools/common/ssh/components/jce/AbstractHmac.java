@@ -21,6 +21,7 @@ package com.sshtools.common.ssh.components.jce;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshHmac;
 
@@ -37,15 +38,27 @@ public abstract class AbstractHmac implements SshHmac {
 	protected int macSize;
 	protected int macLength;
 	protected String jceAlgorithm;
+	final private SecurityLevel securityLevel;
+	final int priority;
 	
-	public AbstractHmac(String jceAlgorithm, int macLength) {
-		this(jceAlgorithm, macLength, macLength);
+	public AbstractHmac(String jceAlgorithm, int macLength, SecurityLevel securityLevel, int priority) {
+		this(jceAlgorithm, macLength, macLength, securityLevel, priority);
 	}
 
-	public AbstractHmac(String jceAlgorithm, int macSize, int outputLength) {
+	public AbstractHmac(String jceAlgorithm, int macSize, int outputLength, SecurityLevel securityLevel, int priority) {
 		this.jceAlgorithm = jceAlgorithm;
 		this.macSize = macSize;
 		this.macLength = outputLength;
+		this.securityLevel = securityLevel;
+		this.priority = priority;
+	}
+	
+	public SecurityLevel getSecurityLevel() {
+		return securityLevel;
+	}
+	
+	public int getPriority() {
+		return priority;
 	}
 	
 	public void generate(long sequenceNo, byte[] data, int offset, int len,

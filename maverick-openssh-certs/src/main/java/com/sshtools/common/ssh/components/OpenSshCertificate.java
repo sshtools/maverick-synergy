@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.ssh.components.jce;
+package com.sshtools.common.ssh.components;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,8 +29,8 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import com.sshtools.common.publickey.SshPublicKeyFileFactory;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.UnsignedInteger64;
@@ -44,10 +44,8 @@ import com.sshtools.common.util.UnsignedInteger64;
  * @author lee
  * 
  */
-public abstract class OpenSshCertificate implements SshPublicKey {
+public abstract class OpenSshCertificate implements SshPublicKey, SshCertificate {
 
-	public static final int SSH_CERT_TYPE_USER = 1;
-	public static final int SSH_CERT_TYPE_HOST = 2;
 
 	public static final String PERMIT_X11_FORWARDING = "permit-x11-forwarding";
 	public static final String PERMIT_PORT_FORWARDING = "permit-port-forwarding";
@@ -69,6 +67,22 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 	String reserved;
 	SshPublicKey signedBy;
 	byte[] signature;
+	
+	private final SecurityLevel securityLevel;
+	private final int priority;
+	
+	protected OpenSshCertificate(SecurityLevel securityLevel, int priority) {
+		this.securityLevel = securityLevel;
+		this.priority = priority;
+	}
+	
+	public SecurityLevel getSecurityLevel() {
+		return securityLevel;
+	}
+	
+	public int getPriority() {
+		return priority;
+	}
 	
 	public String getEncodingAlgorithm() {
 		return getAlgorithm();
@@ -219,5 +233,9 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 	
 	public String getKeyId() {
 		return keyId;
+	}
+	
+	public final boolean isCertificate() {
+		return true;
 	}
 }

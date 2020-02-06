@@ -180,5 +180,15 @@ public class SshKeyUtils {
 		}
 		return false;
 	}
+	
+	public static SshKeyPair getCertificateAndKey(File privateKey, String passphrase) throws IOException, InvalidPassphraseException {
+		File certFile = new File(privateKey.getAbsolutePath() + "-cert.pub");
+		if(!certFile.exists()) {
+			throw new IOException(String.format("No certificate file %s to match private key file %s", certFile.getName(), privateKey.getName()));
+		}
+		SshKeyPair pair = getPrivateKey(privateKey, passphrase);
+		pair.setPublicKey(getPublicKey(certFile));
+		return pair;
+	}
 
 }

@@ -239,18 +239,26 @@ public abstract class SshContext extends ProtocolContext implements
 	Map<Class<?>,Object> policies = new HashMap<>();
 	
 	/** Constructs a default context but does not set the daemon 
-	 * @param componentManager */
-	public SshContext(ComponentManager componentManager) throws IOException {
+	 * @param componentManager 
+	 * @throws SshException */
+	public SshContext(ComponentManager componentManager, SecurityLevel securityLevel) throws IOException, SshException {
 		
 		this.componentManager = componentManager;
 		
 		keyExchanges =  new ComponentFactory<SshKeyExchange<?>>(componentManager);
+		configureKeyExchanges();
+		keyExchanges.configureSecurityLevel(securityLevel);
 		
 		ciphersCS = ComponentManager.getDefaultInstance().supportedSsh2CiphersCS();
+		ciphersCS.configureSecurityLevel(securityLevel);
 		ciphersSC = ComponentManager.getDefaultInstance().supportedSsh2CiphersSC();
+		ciphersSC.configureSecurityLevel(securityLevel);
 		macCS = ComponentManager.getDefaultInstance().supportedHMacsCS();
+		macCS.configureSecurityLevel(securityLevel);
 		macSC = ComponentManager.getDefaultInstance().supportedHMacsSC();
+		macSC.configureSecurityLevel(securityLevel);
 		publicKeys = ComponentManager.getDefaultInstance().supportedPublicKeys();
+		publicKeys.configureSecurityLevel(securityLevel);
 
 		try {
 
@@ -269,8 +277,6 @@ public abstract class SshContext extends ProtocolContext implements
 					.getClass().getName());
 		}
 
-		configureKeyExchanges();
-		
 		this.keepAlive = true;
 		this.tcpNoDelay = true;
 
@@ -286,9 +292,10 @@ public abstract class SshContext extends ProtocolContext implements
 	 * @param componentManager 
 	 * 
 	 * @throws IOException
+	 * @throws SshException 
 	 */
-	public SshContext(SshEngine daemon, ComponentManager componentManager) throws IOException {
-		this(componentManager);
+	public SshContext(SshEngine daemon, ComponentManager componentManager, SecurityLevel securityLevel) throws IOException, SshException {
+		this(componentManager, securityLevel);
 		init(daemon);
 	}
 	

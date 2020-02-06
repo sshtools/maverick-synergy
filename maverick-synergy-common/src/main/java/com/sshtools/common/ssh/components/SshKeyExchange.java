@@ -21,19 +21,17 @@ package com.sshtools.common.ssh.components;
 import java.io.IOException;
 import java.math.BigInteger;
 
-import com.sshtools.common.ssh.SshTransport;
+import com.sshtools.common.ssh.SecureComponent;
 import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.SshComponent;
-import com.sshtools.common.ssh.components.SshPrivateKey;
-import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.SshTransport;
 
 /**
  * Base interface for SSH2 key exchange implementations. 
  * @author Lee David Painter
  *
  */
-public interface SshKeyExchange<T extends SshContext> extends SshComponent {
+public interface SshKeyExchange<T extends SshContext> extends SshComponent, SecureComponent {
 
 	String getHashAlgorithm();
 	

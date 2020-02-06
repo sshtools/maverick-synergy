@@ -39,6 +39,7 @@ import javax.crypto.spec.DHPublicKeySpec;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.SshKeyExchangeClient;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.ssh.SshTransport;
@@ -97,8 +98,9 @@ public class DiffieHellmanGroupExchange extends SshKeyExchangeClient
 	/**
 	 * Construct an uninitialized instance.
 	 */
-	public DiffieHellmanGroupExchange(String kexAlgorithm, String hashAlgorithm) {
-		super(hashAlgorithm);
+	public DiffieHellmanGroupExchange(String kexAlgorithm, String hashAlgorithm, SecurityLevel securityLevel, int priority) {
+		super(hashAlgorithm, securityLevel, priority);
+		this.kexAlgorithm = kexAlgorithm;
 	}
 
 	/**

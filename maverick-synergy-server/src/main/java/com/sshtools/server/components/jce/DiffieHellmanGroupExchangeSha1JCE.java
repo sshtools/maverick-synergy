@@ -35,6 +35,7 @@ import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.ssh.SshTransport;
@@ -92,11 +93,11 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 	 * Construct an uninitialized instance.
 	 */
 	public DiffieHellmanGroupExchangeSha1JCE() {
-		super(JCEAlgorithms.JCE_SHA1);
+		super(JCEAlgorithms.JCE_SHA1, SecurityLevel.WEAK, 1000);
 	}
 
-	public DiffieHellmanGroupExchangeSha1JCE(String hashAlgorithm) {
-		super(hashAlgorithm);
+	public DiffieHellmanGroupExchangeSha1JCE(String hashAlgorithm, SecurityLevel securityLevel, int priority) {
+		super(hashAlgorithm, securityLevel, priority);
 	}
 
 	/**

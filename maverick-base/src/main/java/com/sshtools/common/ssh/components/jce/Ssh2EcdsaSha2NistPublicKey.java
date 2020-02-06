@@ -33,7 +33,7 @@ import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
 
 import com.sshtools.common.logger.Log;
-
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshKeyFingerprint;
 import com.sshtools.common.ssh.components.SshPublicKey;
@@ -74,6 +74,15 @@ public class Ssh2EcdsaSha2NistPublicKey implements SshPublicKey {
 		}
 	}
 
+	public SecurityLevel getSecurityLevel() {
+		return SecurityLevel.STRONG;
+	}
+
+	@Override
+	public int getPriority() {
+		return 2500;
+	}
+	
 	protected Ssh2EcdsaSha2NistPublicKey(String name, String spec, String curve, String nistpCurve) {
 		this.name = name;
 		this.spec = spec;

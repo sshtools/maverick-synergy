@@ -18,6 +18,7 @@
  */
 package com.sshtools.client.sftp;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -35,19 +36,25 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
 import com.sshtools.client.SshClient;
 import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.sftp.GlobSftpFileFilter;
+import com.sshtools.common.sftp.RegexSftpFileFilter;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.SftpFileFilter;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.EOLProcessor;
+import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
@@ -108,6 +115,7 @@ public class SftpClient {
 
 	private int outputEOL = EOL_CRLF;
 	private int inputEOL = EOLProcessor.TEXT_SYSTEM;
+	private boolean stripEOL = false;
 	private boolean forceRemoteEOL;
 	
 	private int transferMode = MODE_BINARY;
@@ -179,6 +187,15 @@ public class SftpClient {
 
 	}
 
+	/**
+	 * Strip all line endings in preference of the target system EOL setting.
+	 * 
+	 * @param stripEOL
+	 */
+	public void setStripEOL(boolean stripEOL) {
+		this.stripEOL = stripEOL;
+	}
+	
 	/**
 	 * <p>
 	 * When connected to servers running SFTP version 3 (or less) the remote EOL
@@ -689,7 +706,125 @@ public class SftpClient {
 		}
 		return files;
 	}
+	
+	public SftpFile[] ls(String filter, boolean regexFilter, int maximumFiles) throws SftpStatusException, SshException {
+		return ls("", filter, regexFilter, maximumFiles);
+	}
+	
+	public SftpFile[] ls(String path, String filter, boolean regexFilter, int maximumFiles) throws SftpStatusException, SshException {
+		String actual = resolveRemotePath(path);
 
+		if (Log.isDebugEnabled()) {
+			Log.debug("Listing files for {} with filter {}");
+		}
+
+		ByteArrayWriter msg = new ByteArrayWriter();
+		try {
+			msg.writeString(actual);
+			msg.writeString(filter);
+			msg.writeBoolean(regexFilter);
+
+			byte[] handle;
+			boolean localFiltering = false;
+			try {
+				handle = sftp.getHandleResponse(sftp.sendExtensionMessage(
+					"open-directory-with-filter@sshtools.com", 
+					msg.toByteArray()));
+			} catch(SftpStatusException e) {
+				if(Boolean.getBoolean("maverick.disableLocalFiltering")) {
+					throw new SshException("Remote server does not support server side filtering", SshException.UNSUPPORTED_OPERATION);
+				}
+				handle = sftp.openDirectory(actual).getHandle();
+			}
+			
+			SftpFileFilter f = null;
+			if(localFiltering) {
+				f = regexFilter ? new RegexSftpFileFilter(filter) : new GlobSftpFileFilter(filter);
+			}
+			SftpFile file = new SftpFile(actual, sftp.getAttributes(actual));
+			file.setHandle(handle);
+			file.setSFTPSubsystem(sftp);
+			
+			Vector<SftpFile> children = new Vector<SftpFile>();
+			Vector<SftpFile> tmp = new Vector<SftpFile>();
+			
+			int pageCount;
+			do {
+				pageCount = sftp.listChildren(file, tmp);
+				
+				if(pageCount > -1) {
+				if(!localFiltering) {
+					if (pageCount > -1 && Log.isDebugEnabled()) {
+						Log.debug("Got page of {} files for {} with filter {}", 
+								pageCount, actual, filter, localFiltering);
+					}
+					children.addAll(tmp);
+				} else {
+					if (pageCount > -1 && Log.isDebugEnabled()) {
+						Log.debug("Got page of {} files for {} before local filtering", 
+								pageCount, actual, filter, localFiltering);
+					}
+					int count = 0;
+					for(SftpFile t : tmp) {
+						if(f.matches(t.getFilename())) {
+							children.add(t);
+							count++;
+						}
+					}
+					if (pageCount > -1 && Log.isDebugEnabled()) {
+						Log.debug("Got page of {} files for {} after local filtering", 
+								count, actual, filter, localFiltering);
+					}
+				}
+				}
+			} while (pageCount > -1 && (maximumFiles == 0 || children.size() < maximumFiles));
+
+			file.close();
+			SftpFile[] files = new SftpFile[children.size()];
+			int index = 0;
+			for (Enumeration<SftpFile> e = children.elements(); e.hasMoreElements();) {
+				files[index++] = e.nextElement();
+			}
+			return files;
+
+		} catch (IOException e) {
+			throw new SshException(SshException.INTERNAL_ERROR, e);
+		} finally {
+			try {
+				msg.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+
+	/**
+	 * Return an iterator for the current working directory.
+	 * 
+	 * This method improves memory usage by only getting paged contents of the
+	 * directory.
+	 * 
+	 * @return
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	public Iterator<SftpFile> lsIterator() throws SftpStatusException, SshException {
+		return lsIterator(cwd);
+	}
+
+	/**
+	 * Return an iterator for the path provided.
+	 * 
+	 * This method improves memory usage by only getting paged contents of the
+	 * directory.
+	 * 
+	 * @param path
+	 * @return
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	public Iterator<SftpFile> lsIterator(String path) throws SftpStatusException, SshException {
+		return new DirectoryIterator(path);
+	}
 	/**
 	 * <p>
 	 * Changes the local working directory.
@@ -1402,7 +1537,7 @@ public class SftpClient {
 				// Default text mode handling for versions 3- of the SFTP
 				// protocol
 				int inputStyle = outputEOL;
-				int outputStyle = inputEOL;
+				int outputStyle = (stripEOL ? EOLProcessor.TEXT_ALL : inputEOL);
 	
 				byte[] nl = null;
 	
@@ -1632,6 +1767,16 @@ public class SftpClient {
 		put(local, remote, progress, false);
 	}
 
+	public void append(InputStream in, String remote)
+			throws SftpStatusException, SshException, TransferCancelledException {
+		put(in, remote, null, -1);
+	}
+	
+	public void append(InputStream in, String remote, FileTransferProgress progress)
+			throws SftpStatusException, SshException, TransferCancelledException {
+		put(in, remote, progress, -1);
+	}
+	
 	/**
 	 * <p>
 	 * Upload a file to the remote computer. If the paths provided are not
@@ -1712,6 +1857,31 @@ public class SftpClient {
 
 	}
 
+	public void append(String local, String remote)
+			throws FileNotFoundException, SftpStatusException, SshException, TransferCancelledException {
+		append(local, remote, null);
+	}
+	
+	public void append(String local, String remote, FileTransferProgress progress)
+			throws FileNotFoundException, SftpStatusException, SshException, TransferCancelledException {
+		File localPath = resolveLocalPath(local);
+
+		String remotePath = resolveRemotePath(remote);
+		stat(remotePath);
+
+		InputStream in = new FileInputStream(localPath);
+		
+		try {
+			append(in, remotePath, progress);
+
+		} finally {
+			try {
+				in.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+	
 	/**
 	 * Upload a file to the remote computer
 	 * 
@@ -1770,26 +1940,21 @@ public class SftpClient {
 		put(in, remote, progress, 0);
 	}
 
-	public void put(InputStream in, String remote,
-			FileTransferProgress progress, long position)
-			throws SftpStatusException, SshException,
-			TransferCancelledException {
+	public void put(InputStream in, String remote, FileTransferProgress progress, long position)
+			throws SftpStatusException, SshException, TransferCancelledException {
 		String remotePath = resolveRemotePath(remote);
 
 		SftpFileAttributes attrs = null;
 
-		SftpFile file;
-
 		if (transferMode == MODE_TEXT) {
 
 			// Default text mode handling for versions 3- of the SFTP protocol
-			int inputStyle = inputEOL;
+			int inputStyle = (stripEOL ? EOLProcessor.TEXT_ALL : inputEOL);
 			int outputStyle = outputEOL;
 
 			byte[] nl = null;
 
-			if (sftp.getVersion() <= 3
-					&& sftp.getExtension("newline@vandyke.com") != null) {
+			if (sftp.getVersion() <= 3 && sftp.getExtension("newline@vandyke.com") != null) {
 				nl = sftp.getExtension("newline@vandyke.com");
 			} else if (sftp.getVersion() > 3) {
 				nl = sftp.getCanonicalNewline();
@@ -1801,59 +1966,89 @@ public class SftpClient {
 			}
 
 			try {
-				in = EOLProcessor
-						.createInputStream(inputStyle, outputStyle, in);
+				in = EOLProcessor.createInputStream(inputStyle, outputStyle, in);
 			} catch (IOException ex) {
-				throw new SshException(
-						"Failed to create EOL processing stream",
-						SshException.INTERNAL_ERROR);
+				throw new SshException("Failed to create EOL processing stream", SshException.INTERNAL_ERROR);
 			}
 		}
 
-		attrs = new SftpFileAttributes(
-				SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR,
-				sftp.getCharsetEncoding());
-		
-		if(applyUmask) {
+		attrs = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR, "UTF-8");
+
+		if (applyUmask) {
 			attrs.setPermissions(new UnsignedInteger32(0666 ^ umask));
 		}
-		
+
 		if (position > 0) {
 
 			if (transferMode == MODE_TEXT && sftp.getVersion() > 3) {
-				throw new SftpStatusException(
-						SftpStatusException.SSH_FX_OP_UNSUPPORTED,
+				throw new SftpStatusException(SftpStatusException.SSH_FX_OP_UNSUPPORTED,
 						"Resume on text mode files is not supported");
 			}
 
-			file = sftp.openFile(remotePath, SftpChannel.OPEN_WRITE, attrs);
+			internalPut(in, remotePath, progress, position, SftpChannel.OPEN_WRITE, attrs);
 		} else {
-			if (transferMode == MODE_TEXT && sftp.getVersion() > 3) {
-				file = sftp.openFile(remotePath,
-						SftpChannel.OPEN_CREATE
-								| SftpChannel.OPEN_TRUNCATE
-								| SftpChannel.OPEN_WRITE
-								| SftpChannel.OPEN_TEXT, attrs);
+			
+			if(position==0) {
+				if (transferMode == MODE_TEXT && sftp.getVersion() > 3) {
+					internalPut(in, remotePath, progress, position, 
+							SftpChannel.OPEN_CREATE 
+							| SftpChannel.OPEN_TRUNCATE
+							| SftpChannel.OPEN_WRITE 
+							| SftpChannel.OPEN_TEXT, attrs);
+				} else {
+					internalPut(in, remotePath, progress, position, 
+							SftpChannel.OPEN_CREATE 
+							| SftpChannel.OPEN_TRUNCATE
+							| SftpChannel.OPEN_WRITE, attrs);
+				}
 			} else {
-				file = sftp.openFile(remotePath,
-						SftpChannel.OPEN_CREATE
-								| SftpChannel.OPEN_TRUNCATE
-								| SftpChannel.OPEN_WRITE, attrs);
+				/**
+				 * Negative position means append
+				 */
+				if (transferMode == MODE_TEXT && sftp.getVersion() > 3) {
+					internalPut(in, remotePath, progress, position, 
+							SftpChannel.OPEN_WRITE 
+							| SftpChannel.OPEN_TEXT
+						    | SftpChannel.OPEN_APPEND, attrs);
+				} else {
+					internalPut(in, remotePath, progress, position, 
+							SftpChannel.OPEN_WRITE
+							 | SftpChannel.OPEN_APPEND, attrs);
+				}
 			}
 		}
-
+	}
+	
+	private void internalPut(InputStream in,
+			String remotePath, 
+			FileTransferProgress progress,
+			long position,
+			int flags, SftpFileAttributes attrs)
+			throws SftpStatusException, SshException, TransferCancelledException {
+		
+		SftpFile file = sftp.openFile(remotePath, flags, attrs);
 		if (progress != null) {
 			try {
 				progress.started(in.available(), remotePath);
 			} catch (IOException ex1) {
-				throw new SshException("Failed to determine local file size",
-						SshException.INTERNAL_ERROR);
+				throw new SshException("Failed to determine local file size", SshException.INTERNAL_ERROR);
 			}
 		}
 
 		try {
-			sftp.performOptimizedWrite(file.getHandle(), blocksize,
-					asyncRequests, in, buffersize, progress, position);
+			sftp.performOptimizedWrite(file.getHandle(), blocksize, asyncRequests, in, buffersize, progress, position < 0 ? 0 : position);
+		} catch (SftpStatusException e) {
+			Log.error("SFTP status exception during transfer [" + e.getStatus() + "]", e);
+			throw e;
+		} catch (SshException e) {
+			Log.error("SSH exception during transfer [" + e.getReason() + "]", e);
+			if (e.getCause() != null) {
+				Log.error("SSH exception cause", e.getCause());
+			}
+			throw e;
+		} catch (TransferCancelledException e) {
+			Log.error("Transfer cancelled", e);
+			throw e;
 		} finally {
 			try {
 				in.close();
@@ -1865,7 +2060,6 @@ public class SftpClient {
 		if (progress != null) {
 			progress.completed();
 		}
-
 	}
 
 	/**
@@ -2057,6 +2251,52 @@ public class SftpClient {
 	}
 
 	/**
+	 * Rename a file on the remote computer, optionally using posix semantics that allow files to be renamed
+	 * even if the destination path exists. The server must support posix-rename@openssh.com SFTP extension in 
+	 * order to use the posix operation.
+	 * @param oldpath
+	 * @param newpath
+	 * @param posix
+	 * @throws IOException
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	public void rename(String oldpath, String newpath, boolean posix) throws IOException, SftpStatusException, SshException {
+		
+		if(posix) {
+			ByteArrayWriter msg = new ByteArrayWriter();
+			
+			try {
+				msg.writeString(resolveRemotePath(oldpath));
+				msg.writeString(resolveRemotePath(newpath));
+		
+				sftp.getOKRequestStatus(sftp.sendExtensionMessage("posix-rename@openssh.com", msg.toByteArray()));
+
+			} finally {
+				msg.close();
+			}
+		} else {
+			rename(oldpath, newpath);
+		}
+	}
+	
+	public void copyRemoteFile(String sourceFile, String destinationFile, boolean overwriteDestination) throws SftpStatusException, SshException, IOException {
+		
+		ByteArrayWriter msg = new ByteArrayWriter();
+		
+		try {
+			msg.writeString(resolveRemotePath(sourceFile));
+			msg.writeString(resolveRemotePath(destinationFile));
+			msg.writeBoolean(overwriteDestination);
+			
+			sftp.getOKRequestStatus(sftp.sendExtensionMessage("copy-file", msg.toByteArray()));
+
+		} finally {
+			msg.close();
+		}
+	}
+	
+	/**
 	 * <p>
 	 * Rename a file on the remote computer.
 	 * </p>
@@ -2085,7 +2325,7 @@ public class SftpClient {
 		}
 
 		if (attrs != null && attrs.isDirectory()) {
-			sftp.renameFile(from, to);
+			sftp.renameFile(from, FileUtils.checkEndsWithSlash(to) + FileUtils.lastPathElement(from));
 		} else {
 			throw new SftpStatusException(
 					SftpStatusException.SSH_FX_FILE_ALREADY_EXISTS, newpath
@@ -2293,9 +2533,8 @@ public class SftpClient {
 			msg.writeUINT64(length);
 			msg.writeBinaryString(digest);
 
-			SftpMessage resp = sftp.sendExtensionMessage("md5-hash", msg.toByteArray());
-			
-			byte[] remoteHash = resp.readBinaryString();
+
+			byte[] remoteHash = getRemoteHash(remoteFile, offset, length, digest);
 			md.reset();
 			dis = new DigestInputStream(new FileInputStream(local), md);
 			while(dis.read(buf) > -1);
@@ -2321,9 +2560,54 @@ public class SftpClient {
 			}
 		}
 
-		
-		
 	}
+
+	public byte[] getRemoteHash(String remoteFile) throws IOException, SftpStatusException, SshException {
+		return getRemoteHash(remoteFile, 0, 0, new byte[0]);
+	}
+	
+	public byte[] getRemoteHash(String remoteFile, long offset, long length, byte[] quickCheck) throws IOException, SftpStatusException, SshException {
+		ByteArrayWriter msg = new ByteArrayWriter();
+		
+		try {
+			msg.writeString(resolveRemotePath(remoteFile));
+			msg.writeUINT64(offset);
+			msg.writeUINT64(length);
+			msg.writeBinaryString(quickCheck);
+	
+			SftpMessage resp = sftp.getExtensionResponse(sftp.sendExtensionMessage("md5-hash", msg.toByteArray()));
+	
+			resp.readString();
+			return resp.readBinaryString();
+		} finally {
+			msg.close();
+		}
+
+	}
+	
+	public byte[] getRemoteHash(byte[] handle) throws IOException, SftpStatusException, SshException {
+		return getRemoteHash(handle, 0, 0, new byte[0]);
+	}
+	
+	public byte[] getRemoteHash(byte[] handle, long offset, long length, byte[] quickCheck) throws IOException, SftpStatusException, SshException {
+		ByteArrayWriter msg = new ByteArrayWriter();
+		
+		try {
+			msg.writeBinaryString(handle);
+			msg.writeUINT64(offset);
+			msg.writeUINT64(length);
+			msg.writeBinaryString(quickCheck);
+	
+			SftpMessage resp = sftp.getExtensionResponse(sftp.sendExtensionMessage("md5-hash-handle", msg.toByteArray()));
+	
+			resp.readString();
+			return resp.readBinaryString();
+		} finally {
+			msg.close();
+		}
+
+	}
+	
 	/**
 	 * <p>
 	 * Close the SFTP client.
@@ -3301,6 +3585,78 @@ public class SftpClient {
 		public void close() throws IOException {
 			file.close();
 		}
+	}
+	
+	class DirectoryIterator implements Iterator<SftpFile> {
+
+		SftpFile currentFolder;
+		Vector<SftpFile> currentPage = new Vector<SftpFile>();
+		Iterator<SftpFile> currentIterator;
+
+		DirectoryIterator(String path) throws SftpStatusException, SshException {
+
+			String actual = resolveRemotePath(path);
+
+			if (Log.isDebugEnabled())
+				Log.debug("Listing files for " + actual);
+
+			currentFolder = sftp.openDirectory(actual);
+
+			try {
+				getNextPage();
+			} catch (EOFException e) {
+			}
+
+		}
+
+		private void getNextPage() throws SftpStatusException, SshException, EOFException {
+			currentPage.clear();
+			int ret = sftp.listChildren(currentFolder, currentPage);
+			if (ret == -1) {
+				currentIterator = null;
+				throw new EOFException();
+			}
+			currentIterator = currentPage.iterator();
+		}
+
+		@Override
+		public boolean hasNext() {
+			if (currentIterator != null && currentIterator.hasNext()) {
+				return true;
+			}
+			return false;
+		}
+
+		@Override
+		public SftpFile next() {
+			if (currentIterator == null) {
+				throw new NoSuchElementException();
+			}
+
+			SftpFile ret = null;
+			if (currentIterator.hasNext()) {
+				ret = currentIterator.next();
+			}
+
+			if (!currentIterator.hasNext()) {
+				try {
+					getNextPage();
+				} catch (EOFException e) {
+					if (ret == null) {
+						throw new NoSuchElementException();
+					}
+				} catch (SftpStatusException | SshException e) {
+					throw new NoSuchElementException(e.getMessage());
+				}
+
+				if (ret == null) {
+					ret = currentIterator.next();
+				}
+			}
+
+			return ret;
+		}
+
 	}
 
 }

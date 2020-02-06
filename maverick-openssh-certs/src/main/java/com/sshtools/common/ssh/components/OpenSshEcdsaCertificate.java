@@ -33,14 +33,12 @@ import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
 
 import com.sshtools.common.logger.Log;
-
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshKeyFingerprint;
-import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.jce.ECUtils;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
-import com.sshtools.common.ssh.components.jce.OpenSshCertificate;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.SimpleASNWriter;
@@ -57,6 +55,7 @@ public class OpenSshEcdsaCertificate extends OpenSshCertificate implements SshPu
 	protected ECPublicKey pub;
 
 	public OpenSshEcdsaCertificate(ECPublicKey pub, String curve) throws IOException {
+		super(SecurityLevel.STRONG, 2000);
 		this.pub = pub;
 		if (curve.equals("prime256v1") || curve.equals("secp256r1")) {
 			this.curve = "secp256r1";
@@ -76,6 +75,7 @@ public class OpenSshEcdsaCertificate extends OpenSshCertificate implements SshPu
 	}
 
 	OpenSshEcdsaCertificate(String name, String spec, String curve) {
+		super(SecurityLevel.STRONG, 2000);
 		this.name = name;
 		this.spec = spec;
 		this.curve = curve;

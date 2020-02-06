@@ -457,6 +457,10 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 
 	protected void initializeSsh2CipherFactory(ComponentFactory<SshCipher> ciphers) {
 
+		if (testJCECipher("chacha20-poly1305@openssh.com", ChaCha20Poly1305.class)) {
+			ciphers.add("chacha20-poly1305@openssh.com", ChaCha20Poly1305.class);
+		}
+		
 		if (testJCECipher("aes128-ctr", AES128Ctr.class)) {
 			ciphers.add("aes128-ctr", AES128Ctr.class);
 		}

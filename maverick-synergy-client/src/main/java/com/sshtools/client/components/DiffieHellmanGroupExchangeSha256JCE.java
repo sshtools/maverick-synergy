@@ -18,6 +18,7 @@
  */
 package com.sshtools.client.components;
 
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 
 /**
@@ -36,7 +37,7 @@ public class DiffieHellmanGroupExchangeSha256JCE extends DiffieHellmanGroupExcha
 	 * Construct an uninitialized instance.
 	 */
 	public DiffieHellmanGroupExchangeSha256JCE() {
-		super(DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA256, JCEAlgorithms.JCE_SHA256);
+		super(DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA256, JCEAlgorithms.JCE_SHA256, SecurityLevel.STRONG, 2003);
 	}
 
 }

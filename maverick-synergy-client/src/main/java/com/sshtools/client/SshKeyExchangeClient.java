@@ -21,8 +21,9 @@ package com.sshtools.client;
 import java.io.IOException;
 import java.math.BigInteger;
 
-import com.sshtools.common.ssh.SshTransport;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.SshTransport;
 import com.sshtools.common.ssh.components.Digest;
 import com.sshtools.common.ssh.components.SshKeyExchange;
 import com.sshtools.common.ssh.components.SshPublicKey;
@@ -64,6 +65,8 @@ public abstract class SshKeyExchangeClient implements SshKeyExchange<SshClientCo
     protected BigInteger e = null;
     protected BigInteger f = null;
     
+    final private SecurityLevel securityLevel;
+    final int priority;
     /**
      * The transport protocol for sending/receiving messages
      */
@@ -74,8 +77,19 @@ public abstract class SshKeyExchangeClient implements SshKeyExchange<SshClientCo
     /**
      * Contruct an uninitialized key exchange
      */
-    public SshKeyExchangeClient(String hashAlgorithm) {
+    public SshKeyExchangeClient(String hashAlgorithm, SecurityLevel securityLevel, int priority) {
     		this.hashAlgorithm = hashAlgorithm;
+    		this.securityLevel = securityLevel;
+    		this.priority = priority;
+    }
+    
+    public SecurityLevel getSecurityLevel() {
+    	return securityLevel;
+    }
+    
+
+    public int getPriority() {
+    	return priority;
     }
 
     public void setReceivedNewKeys(boolean receivedNewKeys) {

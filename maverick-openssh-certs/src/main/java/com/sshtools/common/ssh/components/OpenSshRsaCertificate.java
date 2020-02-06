@@ -34,13 +34,11 @@ import java.security.spec.RSAPublicKeySpec;
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshKeyFingerprint;
-import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.ssh.components.SshRsaPublicKey;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
-import com.sshtools.common.ssh.components.jce.OpenSshCertificate;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 
@@ -62,14 +60,17 @@ public class OpenSshRsaCertificate extends OpenSshCertificate implements SshRsaP
 	 * 
 	 */
 	public OpenSshRsaCertificate() {
+		super(SecurityLevel.STRONG, 2000);
 	}
 
 	public OpenSshRsaCertificate(RSAPublicKey pubKey) {
+		super(SecurityLevel.STRONG, 2000);
 		this.pubKey = pubKey;
 	}
 
 	public OpenSshRsaCertificate(BigInteger modulus, BigInteger publicExponent)
 			throws NoSuchAlgorithmException, InvalidKeySpecException {
+		super(SecurityLevel.STRONG, 2000);
 		KeyFactory keyFactory = JCEProvider
 				.getProviderForAlgorithm(JCEAlgorithms.JCE_RSA) == null ? KeyFactory
 				.getInstance(JCEAlgorithms.JCE_RSA) : KeyFactory.getInstance(

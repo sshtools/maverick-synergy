@@ -20,6 +20,8 @@ package com.sshtools.common.ssh.components;
 
 import java.io.IOException;
 
+import com.sshtools.common.ssh.SecurityLevel;
+
 /**
  * <p>This special cipher implementation provides an unencrypted connection. This
  * is not enabled by default and should be used with caution. To enable 
@@ -40,7 +42,7 @@ import java.io.IOException;
  */
 public class NoneCipher extends SshCipher {
     public NoneCipher() {
-        super("none");
+        super("none", SecurityLevel.NONE, 0);
     }
 
     /**

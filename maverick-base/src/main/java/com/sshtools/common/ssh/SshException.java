@@ -175,6 +175,11 @@ public class SshException extends Exception {
 	 */
 	public static final int HOST_KEY_ERROR = 0xF000;
 
+	/**
+	 * An operation was not supported
+	 */
+	public static final int UNSUPPORTED_OPERATION = 0xE007;
+	
 	int reason;
 	Throwable cause;
 

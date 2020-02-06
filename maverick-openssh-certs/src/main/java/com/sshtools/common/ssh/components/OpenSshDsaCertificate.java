@@ -32,14 +32,11 @@ import java.security.spec.KeySpec;
 import java.util.Random;
 
 import com.sshtools.common.publickey.SshKeyPairGenerator;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshKeyFingerprint;
-import com.sshtools.common.ssh.components.SshDsaPublicKey;
-import com.sshtools.common.ssh.components.SshKeyPair;
-import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
-import com.sshtools.common.ssh.components.jce.OpenSshCertificate;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.SimpleASNWriter;
@@ -52,16 +49,18 @@ public class OpenSshDsaCertificate extends OpenSshCertificate implements SshDsaP
 	protected DSAPublicKey pubkey;
 
 	public OpenSshDsaCertificate() {
+		super(SecurityLevel.WEAK, 0);
 	}
 
 	public OpenSshDsaCertificate(DSAPublicKey pub) {
+		super(SecurityLevel.WEAK, 0);
 		this.pubkey = pub;
 	}
 
 	public OpenSshDsaCertificate(BigInteger p, BigInteger q, BigInteger g,
 			BigInteger y) throws NoSuchAlgorithmException,
 			InvalidKeySpecException {
-
+		super(SecurityLevel.WEAK, 0);
 		KeyFactory keyFactory = JCEProvider
 				.getProviderForAlgorithm(JCEAlgorithms.JCE_DSA) == null ? KeyFactory
 				.getInstance(JCEAlgorithms.JCE_DSA) : KeyFactory.getInstance(

@@ -30,6 +30,7 @@ import javax.crypto.ShortBufferException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.components.SshCipher;
 
 /**
@@ -52,8 +53,8 @@ public class AbstractJCECipher extends SshCipher {
    * @param keyspec the value passed into the constructor of SecretKeySpec.
    * @param keylength int the length in bytes of the key
    */
-  public AbstractJCECipher(String spec, String keyspec, int keylength, String algorithm) throws IOException {
-    super(algorithm);
+  public AbstractJCECipher(String spec, String keyspec, int keylength, String algorithm, SecurityLevel securityLevel, int priority) throws IOException {
+    super(algorithm, securityLevel, priority);
     this.spec = spec;
     this.keylength = keylength;
     this.keyspec = keyspec;

@@ -50,6 +50,7 @@ import com.sshtools.common.ssh.ConnectionManager;
 import com.sshtools.common.ssh.ConnectionStateListener;
 import com.sshtools.common.ssh.ForwardingManager;
 import com.sshtools.common.ssh.GlobalRequestHandler;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.ComponentFactory;
@@ -100,13 +101,17 @@ public class SshServerContext extends SshContext {
 	
 	private static ComponentFactory<SshKeyExchange<SshServerContext>> verifiedKeyExchanges;
 	
-	public SshServerContext(SshEngine engine, ComponentManager componentManager) throws IOException {
-		super(engine, componentManager);
+	public SshServerContext(SshEngine engine) throws IOException, SshException {
+		this(engine, SecurityLevel.STRONG);
+	}
+	
+	public SshServerContext(SshEngine engine, ComponentManager componentManager, SecurityLevel securityLevel) throws IOException, SshException {
+		super(engine, componentManager, securityLevel);
 		setAuthenicationMechanismFactory(new DefaultAuthenticationMechanismFactory<>());
 	}
 
-	public SshServerContext(SshEngine engine) throws IOException {
-		this(engine, ComponentManager.getDefaultInstance());
+	public SshServerContext(SshEngine engine, SecurityLevel securityLevel) throws IOException, SshException {
+		this(engine, ComponentManager.getDefaultInstance(), securityLevel);
 	}
 	
 	public ConnectionManager<SshServerContext> getConnectionManager() {

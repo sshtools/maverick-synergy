@@ -21,6 +21,7 @@ package com.sshtools.common.ssh.components.jce;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 
 
@@ -32,7 +33,7 @@ import com.sshtools.common.ssh.SshException;
 public class HmacSha1ETM extends AbstractHmac {
 
 	public HmacSha1ETM() {
-		super(JCEAlgorithms.JCE_HMACSHA1, 20);
+		super(JCEAlgorithms.JCE_HMACSHA1, 20, SecurityLevel.WEAK, 6);
 	}
 	
 	public String getAlgorithm() {

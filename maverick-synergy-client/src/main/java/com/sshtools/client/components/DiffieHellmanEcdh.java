@@ -34,6 +34,7 @@ import javax.crypto.KeyAgreement;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.SshKeyExchangeClient;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.ssh.SshTransport;
@@ -72,8 +73,8 @@ public class DiffieHellmanEcdh extends SshKeyExchangeClient implements
 	KeyAgreement keyAgreement;
 	KeyPair keyPair;
 	
-	protected DiffieHellmanEcdh(String name, String curve, String hashAlgorithm) {
-		super(hashAlgorithm);
+	protected DiffieHellmanEcdh(String name, String curve, String hashAlgorithm, SecurityLevel securityLevel, int priority) {
+		super(hashAlgorithm, securityLevel, priority);
 		this.name = name;
 		this.curve = curve;
 	}

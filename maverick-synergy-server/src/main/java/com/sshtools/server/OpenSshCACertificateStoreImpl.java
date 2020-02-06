@@ -27,8 +27,8 @@ import java.util.Set;
 import com.sshtools.common.auth.AbstractPublicKeyAuthenticationProvider;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshCertificate;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.ssh.components.jce.OpenSshCertificate;
 
 public class OpenSshCACertificateStoreImpl extends AbstractPublicKeyAuthenticationProvider {
 
@@ -52,13 +52,13 @@ public class OpenSshCACertificateStoreImpl extends AbstractPublicKeyAuthenticati
 	
 	public boolean isAuthorizedKey(SshPublicKey key, SshConnection con) {
 		
-		if(!(key instanceof OpenSshCertificate)) {
+		if(!(key.isCertificate())) {
 			return false;
 		}
 		
-		OpenSshCertificate cert = (OpenSshCertificate) key;
+		SshCertificate cert = (SshCertificate) key;
 		
-		if(cert.getType()!=OpenSshCertificate.SSH_CERT_TYPE_USER) {
+		if(cert.getType()!=SshCertificate.SSH_CERT_TYPE_USER) {
 			return false;
 		}
 		

@@ -19,13 +19,20 @@
 /* HEADER */
 package com.sshtools.common.ssh.components;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import com.sshtools.common.ssh.SecureComponent;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 
 /**
@@ -43,8 +50,8 @@ public class ComponentFactory<T> implements Cloneable {
 	 * component name such as "3des-cbc" and a Class value storing the
 	 * implementation class.
 	 */
-	protected Hashtable<String, Class<? extends T>> supported = new Hashtable<String, Class<? extends T>>();
-	protected Vector<String> order = new Vector<String>();
+	protected Map<String, Class<? extends T>> supported = new HashMap<>();
+	protected List<String> order = new ArrayList<>();
 
 	private boolean locked = false;
 	private ComponentManager componentManager;
@@ -71,16 +78,16 @@ public class ComponentFactory<T> implements Cloneable {
 
 		int currentLocation = order.indexOf(name);
 		if (currentLocation < position) {
-			order.insertElementAt(name, position);
+			order.add(position, name);
 			if(currentLocation > 0) {
-			  order.removeElementAt(currentLocation);
+			  order.remove(currentLocation);
 			}
 		} else {
-			order.removeElementAt(currentLocation);
-			order.insertElementAt(name, position);
+			order.remove(currentLocation);
+			order.add(position, name);
 		}
 
-		return (String) order.elementAt(0);
+		return (String) order.get(0);
 	}
 	
 	public Collection<String> names() {
@@ -120,22 +127,22 @@ public class ComponentFactory<T> implements Cloneable {
 				throw new SshException("index out of bounds",
 						SshException.BAD_API_USAGE);
 			}
-			order.insertElementAt(order.elementAt(ordering[i]), order.size());
+			order.add(order.size(), order.get(ordering[i]));
 		}
 		// sort ordering indices so that remove lowest indices first
 		Arrays.sort(ordering);
 		// remove from order starting from end
 		for (int i = (ordering.length - 1); i >= 0; i--) {
-			order.removeElementAt(ordering[i]);
+			order.remove(ordering[i]);
 		}
 		// move ones moved to end to beginning starting from end
 		for (int i = 0; i < ordering.length; i++) {
-			String element = order.elementAt(order.size() - 1);
-			order.removeElementAt(order.size() - 1);
-			order.insertElementAt(element, 0);
+			String element = order.get(order.size() - 1);
+			order.remove(order.size() - 1);
+			order.add(0, element);
 		}
 
-		return order.elementAt(0);
+		return order.get(0);
 	}
 
 	/**
@@ -199,7 +206,7 @@ public class ComponentFactory<T> implements Cloneable {
 		supported.put(name, cls);
 		// add name to end of order vector
 		if (!order.contains(name))
-			order.addElement(name);
+			order.add(name);
 	}
 
 	/**
@@ -251,12 +258,12 @@ public class ComponentFactory<T> implements Cloneable {
 		}
 
 		for (int i = 0; i < order.size(); i++) {
-			if (prefIndex == i || isDisabled(order.elementAt(i))) {
+			if (prefIndex == i || isDisabled(order.get(i))) {
 				continue;
 			}
 			boolean ignoreItem = false;
 			for(String ignore : ignores) {
-				if(order.elementAt(i).equals(ignore)) {
+				if(order.get(i).equals(ignore)) {
 					ignoreItem = true;
 					break;
 				}
@@ -265,7 +272,7 @@ public class ComponentFactory<T> implements Cloneable {
 				if(listBuf.length() > 0) {
 					listBuf.append(",");
 				}
-				listBuf.append((String) order.elementAt(i));
+				listBuf.append((String) order.get(i));
 			}
 		}
 
@@ -284,7 +291,7 @@ public class ComponentFactory<T> implements Cloneable {
 	public synchronized void remove(String name) {
 
 		// remove name from order vector
-		order.removeElement(name);
+		order.remove(name);
 	}
 
 	/**
@@ -299,15 +306,14 @@ public class ComponentFactory<T> implements Cloneable {
 
 		supported.clear();
 		// clear order vector
-		order.removeAllElements();
+		order.clear();
 	}
 
 	@SuppressWarnings("unchecked")
 	public Object clone() {
 		ComponentFactory<T> clone = new ComponentFactory<T>(componentManager);
-		clone.order = (Vector<String>) order.clone();
-		clone.supported = (Hashtable<String, Class<? extends T>>) supported
-				.clone();
+		clone.order = new ArrayList<>(order);
+		clone.supported = new HashMap<>(supported);
 		return clone;
 	}
 
@@ -324,8 +330,7 @@ public class ComponentFactory<T> implements Cloneable {
 				v.add(name);
 		}
 
-		for (Enumeration<String> e = supported.keys(); e.hasMoreElements();) {
-			String name = (String) e.nextElement();
+		for (String name : supported.keySet()) {
 			if (!v.contains(name)) {
 				remove(name);
 			}
@@ -334,5 +339,50 @@ public class ComponentFactory<T> implements Cloneable {
 
 	public void lockComponents() {
 		this.locked = true;
+	}
+	
+	public void configureSecurityLevel(SecurityLevel securityLevel) throws SshException {
+		
+		List<SecureComponent> list = new ArrayList<>();
+		for (String name : supported.keySet()) {
+			SecureComponent o = (SecureComponent) getInstance(name);
+			if(o.getSecurityLevel().ordinal() < securityLevel.ordinal()) {
+				remove(name);
+			} else {
+				list.add(o);
+			}
+		}
+		
+		list.sort(new Comparator<SecureComponent>() {
+			@Override
+			public int compare(SecureComponent o1, SecureComponent o2) {
+				return new Integer(o2.getPriority()).compareTo(o1.getPriority());
+			}
+		});
+		
+		Vector<String> newOrder = new Vector<String>();
+		
+		for(SecureComponent alg : list) {
+			newOrder.add(alg.getAlgorithm());
+		}
+		
+		if(newOrder.size() == 0) {
+			throw new SshException("No algorithms supported",
+					SshException.BAD_API_USAGE);
+		}
+		
+		order = newOrder;
+	}
+	
+	public boolean hasComponents() {
+		return !supported.isEmpty();
+	}
+
+	public Collection<String> order() {
+		return order;
+	}
+
+	public String list() {
+		return list("");
 	}
 }

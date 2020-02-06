@@ -21,6 +21,7 @@ package com.sshtools.common.ssh.components;
 
 import java.security.Key;
 
+import com.sshtools.common.ssh.SecureComponent;
 import com.sshtools.common.ssh.SshException;
 
 
@@ -28,7 +29,7 @@ import com.sshtools.common.ssh.SshException;
  * <p>Interface for SSH supported public keys.</p>
  * @author Lee David Painter
  */
-public interface SshPublicKey {
+public interface SshPublicKey extends SecureComponent {
 
   /**
    * Initialize the public key from a blob of binary data.
@@ -97,5 +98,17 @@ public interface SshPublicKey {
    */
   public String test();
 
+  /**
+   * Return the JCE component for this key.
+   * @return
+   */
   public Key getJCEPublicKey();
+
+  /**
+   * Indicates if this key is part of a certificate.
+   * @return
+   */
+  public default boolean isCertificate() {
+	return false;
+}
 }

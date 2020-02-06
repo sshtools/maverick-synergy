@@ -24,10 +24,16 @@ public interface SftpExtension {
 
 	public static final int SSH_FXP_EXTENDED_REPLY = 201;
 	
-	void processMessage(ByteArrayReader msg, int requestId, SftpSpecification sftp);
+	void processMessage(ByteArrayReader msg, int requestId, SftpSubsystem sftp);
 
 	boolean supportsExtendedMessage(int messageId);
 
-	void processExtendedMessage(ByteArrayReader msg, SftpSpecification sftp);
+	void processExtendedMessage(ByteArrayReader msg, SftpSubsystem sftp);
+
+	boolean isDeclaredInVersion();
+
+	byte[] getDefaultData();
+
+	String getName();
 
 }

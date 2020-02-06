@@ -1318,6 +1318,10 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.writeUINT64(offset);
 			msg.writeInt(len);
 
+			if(Log.isDebugEnabled()) {
+				Log.debug(String.format("Sending SSH_FXP_READ channel=%d requestId=%s offset=%s blocksize=%d",
+				 						session.getLocalId(), requestId.toString(), offset, len));		
+				 			}
 			sendMessage(msg);
 
 			return requestId;
@@ -1370,6 +1374,11 @@ public class SftpChannel extends AbstractSubsystem {
 				if (bar.getType() == SSH_FXP_DATA) {
 					byte[] msgdata = bar.readBinaryString();
 					System.arraycopy(msgdata, 0, output, off, msgdata.length);
+					
+					if(Log.isDebugEnabled()) {
+						Log.debug(String.format("Received SSH_FXP_DATA channel=%d requestId=%s offset=%s blocksize=%d",
+						 		session.getLocalId(), requestId.toString(), offset.toString(), msgdata.length));		
+						 				}
 					return msgdata.length;
 				} else if (bar.getType() == SSH_FXP_STATUS) {
 					int status = (int) bar.readInt();
@@ -2420,12 +2429,16 @@ public class SftpChannel extends AbstractSubsystem {
 			throw new SshException(ex);
 		}
 	}
-
-	byte[] getHandleResponse(UnsignedInteger32 requestId)
+	
+	public byte[] getHandleResponse(UnsignedInteger32 requestId)
+			throws SftpStatusException, SshException {
+		return getHandleResponse(getResponse(requestId));
+	}
+	
+	public byte[] getHandleResponse(SftpMessage bar)
 			throws SftpStatusException, SshException {
 
 		try {
-			SftpMessage bar = getResponse(requestId);
 			if (bar.getType() == SSH_FXP_HANDLE) {
 				return bar.readBinaryString();
 			} else if (bar.getType() == SSH_FXP_STATUS) {
@@ -2448,7 +2461,6 @@ public class SftpChannel extends AbstractSubsystem {
 			throw new SshException(ex);
 		}
 	}
-
 
 	SftpMessage getExtensionResponse(UnsignedInteger32 requestId)
 			throws SftpStatusException, SshException {
@@ -2492,7 +2504,7 @@ public class SftpChannel extends AbstractSubsystem {
 	 * @throws SshException
 	 * @throws SftpStatusException
 	 */
-	public SftpMessage sendExtensionMessage(String request, byte[] requestData)
+	public UnsignedInteger32 sendExtensionMessage(String request, byte[] requestData)
 			throws SshException, SftpStatusException {
 
 		try {
@@ -2505,7 +2517,7 @@ public class SftpChannel extends AbstractSubsystem {
 			
 			sendMessage(packet);
 
-			return getExtensionResponse(id);
+			return id;
 			
 		} catch (IOException ex) {
 			throw new SshException(SshException.INTERNAL_ERROR, ex);

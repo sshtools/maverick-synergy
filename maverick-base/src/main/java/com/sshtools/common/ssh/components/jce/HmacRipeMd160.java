@@ -21,6 +21,7 @@ package com.sshtools.common.ssh.components.jce;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 
 
@@ -32,11 +33,11 @@ import com.sshtools.common.ssh.SshException;
 public class HmacRipeMd160 extends AbstractHmac {
 
 	public HmacRipeMd160() {
-		super(JCEAlgorithms.JCE_HMACRIPEMD160, 20);
+		super(JCEAlgorithms.JCE_HMACRIPEMD160, 20, SecurityLevel.WEAK, 1);
 	}
 	
 	protected HmacRipeMd160(int size) {
-		super(JCEAlgorithms.JCE_HMACRIPEMD160, 20, size);
+		super(JCEAlgorithms.JCE_HMACRIPEMD160, 20, size, SecurityLevel.WEAK, 1);
 	}
 
 	

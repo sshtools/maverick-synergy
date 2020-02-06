@@ -211,8 +211,12 @@ public final class AbstractFileSystem {
 	}
 
 	public byte[] openDirectory(String path) throws PermissionDeniedException, FileNotFoundException, IOException {
+		return openDirectory(path, null);
+	}
+	
+	public byte[] openDirectory(String path, SftpFileFilter filter) throws PermissionDeniedException, FileNotFoundException, IOException {
 
-		if(Log.isDebugEnabled())
+		if (Log.isDebugEnabled())
 			Log.debug("Opening directory for " + path);
 
 		AbstractFile f = resolveFile(path, con);
@@ -224,7 +228,7 @@ public final class AbstractFileSystem {
 		if (f.exists()) {
 			if (f.isDirectory()) {
 				byte[] handle = createHandle();
-				openDirectories.put(getHandle(handle), new OpenDirectory(f));
+				openDirectories.put(getHandle(handle), new OpenDirectory(f, filter));
 				return handle;
 			}
 
@@ -257,39 +261,40 @@ public final class AbstractFileSystem {
 
 	public SftpFile[] readDirectory(byte[] handle)
 			throws InvalidHandleException, EOFException, IOException, PermissionDeniedException {
+
 		String shandle = getHandle(handle);
 
 		if (openDirectories.containsKey(shandle)) {
 			OpenDirectory dir = openDirectories.get(shandle);
 
-			if(Log.isDebugEnabled())
+			if (Log.isDebugEnabled())
 				Log.debug("Read directory for " + dir.getFile().getAbsolutePath());
 
 			int pos = dir.getPosition();
 			AbstractFile[] children = dir.getChildren();
-
-			if (children == null) {
+			
+			if (dir.children == null) {
 				throw new IOException("Permission denined.");
 			}
 
-			int count = ((children.length - pos) < 100) ? (children.length - pos) : 100;
-
-			if (count > 0) {
-				Vector<SftpFile> files = new Vector<SftpFile>();
-
-				for (int i = 0; i < count; i++) {
-					AbstractFile f = children[pos + i];
+			Vector<SftpFile> files = new Vector<SftpFile>();
+			while(files.size() < 100 && pos < children.length) {
+				AbstractFile f = children[pos++];
+				if(dir.getFilter()==null || dir.getFilter().matches(f.getName())) {
 					SftpFile sftpfile = new SftpFile(f.getName(), f.getAttributes());
 					files.add(sftpfile);
 				}
-
-				dir.readpos = pos + files.size();
+			}
+			
+			dir.readpos = pos;
+			
+			if(files.size() > 0) {
 				SftpFile[] sf = new SftpFile[files.size()];
 				files.copyInto(sf);
 				return sf;
+			} else {
+				throw new EOFException("There are no more files");
 			}
-
-			throw new EOFException("There are no more files");
 		}
 
 		throw new InvalidHandleException("Handle is not an open directory");
@@ -494,6 +499,31 @@ public final class AbstractFileSystem {
 		} else {
 			throw new FileNotFoundException(oldpath + " does not exist");
 		}
+	}
+	
+	public void copyFile(String oldpath, String newpath, boolean overwrite) 
+			throws PermissionDeniedException, FileNotFoundException, IOException {
+		
+		AbstractFile f1 = fileFactory.getFile(oldpath, con);
+		AbstractFile f2 = fileFactory.getFile(newpath, con);
+
+		if(!f1.exists()) {
+			throw new FileNotFoundException(oldpath + " does not exist");
+		}
+		
+		if(f2.exists() && f2.isDirectory()) {
+			f2 = fileFactory.getFile(FileUtils.checkEndsWithSlash(f2.getAbsolutePath()) + f1.getName(), con);
+		}
+		
+		if(f2.exists() && !overwrite) {
+			throw new PermissionDeniedException("File already exists " + newpath);
+		}
+
+		if (f2.exists() && !f2.isWritable()) {
+			throw new PermissionDeniedException("User does not have permission to write " + newpath);
+		}
+
+		f2.copyFrom(f1);
 	}
 
 	public String getDefaultPath() throws IOException, PermissionDeniedException {
@@ -726,9 +756,11 @@ public final class AbstractFileSystem {
 		AbstractFile f;
 		AbstractFile[] children;
 		int readpos = 0;
+		SftpFileFilter filter;
 
-		public OpenDirectory(AbstractFile f) throws IOException, PermissionDeniedException {
+		public OpenDirectory(AbstractFile f, SftpFileFilter filter) throws IOException, PermissionDeniedException {
 			this.f = f;
+			this.filter = filter;
 			this.children = f.getChildren().toArray(new AbstractFile[0]);
 		}
 
@@ -736,12 +768,16 @@ public final class AbstractFileSystem {
 			return f;
 		}
 
-		public AbstractFile[] getChildren() {
+		public AbstractFile[] getChildren() throws IOException, PermissionDeniedException {
 			return children;
 		}
 
 		public int getPosition() {
 			return readpos;
+		}
+		
+		public SftpFileFilter getFilter() {
+			return filter;
 		}
 
 		public void setPosition(int readpos) {

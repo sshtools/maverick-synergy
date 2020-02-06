@@ -18,6 +18,7 @@
  */
 package com.sshtools.common.ssh.components;
 
+import com.sshtools.common.ssh.SecureComponent;
 import com.sshtools.common.ssh.SshException;
 
 /**
@@ -26,7 +27,7 @@ import com.sshtools.common.ssh.SshException;
  * @author Lee David Painter
  *
  */
-public interface SshHmac extends SshComponent {
+public interface SshHmac extends SshComponent, SecureComponent {
 
    /**
     * The size of the message digest output by the hmac algorithm

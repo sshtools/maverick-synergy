@@ -51,10 +51,12 @@ import com.sshtools.common.ssh.components.SshCipher;
 import com.sshtools.common.ssh.components.SshHmac;
 import com.sshtools.common.ssh.components.SshKeyExchange;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.jce.ChaCha20Poly1305;
 import com.sshtools.common.ssh.compression.SshCompression;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.UnsignedInteger64;
 import com.sshtools.common.util.Utils;
 
 /**
@@ -577,7 +579,9 @@ public abstract class TransportProtocol<T extends SshContext>
 				 */
 				synchronized (kexlockIn) {
 
-					if(incomingMac!=null && incomingMac.isETM()) {
+					if(decryption!=null && decryption instanceof ChaCha20Poly1305) {
+						hasMessage = decodeChaCha20Poly1305Format(applicationData);
+					} else if(incomingMac!=null && incomingMac.isETM()) {
 						hasMessage = decodeETMPacketFormat(applicationData);
 					} else {
 						hasMessage = decodeOriginalPacketFormat(applicationData);
@@ -653,6 +657,110 @@ public abstract class TransportProtocol<T extends SshContext>
 
 		return requiresWriteOperation;
 
+	}
+	
+	private boolean decodeChaCha20Poly1305Format(ByteBuffer applicationData) throws IOException {
+		
+		ChaCha20Poly1305 cipher = (ChaCha20Poly1305) decryption;
+		
+		if (expectPacket) {
+
+			/**
+			 * We need to decrypt the initial binary packet header
+			 * to determine how much data we are expecting
+			 */
+			applicationData.get(incomingSwap, 0, 4);
+
+			// Work out the message length, payload, padding and
+			// remaining bytes
+			msglen = (int) cipher.readPacketLength(incomingSwap, new UnsignedInteger64(incomingSequence));
+
+			if (msglen <= 0)
+				throw new IOException(
+						"Client sent invalid message length of "
+								+ msglen + "!");
+			
+			if ((msglen + 4) < 0
+					|| (msglen + 4) > sshContext
+							.getMaximumPacketLength()) {
+				disconnect(
+						TransportProtocol.PROTOCOL_ERROR,
+						"Incoming packet length "
+								+ msglen
+								+ ((msglen + 4) < 0 ? " is too small"
+										: " exceeds maximum supported length of "
+												+ sshContext
+														.getMaximumPacketLength()));
+				throw new IOException("Disconnected");
+			}
+
+			
+			remaining = msglen;
+			expectedBytes = remaining + incomingMacLength;
+			expectPacket = false;
+			offsetIncoming += 4;
+			
+		}
+		
+		/**
+		 * If we have more data to get from the network do it now
+		 */
+		if (!expectPacket && applicationData.remaining() > 0) {
+
+			/**
+			 * Determine how many bytes to process this time
+			 */
+			int count = (expectedBytes > applicationData
+					.remaining() ? applicationData.remaining()
+					: expectedBytes);
+
+			/**
+			 * Now get the data
+			 */
+			applicationData.get(incomingSwap, offsetIncoming, count);
+
+			/**
+			 * Update our position in the swap buffer and the number
+			 * of expected bytes
+			 */
+			expectedBytes -= count;
+			offsetIncoming += count;
+
+			/**
+			 * Only complete the message once we have all the bytes
+			 */
+			if (expectedBytes == 0) {
+				
+				// Record the packet legth
+				int packetlen = msglen;
+
+				decryption.transform(incomingSwap,
+							4, incomingSwap,
+							4, remaining + incomingMacLength);
+
+				
+				
+				padlen = (incomingSwap[4] & 0xFF);
+				payloadIncoming = new byte[msglen - padlen - 1];
+
+				// Copy the payload into the final output buffer
+				System.arraycopy(incomingSwap, 5, payloadIncoming,
+						0, msglen - padlen - 1);
+
+				// Uncompress the message payload if necersary
+				if (incomingCompression != null) {
+					payloadIncoming = incomingCompression
+							.uncompress(payloadIncoming, 0,
+									payloadIncoming.length);
+				}
+
+				return true;
+
+			}
+		}
+		
+		return false;
+		
 	}
 
 	private boolean decodeETMPacketFormat(ByteBuffer applicationData) throws IOException {
@@ -1000,7 +1108,9 @@ public abstract class TransportProtocol<T extends SshContext>
 
 						outgoingMessage.flip();
 						
-						if(outgoingMac!=null && outgoingMac.isETM()) {
+						if(encryption!=null && encryption instanceof ChaCha20Poly1305) {
+							encodeChaCha20Poly1305FormatPacket(outgoingMessage);
+						} else if(outgoingMac!=null && outgoingMac.isETM()) {
 							encodeETMFormatPacket(outgoingMessage);
 						} else {
 							encodeOriginalFormatPacket(outgoingMessage);
@@ -1057,6 +1167,61 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 
 	}
+	
+	private void encodeChaCha20Poly1305FormatPacket(ByteBuffer outgoingMessage) throws IOException {
+		
+		ChaCha20Poly1305 cipher = (ChaCha20Poly1305) encryption;
+		
+		byte[] payload = new byte[outgoingMessage.remaining()];
+		outgoingMessage.get(payload);
+		outgoingMessage.clear();
+
+		int padding = 4;
+		int cipherlen = 8;
+		
+		// Compress the payload if necersary
+		if (outgoingCompression != null) {
+			payload = outgoingCompression.compress(payload, 0,
+					payload.length);
+		}
+
+		// Determine the padding length
+		padding += ((cipherlen - ((payload.length + 1 + padding) % cipherlen)) % cipherlen);
+
+		// Write the packet length field
+		outgoingMessage.put(cipher.writePacketLength(payload.length + 1 + padding, new UnsignedInteger64(outgoingSequence)));
+
+		// Write the padding length
+		outgoingMessage.put((byte) padding);
+
+		// Write the message payload
+		outgoingMessage.put(payload, 0, payload.length);
+		outgoingBytes += payload.length + padding + 1 + cipher.getMacLength() + 4;
+
+		// Create some random data for the padding
+		byte[] pad = new byte[padding];
+		rnd.nextBytes(pad);
+
+		// Write the padding
+		outgoingMessage.put(pad);
+
+		outgoingMessage.flip();
+		
+		// Get the unencrypted packet data
+		byte[] packet = new byte[outgoingMessage.remaining() + encryption.getMacLength()];
+		
+		outgoingMessage.get(packet, 0, outgoingMessage.remaining());
+		
+		cipher.transform(packet, 4, packet, 4, packet.length-4);
+
+		// Reset the message
+		outgoingMessage.clear();
+
+		// Write the packet data
+		outgoingMessage.put(packet);
+		
+		
+	}	
 
 	private void encodeETMFormatPacket(ByteBuffer outgoingMessage) throws IOException {
 		

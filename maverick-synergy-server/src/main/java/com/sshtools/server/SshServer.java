@@ -220,7 +220,7 @@ public class SshServer implements ProtocolContextFactory<SshServerContext>, Clos
 		try {
 			hostKeys.add(context.loadOrGenerateHostKey(file, type, bitlength));
 		} catch (IOException | InvalidPassphraseException | SshException e) {
-			Log.warn("Could not generate or load host key for algorithm %s", type);
+			Log.warn("Could not generate or load host key for algorithm %s: %s", type, e.getMessage());
 		}
 	}
 	

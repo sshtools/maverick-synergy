@@ -28,20 +28,20 @@ public class Ed25519OpenSSHPrivateKeyFileParser implements OpenSSHPrivateKeyFile
 
 	@Override
 	public void decode(ByteArrayReader privateReader, SshKeyPair pair) throws IOException {
-		  byte[] publicKey = privateReader.readBinaryString();
-		  byte[] privateKey = privateReader.readBinaryString();
-		  pair.setPrivateKey(new SshEd25519PrivateKey(privateKey, publicKey));
+		byte[] publicKey = privateReader.readBinaryString();
+		byte[] privateKey = privateReader.readBinaryString();
+		pair.setPrivateKey(new SshEd25519PrivateKey(privateKey, publicKey));
 	}
 
 	@Override
 	public void encode(ByteArrayWriter privateWriter, SshKeyPair pair) throws IOException {
 
-		privateWriter.writeBinaryString(((SshEd25519PublicKey)pair.getPublicKey()).getA());
-		  byte[] sk = ((SshEd25519PrivateKey)pair.getPrivateKey()).getSeed();
-		  byte[] h = ((SshEd25519PrivateKey)pair.getPrivateKey()).getH();
-		  privateWriter.writeInt(64);
-		  privateWriter.write(sk);
-		  privateWriter.write(h);
+		byte[] a = ((SshEd25519PublicKey) pair.getPublicKey()).getA();
+		privateWriter.writeBinaryString(a);
+		byte[] sk = ((SshEd25519PrivateKey) pair.getPrivateKey()).getSeed();
+		privateWriter.writeInt(sk.length + a.length);
+		privateWriter.write(sk);
+		privateWriter.write(a);
 	}
 
 }

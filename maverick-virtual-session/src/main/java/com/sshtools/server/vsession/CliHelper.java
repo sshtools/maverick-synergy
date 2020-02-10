@@ -98,7 +98,7 @@ public class CliHelper {
 			String arg = args[i];
 			if(arg.startsWith("-") && !arg.startsWith("--")) {
 				if(arg.length()==2 && arg.indexOf(opt) == 1) {
-					if(args.length > i+i) {
+					if(args.length > i+1) {
 						return args[i+1];
 					} else {
 						throw new UsageException("Missing value for option " + opt);

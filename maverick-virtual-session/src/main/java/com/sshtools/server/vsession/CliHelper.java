@@ -20,6 +20,20 @@ package com.sshtools.server.vsession;
 
 public class CliHelper {
 
+	public static boolean hasOption(String[] args, char shortOpt, String longOpt) {
+		return hasShortOption(args, shortOpt) || hasLongOption(args, longOpt);
+	}
+	
+	public static String getValue(String[] args, char shortOpt, String longOpt) throws UsageException {
+		if(hasShortOption(args, shortOpt)) {
+			return getShortValue(args, shortOpt);
+		} else if(hasLongOption(args, longOpt)) {
+			return getLongValue(args, longOpt);
+		} else {
+			throw new UsageException(String.format("Missing -%c or --%s option", shortOpt, longOpt));
+		}
+	}
+	
 	public static boolean hasShortOption(String[] args, char opt) {
 				
 		for(String arg : args) {

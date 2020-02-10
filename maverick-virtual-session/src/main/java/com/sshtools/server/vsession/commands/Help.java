@@ -93,7 +93,7 @@ public class Help<T extends AbstractFile> extends ShellCommand {
 				comandMap = entry.getValue();
 				for (Command shellCmd : comandMap.values()) {
 					console.println(ShellUtilities.padString("", 5)
-						+ ShellUtilities.padString(shellCmd.getCommandName(), 15) + shellCmd.getDescription());
+						+ ShellUtilities.padString(shellCmd.getCommandName(), 30) + shellCmd.getDescription());
 				}
 
 				console.println();

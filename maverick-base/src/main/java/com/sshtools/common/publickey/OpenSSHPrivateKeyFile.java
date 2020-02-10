@@ -45,6 +45,8 @@ import com.sshtools.common.ssh.components.SshRsaPrivateCrtKey;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
 import com.sshtools.common.ssh.components.jce.AES128Cbc;
 import com.sshtools.common.ssh.components.jce.AES256Ctr;
+import com.sshtools.common.ssh.components.jce.AES192Cbc;
+import com.sshtools.common.ssh.components.jce.AES256Cbc;
 import com.sshtools.common.ssh.components.jce.ECUtils;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.ssh.components.jce.Ssh2DsaPrivateKey;
@@ -319,6 +321,10 @@ class OpenSSHPrivateKeyFile
 				 
 				  if("aes128-cbc".equals(cipherName)) {
 					  cipher = new AES128Cbc();
+				  } else if("aes192-cbc".equals(cipherName)){
+					  cipher = new AES192Cbc();
+				  } else if("aes256-cbc".equals(cipherName)){
+					  cipher = new AES256Cbc();
 				  } else {
 					  cipher = (SshCipher) ComponentManager.getInstance().supportedSsh2CiphersCS().getInstance(cipherName);
 				  }

@@ -80,7 +80,7 @@ public class CliHelper {
 			String arg = args[i];
 			if(arg.startsWith("--")) {
 				if(arg.equals(opt)) {
-					if(args.length > i+i) {
+					if(args.length > i+1) {
 						return args[i+1];
 					} else {
 						throw new UsageException("Missing value for long option " + opt);

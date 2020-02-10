@@ -18,6 +18,8 @@
  */
 package com.sshtools.server.vsession;
 
+import java.util.Objects;
+
 public class CliHelper {
 
 	public static boolean hasOption(String[] args, char shortOpt, String longOpt) {
@@ -25,13 +27,20 @@ public class CliHelper {
 	}
 	
 	public static String getValue(String[] args, char shortOpt, String longOpt) throws UsageException {
+		return getValue(args, shortOpt, longOpt, null);
+	}
+	
+	public static String getValue(String[] args, char shortOpt, String longOpt, String defaultValue) throws UsageException {
 		if(hasShortOption(args, shortOpt)) {
 			return getShortValue(args, shortOpt);
 		} else if(hasLongOption(args, longOpt)) {
 			return getLongValue(args, longOpt);
 		} else {
-			throw new UsageException(String.format("Missing -%c or --%s option", shortOpt, longOpt));
+			if(Objects.isNull(defaultValue)) {
+				throw new UsageException(String.format("Missing -%c or --%s option", shortOpt, longOpt));
+			}
 		}
+		return defaultValue;
 	}
 	
 	public static boolean hasShortOption(String[] args, char opt) {

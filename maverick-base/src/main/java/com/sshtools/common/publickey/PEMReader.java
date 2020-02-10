@@ -26,8 +26,9 @@ import java.util.Hashtable;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
-import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.ssh.components.SshCipher;
+import com.sshtools.common.ssh.components.jce.AES128Cbc;
+import com.sshtools.common.ssh.components.jce.TripleDesCbc;
 import com.sshtools.common.util.Base64;
 
 class PEMReader extends PEM {
@@ -160,50 +161,45 @@ class PEMReader extends PEM {
 	 * 
 	 */
 	public byte[] decryptPayload(String passphrase) throws IOException {
-		try {
-			String dekInfo = (String) header.get("DEK-Info");
 
-			if (dekInfo != null) {
-				int comma = dekInfo.indexOf(',');
-				String keyAlgorithm = dekInfo.substring(0, comma);
+		String dekInfo = (String) header.get("DEK-Info");
 
-				if (!"DES-EDE3-CBC".equalsIgnoreCase(keyAlgorithm)
-						&& !"AES-128-CBC".equalsIgnoreCase(keyAlgorithm)) {
-					throw new IOException("Unsupported passphrase algorithm: "
-							+ keyAlgorithm);
-				}
+		if (dekInfo != null) {
+			int comma = dekInfo.indexOf(',');
+			String keyAlgorithm = dekInfo.substring(0, comma);
 
-				String ivString = dekInfo.substring(comma + 1);
-				byte[] iv = new byte[ivString.length() / 2];
-
-				for (int i = 0; i < ivString.length(); i += 2) {
-					iv[i / 2] = (byte) Integer.parseInt(
-							ivString.substring(i, i + 2), 16);
-				}
-
-				byte[] keydata = null;
-				SshCipher cipher = null;
-
-				if ("DES-EDE3-CBC".equalsIgnoreCase(keyAlgorithm)) {
-					keydata = getKeyFromPassphrase(passphrase, iv, 24);
-					cipher = (SshCipher) ComponentManager.getInstance()
-							.supportedSsh2CiphersCS().getInstance("3des-cbc");
-				} else if ("AES-128-CBC".equalsIgnoreCase(keyAlgorithm)) {
-					keydata = getKeyFromPassphrase(passphrase, iv, 16);
-					cipher = (SshCipher) ComponentManager.getInstance()
-							.supportedSsh2CiphersCS().getInstance("aes128-cbc");
-				}
-
-				cipher.init(SshCipher.DECRYPT_MODE, iv, keydata);
-
-				byte[] plain = new byte[payload.length];
-				cipher.transform(payload, 0, plain, 0, plain.length);
-
-				return plain;
+			if (!"DES-EDE3-CBC".equalsIgnoreCase(keyAlgorithm)
+					&& !"AES-128-CBC".equalsIgnoreCase(keyAlgorithm)) {
+				throw new IOException("Unsupported passphrase algorithm: "
+						+ keyAlgorithm);
 			}
-			return payload;
-		} catch (SshException e) {
-			throw new SshIOException(e);
+
+			String ivString = dekInfo.substring(comma + 1);
+			byte[] iv = new byte[ivString.length() / 2];
+
+			for (int i = 0; i < ivString.length(); i += 2) {
+				iv[i / 2] = (byte) Integer.parseInt(
+						ivString.substring(i, i + 2), 16);
+			}
+
+			byte[] keydata = null;
+			SshCipher cipher = null;
+
+			if ("DES-EDE3-CBC".equalsIgnoreCase(keyAlgorithm)) {
+				keydata = getKeyFromPassphrase(passphrase, iv, 24);
+				cipher = new TripleDesCbc();
+			} else if ("AES-128-CBC".equalsIgnoreCase(keyAlgorithm)) {
+				keydata = getKeyFromPassphrase(passphrase, iv, 16);
+				cipher = new AES128Cbc();
+			}
+
+			cipher.init(SshCipher.DECRYPT_MODE, iv, keydata);
+
+			byte[] plain = new byte[payload.length];
+			cipher.transform(payload, 0, plain, 0, plain.length);
+
+			return plain;
 		}
+		return payload;
 	}
 }

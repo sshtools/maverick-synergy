@@ -87,6 +87,8 @@ public class SshKeyPairGenerator {
 		case ED25519:
 			return generateKeyPair(algorithm, 0);
 		case SSH2_RSA:
+		case "rsa":
+		case "RSA":
 			return generateKeyPair(algorithm, 2048)	;
 		default:
 			throw new IOException(String.format("Unexpected key algorithm %s", algorithm));
@@ -103,22 +105,20 @@ public class SshKeyPairGenerator {
 	public static SshKeyPair generateKeyPair(String algorithm, int bits) throws IOException, SshException {
 
 		
-		SshKeyPair pair = new SshKeyPair();
-
-		if (ECDSA.equalsIgnoreCase(algorithm)) {
-			pair = ComponentManager.getDefaultInstance().generateEcdsaKeyPair(bits);
-		} else if (SSH2_RSA.equalsIgnoreCase(algorithm)) {
-			pair = ComponentManager.getDefaultInstance().generateRsaKeyPair(bits, 2);
-		} else {
-			
+		switch(algorithm) {
+		case ECDSA:
+			return ComponentManager.getDefaultInstance().generateEcdsaKeyPair(bits);
+		case SSH2_RSA:
+		case "rsa":
+		case "RSA":
+			return ComponentManager.getDefaultInstance().generateRsaKeyPair(bits, 2);
+		default:
 			ComponentFactory<KeyGenerator> generators = new ComponentFactory<>(JCEComponentManager.getDefaultInstance());
 			JCEComponentManager.getDefaultInstance().loadExternalComponents("generator.properties",generators);
 			
 			KeyGenerator gen = generators.getInstance(algorithm);
 			return gen.generateKey(bits);
 		}
-
-		return pair;
 	}
 
 }

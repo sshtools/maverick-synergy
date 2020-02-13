@@ -689,8 +689,6 @@ public abstract class ConnectionProtocol<T extends SshContext> extends ExecutorO
 				return;
 			}
 
-			
-
 			channel.init(this);
 
 			int channelid = allocateChannel(channel);

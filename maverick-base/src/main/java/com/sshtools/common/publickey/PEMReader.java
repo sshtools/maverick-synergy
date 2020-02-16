@@ -24,8 +24,6 @@ import java.io.LineNumberReader;
 import java.io.Reader;
 import java.util.Hashtable;
 
-import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.ssh.components.SshCipher;
 import com.sshtools.common.ssh.components.jce.AES128Cbc;
 import com.sshtools.common.ssh.components.jce.TripleDesCbc;

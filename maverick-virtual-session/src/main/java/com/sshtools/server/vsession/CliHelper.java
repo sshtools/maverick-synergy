@@ -110,4 +110,13 @@ public class CliHelper {
 		throw new UsageException("Missing option " + opt);
 	}
 
+	public static boolean isOption(String opt, String shortOptions) {
+		if(opt.startsWith("--")) {
+			return shortOptions.contains(opt.substring(2));
+		} else if(opt.startsWith("-")) {
+			return shortOptions.contains(opt.substring(1));
+		}
+		return false;
+	}
+
 }

@@ -20,6 +20,7 @@ package com.sshtools.server.vshell.commands.fs;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -30,16 +31,19 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.UsageHelper;
 import com.sshtools.server.vsession.VirtualConsole;
 
 public class Ls extends ShellCommand {
 	
 	
 	public Ls() {
-		super("ls", SUBSYSTEM_FILESYSTEM, "[<path1>,[,<path2>],..]", "Lists the contents of the current directory");
-//		new Option("l", false, "Long format"), new Option("a", false,
-//			"All files including hidden ones"), new Option("x", false, "Show extended attributes"),
-//			new Option("d", false, "List directory entries instead of contents"));
+		super("ls", SUBSYSTEM_FILESYSTEM, UsageHelper.build("ls [options] path...",
+				"-l, --long						        Show details for each individual file/folder",
+				"-a, --all                              Show all files",
+				"-d, --directory                        List directories themeselves, not their contents",
+				"-x, --extended                         Show extended attributes"), 
+				"List the contents of a directory.");
 		setBuiltIn(false);
 	}
 
@@ -50,8 +54,14 @@ public class Ls extends ShellCommand {
 		if (args.length == 1) {
 			list(args, process, dir);
 		} else {
-			for (int i = 1; i < args.length; i++) {
-				list(args, process, dir.resolveFile(args[i]));
+			List<String> paths = new ArrayList<>();
+			for(int i=1; i<args.length;i++) {
+				if(!CliHelper.isOption(args[i], "ladx")) {
+					paths.add(args[i]);
+				}
+			}
+			for (String path : paths) {
+				list(args, process, dir.resolveFile(path));
 			}
 		}
 	}
@@ -79,10 +89,10 @@ public class Ls extends ShellCommand {
 	}
 
 	protected void printFile(String[] args, VirtualConsole process, AbstractFile file) throws IOException, PermissionDeniedException {
-		if (!file.isHidden() || CliHelper.hasShortOption(args,'a')) {
+		if (!file.isHidden() || CliHelper.hasOption(args,'a', "all")) {
 			StringBuffer attr = new StringBuffer();
 			
-			if (CliHelper.hasShortOption(args,'l')) {
+			if (CliHelper.hasOption(args,'l', "all")) {
 				SftpFileAttributes attrs = file.getAttributes();
 				
 				String lastModifiedTime = "";
@@ -116,7 +126,7 @@ public class Ls extends ShellCommand {
 			} else {
 				process.println(file.getName() + attr.toString());
 			}
-			if(CliHelper.hasShortOption(args,'x')) {
+			if(CliHelper.hasOption(args,'x', "extended")) {
 				SftpFileAttributes attrs = file.getAttributes();
 				for(Object name : attrs.getExtendedAttributes().keySet()) {
 					Object val = attrs.getExtendedAttributes().get(name);

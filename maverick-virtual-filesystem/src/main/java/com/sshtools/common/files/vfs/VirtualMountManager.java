@@ -59,19 +59,13 @@ public class VirtualMountManager {
 					replaceTokens(homeMount.getMount(), con), replaceTokens(
 							homeMount.getRoot(), con), fileFactory, homeMount
 							.getActualFileFactory(), con, true, false));
-
-//			if (!homeMount.getMount().equals("/")) {
-//				// We need a root mount that is imaginary
-//				mounts.add(new VirtualMount("/", "", fileFactory,
-//						fileFactory.getDefaultFileFactory(), con, false, true));
-//			}
 		}
 
 		// Add any remaining templates
 		for (VirtualMountTemplate m : additionalMounts) {
-			mounts.add(new VirtualMount(replaceTokens(m.getMount(), con),
-					replaceTokens(m.getRoot(), con), fileFactory, m
-							.getActualFileFactory(), con));
+			mounts.add(createMount(replaceTokens(m.getMount(), con), 
+					replaceTokens(m.getRoot(), con),
+					m.getActualFileFactory()));
 		}
 
 		sort();
@@ -82,8 +76,14 @@ public class VirtualMountManager {
 		String ret = str.replace("${username}", con.getUsername());
 		return ret;
 	}
+	
+	public void mount(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
+		mount(createMount(template.getMount(),
+				template.getRoot(), 
+				template.getActualFileFactory()));
+	}
 
-	public void mount(VirtualMount mount) throws IOException,
+	private void mount(VirtualMount mount) throws IOException,
 			PermissionDeniedException {
 		Log.info("Mounting " + mount.getMount() + " on " + mount.getRoot() + " for " + con.getUsername() + " (" + con.getSessionId() + ")");
 
@@ -149,12 +149,7 @@ public class VirtualMountManager {
 		return false;
 	}
 
-	public VirtualMount createMount(String mount, String path)
-			throws IOException, PermissionDeniedException {
-		return createMount(mount, path, fileFactory.getDefaultFileFactory());
-	}
-
-	public VirtualMount createMount(String mount, String path,
+	private VirtualMount createMount(String mount, String path,
 			AbstractFileFactory<?> actualFileFactory) throws IOException,
 			PermissionDeniedException {
 		return new VirtualMount(mount, path, fileFactory, actualFileFactory,

@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -80,6 +81,9 @@ public class Msh extends ShellCommand {
 
 	public String expandEnvironmentVariables(Environment env, String value, Map<String,String> additionalReplacements) {
 		
+		if(Objects.isNull(value)) {
+			return value;
+		}
 		Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
 		Matcher matcher = pattern.matcher(value);
 
@@ -112,8 +116,12 @@ public class Msh extends ShellCommand {
 	protected void runShell(VirtualConsole console) throws IOException {
 		
 		Map<String,String> additionalReplacements = new HashMap<String,String>();
+		if(!console.getEnvironment().containsKey("PROMPT")) {
+			console.getEnvironment().put("PROMPT", "# ");
+		}
 		while (!exit) {
-			prompt = console.getEnvironment().getOrDefault("PROMPT", "# ").toString();
+			prompt = (String) console.getEnvironment().get("PROMPT");
+			
 			prompt = expandEnvironmentVariables(console.getEnvironment(), prompt, additionalReplacements);
 			try {
 				String line = console.readLine(prompt);

@@ -60,8 +60,12 @@ public class Ls extends ShellCommand {
 					paths.add(args[i]);
 				}
 			}
-			for (String path : paths) {
-				list(args, process, dir.resolveFile(path));
+			if(paths.isEmpty()) {
+				list(args, process, dir);
+			} else {
+				for (String path : paths) {
+					list(args, process, dir.resolveFile(path));
+				}
 			}
 		}
 	}

@@ -132,12 +132,15 @@ public class VirtualConsole {
 		if(Objects.isNull(cwd)) {
 			cwd = getContext().getPolicy(FileSystemPolicy.class)
 					.getFileFactory(getConnection())
-						.getFile((String)env.getOrDefault("HOME", ""), con);
+						.getFile((String)env.getOrDefault("HOME", "/"), con);
 		} 
 		
 		AbstractFile file = cwd.resolveFile(currentDirectory);
 		if(!file.exists()) {
-			throw new FileNotFoundException(String.format("%s does not exist", file.getName()));
+			file.createFolder();
+			if(!file.exists()) {
+				throw new FileNotFoundException(String.format("%s does not exist", file.getName()));
+			}
 		}
 		if(!file.isDirectory()) {
 			throw new IOException(String.format("%s is not a directory", file.getName()));

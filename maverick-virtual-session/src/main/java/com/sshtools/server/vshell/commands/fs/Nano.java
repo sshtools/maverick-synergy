@@ -44,7 +44,10 @@ public class Nano extends ShellCommand {
 		
 		Map<String,Object> env = new HashMap<>();
 		env.put("connection", console.getConnection());
-		FileSystem fs = FileSystems.newFileSystem(AbstractFileURI.create(console.getConnection(), ""), env);
+		FileSystem fs = FileSystems.newFileSystem(
+				AbstractFileURI.create(console.getConnection(), ""), 
+				env,
+				getClass().getClassLoader());
 
 		org.jline.builtins.Nano n = new org.jline.builtins.Nano(console.getTerminal(), fs.getPath(""));
 		

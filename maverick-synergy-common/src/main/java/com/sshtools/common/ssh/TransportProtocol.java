@@ -732,7 +732,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			if (expectedBytes == 0) {
 				
 				// Record the packet legth
-				int packetlen = msglen;
+//				int packetlen = msglen;
 
 				decryption.transform(incomingSwap,
 							4, incomingSwap,

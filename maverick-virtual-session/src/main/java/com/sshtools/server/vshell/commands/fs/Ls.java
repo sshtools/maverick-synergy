@@ -29,6 +29,7 @@ import java.util.List;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.util.Utils;
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
 import com.sshtools.server.vsession.UsageHelper;
@@ -94,7 +95,6 @@ public class Ls extends ShellCommand {
 
 	protected void printFile(String[] args, VirtualConsole process, AbstractFile file) throws IOException, PermissionDeniedException {
 		if (!file.isHidden() || CliHelper.hasOption(args,'a', "all")) {
-			StringBuffer attr = new StringBuffer();
 			
 			if (CliHelper.hasOption(args,'l', "all")) {
 				SftpFileAttributes attrs = file.getAttributes();
@@ -104,15 +104,7 @@ public class Ls extends ShellCommand {
 				if (file.isFile()) {
 					size = attrs.getSize().longValue();
 				} else if (file.isDirectory()) {
-					if (file.isReadable()) {
-						try {
-							size = file.getChildren().size();
-						}
-						catch(IOException e) {
-							// Unreadable
-							size = 0;
-						}
-					}
+					size = 0;
 				}
 				SimpleDateFormat df;
 		        long mt = (attrs.getModifiedTime().longValue() * 1000L);
@@ -126,9 +118,16 @@ public class Ls extends ShellCommand {
 
 		        lastModifiedTime = df.format(new Date(mt));
 				int linkCount = 0;
-				process.println(String.format("%s %-3d %-8s %-8s %10d %-14s %-30s", attrs.getPermissionsString(), linkCount, attrs.getUID(), attrs.getGID(), size, lastModifiedTime, file.getName()) + attr.toString());
+				process.println(String.format("%s %-3d %-8s %-8s %10d %-14s %-30s", 
+						attrs.getPermissionsString(), 
+						linkCount, 
+						Utils.defaultString(attrs.getUID(), "nouser"),
+						Utils.defaultString(attrs.getGID(), "nogroup"),
+						size, 
+						lastModifiedTime, 
+						file.getName()));
 			} else {
-				process.println(file.getName() + attr.toString());
+				process.println(file.getName());
 			}
 			if(CliHelper.hasOption(args,'x', "extended")) {
 				SftpFileAttributes attrs = file.getAttributes();

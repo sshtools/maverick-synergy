@@ -349,4 +349,20 @@ public class SshClient implements Closeable {
 		return con.getHostKey();
 	}
 
+	public SessionChannelNG openSessionChannel() throws SshException {
+		return openSessionChannel(60000L);
+	}
+	
+	public SessionChannelNG openSessionChannel(long timeout) throws SshException {
+		
+		
+		SessionChannelNG session = new SessionChannelNG(con);
+		con.openChannel(session);
+		session.getOpenFuture().waitFor(timeout);
+		if(session.getOpenFuture().isSuccess()) {
+			return session;
+		}
+		throw new SshException(String.format("Session was not opened after %d ms timeout threshold", timeout), SshException.SOCKET_TIMEOUT);
+	}
+
 }

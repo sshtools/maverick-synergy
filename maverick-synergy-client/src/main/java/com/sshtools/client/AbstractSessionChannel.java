@@ -88,6 +88,10 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 	protected void onChannelOpen() {
 
 	}
+	
+	public RequestFuture allocatePseudoTerminal(String type) {
+		return allocatePseudoTerminal(type, 80, 25);
+	}
 
 	public RequestFuture allocatePseudoTerminal(String type, int cols, int rows) {
 		return allocatePseudoTerminal(type, cols, rows, 0, 0, null);
@@ -139,6 +143,28 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 
 			ChannelRequestFuture future = new ChannelRequestFuture();
 			sendChannelRequest("pty-req", true, request.toByteArray(), future);
+			return future;
+		} catch (IOException ex) {
+			throw new IllegalStateException(ex.getMessage(), ex);
+		} finally {
+			try {
+				request.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+	
+	public RequestFuture setEnvironmentVariable(String key, String val) {
+		
+		ByteArrayWriter request = new ByteArrayWriter();
+
+		try {
+
+			request.writeString(key);
+			request.writeString(val);
+
+			ChannelRequestFuture future = new ChannelRequestFuture();
+			sendChannelRequest("env", true, request.toByteArray(), future);
 			return future;
 		} catch (IOException ex) {
 			throw new IllegalStateException(ex.getMessage(), ex);

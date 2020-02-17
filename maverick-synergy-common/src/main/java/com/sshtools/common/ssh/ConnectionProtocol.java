@@ -41,7 +41,8 @@ import com.sshtools.common.util.ByteArrayWriter;
  * This class implements the SSH Connection Protocol as an SSH Transport
  * Protocol service.
  */
-public abstract class ConnectionProtocol<T extends SshContext> extends ExecutorOperationSupport<SshContext> implements Service {
+public abstract class ConnectionProtocol<T extends SshContext> 
+		extends ExecutorOperationSupport<SshContext> implements Service {
 
 	
 	private static final Integer CHANNEL_DATA_IN = ExecutorOperationQueues.generateUniqueQueue("ConnectionProtocol.channelDataIn");
@@ -201,14 +202,15 @@ public abstract class ConnectionProtocol<T extends SshContext> extends ExecutorO
 				if (channelid == -1) {
 					
 					if(Log.isDebugEnabled()) {
-						Log.debug("Failed to allocate channel %s", channel.getChannelType());
+						Log.debug("Failed to allocate channel %s", 
+								channel.getChannelType());
 					}
 					channel.getOpenFuture().done(false);
 
 				}
 
-				transport.postMessage(new ChannelOpenMessage(channel, channel
-						.create(channelid)));
+				transport.postMessage(new ChannelOpenMessage(
+						channel, channel.create(channelid)));
 
 				/*
 				 * try { channel.wait(); } catch (InterruptedException ex) { }

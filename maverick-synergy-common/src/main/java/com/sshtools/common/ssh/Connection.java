@@ -40,6 +40,7 @@ import com.sshtools.common.events.EventListener;
 import com.sshtools.common.events.EventTrigger;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
+import com.sshtools.common.nio.IdleStateListener;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.ssh.components.SshPublicKey;
 
@@ -71,6 +72,10 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 			}
 		});
 	}
+//	
+//	public void addIdleStateListener(IdleStateListener l) {
+//		transport.getSocketConnection().getIdleStates().register(l);
+//	}
 	
 	@Override
 	public synchronized void addEventListener(EventListener listener) {

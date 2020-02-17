@@ -145,6 +145,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		return state == CHANNEL_CLOSED;
 	}
 
+	public boolean isConnected() {
+		return !isClosed();
+	}
+
 	public int getMaxiumRemoteWindowSize() {
 		return remoteWindow.getMaximumWindowSpace();
 	}

@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
+import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.CachingDataWindow;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.SessionChannel;
@@ -35,6 +36,14 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 	CachingDataWindow extendedData;
 	ChannelInputStream stderrInputStream;
 
+	public SessionChannelNG(SshConnection con) {
+		this(con, con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
+				null, false);
+	}
+	
 	public SessionChannelNG(SshConnection con, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace,
 			ChannelRequestFuture closeFuture, boolean autoConsume) {
 		super(con, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
@@ -85,4 +94,5 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 	public void onSessionOpen() {
 		
 	}
+
 }

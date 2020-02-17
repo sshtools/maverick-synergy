@@ -18,6 +18,8 @@
  */
 package com.sshtools.client;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -27,6 +29,8 @@ import java.util.List;
 import java.util.Objects;
 
 import com.sshtools.common.publickey.SignatureGenerator;
+import com.sshtools.common.publickey.SshPrivateKeyFile;
+import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.TransportProtocol;
@@ -47,10 +51,24 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 	String username;
 	Collection<SshPublicKey> publicKeys;
 	Collection<SshKeyPair> keypairs;
-	SshPublicKey authenticatingKey = null;
+	Collection<SshPrivateKeyFile> privateKeyFiles;
+	
 	SignatureGenerator signatureGenerator;
 	
+	SshPublicKey authenticatingKey = null;
+	SshKeyPair authenticatingPair = null;
+	SshPrivateKeyFile authenticatingFile = null;
+	
 	public PublicKeyAuthenticator() {
+	}
+	
+	public PublicKeyAuthenticator(File... privateKeyFiles) throws IOException {
+		this.privateKeyFiles = new ArrayList<>();
+		for(File file : privateKeyFiles) {
+			try(FileInputStream in = new FileInputStream(file)) {
+				this.privateKeyFiles.add(SshPrivateKeyFileFactory.parse(in));
+			}
+		}
 	}
 	
 	public PublicKeyAuthenticator(SignatureGenerator signatureGenerator) {

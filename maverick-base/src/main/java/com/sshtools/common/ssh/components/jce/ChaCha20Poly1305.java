@@ -52,7 +52,7 @@ public class ChaCha20Poly1305 extends SshCipher {
 	
 	@Override
 	public int getBlockSize() {
-		return 32;
+		return 8;
 	}
 
 	@Override

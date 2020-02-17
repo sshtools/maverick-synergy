@@ -237,7 +237,7 @@ public class SocketConnection implements SocketHandler {
      */
     public synchronized boolean processReadEvent() {
 
-        if(Log.isTraceEnabled()) {
+    	if(Log.isTraceEnabled()) {
         	Log.trace("Processing socket READ event");
         }
 
@@ -259,6 +259,7 @@ public class SocketConnection implements SocketHandler {
           if(Log.isTraceEnabled()) {
         	  Log.trace("Read " + numBytesRead + " bytes from socket");
           }
+         
 
           if (numBytesRead == -1) {
               if(Log.isTraceEnabled()) {

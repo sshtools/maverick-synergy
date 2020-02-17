@@ -399,7 +399,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					response = resp.toByteArray();
 					success = true;
 				} 
-			} else if (name.equals("ping@sshtools.com") || name.equals("pong@sshtools.com")) {
+			} else if (name.equals("ping@sshtools.com")) {
 				/**
 				 * Only for show; the remote side only cares if it gets a response
 				 * not what the actual value is, but we are positive so send a success
@@ -1034,10 +1034,10 @@ public abstract class ConnectionProtocol<T extends SshContext>
 		addTask(ExecutorOperationSupport.CALLBACKS, new ConnectionTaskWrapper(getConnection(), new Runnable() {
 			public void run() {
 				GlobalRequest global = new GlobalRequest(
-						String.format("%s@sshtools.com", isClient() ? "ping" : "pong"), 
+						"ping@sshtools.com", 
 						con, null);
 				sendGlobalRequest(global, true);
-				global.waitFor(10000);
+				global.waitFor(30000);
 				if(!global.isDone()) {
 					if(Log.isInfoEnabled()) {
 						Log.error("Remote node is unresponsive");

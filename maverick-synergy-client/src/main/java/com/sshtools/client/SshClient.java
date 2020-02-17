@@ -41,6 +41,7 @@ import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
+import com.sshtools.common.ssh.components.SshPublicKey;
 
 public class SshClient implements Closeable {
 
@@ -49,6 +50,7 @@ public class SshClient implements Closeable {
 	Connection<SshClientContext> con;
 	SshClientContext sshContext;
 	String remotePublicKeys = "";
+	String hostname;
 	
 	public SshClient(String hostname, int port, String username, char[] password) throws IOException, SshException {
 		this(hostname, port, username, new SshClientContext(), password);
@@ -88,6 +90,7 @@ public class SshClient implements Closeable {
 	
 	public SshClient(String hostname, int port, String username, SshClientContext sshContext, char[] password, SshKeyPair... identities) throws IOException, SshException {
 		this.sshContext = sshContext;
+		this.hostname = hostname;
 		sshContext.setUsername(username);
 		if(Objects.nonNull(password) && password.length > 0) {
 			sshContext.addAuthenticator(new PasswordAuthenticator(password));
@@ -332,6 +335,18 @@ public class SshClient implements Closeable {
 
 	public String getRemoteIdentification() {
 		return con.getRemoteIdentification();
+	}
+	
+	public String getLocalIdentification() {
+		return con.getLocalIdentification();
+	}
+	
+	public String getHost() {
+		return hostname;
+	}
+
+	public SshPublicKey getHostKey() {
+		return con.getHostKey();
 	}
 
 }

@@ -3659,4 +3659,22 @@ public class SftpClient {
 
 	}
 
+	public boolean isConnected() {
+		return sftp.isClosed();
+	}
+
+	public void hardlink(String src, String dst) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public SftpFileAttributes statVFS(String string) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public String getHome() throws SftpStatusException, SshException {
+		return getAbsolutePath("");
+	}
+
 }

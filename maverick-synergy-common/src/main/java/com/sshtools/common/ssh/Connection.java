@@ -364,4 +364,8 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 		return transport.getHostKeyInUse();
 	}
 
+	public String getLocalIdentification() {
+		return transport.getLocalIdentification();
+	}
+
 }

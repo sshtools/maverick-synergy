@@ -2604,4 +2604,8 @@ public abstract class TransportProtocol<T extends SshContext>
 	public String getHostKeyInUse() {
 		return publicKey;
 	}
+
+	public String getLocalIdentification() {
+		return localIdentification.trim();
+	}
 }

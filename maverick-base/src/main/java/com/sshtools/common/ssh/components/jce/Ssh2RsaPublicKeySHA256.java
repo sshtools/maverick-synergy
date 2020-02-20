@@ -23,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
 
 public class Ssh2RsaPublicKeySHA256 extends Ssh2RsaPublicKey {
@@ -42,6 +43,10 @@ public class Ssh2RsaPublicKeySHA256 extends Ssh2RsaPublicKey {
 
 	public Ssh2RsaPublicKeySHA256(SshRsaPublicKey publicKey) {
 		this((RSAPublicKey)publicKey.getJCEPublicKey());
+	}
+	
+	public SecurityLevel getSecurityLevel() {
+		return SecurityLevel.STRONG;
 	}
 	
 	@Override

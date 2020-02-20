@@ -24,7 +24,6 @@ import java.security.cert.CertificateFactory;
 import java.security.interfaces.RSAPublicKey;
 
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.SshX509PublicKey;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKey;
@@ -60,7 +59,7 @@ public class SshX509RsaPublicKey extends Ssh2RsaPublicKey implements SshX509Publ
     public String getSigningAlgorithm() {
     		return getAlgorithm();
     }
-    
+	
     /**
      * Encode the public key into a blob of binary data, the encoded result
      * will be passed into init to recreate the key.

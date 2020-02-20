@@ -76,13 +76,12 @@ public class Ssh2RsaPublicKey implements SshRsaPublicKey {
 	}
 
 	public SecurityLevel getSecurityLevel() {
-		return SecurityLevel.STRONG;
+		return SecurityLevel.WEAK;
 	}
-	
 
 	@Override
 	public int getPriority() {
-		return 2000;
+		return 1000;
 	}
 	/*
 	 * (non-Javadoc)

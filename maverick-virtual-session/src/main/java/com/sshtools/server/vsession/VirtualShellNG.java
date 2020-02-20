@@ -166,7 +166,7 @@ public class VirtualShellNG extends SessionChannelNG {
                 .terminal(terminal)
                 .variable(LineReader.HISTORY_SIZE, 1000)
                 .variable(LineReader.HISTORY_FILE, fs.getPath(".history"));
-        
+
 		return new VirtualConsole(this, this.env, terminal, lineReaderBuilder.build(), shell);
 	}
 

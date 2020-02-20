@@ -27,7 +27,7 @@ import java.security.cert.CertificateFactory;
 import java.security.interfaces.RSAPublicKey;
 
 import com.sshtools.common.logger.Log;
-
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshX509PublicKey;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKey;
@@ -95,6 +95,10 @@ public class SshX509Rsa2048Sha256Rfc6187 extends Ssh2RsaPublicKey implements Ssh
 		} finally {
 			reader.close();
 		}
+	}
+	
+	public SecurityLevel getSecurityLevel() {
+		return SecurityLevel.STRONG;
 	}
 	
     public Certificate getCertificate() {

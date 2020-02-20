@@ -64,6 +64,18 @@ Include the server module to develop your own SSH/SFTP server.
   <artifactId>maverick-synergy-server</artifactId>
   <version>3.0.0-SNAPSHOT</version>
 </dependency>
+
+<!-- You may also need this repository if the version is a SNAPSHOT -->
+<repository>
+   <id>oss-snapshots</id>
+   <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+   <snapshots>
+      <enabled>true</enabled>
+   </snapshots>
+   <releases>
+      <enabled>false</enabled>
+   </releases>
+</repository>
 ```
 We also have done a lot of the hard work for you implementing a virtual file system that simply enables you to mount folders and remote file locations into a single file system.
 ```xml

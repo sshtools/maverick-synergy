@@ -35,6 +35,18 @@ In the first instance, for a no dependency Java SSH client API simply use the ma
   <artifactId>maverick-synergy-client</artifactId>
   <version>3.0.0-SNAPSHOT</version>
 </dependency>
+
+<!-- You may also need this repository if the version is a SNAPSHOT -->
+<repository>
+   <id>oss-snapshots</id>
+   <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+   <snapshots>
+      <enabled>true</enabled>
+   </snapshots>
+   <releases>
+      <enabled>false</enabled>
+   </releases>
+</repository>
 ```
 We have created a high level API that makes it easy to make calls to SSH servers and perform common tasks. For example, downloading a file over SFTP is as simple as:
 ```java	

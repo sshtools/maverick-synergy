@@ -72,6 +72,9 @@ public class KeyboardInteractiveAuthentication<C extends Context> implements
 		if (msg[0] != SSH_MSG_USERAUTH_INFO_RESPONSE)
 			return false;
 		
+		if(Log.isDebugEnabled()) {
+			Log.debug("Received SSH_MSG_USERAUTH_INFO_RESPONSE");
+		}
 		con.addTask(ExecutorOperationSupport.EVENTS, new ProcessMessageTask(con, msg));
 		
 		return true;
@@ -187,6 +190,7 @@ public class KeyboardInteractiveAuthentication<C extends Context> implements
     				}
     			}		
     		} catch(IOException ex) { 
+    			Log.error("Error starting keyboard-interactive authentication", ex);
     			con.disconnect(TransportProtocolSpecification.PROTOCOL_ERROR, ex.getMessage());
     		} finally {
     			bar.close();
@@ -240,6 +244,7 @@ public class KeyboardInteractiveAuthentication<C extends Context> implements
 
 				}
 			} catch(IOException ex) { 
+				Log.error("Error processing USER_AUTH_INFO_RESPONSE", ex);
 				con.disconnect(TransportProtocolSpecification.PROTOCOL_ERROR, ex.getMessage());
 			} finally {
 				response.close();

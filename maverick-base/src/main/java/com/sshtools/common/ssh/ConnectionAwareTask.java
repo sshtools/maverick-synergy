@@ -20,6 +20,8 @@ package com.sshtools.common.ssh;
 
 import java.util.Objects;
 
+import com.sshtools.common.logger.Log;
+
 public abstract class ConnectionAwareTask extends AbstractRequestFuture implements Runnable {
 
 	protected final SshConnection con;
@@ -44,6 +46,7 @@ public abstract class ConnectionAwareTask extends AbstractRequestFuture implemen
 			done(true);
 		} catch(Throwable t) { 
 			this.lastError = t;
+			Log.error("Connection task failed with an error", t);
 			done(false);
 		} finally {
 			con.getConnectionManager().clearConnection();

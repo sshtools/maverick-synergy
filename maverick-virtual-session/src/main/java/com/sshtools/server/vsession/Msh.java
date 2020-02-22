@@ -226,34 +226,41 @@ public class Msh extends ShellCommand {
 			CmdLine lastCommand = null;
 			boolean exit = false;
 
-			for (CmdLine l : lineParser.parseCommands(line, exitCode)) {
-
-				if (exit)
-					break;
-
-				switch (lastCommand == null ? 0 : lastCommand.getExitCode()) {
-				case 0:
-				case STILL_ACTIVE:
-					if (lastCommand != null
-							&& lastCommand.getCondition() == Condition.ExecNextCommandOnFailure) {
-						exit = true;
-						continue;
+			console.getLineReader().getVariables().put(LineReader.DISABLE_HISTORY, Boolean.TRUE);
+			
+			try {
+				for (CmdLine l : lineParser.parseCommands(line, exitCode)) {
+	
+					if (exit)
+						break;
+	
+					switch (lastCommand == null ? 0 : lastCommand.getExitCode()) {
+					case 0:
+					case STILL_ACTIVE:
+						if (lastCommand != null
+								&& lastCommand.getCondition() == Condition.ExecNextCommandOnFailure) {
+							exit = true;
+							continue;
+						}
+						break;
+					default:
+						if (lastCommand != null
+								&& lastCommand.getCondition() == Condition.ExecNextCommandOnSuccess) {
+							exit = true;
+							continue;
+						}
+						break;
 					}
-					break;
-				default:
-					if (lastCommand != null
-							&& lastCommand.getCondition() == Condition.ExecNextCommandOnSuccess) {
-						exit = true;
-						continue;
-					}
-					break;
+					lastCommand = l;
+					
+					
+					expandAliases(console, lineParser, l.getArgs(), exitCode);
+					
+					l.setExitCode(exitCode = spawn(console, l.getArgArray(), l.isBackground()));
 				}
-				lastCommand = l;
-				
-				
-				expandAliases(console, lineParser, l.getArgs(), exitCode);
-				
-				l.setExitCode(exitCode = spawn(console, l.getArgArray(), l.isBackground()));
+			
+			} finally {
+				console.getLineReader().getVariables().remove(LineReader.DISABLE_HISTORY);
 			}
 
 		}

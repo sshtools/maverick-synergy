@@ -277,7 +277,7 @@ public class Utils {
 	}
 
 	public static String defaultString(String value, String defaultValue) {
-		if(Objects.isNull(value)) {
+		if(Objects.isNull(value) || value.length()==0) {
 			return defaultValue;
 		}
 		return value;

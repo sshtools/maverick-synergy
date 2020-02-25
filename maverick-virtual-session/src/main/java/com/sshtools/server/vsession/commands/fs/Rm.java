@@ -16,9 +16,10 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.vshell.commands.fs;
+package com.sshtools.server.vsession.commands.fs;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -26,34 +27,40 @@ import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
 import com.sshtools.server.vsession.VirtualConsole;
 
-public class Cp extends ShellCommand {
-	public Cp() {
-		super("cp", ShellCommand.SUBSYSTEM_FILESYSTEM, "[<srcFilePath>[ <srcFilePath2>]] [targetPath]", "Copy files or directories");
-//		getOptions().addOption("v", false, "Verbose. Display file names as they are copied.");
+public class Rm extends ShellCommand {
+	public Rm() {
+		super("rm", ShellCommand.SUBSYSTEM_FILESYSTEM, "[<filePath>]", "Removes a file or directory");
+//		getOptions().addOption("r", false, "Recursively remove files and directories.");
+//		getOptions().addOption("v", false, "Verbose. Display file names as they are deleted.");
 	}
 
 	public void run(String[] args, final VirtualConsole process) throws IOException, PermissionDeniedException {
 
-		if (args.length < 3)
-			throw new IOException("Not enough file names supplied.");
-		AbstractFile target = process.getCurrentDirectory().resolveFile(args[args.length - 1]);
+		if (args.length == 1)
+			throw new IOException("No file names supplied.");
 
-		if (args.length > 3 && (!target.exists() || !target.isDirectory())) {
-			throw new IOException("Target must exist as a folder if multiple sources are specified.");
+		for (int i = 1; i < args.length; i++) {
+			delete(process, process.getCurrentDirectory().resolveFile(args[i]), 
+					CliHelper.hasShortOption(args, 'r'), 
+					CliHelper.hasShortOption(args,'v'));
 		}
-
-		for (int i = 1; i < args.length - 1; i++) {
-			AbstractFile src = process.getCurrentDirectory().resolveFile(args[i]);
-			if (src.isDirectory() && target.isFile()) {
-				throw new IOException("Cannot move folder " + src + " to file " + target);
+	}
+	
+	
+	private void delete(VirtualConsole process, AbstractFile file, boolean recurse, boolean verbose) throws IOException, PermissionDeniedException {
+		
+		if(file.isDirectory() && recurse) {
+			List<AbstractFile> children = file.getChildren();
+			for(AbstractFile f : children) {
+				delete(process, f, true, verbose);
 			}
-			if (target.exists()) {
-				target = target.resolveFile(src.getName());
-			}
-			target.copyFrom(src);
-			if (CliHelper.hasShortOption(args, 'v')) {
-				process.println(src.toString());
-			}
+		}
+		file.delete(false);
+		if(verbose) {
+			try {
+				process.println(file.getAbsolutePath());
+			} catch (IOException e) {
+			}			
 		}
 	}
 }

@@ -16,27 +16,22 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.vshell.commands.admin;
+package com.sshtools.server.vsession.commands.fs;
 
 import java.io.IOException;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.server.vsession.ShellCommand;
 import com.sshtools.server.vsession.VirtualConsole;
 
-public class Connections extends ShellCommand {
 
-	public Connections() {
-		super("con", ShellCommand.SUBSYSTEM_SSHD, "", "Show active connections");
+public class Refresh extends ShellCommand {
+	public Refresh() {
+		super("refresh", SUBSYSTEM_FILESYSTEM, "", "Refreshes the current directory");
+		setBuiltIn(true);
 	}
 
-	public void run(String[] args, VirtualConsole process)
-			throws IOException, PermissionDeniedException {
-
-		for(SshConnection c : process.getConnection().getConnectionManager().getAllConnections()) {
-			process.println(String.format("%s %16s %s", c.getUUID(), c.getRemoteAddress().getAddress(), c.getUsername()));
-		}
+	public void run(String[] args, VirtualConsole process) throws IOException, PermissionDeniedException {
+		process.getCurrentDirectory().refresh();
 	}
-
 }

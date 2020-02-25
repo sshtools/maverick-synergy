@@ -16,35 +16,34 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.vshell.commands.fs;
+package com.sshtools.server.vsession.commands.admin;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.server.vsession.CommandFactory;
 import com.sshtools.server.vsession.ShellCommand;
-import com.sshtools.server.vsession.VirtualConsole;
 
-public class Mkdir extends ShellCommand {
-	public Mkdir() {
-		super("mkdir", SUBSYSTEM_FILESYSTEM,
-			"<name> [<name2> <name3> .. <nameX>]", "Create one or more directories");
+public class AdminCommandFactory extends CommandFactory<ShellCommand> {
+
+	public AdminCommandFactory() {
+
+		installShellCommands();
+	}
+	
+	protected void installShellCommands() {
+		
+		commands.put("threads", Threads.class);
+		commands.put("shutdown", Shutdown.class);
+		commands.put("con", Connections.class);
+		commands.put("mem", Mem.class);
+		commands.put("threaddump", ThreadDump.class);
 	}
 
-	public void run(String[] args, VirtualConsole process) throws IOException,
-			PermissionDeniedException {
-
-		if (args.length < 2)
-			throw new IOException("At least one argument required");
-		for (int i = 1; i < args.length; i++) {
-			AbstractFile obj = process.getCurrentDirectory().resolveFile(args[i]);
-			if(obj.exists()) {
-				throw new FileNotFoundException(String.format("%s already exists", args[i]));
-			}
-			if(!obj.createFolder()) {
-				throw new IOException(String.format("%s could not be created", args[i]));
-			}
-		}
+	@Override
+	protected void configureCommand(ShellCommand c, SshConnection con) throws IOException, PermissionDeniedException {
+		super.configureCommand(c, con);
 	}
+
 }

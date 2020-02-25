@@ -16,24 +16,27 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.vshell.commands.admin;
+package com.sshtools.server.vsession.commands.admin;
 
 import java.io.IOException;
 
+import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.server.vsession.ShellCommand;
 import com.sshtools.server.vsession.VirtualConsole;
 
-public class Shutdown extends ShellCommand {
-	public Shutdown() {
-		super("shutdown", SUBSYSTEM_JVM, "[<exitValue>]", "Exit the JVM");
-		setBuiltIn(false);
+public class Connections extends ShellCommand {
+
+	public Connections() {
+		super("con", ShellCommand.SUBSYSTEM_SSHD, "", "Show active connections");
 	}
 
-	public void run(String[] args, VirtualConsole process) throws IOException {
+	public void run(String[] args, VirtualConsole process)
+			throws IOException, PermissionDeniedException {
 
-		if (args.length > 2) {
-			throw new IOException("Incorrect number of arguments.");
+		for(SshConnection c : process.getConnection().getConnectionManager().getAllConnections()) {
+			process.println(String.format("%s %16s %s", c.getUUID(), c.getRemoteAddress().getAddress(), c.getUsername()));
 		}
-		System.exit(args.length == 1 ? 0 : Integer.parseInt(args[1]));
 	}
+
 }

@@ -16,34 +16,24 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.vshell.commands.admin;
+package com.sshtools.server.vsession.commands.admin;
 
 import java.io.IOException;
 
-import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.server.vsession.CommandFactory;
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.VirtualConsole;
 
-public class AdminCommandFactory extends CommandFactory<ShellCommand> {
-
-	public AdminCommandFactory() {
-
-		installShellCommands();
-	}
-	
-	protected void installShellCommands() {
-		
-		commands.put("threads", Threads.class);
-		commands.put("shutdown", Shutdown.class);
-		commands.put("con", Connections.class);
-		commands.put("mem", Mem.class);
-		commands.put("threaddump", ThreadDump.class);
+public class Shutdown extends ShellCommand {
+	public Shutdown() {
+		super("shutdown", SUBSYSTEM_JVM, "[<exitValue>]", "Exit the JVM");
+		setBuiltIn(false);
 	}
 
-	@Override
-	protected void configureCommand(ShellCommand c, SshConnection con) throws IOException, PermissionDeniedException {
-		super.configureCommand(c, con);
-	}
+	public void run(String[] args, VirtualConsole process) throws IOException {
 
+		if (args.length > 2) {
+			throw new IOException("Incorrect number of arguments.");
+		}
+		System.exit(args.length == 1 ? 0 : Integer.parseInt(args[1]));
+	}
 }

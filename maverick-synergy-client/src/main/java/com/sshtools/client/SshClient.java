@@ -92,13 +92,23 @@ public class SshClient implements Closeable {
 		this.sshContext = sshContext;
 		this.hostname = hostname;
 		sshContext.setUsername(username);
-		if(Objects.nonNull(password) && password.length > 0) {
-			sshContext.addAuthenticator(new PasswordAuthenticator(password));
-		}
-		if(identities.length > 0) {
-			sshContext.addAuthenticator(new PublicKeyAuthenticator(identities));
-		}
 		doConnect(hostname, port, username, sshContext);
+		boolean attempted = false;
+
+		if(!isAuthenticated() && identities.length > 0) {
+			attempted = true;
+			authenticate(new PublicKeyAuthenticator(identities), 30000);
+		}
+		
+		if(!isAuthenticated() && Objects.nonNull(password) && password.length > 0) {
+			attempted = true;
+			authenticate(new PasswordAuthenticator(password), 30000);
+		}
+		
+		if(attempted && !isAuthenticated()) {
+			throw new IOException("Authentication failed");
+		}
+
 	}
 
 	@SuppressWarnings("unchecked")

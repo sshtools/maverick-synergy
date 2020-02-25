@@ -154,7 +154,7 @@ public class AuthenticationProtocolClient implements Service {
 					checkForKeyboardInteractiveAuthentication();
 				}
 				
-				if(canAuthenticate()) {
+				if(authenticators.size() > 0) {
 					doNextAuthentication();
 				}  else {
 					transport.addTask(ExecutorOperationSupport.EVENTS, new ConnectionTaskWrapper(transport.getConnection(), new Runnable() {
@@ -255,6 +255,10 @@ public class AuthenticationProtocolClient implements Service {
 		if (canAuthenticate()) {
 			currentAuthenticator = authenticators.get(authIndex++);
 			currentAuthenticator.authenticate(transport, username);
+		} else {
+			if(authenticators.size() > 0) {
+				transport.getConnection().getAuthenticatedFuture().done(false);
+			}
 		}
 	}
 

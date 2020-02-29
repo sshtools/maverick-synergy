@@ -1491,9 +1491,9 @@ public abstract class TransportProtocol<T extends SshContext>
 					Log.debug("Submitting transport cleanup to executor service");
 				}
 
+
 				addTask(EVENTS, new ConnectionTaskWrapper(getConnection(), new Runnable() {
 					public void run() {
-						
 						synchronized (lock) {
 							cleanupOperations(new ConnectionAwareTask(con) {
 								protected void doTask() {

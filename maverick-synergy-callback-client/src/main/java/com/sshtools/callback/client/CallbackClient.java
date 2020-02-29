@@ -24,9 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.sshtools.common.auth.AuthenticationMechanismFactory;
-import com.sshtools.common.auth.KeyboardInteractiveAuthenticationProvider;
-import com.sshtools.common.auth.KeyboardInteractiveProvider;
+import com.sshtools.common.auth.MutualKeyAuthenticationStore;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ConnectRequestFuture;
 import com.sshtools.common.nio.DisconnectRequestFuture;
@@ -38,13 +36,11 @@ import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionProtocol;
 import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.GlobalRequestHandler;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.util.ByteArrayReader;
-import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.server.SshServerContext;
 
 /**
@@ -52,13 +48,12 @@ import com.sshtools.server.SshServerContext;
  * on the SSH port to act as a client to any incoming connections. The connection is authenticated by a public
  * key held by the CallbackClient.
  */
-public abstract class CallbackClient<T extends CallbackConfiguration> implements ProtocolContextFactory<SshServerContext>, Runnable {
+public abstract class CallbackClient implements ProtocolContextFactory<SshServerContext>, Runnable {
 
-	
+	public static final String CALLBACK_IDENTIFIER = "CallbackClient-";
 
-	ServerPublicKeyAuthentication serverAuthenticationProvider;
-	T config;
-	CallbackApplication<T> app;
+	CallbackConfiguration config;
+	CallbackApplication app;
 	ConnectRequestFuture future;
 	Connection<?> currentConnection;
 	boolean isStopped = false;
@@ -69,13 +64,13 @@ public abstract class CallbackClient<T extends CallbackConfiguration> implements
 	Map<String,Object> attributes = new HashMap<String,Object>();
 	int numberOfAuthenticationErrors = 0;
 	
-	public CallbackClient(T config, CallbackApplication<T> app, String hostname, int port, boolean onDemand) throws IOException {
+	public CallbackClient(CallbackConfiguration config, CallbackApplication app, String hostname, int port, boolean onDemand) throws IOException {
 		this.config = config;
 		this.app = app;
 		this.onDemand = onDemand;
 		this.hostname = hostname;
 		this.port = port;
-		serverAuthenticationProvider = new ServerPublicKeyAuthentication(config.getAuthorizedKeys());
+
 	}
 	
 	public void run() {
@@ -165,59 +160,7 @@ public abstract class CallbackClient<T extends CallbackConfiguration> implements
 			}
 		}
 	}
-	
-	public boolean startRoute(String name, int startPort, int endPort, String destinationHost, int destinationPort) throws IOException {
-		if(currentConnection==null) {
-			throw new IOException("Client is not connected");
-		}
 		
-		ByteArrayWriter msg = new ByteArrayWriter();
-		
-		try {
-			msg.writeString(config.getAgentName());
-			msg.writeString(name);
-			msg.writeString(destinationHost);
-			msg.writeInt(destinationPort);
-			msg.writeInt(startPort);
-			msg.writeInt(endPort);
-			
-			GlobalRequest request = new GlobalRequest("start-route@hypersocket.com", currentConnection, msg.toByteArray());
-			currentConnection.getConnectionProtocol().sendGlobalRequest(request, true);
-			
-			request.waitFor(60000);
-			
-			return request.isDone() && request.isSuccess();
-		
-		} finally {
-			msg.close();
-		}
-		
-		
-	}
-	
-	public boolean stopRoute(String name) throws IOException {
-		
-		if(currentConnection==null) {
-			throw new IOException("Client is not connected");
-		}
-		
-		ByteArrayWriter msg = new ByteArrayWriter();
-		
-		try {
-			msg.writeString(config.getAgentName());
-			msg.writeString(name);
-			
-			GlobalRequest request = new GlobalRequest("stop-route@hypersocket.com", currentConnection, msg.toByteArray());
-			currentConnection.getConnectionProtocol().sendGlobalRequest(request, true);
-			
-			request.waitFor(60000);
-			
-			return request.isDone() && request.isSuccess();
-		} finally {
-			msg.close();
-		}
-	}
-	
 	public void disconnect() {
 		if(future.isDone() && future.isSuccess()) {
 			future.getTransport().disconnect(TransportProtocol.BY_APPLICATION, "The user disconnected.");
@@ -231,17 +174,6 @@ public abstract class CallbackClient<T extends CallbackConfiguration> implements
 		return future.getTransport().getDisconnectFuture();
 	}
 	
-	public boolean authenticateUUID(String remoteUUID) throws IOException {
-		
-		if(config.getRemoteUUID()==null) {
-			config.setRemoteUUID(remoteUUID);
-		}
-		
-		if(Log.isDebugEnabled()) {
-			Log.debug(String.format("Authenticating remote UUD %s against expected %s", config.getRemoteUUID(), remoteUUID));
-		}
-		return config.getRemoteUUID().equals(remoteUUID);
-	}
 	
 	@Override
 	public SshServerContext createContext(SshEngineContext daemonContext, SocketChannel sc) throws IOException, SshException {
@@ -252,18 +184,13 @@ public abstract class CallbackClient<T extends CallbackConfiguration> implements
 			sshContext.addHostKey(key);
 		}
 		
-		sshContext.setSoftwareVersionComments("CallbackClient-" + SshEngine.getVersion());
+		sshContext.setSoftwareVersionComments(CALLBACK_IDENTIFIER + config.getAgentName());
 
-		sshContext.getPolicy(AuthenticationMechanismFactory.class).addProvider(serverAuthenticationProvider);
-		sshContext.getPolicy(AuthenticationMechanismFactory.class).addProvider(new KeyboardInteractiveAuthenticationProvider() {
-			
-			public KeyboardInteractiveProvider createInstance(SshConnection con) {
-				return new KeyboardInteractiveAuthentication(CallbackClient.this);
-			}
-		});
-		
-		sshContext.getPolicy(AuthenticationPolicy.class).addRequiredMechanism("publickey");
-		sshContext.getPolicy(AuthenticationPolicy.class).addRequiredMechanism("keyboard-interactive");
+		MutualKeyAuthenticationStore authenticationStore = new MutualKeyAuthenticationStore();
+		authenticationStore.addKey(config.getAgentName(), config.getPrivateKey(), config.getPublicKey());
+		MutualCallbackAuthenticationProvider provider = new MutualCallbackAuthenticationProvider(authenticationStore);
+		sshContext.setAuthenicationMechanismFactory(new CallbackAuthenticationMechanismFactory<>(provider));
+		sshContext.getPolicy(AuthenticationPolicy.class).addRequiredMechanism("mutual-key-auth@sshtools.com");
 		
 		sshContext.setSendIgnorePacketOnIdle(true);
 		
@@ -316,16 +243,12 @@ public abstract class CallbackClient<T extends CallbackConfiguration> implements
 	protected abstract void onUpdateRequest(Connection<?> con, String updateInfo);
 	
 	protected abstract void configureContext(SshServerContext sshContext) throws IOException, SshException;
-
-	public String getUUID() {
-		return config.getLocalUUID();
-	}
 	
 	public String getName() {
 		return config.getAgentName() + "@" + config.getServerHost();
 	}
 
-	public T getConfig() {
+	public CallbackConfiguration getConfig() {
 		return config;
 	}
 
@@ -333,7 +256,7 @@ public abstract class CallbackClient<T extends CallbackConfiguration> implements
 		return isStopped;
 	}
 
-	public void setConfig(T config) {
+	public void setConfig(CallbackConfiguration config) {
 		this.config = config;
 	}
 	

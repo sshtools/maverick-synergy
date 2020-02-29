@@ -24,15 +24,13 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.EncodingUtils;
 
-class AuthenticationMessage implements SshMessage {
-
-	
+public class AuthenticationMessage implements SshMessage {
 
 	byte[] username;
 	byte[] servicename;
 	byte[] methodname;
 
-	AuthenticationMessage(String username, String servicename, String methodname) {
+	public AuthenticationMessage(String username, String servicename, String methodname) {
 		this.username = EncodingUtils.getUTF8Bytes(username);
 		this.servicename = EncodingUtils.getUTF8Bytes(servicename);
 		this.methodname = EncodingUtils.getUTF8Bytes(methodname);

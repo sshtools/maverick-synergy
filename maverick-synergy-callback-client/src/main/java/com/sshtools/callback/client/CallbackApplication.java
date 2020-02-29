@@ -34,13 +34,13 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.DisconnectRequestFuture;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.SshException;
+import com.sshtools.server.SshServerContext;
 
-public abstract class CallbackApplication<T extends CallbackConfiguration> {
+public class CallbackApplication {
 
-	
-	
 	SshEngine ssh = new SshEngine();
-	Set<CallbackClient<T>> clients = new HashSet<CallbackClient<T>>();
+	Set<CallbackClient> clients = new HashSet<CallbackClient>();
 	ExecutorService executor;
 	
 	public CallbackApplication() {
@@ -56,11 +56,24 @@ public abstract class CallbackApplication<T extends CallbackConfiguration> {
 		 return Executors.newCachedThreadPool();
 	}
 	
-	protected abstract CallbackClient<T> createClient(T config, String hostname, int port, boolean onDemand) throws IOException; 
+	protected CallbackClient createClient(CallbackConfiguration config, String hostname, int port, boolean onDemand) throws IOException {
+		return new CallbackClient(config, this, hostname, port, onDemand) {
+			
+			@Override
+			protected void onUpdateRequest(Connection<?> con, String updateInfo) {
+				
+			}
+			
+			@Override
+			protected void configureContext(SshServerContext sshContext) throws IOException, SshException {
+				
+			}
+		};
+	}
 
-	public void start(Collection<T> configs) {
+	public void start(Collection<CallbackConfiguration> configs) {
 		
-		for(T config : configs) {
+		for(CallbackConfiguration config : configs) {
 			
 			try {
 				start(config, config.getServerHost(), config.getServerPort());						
@@ -70,15 +83,15 @@ public abstract class CallbackApplication<T extends CallbackConfiguration> {
 		}
 	}
 	
-	public synchronized void start(T config) throws IOException {
+	public synchronized void start(CallbackConfiguration config) throws IOException {
 		start(config, config.getServerHost(), config.getServerPort());
 	}
 	
-	public synchronized void start(T config, String hostname, int port) throws IOException {
+	public synchronized void start(CallbackConfiguration config, String hostname, int port) throws IOException {
 		start(createClient(config, hostname, port, false));
 	}
 	
-	public synchronized void start(CallbackClient<T> client) {
+	public synchronized void start(CallbackClient client) {
 		
 		if(Log.isInfoEnabled()) {
 			Log.info("Starting client " + client.getConfig().getAgentName());
@@ -86,7 +99,7 @@ public abstract class CallbackApplication<T extends CallbackConfiguration> {
 		executor.execute(client);
 	}
 	
-	void onClientConnected(CallbackClient<T> client) {
+	void onClientConnected(CallbackClient client) {
 		clients.add(client);
 		onClientStart(client);
 	}
@@ -95,19 +108,19 @@ public abstract class CallbackApplication<T extends CallbackConfiguration> {
 		return ssh.isStarted() && !clients.isEmpty();
 	}
 	
-	public Collection<CallbackClient<T>> getClients() {
+	public Collection<CallbackClient> getClients() {
 		return clients;
 	}
 	
-	protected void onClientStart(CallbackClient<T> client) {
+	protected void onClientStart(CallbackClient client) {
 		
 	}
 	
-	protected void onClientStop(CallbackClient<T> client) {
+	protected void onClientStop(CallbackClient client) {
 		
 	}
 	
-	public synchronized void stop(CallbackClient<T> client) {
+	public synchronized void stop(CallbackClient client) {
 		
 		if(Log.isInfoEnabled()) {
 			Log.info("Stopping callback client");
@@ -120,11 +133,13 @@ public abstract class CallbackApplication<T extends CallbackConfiguration> {
 		}
 	}
 	
-	protected abstract void reload(CallbackClient<T> client) throws IOException;
+	protected void reload(CallbackClient client) throws IOException {
+		
+	}
 	
 	public void stop() {
 		
-		for(CallbackClient<T> client : new ArrayList<CallbackClient<T>>(clients)) {
+		for(CallbackClient client : new ArrayList<CallbackClient>(clients)) {
 			stop(client);
 		}
 		
@@ -146,8 +161,7 @@ public abstract class CallbackApplication<T extends CallbackConfiguration> {
 					executor.execute(new Runnable() {
 						public void run() {
 							if(con.containsProperty("callbackClient")) {
-								@SuppressWarnings("unchecked")
-								CallbackClient<T> client = (CallbackClient<T>) con.getProperty("callbackClient");
+								CallbackClient client = (CallbackClient) con.getProperty("callbackClient");
 								onClientStop(client);
 								con.removeProperty("callbackClient");
 								clients.remove(client);

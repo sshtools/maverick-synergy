@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.nio.channels.SocketChannel;
 
 import com.sshtools.client.SshClientContext;
+import com.sshtools.common.auth.MutualKeyAuthenticationStore;
 import com.sshtools.common.nio.ProtocolContextFactory;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.nio.SshEngineContext;
@@ -39,10 +40,21 @@ import com.sshtools.server.SshServerContext;
  */
 public abstract class CallbackServer extends SshEngine {
 
-	String callbackIdentifier;
+	public static final String CALLBACK_IDENTIFIER = "CallbackClient-";
 	
-	protected CallbackServer(String callbackIdentifier) throws IOException {
+	String callbackIdentifier;
+	MutualKeyAuthenticationStore authenticationStore;
+	
+	protected CallbackServer() {
+		this(CALLBACK_IDENTIFIER);
+	}
+	
+	protected CallbackServer(String callbackIdentifier) {
 		this.callbackIdentifier = callbackIdentifier;
+	}
+	
+	public void setMutualKeyAuthenticationStore(MutualKeyAuthenticationStore authenticationStore) {
+		this.authenticationStore = authenticationStore;
 	}
 	
 	public void addInterface(InetAddress addressToBind, int portToBind) throws IOException {
@@ -52,19 +64,23 @@ public abstract class CallbackServer extends SshEngine {
 	protected abstract void configureClientContext(SshClientContext clientContext);
 
 	protected abstract SshServerContext createServerContext(SshEngineContext daemonContext, 
-			SocketChannel sc);
+			SocketChannel sc) throws IOException, SshException;
 	
 
-	class ClientContextFactory implements ProtocolContextFactory<SshClientContext> {
+	protected class ClientContextFactory implements ProtocolContextFactory<SshClientContext> {
+
+		public ClientContextFactory() {
+		}
 
 		@Override
 		public SshClientContext createContext(SshEngineContext daemonContext, SocketChannel sc)
 				throws IOException, SshException {
-			SshClientContext clientContext = new SwitchingSshContext(CallbackServer.this, callbackIdentifier, new ServerContextFactory());
+			SshClientContext clientContext = new SwitchingSshContext(
+					CallbackServer.this, callbackIdentifier, new ServerContextFactory());
 			configureClientContext(clientContext);
+			clientContext.addAuthenticator(new MutualCallbackAuthenticator(authenticationStore));
 			return clientContext;
 		}
-		
 	}
 	
 	class ServerContextFactory implements ProtocolContextFactory<SshServerContext> {
@@ -75,7 +91,5 @@ public abstract class CallbackServer extends SshEngine {
 			SshServerContext serverContext = createServerContext(daemonContext, sc);
 			return serverContext;
 		}
-		
-		
 	}
 }

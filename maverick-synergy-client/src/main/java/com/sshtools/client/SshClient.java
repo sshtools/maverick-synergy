@@ -106,6 +106,7 @@ public class SshClient implements Closeable {
 		}
 		
 		if(attempted && !isAuthenticated()) {
+			close();
 			throw new IOException("Authentication failed");
 		}
 
@@ -138,6 +139,7 @@ public class SshClient implements Closeable {
 		if(!sshContext.getAuthenticators().isEmpty()) {
 			con.getAuthenticatedFuture().waitForever();
 			if(!con.getAuthenticatedFuture().isSuccess()) {
+				close();
 				throw new IOException(
 						String.format("Failed to authenticate user %s at %s:%d", username, hostname, port));
 			}

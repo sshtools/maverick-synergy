@@ -57,10 +57,6 @@ public class PublicKeyAuthentication<C extends Context> implements Authenticatio
 	
 	public static final String AUTHENTICATION_METHOD = "publickey";
 	
-	public PublicKeyAuthentication() {
-		
-	}
-	
 	public PublicKeyAuthentication(AbstractServerTransport<C> transport,
 			AbstractAuthenticationProtocol<C> authentication, SshConnection con,
 			PublicKeyAuthenticationProvider[] providers) {
@@ -68,14 +64,6 @@ public class PublicKeyAuthentication<C extends Context> implements Authenticatio
 		this.authentication = authentication;
 		this.con = con;
 		this.providers = providers;
-	}
-
-	public void init(AbstractServerTransport<C> transport,
-			AbstractAuthenticationProtocol<C> authentication) throws IOException {
-		this.transport = transport;
-		this.authentication = authentication;
-		this.con = transport.getConnection();
-
 	}
 
 	public String getMethod() {
@@ -144,9 +132,7 @@ public class PublicKeyAuthentication<C extends Context> implements Authenticatio
 			ByteArrayReader bar = new ByteArrayReader(msg);
 
 			try {
-				// if the first byte is 0 then password doesnt need changing, else
-				// it
-				// does
+
 				boolean verify = bar.read() == 0 ? false : true;
 				final String algorithm = bar.readString();
 

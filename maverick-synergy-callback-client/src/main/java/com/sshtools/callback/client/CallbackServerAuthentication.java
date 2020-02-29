@@ -25,13 +25,11 @@ import com.sshtools.common.auth.AbstractPublicKeyAuthenticationProvider;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.components.SshPublicKey;
 
-public class ServerPublicKeyAuthentication extends AbstractPublicKeyAuthenticationProvider {
+public class CallbackServerAuthentication extends AbstractPublicKeyAuthenticationProvider {
 
-	
-	
 	Set<SshPublicKey> serverKeys;
 	
-	ServerPublicKeyAuthentication(Set<SshPublicKey> serverKeys) throws IOException {
+	CallbackServerAuthentication(Set<SshPublicKey> serverKeys) throws IOException {
 		
 		this.serverKeys = serverKeys;
 		

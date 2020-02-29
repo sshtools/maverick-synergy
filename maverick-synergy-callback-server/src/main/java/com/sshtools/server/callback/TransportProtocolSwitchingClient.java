@@ -49,12 +49,22 @@ class TransportProtocolSwitchingClient extends TransportProtocolClient {
 			try {
 				SshServerContext context = serverFactory.createContext(sshContext.getDaemonContext(), getSocketConnection().getSocketChannel());
 				TransportProtocolServer engine = (TransportProtocolServer) context.createEngine(connectFuture);
+				
 				transferState(engine);
 				getSocketConnection().setProtocolEngine(engine);
+				
 			} catch (Exception e) {
 				disconnect(PROTOCOL_ERROR, "Failed to switch SSH role");
 			}
+		} else {
+			/**
+			 * We need to know the username to initiate authentication since we are acting as the client. So
+			 * the callback client places the username in the initial SSH identification string.
+			 */
+			String username = remoteIdentification.substring(8+callbackIdentifier.length()).trim();
+			getContext().setUsername(username);
 		}
+		
 	}
 
 	

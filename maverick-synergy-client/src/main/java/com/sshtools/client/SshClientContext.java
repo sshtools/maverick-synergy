@@ -74,7 +74,7 @@ public class SshClientContext extends SshContext {
 
 	String username;
 
-	TransportProtocolClient transport;
+	protected TransportProtocolClient transport;
 	
 	Collection<ClientStateListener> stateListeners = new ArrayList<ClientStateListener>();
 	

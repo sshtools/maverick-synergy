@@ -69,7 +69,7 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 		}
 	}
 	
-	public InputStream getErrorStream() {
+	public InputStream getStderrStream() {
 		return stderrInputStream;
 	}
 

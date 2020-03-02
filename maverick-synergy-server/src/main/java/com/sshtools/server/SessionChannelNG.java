@@ -106,9 +106,7 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	boolean haltIncomingData = false;
 	long lastActivity = System.currentTimeMillis();
 	boolean agentForwardingRequested;
-	CachingDataWindow cached;
-	ChannelInputStream channelInputStream;
-	ChannelOutputStream channelOutputStream = new ChannelOutputStream(this);
+
 	ChannelOutputStream stderrOutputStream = new ChannelOutputStream(this, SSH_EXTENDED_DATA_STDERR);
 	
 	public SessionChannelNG(SshConnection con) {
@@ -123,16 +121,8 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		return null;
 	}
 	
-	public InputStream getInputStream() {
-		return channelInputStream;
-	}
-	
 	public OutputStream getErrorStream() {
 		return stderrOutputStream;
-	}
-	
-	public OutputStream getOutputStream() {
-		return channelOutputStream;
 	}
 	
 	public boolean isAgentForwardingRequested() {
@@ -580,7 +570,7 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 
 	protected void onSessionData(ByteBuffer data) {
 		synchronized (localWindow) {
-			cached.put(data);
+			cache.put(data);
 		}		
 	}
 	/**

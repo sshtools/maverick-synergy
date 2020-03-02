@@ -26,13 +26,19 @@ public final class VirtualMountTemplate extends AbstractMount {
 
 	private AbstractFileFactory<?> actualFileFactory;
 	private FileSystemOptions fileSystemOptions;
-
+	private boolean createMountFolder;
+	
 	public VirtualMountTemplate(String mount, String path,
-			AbstractFileFactory<?> actualFileFactory) {
+			AbstractFileFactory<?> actualFileFactory,
+			boolean createMountFolder) {
 		super(mount, path, false, false);
 		this.actualFileFactory = actualFileFactory;
+		this.createMountFolder = createMountFolder;
 	}
 
+	public boolean isCreateMountFolder() {
+		return createMountFolder;
+	}
 	public AbstractFileFactory<?> getActualFileFactory() {
 		return actualFileFactory;
 	}

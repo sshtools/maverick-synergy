@@ -18,9 +18,6 @@
  */
 package com.sshtools.callback.client;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
 
@@ -34,21 +31,19 @@ public class CallbackConfiguration {
 	Long reconnectIntervalMs;
 	SshKeyPair privateKey;
 	SshPublicKey publicKey;
-	List<SshKeyPair> hostKeys;
+
 	public CallbackConfiguration(String agentName, 
 			String serverHost, 
 			int serverPort, 
 			Long reconnectIntervalMs, 
 			SshKeyPair privateKey,
-			SshPublicKey publicKey,
-			List<SshKeyPair> hostKeys) {
+			SshPublicKey publicKey) {
 		super();
 		this.agentName = agentName;
 		this.serverHost = serverHost;
 		this.serverPort = serverPort;
 		this.privateKey = privateKey;
 		this.publicKey = publicKey;
-		this.hostKeys = hostKeys;
 	}
 	
 	protected CallbackConfiguration() {
@@ -94,10 +89,4 @@ public class CallbackConfiguration {
 	public SshPublicKey getPublicKey() {
 		return publicKey;
 	}
-
-	public Collection<SshKeyPair> getHostKeys() {
-		return hostKeys;
-	}
-	
-	
 }

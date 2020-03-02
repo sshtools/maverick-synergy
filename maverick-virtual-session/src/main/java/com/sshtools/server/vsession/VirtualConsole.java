@@ -30,8 +30,8 @@ import org.jline.utils.InfoCmp.Capability;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
-import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.Context;
+import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SshConnection;
 
 public class VirtualConsole {
@@ -40,11 +40,11 @@ public class VirtualConsole {
 	Terminal terminal;
 	LineReader reader;
 	SshConnection con;
-	Channel channel;
+	SessionChannel channel;
 	Msh shell;
 	AbstractFile cwd;
 	
-	public VirtualConsole(Channel channel, Environment env, Terminal terminal, LineReader reader, Msh shell) {
+	public VirtualConsole(SessionChannel channel, Environment env, Terminal terminal, LineReader reader, Msh shell) {
 		this.channel = channel;
 		this.con = channel.getConnection();
 		this.env = env;
@@ -106,7 +106,7 @@ public class VirtualConsole {
 		return reader.readLine();
 	}
 
-	public Channel getSessionChannel() {
+	public SessionChannel getSessionChannel() {
 		return channel;
 	}
 

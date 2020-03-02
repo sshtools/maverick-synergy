@@ -15,7 +15,7 @@ public class CallbackAuthenticationMechanismFactory<C extends Context> extends D
 	
 	public CallbackAuthenticationMechanismFactory(MutualCallbackAuthenticationProvider provider) {
 		this.provider = provider;
-		supportedMechanisms.add("mutual-key-auth@sshtools.com");
+		supportedMechanisms.add(MutualCallbackAuthenticationProvider.MUTUAL_KEY_AUTHENTICATION);
 	}
 	
 	public AuthenticationMechanism createInstance(String name,
@@ -23,7 +23,7 @@ public class CallbackAuthenticationMechanismFactory<C extends Context> extends D
 			AbstractAuthenticationProtocol<C> authentication, SshConnection con)
 			throws UnsupportedChannelException {
 		
-		if(name.equals("mutual-key-auth@sshtools.com")) {
+		if(name.equals(MutualCallbackAuthenticationProvider.MUTUAL_KEY_AUTHENTICATION)) {
 			return new MutualCallbackAuthentication<C>(transport, authentication, con, provider);
 		}
 		

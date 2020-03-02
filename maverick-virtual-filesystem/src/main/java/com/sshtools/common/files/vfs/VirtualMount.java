@@ -32,15 +32,18 @@ public class VirtualMount extends AbstractMount {
 	AbstractFileFactory<? extends AbstractFile> actualFileFactory;
 	VirtualFileFactory virtualFileFactory;
 	boolean cached;
-
+	boolean createMountFolder;
+	
 	VirtualMount(String mount, String path,
 			VirtualFileFactory virtualFileFactory,
 			AbstractFileFactory<?> actualFileFactory,
 			SshConnection con, boolean isDefault,
-			boolean isImaginary) throws IOException, PermissionDeniedException {
+			boolean isImaginary, boolean createMountFolder)
+				throws IOException, PermissionDeniedException {
 		super(mount, path, isDefault, isImaginary);
 		this.actualFileFactory = actualFileFactory;
 		this.virtualFileFactory = virtualFileFactory;
+		this.createMountFolder = createMountFolder;
 		if (!isImaginary()) {
 			AbstractFile f = actualFileFactory.getFile(path, con);
 			this.path = f.getAbsolutePath();
@@ -51,10 +54,10 @@ public class VirtualMount extends AbstractMount {
 	public VirtualMount(String mount, String path,
 			VirtualFileFactory virtualFileFactory,
 			AbstractFileFactory<?> actualFileFactory,
-			SshConnection con) throws IOException,
+			SshConnection con, boolean createMountFolder) throws IOException,
 			PermissionDeniedException {
 		this(mount, path, virtualFileFactory, actualFileFactory, con, false,
-				false);
+				false, createMountFolder);
 	}
 
 	public AbstractFileFactory<? extends AbstractFile> getActualFileFactory() {
@@ -82,5 +85,9 @@ public class VirtualMount extends AbstractMount {
 
 	public AbstractFileFactory<VirtualFile> getVirtualFileFactory() {
 		return virtualFileFactory;
+	}
+
+	public boolean isCreateMountFolder() {
+		return createMountFolder;
 	}
 }

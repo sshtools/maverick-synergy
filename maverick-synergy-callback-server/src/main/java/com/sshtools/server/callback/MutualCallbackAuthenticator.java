@@ -8,7 +8,7 @@ import java.util.Objects;
 import com.sshtools.client.AuthenticationMessage;
 import com.sshtools.client.SimpleClientAuthenticator;
 import com.sshtools.client.TransportProtocolClient;
-import com.sshtools.common.auth.MutualKeyAuthenticationStore;
+import com.sshtools.common.auth.MutualKeyAuthenticatonStore;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshConnection;
@@ -24,20 +24,21 @@ import com.sshtools.common.util.ByteArrayWriter;
 public class MutualCallbackAuthenticator extends SimpleClientAuthenticator {
 
 	public static final int SSH_MSG_USERAUTH_SIGNED_CHALLENGE = 60;
+	public static final String MUTUAL_KEY_AUTHENTICATION = "mutual-key-auth@sshtools.com";
 	
 	TransportProtocolClient transport;
 	String username;
 	byte[] ourChallenge;
 	
-	MutualKeyAuthenticationStore authenticationStore;
+	MutualKeyAuthenticatonStore authenticationStore;
 	
-	public MutualCallbackAuthenticator(MutualKeyAuthenticationStore authenticationStore) {
+	public MutualCallbackAuthenticator(MutualKeyAuthenticatonStore authenticationStore) {
 		this.authenticationStore = authenticationStore;
 	}
 	
 	@Override
 	public String getName() {
-		return "mutual-key-auth@sshtools.com";
+		return MUTUAL_KEY_AUTHENTICATION;
 	}
 
 	@Override
@@ -128,7 +129,7 @@ public class MutualCallbackAuthenticator extends SimpleClientAuthenticator {
 	
 				final byte[] msg = generateAuthenticationRequest();
 				
-				transport.postMessage(new AuthenticationMessage(username, "ssh-connection", "mutual-key-auth@sshtools.com") {
+				transport.postMessage(new AuthenticationMessage(username, "ssh-connection", MUTUAL_KEY_AUTHENTICATION) {
 	
 					@Override
 					public boolean writeMessageIntoBuffer(ByteBuffer buf) {

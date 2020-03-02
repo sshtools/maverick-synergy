@@ -18,261 +18,240 @@
  */
 package com.sshtools.callback.client;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.channels.SocketChannel;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import com.sshtools.common.auth.MutualKeyAuthenticationStore;
+import com.sshtools.common.auth.InMemoryMutualKeyAuthenticationStore;
+import com.sshtools.common.events.Event;
+import com.sshtools.common.events.EventCodes;
+import com.sshtools.common.events.EventListener;
+import com.sshtools.common.events.EventServiceImplementation;
+import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.files.vfs.VFSFileFactory;
+import com.sshtools.common.files.vfs.VirtualFileFactory;
+import com.sshtools.common.files.vfs.VirtualMountTemplate;
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.nio.ConnectRequestFuture;
 import com.sshtools.common.nio.DisconnectRequestFuture;
-import com.sshtools.common.nio.ProtocolContextFactory;
+import com.sshtools.common.nio.ProtocolContext;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.nio.SshEngineContext;
 import com.sshtools.common.policy.AuthenticationPolicy;
+import com.sshtools.common.policy.FileSystemPolicy;
+import com.sshtools.common.ssh.ChannelFactory;
 import com.sshtools.common.ssh.Connection;
-import com.sshtools.common.ssh.ConnectionProtocol;
-import com.sshtools.common.ssh.GlobalRequest;
-import com.sshtools.common.ssh.GlobalRequestHandler;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
-import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.server.DefaultServerChannelFactory;
 import com.sshtools.server.SshServerContext;
 
-/**
- * Implements a reverse SSH server. Making a client socket connection out to the CallbackServer which is listening
- * on the SSH port to act as a client to any incoming connections. The connection is authenticated by a public
- * key held by the CallbackClient.
- */
-public abstract class CallbackClient implements ProtocolContextFactory<SshServerContext>, Runnable {
+public class CallbackClient {
 
-	public static final String CALLBACK_IDENTIFIER = "CallbackClient-";
-
-	CallbackConfiguration config;
-	CallbackApplication app;
-	ConnectRequestFuture future;
-	Connection<?> currentConnection;
-	boolean isStopped = false;
-	public static final String REMOTE_UUID = "remoteUUID";
-	String hostname;
-	int port;
-	boolean onDemand = false;
-	Map<String,Object> attributes = new HashMap<String,Object>();
-	int numberOfAuthenticationErrors = 0;
+	SshEngine ssh = new SshEngine();
+	Set<CallbackSession> clients = new HashSet<CallbackSession>();
+	ExecutorService executor;
+	List<SshKeyPair> hostKeys = new ArrayList<>();
+	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory();
+	AbstractFileFactory<?> fileFactory = null;
 	
-	public CallbackClient(CallbackConfiguration config, CallbackApplication app, String hostname, int port, boolean onDemand) throws IOException {
-		this.config = config;
-		this.app = app;
-		this.onDemand = onDemand;
-		this.hostname = hostname;
-		this.port = port;
-
+	public CallbackClient() {
+		executor = getExecutorService();
+		EventServiceImplementation.getInstance().addListener(new DisconnectionListener());
 	}
 	
-	public void run() {
-		try {
-			connect();
-		} catch (IOException e) {
-			Log.error("Failed to startup", e);
-		}
+	public SshEngine getSshEngine() {
+		return ssh;
+	}
+	
+	protected ExecutorService getExecutorService() {
+		 return Executors.newCachedThreadPool();
 	}
 
-	public void connect() throws IOException {
+	public void start(Collection<CallbackConfiguration> configs) {
 		
-		if(isStopped) {
-			throw new IOException("Client has been stopped");
+		for(CallbackConfiguration config : configs) {
+			
+			try {
+				start(config, config.getServerHost(), config.getServerPort());						
+			} catch (Throwable e) {
+				Log.error(String.format("Could not load configuration %s", config.getAgentName()), e);
+			}
 		}
+	}
+	
+	public synchronized void start(CallbackConfiguration config) throws IOException {
+		start(config, config.getServerHost(), config.getServerPort());
+	}
+	
+	public synchronized void start(CallbackConfiguration config, String hostname, int port) throws IOException {
+		start(new CallbackSession(config, this, hostname, port, false));
+	}
+	
+	public synchronized void start(CallbackSession client) {
 		
 		if(Log.isInfoEnabled()) {
-			Log.info(String.format("Connecting to %s:%d", hostname, port));
+			Log.info("Starting client " + client.getConfig().getAgentName());
 		}
-		
-		synchronized(app) {
-			if(!app.getSshEngine().isStarted() && !app.getSshEngine().isStarting()) {
-				if(!app.getSshEngine().startup()) {
-					throw new IOException("SSH Engine failed to start");
-				}
-			}
-		}
-		int count = 1;
-		while(app.getSshEngine().isStarted()) {
-			try {
-				future = app.getSshEngine().connect(
-						hostname, 
-						port, 
-						createContext(app.getSshEngine().getContext(), null));;
-				future.waitFor(30000L);
-				if(future.isDone() && future.isSuccess()) {
-					currentConnection = future.getConnection();
-					currentConnection.getAuthenticatedFuture().waitFor(30000L);
-					if(currentConnection.getAuthenticatedFuture().isDone() && currentConnection.getAuthenticatedFuture().isSuccess()) {
-						currentConnection.setProperty("callbackClient", this);
-						app.onClientConnected(this);
-						if(Log.isInfoEnabled()) {
-							Log.info(String.format("Client is connected to %s:%d", hostname, port));
-						}
-						numberOfAuthenticationErrors = 0;
-						break;
-					} else {
-						if(Log.isInfoEnabled()) {
-							Log.info(String.format("Could not authenticate to %s:%d", hostname, port));
-						}
-						currentConnection.disconnect();
-						numberOfAuthenticationErrors++;
-					}
-				}
-				try {
-					long interval = config.getReconnectIntervalMs();
-					if(numberOfAuthenticationErrors >= 3) {
-						interval = TimeUnit.MINUTES.toMillis(10);
-					}
-					if(numberOfAuthenticationErrors >= 9) {
-						interval = TimeUnit.MINUTES.toMillis(60);
-					}
-					if(Log.isInfoEnabled()) {
-						Log.info(String.format("Will reconnect to %s:%d in %d seconds", hostname, port, interval / 1000));
-					}
-					Thread.sleep(interval);
-				} catch (InterruptedException e) {
-				}
-			} catch(Throwable e) {
-				Log.error(String.format("%s on %s:%d", 
-						e.getMessage(),
-						config.getServerHost(), 
-						config.getServerPort()), e);
-				long interval = config.getReconnectIntervalMs() * Math.min(count, 12 * 60);
-				if(Log.isInfoEnabled()) {
-					Log.info(String.format("Reconnecting to %s:%d in %d seconds", hostname, port, interval / 1000));
-				}
-				try {
-					Thread.sleep(interval);
-				} catch (InterruptedException e1) {
-				}
-				if(count >= 12) {
-					count += 12;
-				} else {
-					count++;
-				}
-			}
-		}
-	}
-		
-	public void disconnect() {
-		if(future.isDone() && future.isSuccess()) {
-			future.getTransport().disconnect(TransportProtocol.BY_APPLICATION, "The user disconnected.");
-		}
-		currentConnection = null;
+		executor.execute(client);
 	}
 	
-	public DisconnectRequestFuture stop() {
-		isStopped = true;
-		disconnect();
-		return future.getTransport().getDisconnectFuture();
+	void onClientConnected(CallbackSession client) {
+		clients.add(client);
+		onClientStart(client);
 	}
 	
+	public boolean isConnected() {
+		return ssh.isStarted() && !clients.isEmpty();
+	}
 	
-	@Override
-	public SshServerContext createContext(SshEngineContext daemonContext, SocketChannel sc) throws IOException, SshException {
+	public Collection<CallbackSession> getClients() {
+		return clients;
+	}
+	
+	protected void onClientStart(CallbackSession client) {
 		
-		SshServerContext sshContext = new SshServerContext(app.getSshEngine(), JCEComponentManager.getDefaultInstance());
+	}
+	
+	protected void onClientStop(CallbackSession client) {
+		
+	}
+	
+	public synchronized void stop(CallbackSession client) {
+		
+		if(Log.isInfoEnabled()) {
+			Log.info("Stopping callback client");
+		}
+		
+		DisconnectRequestFuture future = client.stop();
+		
+		if(Log.isInfoEnabled()) {
+			Log.info(String.format("Callback client has disconnected [%s]", String.valueOf(future.isDone())));
+		}
+	}
+	
+	protected void reload(CallbackSession client) throws IOException {
+		
+	}
+	
+	public void stop() {
+		
+		for(CallbackSession client : new ArrayList<CallbackSession>(clients)) {
+			stop(client);
+		}
+		
+		executor.shutdownNow();
+	}
+	
+	class DisconnectionListener implements EventListener {
 
-		for(SshKeyPair key : config.getHostKeys()) {
+		@Override
+		public void processEvent(Event evt) {
+			
+			switch(evt.getId()) {
+			case EventCodes.EVENT_DISCONNECTED:
+				
+				
+				final Connection<?> con = (Connection<?>)evt.getAttribute(EventCodes.ATTRIBUTE_CONNECTION);
+				
+				if(!executor.isShutdown()) {
+					executor.execute(new Runnable() {
+						public void run() {
+							if(con.containsProperty("callbackClient")) {
+								CallbackSession client = (CallbackSession) con.getProperty("callbackClient");
+								onClientStop(client);
+								con.removeProperty("callbackClient");
+								clients.remove(client);
+								if(!client.isStopped()) {
+									int count = 1;
+									while(getSshEngine().isStarted()) {
+										try {
+											try {
+												Thread.sleep(client.getConfig().getReconnectIntervalMs() * Math.min(count, 12));
+											} catch (InterruptedException e1) {
+											}
+											reload(client);
+											client.connect();
+											break;
+										} catch (IOException e) {
+										}
+										count++;
+									}
+								}
+							}
+						}
+					});
+				}
+				
+				break;
+			default:
+				break;
+			}
+		}
+		
+	}
+
+	public ProtocolContext createContext(SshEngineContext daemonContext, CallbackConfiguration config) throws IOException, SshException {
+		
+		SshServerContext sshContext = new SshServerContext(getSshEngine(), JCEComponentManager.getDefaultInstance());
+		
+		for(SshKeyPair key : hostKeys) {
 			sshContext.addHostKey(key);
 		}
+				
+		sshContext.setSoftwareVersionComments(CallbackSession.CALLBACK_IDENTIFIER + config.getAgentName());
 		
-		sshContext.setSoftwareVersionComments(CALLBACK_IDENTIFIER + config.getAgentName());
-
-		MutualKeyAuthenticationStore authenticationStore = new MutualKeyAuthenticationStore();
+		InMemoryMutualKeyAuthenticationStore authenticationStore = new InMemoryMutualKeyAuthenticationStore();
 		authenticationStore.addKey(config.getAgentName(), config.getPrivateKey(), config.getPublicKey());
 		MutualCallbackAuthenticationProvider provider = new MutualCallbackAuthenticationProvider(authenticationStore);
 		sshContext.setAuthenicationMechanismFactory(new CallbackAuthenticationMechanismFactory<>(provider));
-		sshContext.getPolicy(AuthenticationPolicy.class).addRequiredMechanism("mutual-key-auth@sshtools.com");
+		sshContext.getPolicy(AuthenticationPolicy.class).addRequiredMechanism(
+				MutualCallbackAuthenticationProvider.MUTUAL_KEY_AUTHENTICATION);
 		
 		sshContext.setSendIgnorePacketOnIdle(true);
-		
-		sshContext.addGlobalRequestHandler(new GlobalRequestHandler<SshServerContext>() {
-			
-			@Override
-			public String[] supportedRequests() {
-				return new String[] {"broker-connection@hypersocket.com",
-						"update@hypersocket.com",
-						"broker-query@hypersocket.com"};
-			}
-			
-			@Override
-			public boolean processGlobalRequest(GlobalRequest request, ConnectionProtocol<SshServerContext> context) {
 				
-				ByteArrayReader msg = new ByteArrayReader(request.getData());
+		configureForwarding(sshContext, config);
+		configureChannels(sshContext, config);
+		configureFilesystem(sshContext, config);
+		
+		configureContext(sshContext, config);
 				
-				try {
-					if(request.getName().equals("broker-connection@hypersocket.com")) {
-						String hostname = msg.readString();
-						int port = (int) msg.readInt();
-						brokerConnection(hostname, port);
-						return true;
-					} else if(request.getName().equals("broker-query@hypersocket.com")) {
-						return !onDemand;
-					} else if(request.getName().equals("update@hypersocket.com")) {
-						if(!Boolean.getBoolean("hypersocket.development")) {
-							onUpdateRequest(context.getConnection(), msg.readString());
-						}
-						return true;
-					} else {
-						return false;
-					}
-				} catch (IOException e) {
-					return false;
-				} finally {
-					msg.close();
-				}
-			}
-
-		});
-		
-		sshContext.getForwardingPolicy().allowForwarding();
-		
-		configureContext(sshContext);
-		
 		return sshContext;
 	}
-	
-	protected abstract void onUpdateRequest(Connection<?> con, String updateInfo);
-	
-	protected abstract void configureContext(SshServerContext sshContext) throws IOException, SshException;
-	
-	public String getName() {
-		return config.getAgentName() + "@" + config.getServerHost();
+
+	protected void configureContext(SshServerContext sshContext, CallbackConfiguration config) {
 	}
 
-	public CallbackConfiguration getConfig() {
-		return config;
+	protected void configureFilesystem(SshServerContext sshContext, CallbackConfiguration config) {
+		if(fileFactory==null) {
+			try {
+				sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(
+						new VirtualFileFactory(new VirtualMountTemplate(
+								"/", "tmp:///", new VFSFileFactory(), true)));
+			} catch (FileNotFoundException e) {
+				throw new IllegalStateException(e.getMessage(), e);
+			}
+		} else {
+			sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(fileFactory);
+		}
 	}
 
-	public boolean isStopped() {
-		return isStopped;
+	protected void configureChannels(SshServerContext sshContext, CallbackConfiguration config) {
+		sshContext.setChannelFactory(channelFactory);
 	}
 
-	public void setConfig(CallbackConfiguration config) {
-		this.config = config;
+	protected void configureForwarding(SshServerContext sshContext, CallbackConfiguration config) {
+		sshContext.getForwardingPolicy().allowForwarding();
+	}
+
+	public void addHostKey(SshKeyPair pair) {
+		this.hostKeys.add(pair);
 	}
 	
-	private void brokerConnection(String hostname, int port) throws IOException {
-		app.start(app.createClient(config, hostname, port, true));
-	}
-	
-	public boolean hasAttribute(String key) {
-		return attributes.containsKey(key);
-	}
-	
-	public Object getAttribute(String key) {
-		return attributes.get(key);
-	}
-	
-	public void setAttribute(String key, Object val) {
-		attributes.put(key, val);
-	}
 }

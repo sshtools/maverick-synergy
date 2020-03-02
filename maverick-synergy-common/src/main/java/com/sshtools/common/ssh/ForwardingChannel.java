@@ -51,6 +51,10 @@ public abstract class ForwardingChannel<T extends SshContext>
     public ForwardingChannel(String channelType, SshConnection con, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace) {
         super(channelType, con, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace);
     }
+    
+    public ForwardingChannel(String channelType, SshConnection con, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace, boolean autoConsume) {
+        super(channelType, con, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, new ChannelRequestFuture(), autoConsume);
+    }
 
     /**
      * The hostname of the endpoint of tunnel.

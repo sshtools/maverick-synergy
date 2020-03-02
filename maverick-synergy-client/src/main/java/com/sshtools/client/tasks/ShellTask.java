@@ -20,14 +20,12 @@ package com.sshtools.client.tasks;
 
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClient;
-import com.sshtools.client.SshClientContext;
 import com.sshtools.common.shell.ShellPolicy;
-import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshConnection;
 
 public abstract class ShellTask extends AbstractShellTask<SessionChannelNG> {
 
-	public ShellTask(Connection<SshClientContext> con) {
+	public ShellTask(SshConnection con) {
 		super(con);
 	}
 

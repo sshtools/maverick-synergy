@@ -53,12 +53,16 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 		}
 		
 		if(channeltype.equals(LOCAL_FORWARDING_CHANNEL_TYPE)) {
-			return new com.sshtools.common.ssh.LocalForwardingChannel<SshServerContext>(
-					LOCAL_FORWARDING_CHANNEL_TYPE,
-					con);
+			return createLocalForwardingChannel(con);
 		}
 		
 		return onCreateChannel(channeltype, con);
+	}
+
+	protected ChannelNG<SshServerContext> createLocalForwardingChannel(SshConnection con) {
+		return new com.sshtools.common.ssh.LocalForwardingChannel<SshServerContext>(
+				LOCAL_FORWARDING_CHANNEL_TYPE,
+				con);
 	}
 
 	protected ChannelNG<SshServerContext> onCreateChannel(String channeltype, SshConnection con) 

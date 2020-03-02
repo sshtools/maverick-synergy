@@ -63,7 +63,12 @@ public class AuthenticationProtocolClient implements Service {
 		this.transport = transport;
 		this.context = context;
 		this.username = username;
+		transport.getConnection().setUsername(username);
 		
+		for (ClientStateListener stateListener : context.getStateListeners()) {
+			stateListener.authenticationStarted(AuthenticationProtocolClient.this, transport.getConnection());
+		}
+
 		transport.getConnection().addEventListener(new EventListener() {
 			@Override
 			public void processEvent(Event evt) {

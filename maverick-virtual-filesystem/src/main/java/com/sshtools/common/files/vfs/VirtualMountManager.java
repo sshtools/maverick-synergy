@@ -55,17 +55,28 @@ public class VirtualMountManager {
 		this.fileFactory = fileFactory;
 
 		if (homeMount != null) {
-			mounts.add(defaultMount = new VirtualMount(
+			defaultMount = new VirtualMount(
 					replaceTokens(homeMount.getMount(), con), replaceTokens(
 							homeMount.getRoot(), con), fileFactory, homeMount
-							.getActualFileFactory(), con, true, false));
+							.getActualFileFactory(), con, true, false, homeMount.isCreateMountFolder());
+			if(defaultMount.isCreateMountFolder()) {
+				defaultMount.getActualFileFactory().getFile(defaultMount.getRoot(), con).createFolder();
+			}
+			mounts.add(defaultMount);
 		}
 
 		// Add any remaining templates
 		for (VirtualMountTemplate m : additionalMounts) {
-			mounts.add(createMount(replaceTokens(m.getMount(), con), 
+			VirtualMount vm = createMount(replaceTokens(m.getMount(), con), 
 					replaceTokens(m.getRoot(), con),
-					m.getActualFileFactory()));
+					m.getActualFileFactory(),
+					m.isCreateMountFolder());
+			
+
+			if(vm.isCreateMountFolder()) {
+				vm.getActualFileFactory().getFile(vm.getRoot(), con).createFolder();
+			}
+			mounts.add(vm);
 		}
 
 		sort();
@@ -80,7 +91,8 @@ public class VirtualMountManager {
 	public void mount(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
 		mount(createMount(template.getMount(),
 				template.getRoot(), 
-				template.getActualFileFactory()));
+				template.getActualFileFactory(),
+				template.isCreateMountFolder()));
 	}
 
 	private void mount(VirtualMount mount) throws IOException,
@@ -98,7 +110,9 @@ public class VirtualMountManager {
 		// Now test it
 		try {
 			AbstractFile f = fileFactory.getFile(mount.getMount(), con);
-			f.createFolder();
+			if(mount.isCreateMountFolder()) {
+				f.createFolder();
+			}
 		} catch (Exception ex) {
 			Log.error(
 					"Failed to mount " + mount.getMount() + " "
@@ -150,10 +164,10 @@ public class VirtualMountManager {
 	}
 
 	private VirtualMount createMount(String mount, String path,
-			AbstractFileFactory<?> actualFileFactory) throws IOException,
+			AbstractFileFactory<?> actualFileFactory, boolean createMoundFolder) throws IOException,
 			PermissionDeniedException {
 		return new VirtualMount(mount, path, fileFactory, actualFileFactory,
-				con);
+				con, createMoundFolder);
 	}
 
 	public VirtualMount getMount(String path) throws IOException {

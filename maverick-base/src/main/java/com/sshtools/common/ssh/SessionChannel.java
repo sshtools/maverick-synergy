@@ -18,6 +18,9 @@
  */
 package com.sshtools.common.ssh;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
 public interface SessionChannel extends Channel {
 
 	SshConnection getConnection();
@@ -37,6 +40,10 @@ public interface SessionChannel extends Channel {
 	void onSessionOpen();
 
 	boolean isEOF();
+	
+	InputStream getInputStream();
+	
+	OutputStream getOutputStream();
 
 	
 }

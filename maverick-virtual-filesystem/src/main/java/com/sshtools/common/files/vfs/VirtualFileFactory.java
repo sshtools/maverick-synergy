@@ -49,7 +49,9 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
 	public VirtualFileFactory(AbstractFileFactory<?> defaultFileFactory) {
 		homeMountTemplate = new VirtualMountTemplate("/",
-				"virtualfs/home/${username}", defaultFileFactory);
+				"virtualfs/home/${username}", 
+				defaultFileFactory,
+				true);
 	}
 
 	public VirtualFileFactory(VirtualMountTemplate defaultMount,
@@ -131,11 +133,10 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 				for (VirtualMount m : mounts) {
 					String thisMountPath = FileUtils.addTrailingSlash(m
 							.getMount());
-					if (thisMountPath.startsWith(mountPath)
-							&& !thisMountPath.equals(mountPath)) {
+					if (thisMountPath.startsWith(mountPath) 
+							&& !thisMountPath.contentEquals(mountPath)) {
 						return new VirtualMountFile(
-								FileUtils
-										.removeTrailingSlash(virtualPath),
+								FileUtils.removeTrailingSlash(virtualPath),
 								mgr.getMount(virtualPath), mgr, con);
 					}
 				}

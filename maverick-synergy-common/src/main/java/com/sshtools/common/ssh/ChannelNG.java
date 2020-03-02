@@ -824,7 +824,12 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 						for (ChannelEventListener listener : eventListeners) {
 							listener.onChannelClose(ChannelNG.this);
 						}
-
+						try {
+							if(Objects.nonNull(channelIn)) {
+								channelIn.close();
+							}
+						} catch (IOException e) {
+						}
 						onChannelClosed();
 						completedClose.set(true);
 						ChannelNG.this.notifyAll();
@@ -1318,6 +1323,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		public void close() throws IOException {
 			if(!streamClosed) {
 				streamClosed = true;
+				streamCache.close();
 				synchronized(streamCache) {
 					streamCache.notify();
 				}

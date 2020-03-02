@@ -59,7 +59,7 @@ public class MutualCallbackAuthentication<C extends Context> implements Authenti
 
 	@Override
 	public String getMethod() {
-		return "mutual-key-auth@sshtools.com";
+		return MutualCallbackAuthenticationProvider.MUTUAL_KEY_AUTHENTICATION;
 	}
 	
 	

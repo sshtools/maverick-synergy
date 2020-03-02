@@ -40,5 +40,15 @@
   		<artifactId>maverick-synergy-server</artifactId>
   		<version>${project.version}</version>
   	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-virtual-session</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-virtual-filesystem</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
   </dependencies>
 </project>

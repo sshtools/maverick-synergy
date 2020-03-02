@@ -16,32 +16,35 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.client.tasks;
+package com.sshtools.server.callback.commands;
 
-import com.sshtools.client.AbstractSessionChannel;
-import com.sshtools.client.SshClient;
+import java.io.IOException;
+
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.server.callback.CallbackServer;
+import com.sshtools.server.vsession.CommandFactory;
+import com.sshtools.server.vsession.ShellCommand;
 
-/**
- * An abstract task for starting the shell.
- */
-public abstract class AbstractShellTask<T extends AbstractSessionChannel> extends AbstractSessionTask<T> {
+public class CallbackCommandFactory extends CommandFactory<CallbackCommand> {
 
-	public AbstractShellTask(SshConnection con) {
-		super(con);
+	CallbackServer server;
+	
+	public CallbackCommandFactory(CallbackServer server) {
+		this.server = server;
+		installShellCommands();
 	}
 	
-	public AbstractShellTask(SshClient ssh) {
-		super(ssh.getConnection());
+	protected void installShellCommands() {
+		installCommand(Callbacks.class);
+		installCommand(CallbackShell.class);
+		installCommand(CallbackMount.class);
 	}
-	
+
 	@Override
-	protected final void setupSession(T session) {
-		beforeStartShell(session);
-		session.startShell();
+	protected void configureCommand(CallbackCommand c, SshConnection con) throws IOException, PermissionDeniedException {
+		c.setServer(server);
+		super.configureCommand(c, con);
 	}
 
-	protected void beforeStartShell(T session) {
-		
-	}
 }

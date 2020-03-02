@@ -20,14 +20,26 @@ package com.sshtools.server.callback;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.channels.SocketChannel;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
+import com.sshtools.client.AuthenticationProtocolClient;
+import com.sshtools.client.ClientStateListener;
 import com.sshtools.client.SshClientContext;
-import com.sshtools.common.auth.MutualKeyAuthenticationStore;
+import com.sshtools.common.auth.InMemoryMutualKeyAuthenticationStore;
+import com.sshtools.common.auth.MutualKeyAuthenticatonStore;
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ProtocolContextFactory;
-import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.nio.SshEngineContext;
+import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.server.AbstractSshServer;
 import com.sshtools.server.SshServerContext;
 
 /**
@@ -38,34 +50,49 @@ import com.sshtools.server.SshServerContext;
  * The server also has the facility to act as a normal server. Switching modes depending on the 
  * client identifier provided by the SSH client.
  */
-public abstract class CallbackServer extends SshEngine {
+public class CallbackServer extends AbstractSshServer {
 
 	public static final String CALLBACK_IDENTIFIER = "CallbackClient-";
 	
-	String callbackIdentifier;
-	MutualKeyAuthenticationStore authenticationStore;
+	String callbackIdentifier = CALLBACK_IDENTIFIER;
+	MutualKeyAuthenticatonStore authenticationStore = new InMemoryMutualKeyAuthenticationStore();
+	ClientContextFactory defaultContextFactory = new ClientContextFactory();
+	Map<String,SshConnection> callbackClients = new HashMap<>();
 	
-	protected CallbackServer() {
-		this(CALLBACK_IDENTIFIER);
+	public CallbackServer() {
 	}
 	
-	protected CallbackServer(String callbackIdentifier) {
+	public CallbackServer(InetAddress addressToBind, int port) {
+		super(addressToBind, port);
+	}
+	
+	public CallbackServer(int port) throws UnknownHostException {
+		super(port);
+	}
+
+	public CallbackServer(String addressToBind, int port) throws UnknownHostException {
+		super(addressToBind, port);
+	}
+
+	public void setCallbackIdentifier(String callbackIdentifier) {
 		this.callbackIdentifier = callbackIdentifier;
 	}
 	
-	public void setMutualKeyAuthenticationStore(MutualKeyAuthenticationStore authenticationStore) {
+	public void setMutualKeyAuthenticationStore(MutualKeyAuthenticatonStore authenticationStore) {
 		this.authenticationStore = authenticationStore;
 	}
 	
-	public void addInterface(InetAddress addressToBind, int portToBind) throws IOException {
-		getContext().addListeningInterface(addressToBind, portToBind, new ClientContextFactory(), true);
+	public Collection<SshConnection> getCallbackClients() {
+		return Collections.unmodifiableCollection(callbackClients.values());
 	}
 	
-	protected abstract void configureClientContext(SshClientContext clientContext);
-
-	protected abstract SshServerContext createServerContext(SshEngineContext daemonContext, 
-			SocketChannel sc) throws IOException, SshException;
+	public SshConnection getCallbackClient(String username) {
+		return callbackClients.get(username);
+	}
 	
+	protected void configureClientContext(SshClientContext clientContext) {
+		
+	}
 
 	protected class ClientContextFactory implements ProtocolContextFactory<SshClientContext> {
 
@@ -76,9 +103,37 @@ public abstract class CallbackServer extends SshEngine {
 		public SshClientContext createContext(SshEngineContext daemonContext, SocketChannel sc)
 				throws IOException, SshException {
 			SshClientContext clientContext = new SwitchingSshContext(
-					CallbackServer.this, callbackIdentifier, new ServerContextFactory());
+					getEngine(), callbackIdentifier, new ServerContextFactory());
 			configureClientContext(clientContext);
 			clientContext.addAuthenticator(new MutualCallbackAuthenticator(authenticationStore));
+			clientContext.addStateListener(new ClientStateListener() {
+
+				@Override
+				public void authenticationStarted(AuthenticationProtocolClient authClient,
+						Connection<SshClientContext> con) {
+					if(callbackClients.containsKey(con.getUsername())) {
+						con.disconnect(String.format("Only one connection allowed by %s at anyone time", con.getUsername()));
+					}
+				}
+
+				@Override
+				public void connected(Connection<SshClientContext> con) {
+					Log.info("Callback client %s connected", con.getUsername());
+					callbackClients.put(con.getUsername(), con);
+				}
+
+				@Override
+				public void disconnected(Connection<SshClientContext> con) {
+					SshConnection connected = callbackClients.get(con.getUsername());
+					if(Objects.nonNull(connected)) {
+						if(connected.equals(con)) {
+							Log.info("Callback client %s disconnected", con.getUsername());
+							callbackClients.remove(con.getUsername());
+						}
+					}
+					
+				}
+			});
 			return clientContext;
 		}
 	}
@@ -92,4 +147,11 @@ public abstract class CallbackServer extends SshEngine {
 			return serverContext;
 		}
 	}
+
+	@Override
+	protected ProtocolContextFactory<?> getDefaultContextFactory() {
+		return defaultContextFactory;
+	}
+
+
 }

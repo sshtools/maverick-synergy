@@ -46,10 +46,11 @@ public class Nano extends ShellCommand {
 		env.put("connection", console.getConnection());
 		FileSystem fs = FileSystems.newFileSystem(
 				AbstractFileURI.create(console.getConnection(), ""), 
-				env,
-				getClass().getClassLoader());
+					env,
+					getClass().getClassLoader());
 
-		org.jline.builtins.Nano n = new org.jline.builtins.Nano(console.getTerminal(), fs.getPath(""));
+		org.jline.builtins.Nano n = new org.jline.builtins.Nano(console.getTerminal(), 
+				fs.getPath(console.getCurrentDirectory().getAbsolutePath()));
 		
 		List<String> arglist = new ArrayList<>();
 		if(args.length > 1) {
@@ -57,7 +58,6 @@ public class Nano extends ShellCommand {
 				arglist.add(args[i]);
 			}
 		}
-
 
 		n.open(arglist);
 		n.run();

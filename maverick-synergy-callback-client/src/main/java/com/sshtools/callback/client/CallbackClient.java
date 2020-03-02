@@ -21,6 +21,7 @@ package com.sshtools.callback.client;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +61,7 @@ public class CallbackClient {
 	List<SshKeyPair> hostKeys = new ArrayList<>();
 	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory();
 	AbstractFileFactory<?> fileFactory = null;
+	List<Object> defaultPolicies = new ArrayList<>();
 	
 	public CallbackClient() {
 		executor = getExecutorService();
@@ -74,6 +76,10 @@ public class CallbackClient {
 		 return Executors.newCachedThreadPool();
 	}
 
+	public void setDefaultPolicies(Object... policies) {
+		defaultPolicies.addAll(Arrays.asList(policies));
+	}
+	
 	public void start(Collection<CallbackConfiguration> configs) {
 		
 		for(CallbackConfiguration config : configs) {
@@ -205,6 +211,10 @@ public class CallbackClient {
 			sshContext.addHostKey(key);
 		}
 				
+		for(Object policy : defaultPolicies) {
+			sshContext.setPolicy(policy.getClass(), policy);
+		}
+		
 		sshContext.setSoftwareVersionComments(CallbackSession.CALLBACK_IDENTIFIER + config.getAgentName());
 		
 		InMemoryMutualKeyAuthenticationStore authenticationStore = new InMemoryMutualKeyAuthenticationStore();
@@ -252,6 +262,14 @@ public class CallbackClient {
 
 	public void addHostKey(SshKeyPair pair) {
 		this.hostKeys.add(pair);
+	}
+
+	public void setFileFactory(AbstractFileFactory<?> fileFactory) {
+		this.fileFactory = fileFactory;
+	}
+
+	public void setChannelFactory(ChannelFactory<SshServerContext> channelFactory) {
+		this.channelFactory = channelFactory;
 	}
 	
 }

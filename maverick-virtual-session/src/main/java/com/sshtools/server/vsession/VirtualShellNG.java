@@ -65,6 +65,7 @@ public class VirtualShellNG extends SessionChannelNG {
 	VirtualConsole console;
 	ShellCommandFactory commandFactory;
 
+	boolean rawMode = false;
 	
 	List<WindowSizeChangeListener> listeners = new ArrayList<WindowSizeChangeListener>();
 	
@@ -73,7 +74,6 @@ public class VirtualShellNG extends SessionChannelNG {
 		super(con);
 		this.commandFactory = commandFactory;
 	}
-
 
 	public void addWindowSizeChangeListener(WindowSizeChangeListener listener) {
 		listeners.add(listener);
@@ -107,6 +107,7 @@ public class VirtualShellNG extends SessionChannelNG {
 
 	@Override
 	protected void onSessionData(ByteBuffer data) {
+
 		byte[] tmp = new byte[data.remaining()];
 		data.get(tmp);
 		try {
@@ -116,6 +117,7 @@ public class VirtualShellNG extends SessionChannelNG {
 			Log.error("Failed to send input to terminal.", e);
 			close();
 		}
+		
 	}
 
 

@@ -334,9 +334,9 @@ public abstract class SshContext extends ProtocolContext implements
 		return (P) policies.get(clz);
 
 	}
-	
+		
 	@Override
-	public <P> void setPolicy(Class<P> clz, P policy) {
+	public void setPolicy(Class<?> clz, Object policy) {
 		policies.put(clz, policy);
 	}
 	

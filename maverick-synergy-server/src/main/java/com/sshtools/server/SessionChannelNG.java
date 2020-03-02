@@ -106,7 +106,8 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	boolean haltIncomingData = false;
 	long lastActivity = System.currentTimeMillis();
 	boolean agentForwardingRequested;
-
+	boolean rawMode = false;
+	
 	ChannelOutputStream stderrOutputStream = new ChannelOutputStream(this, SSH_EXTENDED_DATA_STDERR);
 	
 	public SessionChannelNG(SshConnection con) {
@@ -116,6 +117,14 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize());
 	}
 
+	public void enableRawMode() {
+		rawMode = true;
+	}
+	
+	public void disableRawMode() {
+		rawMode = false;
+	}
+	
 	final protected byte[] createChannel() throws java.io.IOException {
 		registerExtendedDataType(SSH_EXTENDED_DATA_STDERR);
 		return null;
@@ -564,7 +573,11 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 				close();
 			}
 		} else {
-			onSessionData(data);
+			if(rawMode) {
+				super.onChannelData(data);
+			} else {
+				onSessionData(data);
+			}
 		}
 	}
 

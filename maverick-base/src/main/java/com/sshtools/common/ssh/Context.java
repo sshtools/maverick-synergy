@@ -27,8 +27,6 @@ public interface Context {
 
 	<P> P getPolicy(Class<P> clz);
 	
-	<P> void setPolicy(Class<P> clz, P policy);
-	
 	boolean hasPolicy(Class<?> clz);
 	
 	ExecutorService getExecutorService();
@@ -38,5 +36,7 @@ public interface Context {
 	ByteBufferPool getByteBufferPool();
 	
 	ComponentManager getComponentManager();
+
+	void setPolicy(Class<?> clz, Object policy);
 
 }

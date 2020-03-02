@@ -22,6 +22,14 @@ public class VirtualSessionPolicy {
 
 	String welcomeText = "Maverick Synergy\r\nVirtual Shell ${version}";
 
+	public VirtualSessionPolicy() {
+		
+	}
+	
+	public VirtualSessionPolicy(String welcomeText) {
+		this.welcomeText = welcomeText;
+	}
+
 	public String getWelcomeText() {
 		return welcomeText;
 	}

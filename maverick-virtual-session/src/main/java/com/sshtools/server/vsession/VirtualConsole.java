@@ -32,6 +32,7 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.Context;
 import com.sshtools.common.ssh.SessionChannel;
+import com.sshtools.common.ssh.SessionChannelServer;
 import com.sshtools.common.ssh.SshConnection;
 
 public class VirtualConsole {
@@ -40,11 +41,11 @@ public class VirtualConsole {
 	Terminal terminal;
 	LineReader reader;
 	SshConnection con;
-	SessionChannel channel;
+	SessionChannelServer channel;
 	Msh shell;
 	AbstractFile cwd;
 	
-	public VirtualConsole(SessionChannel channel, Environment env, Terminal terminal, LineReader reader, Msh shell) {
+	public VirtualConsole(SessionChannelServer channel, Environment env, Terminal terminal, LineReader reader, Msh shell) {
 		this.channel = channel;
 		this.con = channel.getConnection();
 		this.env = env;
@@ -106,7 +107,7 @@ public class VirtualConsole {
 		return reader.readLine();
 	}
 
-	public SessionChannel getSessionChannel() {
+	public SessionChannelServer getSessionChannel() {
 		return channel;
 	}
 

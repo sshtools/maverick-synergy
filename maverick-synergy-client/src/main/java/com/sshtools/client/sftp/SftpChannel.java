@@ -1649,42 +1649,54 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.writeString(path, CHARSET_ENCODING);
 			sendMessage(msg);
 
-			SftpMessage bar = getResponse(requestId);
+			return getSingleFileResponse(getResponse(requestId), "SSH_FXP_REALPATH").getAbsolutePath();
 			
-			try {
-				if (bar.getType() == SSH_FXP_NAME) {
-					SftpFile[] files = extractFiles(bar, null);
-	
-					if (files.length != 1) {
-						close();
-						throw new SshException(
-								"Server responded to SSH_FXP_REALPATH with too many files!",
-								SshException.CHANNEL_FAILURE);
-					}
-	
-					return files[0].getAbsolutePath();
-				} else if (bar.getType() == SSH_FXP_STATUS) {
-					int status = (int) bar.readInt();
-					if (version >= 3) {
-						String desc = bar.readString();
-						throw new SftpStatusException(status, desc);
-					}
-					throw new SftpStatusException(status);
-				} else {
-					close();
-					throw new SshException(
-							"The server responded with an unexpected message",
-							SshException.CHANNEL_FAILURE);
-				}
-			} finally {
-				bar.release();
-			}
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
 			throw new SshException(ex);
 		}
 
+	}
+	
+	/**
+	 * Get a single SftpFile object from a message returning SSH_FXP_NAME result.
+	 * @param bar
+	 * @param messageName
+	 * @return
+	 * @throws SshException
+	 * @throws SftpStatusException
+	 */
+	public SftpFile getSingleFileResponse(SftpMessage bar, String messageName) throws SshException, SftpStatusException {
+		try {
+			if (bar.getType() == SSH_FXP_NAME) {
+				SftpFile[] files = extractFiles(bar, null);
+
+				if (files.length != 1) {
+					close();
+					throw new SshException(
+							"Server responded to "
+							+ messageName + " with too many files!",
+							SshException.CHANNEL_FAILURE);
+				}
+
+				return files[0];
+			} else if (bar.getType() == SSH_FXP_STATUS) {
+				int status = (int) bar.readInt();
+				if (version >= 3) {
+					String desc = bar.readString();
+					throw new SftpStatusException(status, desc);
+				}
+				throw new SftpStatusException(status);
+			} else {
+				close();
+				throw new SshException(
+						"The server responded with an unexpected message",
+						SshException.CHANNEL_FAILURE);
+			}
+		} catch (IOException e) {
+			throw new SshException(e);
+		}
 	}
 
 	/**
@@ -2513,8 +2525,9 @@ public class SftpChannel extends AbstractSubsystem {
 			packet.write(SSH_FXP_EXTENDED);
 			packet.writeUINT32(id);
 			packet.writeString(request);
-			packet.write(requestData);
-			
+			if(requestData!=null) {
+				packet.write(requestData);
+			}		
 			sendMessage(packet);
 
 			return id;

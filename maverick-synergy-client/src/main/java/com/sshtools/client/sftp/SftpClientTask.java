@@ -1346,11 +1346,11 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SshException
 	 * @throws TransferCancelledException
 	 */
-	public DirectoryOperation copyLocalDirectory(String localdir,
+	public DirectoryOperation putLocalDirectory(String localdir,
 			String remotedir, boolean recurse, boolean sync, boolean commit,
 			FileTransferProgress progress) throws FileNotFoundException,
 			SftpStatusException, SshException, TransferCancelledException {
-		return sftp.copyLocalDirectory(localdir, remotedir, recurse, sync, commit, progress);
+		return sftp.putLocalDirectory(localdir, remotedir, recurse, sync, commit, progress);
 	}
 
 	
@@ -1419,11 +1419,11 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SshException
 	 * @throws TransferCancelledException
 	 */
-	public DirectoryOperation copyRemoteDirectory(String remotedir,
+	public DirectoryOperation getRemoteDirectory(String remotedir,
 			String localdir, boolean recurse, boolean sync, boolean commit,
 			FileTransferProgress progress) throws FileNotFoundException,
 			SftpStatusException, SshException, TransferCancelledException {
-		return sftp.copyRemoteDirectory(remotedir, localdir, recurse, sync, commit, progress);
+		return sftp.getRemoteDirectory(remotedir, localdir, recurse, sync, commit, progress);
 	}
 
 	/**

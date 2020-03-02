@@ -44,6 +44,5 @@ public interface SessionChannel extends Channel {
 	InputStream getInputStream();
 	
 	OutputStream getOutputStream();
-
 	
 }

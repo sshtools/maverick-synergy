@@ -2296,6 +2296,25 @@ public class SftpClient {
 		}
 	}
 	
+	public void copyRemoteData(SftpFile sourceFile, UnsignedInteger64 fromOffset, UnsignedInteger64 length, SftpFile destinationFile, UnsignedInteger64 toOffset) throws SftpStatusException, SshException, IOException {
+		
+		if(!sourceFile.isOpen() || !destinationFile.isOpen()) {
+			throw new SftpStatusException(SftpStatusException.SSH_FX_INVALID_HANDLE, "source and desintation files must be open");
+		}
+		
+		
+		try(ByteArrayWriter msg = new ByteArrayWriter()) {
+			msg.writeBinaryString(sourceFile.getHandle());
+			msg.writeUINT64(fromOffset);
+			msg.writeUINT64(length);
+			msg.writeBinaryString(destinationFile.getHandle());
+			msg.writeUINT64(toOffset);
+			
+			sftp.getOKRequestStatus(sftp.sendExtensionMessage("copy-data", msg.toByteArray()));
+
+		} 
+	}
+	
 	/**
 	 * <p>
 	 * Rename a file on the remote computer.
@@ -2653,7 +2672,7 @@ public class SftpClient {
 	 * @throws SshException
 	 * @throws TransferCancelledException
 	 */
-	public DirectoryOperation copyLocalDirectory(String localdir,
+	public DirectoryOperation putLocalDirectory(String localdir,
 			String remotedir, boolean recurse, boolean sync, boolean commit,
 			FileTransferProgress progress) throws FileNotFoundException,
 			SftpStatusException, SshException, TransferCancelledException {
@@ -2684,7 +2703,7 @@ public class SftpClient {
 					if (recurse) {
 						// File f = new File(local, source.getName());
 						op.addDirectoryOperation(
-								copyLocalDirectory(source.getAbsolutePath(),
+								putLocalDirectory(source.getAbsolutePath(),
 										remotedir + source.getName(), recurse, sync, commit,
 										progress), source);
 					}
@@ -2931,7 +2950,7 @@ public class SftpClient {
 	 * @throws SshException
 	 * @throws TransferCancelledException
 	 */
-	public DirectoryOperation copyRemoteDirectory(String remotedir,
+	public DirectoryOperation getRemoteDirectory(String remotedir,
 			String localdir, boolean recurse, boolean sync, boolean commit,
 			FileTransferProgress progress) throws FileNotFoundException,
 			SftpStatusException, SshException, TransferCancelledException {
@@ -2977,7 +2996,7 @@ public class SftpClient {
 				if (recurse) {
 					f = new File(local, file.getFilename());
 					op.addDirectoryOperation(
-							copyRemoteDirectory(file.getFilename(),
+							getRemoteDirectory(file.getFilename(),
 									local.getAbsolutePath() + "/" + file.getFilename(), recurse, sync,
 									commit, progress), f);
 				}
@@ -3663,14 +3682,57 @@ public class SftpClient {
 		return sftp.isClosed();
 	}
 
-	public void hardlink(String src, String dst) {
-		// TODO Auto-generated method stub
+	public void hardlink(String src, String dst) throws SshException, SftpStatusException {
 		
+		try(ByteArrayWriter msg = new ByteArrayWriter()) {
+			msg.writeString(src);
+			msg.writeString(dst);
+			SftpChannel channel = getSubsystemChannel();
+			UnsignedInteger32 requestId = channel.sendExtensionMessage("hardlink@openssh.com", msg.toByteArray());
+			channel.getOKRequestStatus(requestId);
+		} catch(IOException e) {
+			throw new SshException(e);
+		}
+	}
+	
+	public String getHomeDirectory(String username) throws SshException, SftpStatusException {
+		
+		try(ByteArrayWriter msg = new ByteArrayWriter()) {
+			msg.writeString(username);
+			SftpChannel channel = getSubsystemChannel();
+			UnsignedInteger32 requestId = channel.sendExtensionMessage("home-directory", msg.toByteArray());
+			return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME").getAbsolutePath();
+		} catch(IOException e) {
+			throw new SshException(e);
+		}
+
 	}
 
-	public SftpFileAttributes statVFS(String string) {
-		// TODO Auto-generated method stub
-		return null;
+	public String makeTemporaryFolder() throws SshException, SftpStatusException {
+		
+		SftpChannel channel = getSubsystemChannel();
+		UnsignedInteger32 requestId = channel.sendExtensionMessage("make-temp-folder", null);
+		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME").getAbsolutePath();
+
+	}
+	
+	public String getTemporaryFolder() throws SshException, SftpStatusException {
+		
+		SftpChannel channel = getSubsystemChannel();
+		UnsignedInteger32 requestId = channel.sendExtensionMessage("get-temp-folder", null);
+		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME").getAbsolutePath();
+	}
+
+	public StatVfs statVFS(String path) throws SshException, SftpStatusException {
+		
+		try(ByteArrayWriter msg = new ByteArrayWriter()) {
+			msg.writeString(path);
+			SftpChannel channel = getSubsystemChannel();
+			UnsignedInteger32 requestId = channel.sendExtensionMessage("statvfs@openssh.com", msg.toByteArray());
+			return new StatVfs(channel.getResponse(requestId));
+		} catch(IOException e) {
+			throw new SshException(e);
+		}
 	}
 
 	public String getHome() throws SftpStatusException, SshException {

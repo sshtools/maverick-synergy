@@ -35,7 +35,7 @@ public class CallbackShell extends CallbackCommand {
 			console.println(String.format("%s is not currently connected", clientName));
 		}
 
-		console.println(String.format("---- Opening shell on client %s", clientName));
+		console.println(String.format("---- Opening shell on %s", clientName));
 		console.println();
 		
 		ShellTask shell = new ShellTask(con) {
@@ -50,6 +50,9 @@ public class CallbackShell extends CallbackCommand {
 			@Override
 			protected void onOpenSession(SessionChannelNG session)
 					throws IOException, SshException, ShellTimeoutException {
+				
+				console.getSessionChannel().enableRawMode();
+				
 				con.addTask(new ConnectionAwareTask(con) {
 					@Override
 					protected void doTask() throws Throwable {
@@ -64,8 +67,9 @@ public class CallbackShell extends CallbackCommand {
 		con.addTask(shell);
 		shell.waitForever();
 		
+		console.getSessionChannel().disableRawMode();
 		console.println();
-		console.println(String.format("---- Exited shell on client %s", clientName));
+		console.println(String.format("---- Exited shell on %s", clientName));
 	}
 
 }

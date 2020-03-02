@@ -55,7 +55,7 @@ public class MockContext implements Context {
 	}
 
 	@Override
-	public <P> void setPolicy(Class<P> clz, P p) {
+	public void setPolicy(Class<?> clz, Object p) {
 		policy.put(clz, policy);
 	}
 

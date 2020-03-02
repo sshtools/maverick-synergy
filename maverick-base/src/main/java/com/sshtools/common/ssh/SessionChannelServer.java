@@ -24,4 +24,7 @@ public interface SessionChannelServer extends SessionChannel {
 
 	OutputStream getErrorStream();
 	
+	void enableRawMode();
+
+	void disableRawMode();
 }

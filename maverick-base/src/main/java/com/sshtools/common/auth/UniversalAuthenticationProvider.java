@@ -23,9 +23,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.publickey.SshKeyUtils;
@@ -34,20 +36,23 @@ import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
 
-public class GatewayKeyAuthenticationProvider implements PublicKeyAuthenticationProvider {
+public class UniversalAuthenticationProvider implements PublicKeyAuthenticationProvider {
 
 	String hostname;
 	int port;
 	
-	public GatewayKeyAuthenticationProvider() {
-		this("gateway.sshtools.com", 443);
+	UniversalAuthenticatorAccountDatabase accountDatabase;
+	
+	public UniversalAuthenticationProvider(UniversalAuthenticatorAccountDatabase accountDatabase) {
+		this(accountDatabase, "gateway.sshtools.com", 443);
 	}
 	
-	public GatewayKeyAuthenticationProvider(String hostname) {
-		this(hostname, 443);
+	public UniversalAuthenticationProvider(UniversalAuthenticatorAccountDatabase accountDatabase, String hostname) {
+		this(accountDatabase, hostname, 443);
 	}
 	
-	public GatewayKeyAuthenticationProvider(String hostname, int port) {
+	public UniversalAuthenticationProvider(UniversalAuthenticatorAccountDatabase accountDatabase, String hostname, int port) {
+		this.accountDatabase = accountDatabase;
 		this.hostname = hostname;
 		this.port = port;
 	}
@@ -55,9 +60,15 @@ public class GatewayKeyAuthenticationProvider implements PublicKeyAuthentication
 	@Override
 	public boolean isAuthorizedKey(SshPublicKey key, SshConnection con) throws IOException {
 		
-		for(SshPublicKey gatewayKey : getGatewayKeys(con.getUsername())) {
-			if(gatewayKey.equals(key)) {
-				return true;
+		Set<String> gatewayAccounts = accountDatabase.getAccounts(con.getUsername());
+		if(gatewayAccounts==null) {
+			return false;
+		}
+		for(String gatewayAccount : gatewayAccounts) {
+			for(SshPublicKey gatewayKey : getGatewayKeys(gatewayAccount)) {
+				if(gatewayKey.equals(key)) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -115,5 +126,4 @@ public class GatewayKeyAuthenticationProvider implements PublicKeyAuthentication
 	public boolean checkKey(SshPublicKey key, SshConnection con) throws IOException {
 		return isAuthorizedKey(key, con);
 	}
-
 }

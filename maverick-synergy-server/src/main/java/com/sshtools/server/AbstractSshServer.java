@@ -68,6 +68,7 @@ public abstract class AbstractSshServer implements Closeable {
 	ForwardingPolicy forwardingPolicy = new ForwardingPolicy();
 	
 	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory(); 
+	File confFolder = new File(".");
 	
 	protected AbstractSshServer() {
 	}
@@ -87,6 +88,10 @@ public abstract class AbstractSshServer implements Closeable {
 	}
 	
 	protected abstract ProtocolContextFactory<?> getDefaultContextFactory();
+	
+	public void setConfigFolder(File confFolder) {
+		this.confFolder = confFolder;
+	}
 	
 	public void start() throws IOException {
 		start(false);
@@ -179,22 +184,22 @@ public abstract class AbstractSshServer implements Closeable {
 		if(!hostKeys.isEmpty()) {
 			sshContext.addHostKeys(hostKeys);
 		} else {
-			loadOrGenerateHostKey(sshContext, new File("ssh_host_rsa"), SshKeyPairGenerator.SSH2_RSA, 2048);
+			loadOrGenerateHostKey(sshContext, new File(confFolder, "ssh_host_rsa"), SshKeyPairGenerator.SSH2_RSA, 2048);
 			
 			try {
-				loadOrGenerateHostKey(sshContext, SshKeyUtils.getRSAPrivateKeyWithSHA256Signature(new File("ssh_host_rsa"), null));
+				loadOrGenerateHostKey(sshContext, SshKeyUtils.getRSAPrivateKeyWithSHA256Signature(new File(confFolder, "ssh_host_rsa"), null));
 			} catch (InvalidPassphraseException e) {
 			}
 			
 			try {
-				loadOrGenerateHostKey(sshContext, SshKeyUtils.getRSAPrivateKeyWithSHA512Signature(new File("ssh_host_rsa"), null));
+				loadOrGenerateHostKey(sshContext, SshKeyUtils.getRSAPrivateKeyWithSHA512Signature(new File(confFolder, "ssh_host_rsa"), null));
 			} catch (InvalidPassphraseException e) {
 			}
 			
-			loadOrGenerateHostKey(sshContext, new File("ssh_host_ecdsa_256"), SshKeyPairGenerator.ECDSA, 256);
-			loadOrGenerateHostKey(sshContext, new File("ssh_host_ecdsa_384"), SshKeyPairGenerator.ECDSA, 384);
-			loadOrGenerateHostKey(sshContext, new File("ssh_host_ecdsa_521"), SshKeyPairGenerator.ECDSA, 521);
-			loadOrGenerateHostKey(sshContext, new File("ssh_host_ed25519"), SshKeyPairGenerator.ED25519, 0);
+			loadOrGenerateHostKey(sshContext, new File(confFolder, "ssh_host_ecdsa_256"), SshKeyPairGenerator.ECDSA, 256);
+			loadOrGenerateHostKey(sshContext, new File(confFolder, "ssh_host_ecdsa_384"), SshKeyPairGenerator.ECDSA, 384);
+			loadOrGenerateHostKey(sshContext, new File(confFolder, "ssh_host_ecdsa_521"), SshKeyPairGenerator.ECDSA, 521);
+			loadOrGenerateHostKey(sshContext, new File(confFolder, "ssh_host_ed25519"), SshKeyPairGenerator.ED25519, 0);
 			
 			if(hostKeys.isEmpty()) {
 				throw new IOException("There are no host keys available");

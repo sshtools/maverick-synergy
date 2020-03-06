@@ -106,6 +106,13 @@ public class SshClient implements Closeable {
 			authenticate(new PasswordAuthenticator(password), 30000);
 		}
 		
+		if(!isAuthenticated() && Objects.nonNull(password) && password.length > 0) {
+			attempted = true;
+			authenticate(new KeyboardInteractiveAuthenticator(
+					new PasswordOverKeyboardInteractiveCallback(
+						new PasswordAuthenticator(password))), 30000);
+		}
+		
 		if(attempted && !isAuthenticated()) {
 			close();
 			throw new IOException("Authentication failed");

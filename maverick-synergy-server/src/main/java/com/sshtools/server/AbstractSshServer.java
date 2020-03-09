@@ -97,6 +97,10 @@ public abstract class AbstractSshServer implements Closeable {
 		start(false);
 	}
 	
+	public void addInterface(String addressToBind, int portToBind) throws IOException {
+		engine.getContext().addListeningInterface(addressToBind, portToBind, getDefaultContextFactory(), true);
+	}
+	
 	public void start(boolean requireListeningInterface) throws IOException {
 		
 		beforeStart();

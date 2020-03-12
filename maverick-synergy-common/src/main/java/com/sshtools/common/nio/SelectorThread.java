@@ -208,7 +208,7 @@ public class SelectorThread extends Thread {
 						if(Log.isTraceEnabled())
 							Log.trace("Cannot register channel because it is closed!");
 					}
-				} catch (ClosedChannelException ex) {
+				} catch (IOException ex) {
 					if(Log.isTraceEnabled())
 						Log.trace("Failed to register channel as it is closed");
 				}

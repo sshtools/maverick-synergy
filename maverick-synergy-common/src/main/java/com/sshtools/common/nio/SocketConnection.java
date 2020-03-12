@@ -61,6 +61,14 @@ public class SocketConnection implements SocketHandler {
     Object opsLock = new Object();
     LinkedList<SocketWriteCallback> socketWriteCallbacks = new LinkedList<SocketWriteCallback>();
 
+	private SocketAddress remoteAddress;
+
+	private int remotePort;
+
+	private int localPort;
+
+	private SocketAddress localAddress;
+
     /**
      * Construct the socket.
      */
@@ -85,14 +93,18 @@ public class SocketConnection implements SocketHandler {
      * @param channel SelectableChannel
      * @param key SelectionKey
      * @param selectorThread SelectorThread
+     * @throws IOException 
      */
     public void registrationCompleted(SelectableChannel channel,
                                       SelectionKey key,
-                                      SelectorThread selectorThread) {
+                                      SelectorThread selectorThread) throws IOException {
           this.socketChannel = (SocketChannel)channel;
           this.selectorThread = selectorThread;
           this.key = key;
-
+          this.localAddress = socketChannel.getLocalAddress();
+          this.localPort = socketChannel.socket().getLocalPort();
+          this.remoteAddress = socketChannel.getRemoteAddress();
+          this.remotePort = socketChannel.socket().getPort();
           protocolEngine.onSocketConnect(this);
           
     }
@@ -155,7 +167,7 @@ public class SocketConnection implements SocketHandler {
      * @return
      */
     public SocketAddress getLocalAddress(){
-      return socketChannel.socket().getLocalSocketAddress();
+      return localAddress;
     }
 
     /**
@@ -163,7 +175,7 @@ public class SocketConnection implements SocketHandler {
      * @return
      */
     public int getLocalPort() {
-      return socketChannel.socket().getLocalPort();
+      return localPort;
     }
 
     /**
@@ -171,7 +183,7 @@ public class SocketConnection implements SocketHandler {
      * @return
      */
     public int getPort() {
-    	return socketChannel.socket().getPort();
+    	return remotePort;
     }
     
     /**
@@ -179,7 +191,7 @@ public class SocketConnection implements SocketHandler {
      * @return
      */
     public SocketAddress getRemoteAddress() {
-      return socketChannel.socket().getRemoteSocketAddress();
+      return remoteAddress;
     }
 
     /**

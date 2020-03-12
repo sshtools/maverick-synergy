@@ -18,6 +18,7 @@
  */
 package com.sshtools.common.nio;
 
+import java.io.IOException;
 import java.nio.channels.*;
 
 /**
@@ -33,8 +34,9 @@ public interface SelectorRegistrationListener {
          * @param channel SelectableChannel
          * @param key SelectionKey
          * @param selectorThread SelectorThread
+         * @throws IOException 
          */
         public void registrationCompleted(SelectableChannel channel,
                                     SelectionKey key,
-                                    SelectorThread selectorThread);
+                                    SelectorThread selectorThread) throws IOException;
 }

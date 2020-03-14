@@ -36,6 +36,10 @@ public class Help<T extends AbstractFile> extends ShellCommand {
 		super("help", SUBSYSTEM_HELP, "[<command>]", "Display information about the available commands.");
 	}
 
+	public boolean isHidden() {
+		return true;
+	}
+	
 	public void run(String[] args, VirtualConsole console) throws IOException {
 		java.util.Set<String> cmds = console.getShell().getCommandFactory().getSupportedCommands();
 

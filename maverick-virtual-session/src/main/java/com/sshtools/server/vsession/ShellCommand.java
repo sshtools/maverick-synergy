@@ -27,7 +27,7 @@ public abstract class ShellCommand extends AbstractCommand {
 	public final static String SUBSYSTEM_SHELL = "Shell";
 	public final static String SUBSYSTEM_SSHD = "Sshd";
 	public final static String SUBSYSTEM_HELP = "Help";
-	public static final String SUBSYSTEM_FILESYSTEM = "Filesystem";
+	public static final String SUBSYSTEM_FILESYSTEM = "File System";
 	public static final String SUBSYSTEM_POLICY = "Policy";
 	public static final String SUBSYSTEM_JVM = "JVM";
 	public static final String SUBSYSTEM_SYSTEM = "System";

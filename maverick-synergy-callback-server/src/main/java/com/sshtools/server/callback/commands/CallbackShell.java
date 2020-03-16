@@ -51,6 +51,7 @@ public class CallbackShell extends CallbackCommand {
 		
 		if(Objects.isNull(con)) {
 			console.println(String.format("%s is not currently connected", clientName));
+			return;
 		}
 
 		console.println(String.format("---- Opening shell on %s", clientName));

@@ -32,7 +32,7 @@ public class Sleep extends ShellCommand {
 
 	public void run(String[] args, VirtualConsole console) throws IOException {
 
-		if (args.length != 2) {
+		if (args.length < 2) {
 			throw new IllegalArgumentException(
 					"Requires single argument specifying time to sleep.");
 		}
@@ -44,7 +44,7 @@ public class Sleep extends ShellCommand {
 			mult = 1;
 		} else if (t == 's') {
 			ts = ts.substring(ts.length() - 1);
-			mult = 1;
+			mult = 1000;
 		} else if (t == 'm') {
 			ts = ts.substring(ts.length() - 1);
 			mult = 60000;

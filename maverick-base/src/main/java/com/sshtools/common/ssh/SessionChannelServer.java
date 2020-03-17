@@ -27,4 +27,6 @@ public interface SessionChannelServer extends SessionChannel {
 	void enableRawMode();
 
 	void disableRawMode();
+
+	boolean setEnvironmentVariable(String name, String value);
 }

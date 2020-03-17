@@ -25,9 +25,11 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
 
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -49,6 +51,7 @@ public class VirtualShellNG extends SessionChannelNG {
 
 	String shellCommand = null;
 	Environment env = new Environment();
+	Set<String> protectedEnvironmentVars = new HashSet<>();
 	
 	public VirtualShellNG(SshConnection con,
 			ShellCommandFactory commandFactory, 
@@ -81,6 +84,10 @@ public class VirtualShellNG extends SessionChannelNG {
 
 	public void removeWindowSizeChangeListener(WindowSizeChangeListener listener) {
 		listeners.remove(listener);
+	}
+	
+	public void addProtectedEnvironmentVar(String name) {
+		protectedEnvironmentVars.add(name.toUpperCase());
 	}
 
 	protected boolean executeCommand(String cmd) {
@@ -201,7 +208,10 @@ public class VirtualShellNG extends SessionChannelNG {
 			return true;
 	}
 
-	protected boolean setEnvironmentVariable(String name, String value) {
+	public boolean setEnvironmentVariable(String name, String value) {
+		if(protectedEnvironmentVars.contains(name.toUpperCase())) {
+			return false;
+		}
 		env.put(name, value);
 		return true;
 	}

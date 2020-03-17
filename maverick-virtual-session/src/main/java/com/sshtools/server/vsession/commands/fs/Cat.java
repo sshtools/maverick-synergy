@@ -26,17 +26,19 @@ import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.UsageHelper;
 import com.sshtools.server.vsession.VirtualConsole;
 
 public class Cat extends ShellCommand {
 	public Cat() {
-		super("cat", ShellCommand.SUBSYSTEM_SHELL, "", "");
-//		UsageHelper.build("cat <filename>...",
-//				new Option("E", false, "Display $ at end of each line"),
-//				new Option("n", "number", false, "number all output lines"),
-//				new Option("s", "squeeze-blank", false, "suppress repeated empty output lines"),
-//				new Option("T", "show-tabs", false, "displays TAB characters as ^I"),
-//				new Option("v", "show-nonprinting", false, "use ^ and M- notation, except for LFD and TAB"));
+		super("cat", ShellCommand.SUBSYSTEM_FILESYSTEM, 
+		UsageHelper.build("cat [options] <filename>...",
+				"-E                      Display $ at end of each line",
+				"-n, --number            Number all output lines",
+				"-s, --squeeze-blank     Suppress repeated empty output lines",
+				"-T, --show-tabs         Displays TAB characters as ^I",
+				"-v, --show-nonprinting  Use ^ and M- notation, except for LFD and TAB"), 
+		"Output the contents of a file");
 	}
 
 	public void run(String[] args, VirtualConsole process) throws IOException, PermissionDeniedException {
@@ -44,6 +46,9 @@ public class Cat extends ShellCommand {
 		if (args.length < 2)
 			throw new IOException("At least one argument required");
 		for (int i = 1; i < args.length; i++) {
+			if(args[i].startsWith("-")) {
+				continue;
+			}
 			AbstractFile obj = process.getCurrentDirectory().resolveFile(args[i]);
 			BufferedReader reader = new BufferedReader(new InputStreamReader(obj.getInputStream()));
 			

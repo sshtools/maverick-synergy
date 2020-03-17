@@ -147,7 +147,7 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 		}
 
 		if(Log.isDebugEnabled()) {
-			Log.debug("Translating Actual: " + actualPath);
+			Log.debug("Translating Actual: %s", actualPath);
 		}
 
 		actualPath = translateCanonicalPath(actualPath, parentMount.getRoot());
@@ -159,7 +159,7 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 				.getMount()) + FileUtils.removeStartingSlash(relative);
 
 		if(Log.isDebugEnabled()) {
-			Log.debug("Translate Success: " + virtualPath);
+			Log.debug("Translate Success: %s", virtualPath);
 		}
 
 		return virtualPath.equals("/") ? virtualPath : FileUtils
@@ -229,8 +229,8 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 			PermissionDeniedException {
 		try {
 			if(Log.isDebugEnabled()) {
-				Log.debug("     Translating Canonical: " + path);
-				Log.debug("                     Mount: " + securemount);
+				Log.debug("     Translating Canonical: %s", path);
+				Log.debug("                     Mount: %s ", securemount);
 			}
 
 			boolean containsDotDot = path.indexOf("..") > -1;
@@ -259,13 +259,13 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 			// Verify that the canonical path does not exit out of the mount
 			if (canonical.startsWith(canonical2)) {
 				if(Log.isDebugEnabled()) {
-					Log.debug("          Translate Success: " + FileUtils.removeTrailingSlash(canonical));
+					Log.debug("          Translate Success: %s", FileUtils.removeTrailingSlash(canonical));
 				}
 				return FileUtils.removeTrailingSlash(canonical);
 			}
 
 			if(Log.isDebugEnabled()) {
-				Log.debug("          Translate Failed: " + FileUtils.removeTrailingSlash(canonical));
+				Log.debug("          Translate Failed: %s", FileUtils.removeTrailingSlash(canonical));
 			}
 
 			throw new FileNotFoundException("Path " + path

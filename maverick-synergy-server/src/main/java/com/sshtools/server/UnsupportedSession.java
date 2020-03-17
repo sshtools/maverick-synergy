@@ -106,7 +106,7 @@ public class UnsupportedSession extends SessionChannelNG {
         // The remote side is EOF no more data will be received
     }
 
-    protected boolean setEnvironmentVariable(String name, String value) {
-        return true;
+    public boolean setEnvironmentVariable(String name, String value) {
+        return false;
     }
 }

@@ -193,7 +193,7 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	 * @return <tt>true</tt> if the variable has been set, otherwise
 	 *         <tt>false</tt>
 	 */
-	protected abstract boolean setEnvironmentVariable(String name, String value);
+	public abstract boolean setEnvironmentVariable(String name, String value);
 
 	/**
 	 * Invoked when the user wants to start a shell.

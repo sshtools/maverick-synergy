@@ -36,6 +36,7 @@ public class Source extends Msh {
 
 	public void run(CommandLine cli, VirtualConsole console) throws IOException, PermissionDeniedException {
 		
+		this.commandFactory = console.getShell().getCommandFactory();
 		String[] args = cli.getArgs();
 		if (args.length != 2) {
 			throw new IllegalArgumentException("Expects a single script as the argument.");

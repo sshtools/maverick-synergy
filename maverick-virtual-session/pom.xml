@@ -62,6 +62,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.sshtools</groupId>
+			<artifactId>maverick-synergy-client</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>	
+		<dependency>
+			<groupId>com.sshtools</groupId>
 			<artifactId>maverick-sshagent</artifactId>
 			<version>${project.version}</version>
 			<scope>provided</scope>

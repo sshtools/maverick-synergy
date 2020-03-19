@@ -21,12 +21,19 @@ package com.sshtools.server.vsession.commands;
 import java.io.IOException;
 
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.UsageHelper;
 import com.sshtools.server.vsession.VirtualConsole;
 
 public class Sleep extends ShellCommand {
 
 	public Sleep() {
-		super("sleep", ShellCommand.SUBSYSTEM_SHELL, "Usage: sleep [-M|-s|-m|-h|-d] <time>", "Sleep for some time (defaults to seconds)");
+		super("sleep", ShellCommand.SUBSYSTEM_SHELL, UsageHelper.build("sleep [options] <time>",
+				"-M     Time argument is in milliseconds", 
+				"-s     Time argument is in seconds (default)", 
+				"-m     Time argument is in minutes",
+				"-h     Time argument is in hours",
+				"-d     Time argument is in days"), "Sleep for some time (defaults to seconds)");
+		
 		setBuiltIn(false);
 	}
 

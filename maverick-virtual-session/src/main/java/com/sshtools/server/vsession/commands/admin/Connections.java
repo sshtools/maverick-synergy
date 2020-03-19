@@ -28,7 +28,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 public class Connections extends ShellCommand {
 
 	public Connections() {
-		super("con", ShellCommand.SUBSYSTEM_SSHD, "", "Show active connections");
+		super("con", ShellCommand.SUBSYSTEM_SSHD, "con", "Show active connections");
 	}
 
 	public void run(String[] args, VirtualConsole process)

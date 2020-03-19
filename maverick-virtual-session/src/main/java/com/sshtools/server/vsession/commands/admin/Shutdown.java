@@ -25,7 +25,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 
 public class Shutdown extends ShellCommand {
 	public Shutdown() {
-		super("shutdown", SUBSYSTEM_JVM, "[<exitValue>]", "Exit the JVM");
+		super("shutdown", SUBSYSTEM_JVM, "shutdown <exitValue>", "Exit the JVM");
 		setBuiltIn(false);
 	}
 

@@ -33,7 +33,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 public class Help<T extends AbstractFile> extends ShellCommand {
 
 	public Help() {
-		super("help", SUBSYSTEM_HELP, "[<command>]", "Display information about the available commands.");
+		super("help", SUBSYSTEM_HELP, "help <command>", "Display information about the available commands.");
 	}
 
 	public boolean isHidden() {

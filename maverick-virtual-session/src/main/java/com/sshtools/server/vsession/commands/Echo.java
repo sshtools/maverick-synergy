@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.UsageHelper;
 import com.sshtools.server.vsession.VirtualConsole;
 
 /**
@@ -32,7 +33,8 @@ import com.sshtools.server.vsession.VirtualConsole;
 public class Echo extends ShellCommand {
 
 	public Echo() {
-		super("echo", ShellCommand.SUBSYSTEM_SHELL, "echo [-n] [string]", "Echo a message to the screen");
+		super("echo", ShellCommand.SUBSYSTEM_SHELL, UsageHelper.build("echo [options] [string]",
+				"-n       Don't print newline"), "Echo a message to the screen");
 		setBuiltIn(true);
 	}
 

@@ -31,7 +31,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 
 public class Mem extends ShellCommand {
 	public Mem() {
-		super("mem", SUBSYSTEM_JVM, "", "Displays JVM memory information");
+		super("mem", SUBSYSTEM_JVM, "mem", "Displays JVM memory information");
 	}
 
 	public void run(String[] args, VirtualConsole console) throws IOException {

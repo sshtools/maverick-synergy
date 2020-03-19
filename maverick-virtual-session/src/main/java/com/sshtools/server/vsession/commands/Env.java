@@ -28,7 +28,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 public class Env extends ShellCommand {
 
 	public Env() {
-		super("set", SUBSYSTEM_SHELL, "Usage: set <variable>=<value>","Set an environment variable");
+		super("set", SUBSYSTEM_SHELL, "set <variable>=<value>", "Set an environment variable");
 		setBuiltIn(true);
 	}
 

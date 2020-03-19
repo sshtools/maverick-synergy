@@ -30,7 +30,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 
 public class Threads extends ShellCommand {
 	public Threads() {
-		super("threads", SUBSYSTEM_JVM, "[<threadId>[,<threadId-2>,..]]", "List all running threads");
+		super("threads", SUBSYSTEM_JVM, "threads [<threadId>[,<threadId-2>,..]]", "List all running threads");
 		setBuiltIn(false);
 //		getOptions().addOption("d", false, "Attempt to kill the specified thread(s)");
 //		getOptions().addOption("s", false, "Attempt to stop the specified thread(s)");

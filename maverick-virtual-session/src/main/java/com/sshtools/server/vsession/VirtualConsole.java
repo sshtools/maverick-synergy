@@ -98,6 +98,10 @@ public class VirtualConsole {
 	public String readLine(String prompt) {
 		return reader.readLine(prompt);
 	}
+	
+	public String readLine(String prompt, Character mask) {
+		return reader.readLine(prompt, mask);
+	}
 
 	public Context getContext() {
 		return con.getContext();
@@ -133,7 +137,7 @@ public class VirtualConsole {
 		if(Objects.isNull(cwd)) {
 			cwd = getContext().getPolicy(FileSystemPolicy.class)
 					.getFileFactory(getConnection())
-						.getFile((String)env.getOrDefault("HOME", "/"), con);
+						.getFile((String)env.getOrDefault("HOME", "/"));
 		} 
 		
 		AbstractFile file = cwd.resolveFile(currentDirectory);

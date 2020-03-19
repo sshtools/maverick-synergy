@@ -35,7 +35,7 @@ public class Unalias extends ShellCommand {
 	
 
 	public Unalias() {
-		super("unalias", ShellCommand.SUBSYSTEM_SHELL, "Usage: unalias [-a] name [name ...]", 
+		super("unalias", ShellCommand.SUBSYSTEM_SHELL, "unalias [-a] name [name ...]", 
 				"Unset an alias that has previously been set.");
 		setBuiltIn(true);
 	}

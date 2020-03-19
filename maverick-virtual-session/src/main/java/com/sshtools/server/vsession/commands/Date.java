@@ -32,7 +32,7 @@ public class Date extends ShellCommand {
 
 	public Date() {
 		super("date", ShellCommand.SUBSYSTEM_SHELL, 
-				UsageHelper.build("Usage: date [options]",
+				UsageHelper.build("date [options]",
 						"-t   Just output time",
 						"-d   Just output date",
 						"-l   Output date and time in long format",

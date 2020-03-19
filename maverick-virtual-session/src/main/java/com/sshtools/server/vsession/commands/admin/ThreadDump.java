@@ -29,7 +29,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 
 public class ThreadDump extends ShellCommand {
 	public ThreadDump() {
-		super("threaddump", SUBSYSTEM_JVM, "Usage: threaddump [-t -b -w -r -n]", "Generate and print out a thread dump.");
+		super("thread-dump", SUBSYSTEM_JVM, "thread-dump [-t -b -w -r -n]", "Generate and print out a thread dump.");
 		setBuiltIn(false);
 	}
 

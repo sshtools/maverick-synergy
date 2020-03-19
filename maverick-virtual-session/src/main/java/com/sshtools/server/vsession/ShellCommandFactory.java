@@ -38,6 +38,7 @@ import com.sshtools.server.vsession.commands.Help;
 import com.sshtools.server.vsession.commands.Kill;
 import com.sshtools.server.vsession.commands.ShowLastError;
 import com.sshtools.server.vsession.commands.Sleep;
+import com.sshtools.server.vsession.commands.Source;
 import com.sshtools.server.vsession.commands.Unalias;
 
 
@@ -64,14 +65,15 @@ public class ShellCommandFactory extends CommandFactory<ShellCommand> {
 		commands.put("date", Date.class);
 
 		commands.put("env", Env.class);
-		
 		commands.put("set", Env.class);
-		commands.put("export", Env.class);
+		
 		commands.put("error", ShowLastError.class);
 		commands.put("help", Help.class);
 		commands.put("kill", Kill.class);
 		
 		commands.put("msh", Msh.class);
+		commands.put("source", Source.class);
+		
 		commands.put("clear", Clear.class);
 		commands.put("sleep", Sleep.class);
 		commands.put("catch", Catch.class);

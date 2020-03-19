@@ -29,7 +29,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 public class Mkdir extends ShellCommand {
 	public Mkdir() {
 		super("mkdir", SUBSYSTEM_FILESYSTEM,
-			"<name> [<name2> <name3> .. <nameX>]", "Create one or more directories");
+			"mkdir <name>...", "Create one or more directories");
 	}
 
 	public void run(String[] args, VirtualConsole process) throws IOException,

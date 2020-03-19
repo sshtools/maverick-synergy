@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.vsession.commands.admin;
+package com.sshtools.server.vsession.jvm;
 
 import java.io.IOException;
 import java.util.ArrayList;

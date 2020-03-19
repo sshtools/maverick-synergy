@@ -30,7 +30,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 
 public class Follow extends ShellCommand {
 	public Follow() {
-		super("follow", ShellCommand.SUBSYSTEM_FILESYSTEM, "<filename>", "Monitor a file");
+		super("follow", ShellCommand.SUBSYSTEM_FILESYSTEM, "follow <filename>", "Monitor a file");
 		setBuiltIn(false);
 	}
 

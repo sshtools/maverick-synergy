@@ -30,7 +30,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 public class Catch extends Msh {
 
 	public Catch() {
-		super("catch", ShellCommand.SUBSYSTEM_SHELL, UsageHelper.build("catch <command> [<arg1>,<arg2>,..]"),
+		super("catch", ShellCommand.SUBSYSTEM_SHELL, UsageHelper.build("catch <command> <arg1> <arg2>.."),
 				null);
 		setDescription("Run a command, catching exceptions it might throw");
 		setBuiltIn(true);

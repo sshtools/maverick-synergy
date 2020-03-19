@@ -24,12 +24,13 @@ import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.UsageHelper;
 import com.sshtools.server.vsession.VirtualConsole;
 
 public class Mv extends ShellCommand {
 	public Mv() {
-		super("mv", ShellCommand.SUBSYSTEM_FILESYSTEM, "[<srcFilePath>[ <srcFilePath2>]] [targetPath]", "Move or rename a files or directories");
-//		getOptions().addOption("v", false, "Verbose. Display file names as they are moved.");
+		super("mv", ShellCommand.SUBSYSTEM_FILESYSTEM, UsageHelper.build("mv [options] <sourcePath> <targetPath>",
+				"-v        Verbose. Display file names as they are moved"), "Move or rename a files or directories");
 	}
 
 	public void run(String[] args, final VirtualConsole process) throws IOException, PermissionDeniedException {

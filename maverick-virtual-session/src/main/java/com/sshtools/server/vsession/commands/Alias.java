@@ -40,7 +40,7 @@ public class Alias<T extends AbstractFile> extends ShellCommand {
 
 	public Alias() {
 		super("alias", ShellCommand.SUBSYSTEM_SHELL, 
-				UsageHelper.build("alias [-p] [name=[value] ...]",
+				UsageHelper.build("alias [options] <name=value>...",
 				"-p, --print           Print out existing aliases"),
 				"Set an alias to abbreviate long commands.");
 		setBuiltIn(true);

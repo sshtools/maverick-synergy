@@ -24,7 +24,6 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.server.callback.CallbackServer;
 import com.sshtools.server.vsession.CommandFactory;
-import com.sshtools.server.vsession.ShellCommand;
 
 public class CallbackCommandFactory extends CommandFactory<CallbackCommand> {
 

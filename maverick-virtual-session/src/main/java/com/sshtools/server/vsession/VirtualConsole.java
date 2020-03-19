@@ -31,7 +31,6 @@ import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.Context;
-import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SessionChannelServer;
 import com.sshtools.common.ssh.SshConnection;
 
@@ -137,7 +136,7 @@ public class VirtualConsole {
 		if(Objects.isNull(cwd)) {
 			cwd = getContext().getPolicy(FileSystemPolicy.class)
 					.getFileFactory(getConnection())
-						.getFile((String)env.getOrDefault("HOME", "/"));
+						.getFile((String)env.getOrDefault("HOME", "/"), con);
 		} 
 		
 		AbstractFile file = cwd.resolveFile(currentDirectory);

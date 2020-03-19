@@ -24,6 +24,7 @@ import java.util.Map;
 
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.UsageHelper;
 import com.sshtools.server.vsession.VirtualConsole;
 
 /**
@@ -35,7 +36,8 @@ public class Unalias extends ShellCommand {
 	
 
 	public Unalias() {
-		super("unalias", ShellCommand.SUBSYSTEM_SHELL, "unalias [-a] name [name ...]", 
+		super("unalias", ShellCommand.SUBSYSTEM_SHELL, UsageHelper.build("unalias -a | <name>",
+				"-a            Remove all aliases"), 
 				"Unset an alias that has previously been set.");
 		setBuiltIn(true);
 	}

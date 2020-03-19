@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.vsession.commands.admin;
+package com.sshtools.server.vsession.jvm;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,18 +26,22 @@ import java.util.List;
 
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.UsageHelper;
 import com.sshtools.server.vsession.VirtualConsole;
 
 public class Threads extends ShellCommand {
 	public Threads() {
-		super("threads", SUBSYSTEM_JVM, "threads [<threadId>[,<threadId-2>,..]]", "List all running threads");
+		super("threads", SUBSYSTEM_JVM, UsageHelper.build("threads <threadId>..",
+				"-d     Attempt to kill the specified thread(s)",
+				"-s     Attempt to stop the specified thread(s)",
+				"-z     Attempt to suspend the specified thread(s)",
+				"-i     Attempt to interrupt the specified thread(s)",
+				"-j     Attempt to join the specified thread(s)",
+				"-r     Attempt to resume the specified thread(s)", 
+				"-1     Set specified thread(s) priority to MINIMUM",
+				"-2     Set specified thread(s) priority to NORMAL",
+				"-3     Set specified thread(s) priority to MAXIMUM"),"List all running threads");
 		setBuiltIn(false);
-//		getOptions().addOption("d", false, "Attempt to kill the specified thread(s)");
-//		getOptions().addOption("s", false, "Attempt to stop the specified thread(s)");
-//		getOptions().addOption("z", false, "Attempt to suspend the specified thread(s)");
-//		getOptions().addOption("i", false, "Attempt to interrupt the specified thread(s)");
-//		getOptions().addOption("j", false, "Attempt to join the specified thread(s)");
-//		getOptions().addOption("r", false, "Attempt to resume the specified thread(s)");
 	}
 
 	@SuppressWarnings("deprecation")

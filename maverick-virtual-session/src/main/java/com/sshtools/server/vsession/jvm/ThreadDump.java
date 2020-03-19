@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.vsession.commands.admin;
+package com.sshtools.server.vsession.jvm;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,11 +25,18 @@ import java.util.List;
 import com.sshtools.common.util.Utils;
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.UsageHelper;
 import com.sshtools.server.vsession.VirtualConsole;
 
 public class ThreadDump extends ShellCommand {
 	public ThreadDump() {
-		super("thread-dump", SUBSYSTEM_JVM, "thread-dump [-t -b -w -r -n]", "Generate and print out a thread dump.");
+		super("thread-dump", SUBSYSTEM_JVM, UsageHelper.build("thread-dump [options]",
+				"-t       Show TIMED_WAITING threads", 
+				"-b       Show BLOCKED threads",
+				"-w       Show WAITING threads",
+				"-r       Show RUNNABLE threads",
+				"-n       Show NEW threads"), 
+				"Generate and print out a thread dump.");
 		setBuiltIn(false);
 	}
 

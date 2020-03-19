@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.vsession.commands.admin;
+package com.sshtools.server.vsession.jvm;
 
 import java.io.IOException;
 
@@ -24,13 +24,10 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.server.vsession.CommandFactory;
 import com.sshtools.server.vsession.ShellCommand;
-import com.sshtools.server.vsession.jvm.Mem;
-import com.sshtools.server.vsession.jvm.ThreadDump;
-import com.sshtools.server.vsession.jvm.Threads;
 
-public class AdminCommandFactory extends CommandFactory<ShellCommand> {
+public class JVMCommandFactory extends CommandFactory<ShellCommand> {
 
-	public AdminCommandFactory() {
+	public JVMCommandFactory() {
 
 		installShellCommands();
 	}
@@ -38,8 +35,6 @@ public class AdminCommandFactory extends CommandFactory<ShellCommand> {
 	protected void installShellCommands() {
 		
 		commands.put("threads", Threads.class);
-		commands.put("shutdown", Shutdown.class);
-		commands.put("con", Connections.class);
 		commands.put("mem", Mem.class);
 		commands.put("threaddump", ThreadDump.class);
 	}

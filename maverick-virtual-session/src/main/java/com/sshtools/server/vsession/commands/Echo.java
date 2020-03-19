@@ -33,7 +33,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 public class Echo extends ShellCommand {
 
 	public Echo() {
-		super("echo", ShellCommand.SUBSYSTEM_SHELL, UsageHelper.build("echo [options] [string]",
+		super("echo", ShellCommand.SUBSYSTEM_SHELL, UsageHelper.build("echo [options] <string>",
 				"-n       Don't print newline"), "Echo a message to the screen");
 		setBuiltIn(true);
 	}

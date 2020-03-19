@@ -72,7 +72,7 @@ public class CallbackMount extends CallbackCommand {
 		SftpFileSystemConfigBuilder.getInstance().setSshConnection(opts, remoteConnection);
 		vff.getMountManager(console.getConnection()).mount(new VirtualMountTemplate(
 				"/" + remoteConnection.getUsername(), String.format("sftp://%s/", remoteConnection.getUUID()),
-					new VFSFileFactory(m, opts, new VFSHomeFactory()), false));
+					new VFSFileFactory(m, opts, new VFSHomeFactory()), false), false);
 	}
 	
 	class VFSHomeFactory implements AbstractFileHomeFactory {

@@ -28,7 +28,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 public class Env extends ShellCommand {
 
 	public Env() {
-		super("set", SUBSYSTEM_SHELL, "Usage: set [<variable>=<value>]","Set an environment variable");
+		super("set", SUBSYSTEM_SHELL, "set <variable>=<value>", "Set an environment variable");
 		setBuiltIn(true);
 	}
 
@@ -47,7 +47,7 @@ public class Env extends ShellCommand {
 			if (args[1].indexOf("=") > -1) {
 				String name = args[1].substring(0, args[1].indexOf("="));
 				String value = args[1].substring(args[1].indexOf("=") + 1);
-				console.getEnvironment().put(name, value);
+				console.getSessionChannel().setEnvironmentVariable(name, value);
 			}
 		} else {
 			console.println("ERR: Incorrect number of arguments. Use help [command] for signature.");

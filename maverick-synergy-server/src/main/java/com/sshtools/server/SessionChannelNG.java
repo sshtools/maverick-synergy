@@ -21,7 +21,6 @@ package com.sshtools.server;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -37,7 +36,6 @@ import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.shell.ShellPolicy;
-import com.sshtools.common.ssh.CachingDataWindow;
 import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.ChannelOutputStream;
@@ -193,7 +191,7 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	 * @return <tt>true</tt> if the variable has been set, otherwise
 	 *         <tt>false</tt>
 	 */
-	protected abstract boolean setEnvironmentVariable(String name, String value);
+	public abstract boolean setEnvironmentVariable(String name, String value);
 
 	/**
 	 * Invoked when the user wants to start a shell.

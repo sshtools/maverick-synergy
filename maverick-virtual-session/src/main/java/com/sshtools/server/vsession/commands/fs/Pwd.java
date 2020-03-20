@@ -26,7 +26,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 
 public class Pwd extends ShellCommand {
 	public Pwd() {
-		super("pwd", SUBSYSTEM_FILESYSTEM, "", "Returns the current working directory");
+		super("pwd", SUBSYSTEM_FILESYSTEM, "pwd", "Returns the current working directory");
 	}
 
 	public void run(String[] args, VirtualConsole process) throws IOException, PermissionDeniedException {

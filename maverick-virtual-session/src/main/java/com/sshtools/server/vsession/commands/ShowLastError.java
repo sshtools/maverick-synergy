@@ -27,7 +27,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 public class ShowLastError extends ShellCommand {
 
 	public ShowLastError() {
-		super("error", ShellCommand.SUBSYSTEM_SHELL, "", "Display the last error");
+		super("error", ShellCommand.SUBSYSTEM_SHELL, "error", "Display the last error");
 	}
 
 	public void run(String[] args, VirtualConsole console) throws IOException {

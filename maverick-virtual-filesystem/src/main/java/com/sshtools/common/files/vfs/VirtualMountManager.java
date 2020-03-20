@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
@@ -34,13 +35,12 @@ import com.sshtools.common.util.FileUtils;
 
 public class VirtualMountManager {
 
-	
-
 	private SshConnection con;
 	private VirtualMount defaultMount;
 	private List<VirtualMount> mounts = new ArrayList<VirtualMount>();
 	private VirtualFileFactory fileFactory;
-
+	private ThreadLocal<VirtualMount> testingMount = new ThreadLocal<>(); 
+	
 	public VirtualMountManager(SshConnection con,
 			VirtualFileFactory fileFactory) throws IOException,
 			PermissionDeniedException {
@@ -88,15 +88,40 @@ public class VirtualMountManager {
 		return ret;
 	}
 	
-	public void mount(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
+	public void mount(VirtualMountTemplate template, boolean unmount) throws IOException, PermissionDeniedException {
 		mount(createMount(template.getMount(),
 				template.getRoot(), 
 				template.getActualFileFactory(),
-				template.isCreateMountFolder()));
+				template.isCreateMountFolder()), unmount);
 	}
 
-	private void mount(VirtualMount mount) throws IOException,
+	public void test(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
+		
+		VirtualMount mount = createMount(template.getMount(),
+				template.getRoot(), 
+				template.getActualFileFactory(),
+				template.isCreateMountFolder());
+		
+		try {
+			testingMount.set(mount);
+			AbstractFile f = fileFactory.getFile(mount.getMount(), con);
+			if(mount.isCreateMountFolder()) {
+				f.createFolder();
+			}
+		} catch (Exception ex) {
+			Log.error("Cannot mount " + mount.getMount() + " " + mount.getRoot(), ex);
+		} finally {
+			testingMount.remove();
+		}
+	}
+	
+	private void mount(VirtualMount mount, boolean unmount) throws IOException,
 			PermissionDeniedException {
+		
+		if(unmount && isMounted(mount.getMount())) {
+			unmount(mount);
+		}
+		
 		Log.info("Mounting " + mount.getMount() + " on " + mount.getRoot() + " for " + con.getUsername() + " (" + con.getSessionId() + ")");
 
 		if(isMounted(mount.getMount())) {
@@ -136,7 +161,17 @@ public class VirtualMountManager {
 
 	public void unmount(VirtualMount mount) throws IOException {
 		Log.info("Unmounting " + mount.getMount() + " from " + mount.getRoot() + " for " + con.getUsername() + " (" + con.getSessionId() + ")");
-		mounts.remove(mount);
+		VirtualMount mounted = null;
+		for(VirtualMount m : mounts) {
+			if(FileUtils.checkEndsWithSlash(m.getMount())
+					.equals(FileUtils.checkEndsWithSlash(mount.getMount()))) {
+				mounted = m;
+			}
+		}
+		if(Objects.isNull(mounted)) {
+			throw new IOException(String.format("Could not find mount %s", mount.getMount()));
+		}
+		mounts.remove(mounted);
 		sort();
 		Log.info("Unmounted " + mount.getMount() + " from " + mount.getRoot());
 	}
@@ -146,7 +181,13 @@ public class VirtualMountManager {
 	}
 
 	public VirtualMount[] getMounts() {
-		return mounts.toArray(new VirtualMount[0]);
+		List<VirtualMount> tmp = new ArrayList<>();
+		VirtualMount testMount = testingMount.get();
+		if(testMount!=null) {
+			tmp.add(testingMount.get());
+		}
+		tmp.addAll(mounts);
+		return tmp.toArray(new VirtualMount[0]);
 	}
 
 	public boolean isMounted(String path) {
@@ -178,7 +219,7 @@ public class VirtualMountManager {
 			return defaultMount;
 		}
 
-		for (VirtualMount mount : mounts) {
+		for (VirtualMount mount : getMounts()) {
 			String mountPath = FileUtils.checkEndsWithSlash(mount.getMount());
 			path = FileUtils.checkEndsWithSlash(path);
 			if (path.startsWith(mountPath)) {
@@ -196,7 +237,7 @@ public class VirtualMountManager {
 		path = FileUtils.addTrailingSlash(path);
 
 		List<VirtualMount> matched = new ArrayList<VirtualMount>();
-		for (VirtualMount m : mounts) {
+		for (VirtualMount m : getMounts()) {
 			String mountPath = FileUtils.addTrailingSlash(m.getMount());
 			if (path.startsWith(mountPath) || mountPath.startsWith(path)) {
 				matched.add(m);

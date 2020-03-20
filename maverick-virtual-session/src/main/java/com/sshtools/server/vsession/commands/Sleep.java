@@ -21,18 +21,25 @@ package com.sshtools.server.vsession.commands;
 import java.io.IOException;
 
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.UsageHelper;
 import com.sshtools.server.vsession.VirtualConsole;
 
 public class Sleep extends ShellCommand {
 
 	public Sleep() {
-		super("sleep", ShellCommand.SUBSYSTEM_SHELL, "Usage: sleep [-M|-s|-m|-h|-d] <time>", "Sleep for some time (defaults to seconds)");
+		super("sleep", ShellCommand.SUBSYSTEM_SHELL, UsageHelper.build("sleep [options] <time>",
+				"-M     Time argument is in milliseconds", 
+				"-s     Time argument is in seconds (default)", 
+				"-m     Time argument is in minutes",
+				"-h     Time argument is in hours",
+				"-d     Time argument is in days"), "Sleep for some time (defaults to seconds)");
+		
 		setBuiltIn(false);
 	}
 
 	public void run(String[] args, VirtualConsole console) throws IOException {
 
-		if (args.length != 2) {
+		if (args.length < 2) {
 			throw new IllegalArgumentException(
 					"Requires single argument specifying time to sleep.");
 		}
@@ -44,7 +51,7 @@ public class Sleep extends ShellCommand {
 			mult = 1;
 		} else if (t == 's') {
 			ts = ts.substring(ts.length() - 1);
-			mult = 1;
+			mult = 1000;
 		} else if (t == 'm') {
 			ts = ts.substring(ts.length() - 1);
 			mult = 60000;

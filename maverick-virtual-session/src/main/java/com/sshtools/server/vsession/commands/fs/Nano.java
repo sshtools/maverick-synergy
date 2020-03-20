@@ -35,7 +35,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 public class Nano extends ShellCommand {
 
 	public Nano() {
-		super("nano", "File System", "Usage: nano <file>", "File editor");
+		super("nano", SUBSYSTEM_FILESYSTEM, "nano <file>", "File editor");
 	}
 
 	@Override

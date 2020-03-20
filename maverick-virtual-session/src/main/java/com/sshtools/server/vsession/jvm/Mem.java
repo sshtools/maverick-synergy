@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.vsession.commands.admin;
+package com.sshtools.server.vsession.jvm;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 
 public class Mem extends ShellCommand {
 	public Mem() {
-		super("mem", SUBSYSTEM_JVM, "", "Displays JVM memory information");
+		super("mem", SUBSYSTEM_JVM, "mem", "Displays JVM memory information");
 	}
 
 	public void run(String[] args, VirtualConsole console) throws IOException {

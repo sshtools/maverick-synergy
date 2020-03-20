@@ -24,6 +24,9 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.server.vsession.CommandFactory;
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.jvm.Mem;
+import com.sshtools.server.vsession.jvm.ThreadDump;
+import com.sshtools.server.vsession.jvm.Threads;
 
 public class AdminCommandFactory extends CommandFactory<ShellCommand> {
 

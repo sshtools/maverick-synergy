@@ -30,7 +30,7 @@ import com.sshtools.server.vsession.VirtualConsole;
  */
 public class Cd extends ShellCommand {
 	public Cd() {
-		super("cd", ShellCommand.SUBSYSTEM_FILESYSTEM, "cd [directory]","Moves the working directory to a new directory");
+		super("cd", ShellCommand.SUBSYSTEM_FILESYSTEM, "cd <directory>", "Moves the working directory to a new directory");
 		setBuiltIn(true);
 	}
 

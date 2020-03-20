@@ -23,9 +23,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.sshtools.common.files.AbstractFile;
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.UsageHelper;
 import com.sshtools.server.vsession.VirtualConsole;
 
 /**
@@ -33,13 +33,14 @@ import com.sshtools.server.vsession.VirtualConsole;
  * @author lee
  *
  */
-public class Alias<T extends AbstractFile> extends ShellCommand {
+public class Alias extends ShellCommand {
 	public static Map<String, Map<String, String>> userlist = new HashMap<String, Map<String, String>>();
 	public static Map<String, String> predefined = new HashMap<String, String>();
 
 	public Alias() {
 		super("alias", ShellCommand.SUBSYSTEM_SHELL, 
-				"Usage: alias [-p] [name=[value] ...]",
+				UsageHelper.build("alias [options] <name=value>...",
+				"-p, --print           Print out existing aliases"),
 				"Set an alias to abbreviate long commands.");
 		setBuiltIn(true);
 	}
@@ -54,7 +55,7 @@ public class Alias<T extends AbstractFile> extends ShellCommand {
 		aliaslist = userlist.get(username);
 		
 		
-		if (!CliHelper.hasShortOption(args, 'p') && args.length > 1) {
+		if (!CliHelper.hasOption(args, 'p', "print") && args.length > 1) {
 			boolean skip = true;
 			for(String arg : args) {
 				if(skip) {

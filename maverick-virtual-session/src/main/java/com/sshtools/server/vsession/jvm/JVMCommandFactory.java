@@ -16,17 +16,32 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.ssh;
+package com.sshtools.server.vsession.jvm;
 
-import java.io.OutputStream;
+import java.io.IOException;
 
-public interface SessionChannelServer extends SessionChannel {
+import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.server.vsession.CommandFactory;
+import com.sshtools.server.vsession.ShellCommand;
 
-	OutputStream getErrorStream();
+public class JVMCommandFactory extends CommandFactory<ShellCommand> {
+
+	public JVMCommandFactory() {
+
+		installShellCommands();
+	}
 	
-	void enableRawMode();
+	protected void installShellCommands() {
+		
+		commands.put("threads", Threads.class);
+		commands.put("mem", Mem.class);
+		commands.put("threaddump", ThreadDump.class);
+	}
 
-	void disableRawMode();
+	@Override
+	protected void configureCommand(ShellCommand c, SshConnection con) throws IOException, PermissionDeniedException {
+		super.configureCommand(c, con);
+	}
 
-	boolean setEnvironmentVariable(String name, String value);
 }

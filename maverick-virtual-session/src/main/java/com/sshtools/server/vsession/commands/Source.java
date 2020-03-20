@@ -16,24 +16,32 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.vsession.commands.admin;
+package com.sshtools.server.vsession.commands;
 
 import java.io.IOException;
 
-import com.sshtools.server.vsession.ShellCommand;
+import org.apache.commons.cli.CommandLine;
+
+import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.server.vsession.Msh;
 import com.sshtools.server.vsession.VirtualConsole;
 
-public class Shutdown extends ShellCommand {
-	public Shutdown() {
-		super("shutdown", SUBSYSTEM_JVM, "shutdown <exitValue>", "Exit the JVM");
-		setBuiltIn(false);
+public class Source extends Msh {
+
+	public Source() {
+		super("source", SUBSYSTEM_SHELL, "source <script>", null);
+		setDescription("Run script in same process");
+		setBuiltIn(true);
 	}
 
-	public void run(String[] args, VirtualConsole process) throws IOException {
-
-		if (args.length > 2) {
-			throw new IOException("Incorrect number of arguments.");
+	public void run(CommandLine cli, VirtualConsole console) throws IOException, PermissionDeniedException {
+		
+		this.commandFactory = console.getShell().getCommandFactory();
+		String[] args = cli.getArgs();
+		if (args.length != 2) {
+			throw new IllegalArgumentException("Expects a single script as the argument.");
+		} else {
+			source(console, console.getCurrentDirectory().resolveFile(args[1]));
 		}
-		System.exit(args.length == 1 ? 0 : Integer.parseInt(args[1]));
 	}
 }

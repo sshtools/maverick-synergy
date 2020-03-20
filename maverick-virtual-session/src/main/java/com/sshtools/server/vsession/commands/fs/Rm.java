@@ -25,13 +25,14 @@ import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.UsageHelper;
 import com.sshtools.server.vsession.VirtualConsole;
 
 public class Rm extends ShellCommand {
 	public Rm() {
-		super("rm", ShellCommand.SUBSYSTEM_FILESYSTEM, "[<filePath>]", "Removes a file or directory");
-//		getOptions().addOption("r", false, "Recursively remove files and directories.");
-//		getOptions().addOption("v", false, "Verbose. Display file names as they are deleted.");
+		super("rm", ShellCommand.SUBSYSTEM_FILESYSTEM, UsageHelper.build("rm [options] <path>",
+				"-r         Recursively remove files and directories",
+				"-v         Verbose. Display file names as they are deleted"), "Removes a file or directory");
 	}
 
 	public void run(String[] args, final VirtualConsole process) throws IOException, PermissionDeniedException {

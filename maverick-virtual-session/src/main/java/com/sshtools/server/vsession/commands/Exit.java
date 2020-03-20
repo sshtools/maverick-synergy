@@ -31,7 +31,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 public class Exit extends ShellCommand {
 
 	public Exit() {
-		super("exit", ShellCommand.SUBSYSTEM_SHELL, "Usage: exit", "Exits the current shell");
+		super("exit", ShellCommand.SUBSYSTEM_SHELL, "exit", "Exits the current shell");
 		setDescription("Exits the current shell");
 		setBuiltIn(true);
 	}

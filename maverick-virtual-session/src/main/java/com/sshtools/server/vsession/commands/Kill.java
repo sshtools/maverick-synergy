@@ -26,7 +26,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 
 public class Kill extends AbstractUUIDCommand {
 	public Kill() {
-		super("kill", SUBSYSTEM_SHELL, "[<loginId or processId>]", "Kill a process or login");
+		super("kill", SUBSYSTEM_SHELL, "kill [<loginId or processId>]", "Kill a process or login");
 		setBuiltIn(false);
 	}
 

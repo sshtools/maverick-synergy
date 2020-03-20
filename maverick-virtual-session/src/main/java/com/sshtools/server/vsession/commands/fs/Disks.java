@@ -23,15 +23,18 @@ import java.io.IOException;
 
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.UsageHelper;
 import com.sshtools.server.vsession.VirtualConsole;
 
 public class Disks extends ShellCommand {
 	public Disks() {
-		super("disks", SUBSYSTEM_FILESYSTEM, "[<path>]","List local root file systems or displays information about local disk drives");
-//		getOptions().addOption("m", "mb", false, "Display size in megabytes");
-//		getOptions().addOption("k", "kb", false, "Display size in kilobytes");
-//		getOptions().addOption("g", "gb", false, "Display size in gigabytes");
-//		getOptions().addOption("b", "b", false, "Display size in bytes");
+		super("disks", SUBSYSTEM_FILESYSTEM, UsageHelper.build("disks [options] <path>", 
+				"-m               Display size in megabytes",
+				"-k               Display size in kilobytes",
+				"-g               Display size in gigabytes",
+				"-b               Display size in bytes"),
+				"List local root file systems or displays information about local disk drives");
+
 	}
 
 	public void run(String[] args, VirtualConsole process) throws IOException {

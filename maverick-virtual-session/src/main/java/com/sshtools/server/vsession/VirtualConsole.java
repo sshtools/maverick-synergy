@@ -31,7 +31,6 @@ import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.Context;
-import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SessionChannelServer;
 import com.sshtools.common.ssh.SshConnection;
 
@@ -97,6 +96,10 @@ public class VirtualConsole {
 	
 	public String readLine(String prompt) {
 		return reader.readLine(prompt);
+	}
+	
+	public String readLine(String prompt, Character mask) {
+		return reader.readLine(prompt, mask);
 	}
 
 	public Context getContext() {

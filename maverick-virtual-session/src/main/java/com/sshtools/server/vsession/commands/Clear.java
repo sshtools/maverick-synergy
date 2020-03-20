@@ -32,7 +32,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 public class Clear extends ShellCommand {
 
 	public Clear() {
-		super("clear", ShellCommand.SUBSYSTEM_SHELL, "Usage: clear", "Clears the screen");
+		super("clear", ShellCommand.SUBSYSTEM_SHELL, "clear", "Clears the screen");
 		setBuiltIn(true);
 	}
 

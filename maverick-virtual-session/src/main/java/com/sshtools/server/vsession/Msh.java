@@ -61,7 +61,7 @@ public class Msh extends ShellCommand {
 	private List<MshListener> listeners = new ArrayList<>();
 	
 	public Msh(CommandFactory<ShellCommand> commandFactory) {
-		super("msh", SUBSYSTEM_SHELL, "Usage: msh [script]", "A basic interactive shell for executing commands.");
+		super("msh", SUBSYSTEM_SHELL, "Usage: msh <script>", "A basic interactive shell for executing commands.");
 		setBuiltIn(false);
 		this.commandFactory = commandFactory;
 	}

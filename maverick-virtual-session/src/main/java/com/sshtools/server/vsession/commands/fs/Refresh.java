@@ -27,7 +27,7 @@ import com.sshtools.server.vsession.VirtualConsole;
 
 public class Refresh extends ShellCommand {
 	public Refresh() {
-		super("refresh", SUBSYSTEM_FILESYSTEM, "", "Refreshes the current directory");
+		super("refresh", SUBSYSTEM_FILESYSTEM, "refresh", "Refreshes the current directory");
 		setBuiltIn(true);
 	}
 

@@ -6,6 +6,7 @@ public class SshClientArguments {
 	private String destination;
 	private String identityFile;
 	private String loginName;
+	private String command;
 
 	public int getPort() {
 		return port;
@@ -37,6 +38,14 @@ public class SshClientArguments {
 
 	public void setLoginName(String loginName) {
 		this.loginName = loginName;
+	}
+
+	public String getCommand() {
+		return command;
+	}
+
+	public void setCommand(String command) {
+		this.command = command;
 	}
 	
 	

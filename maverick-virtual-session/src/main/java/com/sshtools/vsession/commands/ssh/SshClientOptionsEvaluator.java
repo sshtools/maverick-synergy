@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.vsession.commands.ssh.SshClientOptions.IdentityFile;
 import com.sshtools.vsession.commands.ssh.SshClientOptions.LoginName;
 import com.sshtools.vsession.commands.ssh.SshClientOptions.Port;
 
@@ -28,9 +29,11 @@ public class SshClientOptionsEvaluator {
 		
 		SshClientArguments arguments = new SshClientArguments();
 		
+		parseCommand(commandLine, arguments);
 		parseDestination(commandLine, arguments);
 		parsePort(commandLine, arguments);
 		parseLoginName(commandLine, arguments);
+		parseIdentityFilename(commandLine, arguments);
 
 		return arguments;
 	}
@@ -48,6 +51,15 @@ public class SshClientOptionsEvaluator {
 	
 		arguments.setDestination(destination);
 		arguments.setLoginName(loginName);
+	}
+	
+	
+	private static void parseCommand(CommandLine commandLine, SshClientArguments arguments) {
+		List<String> commandLineArguments = commandLine.getArgList();
+		if (commandLineArguments.size() > 2) {
+			String command = String.join(" ", commandLineArguments.subList(2, commandLineArguments.size()));
+			arguments.setCommand(command);
+		}
 	}
 	
 	private static void parsePort(CommandLine commandLine, SshClientArguments arguments) {
@@ -69,6 +81,15 @@ public class SshClientOptionsEvaluator {
 
 		if (commandLine.hasOption(LoginName.LOGIN_NAME_OPTION)) {
 			arguments.setLoginName(commandLine.getOptionValue(LoginName.LOGIN_NAME_OPTION));
+		}
+		
+		return null;
+	}
+	
+	private static String parseIdentityFilename(CommandLine commandLine, SshClientArguments arguments) {
+
+		if (commandLine.hasOption(IdentityFile.IDENTITY_FILE_OPTION)) {
+			arguments.setIdentityFile(commandLine.getOptionValue(IdentityFile.IDENTITY_FILE_OPTION));
 		}
 		
 		return null;

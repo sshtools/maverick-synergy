@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
@@ -160,7 +161,17 @@ public class VirtualMountManager {
 
 	public void unmount(VirtualMount mount) throws IOException {
 		Log.info("Unmounting " + mount.getMount() + " from " + mount.getRoot() + " for " + con.getUsername() + " (" + con.getSessionId() + ")");
-		mounts.remove(mount);
+		VirtualMount mounted = null;
+		for(VirtualMount m : mounts) {
+			if(FileUtils.checkEndsWithSlash(m.getMount())
+					.equals(FileUtils.checkEndsWithSlash(mount.getMount()))) {
+				mounted = m;
+			}
+		}
+		if(Objects.isNull(mounted)) {
+			throw new IOException(String.format("Could not find mount %s", mount.getMount()));
+		}
+		mounts.remove(mounted);
 		sort();
 		Log.info("Unmounted " + mount.getMount() + " from " + mount.getRoot());
 	}

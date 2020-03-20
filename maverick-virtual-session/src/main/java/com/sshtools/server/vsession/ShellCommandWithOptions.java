@@ -53,12 +53,16 @@ public abstract class ShellCommandWithOptions extends ShellCommand {
 		
 		CommandLine cli;
 		try {
-			cli = parser.parse(options, args, !hasFixedOptions());
+			cli = parser.parse(options, filterArgs(args), !hasFixedOptions());
 		} catch (ParseException e) {
 			throw new UsageException(getUsage());
 		}
 		
 		run (cli, console);
+	}
+
+	protected String[] filterArgs(String[] args) {
+		return args;
 	}
 
 	public abstract void run(CommandLine cli, VirtualConsole console) throws IOException, PermissionDeniedException, UsageException;

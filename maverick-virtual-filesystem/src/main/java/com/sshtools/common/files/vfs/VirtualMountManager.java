@@ -60,7 +60,7 @@ public class VirtualMountManager {
 							homeMount.getRoot(), con), fileFactory, homeMount
 							.getActualFileFactory(), con, true, false, homeMount.isCreateMountFolder());
 			if(defaultMount.isCreateMountFolder()) {
-				defaultMount.getActualFileFactory().getFile(defaultMount.getRoot(), con).createFolder();
+				defaultMount.getActualFileFactory().getFile(defaultMount.getRoot()).createFolder();
 			}
 			mounts.add(defaultMount);
 		}
@@ -74,7 +74,7 @@ public class VirtualMountManager {
 			
 
 			if(vm.isCreateMountFolder()) {
-				vm.getActualFileFactory().getFile(vm.getRoot(), con).createFolder();
+				vm.getActualFileFactory().getFile(vm.getRoot()).createFolder();
 			}
 			mounts.add(vm);
 		}
@@ -97,14 +97,20 @@ public class VirtualMountManager {
 
 	public void test(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
 		
-		VirtualMount mount = createMount(template.getMount(),
+		test(createMount(template.getMount(),
 				template.getRoot(), 
 				template.getActualFileFactory(),
-				template.isCreateMountFolder());
+				template.isCreateMountFolder()));
 		
+	}
+	
+	private void test(VirtualMount mount) throws IOException, PermissionDeniedException {
+		
+		Log.info("Testing " + mount.getMount() + " on " + mount.getRoot() + " for " + con.getUsername() + " (" + con.getSessionId() + ")");
+
 		try {
 			testingMount.set(mount);
-			AbstractFile f = fileFactory.getFile(mount.getMount(), con);
+			AbstractFile f = fileFactory.getFile(mount.getMount());
 			if(mount.isCreateMountFolder()) {
 				f.createFolder();
 			}
@@ -121,29 +127,18 @@ public class VirtualMountManager {
 		if(unmount && isMounted(mount.getMount())) {
 			unmount(mount);
 		}
-		
-		Log.info("Mounting " + mount.getMount() + " on " + mount.getRoot() + " for " + con.getUsername() + " (" + con.getSessionId() + ")");
 
 		if(isMounted(mount.getMount())) {
 			throw new IOException(mount.getMount() + " already mounted on " + getMount(mount.getMount()).getRoot());
 		} 
+		
+		Log.info("Mounting " + mount.getMount() + " on " + mount.getRoot() + " for " + con.getUsername() + " (" + con.getSessionId() + ")");
 
+		test(mount);
+		
 		// Add the mount
 		mounts.add(mount);
 		sort();
-
-		// Now test it
-		try {
-			AbstractFile f = fileFactory.getFile(mount.getMount(), con);
-			if(mount.isCreateMountFolder()) {
-				f.createFolder();
-			}
-		} catch (Exception ex) {
-			Log.error(
-					"Failed to mount " + mount.getMount() + " "
-							+ mount.getRoot(), ex);
-			unmount(mount);
-		}
 
 		Log.info("Mounted " + mount.getMount() + " on " + mount.getRoot());
 
@@ -173,7 +168,7 @@ public class VirtualMountManager {
 		}
 		mounts.remove(mounted);
 		sort();
-		Log.info("Unmounted " + mount.getMount() + " from " + mount.getRoot());
+		Log.info("Unmounted " + mounted.getMount() + " from " + mounted.getRoot());
 	}
 
 	public VirtualMount getDefaultMount() {

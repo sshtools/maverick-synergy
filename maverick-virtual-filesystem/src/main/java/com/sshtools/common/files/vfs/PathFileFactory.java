@@ -36,7 +36,7 @@ public class PathFileFactory implements AbstractFileFactory<PathFile> {
 	}
 
 	@Override
-	public PathFile getFile(String path, SshConnection con) throws PermissionDeniedException, IOException {
+	public PathFile getFile(String path) throws PermissionDeniedException, IOException {
 		if(Log.isTraceEnabled())
 			Log.trace(String.format("Resolving path '%s' in '%s'", path, base));
 		Path p;
@@ -64,7 +64,7 @@ public class PathFileFactory implements AbstractFileFactory<PathFile> {
 	}
 
 	@Override
-	public PathFile getDefaultPath(SshConnection con) throws PermissionDeniedException, IOException {
-		return getFile("/", con);
+	public PathFile getDefaultPath() throws PermissionDeniedException, IOException {
+		return getFile("/");
 	}
 }

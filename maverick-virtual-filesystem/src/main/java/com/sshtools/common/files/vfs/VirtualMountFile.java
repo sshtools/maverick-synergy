@@ -36,15 +36,13 @@ public class VirtualMountFile implements VirtualFile {
 
 	private VirtualMount mount;
 	private VirtualMountManager mgr;
-	private SshConnection con;
 	private String name;
 	private String path;
 	private AbstractFile file;
 	
-	public VirtualMountFile(String path, VirtualMount mount,VirtualMountManager mgr, SshConnection con) throws PermissionDeniedException, IOException {
+	public VirtualMountFile(String path, VirtualMount mount,VirtualMountManager mgr) throws PermissionDeniedException, IOException {
 		this.mount = mount;
 		this.mgr = mgr;
-		this.con = con;
 		int idx = path.lastIndexOf('/');
 		if(idx > -1) {
 			name = path.substring(idx+1);
@@ -52,7 +50,7 @@ public class VirtualMountFile implements VirtualFile {
 			name = path;
 		}
 		this.path = path;
-		file = mount.getActualFileFactory().getFile(mount.getResolvePath(path), con);
+		file = mount.getActualFileFactory().getFile(mount.getResolvePath(path));
 	}
 	
 	public boolean exists() throws IOException {
@@ -102,14 +100,14 @@ public class VirtualMountFile implements VirtualFile {
 					if(m.getMount().equals(currentPath)) {
 						// We need to list the contents of the actual folder
 						VirtualMount actualMount = mgr.getMount(currentPath);
-						AbstractFile parent = actualMount.getActualFileFactory().getFile(actualMount.getRoot(), con);
+						AbstractFile parent = actualMount.getActualFileFactory().getFile(actualMount.getRoot());
 						files.addAll(parent.getChildren());
 					} else {
 						String child = m.getMount().substring(currentPath.length());
 						if(child.indexOf('/') > -1) {
 							child = child.substring(0,child.indexOf('/'));
 						}
-						files.add(new VirtualMountFile(currentPath + child, m, mgr, con));
+						files.add(new VirtualMountFile(currentPath + child, m, mgr));
 					}
 				}
 			}
@@ -119,7 +117,7 @@ public class VirtualMountFile implements VirtualFile {
 			if(child.indexOf('/') > -1) {
 				child = child.substring(0,child.indexOf('/'));
 			}
-			files.add(new VirtualMountFile(path + child, mount, mgr, con));
+			files.add(new VirtualMountFile(path + child, mount, mgr));
 		}
 		
 		return files;
@@ -203,9 +201,9 @@ public class VirtualMountFile implements VirtualFile {
 
 	public AbstractFile resolveFile(String child) throws IOException, PermissionDeniedException {
 		if(child.startsWith("/")) {
-			return mgr.getVirtualFileFactory().getFile(child, con);
+			return mgr.getVirtualFileFactory().getFile(child);
 		} else {
-			return mgr.getVirtualFileFactory().getFile(path + (path.equals("/") || path.endsWith("/") ? "" : "/") + child, con);
+			return mgr.getVirtualFileFactory().getFile(path + (path.equals("/") || path.endsWith("/") ? "" : "/") + child);
 		}
 	}
 

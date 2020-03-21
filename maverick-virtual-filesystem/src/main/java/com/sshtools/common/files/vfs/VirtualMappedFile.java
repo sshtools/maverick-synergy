@@ -32,24 +32,23 @@ import com.sshtools.common.util.FileUtils;
 public class VirtualMappedFile extends AbstractFileAdapter implements
 		VirtualFile {
 
-	private SshConnection con;
 	private VirtualMount parentMount;
 	private VirtualFileFactory fileFactory;
 	private String absolutePath;
 	private String name;
-
-	public VirtualMappedFile(String path, SshConnection con,
+	private VirtualMountManager mgr;
+	
+	public VirtualMappedFile(String path,
 			VirtualMount parentMount, VirtualFileFactory fileFactory)
 			throws IOException, PermissionDeniedException {
 
-		this.con = con;
 		this.parentMount = parentMount;
 		this.fileFactory = fileFactory;
 
 		toActualPath(path);
 
 		init(parentMount.getActualFileFactory()
-				.getFile(toActualPath(path), con));
+				.getFile(toActualPath(path)));
 
 		absolutePath = toVirtualPath(super.getAbsolutePath());
 		// canonicalPath = toVirtualPath(super.getCanonicalPath());
@@ -60,11 +59,10 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 	}
 
 	VirtualMappedFile(AbstractFile actualFile,
-			SshConnection con, VirtualMount parentMount,
+			VirtualMount parentMount,
 			VirtualFileFactory fileFactory) throws IOException,
 			PermissionDeniedException {
 
-		this.con = con;
 		this.parentMount = parentMount;
 		this.fileFactory = fileFactory;
 		init(actualFile);
@@ -85,7 +83,6 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 		// First check to see if this file is the file system root and if so
 		// list out all the mounts.
 		if (absolutePath.equals("/")) {
-			VirtualMountManager mgr = fileFactory.getMountManager(con);
 			for (VirtualMount m : mgr.getMounts()) {
 				if (!m.isFilesystemRoot()) {
 					String child = m.getMount().substring(1);
@@ -93,12 +90,12 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 						child = child.substring(0, child.indexOf('/'));
 					}
 					files.add(new VirtualMountFile(absolutePath + child, m,
-							mgr, con));
+							mgr));
 				}
 			}
 
 			for (AbstractFile f : super.getChildren()) {
-				VirtualFile f2 = new VirtualMappedFile(f, con, parentMount,
+				VirtualFile f2 = new VirtualMappedFile(f, parentMount,
 						fileFactory);
 				if (!mgr.isMounted(f2.getAbsolutePath())) {
 					files.add(f2);
@@ -107,7 +104,7 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 
 		} else {
 			for (AbstractFile f : super.getChildren()) {
-				files.add(new VirtualMappedFile(f, con, parentMount,
+				files.add(new VirtualMappedFile(f, parentMount,
 						fileFactory));
 			}
 		}
@@ -170,11 +167,11 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 			throws PermissionDeniedException, IOException {
 
 		if (child.startsWith("/")) {
-			return fileFactory.getFile(child, con);
+			return fileFactory.getFile(child);
 		} else {
 			return fileFactory
 					.getFile(FileUtils.addTrailingSlash(absolutePath)
-							+ child, con);
+							+ child);
 		}
 	}
 
@@ -235,13 +232,12 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 
 			boolean containsDotDot = path.indexOf("..") > -1;
 
-			AbstractFile f = parentMount.getActualFileFactory().getFile(path,
-					con);
+			AbstractFile f = parentMount.getActualFileFactory().getFile(path);
 			String canonical = containsDotDot ? f.getCanonicalPath().replace(
 					'\\', '/') : f.getAbsolutePath().replace('\\', '/');
 
 			AbstractFile f2 = parentMount.getActualFileFactory().getFile(
-					securemount, con);
+					securemount);
 			
 			containsDotDot = securemount.indexOf("..") > -1;
 			

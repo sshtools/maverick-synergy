@@ -41,13 +41,11 @@ public class InMemoryAbstractFile implements AbstractFile {
 	private InMemoryFileSystem fs;
     private SftpFileAttributes attrs;
     private AbstractFileFactory<InMemoryAbstractFile> fileFactory;
-    private SshConnection sshConnection;
     
-    public InMemoryAbstractFile(String path, InMemoryFileSystem fs, AbstractFileFactory<InMemoryAbstractFile> fileFactory, SshConnection sshConnection) {
+    public InMemoryAbstractFile(String path, InMemoryFileSystem fs, AbstractFileFactory<InMemoryAbstractFile> fileFactory) {
     	this.path = path;
     	this.fs = fs;
     	this.fileFactory = fileFactory;
-    	this.sshConnection = sshConnection;
 	}
 	
 	@Override
@@ -72,7 +70,7 @@ public class InMemoryAbstractFile implements AbstractFile {
 	@Override
 	public List<AbstractFile> getChildren() throws IOException, PermissionDeniedException {
 		return getFile().getChildren().stream().map((fo) -> {
-			return new InMemoryAbstractFile(fo.getPath(), fs, InMemoryAbstractFile.this.fileFactory, InMemoryAbstractFile.this.sshConnection);
+			return new InMemoryAbstractFile(fo.getPath(), fs, InMemoryAbstractFile.this.fileFactory);
 		}).collect(Collectors.toList());
 	}
 
@@ -275,7 +273,7 @@ public class InMemoryAbstractFile implements AbstractFile {
 			path = String.format("%s%s", getFile().getPath(), child);
 		}
 		
-		return new InMemoryAbstractFile(path, fs, this.fileFactory, this.sshConnection);
+		return new InMemoryAbstractFile(path, fs, this.fileFactory);
 	}
 
 	@Override

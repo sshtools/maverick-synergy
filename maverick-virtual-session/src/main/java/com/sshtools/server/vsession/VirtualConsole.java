@@ -136,7 +136,7 @@ public class VirtualConsole {
 		if(Objects.isNull(cwd)) {
 			cwd = getContext().getPolicy(FileSystemPolicy.class)
 					.getFileFactory(getConnection())
-						.getFile((String)env.getOrDefault("HOME", "/"), con);
+						.getFile((String)env.getOrDefault("HOME", "/"));
 		} 
 		
 		AbstractFile file = cwd.resolveFile(currentDirectory);

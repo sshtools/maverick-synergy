@@ -18,7 +18,6 @@
  */
 package com.sshtools.callback.client;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,10 +42,12 @@ import com.sshtools.common.nio.DisconnectRequestFuture;
 import com.sshtools.common.nio.ProtocolContext;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.nio.SshEngineContext;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.AuthenticationPolicy;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.ChannelFactory;
 import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
@@ -60,7 +61,6 @@ public class CallbackClient {
 	ExecutorService executor;
 	List<SshKeyPair> hostKeys = new ArrayList<>();
 	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory();
-	AbstractFileFactory<?> fileFactory = null;
 	List<Object> defaultPolicies = new ArrayList<>();
 	
 	public CallbackClient() {
@@ -239,17 +239,13 @@ public class CallbackClient {
 	}
 
 	protected void configureFilesystem(SshServerContext sshContext, CallbackConfiguration config) {
-		if(fileFactory==null) {
-			try {
-				sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(
-						new VirtualFileFactory(new VirtualMountTemplate(
-								"/", "tmp:///", new VFSFileFactory(), true)));
-			} catch (FileNotFoundException e) {
-				throw new IllegalStateException(e.getMessage(), e);
+		
+		sshContext.setPolicy(FileSystemPolicy.class, new FileSystemPolicy() {
+			@Override
+			public AbstractFileFactory<?> getFileFactory(SshConnection con) {
+				return getFileFactory(con);
 			}
-		} else {
-			sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(fileFactory);
-		}
+		});
 	}
 
 	protected void configureChannels(SshServerContext sshContext, CallbackConfiguration config) {
@@ -264,8 +260,13 @@ public class CallbackClient {
 		this.hostKeys.add(pair);
 	}
 
-	public void setFileFactory(AbstractFileFactory<?> fileFactory) {
-		this.fileFactory = fileFactory;
+	protected AbstractFileFactory<?> getFileFactory(SshConnection con) {
+		try {
+			return new VirtualFileFactory(con, new VirtualMountTemplate(
+					"/", "tmp:///", new VFSFileFactory(), true));
+		} catch (IOException | PermissionDeniedException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		}
 	}
 
 	public void setChannelFactory(ChannelFactory<SshServerContext> channelFactory) {

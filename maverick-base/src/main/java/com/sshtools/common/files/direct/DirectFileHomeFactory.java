@@ -18,10 +18,9 @@
  */
 package com.sshtools.common.files.direct;
 
-import com.sshtools.common.files.AbstractFileHomeFactory;
 import com.sshtools.common.ssh.SshConnection;
 
-public class DirectFileHomeFactory implements AbstractFileHomeFactory {
+public class DirectFileHomeFactory {
 	public String getHomeDirectory(SshConnection con) {
 		String os = System.getProperty("os.name");
 		if(os.startsWith("Mac OS X"))

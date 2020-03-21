@@ -229,7 +229,7 @@ public class AuthorizedKeysPublicKeyAuthenticationProvider extends
 			throws PermissionDeniedException, IOException {
 		AbstractFileFactory<?> s = con.getContext().getPolicy(FileSystemPolicy.class).getFileFactory(con);
 		AbstractFile file = authorizedKeysFile.startsWith("/") ? s.getFile(
-				authorizedKeysFile, con) : s.getDefaultPath(con)
+				authorizedKeysFile) : s.getDefaultPath()
 				.resolveFile(authorizedKeysFile);
 		return file;
 	}

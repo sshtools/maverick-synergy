@@ -35,27 +35,25 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.FileUtils;
 
-
-
 public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
-
-	private static final String MOUNT_MANAGER = "mountManager";
-
-	private static final String CACHE = "vfsCache";
 
 	protected List<VirtualMountTemplate> mountTemplates = new ArrayList<VirtualMountTemplate>();
 	protected VirtualMountTemplate homeMountTemplate;
 	protected boolean cached = true;
-
-	public VirtualFileFactory(AbstractFileFactory<?> defaultFileFactory) {
-		homeMountTemplate = new VirtualMountTemplate("/",
+	protected VirtualMountManager mgr;
+	
+	Map<String,VirtualFile> cache = null;
+	
+	public VirtualFileFactory(SshConnection con, AbstractFileFactory<?> defaultFileFactory) throws IOException, PermissionDeniedException {
+		this(con, new VirtualMountTemplate("/",
 				"virtualfs/home/${username}", 
 				defaultFileFactory,
-				true);
+				true));
 	}
 
-	public VirtualFileFactory(VirtualMountTemplate defaultMount,
-			VirtualMountTemplate... additionalMounts) {
+	public VirtualFileFactory(SshConnection con, VirtualMountTemplate defaultMount,
+			VirtualMountTemplate... additionalMounts) throws IOException, PermissionDeniedException {
+		this.mgr = new VirtualMountManager(con, this);
 		this.homeMountTemplate = defaultMount;
 		if(Log.isDebugEnabled()) {
 			Log.debug("Virtual file factory created with default mount "
@@ -111,10 +109,8 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
 	}
 
-	public VirtualFile getFile(String path, SshConnection con)
+	public VirtualFile getFile(String path)
 			throws PermissionDeniedException, IOException {
-
-		VirtualMountManager mgr = getMountManager(con);
 
 		String virtualPath;
 
@@ -137,7 +133,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 							&& !thisMountPath.contentEquals(mountPath)) {
 						return new VirtualMountFile(
 								FileUtils.removeTrailingSlash(virtualPath),
-								mgr.getMount(virtualPath), mgr, con);
+								mgr.getMount(virtualPath), mgr);
 					}
 				}
 			} else {
@@ -145,8 +141,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 				if (!rootMount.isFilesystemRoot()
 						|| (rootMount.isFilesystemRoot() && !rootMount
 								.isDefault())) {
-					return new VirtualMountFile(virtualPath, rootMount, mgr,
-							con);
+					return new VirtualMountFile(virtualPath, rootMount, mgr);
 				}
 			}
 			// If we reached here we are file system root and default so we
@@ -160,33 +155,30 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 			virtualPath = FileUtils.removeTrailingSlash(virtualPath);
 		}
 
-		VirtualMount m = getMountManager(con).getMount(virtualPath);
-		VirtualFile cached = getCachedObject(virtualPath, con);
+		VirtualMount m = mgr.getMount(virtualPath);
+		VirtualFile cached = getCachedObject(virtualPath);
 		if(Objects.nonNull(cached)) {
 			return cached;
 		}
-		VirtualFile f = new VirtualMappedFile(virtualPath, con, m, this);
+		VirtualFile f = new VirtualMappedFile(virtualPath, m, this);
 		if (m.isCached()) {
-			cacheObject(f, con);
+			cacheObject(f);
 		}
 		return f;
 
 	}
 
 	@SuppressWarnings("unchecked")
-	private void cacheObject(VirtualFile f, SshConnection con) throws IOException, PermissionDeniedException {
-		Map<String,VirtualFile> cache = (Map<String,VirtualFile>) con.getProperty(CACHE);
+	private void cacheObject(VirtualFile f) throws IOException, PermissionDeniedException {
 		if(Objects.isNull(cache)) {
 			cache = new HashMap<>();
-			con.setProperty(CACHE, cache);
 		}
 		
 		cache.put(f.getAbsolutePath(), f);
 	}
 
 	@SuppressWarnings("unchecked")
-	protected VirtualFile getCachedObject(String virtualPath, SshConnection con) {
-		Map<String,VirtualFile> cache = (Map<String,VirtualFile>) con.getProperty(CACHE);
+	protected VirtualFile getCachedObject(String virtualPath) {
 		if(Objects.nonNull(cache)) {
 			cache.get(virtualPath);
 		}
@@ -199,19 +191,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
 	public VirtualMountManager getMountManager(SshConnection con)
 			throws IOException, PermissionDeniedException {
-
-		if (!con.containsProperty(MOUNT_MANAGER)) {
-			con.setProperty(
-							MOUNT_MANAGER,
-							new VirtualMountManager(
-									con,
-									this,
-									homeMountTemplate,
-									mountTemplates
-											.toArray(new VirtualMountTemplate[0])));
-		}
-		return (VirtualMountManager) con.getProperty(
-				MOUNT_MANAGER);
+		return mgr;
 	}
 
 	public AbstractFileFactory<?> getDefaultFileFactory() {
@@ -220,12 +200,6 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
 	public void addMountTemplate(VirtualMountTemplate virtualMount) {
 		mountTemplates.add(virtualMount);
-	}
-
-	public void init(String defaultPath) throws PermissionDeniedException,
-			IOException {
-		throw new IllegalAccessError(
-				"VirtualFileFactory is not a physical file system");
 	}
 
 	public Event populateEvent(Event evt) {
@@ -240,8 +214,8 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		}
 	}
 
-	public VirtualFile getDefaultPath(SshConnection con)
+	public VirtualFile getDefaultPath()
 			throws PermissionDeniedException, IOException {
-		return getFile("", con);
+		return getFile("");
 	}
 }

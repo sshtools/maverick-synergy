@@ -23,7 +23,6 @@ import java.io.IOException;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.files.ReadOnlyFileFactoryAdapter.ReadOnlyAbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.SshConnection;
 
 public class ReadOnlyFileFactoryAdapter implements AbstractFileFactory<ReadOnlyAbstractFile> {
 
@@ -34,8 +33,8 @@ public class ReadOnlyFileFactoryAdapter implements AbstractFileFactory<ReadOnlyA
 	}
 	
 	@Override
-	public ReadOnlyAbstractFile getFile(String path, SshConnection con) throws PermissionDeniedException, IOException {
-		return new ReadOnlyAbstractFile(fileFactory.getFile(path, con));
+	public ReadOnlyAbstractFile getFile(String path) throws PermissionDeniedException, IOException {
+		return new ReadOnlyAbstractFile(fileFactory.getFile(path));
 	}
 
 	@Override
@@ -44,8 +43,8 @@ public class ReadOnlyFileFactoryAdapter implements AbstractFileFactory<ReadOnlyA
 	}
 
 	@Override
-	public ReadOnlyAbstractFile getDefaultPath(SshConnection con) throws PermissionDeniedException, IOException {
-		return new ReadOnlyAbstractFile(fileFactory.getDefaultPath(con));
+	public ReadOnlyAbstractFile getDefaultPath() throws PermissionDeniedException, IOException {
+		return new ReadOnlyAbstractFile(fileFactory.getDefaultPath());
 	}
 	
 	static class ReadOnlyAbstractFile extends AbstractFileAdapter {

@@ -125,9 +125,9 @@ public final class AbstractFileSystem {
 			throw new PermissionDeniedException("The user does not have access to a file system.");
 		}
 		if (defaultPaths.contains(path)) {
-			return fileFactory.getDefaultPath(con);
+			return fileFactory.getDefaultPath();
 		} else {
-			return fileFactory.getFile(path, con);
+			return fileFactory.getFile(path);
 		}
 	}
 
@@ -471,8 +471,8 @@ public final class AbstractFileSystem {
 	public void renameFile(String oldpath, String newpath)
 			throws PermissionDeniedException, FileNotFoundException, IOException {
 
-		AbstractFile f1 = fileFactory.getFile(oldpath, con);
-		AbstractFile f2 = fileFactory.getFile(newpath, con);
+		AbstractFile f1 = fileFactory.getFile(oldpath);
+		AbstractFile f2 = fileFactory.getFile(newpath);
 
 		if (!f1.isWritable()) {
 			throw new PermissionDeniedException("User does not have permission to change " + oldpath);
@@ -487,7 +487,7 @@ public final class AbstractFileSystem {
 				f1.moveTo(f2);
 			} else {
 				if(f2.isDirectory() && Boolean.getBoolean("maverick.enableRenameIntoDir")) {
-					f2 = fileFactory.getFile(FileUtils.checkEndsWithSlash(f2.getAbsolutePath()) + f1.getName(), con);
+					f2 = fileFactory.getFile(FileUtils.checkEndsWithSlash(f2.getAbsolutePath()) + f1.getName());
 					if(f2.exists()) {
 						throw new IOException(newpath + " already exists");
 					}
@@ -504,15 +504,15 @@ public final class AbstractFileSystem {
 	public void copyFile(String oldpath, String newpath, boolean overwrite) 
 			throws PermissionDeniedException, FileNotFoundException, IOException {
 		
-		AbstractFile f1 = fileFactory.getFile(oldpath, con);
-		AbstractFile f2 = fileFactory.getFile(newpath, con);
+		AbstractFile f1 = fileFactory.getFile(oldpath);
+		AbstractFile f2 = fileFactory.getFile(newpath);
 
 		if(!f1.exists()) {
 			throw new FileNotFoundException(oldpath + " does not exist");
 		}
 		
 		if(f2.exists() && f2.isDirectory()) {
-			f2 = fileFactory.getFile(FileUtils.checkEndsWithSlash(f2.getAbsolutePath()) + f1.getName(), con);
+			f2 = fileFactory.getFile(FileUtils.checkEndsWithSlash(f2.getAbsolutePath()) + f1.getName());
 		}
 		
 		if(f2.exists() && !overwrite) {
@@ -527,7 +527,7 @@ public final class AbstractFileSystem {
 	}
 
 	public String getDefaultPath() throws IOException, PermissionDeniedException {
-		return fileFactory.getDefaultPath(con).getCanonicalPath();
+		return fileFactory.getDefaultPath().getCanonicalPath();
 	}
 
 	public void removeDirectory(String path) throws PermissionDeniedException, FileNotFoundException, IOException {

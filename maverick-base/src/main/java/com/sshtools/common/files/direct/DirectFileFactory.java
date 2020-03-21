@@ -24,7 +24,6 @@ import java.lang.reflect.Constructor;
 
 import com.sshtools.common.events.Event;
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.files.AbstractFileHomeFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
@@ -32,8 +31,6 @@ import com.sshtools.common.ssh.SshConnection;
 @SuppressWarnings({ "unchecked", "static-access" })
 public class DirectFileFactory extends AbstractDirectFileFactory<DirectFile> {
 
-	
-	
 	File defaultPath = new File(".");
 	static Class<DirectFile> clz = null;
 	static Constructor<DirectFile> constructor = null;
@@ -46,26 +43,23 @@ public class DirectFileFactory extends AbstractDirectFileFactory<DirectFile> {
 			Log.warn("Falling back to simple DirectFile implementation as current version of Java does not appear to support Path and FileAttributes APIs");
 		}
 	}
-	public DirectFileFactory() {
-		super(new DirectFileHomeFactory());
+	
+	public DirectFileFactory(File homeDirectory) {
+		super(homeDirectory);
 	}
 	
-	public DirectFileFactory(AbstractFileHomeFactory homeFactory) {
-		super(homeFactory);
-	}
-	
-	public DirectFile getFile(String path, SshConnection con)
+	public DirectFile getFile(String path)
 			throws PermissionDeniedException, IOException {
 		
 		if(constructor!=null) {
 			try {
-				return constructor.newInstance(path, this, con, homeFactory.getHomeDirectory(con));
+				return constructor.newInstance(path, this, homeDirectory);
 			} catch (Throwable e) {
 				e.printStackTrace();
 			}
 		} 
 		
-		return new DirectFile(path, this, con, homeFactory.getHomeDirectory(con));
+		return new DirectFile(path, this, homeDirectory);
 		
 	}
 

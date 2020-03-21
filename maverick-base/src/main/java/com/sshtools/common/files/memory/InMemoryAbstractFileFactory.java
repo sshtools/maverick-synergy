@@ -37,13 +37,13 @@ public class InMemoryAbstractFileFactory implements AbstractFileFactory<InMemory
 	 * Works on assumption, file will always have extension and directory will not
 	 */
 	@Override
-	public InMemoryAbstractFile getFile(String path, SshConnection con) throws PermissionDeniedException, IOException {
+	public InMemoryAbstractFile getFile(String path) throws PermissionDeniedException, IOException {
 		if (path.startsWith("/")) {
-			return new InMemoryAbstractFile(path, fs, this, con);
+			return new InMemoryAbstractFile(path, fs, this);
 		} else if(path.equals("") || path.equals(".")){
-			return new InMemoryAbstractFile("/", fs, this, con);
+			return new InMemoryAbstractFile("/", fs, this);
 		} else {
-			return new InMemoryAbstractFile("/" + path, fs, this, con);
+			return new InMemoryAbstractFile("/" + path, fs, this);
 		}
 	}
 	
@@ -53,7 +53,7 @@ public class InMemoryAbstractFileFactory implements AbstractFileFactory<InMemory
 	}
 
 	@Override
-	public InMemoryAbstractFile getDefaultPath(SshConnection con) throws PermissionDeniedException, IOException {
-		return getFile("", con);
+	public InMemoryAbstractFile getDefaultPath() throws PermissionDeniedException, IOException {
+		return getFile("");
 	}
 }

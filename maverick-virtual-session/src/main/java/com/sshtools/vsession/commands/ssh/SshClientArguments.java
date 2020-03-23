@@ -47,6 +47,11 @@ public class SshClientArguments {
 	public void setCommand(String command) {
 		this.command = command;
 	}
-	
+
+	@Override
+	public String toString() {
+		return "SshClientArguments [port=" + port + ", destination=" + destination + ", identityFile=" + identityFile
+				+ ", loginName=" + loginName + ", command=" + command + "]";
+	}
 	
 }

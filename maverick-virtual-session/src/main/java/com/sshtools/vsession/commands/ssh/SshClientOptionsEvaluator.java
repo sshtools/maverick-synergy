@@ -14,7 +14,7 @@ import com.sshtools.vsession.commands.ssh.SshClientOptions.Port;
 
 public class SshClientOptionsEvaluator {
 
-	public static SshClientArguments evaluate(CommandLine commandLine) {
+	public static SshClientArguments evaluate(CommandLine commandLine, String[] originalArguments) {
 		
 		if (Log.isDebugEnabled()) {
 			Log.debug("The argument list passed as %s", commandLine.getArgList());
@@ -29,7 +29,7 @@ public class SshClientOptionsEvaluator {
 		
 		SshClientArguments arguments = new SshClientArguments();
 		
-		parseCommand(commandLine, arguments);
+		parseCommand(originalArguments, arguments);
 		parseDestination(commandLine, arguments);
 		parsePort(commandLine, arguments);
 		parseLoginName(commandLine, arguments);
@@ -54,12 +54,16 @@ public class SshClientOptionsEvaluator {
 	}
 	
 	
-	private static void parseCommand(CommandLine commandLine, SshClientArguments arguments) {
-		List<String> commandLineArguments = commandLine.getArgList();
-		if (commandLineArguments.size() > 2) {
-			String command = String.join(" ", commandLineArguments.subList(2, commandLineArguments.size()));
-			arguments.setCommand(command);
+	private static void parseCommand(String[] originalArguments, SshClientArguments arguments) {
+		int indexTillSshClientCommandFound = CommandUtil.extractSshCommandLineFromExecuteCommand(originalArguments);
+		if (originalArguments.length == (indexTillSshClientCommandFound + 1)) {
+			// no execute command found
+			return;
 		}
+		
+		String[] executeCommand = Arrays.copyOfRange(originalArguments, indexTillSshClientCommandFound + 1, originalArguments.length);
+		String command = String.join(" ", executeCommand);
+		arguments.setCommand(command);
 	}
 	
 	private static void parsePort(CommandLine commandLine, SshClientArguments arguments) {

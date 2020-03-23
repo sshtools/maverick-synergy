@@ -102,7 +102,7 @@ public final class AbstractFileSystem {
 	final SshConnection con;
 	final String protocolInUse;
 
-	public AbstractFileSystem(SshConnection con, String protocolInUse) throws IOException {
+	public AbstractFileSystem(SshConnection con, String protocolInUse) throws IOException, PermissionDeniedException {
 		this.fileFactory = con.getContext().getPolicy(FileSystemPolicy.class).getFileFactory().getFileFactory(con);
 		this.con = con;
 		this.protocolInUse = protocolInUse;

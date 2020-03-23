@@ -23,7 +23,6 @@ import java.io.IOException;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.SshConnection;
 
 public class InMemoryAbstractFileFactory implements AbstractFileFactory<InMemoryAbstractFile> {
 	

@@ -95,7 +95,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 	}
 
 	public void init(SessionChannel session, Context context)
-			throws IOException {
+			throws IOException, PermissionDeniedException {
 
 		super.init(session, context);
 		

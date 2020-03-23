@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.util.ByteBufferPool;
 
 /**
@@ -65,9 +66,10 @@ public abstract class Subsystem {
 	 * @param session
 	 * @param context
 	 * @throws IOException
+	 * @throws PermissionDeniedException 
 	 */
 	public void init(SessionChannel session, Context context)
-			throws IOException {
+			throws IOException, PermissionDeniedException {
 		
 		bufferPool = context.getByteBufferPool();
 

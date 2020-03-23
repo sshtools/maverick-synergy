@@ -40,7 +40,6 @@ import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.UnsignedInteger64;
 
 public class VFSFile extends AbstractFileImpl<VFSFile> {

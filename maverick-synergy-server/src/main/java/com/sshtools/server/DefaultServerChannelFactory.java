@@ -100,7 +100,7 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 		throw new UnsupportedChannelException();
 	}
 	
-	protected PublicKeySubsystem createPublicKeySubsystem(SessionChannel session) throws UnsupportedChannelException {
+	protected PublicKeySubsystem createPublicKeySubsystem(SessionChannel session) throws UnsupportedChannelException, PermissionDeniedException {
 		
 		try {
 			PublicKeySubsystem subsystem = new PublicKeySubsystem();

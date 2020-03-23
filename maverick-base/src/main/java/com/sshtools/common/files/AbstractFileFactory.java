@@ -22,7 +22,6 @@ import java.io.IOException;
 
 import com.sshtools.common.events.Event;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.SshConnection;
 
 public interface AbstractFileFactory<T extends AbstractFile> {
 

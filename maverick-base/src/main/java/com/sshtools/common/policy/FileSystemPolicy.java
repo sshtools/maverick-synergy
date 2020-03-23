@@ -225,7 +225,8 @@ public class FileSystemPolicy extends Permissions {
 		}
 		
 		@Override
-		public AbstractFileFactory<?> getFileFactory(SshConnection con) throws IOException {
+		public AbstractFileFactory<?> getFileFactory(SshConnection con) 
+				throws IOException, PermissionDeniedException {
 			if(Objects.nonNull(ff)) {
 				return ff;
 			}

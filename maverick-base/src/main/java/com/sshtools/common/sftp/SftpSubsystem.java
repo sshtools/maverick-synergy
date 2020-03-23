@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
+import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.FileExistsException;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -112,8 +113,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			CHARSET_ENCODING = "ISO-8859-1";
 		}
 
-		if(filePolicy.getFileFactory(session.getConnection()) instanceof SftpOperationWrapper) {
-			addWrapper((SftpOperationWrapper)filePolicy.getFileFactory(session.getConnection()));
+		AbstractFileFactory<?> ff = filePolicy.getFileFactory().getFileFactory(session.getConnection());
+		
+		if(filePolicy.getFileFactory() instanceof SftpOperationWrapper) {
+			addWrapper((SftpOperationWrapper)ff);
 		}
 		
 		executeOperation(SFTP_QUEUE, new InitOperation());

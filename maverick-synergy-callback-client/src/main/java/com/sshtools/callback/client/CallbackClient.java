@@ -44,6 +44,7 @@ import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.nio.SshEngineContext;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.AuthenticationPolicy;
+import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.ChannelFactory;
 import com.sshtools.common.ssh.Connection;
@@ -240,7 +241,7 @@ public class CallbackClient {
 
 	protected void configureFilesystem(SshServerContext sshContext, CallbackConfiguration config) {
 		
-		sshContext.setPolicy(FileSystemPolicy.class, new FileSystemPolicy() {
+		sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(new FileFactory() {
 			@Override
 			public AbstractFileFactory<?> getFileFactory(SshConnection con) {
 				return getFileFactory(con);

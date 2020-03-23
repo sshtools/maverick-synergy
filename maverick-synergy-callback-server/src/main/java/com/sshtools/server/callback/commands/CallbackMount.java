@@ -60,7 +60,7 @@ public class CallbackMount extends CallbackCommand {
 		
 		VirtualFileFactory vff = (VirtualFileFactory) console.getContext()
 					.getPolicy(FileSystemPolicy.class)
-						.getFileFactory(console.getConnection());
+						.getFileFactory().getFileFactory(console.getConnection());
 
 		DefaultFileSystemManager m = new DefaultFileSystemManager();
 		m.addProvider("sftp", new SftpFileProvider());
@@ -69,7 +69,7 @@ public class CallbackMount extends CallbackCommand {
 		
 		FileSystemOptions opts = new FileSystemOptions();
 		SftpFileSystemConfigBuilder.getInstance().setSshConnection(opts, remoteConnection);
-		vff.getMountManager(console.getConnection()).mount(new VirtualMountTemplate(
+		vff.getMountManager().mount(new VirtualMountTemplate(
 				"/" + remoteConnection.getUsername(), String.format("sftp://%s/", remoteConnection.getUUID()),
 					new VFSFileFactory(m, opts), false), false);
 	}

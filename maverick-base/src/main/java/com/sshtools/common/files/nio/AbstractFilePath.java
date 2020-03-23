@@ -386,8 +386,8 @@ public class AbstractFilePath implements Path {
 	public AbstractFile getAbstractFile() throws IOException{
 		try {
 			return con.getContext().getPolicy(
-						FileSystemPolicy.class).getFileFactory(con)
-							.getFile(toString());
+						FileSystemPolicy.class).getFileFactory()
+							.getFileFactory(con).getFile(toString());
 		} catch (PermissionDeniedException e) {
 			throw new IOException(e.getMessage(), e);
 		}

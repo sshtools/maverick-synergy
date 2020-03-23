@@ -168,7 +168,6 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
 	}
 
-	@SuppressWarnings("unchecked")
 	private void cacheObject(VirtualFile f) throws IOException, PermissionDeniedException {
 		if(Objects.isNull(cache)) {
 			cache = new HashMap<>();
@@ -177,7 +176,6 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		cache.put(f.getAbsolutePath(), f);
 	}
 
-	@SuppressWarnings("unchecked")
 	protected VirtualFile getCachedObject(String virtualPath) {
 		if(Objects.nonNull(cache)) {
 			cache.get(virtualPath);
@@ -189,7 +187,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		return homeMountTemplate;
 	}
 
-	public VirtualMountManager getMountManager(SshConnection con)
+	public VirtualMountManager getMountManager()
 			throws IOException, PermissionDeniedException {
 		return mgr;
 	}
@@ -207,8 +205,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 			return evt
 					.addAttribute(
 							EventCodes.ATTRIBUTE_MOUNT_MANAGER,
-							getMountManager((SshConnection) evt
-									.getAttribute(EventCodes.ATTRIBUTE_CONNECTION)));
+							getMountManager());
 		} catch (Exception e) {
 			return evt;
 		}

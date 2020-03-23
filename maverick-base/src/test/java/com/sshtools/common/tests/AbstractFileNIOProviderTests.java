@@ -45,6 +45,7 @@ import com.sshtools.common.files.memory.InMemoryAbstractFileFactory;
 import com.sshtools.common.files.memory.InMemoryFile;
 import com.sshtools.common.files.memory.InMemoryFileSystem;
 import com.sshtools.common.files.nio.AbstractFileURI;
+import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.Arrays;
@@ -63,7 +64,13 @@ public class AbstractFileNIOProviderTests {
 				new InetSocketAddress(InetAddress.getLocalHost(), 22),
 				new MockContext());
 		
-		con.getContext().getPolicy(FileSystemPolicy.class).setFileFactory(createTestFileSystem());
+		con.getContext().getPolicy(FileSystemPolicy.class).setFileFactory(new FileFactory() {
+
+			@Override
+			public AbstractFileFactory<?> getFileFactory(SshConnection con) throws IOException {
+				return createTestFileSystem();
+			}
+		});
 		env.put("connection", con);
 		fs = FileSystems.newFileSystem(AbstractFileURI.create(con, "/"), env);
 	}

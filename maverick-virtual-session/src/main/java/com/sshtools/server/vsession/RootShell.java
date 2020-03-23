@@ -213,8 +213,7 @@ public class RootShell extends Msh {
 											true)
 											.addAttribute(
 													EventCodes.ATTRIBUTE_FILE_FACTORY,
-													channel.getContext().getPolicy(FileSystemPolicy.class)
-														.getFileFactory(console.getConnection()))
+													console.getFileFactory())
 											.addAttribute(
 													EventCodes.ATTRIBUTE_CONNECTION,
 													console.getConnection()));

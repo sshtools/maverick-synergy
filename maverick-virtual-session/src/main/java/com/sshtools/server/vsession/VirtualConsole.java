@@ -28,6 +28,7 @@ import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp.Capability;
 
 import com.sshtools.common.files.AbstractFile;
+import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.Context;
@@ -135,7 +136,7 @@ public class VirtualConsole {
 	public void setCurrentDirectory(String currentDirectory) throws IOException, PermissionDeniedException {
 		if(Objects.isNull(cwd)) {
 			cwd = getContext().getPolicy(FileSystemPolicy.class)
-					.getFileFactory(getConnection())
+					.getFileFactory().getFileFactory(con)
 						.getFile((String)env.getOrDefault("HOME", "/"));
 		} 
 		
@@ -159,6 +160,10 @@ public class VirtualConsole {
 			setCurrentDirectory("");
 		}
 		return cwd;
+	}
+
+	public AbstractFileFactory<?> getFileFactory() {
+		return cwd.getFileFactory();
 	}
 	
 }

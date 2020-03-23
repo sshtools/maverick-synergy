@@ -31,6 +31,7 @@ import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.FileUtils;
 
 public class VirtualMountFile implements VirtualFile {
 
@@ -91,9 +92,8 @@ public class VirtualMountFile implements VirtualFile {
 
 		List<AbstractFile> files = new ArrayList<AbstractFile>();
 		
-		String currentPath = path;
-		if(!currentPath.endsWith("/"))
-			currentPath += "/";
+		String currentPath = FileUtils.checkEndsWithSlash(path);
+
 		if(mount.isFilesystemRoot()) {
 			for(VirtualMount m : mgr.getMounts()) {
 				if(m.getMount().startsWith(currentPath)) {

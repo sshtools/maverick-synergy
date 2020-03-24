@@ -88,6 +88,10 @@ public class VirtualMountManager {
 		return ret;
 	}
 	
+	public void mount(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
+		mount(template, false);
+	}
+	
 	public void mount(VirtualMountTemplate template, boolean unmount) throws IOException, PermissionDeniedException {
 		mount(createMount(template.getMount(),
 				template.getRoot(), 
@@ -243,10 +247,6 @@ public class VirtualMountManager {
 
 	public VirtualFileFactory getVirtualFileFactory() {
 		return fileFactory;
-	}
-
-	public AbstractFileFactory<?> getDefaultFileFactory() {
-		return fileFactory.getDefaultFileFactory();
 	}
 
 }

@@ -37,8 +37,8 @@ import com.sshtools.common.util.FileUtils;
 
 public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
-	protected List<VirtualMountTemplate> mountTemplates = new ArrayList<VirtualMountTemplate>();
-	protected VirtualMountTemplate homeMountTemplate;
+//	protected List<VirtualMountTemplate> mountTemplates = new ArrayList<VirtualMountTemplate>();
+//	protected VirtualMountTemplate homeMountTemplate;
 	protected boolean cached = true;
 	protected VirtualMountManager mgr;
 	
@@ -54,13 +54,13 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 	public VirtualFileFactory(SshConnection con, VirtualMountTemplate defaultMount,
 			VirtualMountTemplate... additionalMounts) throws IOException, PermissionDeniedException {
 		this.mgr = new VirtualMountManager(con, this);
-		this.homeMountTemplate = defaultMount;
+		mgr.mount(defaultMount);
 		if(Log.isDebugEnabled()) {
 			Log.debug("Virtual file factory created with default mount "
 					+ defaultMount.getMount() + " to path " + defaultMount.getRoot());
 		}
 		for (VirtualMountTemplate t : additionalMounts) {
-			mountTemplates.add(t);
+			mgr.mount(t);
 			if(Log.isDebugEnabled()) {
 				Log.debug("Virtual file factory created with additional mount "
 						+ t.getMount() + " to path " + t.getRoot());
@@ -103,7 +103,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
 		if (!ret.startsWith("/")) {
 			ret = FileUtils
-					.addTrailingSlash(homeMountTemplate.getMount()) + ret;
+					.addTrailingSlash(mgr.getDefaultMount().getMount()) + ret;
 		}
 		return ret;
 
@@ -183,21 +183,9 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		return null;
 	}
 
-	public VirtualMountTemplate getDefaultMount() {
-		return homeMountTemplate;
-	}
-
 	public VirtualMountManager getMountManager()
 			throws IOException, PermissionDeniedException {
 		return mgr;
-	}
-
-	public AbstractFileFactory<?> getDefaultFileFactory() {
-		return homeMountTemplate.getActualFileFactory();
-	}
-
-	public void addMountTemplate(VirtualMountTemplate virtualMount) {
-		mountTemplates.add(virtualMount);
 	}
 
 	public Event populateEvent(Event evt) {

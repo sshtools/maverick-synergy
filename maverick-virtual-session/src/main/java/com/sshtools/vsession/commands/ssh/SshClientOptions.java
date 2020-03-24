@@ -21,6 +21,9 @@ public class SshClientOptions {
 		optionsMap.put(Port.PORT_OPTION, Port.instance);
 		optionsMap.put(LoginName.LOGIN_NAME_OPTION, LoginName.instance);
 		optionsMap.put(IdentityFile.IDENTITY_FILE_OPTION, IdentityFile.instance);
+		optionsMap.put(CipherSpec.CIPHER_SPEC_OPTION, CipherSpec.instance);
+		optionsMap.put(MacSpec.MAC_SPEC_OPTION, MacSpec.instance);
+		optionsMap.put(SecurityLevel.SECURITY_LEVEL_OPTION, SecurityLevel.instance);
 		
 		
 		options = optionsMap.values().stream().map(o -> o.option()).collect(Collectors.toList());
@@ -41,7 +44,7 @@ public class SshClientOptions {
 		public static String PORT_OPTION = "p";
 		
 		private static String description = "Port to connect to on the remote host."
-				+ "  This can be specified on a per-host basis in the configuration file.";
+				+ " This can be specified on a per-host basis in the configuration file.";
 		
 		private Port() {}
 		
@@ -63,7 +66,7 @@ public class SshClientOptions {
 		public static String LOGIN_NAME_OPTION = "l";
 		
 		private static String description = "Specifies the user to log in as on the remote machine."
-				+ "  This also may be specified on a per-host basis in the configuration file.";
+				+ " This also may be specified on a per-host basis in the configuration file.";
 		
 		private LoginName() {}
 		
@@ -85,12 +88,12 @@ public class SshClientOptions {
 		public static String IDENTITY_FILE_OPTION = "i";
 		
 		private static String description = "Selects a file from which the identity (private key) for public key authentication is " + 
-					"read.  The default is ~/.ssh/id_dsa, ~/.ssh/id_ecdsa, ~/.ssh/id_ed25519 and ~/.ssh/id_rsa. " + 
-					"Identity files may also be specified on a per-host basis in the configuration file.  It is " + 
-					"possible to have multiple -i options (and multiple identities specified in configuration " + 
-					"files).  If no certificates have been explicitly specified by the CertificateFile direc" + 
-					"tive, ssh will also try to load certificate information from the filename obtained by " + 
-					"appending -cert.pub to identity filenames.";
+					" read.  The default is ~/.ssh/id_dsa, ~/.ssh/id_ecdsa, ~/.ssh/id_ed25519 and ~/.ssh/id_rsa. " + 
+					" Identity files may also be specified on a per-host basis in the configuration file.  It is " + 
+					" possible to have multiple -i options (and multiple identities specified in configuration " + 
+					" files).  If no certificates have been explicitly specified by the CertificateFile directive," + 
+					" ssh will also try to load certificate information from the filename obtained by " + 
+					" appending -cert.pub to identity filenames.";
 		
 		private IdentityFile() {}
 		
@@ -103,5 +106,76 @@ public class SshClientOptions {
 					.argName("identity_file")
 					.build();
 		}
+	}
+	
+	
+	public static class CipherSpec extends SshClientOption {
+		
+		public static final CipherSpec instance = new CipherSpec();
+		
+		public static String CIPHER_SPEC_OPTION = "c";
+		
+		private static String description = "Selects the cipher specification for encrypting the session." + 
+				" cipher_spec is a comma-separated list of ciphers listed in order" + 
+				" of preference.  See the Ciphers keyword in ssh_config(5) for more" + 
+				" information.";
+		
+		private CipherSpec() {}
+		
+		@Override
+		Option option() {
+			return Option
+					.builder(CIPHER_SPEC_OPTION)
+					.hasArg()
+					.desc(description)
+					.argName("cipher_spec")
+					.build();
+		}
+		
+	}
+	
+	public static class MacSpec extends SshClientOption {
+		
+		public static final MacSpec instance = new MacSpec();
+		
+		public static String MAC_SPEC_OPTION = "m";
+		
+		private static String description = "A comma-separated list of MAC (message authentication code) algorithms," +
+				" specified in order of preference. See the MACs keyword for more information.";
+		
+		private MacSpec() {}
+		
+		@Override
+		Option option() {
+			return Option
+					.builder(MAC_SPEC_OPTION)
+					.hasArg()
+					.desc(description)
+					.argName("mac_spec")
+					.build();
+		}
+		
+	}
+	
+	public static class SecurityLevel extends SshClientOption {
+		
+		public static final SecurityLevel instance = new SecurityLevel();
+		
+		public static String SECURITY_LEVEL_OPTION = "JS";
+		
+		private static String description = "This is custom property to set security level.";
+		
+		private SecurityLevel() {}
+		
+		@Override
+		Option option() {
+			return Option
+					.builder(SECURITY_LEVEL_OPTION)
+					.hasArg()
+					.desc(description)
+					.argName("security_level")
+					.build();
+		}
+		
 	}
 }

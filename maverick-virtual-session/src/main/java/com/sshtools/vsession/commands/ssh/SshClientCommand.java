@@ -15,6 +15,7 @@ import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.shell.ShellTimeoutException;
+import com.sshtools.client.tasks.AbstractCommandTask;
 import com.sshtools.client.tasks.ShellTask;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.logger.Log;
@@ -23,6 +24,7 @@ import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionAwareTask;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.util.IOUtils;
@@ -67,7 +69,12 @@ public class SshClientCommand extends ShellCommandWithOptions {
 		SshClient sshClient = null;
 		try {
 			
-			sshClient = new SshClient(arguments.getDestination(), arguments.getPort(), arguments.getLoginName());
+			SshClientContext ctx = getSshContext(arguments);
+			
+			setUpCipherSpecs(arguments, ctx);
+			setUpMacSpecs(arguments, ctx);
+			
+			sshClient = new SshClient(arguments.getDestination(), arguments.getPort(), arguments.getLoginName(), ctx);
 			ClientAuthenticator auth;
 
 			if (CommandUtil.isNotEmpty(arguments.getIdentityFile())) {
@@ -102,8 +109,34 @@ public class SshClientCommand extends ShellCommandWithOptions {
 			
 			if (CommandUtil.isNotEmpty(arguments.getCommand())) {
 				String command = arguments.getCommand();
-				String result = sshClient.executeCommand(command);
-				console.println(result);
+				Connection<SshClientContext> connection = sshClient.getConnection();
+				AbstractCommandTask task = new AbstractCommandTask(connection, command) {
+					
+					@Override
+					protected void beforeExecuteCommand(SessionChannelNG session) {
+						session.allocatePseudoTerminal(console.getTerminal().getType(), console.getTerminal().getWidth(),
+								console.getTerminal().getHeight());
+					}
+					
+					@Override
+					protected void onOpenSession(SessionChannelNG session) throws IOException {
+						
+						console.getSessionChannel().enableRawMode();
+
+						con.addTask(new ConnectionAwareTask(con) {
+							@Override
+							protected void doTask() throws Throwable {
+								IOUtils.copy(console.getSessionChannel().getInputStream(), session.getOutputStream());
+							}
+						});
+						IOUtils.copy(session.getInputStream(), console.getSessionChannel().getOutputStream());
+					}
+				};
+				
+				connection.addTask(task);
+				task.waitForever();
+				console.getSessionChannel().disableRawMode();
+
 				return;
 			}
 
@@ -157,10 +190,53 @@ public class SshClientCommand extends ShellCommandWithOptions {
 	@Override
 	protected String[] filterArgs(String[] args) {
 		this.originalArguments = args;
-		int indexTillSshClientCommandFound = CommandUtil.extractSshCommandLineFromExecuteCommand(args);
+		int indexTillSshClientCommandFound = SshClientOptionsExtractor.extractSshCommandLineFromExecuteCommand(args);
 		return Arrays.copyOfRange(args, 0, indexTillSshClientCommandFound + 1);
 	}
 	
+	private SshClientContext getSshContext(SshClientArguments arguments) throws IOException, SshException {
+		if(CommandUtil.isNotEmpty(arguments.getSecurityLevel()) && 
+				(CommandUtil.isNotEmpty(arguments.getCiphers()) || CommandUtil.isNotEmpty(arguments.getHmacs()))) {
+			throw new IllegalArgumentException("Security level cannot be specified together with cipher or hmac spec.");
+		}
+		
+		if (CommandUtil.isNotEmpty(arguments.getSecurityLevel())) {
+			SecurityLevel securityLevel = SecurityLevel.valueOf(arguments.getSecurityLevel());
+			return new SshClientContext(securityLevel);
+		}
+		
+		if (CommandUtil.isNotEmpty(arguments.getCiphers()) || CommandUtil.isNotEmpty(arguments.getHmacs())) {
+			return new SshClientContext(SecurityLevel.NONE);
+		}
+				
+		return new SshClientContext();
+	}
 	
+	private void setUpCipherSpecs(SshClientArguments arguments, SshClientContext ctx)
+			throws IOException, SshException {
+		if (CommandUtil.isNotEmpty(arguments.getCiphers())) {
+			String[] cipherSpecs = arguments.getCiphers();
+			
+			for (int i = cipherSpecs.length - 1; i >= 0; --i) {
+				ctx.setPreferredCipherCS(cipherSpecs[i]); 
+				ctx.setPreferredCipherSC(cipherSpecs[i]);
+			}
+			
+		}
+	}
+	
+	
+	private void setUpMacSpecs(SshClientArguments arguments, SshClientContext ctx)
+			throws IOException, SshException {
+		if (CommandUtil.isNotEmpty(arguments.getHmacs())) {
+			String[] macSpecs = arguments.getHmacs();
+			
+			for (int i = macSpecs.length - 1; i >= 0; --i) {
+				ctx.setPreferredMacCS(macSpecs[i]); 
+				ctx.setPreferredMacSC(macSpecs[i]);
+			}
+			
+		}
+	}
 
 }

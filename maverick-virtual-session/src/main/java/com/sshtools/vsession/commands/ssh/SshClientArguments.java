@@ -1,5 +1,7 @@
 package com.sshtools.vsession.commands.ssh;
 
+import java.util.Arrays;
+
 public class SshClientArguments {
 
 	private int port = 22;
@@ -7,6 +9,10 @@ public class SshClientArguments {
 	private String identityFile;
 	private String loginName;
 	private String command;
+	private String[] ciphers;
+	private String[] hmacs;
+	private String securityLevel;
+	
 
 	public int getPort() {
 		return port;
@@ -48,10 +54,35 @@ public class SshClientArguments {
 		this.command = command;
 	}
 
+	public String[] getCiphers() {
+		return ciphers;
+	}
+
+	public void setCiphers(String[] ciphers) {
+		this.ciphers = ciphers;
+	}
+
+	public String[] getHmacs() {
+		return hmacs;
+	}
+
+	public void setHmacs(String[] hmacs) {
+		this.hmacs = hmacs;
+	}
+
+	public String getSecurityLevel() {
+		return securityLevel;
+	}
+
+	public void setSecurityLevel(String securityLevel) {
+		this.securityLevel = securityLevel;
+	}
+
 	@Override
 	public String toString() {
 		return "SshClientArguments [port=" + port + ", destination=" + destination + ", identityFile=" + identityFile
-				+ ", loginName=" + loginName + ", command=" + command + "]";
+				+ ", loginName=" + loginName + ", command=" + command + ", ciphers=" + Arrays.toString(ciphers)
+				+ ", hmacs=" + Arrays.toString(hmacs) + ", securityLevel=" + securityLevel + "]";
 	}
-	
+
 }

@@ -7,9 +7,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.vsession.commands.ssh.SshClientOptions.CipherSpec;
 import com.sshtools.vsession.commands.ssh.SshClientOptions.IdentityFile;
 import com.sshtools.vsession.commands.ssh.SshClientOptions.LoginName;
+import com.sshtools.vsession.commands.ssh.SshClientOptions.MacSpec;
 import com.sshtools.vsession.commands.ssh.SshClientOptions.Port;
+import com.sshtools.vsession.commands.ssh.SshClientOptions.SecurityLevel;
 
 
 public class SshClientOptionsEvaluator {
@@ -34,6 +37,9 @@ public class SshClientOptionsEvaluator {
 		parsePort(commandLine, arguments);
 		parseLoginName(commandLine, arguments);
 		parseIdentityFilename(commandLine, arguments);
+		parseCiphers(commandLine, arguments);
+		parseMacs(commandLine, arguments);
+		parseSecurityLevel(commandLine, arguments);
 
 		return arguments;
 	}
@@ -55,7 +61,7 @@ public class SshClientOptionsEvaluator {
 	
 	
 	private static void parseCommand(String[] originalArguments, SshClientArguments arguments) {
-		int indexTillSshClientCommandFound = CommandUtil.extractSshCommandLineFromExecuteCommand(originalArguments);
+		int indexTillSshClientCommandFound = SshClientOptionsExtractor.extractSshCommandLineFromExecuteCommand(originalArguments);
 		if (originalArguments.length == (indexTillSshClientCommandFound + 1)) {
 			// no execute command found
 			return;
@@ -94,6 +100,36 @@ public class SshClientOptionsEvaluator {
 
 		if (commandLine.hasOption(IdentityFile.IDENTITY_FILE_OPTION)) {
 			arguments.setIdentityFile(commandLine.getOptionValue(IdentityFile.IDENTITY_FILE_OPTION));
+		}
+		
+		return null;
+	}
+	
+	private static String parseCiphers(CommandLine commandLine, SshClientArguments arguments) {
+
+		if (commandLine.hasOption(CipherSpec.CIPHER_SPEC_OPTION)) {
+			String[] cipherSpecParts = commandLine.getOptionValue(CipherSpec.CIPHER_SPEC_OPTION).split(",");
+			arguments.setCiphers(cipherSpecParts);
+		}
+		
+		return null;
+	}
+	
+	private static String parseMacs(CommandLine commandLine, SshClientArguments arguments) {
+
+		if (commandLine.hasOption(MacSpec.MAC_SPEC_OPTION)) {
+			String[] macSpecParts = commandLine.getOptionValue(MacSpec.MAC_SPEC_OPTION).split(",");
+			arguments.setHmacs(macSpecParts);
+		}
+		
+		return null;
+	}
+	
+	private static String parseSecurityLevel(CommandLine commandLine, SshClientArguments arguments) {
+
+		if (commandLine.hasOption(SecurityLevel.SECURITY_LEVEL_OPTION)) {
+			String securityLevel = commandLine.getOptionValue(SecurityLevel.SECURITY_LEVEL_OPTION);
+			arguments.setSecurityLevel(securityLevel);
 		}
 		
 		return null;

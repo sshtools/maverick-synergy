@@ -53,19 +53,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
 	public VirtualFileFactory(SshConnection con, VirtualMountTemplate defaultMount,
 			VirtualMountTemplate... additionalMounts) throws IOException, PermissionDeniedException {
-		this.mgr = new VirtualMountManager(con, this);
-		mgr.mount(defaultMount);
-		if(Log.isDebugEnabled()) {
-			Log.debug("Virtual file factory created with default mount "
-					+ defaultMount.getMount() + " to path " + defaultMount.getRoot());
-		}
-		for (VirtualMountTemplate t : additionalMounts) {
-			mgr.mount(t);
-			if(Log.isDebugEnabled()) {
-				Log.debug("Virtual file factory created with additional mount "
-						+ t.getMount() + " to path " + t.getRoot());
-			}
-		}
+		this.mgr = new VirtualMountManager(con, this, defaultMount, additionalMounts);
 	}
 
 	public boolean isCached() {

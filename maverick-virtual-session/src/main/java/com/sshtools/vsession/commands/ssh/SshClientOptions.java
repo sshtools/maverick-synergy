@@ -24,6 +24,7 @@ public class SshClientOptions {
 		optionsMap.put(CipherSpec.CIPHER_SPEC_OPTION, CipherSpec.instance);
 		optionsMap.put(MacSpec.MAC_SPEC_OPTION, MacSpec.instance);
 		optionsMap.put(SecurityLevel.SECURITY_LEVEL_OPTION, SecurityLevel.instance);
+		optionsMap.put(Compression.COMPRESSION_OPTION, Compression.instance);
 		
 		
 		options = optionsMap.values().stream().map(o -> o.option()).collect(Collectors.toList());
@@ -174,6 +175,59 @@ public class SshClientOptions {
 					.hasArg()
 					.desc(description)
 					.argName("security_level")
+					.build();
+		}
+		
+	}
+	
+	
+	public static class ConfigOption extends SshClientOption {
+		
+		public static final ConfigOption instance = new ConfigOption();
+		
+		public static String CONFIG_OPTION = "o";
+		
+		private static String description = "Can be used to give options in the format used in the configuration file." +
+				" This is useful for specifying options for which there" + 
+				" is no separate command-line flag.  For full details of the" + 
+				" options listed below, and their possible values.";
+		
+		private ConfigOption() {}
+		
+		@Override
+		Option option() {
+			return Option
+					.builder(CONFIG_OPTION)
+					.hasArg()
+					.desc(description)
+					.argName("option")
+					.build();
+		}
+		
+	}
+	
+	public static class Compression extends SshClientOption {
+		
+		public static final Compression instance = new Compression();
+		
+		public static String COMPRESSION_OPTION = "C";
+		
+		private static String description = "Requests compression of all data (including stdin, stdout," + 
+				" stderr, and data for forwarded X11, TCP and UNIX-domain connections)." + 
+				" The compression algorithm is the same used by gzip(1)." + 
+				" Compression is desirable on modem lines and other slow connections," + 
+				" but will only slow down things on fast networks.  The" + 
+				" default value can be set on a host-by-host basis in the configuration" + 
+				" files; see the Compression option.";
+		
+		private Compression() {}
+		
+		@Override
+		Option option() {
+			return Option
+					.builder(COMPRESSION_OPTION)
+					.hasArg(false)
+					.desc(description)
 					.build();
 		}
 		

@@ -12,6 +12,8 @@ public class SshClientArguments {
 	private String[] ciphers;
 	private String[] hmacs;
 	private String securityLevel;
+	private String[] configOptions;
+	private boolean compression;
 	
 
 	public int getPort() {
@@ -78,11 +80,28 @@ public class SshClientArguments {
 		this.securityLevel = securityLevel;
 	}
 
+	public String[] getConfigOptions() {
+		return configOptions;
+	}
+
+	public void setConfigOptions(String[] configOptions) {
+		this.configOptions = configOptions;
+	}
+
+	public boolean isCompression() {
+		return compression;
+	}
+
+	public void setCompression(boolean compression) {
+		this.compression = compression;
+	}
+
 	@Override
 	public String toString() {
 		return "SshClientArguments [port=" + port + ", destination=" + destination + ", identityFile=" + identityFile
 				+ ", loginName=" + loginName + ", command=" + command + ", ciphers=" + Arrays.toString(ciphers)
-				+ ", hmacs=" + Arrays.toString(hmacs) + ", securityLevel=" + securityLevel + "]";
+				+ ", hmacs=" + Arrays.toString(hmacs) + ", securityLevel=" + securityLevel + ", configOptions="
+				+ Arrays.toString(configOptions) + ", compression=" + compression + "]";
 	}
 
 }

@@ -25,6 +25,7 @@ import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SecurityLevel;
+import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.util.IOUtils;
@@ -73,6 +74,7 @@ public class SshClientCommand extends ShellCommandWithOptions {
 			
 			setUpCipherSpecs(arguments, ctx);
 			setUpMacSpecs(arguments, ctx);
+			setUpCompression(arguments, ctx);;
 			
 			sshClient = new SshClient(arguments.getDestination(), arguments.getPort(), arguments.getLoginName(), ctx);
 			ClientAuthenticator auth;
@@ -236,6 +238,14 @@ public class SshClientCommand extends ShellCommandWithOptions {
 				ctx.setPreferredMacSC(macSpecs[i]);
 			}
 			
+		}
+	}
+	
+	private void setUpCompression(SshClientArguments arguments, SshClientContext ctx) 
+			throws IOException, SshException {
+		if (arguments.isCompression()) {
+			ctx.setPreferredCompressionCS(SshContext.COMPRESSION_ZLIB);
+ 			ctx.setPreferredCompressionSC(SshContext.COMPRESSION_ZLIB);
 		}
 	}
 

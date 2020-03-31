@@ -35,14 +35,14 @@ import com.sshtools.common.util.FileUtils;
 public class VirtualMountFile implements VirtualFile {
 
 	private VirtualMount mount;
-	private VirtualMountManager mgr;
+	private VirtualFileFactory fileFactory;
 	private String name;
 	private String path;
 	private AbstractFile file;
 	
-	public VirtualMountFile(String path, VirtualMount mount,VirtualMountManager mgr) throws PermissionDeniedException, IOException {
+	public VirtualMountFile(String path, VirtualMount mount, VirtualFileFactory fileFactory) throws PermissionDeniedException, IOException {
 		this.mount = mount;
-		this.mgr = mgr;
+		this.fileFactory = fileFactory;
 		int idx = path.lastIndexOf('/');
 		if(idx > -1) {
 			name = path.substring(idx+1);
@@ -93,6 +93,8 @@ public class VirtualMountFile implements VirtualFile {
 		
 		String currentPath = FileUtils.checkEndsWithSlash(path);
 
+		VirtualMountManager mgr = fileFactory.getMountManager();
+		
 		if(mount.isFilesystemRoot()) {
 			for(VirtualMount m : mgr.getMounts()) {
 				if(m.getMount().startsWith(currentPath)) {
@@ -106,7 +108,7 @@ public class VirtualMountFile implements VirtualFile {
 						if(child.indexOf('/') > -1) {
 							child = child.substring(0,child.indexOf('/'));
 						}
-						files.add(new VirtualMountFile(currentPath + child, m, mgr));
+						files.add(new VirtualMountFile(currentPath + child, m, fileFactory));
 					}
 				}
 			}
@@ -116,7 +118,7 @@ public class VirtualMountFile implements VirtualFile {
 			if(child.indexOf('/') > -1) {
 				child = child.substring(0,child.indexOf('/'));
 			}
-			files.add(new VirtualMountFile(path + child, mount, mgr));
+			files.add(new VirtualMountFile(path + child, mount, fileFactory));
 		}
 		
 		return files;
@@ -200,9 +202,9 @@ public class VirtualMountFile implements VirtualFile {
 
 	public AbstractFile resolveFile(String child) throws IOException, PermissionDeniedException {
 		if(child.startsWith("/")) {
-			return mgr.getVirtualFileFactory().getFile(child);
+			return fileFactory.getFile(child);
 		} else {
-			return mgr.getVirtualFileFactory().getFile(path + (path.equals("/") || path.endsWith("/") ? "" : "/") + child);
+			return fileFactory.getFile(path + (path.equals("/") || path.endsWith("/") ? "" : "/") + child);
 		}
 	}
 

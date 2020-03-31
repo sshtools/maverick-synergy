@@ -35,7 +35,6 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 	private VirtualFileFactory fileFactory;
 	private String absolutePath;
 	private String name;
-	private VirtualMountManager mgr;
 	
 	public VirtualMappedFile(String path,
 			VirtualMount parentMount, VirtualFileFactory fileFactory)
@@ -81,6 +80,9 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 
 		// First check to see if this file is the file system root and if so
 		// list out all the mounts.
+		
+		VirtualMountManager mgr = fileFactory.getMountManager();
+		
 		if (absolutePath.equals("/")) {
 			for (VirtualMount m : mgr.getMounts()) {
 				if (!m.isFilesystemRoot()) {
@@ -88,8 +90,9 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 					if (child.indexOf('/') > -1) {
 						child = child.substring(0, child.indexOf('/'));
 					}
-					files.add(new VirtualMountFile(absolutePath + child, m,
-							mgr));
+					files.add(new VirtualMountFile(absolutePath + child, 
+							m,
+							fileFactory));
 				}
 			}
 

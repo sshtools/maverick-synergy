@@ -121,7 +121,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 							&& !thisMountPath.contentEquals(mountPath)) {
 						return new VirtualMountFile(
 								FileUtils.removeTrailingSlash(virtualPath),
-								mgr.getMount(virtualPath), mgr);
+								mgr.getMount(virtualPath), this);
 					}
 				}
 			} else {
@@ -129,7 +129,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 				if (!rootMount.isFilesystemRoot()
 						|| (rootMount.isFilesystemRoot() && !rootMount
 								.isDefault())) {
-					return new VirtualMountFile(virtualPath, rootMount, mgr);
+					return new VirtualMountFile(virtualPath, rootMount, this);
 				}
 			}
 			// If we reached here we are file system root and default so we

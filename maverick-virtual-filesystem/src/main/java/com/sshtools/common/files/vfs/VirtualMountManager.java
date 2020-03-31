@@ -35,30 +35,25 @@ import com.sshtools.common.util.FileUtils;
 
 public class VirtualMountManager {
 
-	private SshConnection con;
 	private VirtualMount defaultMount;
 	private List<VirtualMount> mounts = new ArrayList<VirtualMount>();
 	private VirtualFileFactory fileFactory;
 	private ThreadLocal<VirtualMount> testingMount = new ThreadLocal<>(); 
 	
-	public VirtualMountManager(SshConnection con,
-			VirtualFileFactory fileFactory) throws IOException,
+	public VirtualMountManager(VirtualFileFactory fileFactory) throws IOException,
 			PermissionDeniedException {
-		this(con, fileFactory, null);
+		this(fileFactory, null);
 	}
 
-	public VirtualMountManager(SshConnection con,
-			VirtualFileFactory fileFactory, VirtualMountTemplate homeMount,
+	public VirtualMountManager(VirtualFileFactory fileFactory, VirtualMountTemplate homeMount,
 			VirtualMountTemplate... additionalMounts) throws IOException,
 			PermissionDeniedException {
-		this.con = con;
+
 		this.fileFactory = fileFactory;
 
 		if (homeMount != null) {
-			defaultMount = new VirtualMount(
-					replaceTokens(homeMount.getMount(), con), replaceTokens(
-							homeMount.getRoot(), con), fileFactory, homeMount
-							.getActualFileFactory(), con, true, false, homeMount.isCreateMountFolder());
+			defaultMount = new VirtualMount(homeMount.getMount(), 
+					homeMount.getRoot(), fileFactory, homeMount.getActualFileFactory(), true, false, homeMount.isCreateMountFolder());
 			if(defaultMount.isCreateMountFolder()) {
 				defaultMount.getActualFileFactory().getFile(defaultMount.getRoot()).createFolder();
 			}
@@ -67,8 +62,8 @@ public class VirtualMountManager {
 
 		// Add any remaining templates
 		for (VirtualMountTemplate m : additionalMounts) {
-			VirtualMount vm = createMount(replaceTokens(m.getMount(), con), 
-					replaceTokens(m.getRoot(), con),
+			VirtualMount vm = createMount(m.getMount(), 
+					m.getRoot(),
 					m.getActualFileFactory(),
 					m.isCreateMountFolder());
 			
@@ -80,12 +75,6 @@ public class VirtualMountManager {
 		}
 
 		sort();
-	}
-
-	private static String replaceTokens(String str,
-			SshConnection con) {
-		String ret = str.replace("${username}", con.getUsername());
-		return ret;
 	}
 	
 	public void mount(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
@@ -110,7 +99,7 @@ public class VirtualMountManager {
 	
 	private void test(VirtualMount mount) throws IOException, PermissionDeniedException {
 		
-		Log.info("Testing " + mount.getMount() + " on " + mount.getRoot() + " for " + con.getUsername() + " (" + con.getSessionId() + ")");
+		Log.info("Testing " + mount.getMount() + " on " + mount.getRoot());
 
 		try {
 			testingMount.set(mount);
@@ -136,7 +125,7 @@ public class VirtualMountManager {
 			throw new IOException(mount.getMount() + " already mounted on " + getMount(mount.getMount()).getRoot());
 		} 
 		
-		Log.info("Mounting " + mount.getMount() + " on " + mount.getRoot() + " for " + con.getUsername() + " (" + con.getSessionId() + ")");
+		Log.info("Mounting " + mount.getMount() + " on " + mount.getRoot());
 
 		test(mount);
 		
@@ -159,7 +148,7 @@ public class VirtualMountManager {
 	}
 
 	public void unmount(VirtualMount mount) throws IOException {
-		Log.info("Unmounting " + mount.getMount() + " from " + mount.getRoot() + " for " + con.getUsername() + " (" + con.getSessionId() + ")");
+		Log.info("Unmounting " + mount.getMount() + " from " + mount.getRoot());
 		VirtualMount mounted = null;
 		for(VirtualMount m : mounts) {
 			if(FileUtils.checkEndsWithSlash(m.getMount())
@@ -206,8 +195,7 @@ public class VirtualMountManager {
 	private VirtualMount createMount(String mount, String path,
 			AbstractFileFactory<?> actualFileFactory, boolean createMoundFolder) throws IOException,
 			PermissionDeniedException {
-		return new VirtualMount(mount, path, fileFactory, actualFileFactory,
-				con, createMoundFolder);
+		return new VirtualMount(mount, path, fileFactory, actualFileFactory, createMoundFolder);
 	}
 
 	public VirtualMount getMount(String path) throws IOException {

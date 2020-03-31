@@ -37,7 +37,7 @@ public class VirtualMount extends AbstractMount {
 	VirtualMount(String mount, String path,
 			VirtualFileFactory virtualFileFactory,
 			AbstractFileFactory<?> actualFileFactory,
-			SshConnection con, boolean isDefault,
+			boolean isDefault,
 			boolean isImaginary, boolean createMountFolder)
 				throws IOException, PermissionDeniedException {
 		super(mount, path, isDefault, isImaginary);
@@ -54,9 +54,9 @@ public class VirtualMount extends AbstractMount {
 	public VirtualMount(String mount, String path,
 			VirtualFileFactory virtualFileFactory,
 			AbstractFileFactory<?> actualFileFactory,
-			SshConnection con, boolean createMountFolder) throws IOException,
+			boolean createMountFolder) throws IOException,
 			PermissionDeniedException {
-		this(mount, path, virtualFileFactory, actualFileFactory, con, false,
+		this(mount, path, virtualFileFactory, actualFileFactory, false,
 				false, createMountFolder);
 	}
 

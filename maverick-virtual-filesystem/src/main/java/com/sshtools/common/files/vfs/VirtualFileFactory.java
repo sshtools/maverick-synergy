@@ -37,23 +37,14 @@ import com.sshtools.common.util.FileUtils;
 
 public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
-//	protected List<VirtualMountTemplate> mountTemplates = new ArrayList<VirtualMountTemplate>();
-//	protected VirtualMountTemplate homeMountTemplate;
 	protected boolean cached = true;
 	protected VirtualMountManager mgr;
 	
 	Map<String,VirtualFile> cache = null;
 	
-	public VirtualFileFactory(SshConnection con, AbstractFileFactory<?> defaultFileFactory) throws IOException, PermissionDeniedException {
-		this(con, new VirtualMountTemplate("/",
-				"virtualfs/home/${username}", 
-				defaultFileFactory,
-				true));
-	}
-
-	public VirtualFileFactory(SshConnection con, VirtualMountTemplate defaultMount,
+	public VirtualFileFactory(VirtualMountTemplate defaultMount,
 			VirtualMountTemplate... additionalMounts) throws IOException, PermissionDeniedException {
-		this.mgr = new VirtualMountManager(con, this, defaultMount, additionalMounts);
+		this.mgr = new VirtualMountManager(this, defaultMount, additionalMounts);
 	}
 
 	public boolean isCached() {

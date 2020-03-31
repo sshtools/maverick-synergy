@@ -263,7 +263,7 @@ public class CallbackClient {
 
 	protected AbstractFileFactory<?> getFileFactory(SshConnection con) {
 		try {
-			return new VirtualFileFactory(con, new VirtualMountTemplate(
+			return new VirtualFileFactory(new VirtualMountTemplate(
 					"/", "tmp:///", new VFSFileFactory(), true));
 		} catch (IOException | PermissionDeniedException e) {
 			throw new IllegalStateException(e.getMessage(), e);

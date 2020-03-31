@@ -19,9 +19,7 @@
 package com.sshtools.common.files.vfs;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Stack;
@@ -30,9 +28,7 @@ import java.util.StringTokenizer;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.FileUtils;
 
 public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {

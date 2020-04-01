@@ -104,7 +104,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		this.channeltype = channelType;
 		this.con = con;
 		this.localWindow = new ChannelDataWindow(initialWindowSize, maximumWindowSpace, minimumWindowSpace, maximumPacketSize);
-		this.closeFuture = closeFuture;
+		this.closeFuture = closeFuture != null ? closeFuture : new ChannelRequestFuture();
 		if(!autoConsume) {
 			cache = createCache(maximumWindowSpace);
 		}

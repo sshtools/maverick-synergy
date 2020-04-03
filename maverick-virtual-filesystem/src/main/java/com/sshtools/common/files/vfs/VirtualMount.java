@@ -24,7 +24,6 @@ import java.io.IOException;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.FileUtils;
 
 public class VirtualMount extends AbstractMount {

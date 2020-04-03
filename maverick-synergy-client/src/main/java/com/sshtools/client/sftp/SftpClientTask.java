@@ -18,7 +18,6 @@
  */
 package com.sshtools.client.sftp;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,6 +26,7 @@ import java.util.List;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.client.tasks.Task;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshConnection;
@@ -57,7 +57,7 @@ public abstract class SftpClientTask extends Task {
 			done(true);
 			
 			sftp.exit();
-		} catch (SshException e) {
+		} catch (SshException | PermissionDeniedException | IOException e) {
 			throw new IllegalStateException(e.getMessage(), e);
 		}
 	}
@@ -421,8 +421,10 @@ public abstract class SftpClientTask extends Task {
 	 *            the path to the new working directory
 	 * 
 	 * @throws SftpStatusException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
-	public void lcd(String path) throws SftpStatusException {
+	public void lcd(String path) throws SftpStatusException, IOException, PermissionDeniedException {
 		sftp.lcd(path);
 	}
 
@@ -432,8 +434,10 @@ public abstract class SftpClientTask extends Task {
 	 * </p>
 	 * 
 	 * @return the absolute path of the local working directory.
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
-	public String lpwd() {
+	public String lpwd() throws IOException, PermissionDeniedException {
 		return sftp.lpwd();
 	}
 
@@ -448,14 +452,15 @@ public abstract class SftpClientTask extends Task {
 	 * 
 	 * @return the downloaded file's attributes
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public SftpFileAttributes get(String path, FileTransferProgress progress)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.get(path, progress);
 	}
 
@@ -472,14 +477,15 @@ public abstract class SftpClientTask extends Task {
 	 * 
 	 * @return the downloaded file's attributes
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public SftpFileAttributes get(String path, FileTransferProgress progress,
-			boolean resume) throws FileNotFoundException, SftpStatusException,
-			SshException, TransferCancelledException {
+			boolean resume) throws SftpStatusException,
+			SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.get(path, progress, resume);
 	}
 
@@ -494,14 +500,15 @@ public abstract class SftpClientTask extends Task {
 	 * 
 	 * @return the downloaded file's attributes
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public SftpFileAttributes get(String path, boolean resume)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.get(path, resume);
 	}
 
@@ -514,13 +521,13 @@ public abstract class SftpClientTask extends Task {
 	 * 
 	 * @return the downloaded file's attributes
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
-	public SftpFileAttributes get(String path) throws FileNotFoundException,
-			SftpStatusException, SshException, TransferCancelledException {
+	public SftpFileAttributes get(String path) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.get(path);
 	}
 
@@ -553,13 +560,13 @@ public abstract class SftpClientTask extends Task {
 	 * @return the downloaded file's attributes
 	 * 
 	 * @throws SftpStatusException
-	 * @throws FileNotFoundException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public SftpFileAttributes get(String remote, String local,
-			FileTransferProgress progress) throws FileNotFoundException,
-			SftpStatusException, SshException, TransferCancelledException {
+			FileTransferProgress progress) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.get(remote, local, progress);
 	}
 
@@ -580,14 +587,15 @@ public abstract class SftpClientTask extends Task {
 	 * @return the downloaded file's attributes
 	 * 
 	 * @throws SftpStatusException
-	 * @throws FileNotFoundException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public SftpFileAttributes get(String remote, String local,
 			FileTransferProgress progress, boolean resume)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 
 		return sftp.get(remote, local, progress, resume);
 	}
@@ -618,14 +626,15 @@ public abstract class SftpClientTask extends Task {
 	 * 
 	 * @return the downloaded file's attributes
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public SftpFileAttributes get(String remote, String local, boolean resume)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.get(remote, local, resume);
 	}
 
@@ -637,14 +646,15 @@ public abstract class SftpClientTask extends Task {
 	 * 
 	 * @return the downloaded file's attributes
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public SftpFileAttributes get(String remote, String local)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.get(remote, local);
 	}
 
@@ -818,11 +828,12 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public void put(String local, FileTransferProgress progress, boolean resume)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.put(local, progress, resume);
 	}
 
@@ -838,11 +849,12 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public void put(String local, FileTransferProgress progress)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.put(local, progress);
 	}
 
@@ -854,10 +866,10 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
-	public void put(String local) throws FileNotFoundException,
-			SftpStatusException, SshException, TransferCancelledException {
+	public void put(String local) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.put(local);
 	}
 
@@ -871,10 +883,10 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
-	public void put(String local, boolean resume) throws FileNotFoundException,
-			SftpStatusException, SshException, TransferCancelledException {
+	public void put(String local, boolean resume) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.put(local, resume);
 	}
 
@@ -893,11 +905,12 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public void put(String local, String remote, FileTransferProgress progress)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.put(local, remote, progress);
 	}
 
@@ -918,11 +931,12 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public void put(String local, String remote, FileTransferProgress progress,
-			boolean resume) throws FileNotFoundException, SftpStatusException,
-			SshException, TransferCancelledException {
+			boolean resume) throws SftpStatusException,
+			SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.put(local, remote, progress, resume);
 	}
 
@@ -937,11 +951,12 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public void put(String local, String remote, boolean resume)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.put(local, remote, resume);
 	}
 
@@ -954,10 +969,10 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
-	public void put(String local, String remote) throws FileNotFoundException,
-			SftpStatusException, SshException, TransferCancelledException {
+	public void put(String local, String remote) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.put(local, remote);
 	}
 
@@ -1280,9 +1295,10 @@ public abstract class SftpClientTask extends Task {
 	 * @return
 	 * @throws SftpStatusException
 	 * @throws SshException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
-	public boolean verifyFiles(String localFile, String remoteFile) throws SftpStatusException, SshException, FileNotFoundException {
+	public boolean verifyFiles(String localFile, String remoteFile) throws SftpStatusException, SshException, IOException, PermissionDeniedException {
 		return sftp.verifyFiles(localFile, remoteFile);
 	}
 	
@@ -1296,9 +1312,10 @@ public abstract class SftpClientTask extends Task {
 	 * @return
 	 * @throws SftpStatusException
 	 * @throws SshException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
-	public boolean verifyFiles(String localFile, String remoteFile, long offset, long length) throws SftpStatusException, SshException, FileNotFoundException {
+	public boolean verifyFiles(String localFile, String remoteFile, long offset, long length) throws SftpStatusException, SshException, IOException, PermissionDeniedException {
 		return sftp.verifyFiles(localFile, remoteFile, offset, length);
 	}
 	/**
@@ -1345,11 +1362,12 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public DirectoryOperation putLocalDirectory(String localdir,
 			String remotedir, boolean recurse, boolean sync, boolean commit,
-			FileTransferProgress progress) throws FileNotFoundException,
-			SftpStatusException, SshException, TransferCancelledException {
+			FileTransferProgress progress) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.putLocalDirectory(localdir, remotedir, recurse, sync, commit, progress);
 	}
 
@@ -1414,15 +1432,15 @@ public abstract class SftpClientTask extends Task {
 	 * 
 	 * @return DirectoryOperation
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public DirectoryOperation getRemoteDirectory(String remotedir,
 			String localdir, boolean recurse, boolean sync, boolean commit,
-			FileTransferProgress progress) throws FileNotFoundException,
-			SftpStatusException, SshException, TransferCancelledException {
+			FileTransferProgress progress) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.getRemoteDirectory(remotedir, localdir, recurse, sync, commit, progress);
 	}
 
@@ -1466,13 +1484,13 @@ public abstract class SftpClientTask extends Task {
 	 * 
 	 * @return the downloaded files' attributes
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
-	public SftpFile[] getFiles(String remote) throws FileNotFoundException,
-			SftpStatusException, SshException, TransferCancelledException {
+	public SftpFile[] getFiles(String remote) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.getFiles(remote);
 	}
 
@@ -1487,14 +1505,15 @@ public abstract class SftpClientTask extends Task {
 	 * 
 	 * @return the downloaded files' attributes
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public SftpFile[] getFiles(String remote, boolean resume)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.getFiles(remote, resume);
 	}
 
@@ -1509,14 +1528,15 @@ public abstract class SftpClientTask extends Task {
 	 * 
 	 * @return SftpFile[]
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public SftpFile[] getFiles(String remote, FileTransferProgress progress)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.getFiles(remote, progress);
 	}
 
@@ -1533,14 +1553,15 @@ public abstract class SftpClientTask extends Task {
 	 * 
 	 * @return SftpFile[]
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public SftpFile[] getFiles(String remote, FileTransferProgress progress,
-			boolean resume) throws FileNotFoundException, SftpStatusException,
-			SshException, TransferCancelledException {
+			boolean resume) throws SftpStatusException,
+			SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.getFiles(remote, progress, resume);
 	}
 
@@ -1552,14 +1573,15 @@ public abstract class SftpClientTask extends Task {
 	 * 
 	 * @return SftpFile[]
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public SftpFile[] getFiles(String remote, String local)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.getFiles(remote, local);
 	}
 
@@ -1573,14 +1595,15 @@ public abstract class SftpClientTask extends Task {
 	 * 
 	 * @return SftpFile[]
 	 * 
-	 * @throws FileNotFoundException
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public SftpFile[] getFiles(String remote, String local, boolean resume)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.getFiles(remote, local, resume);
 	}
 
@@ -1599,14 +1622,15 @@ public abstract class SftpClientTask extends Task {
 	 * @return SftpFile[]
 	 * 
 	 * @throws SftpStatusException
-	 * @throws FileNotFoundException
 	 * @throws SshException
 	 * @throws TransferCancelledException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public SftpFile[] getFiles(String remote, String local,
 			FileTransferProgress progress, boolean resume)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.getFiles(remote, local, progress, resume);
 	}
 
@@ -1650,10 +1674,10 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
-	public void putFiles(String local) throws FileNotFoundException,
-			SftpStatusException, SshException, TransferCancelledException {
+	public void putFiles(String local) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.putFiles(local);
 	}
 
@@ -1667,11 +1691,12 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public void putFiles(String local, boolean resume)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.putFiles(local, resume);
 	}
 
@@ -1687,11 +1712,12 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public void putFiles(String local, FileTransferProgress progress)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.putFiles(local, progress);
 	}
 
@@ -1707,11 +1733,12 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public void putFiles(String local, FileTransferProgress progress,
-			boolean resume) throws FileNotFoundException, SftpStatusException,
-			SshException, TransferCancelledException {
+			boolean resume) throws SftpStatusException,
+			SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.putFiles(local, progress, resume);
 	}
 
@@ -1724,11 +1751,12 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public void putFiles(String local, String remote)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.putFiles(local, remote);
 	}
 
@@ -1743,11 +1771,12 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public void putFiles(String local, String remote, boolean resume)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.putFiles(local, remote, resume);
 	}
 
@@ -1766,11 +1795,11 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public void putFiles(String local, String remote,
-			FileTransferProgress progress) throws FileNotFoundException,
-			SftpStatusException, SshException, TransferCancelledException {
+			FileTransferProgress progress) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.putFiles(local, remote, progress);
 	}
 
@@ -1789,12 +1818,13 @@ public abstract class SftpClientTask extends Task {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws FileNotFoundException
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
 	 */
 	public void putFiles(String local, String remote,
 			FileTransferProgress progress, boolean resume)
-			throws FileNotFoundException, SftpStatusException, SshException,
-			TransferCancelledException {
+			throws SftpStatusException, SshException,
+			TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.putFiles(local, remote, progress, resume);
 	}
 }

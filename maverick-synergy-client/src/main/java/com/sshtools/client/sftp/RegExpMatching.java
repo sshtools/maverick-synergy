@@ -18,11 +18,11 @@
  */
 package com.sshtools.client.sftp;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
 
@@ -45,14 +45,14 @@ public class RegExpMatching implements RegularExpressionMatching {
 	}
 
 	@Override
-	public String[] matchFileNamesWithPattern(File[] files, String pattern)
+	public String[] matchFileNamesWithPattern(AbstractFile[] files, String pattern)
 			throws SftpStatusException, SshException {
 		
 		Pattern p = Pattern.compile(pattern);
 		
 		List<String> matched = new ArrayList<>();
 		
-		for(File file : files) {
+		for(AbstractFile file : files) {
 			if(p.matcher(file.getName()).matches()) {
 				matched.add(file.getName());
 			}

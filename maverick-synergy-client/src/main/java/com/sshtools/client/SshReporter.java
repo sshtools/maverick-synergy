@@ -20,7 +20,6 @@ package com.sshtools.client;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -28,6 +27,7 @@ import java.util.Random;
 
 import com.sshtools.client.sftp.SftpClient;
 import com.sshtools.client.sftp.TransferCancelledException;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.SshConnection;
@@ -36,7 +36,7 @@ import com.sshtools.common.util.IOUtils;
 
 public class SshReporter {
 
-	public static void main(String[] args) throws SshException, IOException, SftpStatusException, ChannelOpenException, TransferCancelledException {
+	public static void main(String[] args) throws SshException, IOException, SftpStatusException, ChannelOpenException, TransferCancelledException, PermissionDeniedException {
 		
 		String hostname;
 		int port = 22;
@@ -119,7 +119,7 @@ public class SshReporter {
 		System.exit(0);
 	}
 	
-	private static void probeSFTP(SshClient ssh) throws SftpStatusException, SshException, ChannelOpenException {
+	private static void probeSFTP(SshClient ssh) throws SftpStatusException, SshException, ChannelOpenException, PermissionDeniedException, IOException {
 		
 		SftpClient sftp = new SftpClient(ssh);
 		
@@ -162,7 +162,7 @@ public class SshReporter {
 //        System.out.println("#####");
 //	}
 
-	private static void reportSFTP(String testName, String filename, String size, int blocksize, int maxRequests, SshClient ssh) throws SftpStatusException, SshException, ChannelOpenException, FileNotFoundException, TransferCancelledException {
+	private static void reportSFTP(String testName, String filename, String size, int blocksize, int maxRequests, SshClient ssh) throws SftpStatusException, SshException, ChannelOpenException, TransferCancelledException, PermissionDeniedException, IOException {
 		
 		System.out.println("##### " + testName);
 		

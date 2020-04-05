@@ -120,14 +120,23 @@ public class SftpClient {
 	private int transferMode = MODE_BINARY;
 	
 	public SftpClient(SshConnection con) throws SshException, PermissionDeniedException, IOException {
-		this.sftp = new SftpChannel(con);
-		this.fileFactory = new DirectFileFactory(new java.io.File(System.getProperty("user.home")));
+		this(con, new DirectFileFactory(new java.io.File(System.getProperty("user.home"))));
+
+	}
+	
+	public SftpClient(SshConnection con, AbstractFileFactory<?> fileFactory) throws PermissionDeniedException, IOException, SshException {
+		this.fileFactory = fileFactory;
 		this.cwd = "";
 		this.lcwd = fileFactory.getFile("");
+		this.sftp = new SftpChannel(con);
 	}
 	
 	public SftpClient(SshClient ssh) throws SshException, PermissionDeniedException, IOException {
 		this(ssh.getConnection());
+	}
+	
+	public SftpClient(SshClient ssh, AbstractFileFactory<?> fileFactory) throws SshException, PermissionDeniedException, IOException {
+		this(ssh.getConnection(), fileFactory);
 	}
 	
 	/**

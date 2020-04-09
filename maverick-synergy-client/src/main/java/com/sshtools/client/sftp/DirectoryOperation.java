@@ -19,11 +19,12 @@
 
 package com.sshtools.client.sftp;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
 
@@ -58,23 +59,23 @@ public class DirectoryOperation {
 	}
 
 	
-	void addNewFile(File f) {
+	void addNewFile(AbstractFile f) {
 		newFiles.addElement(f);
 	}
 
-	void addFailedTransfer(File f, SftpStatusException ex) {
+	void addFailedTransfer(AbstractFile f, SftpStatusException ex) {
 		failedTransfers.put(f, ex);
 	}
 
-	void addUpdatedFile(File f) {
+	void addUpdatedFile(AbstractFile f) {
 		updatedFiles.addElement(f);
 	}
 
-	void addDeletedFile(File f) {
+	void addDeletedFile(AbstractFile f) {
 		deletedFiles.addElement(f);
 	}
 
-	void addUnchangedFile(File f) {
+	void addUnchangedFile(AbstractFile f) {
 		unchangedFiles.addElement(f);
 	}
 
@@ -152,7 +153,7 @@ public class DirectoryOperation {
 	 * @param f
 	 * @return boolean
 	 */
-	public boolean containsFile(File f) {
+	public boolean containsFile(AbstractFile f) {
 		return unchangedFiles.contains(f) || newFiles.contains(f)
 				|| updatedFiles.contains(f) || deletedFiles.contains(f)
 				|| recursedDirectories.contains(f)
@@ -179,7 +180,7 @@ public class DirectoryOperation {
 	 * @param op
 	 * @param f
 	 */
-	public void addDirectoryOperation(DirectoryOperation op, File f) {
+	public void addDirectoryOperation(DirectoryOperation op, AbstractFile f) {
 		addAll(op.getUpdatedFiles(), updatedFiles);
 		addAll(op.getNewFiles(), newFiles);
 		addAll(op.getUnchangedFiles(), unchangedFiles);
@@ -235,17 +236,18 @@ public class DirectoryOperation {
 	 * Get the total number of bytes that this operation will transfer
 	 * 
 	 * @return long
+	 * @throws IOException 
 	 */
-	public long getTransferSize() throws SftpStatusException, SshException {
+	public long getTransferSize() throws SftpStatusException, SshException, IOException {
 
 		Object obj;
 		long size = 0;
 		SftpFile sftpfile;
-		File file;
+		AbstractFile file;
 		for (Enumeration e = newFiles.elements(); e.hasMoreElements();) {
 			obj = e.nextElement();
-			if (obj instanceof File) {
-				file = (File) obj;
+			if (obj instanceof AbstractFile) {
+				file = (AbstractFile) obj;
 				if (file.isFile()) {
 					size += file.length();
 				}
@@ -259,8 +261,8 @@ public class DirectoryOperation {
 		for (Enumeration e = updatedFiles.elements(); e.hasMoreElements();) {
 			obj = e.nextElement();
 
-			if (obj instanceof File) {
-				file = (File) obj;
+			if (obj instanceof AbstractFile) {
+				file = (AbstractFile) obj;
 				if (file.isFile()) {
 					size += file.length();
 				}

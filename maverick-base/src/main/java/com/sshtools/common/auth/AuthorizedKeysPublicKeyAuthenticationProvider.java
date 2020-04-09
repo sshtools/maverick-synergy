@@ -227,9 +227,11 @@ public class AuthorizedKeysPublicKeyAuthenticationProvider extends
 
 	protected AbstractFile getFile(SshConnection con)
 			throws PermissionDeniedException, IOException {
-		AbstractFileFactory<?> s = con.getContext().getPolicy(FileSystemPolicy.class).getFileFactory(con);
+		AbstractFileFactory<?> s = con.getContext()
+				.getPolicy(FileSystemPolicy.class)
+					.getFileFactory().getFileFactory(con);
 		AbstractFile file = authorizedKeysFile.startsWith("/") ? s.getFile(
-				authorizedKeysFile, con) : s.getDefaultPath(con)
+				authorizedKeysFile) : s.getDefaultPath()
 				.resolveFile(authorizedKeysFile);
 		return file;
 	}

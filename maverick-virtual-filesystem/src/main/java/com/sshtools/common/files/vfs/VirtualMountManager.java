@@ -30,62 +30,54 @@ import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.FileUtils;
 
 public class VirtualMountManager {
 
-	private SshConnection con;
 	private VirtualMount defaultMount;
 	private List<VirtualMount> mounts = new ArrayList<VirtualMount>();
 	private VirtualFileFactory fileFactory;
 	private ThreadLocal<VirtualMount> testingMount = new ThreadLocal<>(); 
 	
-	public VirtualMountManager(SshConnection con,
-			VirtualFileFactory fileFactory) throws IOException,
+	public VirtualMountManager(VirtualFileFactory fileFactory) throws IOException,
 			PermissionDeniedException {
-		this(con, fileFactory, null);
+		this(fileFactory, null);
 	}
 
-	public VirtualMountManager(SshConnection con,
-			VirtualFileFactory fileFactory, VirtualMountTemplate homeMount,
+	public VirtualMountManager(VirtualFileFactory fileFactory, VirtualMountTemplate homeMount,
 			VirtualMountTemplate... additionalMounts) throws IOException,
 			PermissionDeniedException {
-		this.con = con;
+
 		this.fileFactory = fileFactory;
 
 		if (homeMount != null) {
-			defaultMount = new VirtualMount(
-					replaceTokens(homeMount.getMount(), con), replaceTokens(
-							homeMount.getRoot(), con), fileFactory, homeMount
-							.getActualFileFactory(), con, true, false, homeMount.isCreateMountFolder());
+			defaultMount = new VirtualMount(homeMount.getMount(), 
+					homeMount.getRoot(), fileFactory, homeMount.getActualFileFactory(), true, false, homeMount.isCreateMountFolder());
 			if(defaultMount.isCreateMountFolder()) {
-				defaultMount.getActualFileFactory().getFile(defaultMount.getRoot(), con).createFolder();
+				defaultMount.getActualFileFactory().getFile(defaultMount.getRoot()).createFolder();
 			}
 			mounts.add(defaultMount);
 		}
 
 		// Add any remaining templates
 		for (VirtualMountTemplate m : additionalMounts) {
-			VirtualMount vm = createMount(replaceTokens(m.getMount(), con), 
-					replaceTokens(m.getRoot(), con),
+			VirtualMount vm = createMount(m.getMount(), 
+					m.getRoot(),
 					m.getActualFileFactory(),
 					m.isCreateMountFolder());
 			
 
 			if(vm.isCreateMountFolder()) {
-				vm.getActualFileFactory().getFile(vm.getRoot(), con).createFolder();
+				vm.getActualFileFactory().getFile(vm.getRoot()).createFolder();
 			}
 			mounts.add(vm);
 		}
 
 		sort();
 	}
-
-	private static String replaceTokens(String str,
-			SshConnection con) {
-		String ret = str.replace("${username}", con.getUsername());
-		return ret;
+	
+	public void mount(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
+		mount(template, false);
 	}
 	
 	public void mount(VirtualMountTemplate template, boolean unmount) throws IOException, PermissionDeniedException {
@@ -97,14 +89,20 @@ public class VirtualMountManager {
 
 	public void test(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
 		
-		VirtualMount mount = createMount(template.getMount(),
+		test(createMount(template.getMount(),
 				template.getRoot(), 
 				template.getActualFileFactory(),
-				template.isCreateMountFolder());
+				template.isCreateMountFolder()));
 		
+	}
+	
+	private void test(VirtualMount mount) throws IOException, PermissionDeniedException {
+		
+		Log.info("Testing " + mount.getMount() + " on " + mount.getRoot());
+
 		try {
 			testingMount.set(mount);
-			AbstractFile f = fileFactory.getFile(mount.getMount(), con);
+			AbstractFile f = fileFactory.getFile(mount.getMount());
 			if(mount.isCreateMountFolder()) {
 				f.createFolder();
 			}
@@ -121,29 +119,18 @@ public class VirtualMountManager {
 		if(unmount && isMounted(mount.getMount())) {
 			unmount(mount);
 		}
-		
-		Log.info("Mounting " + mount.getMount() + " on " + mount.getRoot() + " for " + con.getUsername() + " (" + con.getSessionId() + ")");
 
 		if(isMounted(mount.getMount())) {
 			throw new IOException(mount.getMount() + " already mounted on " + getMount(mount.getMount()).getRoot());
 		} 
+		
+		Log.info("Mounting " + mount.getMount() + " on " + mount.getRoot());
 
+		test(mount);
+		
 		// Add the mount
 		mounts.add(mount);
 		sort();
-
-		// Now test it
-		try {
-			AbstractFile f = fileFactory.getFile(mount.getMount(), con);
-			if(mount.isCreateMountFolder()) {
-				f.createFolder();
-			}
-		} catch (Exception ex) {
-			Log.error(
-					"Failed to mount " + mount.getMount() + " "
-							+ mount.getRoot(), ex);
-			unmount(mount);
-		}
 
 		Log.info("Mounted " + mount.getMount() + " on " + mount.getRoot());
 
@@ -160,7 +147,7 @@ public class VirtualMountManager {
 	}
 
 	public void unmount(VirtualMount mount) throws IOException {
-		Log.info("Unmounting " + mount.getMount() + " from " + mount.getRoot() + " for " + con.getUsername() + " (" + con.getSessionId() + ")");
+		Log.info("Unmounting " + mount.getMount() + " from " + mount.getRoot());
 		VirtualMount mounted = null;
 		for(VirtualMount m : mounts) {
 			if(FileUtils.checkEndsWithSlash(m.getMount())
@@ -173,7 +160,7 @@ public class VirtualMountManager {
 		}
 		mounts.remove(mounted);
 		sort();
-		Log.info("Unmounted " + mount.getMount() + " from " + mount.getRoot());
+		Log.info("Unmounted " + mounted.getMount() + " from " + mounted.getRoot());
 	}
 
 	public VirtualMount getDefaultMount() {
@@ -207,8 +194,7 @@ public class VirtualMountManager {
 	private VirtualMount createMount(String mount, String path,
 			AbstractFileFactory<?> actualFileFactory, boolean createMoundFolder) throws IOException,
 			PermissionDeniedException {
-		return new VirtualMount(mount, path, fileFactory, actualFileFactory,
-				con, createMoundFolder);
+		return new VirtualMount(mount, path, fileFactory, actualFileFactory, createMoundFolder);
 	}
 
 	public VirtualMount getMount(String path) throws IOException {
@@ -248,10 +234,6 @@ public class VirtualMountManager {
 
 	public VirtualFileFactory getVirtualFileFactory() {
 		return fileFactory;
-	}
-
-	public AbstractFileFactory<?> getDefaultFileFactory() {
-		return fileFactory.getDefaultFileFactory();
 	}
 
 }

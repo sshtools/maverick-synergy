@@ -59,7 +59,7 @@ public class FileUtils {
 	}
 
 	public static String getFilename(String path) {
-		int idx = path.indexOf("/");
+		int idx = path.lastIndexOf("/");
 		if(idx > -1) {
 			return path.substring(idx+1);
 		} else {

@@ -23,17 +23,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.SshConnection;
 
 public abstract class AbstractFileImpl<T extends AbstractFile> implements AbstractFile {
 
-
 	protected AbstractFileFactory<T> fileFactory;
-	protected SshConnection con;
-	
-	public AbstractFileImpl(AbstractFileFactory<T> fileFactory, SshConnection con) {
+
+	public AbstractFileImpl(AbstractFileFactory<T> fileFactory) {
 		this.fileFactory = fileFactory;
-		this.con = con;
 	}
 	
 	public void copyFrom(AbstractFile src) throws IOException, PermissionDeniedException {

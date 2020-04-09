@@ -40,7 +40,6 @@ import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.UnsignedInteger64;
 
 public class VFSFile extends AbstractFileImpl<VFSFile> {
@@ -50,9 +49,8 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 	FileObject file;
 	FileSystemOptions opts;
 
-	public VFSFile(FileObject file, VFSFileFactory fileFactory,
-			SshConnection con) {
-		super(fileFactory, con);
+	public VFSFile(FileObject file, VFSFileFactory fileFactory) {
+		super(fileFactory);
 		this.file = file;
 	}
 
@@ -60,16 +58,14 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 		return file;
 	}
 
-	public VFSFile(String path, VFSFileFactory fileFactory,
-			SshConnection con) throws IOException {
-		super(fileFactory, con);
+	public VFSFile(String path, VFSFileFactory fileFactory) throws IOException {
+		super(fileFactory);
 		this.file = fileFactory.getFileSystemManager().resolveFile(path);
 	}
 
-	public VFSFile(String path, String defaultPath, VFSFileFactory fileFactory,
-			SshConnection con, FileSystemOptions opts)
+	public VFSFile(String path, String defaultPath, VFSFileFactory fileFactory, FileSystemOptions opts)
 			throws IOException {
-		super(fileFactory, con);
+		super(fileFactory);
 		this.file = fileFactory.getFileSystemManager().resolveFile(path, opts);
 		this.opts = opts;
 	}
@@ -196,7 +192,7 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 
 		List<AbstractFile> children = new ArrayList<AbstractFile>();
 		for (FileObject f : file.getChildren()) {
-			children.add(new VFSFile(f, (VFSFileFactory) fileFactory, con));
+			children.add(new VFSFile(f, (VFSFileFactory) fileFactory));
 		}
 		return children;
 	}
@@ -370,7 +366,7 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 	public AbstractFile resolveFile(String child) throws IOException,
 			PermissionDeniedException {
 		return new VFSFile(file.resolveFile(child),
-				(VFSFileFactory) fileFactory, con);
+				(VFSFileFactory) fileFactory);
 	}
 
 }

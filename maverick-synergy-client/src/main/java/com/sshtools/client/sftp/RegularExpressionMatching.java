@@ -18,8 +18,10 @@
  */
 package com.sshtools.client.sftp;
 
-import java.io.File;
+import java.io.IOException;
 
+import com.sshtools.common.files.AbstractFile;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
 
@@ -48,7 +50,9 @@ public interface RegularExpressionMatching {
      * @return String[]
      * @throws SftpStatusException
      * @throws SshException
+     * @throws PermissionDeniedException 
+     * @throws IOException 
      */
-    public String[] matchFileNamesWithPattern(File[] files, String fileNameRegExp) throws SftpStatusException, SshException;
+    public String[] matchFileNamesWithPattern(AbstractFile[] files, String fileNameRegExp) throws SftpStatusException, SshException, IOException, PermissionDeniedException;
 
 }

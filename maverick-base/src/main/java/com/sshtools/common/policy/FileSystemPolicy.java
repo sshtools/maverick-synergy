@@ -18,11 +18,15 @@
  */
 package com.sshtools.common.policy;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.permissions.Permissions;
 import com.sshtools.common.sftp.SftpExtension;
 import com.sshtools.common.sftp.SftpExtensionFactory;
@@ -32,7 +36,7 @@ import com.sshtools.common.ssh.SshConnection;
 public class FileSystemPolicy extends Permissions {
 
 	long connectionUploadQuota = -1;
-	AbstractFileFactory<?> fileFactory;
+	FileFactory fileFactory;
 	String sftpCharsetEncoding = "UTF-8";
 	boolean allowZeroLengthFileUpload = true;
 	boolean sftpVersion4Enabled = true;
@@ -90,15 +94,18 @@ public class FileSystemPolicy extends Permissions {
 	 * Set the file factory for this context.
 	 * @param fileFactory
 	 */
-	public void setFileFactory(AbstractFileFactory<?> fileFactory) {
-		this.fileFactory = fileFactory;
+	public void setFileFactory(FileFactory fileFactory) {
+		this.fileFactory = new CachingFileFactory(fileFactory);
 	}
 	
 	/**
 	 * Get the file factory for this context.
 	 * @return
+	 * @throws PermissionDeniedException 
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
 	 */
-	public AbstractFileFactory<?> getFileFactory(SshConnection con) {
+	public FileFactory getFileFactory() {
 		return fileFactory;
 	}
 	
@@ -208,5 +215,23 @@ public class FileSystemPolicy extends Permissions {
 		this.sftpMinWindowSize = sftpMinWindowSize;
 	}
 
-	
+	class CachingFileFactory implements FileFactory {
+
+		AbstractFileFactory<?> ff = null;
+		FileFactory fileFactory;
+		
+		CachingFileFactory(FileFactory fileFactory) {
+			this.fileFactory = fileFactory;
+		}
+		
+		@Override
+		public AbstractFileFactory<?> getFileFactory(SshConnection con) 
+				throws IOException, PermissionDeniedException {
+			if(Objects.nonNull(ff)) {
+				return ff;
+			}
+			return ff = fileFactory.getFileFactory(con);
+		}
+		
+	}
 }

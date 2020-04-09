@@ -16,11 +16,15 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.files;
+package com.sshtools.common.policy;
 
+import java.io.IOException;
+
+import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
 
-public interface AbstractFileHomeFactory {
+public interface FileFactory {
 
-	String getHomeDirectory(SshConnection con);
+	AbstractFileFactory<?> getFileFactory(SshConnection con) throws IOException, PermissionDeniedException;
 }

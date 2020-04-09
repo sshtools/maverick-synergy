@@ -35,13 +35,12 @@ import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.UnsignedInteger64;
 
 public class DirectFileJava7 extends DirectFile {
 	
-	public DirectFileJava7(String path, AbstractFileFactory<DirectFile> fileFactory, SshConnection con, String homeDir) throws IOException {
-		super(path, fileFactory, con, homeDir);
+	public DirectFileJava7(String path, AbstractFileFactory<DirectFile> fileFactory, File homeDir) throws IOException {
+		super(path, fileFactory, homeDir);
 	}
 
 	public SftpFileAttributes getAttributes() throws IOException {
@@ -123,13 +122,13 @@ public class DirectFileJava7 extends DirectFile {
 		File[] files = f.listFiles();
 		List<AbstractFile> files2 = new ArrayList<AbstractFile>();
 		for(File f : files) {
-			files2.add(new DirectFileJava7(f.getAbsolutePath(), fileFactory, con, homeDir));
+			files2.add(new DirectFileJava7(f.getAbsolutePath(), fileFactory, homeDir));
 		}
 		return files2;
 	}
 
 	public AbstractFile resolveFile(String child) throws IOException,
 			PermissionDeniedException {
-		return new DirectFileJava7(new File(f, child).getAbsolutePath(), fileFactory, con, homeDir);
+		return new DirectFileJava7(new File(f, child).getAbsolutePath(), fileFactory, homeDir);
 	}
 }

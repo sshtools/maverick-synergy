@@ -52,7 +52,7 @@ public class Msh extends ShellCommand {
 
 	private boolean exit;
 	private String prompt;
-	protected CommandFactory<ShellCommand> commandFactory;
+	protected CommandFactory<? extends Command> commandFactory;
 
 	protected Map<Long, Job> runningJobs = new HashMap<>();
 	private long nextJobId = 1;
@@ -60,7 +60,7 @@ public class Msh extends ShellCommand {
 
 	private List<MshListener> listeners = new ArrayList<>();
 	
-	public Msh(CommandFactory<ShellCommand> commandFactory) {
+	public Msh(CommandFactory<? extends Command> commandFactory) {
 		super("msh", SUBSYSTEM_SHELL, "Usage: msh <script>", "A basic interactive shell for executing commands.");
 		setBuiltIn(false);
 		this.commandFactory = commandFactory;
@@ -75,7 +75,7 @@ public class Msh extends ShellCommand {
 		listeners.add(listener);
 	}
 	
-	protected void setCommandFactory(CommandFactory<ShellCommand> commandFactory) {
+	protected void setCommandFactory(CommandFactory<? extends Command> commandFactory) {
 		this.commandFactory = commandFactory;
 	}
 
@@ -304,6 +304,9 @@ public class Msh extends ShellCommand {
 				Log.info("Failed to parse command line for " + args[0], ie);
 			console.println("The command was recognized but could not run");
 			return 1;
+		} catch(EndOfFileException eofe) {
+			exit = true;
+			return 0;
 		} catch (Throwable t) {
 			if(t.getCause()!=null) {
 				lastError = t.getCause();
@@ -326,7 +329,7 @@ public class Msh extends ShellCommand {
 			InstantiationException, ParseException, IOException,
 			PermissionDeniedException, UsageException {
 
-		final ShellCommand cmd;
+		final Command cmd;
 
 		if (args[0].equals("sh") || args[0].equals("msh")) {
 			cmd = new Msh(commandFactory);
@@ -352,7 +355,7 @@ public class Msh extends ShellCommand {
 		}
 	}
 
-	private int runCommandWithArgs(String[] args, ShellCommand cmd,
+	private int runCommandWithArgs(String[] args, Command cmd,
 			VirtualConsole console, boolean background) throws ParseException,
 			IOException, PermissionDeniedException, UsageException {
 
@@ -402,7 +405,7 @@ public class Msh extends ShellCommand {
 		exit = true;
 	}
 
-	public CommandFactory<ShellCommand> getCommandFactory() {
+	public CommandFactory<? extends Command> getCommandFactory() {
 		return commandFactory;
 	}
 

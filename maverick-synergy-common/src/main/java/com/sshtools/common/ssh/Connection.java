@@ -71,10 +71,6 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 			}
 		});
 	}
-//	
-//	public void addIdleStateListener(IdleStateListener l) {
-//		transport.getSocketConnection().getIdleStates().register(l);
-//	}
 	
 	@Override
 	public synchronized void addEventListener(EventListener listener) {

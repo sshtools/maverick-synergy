@@ -19,11 +19,12 @@
 package com.sshtools.client.tasks;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.client.sftp.TransferCancelledException;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshException;
@@ -57,7 +58,7 @@ public class DownloadFileTask extends Task {
 						localFile = new File(lpwd(), FileUtils.getFilename(path));
 					}
 					get(path, localFile.getAbsolutePath());
-				} catch (FileNotFoundException | SftpStatusException | SshException | TransferCancelledException e) {
+				} catch (SftpStatusException | SshException | TransferCancelledException | IOException | PermissionDeniedException e) {
 					throw new IllegalStateException(e.getMessage(), e);
 				}
 			}

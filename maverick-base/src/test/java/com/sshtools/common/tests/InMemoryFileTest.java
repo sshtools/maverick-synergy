@@ -40,7 +40,7 @@ public class InMemoryFileTest extends AbstractFileTest {
 	
 	@Override
 	public AbstractFile getAbstractFile(String path, SshConnection con) throws PermissionDeniedException, IOException {
-		return factory.getFile(path, con);
+		return factory.getFile(path);
 	}
 
 	@Override

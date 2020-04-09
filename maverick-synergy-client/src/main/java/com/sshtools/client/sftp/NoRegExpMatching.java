@@ -19,8 +19,7 @@
 
 package com.sshtools.client.sftp;
 
-import java.io.File;
-
+import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
 
@@ -39,7 +38,7 @@ public class NoRegExpMatching implements RegularExpressionMatching {
      * 
      * @throws SftpStatusException
      */
-    public String[] matchFileNamesWithPattern(File[] files, String fileNameRegExp) throws SshException, SftpStatusException {
+    public String[] matchFileNamesWithPattern(AbstractFile[] files, String fileNameRegExp) throws SshException, SftpStatusException {
         String[] thefile = new String[1];
         thefile[0] = files[0].getName();
         return thefile;

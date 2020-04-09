@@ -24,7 +24,6 @@ import java.io.IOException;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.FileUtils;
 
 public class VirtualMount extends AbstractMount {
@@ -37,7 +36,7 @@ public class VirtualMount extends AbstractMount {
 	VirtualMount(String mount, String path,
 			VirtualFileFactory virtualFileFactory,
 			AbstractFileFactory<?> actualFileFactory,
-			SshConnection con, boolean isDefault,
+			boolean isDefault,
 			boolean isImaginary, boolean createMountFolder)
 				throws IOException, PermissionDeniedException {
 		super(mount, path, isDefault, isImaginary);
@@ -45,7 +44,7 @@ public class VirtualMount extends AbstractMount {
 		this.virtualFileFactory = virtualFileFactory;
 		this.createMountFolder = createMountFolder;
 		if (!isImaginary()) {
-			AbstractFile f = actualFileFactory.getFile(path, con);
+			AbstractFile f = actualFileFactory.getFile(path);
 			this.path = f.getAbsolutePath();
 		}
 
@@ -54,9 +53,9 @@ public class VirtualMount extends AbstractMount {
 	public VirtualMount(String mount, String path,
 			VirtualFileFactory virtualFileFactory,
 			AbstractFileFactory<?> actualFileFactory,
-			SshConnection con, boolean createMountFolder) throws IOException,
+			boolean createMountFolder) throws IOException,
 			PermissionDeniedException {
-		this(mount, path, virtualFileFactory, actualFileFactory, con, false,
+		this(mount, path, virtualFileFactory, actualFileFactory, false,
 				false, createMountFolder);
 	}
 

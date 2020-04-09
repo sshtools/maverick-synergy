@@ -25,7 +25,6 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.SshConnection;
 
 public class PathFileFactory implements AbstractFileFactory<PathFile> {
 	
@@ -36,7 +35,7 @@ public class PathFileFactory implements AbstractFileFactory<PathFile> {
 	}
 
 	@Override
-	public PathFile getFile(String path, SshConnection con) throws PermissionDeniedException, IOException {
+	public PathFile getFile(String path) throws PermissionDeniedException, IOException {
 		if(Log.isTraceEnabled())
 			Log.trace(String.format("Resolving path '%s' in '%s'", path, base));
 		Path p;
@@ -64,7 +63,7 @@ public class PathFileFactory implements AbstractFileFactory<PathFile> {
 	}
 
 	@Override
-	public PathFile getDefaultPath(SshConnection con) throws PermissionDeniedException, IOException {
-		return getFile("/", con);
+	public PathFile getDefaultPath() throws PermissionDeniedException, IOException {
+		return getFile("/");
 	}
 }

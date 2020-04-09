@@ -32,13 +32,13 @@ import java.util.Objects;
 
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.Authenticator;
-import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ProtocolContextFactory;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.nio.SshEngineContext;
 import com.sshtools.common.nio.SshEngineListenerAdapter;
+import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyPairGenerator;
@@ -64,7 +64,7 @@ public abstract class AbstractSshServer implements Closeable {
 			Collections.unmodifiableCollection(
 					Arrays.asList(new NoOpPasswordAuthenticator(),
 							new NoOpPublicKeyAuthenticator()));
-	AbstractFileFactory<?> fileFactory;
+	FileFactory fileFactory;
 	ForwardingPolicy forwardingPolicy = new ForwardingPolicy();
 	
 	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory(); 
@@ -151,7 +151,7 @@ public abstract class AbstractSshServer implements Closeable {
 		providers.add(provider);
 	}
 	
-	public void setFileFactory(AbstractFileFactory<?> fileFactory) {
+	public void setFileFactory(FileFactory fileFactory) {
 		this.fileFactory = fileFactory;
 	}
 	

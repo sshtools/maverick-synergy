@@ -32,17 +32,15 @@ import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.files.RandomAccessImpl;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.ssh.SshConnection;
 
 public abstract class AbstractDirectFile<T extends AbstractDirectFile<T>> extends AbstractFileImpl<T> {
 
 	protected File f;
-	protected String homeDir;
+	protected File homeDir;
 	protected boolean hidden = false;
 	
-	public AbstractDirectFile(String path, AbstractFileFactory<T> fileFactory, SshConnection con, String homeDir) throws IOException {
-		super(fileFactory, con);
-		this.con = con;
+	public AbstractDirectFile(String path, AbstractFileFactory<T> fileFactory, File homeDir) throws IOException {
+		super(fileFactory);
 		this.homeDir = homeDir;
 		f = new File(path);
 		if(!f.isAbsolute())

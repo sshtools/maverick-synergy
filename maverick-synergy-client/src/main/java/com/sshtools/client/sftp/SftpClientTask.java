@@ -363,8 +363,10 @@ public abstract class SftpClientTask extends Task {
 	 * </p>
 	 * 
 	 * @return the absolute path of the remote working directory.
+	 * @throws SshException 
+	 * @throws SftpStatusException 
 	 */
-	public String pwd() {
+	public String pwd() throws SftpStatusException, SshException {
 		return sftp.pwd();
 	}
 

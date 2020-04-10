@@ -7,6 +7,8 @@ import java.util.Arrays;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 
 import com.sshtools.client.ClientAuthenticator;
 import com.sshtools.client.PasswordAuthenticator;
@@ -29,16 +31,26 @@ import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.util.IOUtils;
-import com.sshtools.server.vsession.ShellCommandWithOptions;
+import com.sshtools.server.vsession.CommandArgumentsParser;
+import com.sshtools.server.vsession.ShellCommand;
 import com.sshtools.server.vsession.UsageException;
 import com.sshtools.server.vsession.VirtualConsole;
+import com.sshtools.server.vsession.commands.sftp.SftpClientOptions;
 
-public class SshClientCommand extends ShellCommandWithOptions {
+public class SshClientCommand extends ShellCommand {
 	
 	private String[] originalArguments = null;
+	private Options options = new Options();
 
 	public SshClientCommand() {
-		super("ssh", SUBSYSTEM_SHELL, "", "Returns the ssh client shell", SshClientOptions.getOptions());
+		super("ssh", SUBSYSTEM_SHELL, "", "Returns the ssh client shell");
+		for (Option option : SftpClientOptions.getOptions()) {
+			this.options.addOption(option);
+		}
+	}
+	
+	public Options getOptions() {
+		return options;
 	}
 
 	@Override
@@ -55,11 +67,14 @@ public class SshClientCommand extends ShellCommandWithOptions {
 
 		return result;
 	}
-
+	
 	@Override
-	public void run(CommandLine cli, final VirtualConsole console)
+	public void run(String[] args, VirtualConsole console)
 			throws IOException, PermissionDeniedException, UsageException {
 
+		String[] filteredArgs = filterArgs(args);
+		CommandLine cli = CommandArgumentsParser.parse(getOptions(), filteredArgs, getUsage());
+		
 		SshClientArguments arguments = SshClientOptionsEvaluator.evaluate(cli, this.originalArguments);
 		
 		if (Log.isDebugEnabled()) {
@@ -186,10 +201,8 @@ public class SshClientCommand extends ShellCommandWithOptions {
 				sshClient.close();
 			}
 		}
-
 	}
-	
-	@Override
+
 	protected String[] filterArgs(String[] args) {
 		this.originalArguments = args;
 		int indexTillSshClientCommandFound = SshClientOptionsExtractor.extractSshCommandLineFromExecuteCommand(args);

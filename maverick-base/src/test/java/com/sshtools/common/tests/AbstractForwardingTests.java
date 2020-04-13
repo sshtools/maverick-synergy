@@ -76,24 +76,29 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 	 * tests are the result of issues in the SSH code and not the client/server environment.
 	 */
 //	@Ignore
-//	public void testRandomClientServer() throws IOException, SshException, InvalidPassphraseException, UnauthorizedException {
-//		
-//		log("Starting sanity check");
-//		
-//		testTemplate(new ForwardingTestTemplate<T>() {
-//			
-//			@Override
-//			public int startForwarding(T client, int targetPort) throws UnauthorizedException, SshException {
-//				return targetPort;
-//			}
-//			
-//			@Override
-//			public T createClient(TestConfiguration config)
-//					throws IOException, SshException, InvalidPassphraseException {
-//				return null;
-//			}
-//		});
-//	}
+	public void testRandomClientServer() throws IOException, SshException, InvalidPassphraseException, UnauthorizedException {
+		
+		log("Starting sanity check");
+		
+		testTemplate(new ForwardingTestTemplate<T>() {
+			
+			@Override
+			public int startForwarding(T client, int targetPort) throws UnauthorizedException, SshException {
+				return targetPort;
+			}
+			
+			@Override
+			public T createClient(TestConfiguration config)
+					throws IOException, SshException, InvalidPassphraseException {
+				return null;
+			}
+
+			@Override
+			public void disconnect(T client) {
+				
+			}
+		});
+	}
 	
 	
 	/**

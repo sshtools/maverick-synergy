@@ -114,6 +114,7 @@ public class SftpClientCommand extends Msh {
 			installCommand(Pwd.class);
 			installCommand(Cd.class);
 			installCommand(Ls.class);
+			installCommand(Put.class);
 		}
 		
 		@Override

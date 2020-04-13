@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import com.sshtools.client.sftp.SftpFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -20,8 +21,16 @@ import com.sshtools.server.vsession.VirtualConsole;
 
 public class Ls extends SftpCommand {
 
+	private static final String LISTING_LONG_EXTENDED = "extended";
+	private static final String LISTING_LONG_ALL = "all";
+	private static final String LISTING_LONG_DIRECTORY = "directory";
+	private static final String LISTING_LONG_LONG = "long";
+	private static final String LISTING_SHORT_EXTENDED = "x";
+	private static final String LISTING_SHORT_ALL = "a";
+	private static final String LISTING_SHORT_DIRECTORY = "d";
+	private static final String LISTING_SHORT_LONG = "l";
+
 	public Ls() {
-		//super("ls", "SFTP", "ls", "Moves the working directory to a new directory");
 		super("ls", "SFTP", UsageHelper.build("ls [options] path...",
 				"-l, --long						        Show details for each individual file/folder",
 				"-a, --all                              Show all files",
@@ -44,7 +53,7 @@ public class Ls extends SftpCommand {
 			} else {
 				List<String> paths = new ArrayList<>();
 				for(int i=1; i<args.length;i++) {
-					if(!CliHelper.isOption(args[i], "ladx")) {
+					if(!isLsOption(args[i])) {
 						paths.add(args[i]);
 					}
 				}
@@ -66,7 +75,7 @@ public class Ls extends SftpCommand {
 	private void processSftpFilesForPrinting(String[] args, VirtualConsole console, SftpFile[] sftpFiles)
 			throws SftpStatusException, SshException, IOException, PermissionDeniedException {
 		for (SftpFile sftpFile : sftpFiles) {
-			if (sftpFile.isFile() && CliHelper.hasShortOption(args, 'd')) {
+			if (sftpFile.isFile() && (isOption(args, LISTING_SHORT_DIRECTORY) || isOption(args, LISTING_LONG_DIRECTORY))) {
 				continue;
 			}
 			
@@ -79,9 +88,9 @@ public class Ls extends SftpCommand {
 		
 		SftpFileAttributes fileAttributes = file.getAttributes();
 		
-		if (!(isHidden(file)) || CliHelper.hasOption(args,'a', "all")) {
+		if (!(isHidden(file)) || (isOption(args, LISTING_SHORT_ALL) || isOption(args, LISTING_LONG_ALL))) {
 			
-			if (CliHelper.hasOption(args,'l', "all")) {
+			if (isOption(args, LISTING_SHORT_ALL) || isOption(args, LISTING_LONG_ALL)) {
 				
 				String lastModifiedTime = "";
 				long size = 0;
@@ -113,7 +122,7 @@ public class Ls extends SftpCommand {
 			} else {
 				console.println(file.getFilename());
 			}
-			if(CliHelper.hasOption(args,'x', "extended")) {
+			if(isOption(args, LISTING_SHORT_EXTENDED) || isOption(args, LISTING_LONG_EXTENDED)) {
 				for(Object name : fileAttributes.getExtendedAttributes().keySet()) {
 					Object val = fileAttributes.getExtendedAttributes().get(name);
 					console.println(String.format("%" + (CliHelper.hasShortOption(args,'l') ? 64 : 4)+ "s%s", "", name.toString() + "=" + (val == null ? "" : val.toString())));
@@ -133,5 +142,122 @@ public class Ls extends SftpCommand {
 		}
 		
 		return false;
+	}
+	
+	private static boolean isOption(String[] args, String option) {
+		for(String arg : args) {
+			if(arg.startsWith("--")) {
+				String value = arg.substring(2);
+				return isMatchinLongOptionValue(option, value);
+			} else if(arg.startsWith("-")) {
+				String value = arg.substring(1);
+				return isMatchinShortOption(option, value);
+			}
+		}
+		
+		return false;
+	}
+
+	private static boolean isMatchinShortOption(String option, String value) {
+		String[] parts = value.split("");
+		boolean result = false;
+		for (String part : parts) {
+			switch (option) {
+				case LISTING_SHORT_LONG:
+					result = isShortL(part);
+					break;
+				case LISTING_SHORT_DIRECTORY:
+					result = isShortD(part);
+					break;
+				case LISTING_SHORT_ALL:
+					result = isShortA(part);
+					break;
+				case LISTING_SHORT_EXTENDED:
+					result = isShortX(part);
+					break;
+
+				default:
+					result = false;
+			}
+			
+			if (result) return true;
+		}
+		
+		return result;
+	}
+
+	private static boolean isMatchinLongOptionValue(String option, String value) {
+		switch (option) {
+			case LISTING_LONG_LONG:
+				return isLongL(value);
+			case LISTING_LONG_DIRECTORY:
+				return isLongD(value);
+			case LISTING_LONG_ALL:
+				return isLongA(value);
+			case LISTING_LONG_EXTENDED:
+				return isLongX(value);	
+
+			default:
+				return false;
+		}
+	}
+	
+	private static boolean isLsOption(String arg) {
+		if(arg.startsWith("--")) {
+			return isLsLongOption(arg.substring(2));
+		} else if(arg.startsWith("-")) {
+			return isLsShortOption(arg.substring(1));
+		}
+		
+		return false;
+	}
+	
+	private static boolean isLsLongOption(String arg) {
+		return (isLongL(arg) || isLongD(arg) 
+				|| isLongA(arg) || isLongX(arg));
+	}
+	
+	private static boolean isLsShortOption(String arg) {
+		String[] parts = arg.split("");
+		
+		for (String part: parts) {
+			if (isShortL(part) || isShortD(part) || isShortA(part) || isShortX(part))  {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	private static boolean isShortL(String value) {
+		return Objects.equals(LISTING_SHORT_LONG, value);
+	}
+	
+	private static boolean isShortD(String value) {
+		return Objects.equals(LISTING_SHORT_DIRECTORY, value);
+	}
+	
+	private static boolean isShortA(String value) {
+		return Objects.equals(LISTING_SHORT_ALL, value);
+	}
+	
+	private static boolean isShortX(String value) {
+		return Objects.equals(LISTING_SHORT_EXTENDED, value);
+	}
+	
+	private static boolean isLongL(String value) {
+		return Objects.equals(LISTING_LONG_LONG, value);
+	}
+	
+	private static boolean isLongD(String value) {
+		return Objects.equals(LISTING_LONG_DIRECTORY, value);
+	}
+	
+	private static boolean isLongA(String value) {
+		return Objects.equals(LISTING_LONG_ALL, value);
+	}
+	
+	private static boolean isLongX(String value) {
+		return Objects.equals(LISTING_LONG_EXTENDED, value);
 	}
 }

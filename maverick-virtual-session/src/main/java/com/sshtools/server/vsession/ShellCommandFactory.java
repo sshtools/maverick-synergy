@@ -35,6 +35,7 @@ import com.sshtools.server.vsession.commands.Echo;
 import com.sshtools.server.vsession.commands.Env;
 import com.sshtools.server.vsession.commands.Exit;
 import com.sshtools.server.vsession.commands.Help;
+import com.sshtools.server.vsession.commands.Input;
 import com.sshtools.server.vsession.commands.Kill;
 import com.sshtools.server.vsession.commands.ShowLastError;
 import com.sshtools.server.vsession.commands.Sleep;
@@ -62,6 +63,7 @@ public class ShellCommandFactory extends CommandFactory<ShellCommand> {
 //		
 		commands.put("exit", Exit.class);
 		commands.put("echo", Echo.class);
+		commands.put("input", Input.class);
 		commands.put("date", Date.class);
 
 		commands.put("env", Env.class);

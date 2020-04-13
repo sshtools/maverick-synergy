@@ -19,12 +19,16 @@
 package com.sshtools.server.vsession;
 
 import java.io.IOException;
+import java.util.List;
 
+import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
+import org.jline.reader.LineReader;
+import org.jline.reader.ParsedLine;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
 
-public interface Command extends Completer {
+public interface Command {
 
 	public static final int STILL_ACTIVE = Integer.MIN_VALUE;
 	
@@ -44,6 +48,8 @@ public interface Command extends Completer {
 	public abstract int getExitCode();
 
 	public abstract boolean isHidden();
+	
+	public void complete(boolean currentlyExecuting, LineReader reader, ParsedLine line, List<Candidate> candidates);
 
 
 }

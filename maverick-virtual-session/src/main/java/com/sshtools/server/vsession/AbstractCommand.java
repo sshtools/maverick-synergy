@@ -95,7 +95,7 @@ public abstract class AbstractCommand implements Command {
 	}
 	
 	@Override
-	public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
+	public void complete(boolean currentlyExecuting, LineReader reader, ParsedLine line, List<Candidate> candidates) {
 		
 	}
 }

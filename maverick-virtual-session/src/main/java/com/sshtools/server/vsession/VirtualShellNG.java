@@ -30,9 +30,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.jline.reader.Candidate;
+import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.ParsedLine;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.spi.JnaSupport;
@@ -173,6 +177,7 @@ public class VirtualShellNG extends SessionChannelNG {
 		
         final LineReaderBuilder lineReaderBuilder = LineReaderBuilder.builder()
                 .terminal(terminal)
+                .completer(new VirtualShellCompletor())
                 .variable(LineReader.HISTORY_SIZE, 1000)
                 .variable(LineReader.HISTORY_FILE, fs.getPath(".history"));
 
@@ -233,5 +238,66 @@ public class VirtualShellNG extends SessionChannelNG {
 
 	@Override
 	protected void onChannelClosed() {
+	}
+	
+	class VirtualShellCompletor implements Completer, MshListener {
+
+		Command currentCommand = null;
+		AtomicBoolean inCommand = new AtomicBoolean();
+		VirtualShellCompletor() {
+			shell.addListener(this);
+		}
+		
+		@Override
+		public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
+			
+			if(!inCommand.get()) {
+				processShellCompletion(reader, line, candidates);
+			} else {
+				processCommandCompletion(reader, line, candidates);
+			}
+		}
+		
+		private void processCommandCompletion(LineReader reader, ParsedLine line, List<Candidate> candidates) {
+			currentCommand.complete(true, reader, line, candidates);
+		}
+
+		private void processShellCompletion(LineReader reader, ParsedLine line, List<Candidate> candidates) {
+			
+			switch(line.wordIndex()) {
+			case 0:
+				/**
+				 * This is a possible command
+				 */
+				for(String cmd : commandFactory.getSupportedCommands()) {
+					candidates.add(new Candidate(cmd));
+				}
+				break;
+			default:
+				/**
+				 * Defer to command about to be executed
+				 */
+				try {
+					ShellCommand cmd = commandFactory.createCommand(line.words().get(0), con);
+					cmd.complete(false, reader, line, candidates);
+				} catch (IllegalAccessException | InstantiationException
+						| UnsupportedCommandException | IOException
+						| PermissionDeniedException e) {
+				}
+			}
+		}
+
+		@Override
+		public void commandStarted(Command cmd, String[] args, VirtualConsole console) {
+			inCommand.set(true);
+			this.currentCommand = cmd;
+		}
+		
+		@Override
+		public void commandFinished(Command cmd, String[] args, VirtualConsole console) {
+			inCommand.set(false);
+			this.currentCommand = null;
+		}
+		
 	}
 }

@@ -2073,7 +2073,7 @@ public class SftpChannel extends AbstractSubsystem {
 			Packet msg = createPacket();
 			msg.write(SSH_FXP_OPENDIR);
 			msg.writeInt(requestId.longValue());
-			msg.writeString(path, CHARSET_ENCODING);
+			msg.writeString(absolutePath, CHARSET_ENCODING);
 			sendMessage(msg);
 
 			byte[] handle = getHandleResponse(requestId);

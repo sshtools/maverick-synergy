@@ -644,9 +644,11 @@ public class SftpClient {
 	 * </p>
 	 * 
 	 * @return the absolute path of the remote working directory.
+	 * @throws SshException 
+	 * @throws SftpStatusException 
 	 */
-	public String pwd() {
-		return cwd;
+	public String pwd() throws SftpStatusException, SshException {
+		return getAbsolutePath(cwd);
 	}
 
 	/**

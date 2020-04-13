@@ -44,14 +44,17 @@ public class VirtualConsole {
 	SessionChannelServer channel;
 	Msh shell;
 	AbstractFile cwd;
+	AbstractFileFactory<?> fileFactory;
 	
-	public VirtualConsole(SessionChannelServer channel, Environment env, Terminal terminal, LineReader reader, Msh shell) {
+	public VirtualConsole(SessionChannelServer channel, Environment env, Terminal terminal, LineReader reader, Msh shell) throws IOException, PermissionDeniedException {
 		this.channel = channel;
 		this.con = channel.getConnection();
 		this.env = env;
 		this.terminal = terminal;
 		this.reader = reader;
 		this.shell = shell;
+		this.fileFactory = getContext().getPolicy(FileSystemPolicy.class)
+				.getFileFactory().getFileFactory(con);
 	}
 	
 	public SshConnection getConnection() {
@@ -135,18 +138,21 @@ public class VirtualConsole {
 
 	public void setCurrentDirectory(String currentDirectory) throws IOException, PermissionDeniedException {
 		if(Objects.isNull(cwd)) {
-			cwd = getContext().getPolicy(FileSystemPolicy.class)
-					.getFileFactory().getFileFactory(con)
-						.getFile((String)env.getOrDefault("HOME", "/"));
+			cwd = fileFactory.getFile((String)env.getOrDefault("HOME", "/"));
+			if(!cwd.exists()) {
+				cwd.createFolder();
+				if(!cwd.exists()) {
+					throw new FileNotFoundException(String.format("User directory %s does not exist", cwd.getName()));
+				}
+			} else {
+				if(!cwd.isDirectory()) {
+					throw new IOException(String.format("%s is not a directory", cwd.getName()));
+				}
+			}
 		} 
 		
 		AbstractFile file = cwd.resolveFile(currentDirectory);
-		if(!file.exists()) {
-			file.createFolder();
-			if(!file.exists()) {
-				throw new FileNotFoundException(String.format("%s does not exist", file.getName()));
-			}
-		}
+		
 		if(!file.isDirectory()) {
 			throw new IOException(String.format("%s is not a directory", file.getName()));
 		}
@@ -163,7 +169,7 @@ public class VirtualConsole {
 	}
 
 	public AbstractFileFactory<?> getFileFactory() {
-		return cwd.getFileFactory();
+		return fileFactory;
 	}
 	
 }

@@ -152,7 +152,7 @@ public class VirtualShellNG extends SessionChannelNG {
 		return commandFactory.createShell(con);
 	}
 	
-	private VirtualConsole createConsole() throws IOException {
+	private VirtualConsole createConsole() throws IOException, PermissionDeniedException {
 		
         Pty pty = load(JnaSupport.class).open(null, null);
 

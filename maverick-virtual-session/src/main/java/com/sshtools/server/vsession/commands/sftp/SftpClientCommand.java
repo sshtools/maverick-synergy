@@ -11,16 +11,25 @@ import org.apache.commons.cli.Options;
 
 import com.sshtools.client.ClientAuthenticator;
 import com.sshtools.client.PasswordAuthenticator;
+import com.sshtools.client.PublicKeyAuthenticator;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClient;
+import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.publickey.SshPrivateKeyFile;
+import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.ssh.SshContext;
+import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.server.vsession.CommandArgumentsParser;
 import com.sshtools.server.vsession.CommandFactory;
 import com.sshtools.server.vsession.Msh;
 import com.sshtools.server.vsession.VirtualConsole;
+import com.sshtools.vsession.commands.ssh.CommandUtil;
 
 public class SftpClientCommand extends Msh {
 	
@@ -70,15 +79,43 @@ public class SftpClientCommand extends Msh {
 			String user = userAndDestination[0];
 			String destination = userAndDestination[1];
 			
-			sshClient = new SshClient(destination, sftpClientArguments.getPort(), user, new SshClientContext());
+			SshClientContext context = getSshContext(sftpClientArguments);
+			setUpCipherSpecs(sftpClientArguments, context);
+			setUpCompression(sftpClientArguments, context);
+			
+			sshClient = new SshClient(destination, sftpClientArguments.getPort(), user, context);
+			
 			ClientAuthenticator auth;
 
-			do {
-				auth = new PasswordAuthenticator(console.getLineReader().readLine("Password :", '\0'));
-				if (sshClient.authenticate(auth, 30000)) {
-					break;
+			if (CommandUtil.isNotEmpty(sftpClientArguments.getIdentityFile())) {
+				
+				String identityFile = sftpClientArguments.getIdentityFile();
+				AbstractFile identityFileTarget = console.getCurrentDirectory().resolveFile(identityFile);
+				SshPrivateKeyFile pkf = SshPrivateKeyFileFactory.parse(identityFileTarget.getInputStream());
+				
+				String passphrase = null;
+				if (pkf.isPassphraseProtected()) {
+					do {
+						passphrase = console.getLineReader().readLine("Passphrase :", '\0');
+						SshKeyPair pair = pkf.toKeyPair(passphrase);
+
+						auth = new PublicKeyAuthenticator(pair);
+
+						if (sshClient.authenticate(auth, 30000)) {
+							break;
+						}
+					} while (sshClient.isConnected());
 				}
-			} while (sshClient.isConnected());
+
+			} else {
+
+				do {
+					auth = new PasswordAuthenticator(console.getLineReader().readLine("Password :", '\0'));
+					if (sshClient.authenticate(auth, 30000)) {
+						break;
+					}
+				} while (sshClient.isConnected());
+			}
 			
 
 			Connection<SshClientContext> connection = sshClient.getConnection();
@@ -103,6 +140,35 @@ public class SftpClientCommand extends Msh {
 
 	}
 	
+	private SshClientContext getSshContext(SftpClientArguments arguments) throws IOException, SshException {
+		if (CommandUtil.isNotEmpty(arguments.getCiphers())) {
+			return new SshClientContext(SecurityLevel.NONE);
+		}
+				
+		return new SshClientContext();
+	}
+	
+	private void setUpCipherSpecs(SftpClientArguments arguments, SshClientContext ctx)
+			throws IOException, SshException {
+		if (CommandUtil.isNotEmpty(arguments.getCiphers())) {
+			String[] cipherSpecs = arguments.getCiphers();
+			
+			for (int i = cipherSpecs.length - 1; i >= 0; --i) {
+				ctx.setPreferredCipherCS(cipherSpecs[i]); 
+				ctx.setPreferredCipherSC(cipherSpecs[i]);
+			}
+			
+		}
+	}
+	
+	private void setUpCompression(SftpClientArguments arguments, SshClientContext ctx) 
+			throws IOException, SshException {
+		if (arguments.isCompression()) {
+			ctx.setPreferredCompressionCS(SshContext.COMPRESSION_ZLIB);
+ 			ctx.setPreferredCompressionSC(SshContext.COMPRESSION_ZLIB);
+		}
+	}
+	
 	class SftpCommandFactory extends CommandFactory<SftpCommand> {
 		
 		SftpClient sftpClient;
@@ -113,8 +179,17 @@ public class SftpClientCommand extends Msh {
 			installCommand(Lpwd.class);
 			installCommand(Pwd.class);
 			installCommand(Cd.class);
+			installCommand(Lcd.class);
 			installCommand(Ls.class);
 			installCommand(Put.class);
+			installCommand(Get.class);
+			installCommand(Chgrp.class);
+			installCommand(Chmod.class);
+			installCommand(Chown.class);
+			installCommand(Mkdir.class);
+			installCommand(Rename.class);
+			installCommand(Rm.class);
+			installCommand(Rmdir.class);
 		}
 		
 		@Override

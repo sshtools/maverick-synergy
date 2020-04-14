@@ -10,20 +10,19 @@ import com.sshtools.server.vsession.UsageException;
 import com.sshtools.server.vsession.VirtualConsole;
 
 /**
- * put [-afPpr] local-path [remote-path] Upload local-path and store it on the
- * remote machine. If the remote path name is not specified, it is given the
- * same name it has on the local machine. local-path may contain glob(7) charac‐
- * ters and may match multiple files. If it does and remote-path is specified,
- * then remote-path must specify a directory.
+ * get [-afPpr] remote-path [local-path] Retrieve the remote-path and store it
+ * on the local machine. If the local path name is not specified, it is given
+ * the same name it has on the remote machine. remote-path may contain glob(7)
+ * characters and may match multiple files. If it does and local-path is
+ * specified, then local-path must specify a direc‐ tory.
  * 
  * If the -a flag is specified, then attempt to resume partial transfers of
  * existing files. Note that resumption assumes that any partial copy of the
- * remote file matches the local copy. If the local file contents differ from
- * the remote local copy then the resultant file is likely to be corrupt.
+ * local file matches the remote copy. If the remote file contents differ from
+ * the partial local copy then the resultant file is likely to be corrupt.
  * 
- * If the -f flag is specified, then a request will be sent to the server to
- * call fsync(2) after the file has been transferred. Note that this is only
- * supported by servers that implement the "fsync@openssh.com" extension.
+ * If the -f flag is specified, then fsync(2) will be called after the file
+ * transfer has completed to flush the file to disk.
  * 
  * If either the -P or -p flag is specified, then full file permis‐ sions and
  * access times are copied too.
@@ -34,10 +33,10 @@ import com.sshtools.server.vsession.VirtualConsole;
  * @author user
  *
  */
-public class Put extends SftpCommand {
+public class Get extends SftpCommand {
 
-	public Put() {
-		super("put", "SFTP", "put", "Transfers a file from local to remote server.");
+	public Get() {
+		super("get", "SFTP", "get", "Transfers a file from remote to local server.");
 	}
 
 	@Override
@@ -50,23 +49,23 @@ public class Put extends SftpCommand {
 				SftpFileTransferOptions transferOptions = SftpFileTransferOptions.parse(options);
 				if (args.length == 4) {
 					if (transferOptions.isRecurse()) {
-						this.sftp.putLocalDirectory(args[2], args[3], true, false, true, null);
+						this.sftp.getRemoteDirectory(args[2], args[3], true, false, true, null);
 					} else {
-						this.sftp.put(args[2], args[3], transferOptions.isResume());
+						this.sftp.get(args[2], args[3], transferOptions.isResume());
 					}
 				} else if (args.length == 3) {
-					this.sftp.put(args[2], transferOptions.isResume());
+					this.sftp.get(args[2], transferOptions.isResume());
 				} else {
-					throw new IllegalStateException("Cannot understand `put` command.");
+					throw new IllegalStateException("Cannot understand `get` command.");
 				}
 			} else {
 				// no options
 				if (args.length == 3) {
-					this.sftp.put(args[1], args[2]);
+					this.sftp.get(args[1], args[2]);
 				} else if (args.length == 2) {
-					this.sftp.put(args[1]);
+					this.sftp.get(args[1]);
 				} else {
-					throw new IllegalStateException("Cannot understand `put` command.");
+					throw new IllegalStateException("Cannot understand `get` command.");
 				}
 			}
 
@@ -75,4 +74,5 @@ public class Put extends SftpCommand {
 			throw new IllegalStateException("Problem in transfer for file", e);
 		}
 	}
+
 }

@@ -81,6 +81,10 @@ public class DirectFile extends AbstractDirectFile<DirectFile> {
 
 	public AbstractFile resolveFile(String child) throws IOException,
 			PermissionDeniedException {
-		return new DirectFile(new File(f, child).getAbsolutePath(), fileFactory, homeDir);
+		File file = new File(child);
+		if(!file.isAbsolute()) {
+			file = new File(f, child);
+		}
+		return new DirectFile(file.getAbsolutePath(), fileFactory, homeDir);
 	}
 }

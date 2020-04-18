@@ -48,7 +48,7 @@ public interface Command {
 
 	public abstract boolean isHidden();
 	
-	public void complete(boolean currentlyExecuting, LineReader reader, ParsedLine line, List<Candidate> candidates);
+	public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates);
 
 
 }

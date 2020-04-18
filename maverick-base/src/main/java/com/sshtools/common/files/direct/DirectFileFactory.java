@@ -26,7 +26,6 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.SshConnection;
 
 @SuppressWarnings({ "unchecked", "static-access" })
 public class DirectFileFactory extends AbstractDirectFileFactory<DirectFile> {

@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -254,12 +255,16 @@ public class VirtualShellNG extends SessionChannelNG {
 			if(!inCommand.get()) {
 				processShellCompletion(reader, line, candidates);
 			} else {
-				processCommandCompletion(reader, line, candidates);
+				processInCommandCompletion(reader, line, candidates);
 			}
 		}
 		
-		private void processCommandCompletion(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-			currentCommand.complete(true, reader, line, candidates);
+		private void processInCommandCompletion(LineReader reader, ParsedLine line, List<Candidate> candidates) {
+			@SuppressWarnings("unchecked")
+			List<Candidate> tmp = (List<Candidate>) console.getEnvironment().get("_COMPLETIONS");
+			if(Objects.nonNull(tmp)) {
+				candidates.addAll(tmp);
+			}
 		}
 
 		private void processShellCompletion(LineReader reader, ParsedLine line, List<Candidate> candidates) {
@@ -279,7 +284,7 @@ public class VirtualShellNG extends SessionChannelNG {
 				 */
 				try {
 					ShellCommand cmd = commandFactory.createCommand(line.words().get(0), con);
-					cmd.complete(false, reader, line, candidates);
+					cmd.complete(reader, line, candidates);
 				} catch (IllegalAccessException | InstantiationException
 						| UnsupportedCommandException | IOException
 						| PermissionDeniedException e) {

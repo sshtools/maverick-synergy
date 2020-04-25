@@ -25,6 +25,9 @@ import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.server.vsession.commands.sftp.SftpClientOptions.CipherSpec;
+import com.sshtools.server.vsession.commands.sftp.SftpClientOptions.Compression;
+import com.sshtools.server.vsession.commands.sftp.SftpClientOptions.IdentityFile;
 import com.sshtools.server.vsession.commands.sftp.SftpClientOptions.Port;
 import com.sshtools.vsession.commands.ssh.CommandUtil;
 
@@ -72,6 +75,9 @@ public class SftpClientOptionsEvaluator {
 		SftpClientArguments arguments = new SftpClientArguments();
 
 		parsePort(commandLine, arguments);
+		parseIdentityFilename(commandLine, arguments);
+		parseCompression(commandLine, arguments);
+		parseCiphers(commandLine, arguments);
 
 		return arguments;
 	}
@@ -89,5 +95,30 @@ public class SftpClientOptionsEvaluator {
 		}
 
 		arguments.setPort(port);
+	}
+	
+	private static void parseIdentityFilename(CommandLine commandLine, SftpClientArguments arguments) {
+
+		if (commandLine.hasOption(IdentityFile.IDENTITY_FILE_OPTION)) {
+			arguments.setIdentityFile(commandLine.getOptionValue(IdentityFile.IDENTITY_FILE_OPTION));
+		}
+		
+	}
+	
+	private static void parseCompression(CommandLine commandLine, SftpClientArguments arguments) {
+		
+		if (commandLine.hasOption(Compression.COMPRESSION_OPTION)) {
+			arguments.setCompression(true);
+		}
+	}
+	
+	private static void parseCiphers(CommandLine commandLine, SftpClientArguments arguments) {
+
+		if (commandLine.hasOption(CipherSpec.CIPHER_SPEC_OPTION)) {
+			String[] cipherSpecParts = commandLine.getOptionValues(CipherSpec.CIPHER_SPEC_OPTION);
+			String[] finalValues = CommandUtil.toStringFromCsvs(cipherSpecParts);
+			arguments.setCiphers(finalValues);
+		}
+		
 	}
 }

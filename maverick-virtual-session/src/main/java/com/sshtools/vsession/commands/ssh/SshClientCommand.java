@@ -107,7 +107,7 @@ public class SshClientCommand extends ShellCommand {
 			
 			setUpCipherSpecs(arguments, ctx);
 			setUpMacSpecs(arguments, ctx);
-			setUpCompression(arguments, ctx);;
+			setUpCompression(arguments, ctx);
 			
 			sshClient = new SshClient(arguments.getDestination(), arguments.getPort(), arguments.getLoginName(), ctx);
 			ClientAuthenticator auth;

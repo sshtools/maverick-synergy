@@ -148,32 +148,41 @@ public class Msh extends ShellCommand {
 	public void run(String[] args, VirtualConsole console)
 			throws IOException, PermissionDeniedException {
 
-		if (args.length <= 1) {
-			runShell(console);
-		} else {
-			if ("c".equals(args[1]) && args.length >=3) {
-				// Execute the following arguments as a command
-				List<String> commandArgs = Arrays.asList(args).subList(1, args.length);
-				parseArgs(console, commandArgs);
+		for(MshListener listener : listeners) {
+			listener.started(args, console);
+		}
+		
+		try {
+			if (args.length <= 1) {
+				runShell(console);
 			} else {
-				source(console,
-						console.getCurrentDirectory().resolveFile(args[2]));
-			}
-			if ("s".equals(args[2]) && args.length >=3) {
-				// Read commands from standard input
-				try {
-					String line = console.readLine();
-					if (line == null) {
-						exit = true;
-					} else {
-						parseLine(line, console);
+				if ("c".equals(args[1]) && args.length >=3) {
+					// Execute the following arguments as a command
+					List<String> commandArgs = Arrays.asList(args).subList(1, args.length);
+					parseArgs(console, commandArgs);
+				} else {
+					source(console,
+							console.getCurrentDirectory().resolveFile(args[2]));
+				}
+				if ("s".equals(args[2]) && args.length >=3) {
+					// Read commands from standard input
+					try {
+						String line = console.readLine();
+						if (line == null) {
+							exit = true;
+						} else {
+							parseLine(line, console);
+						}
+						console.clear();
+					} catch (InterruptedIOException ie) {
+						console.println();
 					}
-					console.clear();
-				} catch (InterruptedIOException ie) {
-					console.println();
 				}
 			}
-
+		} finally {
+			for(MshListener listener : listeners) {
+				listener.finished(args, console);
+			}
 		}
 	}
 

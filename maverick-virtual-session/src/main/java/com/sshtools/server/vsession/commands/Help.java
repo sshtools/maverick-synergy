@@ -19,8 +19,12 @@
 package com.sshtools.server.vsession.commands;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import com.sshtools.common.files.AbstractFile;
@@ -95,7 +99,15 @@ public class Help<T extends AbstractFile> extends ShellCommand {
 				entry = subsystemsIterator.next();
 				console.println((String) entry.getKey() + " commands:");
 				comandMap = entry.getValue();
-				for (Command shellCmd : comandMap.values()) {
+				List<Command> values = new ArrayList<>(comandMap.values());
+				Collections.sort(values, new Comparator<Command>() {
+					@Override
+					public int compare(Command o1, Command o2) {
+						return o1.getCommandName().compareTo(o2.getCommandName());
+					}
+				});
+				
+				for (Command shellCmd : values) {
 					console.println(ShellUtilities.padString("", 5)
 						+ ShellUtilities.padString(shellCmd.getCommandName(), 30) + shellCmd.getDescription());
 				}

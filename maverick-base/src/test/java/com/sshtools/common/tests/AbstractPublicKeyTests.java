@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Random;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.Ignore;
 
 import com.sshtools.common.publickey.InvalidPassphraseException;
@@ -35,6 +34,7 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.IOUtils;
 
 import junit.framework.TestCase;
 
@@ -52,7 +52,7 @@ public abstract class AbstractPublicKeyTests extends TestCase {
 			assertEquals(getTestingJCE(), pair.getPublicKey().test());
 
 		} finally {
-			IOUtils.closeQuietly(in);
+			IOUtils.closeStream(in);
 		}
 	}
 	
@@ -65,7 +65,7 @@ public abstract class AbstractPublicKeyTests extends TestCase {
 			assertEquals(jce, pair.getPublicKey().test());
 
 		} finally {
-			IOUtils.closeQuietly(in);
+			IOUtils.closeStream(in);
 		}
 	}
 	
@@ -77,7 +77,7 @@ public abstract class AbstractPublicKeyTests extends TestCase {
 			assertEquals(fingerprint, fingerprint2);
 			assertEquals(getTestingJCE(), key.test());
 		} finally {
-			IOUtils.closeQuietly(in);
+			IOUtils.closeStream(in);
 		}
 	}
 	
@@ -112,7 +112,7 @@ public abstract class AbstractPublicKeyTests extends TestCase {
 			SshPrivateKeyFile file = SshPrivateKeyFileFactory.parse(in);
 			return file.toKeyPair(passphrase);
 		} finally {
-			IOUtils.closeQuietly(in);
+			IOUtils.closeStream(in);
 		}
 	}
 	

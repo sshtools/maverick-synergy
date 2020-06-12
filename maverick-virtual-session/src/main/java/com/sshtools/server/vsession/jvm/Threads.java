@@ -32,19 +32,12 @@ import com.sshtools.server.vsession.VirtualConsole;
 public class Threads extends ShellCommand {
 	public Threads() {
 		super("threads", SUBSYSTEM_JVM, UsageHelper.build("threads <threadId>..",
-				"-d     Attempt to kill the specified thread(s)",
-				"-s     Attempt to stop the specified thread(s)",
-				"-z     Attempt to suspend the specified thread(s)",
-				"-i     Attempt to interrupt the specified thread(s)",
-				"-j     Attempt to join the specified thread(s)",
-				"-r     Attempt to resume the specified thread(s)", 
 				"-1     Set specified thread(s) priority to MINIMUM",
 				"-2     Set specified thread(s) priority to NORMAL",
 				"-3     Set specified thread(s) priority to MAXIMUM"),"List all running threads");
 		setBuiltIn(false);
 	}
 
-	@SuppressWarnings("deprecation")
 	public void run(String[] args, VirtualConsole console) throws IOException {
 
 		List<?> argList = new ArrayList<>(Arrays.asList(args));
@@ -60,28 +53,12 @@ public class Threads extends ShellCommand {
 					long id = Long.parseLong((String) it.next());
 					Thread thread = threadArray[i];
 					if (thread.getId() == id) {
-						if (CliHelper.hasShortOption(args, 'i')) {
-							thread.interrupt();
-						} else if (CliHelper.hasShortOption(args, 'z')) {
-							thread.suspend();
-						} else if (CliHelper.hasShortOption(args, '1')) {
+						if (CliHelper.hasShortOption(args, '1')) {
 							thread.setPriority(Thread.MIN_PRIORITY);
 						} else if (CliHelper.hasShortOption(args, '2')) {
 							thread.setPriority(Thread.NORM_PRIORITY);
 						} else if (CliHelper.hasShortOption(args, '3')) {
 							thread.setPriority(Thread.MAX_PRIORITY);
-						} else if (CliHelper.hasShortOption(args, 's')) {
-							thread.stop();
-						} else if (CliHelper.hasShortOption(args, 'd')) {
-							thread.destroy();
-						} else if (CliHelper.hasShortOption(args, 'r')) {
-							thread.resume();
-						} else if (CliHelper.hasShortOption(args, 'j')) {
-							try {
-								thread.join();
-							} catch (InterruptedException e) {
-								console.println(e.getMessage());
-							}
 						} else {
 							printThreadInfo(console, thread, "");
 							for (StackTraceElement el : thread.getStackTrace()) {

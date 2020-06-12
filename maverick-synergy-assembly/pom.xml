@@ -25,7 +25,7 @@
     <artifactId>maverick-synergy-group</artifactId>
     <version>3.0.0-SNAPSHOT</version>
   </parent>
-  <packaging>pom</packaging>
+
   <artifactId>maverick-synergy-assembly</artifactId>
   <name>Assembly</name>
   <description>Build an archive of all the available jar files</description>
@@ -37,7 +37,22 @@
   <dependencies>
   	<dependency>
   		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-synergy-client</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-synergy-server</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
   		<artifactId>maverick-ed25519</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-x509</artifactId>
   		<version>${project.version}</version>
   	</dependency>
   	<dependency>
@@ -55,9 +70,39 @@
   		<artifactId>maverick-virtual-session</artifactId>
   		<version>${project.version}</version>
   	</dependency>
-  	  	<dependency>
+  	<dependency>
   		<groupId>com.sshtools</groupId>
   		<artifactId>maverick-zip</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-android</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-bc</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-bc-fips</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-openssh-certs</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-synergy-callback-client</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.sshtools</groupId>
+  		<artifactId>maverick-synergy-callback-server</artifactId>
   		<version>${project.version}</version>
   	</dependency>
   </dependencies>
@@ -100,6 +145,7 @@
 					<configuration>
 						<!-- switch on dependency-driven aggregation -->
 						<includeDependencySources>true</includeDependencySources>
+						
 						<dependencySourceIncludes>
 							<!-- include ONLY dependencies I control -->
 							<dependencySourceInclude>com.sshtools:*</dependencySourceInclude>

@@ -42,7 +42,7 @@
 	</licenses>
 	<scm>
 		<url>https://github.com/sshtools/maverick-synergy/</url>
-		<connection>https://github.com/sshtools/maverick-synergy.git</connection>
+		<connection>scm:git:https://github.com/sshtools/maverick-synergy.git</connection>
 	</scm>
 
 	<developers>

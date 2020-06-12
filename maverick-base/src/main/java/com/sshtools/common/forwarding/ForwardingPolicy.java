@@ -41,12 +41,14 @@ public class ForwardingPolicy extends Permissions {
 	public ForwardingPolicy() {
 	}
 	
-	public void allowGatewayForwarding() {
+	public ForwardingPolicy allowGatewayForwarding() {
 		add(GATEWAY_FORWARDING);
+		return this;
 	}
 	
-	public void denyGatewayForwarding() {
+	public ForwardingPolicy denyGatewayForwarding() {
 		remove(GATEWAY_FORWARDING);
+		return this;
 	}
 	
 	/**
@@ -54,21 +56,23 @@ public class ForwardingPolicy extends Permissions {
 	 * @param host
 	 * @param port
 	 */
-	public void grantForwarding(String host) {
+	public ForwardingPolicy grantForwarding(String host) {
 		if(host.indexOf(':')==-1)
 			host += ":*";
 		
 		permit.add(host);
+		return this;
 	}
 	
 	/**
 	 * Revoke access from a specific host.
 	 * @param host
 	 */
-	public void revokeForwarding(String host) {
+	public ForwardingPolicy revokeForwarding(String host) {
 		if(host.indexOf(':')==-1)
 			host += ":*";
 		permit.remove(host);
+		return this;
 	}
 	
 	/**
@@ -135,12 +139,14 @@ public class ForwardingPolicy extends Permissions {
 		
 	}
 
-	public void allowForwarding() {
+	public ForwardingPolicy allowForwarding() {
 		add(ALLOW_FORWARDING);
+		return this;
 	}
 
-	public void denyForwarding() {
+	public ForwardingPolicy denyForwarding() {
 		remove(ALLOW_FORWARDING);
+		return this;
 	}
 
 	public int getForwardingMaxPacketSize() {

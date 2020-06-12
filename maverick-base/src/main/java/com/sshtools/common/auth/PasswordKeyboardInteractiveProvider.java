@@ -63,6 +63,13 @@ public class PasswordKeyboardInteractiveProvider implements
 			throw new RuntimeException("Not enough answers!");
 		}
 		
+		maxAttempts--;
+		
+		if(maxAttempts < 0) {
+			state = FINISHED;
+			return false;
+		}
+		
 		switch(state) {
 		case REQUESTED_PASSWORD:
 			
@@ -73,15 +80,19 @@ public class PasswordKeyboardInteractiveProvider implements
 				for(PasswordAuthenticationProvider passwordProvider : providers) {
 					selectedProvider = passwordProvider;
 					success = passwordProvider.verifyPassword(con, username, password);
-					if(success)
-						break;
+					if(success) {
+						state = FINISHED;
+						return true;
+					}
 				}
-
-				state = FINISHED;
-				return true;
+				
+				instruction = "Sorry, try again";
+				additionalPrompts.add(new KBIPrompt(getPasswordPrompt(), false));
+				
+				return false;
 			} catch (PasswordChangeException e) {
 				state = CHANGING_PASSWORD;
-				
+				maxAttempts = 2;
 				
 				additionalPrompts.add(new KBIPrompt(getNewPasswordPrompt(), false));
 				additionalPrompts.add(new KBIPrompt(getConfirmPasswordPrompt(), false));
@@ -100,10 +111,6 @@ public class PasswordKeyboardInteractiveProvider implements
 				throw new RuntimeException("Not enough answers!");
 			}
 			
-			if(maxAttempts <= 0) {
-				state = FINISHED;
-				return true;
-			}
 			String password1 = answers[0];
 			String password2 = answers[1];
 			
@@ -119,8 +126,6 @@ public class PasswordKeyboardInteractiveProvider implements
 				} catch (PasswordChangeException e) {	
 				} catch (IOException e) {
 				}
-				
-				
 
 				state = CHANGING_PASSWORD;
 
@@ -128,15 +133,12 @@ public class PasswordKeyboardInteractiveProvider implements
 				additionalPrompts.add(new KBIPrompt(getConfirmPasswordPrompt(), false));
 				instruction = getChangePasswordFailed(username);
 
-				maxAttempts--;
-
 				return true;
 		} else {
 			instruction = getChangePasswordMismatch(username);
 			additionalPrompts.add(new KBIPrompt(getNewPasswordPrompt(), false));
 			additionalPrompts.add(new KBIPrompt(getConfirmPasswordPrompt(), false));
 
-			maxAttempts--;
 			return true;
 		}
 			

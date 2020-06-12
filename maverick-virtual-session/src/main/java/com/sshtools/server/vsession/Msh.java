@@ -189,9 +189,7 @@ public class Msh extends ShellCommand {
 	protected void source(VirtualConsole console, AbstractFile file)
 			throws IOException {
 		InputStream inputStream = file.getInputStream();
-		try {
-			BufferedReader r = new BufferedReader(new InputStreamReader(
-					inputStream));
+		try(BufferedReader r = new BufferedReader(new InputStreamReader(inputStream))) {
 			String line = null;
 			while ((line = r.readLine()) != null) {
 				parseLine(line, console);

@@ -25,12 +25,10 @@ import java.nio.channels.SocketChannel;
 import java.util.Map;
 
 import com.sshtools.common.logger.Log;
-
 import com.sshtools.common.nio.ClientConnector;
 import com.sshtools.common.nio.ProtocolEngine;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.nio.WriteOperationRequest;
-import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.IOUtils;

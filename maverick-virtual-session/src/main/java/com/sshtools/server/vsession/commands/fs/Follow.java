@@ -52,10 +52,8 @@ public class Follow extends ShellCommand {
 					_filePointer = len;
 				} else if (len > _filePointer) {
 					InputStream in = obj.getInputStream();
-					try {
-						in.skip(_filePointer);
-						BufferedReader r = new BufferedReader(
-								new InputStreamReader(in));
+					in.skip(_filePointer);
+					try(BufferedReader r = new BufferedReader(new InputStreamReader(in))) {
 						String line = null;
 						while ((line = r.readLine()) != null) {
 							process.println(line);

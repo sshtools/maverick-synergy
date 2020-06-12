@@ -21,8 +21,6 @@ package com.sshtools.common.ssh;
 import java.io.IOException;
 import java.util.Vector;
 
-import com.sshtools.common.ssh.Packet;
-
 public class PacketPool {
 
 	Vector<Packet> packets = new Vector<Packet>();

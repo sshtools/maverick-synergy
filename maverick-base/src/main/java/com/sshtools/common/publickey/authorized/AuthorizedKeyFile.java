@@ -65,8 +65,7 @@ public class AuthorizedKeyFile {
 	
 	public void load(InputStream in) throws IOException {
 		
-		try {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+		try(BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
 			String line;
 			while((line = reader.readLine()) != null) {
 				

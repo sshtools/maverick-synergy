@@ -48,8 +48,15 @@ public abstract class AbstractKnownHostsTests extends TestCase {
 		
 		String output = k.toString();
 		
+		System.out.println("----GENERATED-----");
+		System.out.println(output);
+		System.out.println("----END-----");
+		
 		String originalContent = IOUtils.toString(getClass().getResourceAsStream("/known_hosts"), "UTF-8");
 		
+		System.out.println("----ORIGINAL-----");
+		System.out.println(originalContent);
+		System.out.println("----END-----");
 		/**
 		 * Assert the original and output are the same, disregard newline convention which may differ
 		 * between operating systems.

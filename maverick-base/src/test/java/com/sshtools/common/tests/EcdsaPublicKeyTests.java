@@ -128,15 +128,15 @@ public abstract class EcdsaPublicKeyTests extends AbstractPublicKeyTests {
 	}
 
 	public void testEcdsa256bitSignatures() throws IOException, SshException, InvalidPassphraseException {
-		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/ecdsa256"), "1234567890"), 10000);
+		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/ecdsa256"), "1234567890"), 1000);
 	}
 	
 	public void testEcdsa384bitSignatures() throws IOException, SshException, InvalidPassphraseException {
-		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/ecdsa384"), "1234567890"), 10000);
+		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/ecdsa384"), "1234567890"), 1000);
 	}
 	
 	public void testEcdsa521bitSignatures() throws IOException, SshException, InvalidPassphraseException {
-		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/ecdsa521"), "1234567890"), 10000);
+		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/ecdsa521"), "1234567890"), 1000);
 	}
 	
 }

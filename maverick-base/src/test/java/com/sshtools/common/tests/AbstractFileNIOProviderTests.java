@@ -19,6 +19,7 @@
 package com.sshtools.common.tests;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,9 +42,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.files.memory.InMemoryAbstractFileFactory;
-import com.sshtools.common.files.memory.InMemoryFile;
-import com.sshtools.common.files.memory.InMemoryFileSystem;
+import com.sshtools.common.files.direct.DirectFileFactory;
 import com.sshtools.common.files.nio.AbstractFileURI;
 import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
@@ -77,11 +76,17 @@ public class AbstractFileNIOProviderTests {
 	
 	private AbstractFileFactory<?> createTestFileSystem() throws IOException {
 		
-		InMemoryFileSystem fs = new InMemoryFileSystem();
-		fs.createFile(fs.root(), "file.txt");
-		fs.createFile(fs.createFolder(fs.root(), "folder"), "child.txt");
+		File tmp = Files.createTempDirectory("synergy").toFile();
+		File f = new File(tmp, "file.txt");
+		IOUtils.writeUTF8StringToFile(f, "This is a test file");
+		f.createNewFile();
+		File folder = new File(tmp, "folder");
+		folder.mkdirs();
+		File child = new File(folder, "child.txt");
+		child.createNewFile();
 		
-		return new InMemoryAbstractFileFactory(fs);
+		return new DirectFileFactory(tmp);
+
 	}
 	
 	@Test
@@ -103,7 +108,7 @@ public class AbstractFileNIOProviderTests {
 	@Test
 	public void testPathExists() throws IOException {
 
-		Path path = fs.getPath("/file.txt");
+		Path path = fs.getPath("file.txt");
 		Assert.assertTrue(Files.exists(path));
 
 	}
@@ -111,12 +116,11 @@ public class AbstractFileNIOProviderTests {
 	@Test
 	public void testPathSize() throws IOException {
 
-		Path path = fs.getPath("/file.txt");
+		Path path = fs.getPath("file.txt");
 		
 		long count = Files.size(path);
 		
-		// TODO assert known random value
-		Assert.assertEquals(InMemoryFile.DEFAULT_FILE_SIZE, count);
+		Assert.assertEquals(19, count);
 
 	}
 	
@@ -124,7 +128,7 @@ public class AbstractFileNIOProviderTests {
 	@Test
 	public void testPathInputStream() throws IOException {
 
-		Path path = fs.getPath("/file.txt");
+		Path path = fs.getPath("file.txt");
 		
 		long count = Files.size(path);
 		
@@ -137,7 +141,7 @@ public class AbstractFileNIOProviderTests {
 	@Test
 	public void testPathOutputStreamValidateContent() throws IOException {
 
-		Path path = fs.getPath("/file.txt");
+		Path path = fs.getPath("file.txt");
 		
 		byte[] tmp = new byte[65536];
 		new SecureRandom().nextBytes(tmp);
@@ -160,7 +164,7 @@ public class AbstractFileNIOProviderTests {
 	@Test
 	public void testNewPathOutputStreamValidateContent() throws IOException {
 
-		Path path = fs.getPath("/file2.txt");
+		Path path = fs.getPath("file2.txt");
 		
 		byte[] tmp = new byte[65536];
 		new SecureRandom().nextBytes(tmp);
@@ -184,7 +188,7 @@ public class AbstractFileNIOProviderTests {
 	@Test
 	public void testPathDelete() throws IOException {
 
-		Path path = fs.getPath("/file.txt");
+		Path path = fs.getPath("file.txt");
 		Files.delete(path);
 		
 		Assert.assertFalse(Files.exists(path));
@@ -194,7 +198,7 @@ public class AbstractFileNIOProviderTests {
 	@Test
 	public void testFolderExists() throws IOException {
 
-		Path path = fs.getPath("/folder");
+		Path path = fs.getPath("folder");
 		Assert.assertTrue(Files.exists(path));
 
 	}
@@ -202,7 +206,7 @@ public class AbstractFileNIOProviderTests {
 	@Test
 	public void testFolderChildPathExists() throws IOException {
 
-		Path path = fs.getPath("/folder/child.txt");
+		Path path = fs.getPath("folder/child.txt");
 		Assert.assertTrue(Files.exists(path));
 
 	}
@@ -217,7 +221,7 @@ public class AbstractFileNIOProviderTests {
 	@Test
 	public void testFolderCreation() throws IOException {
 		
-		Path path = fs.getPath("/newfolder");
+		Path path = fs.getPath("newfolder");
 		Files.createDirectory(path);
 		
 		Assert.assertTrue(Files.exists(path));
@@ -227,7 +231,7 @@ public class AbstractFileNIOProviderTests {
 	@Test
 	public void testFolderListing() {
 		List<String> fileNames = new ArrayList<>();
-		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(fs.getPath("/"))) {
+		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(fs.getPath("."))) {
             for (Path path : directoryStream) {
                 fileNames.add(path.toString());
             }

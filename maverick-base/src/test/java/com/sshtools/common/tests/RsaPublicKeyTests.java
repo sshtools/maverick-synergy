@@ -40,7 +40,7 @@ public abstract class RsaPublicKeyTests extends AbstractPublicKeyTests {
 	
 	public void testRsaKeyNonStandard2016bitsNoPassphrase() throws IOException, SshException, InvalidPassphraseException {
 		testSignatures(testKeyGeneration(SshKeyPairGenerator.SSH2_RSA, 2016, null, 
-				"RSA public key tests", SshPrivateKeyFileFactory.OPENSSH_FORMAT), 10000);
+				"RSA public key tests", SshPrivateKeyFileFactory.OPENSSH_FORMAT), 1000);
 	}
 	
 	public void testRsaKeyGeneration2048bitsNoPassphrase() throws IOException, SshException, InvalidPassphraseException {
@@ -127,30 +127,30 @@ public abstract class RsaPublicKeyTests extends AbstractPublicKeyTests {
 	}
 
 	public void testRsa1024bitSignatures() throws IOException, SshException, InvalidPassphraseException {
-		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/rsa1024"), "1234567890"), 10000);
+		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/rsa1024"), "1234567890"), 1000);
 	}
 	
 	public void testRsa2048bitSignatures() throws IOException, SshException, InvalidPassphraseException {
-		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/rsa2048"), "1234567890"), 10000);
+		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/rsa2048"), "1234567890"), 1000);
 	}
 	
 	public void testRsa4096bitSignatures() throws IOException, SshException, InvalidPassphraseException {
-		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/rsa4096"), "1234567890"), 10000);
+		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/rsa4096"), "1234567890"), 1000);
 	}
 	
 	public void testRsa4048bitSignatures() throws IOException, SshException, InvalidPassphraseException {
-		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/rsa4048"), "1234567890"), 10000);
+		testSignatures(loadKeyPair(getClass().getResourceAsStream("/openssh/rsa4048"), "1234567890"), 1000);
 	}
 	
 	public void testRsa2048bitSHA256Signatures() throws IOException, InvalidPassphraseException, SshException {
 		SshKeyPair pair = loadKeyPair(getClass().getResourceAsStream("/openssh/rsa2048"), "1234567890");
 		pair.setPublicKey(new Ssh2RsaPublicKeySHA256((SshRsaPublicKey)pair.getPublicKey()));
-		testSignatures(pair, 10000);
+		testSignatures(pair, 1000);
 	}
 	
 	public void testRsa2048bitSHA512Signatures() throws IOException, InvalidPassphraseException, SshException {
 		SshKeyPair pair = loadKeyPair(getClass().getResourceAsStream("/openssh/rsa2048"), "1234567890");
 		pair.setPublicKey(new Ssh2RsaPublicKeySHA512((SshRsaPublicKey)pair.getPublicKey()));
-		testSignatures(pair, 10000);
+		testSignatures(pair, 1000);
 	}
 }

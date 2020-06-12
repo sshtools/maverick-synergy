@@ -193,11 +193,10 @@ public class KnownHostsKeyVerification implements
 	
 	private void addEntry(KeyEntry entry) {
 
-		if(entriesByPublicKey.containsKey(entry.getKey())) {
-			removeEntries(entry.getKey());
+		if(!entriesByPublicKey.containsKey(entry.getKey())) {
+			entriesByPublicKey.put(entry.getKey(), new ArrayList<KeyEntry>());
 		}
 		
-		entriesByPublicKey.put(entry.getKey(), new ArrayList<KeyEntry>());
 		entries.add(entry);
 		entriesByPublicKey.get(entry.getKey()).add(entry);
 		if(entry instanceof KeyEntry) {

@@ -1,24 +1,15 @@
-<!--
-
-    (c) 2002-2019 JADAPTIVE Limited. All Rights Reserved.
-
-    This file is part of the Maverick Synergy Java SSH API.
-
-    Maverick Synergy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Maverick Synergy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
-
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<!-- (c) 2002-2019 JADAPTIVE Limited. All Rights Reserved. This file is part 
+	of the Maverick Synergy Java SSH API. Maverick Synergy is free software: 
+	you can redistribute it and/or modify it under the terms of the GNU Lesser 
+	General Public License as published by the Free Software Foundation, either 
+	version 3 of the License, or (at your option) any later version. Maverick 
+	Synergy is distributed in the hope that it will be useful, but WITHOUT ANY 
+	WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
+	FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more 
+	details. You should have received a copy of the GNU Lesser General Public 
+	License along with Maverick Synergy. If not, see <https://www.gnu.org/licenses/>. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sshtools</groupId>
@@ -54,7 +45,7 @@
 			<organizationUrl>https://www.jadaptive.com</organizationUrl>
 		</developer>
 	</developers>
-	
+
 	<distributionManagement>
 		<snapshotRepository>
 			<id>ossrh-sshtools</id>
@@ -66,6 +57,36 @@
 		</repository>
 	</distributionManagement>
 
+	<profiles>
+		<profile>
+			<id>sign</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.5</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+								<configuration>
+									<gpgArguments>
+										<arg>--pinentry-mode</arg>
+										<arg>loopback</arg>
+									</gpgArguments>
+								</configuration>
+							</execution>
+
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 	<build>
 		<plugins>
 			<plugin>
@@ -110,27 +131,6 @@
 							<additionalparam>-Xdoclint:none</additionalparam>
 						</configuration>
 					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-gpg-plugin</artifactId>
-				<version>1.5</version>
-				<executions>
-					<execution>
-						<id>sign-artifacts</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>sign</goal>
-						</goals>
-						<configuration>
-			                <gpgArguments>
-			                    <arg>--pinentry-mode</arg>
-			                    <arg>loopback</arg>
-			                </gpgArguments>
-			            </configuration>
-					</execution>
-					
 				</executions>
 			</plugin>
 			<plugin>
@@ -192,9 +192,9 @@
 				</executions>
 			</plugin>
 			<plugin>
-			  <groupId>com.github.spotbugs</groupId>
-			  <artifactId>spotbugs-maven-plugin</artifactId>
-			  <version>3.1.12.2</version>
+				<groupId>com.github.spotbugs</groupId>
+				<artifactId>spotbugs-maven-plugin</artifactId>
+				<version>3.1.12.2</version>
 			</plugin>
 		</plugins>
 	</build>
@@ -207,17 +207,17 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	
+
 	<modules>
 		<module>maverick-base</module>
-		
+
 		<module>maverick-synergy-common</module>
 		<module>maverick-synergy-client</module>
 		<module>maverick-synergy-fuse-drive</module>
 		<module>maverick-synergy-server</module>
 		<module>maverick-synergy-callback-client</module>
 		<module>maverick-synergy-callback-server</module>
-		
+
 		<module>maverick-virtual-filesystem</module>
 		<module>maverick-virtual-session</module>
 		<module>maverick-x509</module>

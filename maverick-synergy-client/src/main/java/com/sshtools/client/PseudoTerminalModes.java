@@ -348,6 +348,10 @@ public class PseudoTerminalModes {
 
     public PseudoTerminalModes() {
     }
+    
+    public PseudoTerminalModes(byte[] modes) throws IOException {
+    	encodedModes.write(modes);
+    }
 
     /**
      * Clear the modes

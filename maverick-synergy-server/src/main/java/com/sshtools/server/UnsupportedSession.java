@@ -72,8 +72,7 @@ public class UnsupportedSession extends SessionChannelNG {
 
     protected boolean startShell() {
     	
-
-		con.executeTask(new ConnectionAwareTask(con) {
+    	con.executeTask(new ConnectionAwareTask(con) {
 			
 			@Override
 			protected void doTask() {
@@ -82,8 +81,8 @@ public class UnsupportedSession extends SessionChannelNG {
                 } catch (InterruptedException ex) {
                 }
                 try {
-					sendChannelDataAndBlock(message.getBytes());
-					 close();
+                	UnsupportedSession.this.sendChannelDataAndBlock(message.getBytes());
+					UnsupportedSession.this.close();
 				} catch (IOException e) {
 					Log.error("Channel I/O error", e);
 				}

@@ -37,28 +37,28 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 	ChannelInputStream stderrInputStream;
 
 	public SessionChannelNG(SshConnection con) {
-		this(con, con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(),
+		this(con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
 				null, false);
 	}
 	
-	public SessionChannelNG(SshConnection con, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace,
+	public SessionChannelNG(int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace,
 			ChannelRequestFuture closeFuture, boolean autoConsume) {
-		super(con, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
+		super(maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
 		extendedData = new CachingDataWindow(maximumWindowSpace, true);
 		stderrInputStream = new ChannelInputStream(extendedData);
 	}
 
-	public SessionChannelNG(SshConnection con, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
+	public SessionChannelNG(int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
 			int minimumWindowSpace, boolean autoConsume) {
-		this(con, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, null, autoConsume);
+		this(maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, null, autoConsume);
 	}
 
-	public SessionChannelNG(SshConnection con, int maximumPacketSize,
+	public SessionChannelNG(int maximumPacketSize,
 			int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace) {
-		this(con, maximumPacketSize, initialWindowSize,
+		this(maximumPacketSize, initialWindowSize,
 				maximumWindowSpace, minimumWindowSpace, null, false);
 	}
 

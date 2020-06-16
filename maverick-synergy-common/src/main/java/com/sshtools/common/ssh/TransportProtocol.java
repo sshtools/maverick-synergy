@@ -271,7 +271,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	long lastKeepAlive = 0;
 
 	protected T sshContext;
-	SocketConnection socketConnection;
+	protected SocketConnection socketConnection;
 	public static Object lock = new Object();
 	Date started = new Date();
 	ConnectRequestFuture connectFuture;
@@ -287,7 +287,8 @@ public abstract class TransportProtocol<T extends SshContext>
 		this.sshContext = sshContext;
 		this.ignoreMessage = new IgnoreMessage();
 		this.connectFuture = connectFuture;
-		uuid = UUID.randomUUID();
+		this.uuid = UUID.randomUUID();
+		this.incomingSwap = new byte[sshContext.getMaximumPacketLength()];
 	}
 
 	public SocketConnection getSocketConnection() {
@@ -345,8 +346,6 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 		
 		onConnected();
-		
-		this.incomingSwap = new byte[sshContext.getMaximumPacketLength()];
 
 		if (!sentLocalIdentification) {
 		

@@ -25,7 +25,6 @@ import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.RequestFuture;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
@@ -43,15 +42,15 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 	boolean flowControlEnabled;
 
 
-	public AbstractSessionChannel(SshConnection con, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
+	public AbstractSessionChannel(int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
 			int minimumWindowSpace, boolean autoConsume) {
-		super("session", con, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace,
+		super("session", maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace,
 				new ChannelRequestFuture(), autoConsume);
 	}
 
-	public AbstractSessionChannel(SshConnection con, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
+	public AbstractSessionChannel(int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
 			int minimumWindowSpace, ChannelRequestFuture closeFuture, boolean autoConsume) {
-		super("session", con, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
+		super("session", maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
 	}
 
 	@Override

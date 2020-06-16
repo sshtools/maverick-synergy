@@ -50,7 +50,6 @@ public abstract class AbstractSubsystem {
 	public AbstractSubsystem(SshConnection con) {
 		this.con = con;
 		session = new SessionChannelNG(
-				con,
 				getMaximumPacketSize(),
 				getMaximumWindowSize(), 
 				getMaximumWindowSize(),

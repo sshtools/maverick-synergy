@@ -36,10 +36,7 @@ import com.sshtools.client.components.DiffieHellmanGroup15Sha512JCE;
 import com.sshtools.client.components.DiffieHellmanGroup16Sha512JCE;
 import com.sshtools.client.components.DiffieHellmanGroup17Sha512JCE;
 import com.sshtools.client.components.DiffieHellmanGroup18Sha512JCE;
-import com.sshtools.client.components.DiffieHellmanGroup1Sha1JCE;
-import com.sshtools.client.components.DiffieHellmanGroupExchangeSha1JCE;
 import com.sshtools.client.components.DiffieHellmanGroupExchangeSha256JCE;
-import com.sshtools.client.components.Rsa1024Sha1;
 import com.sshtools.client.components.Rsa2048Sha256;
 import com.sshtools.common.knownhosts.HostKeyVerification;
 import com.sshtools.common.logger.Log;
@@ -89,7 +86,16 @@ public class SshClientContext extends SshContext {
 	AuthenticationProtocolClient authenticationClient; 
 	
 	private HostKeyVerification hkv = null;
-
+	private String proxyHostname;
+	private int proxyPort;
+	private String remoteHostname;
+	private int remotePort;
+	private String proxyUsername;
+	private String proxyPassword;
+	private boolean resolveLocally;
+	private String userAgent;
+	private Map<String,String> optionalHeaders;
+	
 	ForwardingManager<SshClientContext> forwardingManager;
 	ConnectionManager<SshClientContext> connectionManager;
 	
@@ -98,10 +104,12 @@ public class SshClientContext extends SshContext {
 	static ConnectionManager<SshClientContext> defaultConnectionManager 
 				= new ConnectionManager<SshClientContext>("client");
 	
+	private ProxyType proxyType = ProxyType.NONE;
+	
 	private static ComponentFactory<SshKeyExchange<SshClientContext>> verifiedKeyExchanges;
 	
 	public SshClientContext() throws IOException, SshException {
-		this(SecurityLevel.STRONG);
+		this(SecurityLevel.WEAK);
 	}
 	
 	public SshClientContext(SshEngine daemon, ComponentManager componentManager, SecurityLevel securityLevel) throws IOException, SshException {
@@ -110,7 +118,7 @@ public class SshClientContext extends SshContext {
 	}
 	
 	public SshClientContext(SshEngine daemon) throws IOException, SshException {
-		this(daemon, ComponentManager.getDefaultInstance(), SecurityLevel.STRONG);
+		this(daemon, ComponentManager.getDefaultInstance(), SecurityLevel.WEAK);
 	}
 	
 	public SshClientContext(SshEngine daemon, SecurityLevel securityLevel) throws IOException, SshException {
@@ -239,17 +247,6 @@ public class SshClientContext extends SshContext {
 			verifiedKeyExchanges.add(Rsa2048Sha256.RSA_2048_SHA256, Rsa2048Sha256.class);
 		}
 		
-		if (testClientKeyExchangeAlgorithm("diffie-hellman-group-exchange-sha1", DiffieHellmanGroupExchangeSha1JCE.class)) {
-			verifiedKeyExchanges.add("diffie-hellman-group-exchange-sha1", DiffieHellmanGroupExchangeSha1JCE.class);
-		}
-		
-		if (testClientKeyExchangeAlgorithm("diffie-hellman-group1-sha1", DiffieHellmanGroup1Sha1JCE.class)) {
-			verifiedKeyExchanges.add("diffie-hellman-group1-sha1", DiffieHellmanGroup1Sha1JCE.class);
-		}
-		
-		if (testClientKeyExchangeAlgorithm(Rsa1024Sha1.RSA_1024_SHA1, Rsa1024Sha1.class)) {
-			verifiedKeyExchanges.add(Rsa1024Sha1.RSA_1024_SHA1, Rsa1024Sha1.class);
-		}
 		
 		keyExchanges = (ComponentFactory<SshKeyExchange<? extends SshContext>>)verifiedKeyExchanges.clone();
 		
@@ -395,5 +392,77 @@ public class SshClientContext extends SshContext {
 		
 		((AuthenticationProtocolClient) transport.getActiveService()).doAuthentication(authenticator);
 		return authenticator;
+	}
+
+	public void enableSocks4Proxy(String proxyHostname, int proxyPort, 
+			String remoteHostname, int remotePort, String userId) {
+		
+	}
+	
+	public void enableSocks5Proxy(String proxyHostname, int proxyPort, 
+			String remoteHostname, int remotePort, 
+			String username, String password, boolean localLookup) {
+		
+	}
+	
+	public void enableHTTPProxy(String proxyHostname, int proxyPort,
+		String remoteHostname, int remotePort, 
+        String proxyUsername, String proxyPassword, 
+        String userAgent, Map<String,String> optionalHeaders ) {
+		
+		this.proxyType = ProxyType.HTTP;
+		this.proxyHostname = proxyHostname;
+		this.proxyPort = proxyPort;
+		this.remoteHostname = remoteHostname;
+		this.remotePort = remotePort;
+		this.proxyUsername = proxyUsername;
+		this.proxyPassword = proxyPassword;
+		this.userAgent = userAgent;
+		this.optionalHeaders = optionalHeaders;
+		
+	}
+	
+	public boolean isProxyEnabled() {
+		return proxyType != ProxyType.NONE;
+	}
+
+	public String getProxyHostname() {
+		return proxyHostname;
+	}
+
+	public int getProxyPort() {
+		return proxyPort;
+	}
+
+	public String getRemoteHostname() {
+		return remoteHostname;
+	}
+
+	public int getRemotePort() {
+		return remotePort;
+	}
+
+	public String getProxyUsername() {
+		return proxyUsername;
+	}
+
+	public String getProxyPassword() {
+		return proxyPassword;
+	}
+
+	public boolean isResolveLocally() {
+		return resolveLocally;
+	}
+	
+	public String getUserAgent() {
+		return userAgent;
+	}
+
+	public Map<String, String> getOptionalHeaders() {
+		return optionalHeaders;
+	}
+
+	public ProxyType getProxyType() {
+		return proxyType;
 	}
 }

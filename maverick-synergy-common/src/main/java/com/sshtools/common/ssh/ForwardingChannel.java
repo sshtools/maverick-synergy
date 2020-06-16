@@ -48,12 +48,12 @@ public abstract class ForwardingChannel<T extends SshContext>
      * @param windowSize int
      * @see com.sshtools.common.ssh.ChannelNG#Channel(String channelType, int maximumPacketSize, int initialWindowSize)
      */
-    public ForwardingChannel(String channelType, SshConnection con, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace) {
-        super(channelType, con, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace);
+    public ForwardingChannel(String channelType, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace) {
+        super(channelType, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace);
     }
     
-    public ForwardingChannel(String channelType, SshConnection con, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace, boolean autoConsume) {
-        super(channelType, con, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, new ChannelRequestFuture(), autoConsume);
+    public ForwardingChannel(String channelType, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace, boolean autoConsume) {
+        super(channelType, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, new ChannelRequestFuture(), autoConsume);
     }
 
     /**

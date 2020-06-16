@@ -51,7 +51,7 @@ public class AgentForwardingChannel extends ChannelNG<SshServerContext> implemen
 	}
 	
 	public AgentForwardingChannel(String type, SessionChannelServer session, ChannelEventListener listener) throws IOException {
-		super(type, session.getConnection(), 32768, 1024000, 1024000, 65536);
+		super(type, 32768, 1024000, 1024000, 65536);
 		this.session = session;
 		if(listener!=null) {
 			addEventListener(listener);

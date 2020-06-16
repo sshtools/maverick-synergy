@@ -33,22 +33,16 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.events.EventServiceImplementation;
-import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.files.vfs.VFSFileFactory;
-import com.sshtools.common.files.vfs.VirtualFileFactory;
-import com.sshtools.common.files.vfs.VirtualMountTemplate;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.DisconnectRequestFuture;
 import com.sshtools.common.nio.ProtocolContext;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.nio.SshEngineContext;
-import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.AuthenticationPolicy;
 import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.ChannelFactory;
 import com.sshtools.common.ssh.Connection;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
@@ -63,6 +57,7 @@ public class CallbackClient {
 	List<SshKeyPair> hostKeys = new ArrayList<>();
 	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory();
 	List<Object> defaultPolicies = new ArrayList<>();
+	FileFactory fileFactory;
 	
 	public CallbackClient() {
 		executor = getExecutorService();
@@ -226,7 +221,7 @@ public class CallbackClient {
 				MutualCallbackAuthenticationProvider.MUTUAL_KEY_AUTHENTICATION);
 		
 		sshContext.setSendIgnorePacketOnIdle(true);
-				
+		
 		configureForwarding(sshContext, config);
 		configureChannels(sshContext, config);
 		configureFilesystem(sshContext, config);
@@ -240,13 +235,7 @@ public class CallbackClient {
 	}
 
 	protected void configureFilesystem(SshServerContext sshContext, CallbackConfiguration config) {
-		
-		sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(new FileFactory() {
-			@Override
-			public AbstractFileFactory<?> getFileFactory(SshConnection con) {
-				return getFileFactory(con);
-			}
-		});
+		sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(fileFactory);
 	}
 
 	protected void configureChannels(SshServerContext sshContext, CallbackConfiguration config) {
@@ -261,17 +250,12 @@ public class CallbackClient {
 		this.hostKeys.add(pair);
 	}
 
-	protected AbstractFileFactory<?> getFileFactory(SshConnection con) {
-		try {
-			return new VirtualFileFactory(new VirtualMountTemplate(
-					"/", "tmp:///", new VFSFileFactory(), true));
-		} catch (IOException | PermissionDeniedException e) {
-			throw new IllegalStateException(e.getMessage(), e);
-		}
-	}
-
 	public void setChannelFactory(ChannelFactory<SshServerContext> channelFactory) {
 		this.channelFactory = channelFactory;
+	}
+
+	public void setFileFactory(FileFactory fileFactory) {
+		this.fileFactory = fileFactory;
 	}
 	
 }

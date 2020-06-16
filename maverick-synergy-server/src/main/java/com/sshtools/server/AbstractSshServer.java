@@ -67,7 +67,7 @@ public abstract class AbstractSshServer implements Closeable {
 	FileFactory fileFactory;
 	ForwardingPolicy forwardingPolicy = new ForwardingPolicy();
 	
-	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory(); 
+	ChannelFactory<SshServerContext> channelFactory; 
 	File confFolder = new File(".");
 	
 	protected AbstractSshServer() {
@@ -123,7 +123,7 @@ public abstract class AbstractSshServer implements Closeable {
 		if(Log.isInfoEnabled()) {
 			Log.info("Listening on port %d", this.port);
 		}
-		
+
 		engine.addListener(new SshEngineListenerAdapter() {
 
 			@Override

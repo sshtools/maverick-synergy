@@ -57,7 +57,7 @@ public class ConnectionProtocolServer extends ConnectionProtocol<SshServerContex
 
 		addTask(ExecutorOperationSupport.EVENTS, new ConnectionTaskWrapper(transport.getConnection(), new Runnable() {
 			public void run() {
-				for (ConnectionStateListener<SshServerContext> stateListener : getContext().getStateListeners()) {
+				for (ConnectionStateListener stateListener : getContext().getStateListeners()) {
 					stateListener.connected(con);
 				}
 			}

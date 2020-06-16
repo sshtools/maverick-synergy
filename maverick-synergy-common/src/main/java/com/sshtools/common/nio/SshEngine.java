@@ -498,7 +498,7 @@ public class SshEngine {
 			registerConnector(new DaemonClientConnector(protocolContext, socketChannel, future), socketChannel);
 	    }
 
-	     return future;
+	    return future;
     }
     
 	protected SocketChannel processOpenSocket(SocketChannel socketChannel) {

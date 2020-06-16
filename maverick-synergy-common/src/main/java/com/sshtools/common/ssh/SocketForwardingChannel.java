@@ -69,7 +69,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 	 * @param channeltype the type of channel i.e. "forwarded-tcpip"
 	 */
 	public SocketForwardingChannel(String channeltype, SshConnection con) {
-		super(channeltype, con, 
+		super(channeltype,  
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(), 

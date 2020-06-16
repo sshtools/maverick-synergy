@@ -18,13 +18,13 @@
  */
 package com.sshtools.common.ssh;
 
-public interface ConnectionStateListener<T extends SshContext> {
+public interface ConnectionStateListener {
 
-	default public void connected(Connection<T> con) {
+	default public void connected(SshConnection con) {
 		
 	}
 	
-	default public void disconnected(Connection<T> con) {
+	default public void disconnected(SshConnection con) {
 		
 	}
 

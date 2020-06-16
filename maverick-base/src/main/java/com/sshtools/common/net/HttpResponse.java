@@ -20,7 +20,7 @@
 package com.sshtools.common.net;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
@@ -34,8 +34,12 @@ public class HttpResponse extends HttpHeader {
     private int status;
     private String reason;
 
-    public HttpResponse(InputStream input) throws IOException {
-        begin = readLine(input);
+    public HttpResponse() throws IOException {
+    
+    }
+    
+    public void process(ByteBuffer input) throws IOException {
+    	begin = readLine(input);
 
         while (begin.trim().length() == 0) {
             begin = readLine(input);

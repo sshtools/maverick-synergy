@@ -19,6 +19,7 @@
 package com.sshtools.client;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 
@@ -26,6 +27,7 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.net.HttpRequest;
 import com.sshtools.common.nio.ConnectRequestFuture;
 import com.sshtools.common.nio.LicenseException;
 import com.sshtools.common.nio.SocketConnection;
@@ -49,6 +51,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 	
 	
 	Service pendingService; 
+	boolean proxyDone;
 	
 	//#ifdef LICENSE
 	//static final LicenseVerification license = new LicenseVerification();
@@ -96,6 +99,77 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 	@Override
 	protected boolean canConnect(SocketConnection connection) {
 		return true;
+	}
+	
+	@Override
+	public void onSocketConnect(SocketConnection connection) {
+		
+		this.socketConnection = connection;
+		
+		if(sshContext.isProxyEnabled()) {
+			switch(sshContext.getProxyType()) {
+			case HTTP:
+				sendHTTPProxyRequest();
+				break;
+			case SOCKS4:
+				
+				break;
+			case SOCKS5:
+				
+				break;
+			default:
+				throw new IllegalStateException("Proxy NONE should not mean that a isProxyEnabled returns true");
+			}
+		} else {
+			super.onSocketConnect(connection);
+		}
+	}
+
+	public boolean onSocketRead(ByteBuffer incomingData) {
+		if(sshContext.isProxyEnabled() && !proxyDone) {
+			return super.onSocketRead(incomingData);
+		} else {
+			return super.onSocketRead(incomingData);
+		}
+	}
+	
+	private void sendHTTPProxyRequest() {
+		
+		postMessage(new SshMessage() {
+			
+			HttpRequest request = new HttpRequest();
+			
+			public boolean writeMessageIntoBuffer(ByteBuffer buf) {
+
+		        request.setHeaderBegin("CONNECT " 
+		        			+ sshContext.getRemoteHostname() 
+		        			+ ":" 
+		        			+ sshContext.getRemotePort() 
+		        			+ " HTTP/1.0");
+		        request.setHeaderField("User-Agent", sshContext.getUserAgent());
+		        request.setHeaderField("Pragma", "No-Cache");
+		        request.setHeaderField("Host", sshContext.getProxyHostname());
+		        request.setHeaderField("Proxy-Connection", "Keep-Alive");
+		        
+		        if(sshContext.getProxyUsername()!=null && !"".equals(sshContext.getProxyUsername().trim())
+		        		&& sshContext.getProxyPassword()!=null && !"".equals(sshContext.getProxyPassword().trim())) {
+		        	request.setBasicAuthentication(sshContext.getProxyUsername(), sshContext.getProxyPassword());
+		        }
+		        
+		        try {
+					buf.put(request.toString().getBytes("UTF-8"));
+				} catch (UnsupportedEncodingException e) {
+					throw new IllegalStateException(e.getMessage(), e);
+				}
+				return true;
+			}
+
+			public void messageSent(Long sequenceNo) {
+				if(Log.isDebugEnabled())
+					Log.debug("Sent HTTP Proxy Request");
+					Log.debug(request.toString());
+				}
+		});
 	}
 
 	@Override

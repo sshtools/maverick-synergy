@@ -82,7 +82,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	LinkedList<ChannelRequestFuture> requests = new LinkedList<ChannelRequestFuture>();
 	ChannelRequestFuture closeFuture;
 	
-	protected final SshConnection con;
+	protected SshConnection con;
 	private ChannelInputStream channelIn;
 	private ChannelOutputStream channelOut = new ChannelOutputStream(this);
 	
@@ -98,11 +98,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	 * @param initialWindowSize
 	 *            the initial size of the local window.
 	 */
-	public ChannelNG(String channelType, SshConnection con, int maximumPacketSize,
+	public ChannelNG(String channelType,  int maximumPacketSize,
 			int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace, 
 				ChannelRequestFuture closeFuture, boolean autoConsume) {
 		this.channeltype = channelType;
-		this.con = con;
 		this.localWindow = new ChannelDataWindow(initialWindowSize, maximumWindowSpace, minimumWindowSpace, maximumPacketSize);
 		this.closeFuture = closeFuture != null ? closeFuture : new ChannelRequestFuture();
 		if(!autoConsume) {
@@ -129,9 +128,9 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		return channelOut;
 	}
 	
-	public ChannelNG(String channelType, SshConnection con, int maximumPacketSize,
+	public ChannelNG(String channelType, int maximumPacketSize,
 			int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace) {
-		this(channelType, con, maximumPacketSize,
+		this(channelType, maximumPacketSize,
 				initialWindowSize, maximumWindowSpace, 
 				minimumWindowSpace, new ChannelRequestFuture(), false);
 	}
@@ -169,6 +168,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 
 	void init(ConnectionProtocol<T> connection) {
 		this.connection = connection;
+		this.con = connection.getConnection();
 	}
 
 	/**

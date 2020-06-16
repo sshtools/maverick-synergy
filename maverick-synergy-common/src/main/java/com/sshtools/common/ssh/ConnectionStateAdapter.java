@@ -18,15 +18,15 @@
  */
 package com.sshtools.common.ssh;
 
-public class ConnectionStateAdapter<T extends SshContext> implements ConnectionStateListener<T> {
+public class ConnectionStateAdapter<T extends SshContext> implements ConnectionStateListener {
 
 	@Override
-	public void connected(Connection<T> con) {
+	public void connected(SshConnection con) {
 		
 	}
 
 	@Override
-	public void disconnected(Connection<T> con) {
+	public void disconnected(SshConnection con) {
 
 	}
 

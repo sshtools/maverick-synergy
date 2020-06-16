@@ -19,8 +19,9 @@
 /* HEADER */
 package com.sshtools.common.net;
 
+import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -42,23 +43,23 @@ public abstract class HttpHeader {
         fields = new Hashtable<String,String>();
     }
 
-    protected String readLine(InputStream in) throws IOException {
+    protected String readLine(ByteBuffer in) throws IOException {
         StringBuffer lineBuf = new StringBuffer();
         int c;
 
         while (true) {
-            c = in.read();
+            
+        	if(!in.hasRemaining()) {
+        		throw new EOFException("Unexpected EOF during HTTP header read");
+        	}
+        	
+        	c = (int) in.get() & 0xFF;
 
-            if (c == -1) {
-                throw new IOException(
-                    "Failed to read expected HTTP header line");
-            }
-
-            if (c == '\n') {
+            if (c == '\r') {
                 continue;
             }
 
-            if (c != '\r') {
+            if (c != '\n') {
                 lineBuf.append((char) c);
             } else {
                 break;
@@ -109,7 +110,7 @@ public abstract class HttpHeader {
         return str;
     }
 
-    protected void processHeaderFields(InputStream in)
+    protected void processHeaderFields(ByteBuffer in)
         throws IOException {
         fields = new Hashtable<String,String>();
 
@@ -118,17 +119,18 @@ public abstract class HttpHeader {
         int c;
 
         while (true) {
-            c = in.read();
+        	
+        	if(!in.hasRemaining()) {
+        		throw new EOFException("Unexpected EOF whilst reading HTTP Headers");
+        	}
+        	
+            c = (int) in.get() & 0xFF;
 
-            if (c == -1) {
-                throw new IOException("EOF returned from server but HTTP response is not complete!");
-            }
-
-            if (c == '\n') {
+            if (c == '\r') {
                 continue;
             }
 
-            if (c != '\r') {
+            if (c != '\n') {
                 lineBuf.append((char) c);
             } else {
                 if (lineBuf.length() != 0) {
@@ -141,7 +143,7 @@ public abstract class HttpHeader {
             }
         }
 
-        c = in.read();
+        c = (int) in.get() & 0xFF;
     }
 
     private String processNextLine(String line, String lastHeaderName)

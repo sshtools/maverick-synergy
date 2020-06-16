@@ -58,7 +58,6 @@ public abstract class AbstractCommandTask extends AbstractSessionTask<SessionCha
 
 	protected SessionChannelNG createSession(SshConnection con) {
 		return new SessionChannelNG(
-				con,
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),

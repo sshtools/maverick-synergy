@@ -246,7 +246,7 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 
 	@Override
 	protected void disconnected() {
-		for (ConnectionStateListener<SshServerContext> stateListener : getContext().getStateListeners()) {
+		for (ConnectionStateListener stateListener : getContext().getStateListeners()) {
 			stateListener.disconnected(getContext().getConnectionManager().getConnectionById(getUUID()));
 		}
 	}

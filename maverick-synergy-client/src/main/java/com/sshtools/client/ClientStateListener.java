@@ -21,18 +21,18 @@ package com.sshtools.client;
 import java.util.List;
 import java.util.Set;
 
-import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionStateListener;
+import com.sshtools.common.ssh.SshConnection;
 
-public interface ClientStateListener extends ConnectionStateListener<SshClientContext>{
+public interface ClientStateListener extends ConnectionStateListener {
 
 	default public void authenticate(AuthenticationProtocolClient auth, 
-			Connection<SshClientContext> con, Set<String> supportedAuths, 
+			SshConnection con, Set<String> supportedAuths, 
 				boolean moreRequired, List<ClientAuthenticator> authsToTry) { 
 	}
 
 	default public void authenticationStarted(AuthenticationProtocolClient authenticationProtocolClient,
-			Connection<SshClientContext> connection) {
+			SshConnection connection) {
 		
 	}
 }

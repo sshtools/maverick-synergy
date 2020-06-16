@@ -67,7 +67,6 @@ public abstract class AbstractSubsystemTask extends ConnectionAwareTask {
 	protected SessionChannelNG createSession() throws SshException {
 		
 		SessionChannelNG session = new SessionChannelNG(
-				con,
 				getMaximumPacketSize(),
 				getMaximumWindowSize(), 
 				getMaximumWindowSize(),

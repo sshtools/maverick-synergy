@@ -65,7 +65,6 @@ public abstract class AsyncSessionTask implements Runnable {
 	public void run() {
 
 		session = new SessionChannelNG(
-				con,
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),

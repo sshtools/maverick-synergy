@@ -44,7 +44,7 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 	
 	public CallbackForwardingChannel(SshConnection con, CallbackServer server) {
 		super(LocalForwardingChannel.LOCAL_FORWARDING_CHANNEL_TYPE, 
-				con, con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
+				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize(),
@@ -54,7 +54,7 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 	
 	public CallbackForwardingChannel(SshConnection con, CallbackServer server, String hostToConnect, int portToConnect) {
 		super(LocalForwardingChannel.LOCAL_FORWARDING_CHANNEL_TYPE, 
-				con, con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
+				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize(),
@@ -79,7 +79,7 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 	 *            SocketChannel
 	 */
 	public CallbackForwardingChannel(String channelType, SshConnection con, String hostToConnect, int portToConnect) {
-		super(channelType,  con, con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
+		super(channelType, con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize(),

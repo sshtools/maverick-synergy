@@ -400,20 +400,6 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 			hmacs.add("hmac-sha1-96", HmacSha196.class);
 		}
 		
-		if (testHMac("hmac-ripemd160", HmacRipeMd160.class)) {
-			hmacs.add("hmac-ripemd160", HmacRipeMd160.class);
-			hmacs.add("hmac-ripemd160@openssh.com", HmacRipeMd160.class);
-			hmacs.add("hmac-ripemd160-etm@openssh.com", HmacRipeMd160ETM.class);
-		}
-		
-		if (testHMac("hmac-md5", HmacMD5.class)) {
-			hmacs.add("hmac-md5", HmacMD5.class);
-			hmacs.add("hmac-md5-etm@openssh.com", HmacMD5ETM.class);
-		}
-
-		if (testHMac("hmac-md5-96", HmacMD596.class))
-			hmacs.add("hmac-md5-96", HmacMD596.class);
-		
 		loadExternalComponents("hmac.properties", hmacs);
 
 	}
@@ -429,7 +415,6 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 		loadExternalComponents("publickey.properties", publickeys);
 		
 		testPublicKey("ssh-rsa", Ssh2RsaPublicKey.class, publickeys);
-		testPublicKey("ssh-dss", Ssh2DsaPublicKey.class, publickeys);
 
 	}
 
@@ -475,43 +460,6 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 
 		if (testJCECipher("3des-ctr", TripleDesCtr.class)) {
 			ciphers.add("3des-ctr", TripleDesCtr.class);
-		}
-		
-		if(enableCbc) {
-			if (testJCECipher("3des-cbc", TripleDesCbc.class)) {
-				ciphers.add("3des-cbc", TripleDesCbc.class);
-			}
-	
-			if (testJCECipher("blowfish-cbc", BlowfishCbc.class)) {
-				ciphers.add("blowfish-cbc", BlowfishCbc.class);
-			}
-	
-			if (testJCECipher("aes128-cbc", AES128Cbc.class)) {
-				ciphers.add("aes128-cbc", AES128Cbc.class);
-				ciphers.remove("aes128-cbc");
-			}
-	
-			if (testJCECipher("aes192-cbc", AES192Cbc.class)) {
-				ciphers.add("aes192-cbc", AES192Cbc.class);
-				ciphers.remove("aes192-cbc");
-			}
-	
-			if (testJCECipher("aes256-cbc", AES256Cbc.class)) {
-				ciphers.add("aes256-cbc", AES256Cbc.class);
-				ciphers.remove("aes256-cbc");
-			}
-		}
-
-		if (testJCECipher("arcfour", ArcFour.class)) {
-			ciphers.add("arcfour", ArcFour.class);
-		}
-
-		if (testJCECipher("arcfour128", ArcFour128.class)) {
-			ciphers.add("arcfour128", ArcFour128.class);
-		}
-
-		if (testJCECipher("arcfour256", ArcFour256.class)) {
-			ciphers.add("arcfour256", ArcFour256.class);
 		}
 
 		if (testJCECipher("aes128-gcm@openssh.com", AES128Gcm.class)) {

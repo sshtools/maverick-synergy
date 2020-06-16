@@ -36,7 +36,6 @@ import com.sshtools.common.auth.MutualKeyAuthenticatonStore;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ProtocolContextFactory;
 import com.sshtools.common.nio.SshEngineContext;
-import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.server.AbstractSshServer;
@@ -110,20 +109,20 @@ public class CallbackServer extends AbstractSshServer {
 
 				@Override
 				public void authenticationStarted(AuthenticationProtocolClient authClient,
-						Connection<SshClientContext> con) {
+						SshConnection con) {
 					if(callbackClients.containsKey(con.getUsername())) {
 						con.disconnect(String.format("Only one connection allowed by %s at anyone time", con.getUsername()));
 					}
 				}
 
 				@Override
-				public void connected(Connection<SshClientContext> con) {
+				public void connected(SshConnection con) {
 					Log.info("Callback client %s connected", con.getUsername());
 					callbackClients.put(con.getUsername(), con);
 				}
 
 				@Override
-				public void disconnected(Connection<SshClientContext> con) {
+				public void disconnected(SshConnection con) {
 					SshConnection connected = callbackClients.get(con.getUsername());
 					if(Objects.nonNull(connected)) {
 						if(connected.equals(con)) {

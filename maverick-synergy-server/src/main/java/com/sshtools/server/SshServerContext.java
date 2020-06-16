@@ -67,10 +67,7 @@ import com.sshtools.server.components.jce.DiffieHellmanGroup15Sha512JCE;
 import com.sshtools.server.components.jce.DiffieHellmanGroup16Sha512JCE;
 import com.sshtools.server.components.jce.DiffieHellmanGroup17Sha512JCE;
 import com.sshtools.server.components.jce.DiffieHellmanGroup18Sha512JCE;
-import com.sshtools.server.components.jce.DiffieHellmanGroup1Sha1JCE;
-import com.sshtools.server.components.jce.DiffieHellmanGroupExchangeSha1JCE;
 import com.sshtools.server.components.jce.DiffieHellmanGroupExchangeSha256JCE;
-import com.sshtools.server.components.jce.Rsa1024SHA1KeyExchange;
 import com.sshtools.server.components.jce.Rsa2048SHA2KeyExchange;
 
 public class SshServerContext extends SshContext {
@@ -90,9 +87,9 @@ public class SshServerContext extends SshContext {
 	static ForwardingManager<SshServerContext> globalForwardingManager = new ForwardingManager<>();
 	static ConnectionManager<SshServerContext> globalConnectionManager = new ConnectionManager<>("server");
 		
-	Collection<ConnectionStateListener<SshServerContext>> stateListeners = new ArrayList<ConnectionStateListener<SshServerContext>>();
+	Collection<ConnectionStateListener> stateListeners = new ArrayList<ConnectionStateListener>();
 	
-	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory();
+	ChannelFactory<SshServerContext> channelFactory;
 	
 	Map<String, GlobalRequestHandler<SshServerContext>> globalRequestHandlers = Collections
 			.synchronizedMap(new HashMap<String, GlobalRequestHandler<SshServerContext>>());
@@ -130,11 +127,11 @@ public class SshServerContext extends SshContext {
 		return new TransportProtocolServer(this, connectFuture);
     }
 	
-	public void addStateListener(ConnectionStateListener<SshServerContext> stateListener) {
+	public void addStateListener(ConnectionStateListener stateListener) {
 		this.stateListeners.add(stateListener);
 	}
 
-	public Collection<ConnectionStateListener<SshServerContext>> getStateListeners() {
+	public Collection<ConnectionStateListener> getStateListeners() {
 		return stateListeners;
 	}
 	
@@ -621,21 +618,6 @@ public class SshServerContext extends SshContext {
 		if(testServerKeyExchangeAlgorithm(
 				Rsa2048SHA2KeyExchange.RSA_2048_SHA2, Rsa2048SHA2KeyExchange.class)) {
 			verifiedKeyExchanges.add(Rsa2048SHA2KeyExchange.RSA_2048_SHA2, Rsa2048SHA2KeyExchange.class);
-		}
-		
-		if(testServerKeyExchangeAlgorithm(
-				Rsa1024SHA1KeyExchange.RSA_1024_SHA1, Rsa1024SHA1KeyExchange.class)) {
-			verifiedKeyExchanges.add(Rsa1024SHA1KeyExchange.RSA_1024_SHA1, Rsa1024SHA1KeyExchange.class);
-		}
-		
-		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanGroupExchangeSha1JCE.DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA1,  DiffieHellmanGroupExchangeSha1JCE.class)) {
-			verifiedKeyExchanges.add(DiffieHellmanGroupExchangeSha1JCE.DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA1,  DiffieHellmanGroupExchangeSha1JCE.class);
-		}
-		
-		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanGroup1Sha1JCE.DIFFIE_HELLMAN_GROUP1_SHA1, DiffieHellmanGroup1Sha1JCE.class)) {
-			verifiedKeyExchanges.add(DiffieHellmanGroup1Sha1JCE.DIFFIE_HELLMAN_GROUP1_SHA1, DiffieHellmanGroup1Sha1JCE.class);
 		}
 		
 		keyExchanges = (ComponentFactory<SshKeyExchange<? extends SshContext>>)verifiedKeyExchanges.clone();

@@ -74,7 +74,7 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 	}
 
 	@Override
-	protected void onChannelDisconnect() {
+	protected void onChannelError(Throwable e) {
 
 	}
 	

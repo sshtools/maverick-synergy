@@ -27,6 +27,7 @@ import org.newsclub.net.unix.AFUNIXSocketAddress;
 import com.sshtools.agent.InMemoryKeyStore;
 import com.sshtools.agent.KeyStore;
 import com.sshtools.agent.openssh.OpenSSHConnectionFactory;
+import com.sshtools.common.logger.Log;
 
 public class SshAgentServer {
 
@@ -61,6 +62,7 @@ public class SshAgentServer {
 	}
 	
 	public void close() throws IOException {
+		Log.info("Agent server is closing down");
 		if(acceptor!=null) {
 			acceptor.close();
 		}
@@ -86,6 +88,7 @@ public class SshAgentServer {
 					t.start();
 				}
 			} catch (IOException e) {
+				Log.error("Agent server exited with error", e);
 				try {
 					socket.close();
 				} catch (IOException e1) {

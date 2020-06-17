@@ -57,7 +57,7 @@ public interface ChannelEventListener {
    * event after this.
    * @param channel channel
    */
-  default void onChannelDisconnect(Channel channel) {
+  default void onChannelError(Channel channel, Throwable e) {
   }
   
   /**

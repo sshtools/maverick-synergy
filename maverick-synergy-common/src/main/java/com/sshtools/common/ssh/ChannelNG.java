@@ -788,10 +788,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 			if(forceClose) {
 				
 				for (ChannelEventListener listener : eventListeners) {
-					listener.onChannelDisconnect(this);
+					listener.onChannelError(this, new IOException("Channel has been forced to close"));
 				}
 				
-				onChannelDisconnect();
+				onChannelError(new IOException("Channel has been forced to close"));
 			}
 			
 			completeClose();
@@ -1381,8 +1381,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		}
 	}
 
-	protected void onChannelDisconnect() {
-		
+	protected void onChannelError(Throwable e) {
 		
 	}
 }

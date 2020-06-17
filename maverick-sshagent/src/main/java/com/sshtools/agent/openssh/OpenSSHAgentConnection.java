@@ -342,6 +342,7 @@ public class OpenSSHAgentConnection implements Runnable, SshAgentConnection {
         }
 
         Log.info("Exiting agent connection thread");
+        
     }
 
     /**

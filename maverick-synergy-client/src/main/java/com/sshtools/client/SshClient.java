@@ -374,7 +374,6 @@ public class SshClient implements Closeable {
 	
 	public SessionChannelNG openSessionChannel(long timeout) throws SshException {
 		
-		
 		SessionChannelNG session = new SessionChannelNG(con);
 		con.openChannel(session);
 		session.getOpenFuture().waitFor(timeout);

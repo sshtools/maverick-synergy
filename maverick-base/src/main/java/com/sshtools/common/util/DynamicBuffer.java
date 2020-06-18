@@ -58,7 +58,8 @@ public class DynamicBuffer {
   private boolean closed = false;
   private int interrupt = 1000;
   private int timeout = 0;
-
+  private boolean closedWithError = false;
+  
   /**
    * Creates a new DynamicBuffer object.
    */
@@ -138,10 +139,15 @@ public class DynamicBuffer {
 	    }
 	  }
 
+  public synchronized void close() {
+	  close(false);
+  }
+  
   /**
    * Closes the buffer
    */
-  public synchronized void close() {
+  public synchronized void close(boolean closedWithError) {
+	this.closedWithError = closedWithError;
     if (!closed) {
       closed = true;
       notifyAll();
@@ -179,6 +185,10 @@ public class DynamicBuffer {
   protected synchronized void write(byte[] data, int offset, int len) throws
       IOException {
 
+	if(closedWithError) {
+		throw new IOException("The buffer was closed due to an unspecified error");
+	}
+		
     if (closed) {
       throw new IOException("The buffer is closed");
     }
@@ -233,6 +243,10 @@ public class DynamicBuffer {
    */
   protected synchronized int read(byte[] data, int offset, int len) throws
       IOException {
+	  
+	if(closedWithError) {
+		throw new IOException("The buffer was closed due to an unspecified error");
+	}
     try {
 
       block();
@@ -242,6 +256,10 @@ public class DynamicBuffer {
           "The blocking operation was interrupted");
     }
 
+	if(closedWithError) {
+		throw new IOException("The buffer was closed due to an unspecified error");
+	}
+	
     if (closed && available() <= 0) {
       return -1;
     }

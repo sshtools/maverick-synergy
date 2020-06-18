@@ -368,4 +368,9 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 		return transport.getLocalIdentification();
 	}
 
+	@Override
+	public void sendGlobalRequest(GlobalRequest request, boolean wantReply) {
+		connection.sendGlobalRequest(request, wantReply);;
+	}
+
 }

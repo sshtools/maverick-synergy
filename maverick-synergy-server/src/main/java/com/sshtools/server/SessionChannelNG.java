@@ -123,6 +123,10 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		rawMode = false;
 	}
 	
+	public Subsystem getSubsystem() {
+		return subsystem;
+	}
+	
 	final protected byte[] createChannel() throws java.io.IOException {
 		registerExtendedDataType(SSH_EXTENDED_DATA_STDERR);
 		return null;

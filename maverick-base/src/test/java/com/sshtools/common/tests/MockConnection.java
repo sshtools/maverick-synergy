@@ -31,6 +31,7 @@ import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.Context;
+import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshConnectionManager;
 import com.sshtools.common.ssh.components.SshPublicKey;
@@ -306,6 +307,12 @@ public class MockConnection implements SshConnection {
 	public String getCompressionInUseSC() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void sendGlobalRequest(GlobalRequest request, boolean wantReply) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 

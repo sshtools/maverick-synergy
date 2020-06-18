@@ -68,7 +68,7 @@ public interface SshConnection {
 	String getServerVersion();
 
 	void openChannel(Channel channel);
-
+	
 	String getUUID();
 
 	String getRemoteIdentification();
@@ -118,5 +118,8 @@ public interface SshConnection {
 	String getCompressionInUseCS();
 
 	String getCompressionInUseSC();
+
+	void sendGlobalRequest(GlobalRequest request, boolean wantReply);
+	
 
 }

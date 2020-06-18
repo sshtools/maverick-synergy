@@ -18,14 +18,13 @@
  */
 package com.sshtools.common.ssh;
 
-
 /**
  * This class represents a global request.
  */
 public class GlobalRequest extends AbstractRequestFuture {
 
   String name;
-  Connection<?> con;
+  SshConnection con;
   byte[] requestdata;
 
   /**
@@ -34,7 +33,7 @@ public class GlobalRequest extends AbstractRequestFuture {
    * @param the connection of the request
    * @param requestdata the request data
    */
-  public GlobalRequest(String name, Connection<?> con, byte[] requestdata) {
+  public GlobalRequest(String name, SshConnection con, byte[] requestdata) {
 	    this.name = name;
 	    this.con = con;
 	    this.requestdata = requestdata;
@@ -49,7 +48,7 @@ public class GlobalRequest extends AbstractRequestFuture {
     return name;
   }
   
-  public Connection<?> getConnection() {
+  public SshConnection getConnection() {
 	  return con;
   }
 

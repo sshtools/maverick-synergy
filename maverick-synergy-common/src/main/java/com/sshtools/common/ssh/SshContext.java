@@ -156,6 +156,9 @@ public abstract class SshContext extends ProtocolContext implements
 	/** SSH2 DSA Public Key **/
 	public static final String PUBLIC_KEY_SSHDSS = "ssh-dss";
 
+	/** ED25519 Public key */
+	public static final String PUBLIC_KEY_ED25519 = "ssh-ed25519";
+	
 	/** SSH2 RSA Public Key **/
 	public static final String PUBLIC_KEY_SSHRSA = "ssh-rsa";
 	

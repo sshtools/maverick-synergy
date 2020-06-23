@@ -16,18 +16,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.ssh;
+package com.sshtools.server;
 
-public class ConnectionStateAdapter<T extends SshContext> implements ConnectionStateListener {
+import com.sshtools.common.ssh.ConnectionStateListener;
+import com.sshtools.common.ssh.SshConnection;
 
-	@Override
-	public void connected(SshConnection con) {
+public interface ServerConnectionStateListener extends ConnectionStateListener {
+
+	default public void authenticationComplete(SshConnection con) {
 		
 	}
-
-	@Override
-	public void disconnected(SshConnection con) {
-
-	}
-
 }

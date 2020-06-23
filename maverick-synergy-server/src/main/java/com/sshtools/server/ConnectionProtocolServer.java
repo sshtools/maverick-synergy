@@ -23,6 +23,7 @@ import java.io.IOException;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.ChannelNG;
+import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionProtocol;
 import com.sshtools.common.ssh.ConnectionStateListener;
@@ -137,7 +138,7 @@ public class ConnectionProtocolServer extends ConnectionProtocol<SshServerContex
 	
 	@Override
 	protected ChannelNG<SshServerContext> createChannel(String channeltype, Connection<SshServerContext> con)
-			throws UnsupportedChannelException, PermissionDeniedException {
+			throws UnsupportedChannelException, PermissionDeniedException, ChannelOpenException {
 		return getContext().getChannelFactory().createChannel(channeltype, con);
 	}
 

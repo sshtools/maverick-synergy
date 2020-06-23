@@ -19,7 +19,7 @@
 package com.sshtools.common.ssh;
 
 public interface ConnectionStateListener {
-
+	
 	default public void connected(SshConnection con) {
 		
 	}
@@ -27,5 +27,7 @@ public interface ConnectionStateListener {
 	default public void disconnected(SshConnection con) {
 		
 	}
+
+	
 
 }

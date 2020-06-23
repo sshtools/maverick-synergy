@@ -405,6 +405,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 						+ " bytes local window space before=" + localWindow.getWindowSpace() + " after="
 						+ (localWindow.getWindowSpace() - length));
 			}
+			
 			localWindow.consume(length);
 		}
 	}

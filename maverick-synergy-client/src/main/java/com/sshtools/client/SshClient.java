@@ -369,12 +369,20 @@ public class SshClient implements Closeable {
 	}
 
 	public SessionChannelNG openSessionChannel() throws SshException {
-		return openSessionChannel(60000L);
+		return openSessionChannel(60000L, false);
 	}
 	
 	public SessionChannelNG openSessionChannel(long timeout) throws SshException {
+		return openSessionChannel(timeout, false);
+	}
+	
+	public SessionChannelNG openSessionChannel(boolean autoConsume) throws SshException {
+		return openSessionChannel(60000L, autoConsume);
+	}
+	
+	public SessionChannelNG openSessionChannel(long timeout, boolean autoConsume) throws SshException {
 		
-		SessionChannelNG session = new SessionChannelNG(con);
+		SessionChannelNG session = new SessionChannelNG(con, autoConsume);
 		con.openChannel(session);
 		session.getOpenFuture().waitFor(timeout);
 		if(session.getOpenFuture().isSuccess()) {

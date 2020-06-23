@@ -689,6 +689,11 @@ public abstract class ConnectionProtocol<T extends SshContext>
 						ChannelOpenException.ADMINISTRATIVIVELY_PROHIBITED,
 						"No permission for " + channeltype));
 				return;
+			} catch (ChannelOpenException e) {
+				transport.postMessage(new ChannelFailureMessage(remoteid,
+						e.getReason(),
+						e.getMessage()));
+				return;
 			}
 
 			channel.init(this);
@@ -722,7 +727,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 		}
 	}
 
-	protected abstract ChannelNG<T> createChannel(String channeltype, Connection<T> con) throws UnsupportedChannelException, PermissionDeniedException;
+	protected abstract ChannelNG<T> createChannel(String channeltype, Connection<T> con) throws UnsupportedChannelException, PermissionDeniedException, ChannelOpenException;
 
 	public void sendGlobalRequest(GlobalRequest request, boolean wantReply) {
 		if(Log.isDebugEnabled()) {

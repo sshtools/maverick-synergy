@@ -27,6 +27,7 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpSubsystem;
 import com.sshtools.common.ssh.ChannelFactory;
 import com.sshtools.common.ssh.ChannelNG;
+import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
@@ -45,7 +46,7 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 	}
 
 	public final ChannelNG<SshServerContext> createChannel(String channeltype, SshConnection con)
-			throws UnsupportedChannelException, PermissionDeniedException {
+			throws UnsupportedChannelException, PermissionDeniedException, ChannelOpenException {
 
 		
 		if (channeltype.equals("session")) {
@@ -71,7 +72,7 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 	}
 	
 	protected ChannelNG<SshServerContext> createSessionChannel(SshConnection con)
-			throws UnsupportedChannelException, PermissionDeniedException {
+			throws UnsupportedChannelException, PermissionDeniedException, ChannelOpenException {
 		return new UnsupportedSession(con);
 	}
 

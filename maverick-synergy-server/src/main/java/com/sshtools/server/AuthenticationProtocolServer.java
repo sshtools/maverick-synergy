@@ -367,6 +367,9 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 													EventCodes.ATTRIBUTE_AUTHENTICATION_METHODS,
 													completedAuthentications));
 
+					for(ServerConnectionStateListener listener : getContext().getStateListeners()) {
+						listener.authenticationComplete(transport.getConnection());
+					}
 					// This should be the last thing we do as this will set
 					// transport to null
 					transport.startService(new ConnectionProtocolServer(transport, username));

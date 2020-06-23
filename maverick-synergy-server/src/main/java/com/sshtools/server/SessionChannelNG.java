@@ -109,10 +109,15 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	ChannelOutputStream stderrOutputStream = new ChannelOutputStream(this, SSH_EXTENDED_DATA_STDERR);
 	
 	public SessionChannelNG(SshConnection con) {
+		this(con, false);
+	}
+	public SessionChannelNG(SshConnection con, boolean autoConsume) {
 		super("session", con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
 				0,
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
-				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize());
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
+				null,
+				autoConsume);
 	}
 
 	public void enableRawMode() {

@@ -74,7 +74,7 @@ public class CachingDataWindow {
 			cache.flip();
 			
 			int count = remaining - data.remaining();
-			if(Log.isDebugEnabled()) {
+			if(Log.isTraceEnabled()) {
 				Log.trace(String.format("Written %d bytes from cached data window position=%d remaining=%d limit=%d", 
 						count, cache.position(), cache.remaining(), cache.limit()));
 			}
@@ -101,7 +101,7 @@ public class CachingDataWindow {
 		cache.limit(cache.position() + count);
 		cache.get(tmp, offset, count);
 		cache.limit(limit);
-		if(Log.isDebugEnabled()) {
+		if(Log.isTraceEnabled()) {
 			Log.trace(String.format("Read %d bytes from cached data window position=%d remaining=%d limit=%d", 
 					count, cache.position(), cache.remaining(), cache.limit()));
 		}
@@ -128,7 +128,7 @@ public class CachingDataWindow {
 		cache.limit(cache.position() + count);
 		buffer.put(cache);
 		cache.limit(limit);
-		if(Log.isDebugEnabled()) {
+		if(Log.isTraceEnabled()) {
 			Log.trace(String.format("Read %d bytes from cached data window position=%d remaining=%d limit=%d", 
 					count, cache.position(), cache.remaining(), cache.limit()));
 		}

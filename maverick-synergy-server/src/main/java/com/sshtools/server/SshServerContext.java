@@ -47,7 +47,6 @@ import com.sshtools.common.publickey.SshPublicKeyFile;
 import com.sshtools.common.publickey.SshPublicKeyFileFactory;
 import com.sshtools.common.ssh.ChannelFactory;
 import com.sshtools.common.ssh.ConnectionManager;
-import com.sshtools.common.ssh.ConnectionStateListener;
 import com.sshtools.common.ssh.ForwardingManager;
 import com.sshtools.common.ssh.GlobalRequestHandler;
 import com.sshtools.common.ssh.SecurityLevel;
@@ -87,7 +86,7 @@ public class SshServerContext extends SshContext {
 	static ForwardingManager<SshServerContext> globalForwardingManager = new ForwardingManager<>();
 	static ConnectionManager<SshServerContext> globalConnectionManager = new ConnectionManager<>("server");
 		
-	Collection<ConnectionStateListener> stateListeners = new ArrayList<ConnectionStateListener>();
+	Collection<ServerConnectionStateListener> stateListeners = new ArrayList<>();
 	
 	ChannelFactory<SshServerContext> channelFactory;
 	
@@ -127,11 +126,11 @@ public class SshServerContext extends SshContext {
 		return new TransportProtocolServer(this, connectFuture);
     }
 	
-	public void addStateListener(ConnectionStateListener stateListener) {
+	public void addStateListener(ServerConnectionStateListener stateListener) {
 		this.stateListeners.add(stateListener);
 	}
 
-	public Collection<ConnectionStateListener> getStateListeners() {
+	public Collection<ServerConnectionStateListener> getStateListeners() {
 		return stateListeners;
 	}
 	

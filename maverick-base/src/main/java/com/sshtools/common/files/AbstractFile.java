@@ -31,26 +31,26 @@ public interface AbstractFile {
 
 	public abstract String getName();
 
-	public abstract InputStream getInputStream() throws IOException;
+	public abstract InputStream getInputStream() throws IOException, PermissionDeniedException;
 
-	public abstract boolean exists() throws IOException;
+	public abstract boolean exists() throws IOException, PermissionDeniedException;
 
 	public abstract List<AbstractFile> getChildren() throws IOException,
 			PermissionDeniedException;
 
 	public abstract String getAbsolutePath() throws IOException, PermissionDeniedException;
 
-	public abstract boolean isDirectory() throws IOException;
+	public abstract boolean isDirectory() throws IOException, PermissionDeniedException;
 
-	public abstract boolean isFile() throws IOException;
+	public abstract boolean isFile() throws IOException, PermissionDeniedException;
 
-	public abstract OutputStream getOutputStream() throws IOException;
+	public abstract OutputStream getOutputStream() throws IOException, PermissionDeniedException;
 
-	public abstract boolean isHidden() throws IOException;
+	public abstract boolean isHidden() throws IOException, PermissionDeniedException;
 
 	public abstract boolean createFolder() throws PermissionDeniedException, IOException;
 
-	public abstract boolean isReadable() throws IOException;
+	public abstract boolean isReadable() throws IOException, PermissionDeniedException;
 
 	public abstract void copyFrom(AbstractFile src) throws IOException,
 			PermissionDeniedException;
@@ -65,11 +65,11 @@ public interface AbstractFile {
 
 	public abstract void refresh();
 	
-	long lastModified() throws IOException;
+	long lastModified() throws IOException, PermissionDeniedException;
 
-	long length() throws IOException;
+	long length() throws IOException, PermissionDeniedException;
 
-	boolean isWritable() throws IOException;
+	boolean isWritable() throws IOException, PermissionDeniedException;
 
 	boolean createNewFile() throws PermissionDeniedException, IOException;
 	
@@ -81,9 +81,9 @@ public interface AbstractFile {
 	
 	boolean supportsRandomAccess();
 	
-	AbstractFileRandomAccess openFile(boolean writeAccess) throws IOException;
+	AbstractFileRandomAccess openFile(boolean writeAccess) throws IOException, PermissionDeniedException;
 
-	OutputStream getOutputStream(boolean append) throws IOException;
+	OutputStream getOutputStream(boolean append) throws IOException, PermissionDeniedException;
 	
 	AbstractFile resolveFile(String child) throws IOException, PermissionDeniedException;
 	

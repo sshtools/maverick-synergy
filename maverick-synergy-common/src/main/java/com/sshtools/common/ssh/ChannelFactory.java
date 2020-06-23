@@ -25,7 +25,7 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 
 public interface ChannelFactory<T extends SshContext> {
 
-	ChannelNG<T> createChannel(String channeltype, SshConnection con) throws UnsupportedChannelException, PermissionDeniedException;
+	ChannelNG<T> createChannel(String channeltype, SshConnection con) throws UnsupportedChannelException, PermissionDeniedException, ChannelOpenException;
     
 	Subsystem createSubsystem(String name, SessionChannel session) throws UnsupportedChannelException, PermissionDeniedException;
 

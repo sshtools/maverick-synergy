@@ -54,7 +54,6 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	InetSocketAddress remoteAddress;
 	InetSocketAddress localAddress;
 	T context;
-	AuthenticatedFuture authenticatedFuture = new AuthenticatedFuture();
 	
 	List<EventListener> listeners = new ArrayList<EventListener>();
 	Locale locale;
@@ -106,7 +105,7 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
     }
     
 	public AuthenticatedFuture getAuthenticatedFuture() {
-		return authenticatedFuture;
+		return context.getAuthenticatedFuture();
 	}
 	
 	public String getSessionId() {

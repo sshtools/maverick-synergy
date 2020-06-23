@@ -35,13 +35,17 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 
 	CachingDataWindow extendedData;
 	ChannelInputStream stderrInputStream;
-
+	
 	public SessionChannelNG(SshConnection con) {
+		this(con, false);
+	}
+
+	public SessionChannelNG(SshConnection con, boolean autoConsume) {
 		this(con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
-				null, false);
+				null, autoConsume);
 	}
 	
 	public SessionChannelNG(int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace,

@@ -26,6 +26,7 @@ import com.sshtools.common.events.EventListener;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.ssh.components.SshPublicKey;
 
+
 public interface SshConnection {
 
 	String getUsername();
@@ -120,6 +121,5 @@ public interface SshConnection {
 	String getCompressionInUseSC();
 
 	void sendGlobalRequest(GlobalRequest request, boolean wantReply);
-	
 
 }

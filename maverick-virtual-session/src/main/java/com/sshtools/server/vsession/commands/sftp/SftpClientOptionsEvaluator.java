@@ -25,42 +25,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 
 import com.sshtools.common.logger.Log;
-import com.sshtools.server.vsession.commands.sftp.SftpClientOptions.CipherSpec;
-import com.sshtools.server.vsession.commands.sftp.SftpClientOptions.Compression;
-import com.sshtools.server.vsession.commands.sftp.SftpClientOptions.IdentityFile;
-import com.sshtools.server.vsession.commands.sftp.SftpClientOptions.Port;
-import com.sshtools.vsession.commands.ssh.CommandUtil;
+import com.sshtools.vsession.commands.ssh.AbstractSshOptionsEvaluator;
+import com.sshtools.vsession.commands.ssh.SshClientArguments;
 
-public class SftpClientOptionsEvaluator {
+public class SftpClientOptionsEvaluator extends AbstractSshOptionsEvaluator{
 	
-	public static String[] extractUserAndDestination(List<String> arguments) {
-		
-		if (arguments.size() != 2) {
-			throw new IllegalArgumentException("Expected sftp command is of type `sftp user@host`.");
-		}
-		
-		String userWithDestination = arguments.get(1);
-		if (!userWithDestination.contains("@")) {
-			throw new IllegalArgumentException("Expected sftp destination is as `user@host`.");
-		}
-		
-		String[] parts = userWithDestination.split("@");
-		String user = parts[0];
-		String destination = parts[1];
-		
-		if (CommandUtil.isEmpty(user)) {
-			throw new IllegalArgumentException("User cannot be empty.");
-		}
-		
-		if (CommandUtil.isEmpty(destination)) {
-			throw new IllegalArgumentException("Destination cannot be empty");
-		}
-		
-		return new String[] {user, destination};
-		
-	}
-
-	public static SftpClientArguments evaluate(CommandLine commandLine) {
+	public static SshClientArguments evaluate(CommandLine commandLine) {
 
 		if (Log.isDebugEnabled()) {
 			Log.debug("The argument list passed as %s", commandLine.getArgList());
@@ -72,53 +42,18 @@ public class SftpClientOptionsEvaluator {
 			Log.debug("The option list passed as %s", optionList);
 		}
 
-		SftpClientArguments arguments = new SftpClientArguments();
+		SshClientArguments arguments = new SshClientArguments();
 
+
+		parseDestination(commandLine, arguments);
 		parsePort(commandLine, arguments);
+		parseLoginName(commandLine, arguments);
 		parseIdentityFilename(commandLine, arguments);
-		parseCompression(commandLine, arguments);
 		parseCiphers(commandLine, arguments);
-
+		parseMacs(commandLine, arguments);
+		parseSecurityLevel(commandLine, arguments);
+		parseCompression(commandLine, arguments);
 		return arguments;
 	}
 
-	private static void parsePort(CommandLine commandLine, SftpClientArguments arguments) {
-		int port = 22;
-
-		if (commandLine.hasOption(Port.PORT_OPTION)) {
-			String portValue = commandLine.getOptionValue(Port.PORT_OPTION);
-			try {
-				port = Integer.parseInt(portValue);
-			} catch (Exception e) {
-				port = 22;
-			}
-		}
-
-		arguments.setPort(port);
-	}
-	
-	private static void parseIdentityFilename(CommandLine commandLine, SftpClientArguments arguments) {
-
-		if (commandLine.hasOption(IdentityFile.IDENTITY_FILE_OPTION)) {
-			arguments.setIdentityFile(commandLine.getOptionValue(IdentityFile.IDENTITY_FILE_OPTION));
-		}
-		
-	}
-	
-	private static void parseCompression(CommandLine commandLine, SftpClientArguments arguments) {
-		
-		if (commandLine.hasOption(Compression.COMPRESSION_OPTION)) {
-			arguments.setCompression(true);
-		}
-	}
-	
-	private static void parseCiphers(CommandLine commandLine, SftpClientArguments arguments) {
-
-		if (commandLine.hasOption(CipherSpec.CIPHER_SPEC_OPTION)) {
-			String[] cipherSpecParts = commandLine.getOptionValues(CipherSpec.CIPHER_SPEC_OPTION);
-			String[] finalValues = CommandUtil.toStringFromCsvs(cipherSpecParts);
-			arguments.setCiphers(finalValues);
-		}
-		
-	}
 }

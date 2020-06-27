@@ -16,11 +16,12 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.vsession.commands.sftp;
+package com.sshtools.vsession.commands.ssh;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
@@ -30,38 +31,39 @@ import org.apache.commons.cli.Options;
 import com.sshtools.client.ClientAuthenticator;
 import com.sshtools.client.PasswordAuthenticator;
 import com.sshtools.client.PublicKeyAuthenticator;
+import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
-import com.sshtools.client.sftp.SftpClient;
+import com.sshtools.client.shell.ShellTimeoutException;
+import com.sshtools.client.tasks.AbstractCommandTask;
+import com.sshtools.client.tasks.ShellTask;
 import com.sshtools.common.files.AbstractFile;
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SecurityLevel;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
+import com.sshtools.common.util.IOUtils;
 import com.sshtools.server.vsession.CommandArgumentsParser;
-import com.sshtools.server.vsession.CommandFactory;
-import com.sshtools.server.vsession.Msh;
+import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.server.vsession.UsageException;
 import com.sshtools.server.vsession.VirtualConsole;
-import com.sshtools.vsession.commands.ssh.CommandUtil;
-import com.sshtools.vsession.commands.ssh.SshClientArguments;
-import com.sshtools.vsession.commands.ssh.SshClientHelper;
+import com.sshtools.server.vsession.commands.sftp.SftpClientOptions;
 
-public class SftpClientCommand extends Msh {
+public abstract class AbstractSshClientCommand extends ShellCommand {
 	
-	private Options options = new Options();
+	private String[] originalArguments = null;
+	protected Options options = new Options();
 
-	public SftpClientCommand() {
-		super("sftp", SUBSYSTEM_SHELL, "", "Returns the sftp client shell");
-		for (Option option : SftpClientOptions.getOptions()) {
-			this.options.addOption(option);
-		}
+	public AbstractSshClientCommand(String name, String subsystem, String signature, String description) {
+		super(name, subsystem, signature, description);
 	}
-
+	
 	public Options getOptions() {
 		return options;
 	}
@@ -72,7 +74,11 @@ public class SftpClientCommand extends Msh {
 
 		PrintWriter pw = new PrintWriter(out);
 		HelpFormatter formatter = new HelpFormatter();
-		formatter.printHelp(pw, formatter.getWidth(), "sftp", "", getOptions(), formatter.getLeftPadding(),
+		formatter.printHelp(pw, formatter.getWidth(), 
+				"ssh",
+				"", 
+				getOptions(), 
+				formatter.getLeftPadding(),
 				formatter.getDescPadding(), "");
 		pw.flush();
 
@@ -82,34 +88,25 @@ public class SftpClientCommand extends Msh {
 	}
 	
 	@Override
-	public void run(String[] args, VirtualConsole console) throws IOException, PermissionDeniedException {
-		
-		String[] argsCopy = new String[args.length];
-		System.arraycopy(args, 0, argsCopy, 0, args.length);
-		
-		CommandLine commandLine = CommandArgumentsParser.parse(getOptions(), argsCopy, getUsage());
-		
-		SshClientArguments arguments = SftpClientOptionsEvaluator.evaluate(commandLine);
+	public void run(String[] args, VirtualConsole console)
+			throws IOException, PermissionDeniedException, UsageException {
 
-
+		String[] filteredArgs = filterArgs(args);
+		CommandLine cli = CommandArgumentsParser.parse(getOptions(), filteredArgs, getUsage());
+		
+		SshClientArguments arguments = generateCommandArguments(cli, this.originalArguments);
+		
+		if (Log.isDebugEnabled()) {
+			Log.debug(String.format("The arguments parsed are %s", arguments));
+		}
+		
 		SshClient sshClient = null;
 		try {
 			
-			
 			sshClient = SshClientHelper.connectClient(arguments, console);
 			
-			Connection<SshClientContext> connection = sshClient.getConnection();
-
-			SftpClient sftp = new SftpClient(connection, console.getFileFactory());
-			Object previousPrompt = console.getEnvironment().put("PROMPT", "sftp> ");
-			setCommandFactory(new SftpCommandFactory(sftp));
+			runCommand(sshClient, arguments, console);
 			
-			try {
-				runShell(console);
-			} finally {
-				console.getEnvironment().put("PROMPT", previousPrompt);
-			}
-	
 		} catch (Exception e) {
 			throw new IllegalStateException(e.getMessage(), e);
 		} finally {
@@ -117,37 +114,16 @@ public class SftpClientCommand extends Msh {
 				sshClient.close();
 			}
 		}
-
 	}
-	
-	class SftpCommandFactory extends CommandFactory<SftpCommand> {
-		
-		SftpClient sftpClient;
-		
-		SftpCommandFactory(SftpClient sftpClient) {
-			this.sftpClient = sftpClient;
-			installCommand(Quit.class);
-			installCommand(Lpwd.class);
-			installCommand(Pwd.class);
-			installCommand(Cd.class);
-			installCommand(Lcd.class);
-			installCommand(Ls.class);
-			installCommand(Put.class);
-			installCommand(Get.class);
-			installCommand(Chgrp.class);
-			installCommand(Chmod.class);
-			installCommand(Chown.class);
-			installCommand(Mkdir.class);
-			installCommand(Rename.class);
-			installCommand(Rm.class);
-			installCommand(Rmdir.class);
-		}
-		
-		@Override
-		protected void configureCommand(SftpCommand command, SshConnection con)
-				throws IOException, PermissionDeniedException {
-			command.setSftpClient(this.sftpClient);
-		}
+
+	protected abstract void runCommand(SshClient sshClient, SshClientArguments arguments, VirtualConsole console);
+
+	protected abstract SshClientArguments generateCommandArguments(CommandLine cli, String[] args);
+
+	protected String[] filterArgs(String[] args) {
+		this.originalArguments = args;
+		int indexTillSshClientCommandFound = SshClientOptionsExtractor.extractSshCommandLineFromExecuteCommand(args);
+		return Arrays.copyOfRange(args, 0, indexTillSshClientCommandFound + 1);
 	}
 
 }

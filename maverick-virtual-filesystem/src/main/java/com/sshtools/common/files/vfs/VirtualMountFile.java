@@ -53,7 +53,7 @@ public class VirtualMountFile implements VirtualFile {
 		file = mount.getActualFileFactory().getFile(mount.getResolvePath(path));
 	}
 	
-	public boolean exists() throws IOException {
+	public boolean exists() throws IOException, PermissionDeniedException {
 		return file.exists();
 	}
 
@@ -61,7 +61,7 @@ public class VirtualMountFile implements VirtualFile {
 		return file.createFolder();
 	}
 
-	public long lastModified() throws IOException {
+	public long lastModified() throws IOException, PermissionDeniedException {
 		return file.lastModified();
 	}
 
@@ -69,7 +69,7 @@ public class VirtualMountFile implements VirtualFile {
 		return name;
 	}
 
-	public long length() throws IOException {
+	public long length() throws IOException, PermissionDeniedException {
 		return file.length();
 	}
 
@@ -78,11 +78,11 @@ public class VirtualMountFile implements VirtualFile {
 		return file.getAttributes();
 	}
 
-	public boolean isHidden() throws IOException {
+	public boolean isHidden() throws IOException, PermissionDeniedException {
 		return file.isHidden();
 	}
 
-	public boolean isDirectory() throws IOException {
+	public boolean isDirectory() throws IOException, PermissionDeniedException {
 		return file.isDirectory();
 	}
 
@@ -125,7 +125,7 @@ public class VirtualMountFile implements VirtualFile {
 
 	}
 
-	public boolean isFile() throws IOException {
+	public boolean isFile() throws IOException, PermissionDeniedException {
 		return file.isFile();
 	}
 
@@ -134,15 +134,15 @@ public class VirtualMountFile implements VirtualFile {
 		return path;
 	}
 
-	public InputStream getInputStream() throws IOException {
+	public InputStream getInputStream() throws IOException, PermissionDeniedException {
 		return file.getInputStream();
 	}
 
-	public OutputStream getOutputStream() throws IOException {
+	public OutputStream getOutputStream() throws IOException, PermissionDeniedException {
 		return file.getOutputStream();
 	}
 
-	public boolean isReadable() throws IOException {
+	public boolean isReadable() throws IOException, PermissionDeniedException {
 		return file.isReadable();
 	}
 
@@ -165,7 +165,7 @@ public class VirtualMountFile implements VirtualFile {
 		file.refresh();
 	}
 
-	public boolean isWritable() throws IOException {
+	public boolean isWritable() throws IOException, PermissionDeniedException {
 		return file.isWritable();
 	}
 
@@ -192,11 +192,11 @@ public class VirtualMountFile implements VirtualFile {
 	}
 
 	public AbstractFileRandomAccess openFile(boolean writeAccess)
-			throws IOException {
+			throws IOException, PermissionDeniedException {
 		return file.openFile(writeAccess);
 	}
 
-	public OutputStream getOutputStream(boolean append) throws IOException {
+	public OutputStream getOutputStream(boolean append) throws IOException, PermissionDeniedException {
 		return file.getOutputStream(append);
 	}
 

@@ -361,7 +361,7 @@ public final class AbstractFileSystem {
 	}
 
 	public int readFile(byte[] handle, UnsignedInteger64 offset, byte[] buf, int start, int numBytesToRead)
-			throws InvalidHandleException, EOFException, IOException {
+			throws InvalidHandleException, EOFException, IOException, PermissionDeniedException {
 		String shandle = getHandle(handle);
 
 		if (openFiles.containsKey(shandle)) {
@@ -387,7 +387,7 @@ public final class AbstractFileSystem {
 	}
 
 	public void writeFile(byte[] handle, UnsignedInteger64 offset, byte[] data, int off, int len)
-			throws InvalidHandleException, IOException {
+			throws InvalidHandleException, IOException, PermissionDeniedException {
 		String shandle = getHandle(handle);
 
 		if (openFiles.containsKey(shandle)) {
@@ -622,7 +622,7 @@ public final class AbstractFileSystem {
 		AbstractFileRandomAccess raf;
 		boolean closed;
 
-		public OpenFile(AbstractFile f, UnsignedInteger32 flags) throws IOException {
+		public OpenFile(AbstractFile f, UnsignedInteger32 flags) throws IOException, PermissionDeniedException {
 			this.f = f;
 			this.flags = flags;
 			if (f.supportsRandomAccess()) {
@@ -663,7 +663,7 @@ public final class AbstractFileSystem {
 			closed = true;
 		}
 
-		public int read(byte[] buf, int off, int len) throws IOException {
+		public int read(byte[] buf, int off, int len) throws IOException, PermissionDeniedException {
 			if(closed) {
 				return -1;
 			}
@@ -692,7 +692,7 @@ public final class AbstractFileSystem {
 			}
 		}
 
-		public void write(byte[] buf, int off, int len) throws IOException {
+		public void write(byte[] buf, int off, int len) throws IOException, PermissionDeniedException {
 			if(closed) {
 				throw new IOException("File has been closed.");
 			}
@@ -707,7 +707,7 @@ public final class AbstractFileSystem {
 			}
 		}
 
-		private OutputStream getOutputStream() throws IOException {
+		private OutputStream getOutputStream() throws IOException, PermissionDeniedException {
 			if(closed) {
 				throw new IOException("File has been closed [getOutputStream].");
 			}
@@ -716,7 +716,7 @@ public final class AbstractFileSystem {
 			return out;
 		}
 
-		private InputStream getInputStream() throws IOException {
+		private InputStream getInputStream() throws IOException, PermissionDeniedException {
 			if(closed) {
 				throw new IOException("File has been closed [getInputStream].");
 			}

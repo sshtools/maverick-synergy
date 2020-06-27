@@ -1271,7 +1271,13 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				return;
 			} catch (EOFException eof) {
 				sendStatusMessage(id, STATUS_FX_EOF, eof.getMessage());
-			} catch (InvalidHandleException ihe) {
+			} catch(PermissionDeniedException e) {
+				if (evt != null) {
+					evt.error = true;
+					evt.ex = e;
+				}
+				sendStatusMessage(id, STATUS_FX_PERMISSION_DENIED, e.getMessage());
+		    } catch (InvalidHandleException ihe) {
 				if (evt != null) {
 					evt.error = true;
 					evt.ex = ihe;
@@ -1408,7 +1414,13 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 					evt.ex = ihe;
 				}
 				sendStatusMessage(id, STATUS_FX_FAILURE, ihe.getMessage());
-			} catch (FileNotFoundException ioe2) {
+			}  catch(PermissionDeniedException e) {
+				if (evt != null) {
+					evt.error = true;
+					evt.ex = e;
+				}
+				sendStatusMessage(id, STATUS_FX_PERMISSION_DENIED, e.getMessage());
+		    } catch (FileNotFoundException ioe2) {
 				if (evt != null) {
 					evt.error = true;
 					evt.ex = ioe2;

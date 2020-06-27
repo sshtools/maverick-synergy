@@ -1498,7 +1498,7 @@ public abstract class AbstractFileTest {
 		}
 	}
 	
-	private byte[] getFileContent(AbstractFile abstractFile) throws IOException {
+	private byte[] getFileContent(AbstractFile abstractFile) throws IOException, PermissionDeniedException {
 		InputStream inputStream = null; 
 		try {
 			inputStream = abstractFile.getInputStream();
@@ -1513,7 +1513,7 @@ public abstract class AbstractFileTest {
 		
 	}
 	
-	private void addContentToFile(AbstractFile abstractFile, byte[] data) throws IOException {
+	private void addContentToFile(AbstractFile abstractFile, byte[] data) throws IOException, PermissionDeniedException {
 		OutputStream outputStream = null;
 		try {
 			outputStream = abstractFile.getOutputStream();

@@ -77,7 +77,11 @@ public class SshClientCommand extends ShellCommand {
 
 		PrintWriter pw = new PrintWriter(out);
 		HelpFormatter formatter = new HelpFormatter();
-		formatter.printHelp(pw, formatter.getWidth(), "ssh", "", getOptions(), formatter.getLeftPadding(),
+		formatter.printHelp(pw, formatter.getWidth(), 
+				"ssh",
+				"", 
+				getOptions(), 
+				formatter.getLeftPadding(),
 				formatter.getDescPadding(), "");
 		pw.flush();
 
@@ -99,7 +103,6 @@ public class SshClientCommand extends ShellCommand {
 			Log.debug(String.format("The arguments parsed are %s", arguments));
 		}
 		
-
 		SshClient sshClient = null;
 		try {
 			
@@ -132,10 +135,11 @@ public class SshClientCommand extends ShellCommand {
 					} while (sshClient.isConnected());
 				}
 
-			} else {
+			} 
 
+			if(!sshClient.isAuthenticated()) {
 				do {
-					auth = new PasswordAuthenticator(console.getLineReader().readLine("Password :", '\0'));
+					auth = new PasswordAuthenticator(console.getLineReader().readLine("Password :", '*'));
 					if (sshClient.authenticate(auth, 30000)) {
 						break;
 					}

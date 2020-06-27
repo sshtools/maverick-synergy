@@ -66,7 +66,7 @@ public abstract class AbstractFileImpl<T extends AbstractFile> implements Abstra
 	
 	}
 	
-	public OutputStream getOutputStream(boolean append) throws IOException {
+	public OutputStream getOutputStream(boolean append) throws IOException, PermissionDeniedException {
 		if(!append) {
 			return getOutputStream();
 		}
@@ -94,7 +94,7 @@ public abstract class AbstractFileImpl<T extends AbstractFile> implements Abstra
 
     	AbstractFileRandomAccess content;
     	
-    	AppendOutputStream() throws IOException {
+    	AppendOutputStream() throws IOException, PermissionDeniedException {
     		if(!exists()) {
     			try {
 					createNewFile();

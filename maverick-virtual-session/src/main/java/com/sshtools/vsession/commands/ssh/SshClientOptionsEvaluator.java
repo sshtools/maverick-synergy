@@ -18,6 +18,7 @@
  */
 package com.sshtools.vsession.commands.ssh;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,6 +37,12 @@ import com.sshtools.vsession.commands.ssh.SshClientOptions.SecurityLevel;
 
 public class SshClientOptionsEvaluator {
 
+	static List<SshOptionsResolver> resolvers = new ArrayList<>();
+	
+	public static void addResolver(SshOptionsResolver resolver) {
+		resolvers.add(resolver);
+	}
+	
 	public static SshClientArguments evaluate(CommandLine commandLine, String[] originalArguments) {
 		
 		if (Log.isDebugEnabled()) {
@@ -65,7 +72,7 @@ public class SshClientOptionsEvaluator {
 	}
 	
 	private static void parseDestination(CommandLine commandLine, SshClientArguments arguments) {
-		// [ssh, admin@localhost]
+
 		List<String> commandLineArguments = commandLine.getArgList();
 		String destination = commandLineArguments.get(1);
 		String loginName = null;
@@ -74,9 +81,16 @@ public class SshClientOptionsEvaluator {
 			loginName = destinationParts[0];
 			destination = destinationParts[1];
 		}
-	
+		
 		arguments.setDestination(destination);
 		arguments.setLoginName(loginName);
+		
+		
+		for(SshOptionsResolver resolver : resolvers) {
+			if(resolver.resolveDestination(destination, arguments)) {
+				break;
+			}
+		}
 	}
 	
 	

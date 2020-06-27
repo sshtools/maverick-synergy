@@ -28,6 +28,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 
 import com.sshtools.common.files.AbstractFile;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.util.IOUtils;
 
 public class AbstractFileSeekableByteChannel implements SeekableByteChannel {
@@ -53,6 +54,8 @@ public class AbstractFileSeekableByteChannel implements SeekableByteChannel {
 			try(InputStream in = new FileInputStream(tmpfile)) {
 				IOUtils.copy(in, out);
 			}
+		} catch (PermissionDeniedException e) {
+			throw new IOException(e.getMessage(), e);
 		}
 	}
 

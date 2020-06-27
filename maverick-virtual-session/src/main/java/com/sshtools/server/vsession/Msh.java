@@ -187,7 +187,7 @@ public class Msh extends ShellCommand {
 	}
 
 	protected void source(VirtualConsole console, AbstractFile file)
-			throws IOException {
+			throws IOException, PermissionDeniedException {
 		InputStream inputStream = file.getInputStream();
 		try(BufferedReader r = new BufferedReader(new InputStreamReader(inputStream))) {
 			String line = null;

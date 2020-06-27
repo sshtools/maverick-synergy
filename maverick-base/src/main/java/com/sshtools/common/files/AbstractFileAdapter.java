@@ -41,7 +41,7 @@ public class AbstractFileAdapter implements AbstractFile {
 		this.file = file;
 	}
 	
-	public boolean exists() throws IOException {
+	public boolean exists() throws IOException, PermissionDeniedException {
 		return file.exists();
 	}
 
@@ -49,7 +49,7 @@ public class AbstractFileAdapter implements AbstractFile {
 		return file.createFolder();
 	}
 
-	public long lastModified() throws IOException{
+	public long lastModified() throws IOException, PermissionDeniedException{
 		return file.lastModified();
 	}
 
@@ -57,7 +57,7 @@ public class AbstractFileAdapter implements AbstractFile {
 		return file.getName();
 	}
 
-	public long length() throws IOException {
+	public long length() throws IOException, PermissionDeniedException {
 		return file.length();
 	}
 
@@ -65,7 +65,7 @@ public class AbstractFileAdapter implements AbstractFile {
 		return file.getAttributes();
 	}
 
-	public boolean isDirectory() throws IOException{
+	public boolean isDirectory() throws IOException, PermissionDeniedException {
 		return file.isDirectory();
 	}
 
@@ -73,7 +73,7 @@ public class AbstractFileAdapter implements AbstractFile {
 		return file.getChildren();
 	}
 
-	public boolean isFile() throws IOException {
+	public boolean isFile() throws IOException, PermissionDeniedException {
 		return file.isFile();
 	}
 
@@ -81,7 +81,7 @@ public class AbstractFileAdapter implements AbstractFile {
 		return file.getAbsolutePath();
 	}
 
-	public boolean isReadable() throws IOException {
+	public boolean isReadable() throws IOException, PermissionDeniedException {
 		return file.isReadable();
 	}
 
@@ -94,7 +94,7 @@ public class AbstractFileAdapter implements AbstractFile {
 		file.truncate();
 	}
 
-	public InputStream getInputStream() throws IOException {
+	public InputStream getInputStream() throws IOException, PermissionDeniedException {
 		return file.getInputStream();
 	}
 
@@ -110,19 +110,19 @@ public class AbstractFileAdapter implements AbstractFile {
 		return file.supportsRandomAccess();
 	}
 
-	public AbstractFileRandomAccess openFile(boolean writeAccess) throws IOException {
+	public AbstractFileRandomAccess openFile(boolean writeAccess) throws IOException, PermissionDeniedException {
 		return file.openFile(writeAccess);
 	}
 
-	public boolean isHidden() throws IOException {
+	public boolean isHidden() throws IOException, PermissionDeniedException {
 		return file.isHidden();
 	}
 
-	public OutputStream getOutputStream() throws IOException {
+	public OutputStream getOutputStream() throws IOException, PermissionDeniedException {
 		return file.getOutputStream();
 	}
 
-	public boolean isWritable() throws IOException {
+	public boolean isWritable() throws IOException, PermissionDeniedException {
 		return file.isWritable();
 	}
 
@@ -146,7 +146,7 @@ public class AbstractFileAdapter implements AbstractFile {
 		file.refresh();
 	}
 
-	public OutputStream getOutputStream(boolean append) throws IOException {
+	public OutputStream getOutputStream(boolean append) throws IOException, PermissionDeniedException {
 		return file.getOutputStream(append);
 	}
 

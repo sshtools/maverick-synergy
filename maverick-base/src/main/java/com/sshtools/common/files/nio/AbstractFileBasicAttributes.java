@@ -50,7 +50,7 @@ public class AbstractFileBasicAttributes implements BasicFileAttributes {
 	public boolean isDirectory() {
 		try {
 			return e.isDirectory();
-		} catch (IOException e) {
+		} catch (IOException | PermissionDeniedException e) {
 			return false;
 		}
 	}
@@ -64,7 +64,7 @@ public class AbstractFileBasicAttributes implements BasicFileAttributes {
 	public boolean isRegularFile() {
 		try {
 			return e.isFile();
-		} catch (IOException e) {
+		} catch (IOException | PermissionDeniedException e) {
 			return false;
 		}
 	}

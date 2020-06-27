@@ -108,7 +108,11 @@ public class AbstractFileNIOProvider extends FileSystemProvider {
 		if (optlist.contains(StandardOpenOption.WRITE))
 			throw new IllegalArgumentException(String.format("%s is not supported by this method.", StandardOpenOption.WRITE));
 		checkAccess(path, AccessMode.READ);
-		return toAbstractFilePath(path).getAbstractFile().getInputStream();
+		try {
+			return toAbstractFilePath(path).getAbstractFile().getInputStream();
+		} catch (PermissionDeniedException e) {
+			throw new IOException(e.getMessage(), e);
+		}
 	}
 
 	@Override
@@ -117,16 +121,19 @@ public class AbstractFileNIOProvider extends FileSystemProvider {
 		if (optlist.contains(StandardOpenOption.READ))
 			throw new IllegalArgumentException(String.format("%s is not supported by this method.", StandardOpenOption.READ));
 		AbstractFile fo = toAbstractFilePath(path).getAbstractFile();
-		if (optlist.contains(StandardOpenOption.CREATE_NEW) && fo.exists())
-			throw new IOException(
-					String.format("%s already exists, and the option %s was specified.", fo, StandardOpenOption.CREATE_NEW));
 		try {
+			if (optlist.contains(StandardOpenOption.CREATE_NEW) && fo.exists())
+				throw new IOException(
+						String.format("%s already exists, and the option %s was specified.", fo, StandardOpenOption.CREATE_NEW));
+			
 			fo.createNewFile();
+
+			checkAccess(path, AccessMode.WRITE);
+
+			return fo.getOutputStream(optlist.contains(StandardOpenOption.APPEND));
 		} catch (PermissionDeniedException e) {
-			throw new IOException(e);
+			throw new IOException(e.getMessage(), e);
 		}
-		checkAccess(path, AccessMode.WRITE);
-		return fo.getOutputStream(optlist.contains(StandardOpenOption.APPEND));
 	}
 	
 	@Override
@@ -193,7 +200,12 @@ public class AbstractFileNIOProvider extends FileSystemProvider {
 
 	@Override
 	public boolean isHidden(Path path) throws IOException {
-		return toAbstractFilePath(path).getAbstractFile().isHidden();
+		try {
+			return toAbstractFilePath(path).getAbstractFile().isHidden();
+		} catch (PermissionDeniedException e) {
+			throw new IOException(e.getMessage(), e);
+		}
+		
 	}
 
 	@Override
@@ -207,26 +219,32 @@ public class AbstractFileNIOProvider extends FileSystemProvider {
 		
 		AbstractFilePath p = toAbstractFilePath(path);
 		AbstractFile file = p.getAbstractFile();
-		if(file==null || !file.exists()) {
-			throw new FileNotFoundException();
-		}
-		for (AccessMode m : modes) {
-			switch (m) {
-//			case EXECUTE:
-//				if (!file.isExecutable())
-//					throw new AccessDeniedException(String.format("No %s access to %s", m, path));
-//				break;
-			case READ:
-				if (!file.isReadable())
-					throw new AccessDeniedException(String.format("No %s access to %s", m, path));
-				break;
-			case WRITE:
-				if (!file.isWritable())
-					throw new AccessDeniedException(String.format("No %s access to %s", m, path));
-				break;
-			default:
-				break;
+		
+		try {
+			if(file==null || !file.exists()) {
+				throw new FileNotFoundException();
 			}
+			for (AccessMode m : modes) {
+				switch (m) {
+	//			case EXECUTE:
+	//				if (!file.isExecutable())
+	//					throw new AccessDeniedException(String.format("No %s access to %s", m, path));
+	//				break;
+				case READ:
+					if (!file.isReadable())
+						throw new AccessDeniedException(String.format("No %s access to %s", m, path));
+					break;
+				case WRITE:
+					if (!file.isWritable())
+						throw new AccessDeniedException(String.format("No %s access to %s", m, path));
+					break;
+				default:
+					break;
+				}
+			}
+		
+		} catch(PermissionDeniedException e) {
+			throw new IOException(e.getMessage(), e);
 		}
 		
 	}

@@ -25,6 +25,7 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 import com.sshtools.common.files.AbstractFile;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
 
@@ -237,8 +238,9 @@ public class DirectoryOperation {
 	 * 
 	 * @return long
 	 * @throws IOException 
+	 * @throws PermissionDeniedException 
 	 */
-	public long getTransferSize() throws SftpStatusException, SshException, IOException {
+	public long getTransferSize() throws SftpStatusException, SshException, IOException, PermissionDeniedException {
 
 		Object obj;
 		long size = 0;

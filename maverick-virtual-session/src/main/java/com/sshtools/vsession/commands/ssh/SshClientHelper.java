@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.Objects;
 
 import com.sshtools.client.ClientAuthenticator;
-import com.sshtools.client.KeyboardInteractiveAuthenticator;
 import com.sshtools.client.PasswordAuthenticator;
 import com.sshtools.client.PublicKeyAuthenticator;
 import com.sshtools.client.SshClient;
@@ -36,6 +35,7 @@ import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
+import com.sshtools.common.util.Utils;
 import com.sshtools.server.vsession.VirtualConsole;
 
 public class SshClientHelper {
@@ -140,7 +140,7 @@ public class SshClientHelper {
 			}
 		}
 
-		if(!sshClient.isAuthenticated() && Objects.nonNull(arguments.getPassword())) {
+		if(!sshClient.isAuthenticated() && Utils.isNotBlank(arguments.getPassword())) {
 			sshClient.authenticate(new PasswordAuthenticator(arguments.getPassword()), 30000);
 		}
 

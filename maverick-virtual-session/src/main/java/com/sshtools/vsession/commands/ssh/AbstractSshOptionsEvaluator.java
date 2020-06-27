@@ -45,7 +45,7 @@ public class AbstractSshOptionsEvaluator {
 		resolvers.add(resolver);
 	}
 	
-	protected static void parseDestination(CommandLine commandLine, SshClientArguments arguments) {
+	protected static void parseDestination(CommandLine commandLine, SshClientArguments arguments) throws IOException {
 
 		List<String> commandLineArguments = commandLine.getArgList();
 		String destination = commandLineArguments.get(1);

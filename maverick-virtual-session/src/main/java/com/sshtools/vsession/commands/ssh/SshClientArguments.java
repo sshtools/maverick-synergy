@@ -20,11 +20,16 @@ package com.sshtools.vsession.commands.ssh;
 
 import java.util.Arrays;
 
+import com.sshtools.common.files.AbstractFile;
+import com.sshtools.common.ssh.components.SshKeyPair;
+
 public class SshClientArguments {
 
 	private int port = 22;
 	private String destination;
-	private String identityFile;
+	private AbstractFile identityFile;
+	private SshKeyPair identity;
+	private String password;
 	private String loginName;
 	private String command;
 	private String[] ciphers;
@@ -50,11 +55,11 @@ public class SshClientArguments {
 		this.destination = destination;
 	}
 
-	public String getIdentityFile() {
+	public AbstractFile getIdentityFile() {
 		return identityFile;
 	}
 
-	public void setIdentityFile(String identityFile) {
+	public void setIdentityFile(AbstractFile identityFile) {
 		this.identityFile = identityFile;
 	}
 
@@ -112,6 +117,22 @@ public class SshClientArguments {
 
 	public void setCompression(boolean compression) {
 		this.compression = compression;
+	}
+
+	public SshKeyPair getIdentity() {
+		return identity;
+	}
+
+	public void setIdentity(SshKeyPair identity) {
+		this.identity = identity;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
 	}
 
 	@Override

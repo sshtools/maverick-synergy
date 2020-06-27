@@ -25,41 +25,22 @@ import java.util.Arrays;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
-import com.sshtools.client.ClientAuthenticator;
-import com.sshtools.client.PasswordAuthenticator;
-import com.sshtools.client.PublicKeyAuthenticator;
-import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClient;
-import com.sshtools.client.SshClientContext;
-import com.sshtools.client.shell.ShellTimeoutException;
-import com.sshtools.client.tasks.AbstractCommandTask;
-import com.sshtools.client.tasks.ShellTask;
-import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.publickey.SshPrivateKeyFile;
-import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
-import com.sshtools.common.ssh.Connection;
-import com.sshtools.common.ssh.ConnectionAwareTask;
-import com.sshtools.common.ssh.SecurityLevel;
-import com.sshtools.common.ssh.SshContext;
-import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.SshKeyPair;
-import com.sshtools.common.util.IOUtils;
 import com.sshtools.server.vsession.CommandArgumentsParser;
 import com.sshtools.server.vsession.ShellCommand;
 import com.sshtools.server.vsession.UsageException;
 import com.sshtools.server.vsession.VirtualConsole;
-import com.sshtools.server.vsession.commands.sftp.SftpClientOptions;
 
 public abstract class AbstractSshClientCommand extends ShellCommand {
 	
 	private String[] originalArguments = null;
 	protected Options options = new Options();
-
+	protected VirtualConsole console;
+	
 	public AbstractSshClientCommand(String name, String subsystem, String signature, String description) {
 		super(name, subsystem, signature, description);
 	}
@@ -91,6 +72,8 @@ public abstract class AbstractSshClientCommand extends ShellCommand {
 	public void run(String[] args, VirtualConsole console)
 			throws IOException, PermissionDeniedException, UsageException {
 
+		this.console = console;
+		
 		String[] filteredArgs = filterArgs(args);
 		CommandLine cli = CommandArgumentsParser.parse(getOptions(), filteredArgs, getUsage());
 		
@@ -118,7 +101,7 @@ public abstract class AbstractSshClientCommand extends ShellCommand {
 
 	protected abstract void runCommand(SshClient sshClient, SshClientArguments arguments, VirtualConsole console);
 
-	protected abstract SshClientArguments generateCommandArguments(CommandLine cli, String[] args);
+	protected abstract SshClientArguments generateCommandArguments(CommandLine cli, String[] args) throws IOException, PermissionDeniedException;
 
 	protected String[] filterArgs(String[] args) {
 		this.originalArguments = args;

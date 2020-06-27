@@ -27,27 +27,16 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
-import com.sshtools.client.ClientAuthenticator;
-import com.sshtools.client.PasswordAuthenticator;
-import com.sshtools.client.PublicKeyAuthenticator;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClient;
-import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.publickey.SshPrivateKeyFile;
-import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.common.ssh.Connection;
-import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.common.ssh.SshContext;
-import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.server.vsession.CommandArgumentsParser;
 import com.sshtools.server.vsession.CommandFactory;
 import com.sshtools.server.vsession.Msh;
 import com.sshtools.server.vsession.VirtualConsole;
-import com.sshtools.vsession.commands.ssh.CommandUtil;
 import com.sshtools.vsession.commands.ssh.SshClientArguments;
 import com.sshtools.vsession.commands.ssh.SshClientHelper;
 
@@ -89,7 +78,7 @@ public class SftpClientCommand extends Msh {
 		
 		CommandLine commandLine = CommandArgumentsParser.parse(getOptions(), argsCopy, getUsage());
 		
-		SshClientArguments arguments = SftpClientOptionsEvaluator.evaluate(commandLine);
+		SshClientArguments arguments = SftpClientOptionsEvaluator.evaluate(commandLine, console);
 
 
 		SshClient sshClient = null;

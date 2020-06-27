@@ -18,6 +18,7 @@
  */
 package com.sshtools.server.vsession.commands.sftp;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,12 +26,14 @@ import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.server.vsession.VirtualConsole;
 import com.sshtools.vsession.commands.ssh.AbstractSshOptionsEvaluator;
 import com.sshtools.vsession.commands.ssh.SshClientArguments;
 
 public class SftpClientOptionsEvaluator extends AbstractSshOptionsEvaluator{
 	
-	public static SshClientArguments evaluate(CommandLine commandLine) {
+	public static SshClientArguments evaluate(CommandLine commandLine, VirtualConsole console) throws IOException, PermissionDeniedException {
 
 		if (Log.isDebugEnabled()) {
 			Log.debug("The argument list passed as %s", commandLine.getArgList());
@@ -48,7 +51,7 @@ public class SftpClientOptionsEvaluator extends AbstractSshOptionsEvaluator{
 		parseDestination(commandLine, arguments);
 		parsePort(commandLine, arguments);
 		parseLoginName(commandLine, arguments);
-		parseIdentityFilename(commandLine, arguments);
+		parseIdentityFilename(commandLine, arguments, console);
 		parseCiphers(commandLine, arguments);
 		parseMacs(commandLine, arguments);
 		parseSecurityLevel(commandLine, arguments);

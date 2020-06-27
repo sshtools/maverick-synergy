@@ -1,8 +1,10 @@
 package com.sshtools.vsession.commands.ssh;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import com.sshtools.client.ClientAuthenticator;
+import com.sshtools.client.KeyboardInteractiveAuthenticator;
 import com.sshtools.client.PasswordAuthenticator;
 import com.sshtools.client.PublicKeyAuthenticator;
 import com.sshtools.client.SshClient;
@@ -83,10 +85,9 @@ public class SshClientHelper {
 		SshClient sshClient = new SshClient(arguments.getDestination(), arguments.getPort(), arguments.getLoginName(), ctx);
 		ClientAuthenticator auth;
 
-		if (CommandUtil.isNotEmpty(arguments.getIdentityFile())) {
+		if (Objects.nonNull(arguments.getIdentityFile())) {
 			
-			String identityFile = arguments.getIdentityFile();
-			AbstractFile identityFileTarget = console.getCurrentDirectory().resolveFile(identityFile);
+			AbstractFile identityFileTarget =  arguments.getIdentityFile();
 			SshPrivateKeyFile pkf = SshPrivateKeyFileFactory.parse(identityFileTarget.getInputStream());
 			
 			String passphrase = null;
@@ -110,6 +111,20 @@ public class SshClientHelper {
 				}
 			}
 		} 
+		
+		if(!sshClient.isAuthenticated() && Objects.nonNull(arguments.getIdentity())) {
+			auth = new PublicKeyAuthenticator(arguments.getIdentity());
+
+			if(!sshClient.authenticate(auth, 30000)) {
+				console.println("Public key authentication failed");
+			} else {
+				console.println("Public key authentication succeeded");
+			}
+		}
+
+		if(!sshClient.isAuthenticated() && Objects.nonNull(arguments.getPassword())) {
+			sshClient.authenticate(new PasswordAuthenticator(arguments.getPassword()), 30000);
+		}
 
 		if(!sshClient.isAuthenticated()) {
 			do {

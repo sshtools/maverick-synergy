@@ -8,9 +8,9 @@ import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 
-import com.sshtools.client.SshClientContext;
-import com.sshtools.common.ssh.SshContext;
-import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.files.AbstractFile;
+import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.server.vsession.VirtualConsole;
 import com.sshtools.vsession.commands.ssh.SshClientOptions.CipherSpec;
 import com.sshtools.vsession.commands.ssh.SshClientOptions.Compression;
 import com.sshtools.vsession.commands.ssh.SshClientOptions.IdentityFile;
@@ -72,10 +72,15 @@ public class AbstractSshOptionsEvaluator {
 		
 	}
 	
-	protected static void parseIdentityFilename(CommandLine commandLine, SshClientArguments arguments) {
+	protected static void parseIdentityFilename(CommandLine commandLine, SshClientArguments arguments, VirtualConsole console) throws IOException, PermissionDeniedException {
 
 		if (commandLine.hasOption(IdentityFile.IDENTITY_FILE_OPTION)) {
-			arguments.setIdentityFile(commandLine.getOptionValue(IdentityFile.IDENTITY_FILE_OPTION));
+			String filename = commandLine.getOptionValue(IdentityFile.IDENTITY_FILE_OPTION);
+			AbstractFile file = console.getCurrentDirectory().resolveFile(filename);
+			if(!file.exists()) {
+				throw new IllegalArgumentException(filename + " does not exist");
+			}
+			arguments.setIdentityFile(file);
 		}
 		
 	}

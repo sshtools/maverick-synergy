@@ -29,6 +29,7 @@ import com.sshtools.client.SshClientContext;
 import com.sshtools.client.shell.ShellTimeoutException;
 import com.sshtools.client.tasks.AbstractCommandTask;
 import com.sshtools.client.tasks.ShellTask;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshException;
@@ -118,8 +119,8 @@ public class SshClientCommand extends AbstractSshClientCommand {
 
 
 	@Override
-	protected SshClientArguments generateCommandArguments(CommandLine cli, String[] args) {
-		return SshClientOptionsEvaluator.evaluate(cli, args);
+	protected SshClientArguments generateCommandArguments(CommandLine cli, String[] args) throws IOException, PermissionDeniedException {
+		return SshClientOptionsEvaluator.evaluate(cli, args, console);
 	}
 
 }

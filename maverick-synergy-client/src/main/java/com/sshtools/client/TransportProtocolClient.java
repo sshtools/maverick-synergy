@@ -181,6 +181,10 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 				null, null,
 				firstPacketFollows, useFirstPacket);
 	}
+	
+	protected void onKeyExchangeInit() {
+		
+	}
 
 	@Override
 	protected void completeKeyExchange(SshKeyExchange<SshClientContext> keyExchange) {

@@ -49,7 +49,6 @@ public class SshClientOptionsEvaluator extends AbstractSshOptionsEvaluator {
 		SshClientArguments arguments = new SshClientArguments();
 		
 		parseCommand(originalArguments, arguments);
-		parseDestination(commandLine, arguments);
 		parsePort(commandLine, arguments);
 		parseLoginName(commandLine, arguments);
 		parseIdentityFilename(commandLine, arguments, console);
@@ -57,6 +56,8 @@ public class SshClientOptionsEvaluator extends AbstractSshOptionsEvaluator {
 		parseMacs(commandLine, arguments);
 		parseSecurityLevel(commandLine, arguments);
 		parseCompression(commandLine, arguments);
+		
+		parseDestination(commandLine, arguments);
 
 		return arguments;
 	}

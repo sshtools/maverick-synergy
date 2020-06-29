@@ -350,7 +350,7 @@ public class PseudoTerminalModes {
     }
     
     public PseudoTerminalModes(byte[] modes) throws IOException {
-    	encodedModes.write(modes);
+    	this.output = modes;
     }
 
     /**

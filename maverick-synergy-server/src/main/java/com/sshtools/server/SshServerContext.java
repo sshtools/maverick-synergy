@@ -71,14 +71,13 @@ import com.sshtools.server.components.jce.Rsa2048SHA2KeyExchange;
 
 public class SshServerContext extends SshContext {
 
-	
 	Map<String, SshKeyPair> hostkeys = new ConcurrentHashMap<String, SshKeyPair>(8, 0.9f, 1);
 
 	Map<String, Class<? extends ExecutableCommand>> commands 
 		= new ConcurrentHashMap<String, Class<? extends ExecutableCommand>>(8, 0.9f, 1);
 	
 	int maximumConnections = -1;
-	boolean allowKeyExchangeForDeniedConnection = false;
+	boolean ensureGracefulDisconnect = false;
 	String tooManyConnectionsText = "Too many connections";
 
 	ForwardingManager<SshServerContext> forwardingManager;
@@ -94,6 +93,8 @@ public class SshServerContext extends SshContext {
 			.synchronizedMap(new HashMap<String, GlobalRequestHandler<SshServerContext>>());
 
 	int maxDHGroupSize = 2048;
+
+	private boolean serverControlledKeyExchange = false;
 	
 	private static ComponentFactory<SshKeyExchange<SshServerContext>> verifiedKeyExchanges;
 	
@@ -320,7 +321,7 @@ public class SshServerContext extends SshContext {
 	}
 	
 	/**
-	 * Add an {@link com.maverick.sshd.ExecutableCommand} to the configuration.
+	 * Add an {@link com.sshtools.common.command.ExecutableCommand} to the configuration.
 	 * If a request to execute a command with the name <em>name</em> is received
 	 * an instance of the class is created to handle the command execution.
 	 * 
@@ -364,19 +365,16 @@ public class SshServerContext extends SshContext {
 	public boolean hasPublicKey(String algorithm) {
 		return hostkeys.containsKey(algorithm);
 	}
-	
+
 	/**
 	 * Load a host key from file, if the file does not exist then generate the
 	 * key.
-	 * 
 	 * @param key
-	 *            the key file
 	 * @param type
-	 *            the type of key; acceptable values are
-	 *            SshKeyPairGenerator.SSH2_RSA or SshKeyPairGenerator.SSH2_DSA
 	 * @param bitlength
-	 *            the bit length of the key
+	 * @return
 	 * @throws IOException
+	 * @throws InvalidPassphraseException
 	 * @throws SshException
 	 */
 	public SshKeyPair loadOrGenerateHostKey(File key, String type, int bitlength)
@@ -385,6 +383,17 @@ public class SshServerContext extends SshContext {
 				SshPublicKeyFileFactory.SECSH_FORMAT, "");
 	}
 
+	/**
+	 * Load a host key from a file, if it does not exist, generate it.
+	 * @param key
+	 * @param type
+	 * @param bitlength
+	 * @param passPhrase
+	 * @return
+	 * @throws IOException
+	 * @throws InvalidPassphraseException
+	 * @throws SshException
+	 */
 	public SshKeyPair loadOrGenerateHostKey(File key, String type, int bitlength,
 			String passPhrase) throws IOException, InvalidPassphraseException,
 			SshException {
@@ -392,6 +401,15 @@ public class SshServerContext extends SshContext {
 				SshPublicKeyFileFactory.SECSH_FORMAT, passPhrase);
 	}
 
+	/**
+	 * Load a host key from an InputStream.
+	 * @param in
+	 * @param type
+	 * @param bitlength
+	 * @throws IOException
+	 * @throws InvalidPassphraseException
+	 * @throws SshException
+	 */
 	public void loadHostKey(InputStream in, String type, int bitlength)
 			throws IOException, InvalidPassphraseException, SshException {
 		loadHostKey(in, type, bitlength,
@@ -399,6 +417,16 @@ public class SshServerContext extends SshContext {
 				SshPublicKeyFileFactory.SECSH_FORMAT, "");
 	}
 
+	/**
+	 * Load a host key from an InputStream.
+	 * @param in
+	 * @param type
+	 * @param bitlength
+	 * @param passPhrase
+	 * @throws IOException
+	 * @throws InvalidPassphraseException
+	 * @throws SshException
+	 */
 	public void loadHostKey(InputStream in, String type, int bitlength,
 			String passPhrase) throws IOException, InvalidPassphraseException,
 			SshException {
@@ -410,23 +438,14 @@ public class SshServerContext extends SshContext {
 	/**
 	 * Load a host key from file, if the file does not exist then generate the
 	 * key.
-	 * 
 	 * @param key
-	 *            the key file
 	 * @param type
-	 *            the type of key; acceptable values are
-	 *            SshKeyPairGenerator.SSH2_RSA or SshKeyPairGenerator.SSH2_DSA
 	 * @param bitlength
-	 *            the bit length of the key
-	 * @param privateKeyFormat
-	 *            the format of the private key, {@see
-	 *            com.sshtools.publickey.SshPrivateKeyFileFactory}
 	 * @param publicKeyFormat
-	 *            the format of the public key, {see
-	 *            com.sshtools.publickey.SshPublicKeyFileFactory}
 	 * @param passPhrase
-	 *            the passPhrase of an existing host key
+	 * @return
 	 * @throws IOException
+	 * @throws InvalidPassphraseException
 	 * @throws SshException
 	 */
 	public SshKeyPair loadOrGenerateHostKey(File key, String type, int bitlength,
@@ -445,6 +464,18 @@ public class SshServerContext extends SshContext {
 		return pair;
 	}
 
+	/**
+	 * Load a host key from an InputStream.
+	 * @param in
+	 * @param type
+	 * @param bitlength
+	 * @param privateKeyFormat
+	 * @param publicKeyFormat
+	 * @param passPhrase
+	 * @throws IOException
+	 * @throws InvalidPassphraseException
+	 * @throws SshException
+	 */
 	public void loadHostKey(InputStream in, String type, int bitlength,
 			int privateKeyFormat, int publicKeyFormat, String passPhrase)
 			throws IOException, InvalidPassphraseException, SshException {
@@ -452,12 +483,28 @@ public class SshServerContext extends SshContext {
 		addHostKey(loadKey(in, passPhrase));
 	}
 
+	/**
+	 * Load a key pair from a File
+	 * @param key
+	 * @param passphrase
+	 * @return
+	 * @throws IOException
+	 * @throws InvalidPassphraseException
+	 */
 	public SshKeyPair loadKey(File key, String passphrase) throws IOException,
 			InvalidPassphraseException {
 		return loadKey(new FileInputStream(key), passphrase);
 
 	}
 
+	/**
+	 * Load a key pair from an InputStream.
+	 * @param in
+	 * @param passphrase
+	 * @return
+	 * @throws IOException
+	 * @throws InvalidPassphraseException
+	 */
 	public SshKeyPair loadKey(InputStream in, String passphrase)
 			throws IOException, InvalidPassphraseException {
 		SshKeyPair pair = SshPrivateKeyFileFactory.parse(in).toKeyPair(
@@ -500,7 +547,7 @@ public class SshServerContext extends SshContext {
 	}
 	
 	/**
-	 * Generate a key pair
+	 * Generate a key pair.
 	 * @param type
 	 * @param bitLength
 	 * @return
@@ -510,23 +557,31 @@ public class SshServerContext extends SshContext {
 	public static SshKeyPair generateKey(String type, int bitLength) throws IOException, SshException {
 		return SshKeyPairGenerator.generateKeyPair(type, bitLength);
 	}
-	
-	public void setAllowDeniedKEX(boolean allowKeyExchangeForDeniedConnection) {
-		this.allowKeyExchangeForDeniedConnection = allowKeyExchangeForDeniedConnection;
-	}
 
-	public boolean getAllowDeniedKEX() {
-		return allowKeyExchangeForDeniedConnection;
-	}
-
+	/**
+	 * Get the text used when disconnecting when the maximum connection threshold has been reached.
+	 * @return
+	 */
 	public String getTooManyConnectionsText() {
 		return tooManyConnectionsText;
 	}
 
+	/**
+	 * Set the text used when disconnecting when the maximum connection threshold has been reached.
+	 * @param tooManyConnectionsText
+	 */
 	public void setTooManyConnectionsText(String tooManyConnectionsText) {
 		this.tooManyConnectionsText = tooManyConnectionsText;
 	}
 
+	/**
+	 * This method loads an OpenSSH certificate file for use as a host key.
+	 * @param keyFile
+	 * @param passphrase
+	 * @param certFile
+	 * @throws IOException
+	 * @throws InvalidPassphraseException
+	 */
 	public void loadSshCertificate(File keyFile, String passphrase,
 			File certFile) throws IOException, InvalidPassphraseException {
 
@@ -536,21 +591,50 @@ public class SshServerContext extends SshContext {
 		addHostKey(pair);
 	}
 
-
+	/**
+	 * Set the {@link AuthenticationMechanismFactory} for this context.
+	 * @param authFactory
+	 */
 	public void setAuthenicationMechanismFactory(
 			AuthenticationMechanismFactory<SshServerContext> authFactory) {
 		setPolicy(AuthenticationMechanismFactory.class, authFactory);
 	}
 	
+	/**
+	 * Get the {@link AuthenticationMechanismFactory} for this context.
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public AuthenticationMechanismFactory<SshServerContext> getAuthenticationMechanismFactory() {
 		return getPolicy(AuthenticationMechanismFactory.class, new DefaultAuthenticationMechanismFactory<SshServerContext>());
 	}
 
+	/**
+	 * If a problem occurs, or a connection is denied, for example if maximum connections threshold
+	 * has been reached, this setting determines if the connection is allowed to proceed through
+	 * key exchange so that the user is returned a suitable error. If connections are terminated
+	 * before key exchange completes its not always possible to send the correct error.
+	 * @return
+	 */
 	public boolean isEnsureGracefulDisconnect() {
-		return allowKeyExchangeForDeniedConnection;
+		return ensureGracefulDisconnect;
+	}
+	
+	/**
+	 * If a problem occurs, or a connection is denied, for example if maximum connections threshold
+	 * has been reached, this setting determines if the connection is allowed to proceed through
+	 * key exchange so that the user is returned a suitable error. If connections are terminated
+	 * before key exchange completes its not always possible to send the correct error.
+	 * @param ensureGracefulDisconnect
+	 */
+	public void setEnsureGracefulDisconnect(boolean ensureGracefulDisconnect) {
+		this.ensureGracefulDisconnect = ensureGracefulDisconnect;
 	}
 
+	/**
+	 * Build the key exchanges available in this context. This method caches validated key exchanges to prevent
+	 * the need to test on every new context instance.
+	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	protected synchronized void configureKeyExchanges() {
@@ -623,7 +707,7 @@ public class SshServerContext extends SshContext {
 		
 	}
 	
-	public boolean testServerKeyExchangeAlgorithm(String name, Class<? extends SshKeyExchange<? extends SshContext>> cls) {
+	private boolean testServerKeyExchangeAlgorithm(String name, Class<? extends SshKeyExchange<? extends SshContext>> cls) {
 		
 		SshKeyExchange<? extends SshContext> c = null;
 		try {
@@ -652,12 +736,37 @@ public class SshServerContext extends SshContext {
 		return true;
 	}
 	
+	/**
+	 * Set the maximum group size supported in <code>diffie-hellman-group-exchange</code> key exchange methods.
+	 */
 	public void setMaxDHGroupExchangeSize(int maxDHGroupSize) {
 		this.maxDHGroupSize  = maxDHGroupSize;
 	}
 
+	/**
+	 * Get the maximum group size supported in <code>diffie-hellman-group-exchange</code> key exchange methods.
+	 */
 	public int getMaxDHGroupExchangeKeySize() {
 		return maxDHGroupSize;
+	}
+	
+	/**
+	 * Is the server wanting to control key exchange {@link #setServerControllerKeyExchange()}
+	 */
+	public boolean isServerControlledKeyExchange() {
+		return serverControlledKeyExchange;
+	}
+	
+	/**
+	 * When <code>true</code> the server will delay it's key exchange initialisation
+	 * until it has received the client's initialisation packet. This allows the 
+	 * server to control what algorithms are selected during key exchange by limiting
+	 * its own set of algorithms to only those it wants to support. In effect, allowing
+	 * the server to control the output of key exchange.
+	 * @param serverControlledKeyExchange
+	 */
+	public void setServerControlledKeyExchange(boolean serverControlledKeyExchange) {
+		this.serverControlledKeyExchange = serverControlledKeyExchange;
 	}
 
 }

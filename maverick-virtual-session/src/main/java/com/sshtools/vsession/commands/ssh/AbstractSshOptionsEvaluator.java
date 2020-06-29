@@ -61,7 +61,7 @@ public class AbstractSshOptionsEvaluator {
 		
 		
 		for(SshOptionsResolver resolver : resolvers) {
-			if(resolver.resolveDestination(destination, arguments)) {
+			if(resolver.resolveOptions(destination, arguments)) {
 				break;
 			}
 		}

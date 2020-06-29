@@ -26,9 +26,11 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SecureComponent;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
@@ -369,6 +371,38 @@ public class ComponentFactory<T> implements Cloneable {
 		}
 		
 		order = newOrder;
+	}
+	
+	public String selectStrongestComponent(String[] remoteAlgs) throws SshException {
+		
+		Map<String, SecureComponent> list = new HashMap<>();
+		for (String name : supported.keySet()) {
+			SecureComponent o = (SecureComponent) getInstance(name);
+			list.put(name, o);	
+		}
+		
+		SecureComponent strongest = null;
+		for(String remoteAlg : remoteAlgs) {
+			SecureComponent component = list.get(remoteAlg);
+			if(Objects.nonNull(component)) {
+				if(Objects.isNull(strongest)) {
+					strongest = component;
+				} else {
+					if(new Integer(component.getPriority()).compareTo(strongest.getPriority()) > 0) {
+						strongest = component;
+					}
+				}
+			}
+		}
+		
+		if(Objects.isNull(strongest)) {
+			throw new SshException("Failed to negotiate component", SshException.KEY_EXCHANGE_FAILED);
+		}
+		
+		if(Log.isInfoEnabled()) {
+			Log.info("Selecting strongest component %s", strongest.getAlgorithm());
+		}
+		return strongest.getAlgorithm();
 	}
 	
 	public boolean hasComponents() {

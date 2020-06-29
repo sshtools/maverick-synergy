@@ -401,13 +401,17 @@ public abstract class TransportProtocol<T extends SshContext>
 	
 					sentLocalIdentification = true;
 	
-					if (receivedRemoteIdentification)
+					if (receivedRemoteIdentification && canSendKeyExchangeInit())
 						sendKeyExchangeInit();
 				}
 			});
 		}
 	}
 
+	protected boolean canSendKeyExchangeInit() {
+		return true;
+	}
+	
 	/**
 	 * Called when the socket channel is reported to be ready for reading.
 	 * 
@@ -524,7 +528,9 @@ public abstract class TransportProtocol<T extends SshContext>
 			
 			// Send our kex init
 			if (sentLocalIdentification) {
-				sendKeyExchangeInit();
+				if(canSendKeyExchangeInit()) {
+					sendKeyExchangeInit();
+				}
 
 				// Make sure that any remaining data is
 				// processed by the binary packet protocol
@@ -1269,7 +1275,13 @@ public abstract class TransportProtocol<T extends SshContext>
 		outgoingMessage.flip();
 		
 		// Get the unencrypted packet data
-		byte[] packet = new byte[outgoingMessage.remaining()];
+		byte[] packet;
+		if(encryption!=null && encryption.isMAC()) {
+			packet = new byte[outgoingMessage.remaining() + encryption.getMacLength()];
+		} else {
+			packet = new byte[outgoingMessage.remaining()];
+		}
+		
 		outgoingMessage.get(packet);
 		byte[] mac = null;
 
@@ -1575,9 +1587,6 @@ public abstract class TransportProtocol<T extends SshContext>
 			// msgs
 			currentState = TransportProtocol.PERFORMING_KEYEXCHANGE;
 
-			// Send our kex init (this will only be sent if needed to)
-			sendKeyExchangeInit();
-
 			// Extract the remote's side kex init taking away the header and
 			// padding
 			remotekex = msg;
@@ -1603,6 +1612,11 @@ public abstract class TransportProtocol<T extends SshContext>
 			lang = bar.readString();
 
 			boolean firstPacketFollows = (bar.read() != 0);
+			
+			onKeyExchangeInit();
+			
+			// Send our kex init (this will only be sent if needed to)
+			sendKeyExchangeInit();
 
 			// Determine the negotiated key exchange
 			String localKeyExchanges = sshContext.supportedKeyExchanges().list(
@@ -1794,6 +1808,8 @@ public abstract class TransportProtocol<T extends SshContext>
 			}
 		}
 	}
+
+	protected abstract void onKeyExchangeInit() throws SshException;
 
 	private void checkAlgorithms() {
 		if(Boolean.getBoolean("maverick.isolate")) {

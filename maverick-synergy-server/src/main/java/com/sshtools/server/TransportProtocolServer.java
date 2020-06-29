@@ -154,6 +154,31 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 				pair.getPrivateKey(), pair.getPublicKey(), firstPacketFollows, useFirstPacket);
 
 	}
+	
+	protected void onKeyExchangeInit() throws SshException {
+		
+		if(getContext().isServerControlledKeyExchange()) {
+			/**
+			 * Reconfigure before sending kex init to ensure we only
+			 * support the strongest algorithms of the client
+			 */
+			getContext().supportedKeyExchanges().removeAllBut(
+					getContext().supportedKeyExchanges().selectStrongestComponent(getRemoteKeyExchanges()));
+			getContext().supportedPublicKeys().removeAllBut(
+					getContext().supportedPublicKeys().selectStrongestComponent(getRemotePublicKeys()));
+			
+			getContext().supportedCiphersCS().removeAllBut(
+					getContext().supportedCiphersCS().selectStrongestComponent(getRemoteCiphersCS()));
+			getContext().supportedCiphersCS().removeAllBut(
+					getContext().supportedCiphersCS().selectStrongestComponent(getRemoteCiphersSC()));
+			
+			getContext().supportedMacsCS().removeAllBut(
+					getContext().supportedMacsCS().selectStrongestComponent(getRemoteMacsCS()));
+			getContext().supportedMacsSC().removeAllBut(
+					getContext().supportedMacsSC().selectStrongestComponent(getRemoteMacsSC()));
+
+		}
+	}
 
 	protected void keyExchangeInitialized() {
 		if (denyConnection) {
@@ -162,6 +187,11 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 		}
 	}
 
+	@Override
+	protected boolean canSendKeyExchangeInit() {
+		return !getContext().isServerControlledKeyExchange();
+	}
+	
 	@Override
 	protected void onNewKeysReceived() {
 		generateNewKeysServerIn();

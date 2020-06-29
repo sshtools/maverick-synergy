@@ -47,8 +47,6 @@ public class SftpClientOptionsEvaluator extends AbstractSshOptionsEvaluator{
 
 		SshClientArguments arguments = new SshClientArguments();
 
-
-		parseDestination(commandLine, arguments);
 		parsePort(commandLine, arguments);
 		parseLoginName(commandLine, arguments);
 		parseIdentityFilename(commandLine, arguments, console);
@@ -56,6 +54,9 @@ public class SftpClientOptionsEvaluator extends AbstractSshOptionsEvaluator{
 		parseMacs(commandLine, arguments);
 		parseSecurityLevel(commandLine, arguments);
 		parseCompression(commandLine, arguments);
+		
+		parseDestination(commandLine, arguments);
+		
 		return arguments;
 	}
 

@@ -22,6 +22,6 @@ import java.io.IOException;
 
 public interface SshOptionsResolver {
 
-	boolean resolveDestination(String destination, SshClientArguments arguments) throws IOException;
+	boolean resolveOptions(String destination, SshClientArguments arguments) throws IOException;
 
 }

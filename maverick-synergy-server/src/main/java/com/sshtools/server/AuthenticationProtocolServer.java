@@ -469,6 +469,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 			}
 		}
 
+		authInProgress = false;
 		transport.postMessage(new SshMessage() {
 			public boolean writeMessageIntoBuffer(ByteBuffer buf) {
 				buf.put((byte) SSH_MSG_USERAUTH_FAILURE);
@@ -494,7 +495,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 		});
 
 
-		authInProgress = false;
+		
 	}
 
 	private void fireFailureEvent(boolean partial, boolean ignoreFailed,

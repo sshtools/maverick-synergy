@@ -329,7 +329,6 @@ public abstract class TransportProtocol<T extends SshContext>
 	public void onSocketConnect(SocketConnection connection) {
 
 		this.socketConnection = connection;
-		socketConnection.getIdleStates().register(this);
 
 		if(Log.isInfoEnabled()) {
 			Log.info("Connnection created %s on interface %s", 
@@ -340,7 +339,21 @@ public abstract class TransportProtocol<T extends SshContext>
 		if (!canConnect(connection)) {
 			if(Log.isDebugEnabled())
 				Log.debug("Access denied by TransportProtocol.canConnect");
-			connection.closeConnection();
+			
+			
+			EventServiceImplementation.getInstance().fireEvent(
+					(new Event(this, EventCodes.EVENT_CONNECTED, new IOException("Access Denied")))
+							.addAttribute(
+									EventCodes.ATTRIBUTE_CONNECTION,
+									con)
+							.addAttribute(
+									EventCodes.ATTRIBUTE_OPERATION_STARTED,
+									started)
+							.addAttribute(
+									EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+									new Date()));
+			
+			connection.closeConnection(false);
 			
 			return;
 		}
@@ -369,6 +382,10 @@ public abstract class TransportProtocol<T extends SshContext>
 			}
 		}
 
+	}
+	
+	private synchronized void sendLocalIdentification() {
+		sendLocalIdentification(false, null);
 	}
 	
 	private synchronized void sendLocalIdentification(final boolean doHttpRedirect, final String hostname) {
@@ -1502,7 +1519,7 @@ public abstract class TransportProtocol<T extends SshContext>
 					Log.debug("Submitting transport cleanup to executor service");
 				}
 
-
+				
 				addTask(EVENTS, new ConnectionTaskWrapper(getConnection(), new Runnable() {
 					public void run() {
 						synchronized (lock) {
@@ -1579,6 +1596,10 @@ public abstract class TransportProtocol<T extends SshContext>
 
 		ByteArrayReader bar = null;
 
+		if(!postedIdentification) {
+			sendLocalIdentification();
+		}
+		
 		checkAlgorithms();
 		
 		try {

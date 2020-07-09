@@ -20,6 +20,7 @@ package com.sshtools.common.ssh;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
@@ -273,7 +274,7 @@ public class LocalForwardingChannel<T extends SshContext> extends SocketForwardi
 	}
 
 	@Override
-	public void initialize(ProtocolEngine engine, SshEngine daemon) {
+	public void initialize(ProtocolEngine engine, SshEngine daemon, SelectableChannel channel) {
 
 	}
 

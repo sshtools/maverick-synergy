@@ -519,7 +519,7 @@ public class SshEngine {
 				socketChannel.socket().getLocalSocketAddress(), 
 				socketChannel.socket().getRemoteSocketAddress());
 		ProtocolEngine engine = protocolContext.createEngine(connectFuture);
-		connection.initialize(engine, SshEngine.this);
+		connection.initialize(engine, SshEngine.this, socketChannel);
 		registerHandler(connection, socketChannel);
 		
 		return engine;
@@ -808,17 +808,15 @@ public class SshEngine {
 						}
 
 					}
-			        if(protocolContext.getSocketConnectionFactory()==null) {
-			        	registerHandler(protocolContext.createConnection(SshEngine.this), sc);
-			        } else {
-			        	SocketHandler connection = protocolContext.getSocketConnectionFactory().createSocketConnection(
-			        			context, 
-			        			sc.socket().getLocalSocketAddress(), 
-			        			sc.socket().getRemoteSocketAddress());
-			        	ProtocolEngine e = protocolContext.createEngine(new ConnectRequestFuture());
-			            connection.initialize(e, SshEngine.this);
-			        	registerHandler(connection, sc);
-			        }
+
+		        	SocketHandler connection = protocolContext.getSocketConnectionFactory().createSocketConnection(
+		        			context, 
+		        			sc.socket().getLocalSocketAddress(), 
+		        			sc.socket().getRemoteSocketAddress());
+		        	ProtocolEngine e = protocolContext.createEngine(new ConnectRequestFuture());
+		            connection.initialize(e, SshEngine.this, sc);
+		        	registerHandler(connection, sc);
+			        
 					registered = true;
 
 					return !((ServerSocketChannel) key.channel()).isOpen();

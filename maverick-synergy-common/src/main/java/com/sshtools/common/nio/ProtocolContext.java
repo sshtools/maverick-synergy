@@ -31,20 +31,9 @@ public abstract class ProtocolContext {
     protected boolean reuseAddress = true;
     protected int receiveBufferSize = 0;
     protected int sendBufferSize = 0;
-    private Class<? extends SocketConnection> socketConnectionImpl = SocketConnection.class;
-    private SocketConnectionFactory socketConnectionFactory;
+    private SocketConnectionFactory socketConnectionFactory = new DefaultSocketConnectionFactory();
     
-    /**
-     * Create a socket handler for this protocol.
-     *
-     * @param daemon Daemon
-     * @return SocketHandler
-     * @throws IOException
-     */
-    public SocketHandler createConnection(SshEngine daemon) throws IOException {
-        SocketHandler connection = createConnectionImpl();
-        return connection;
-    }
+
 
     /**
      * Create a protocol engine.
@@ -84,30 +73,6 @@ public abstract class ProtocolContext {
     public void setSocketOptionReuseAddress(boolean reuseAddress) {
         this.reuseAddress = reuseAddress;
   }
-    /**
-     * Sets the socket handler implementation class for this context.
-     *
-     * @param socketConnectionImpl Class
-     * @throws IOException
-     */
-    public void setSocketHandlerImpl(Class<? extends SocketConnection> socketConnectionImpl) throws IOException {
-        if(!SocketHandler.class.isAssignableFrom(socketConnectionImpl))
-            throw new IOException("socketConnectionImpl must be a subclass of com.maverick.nio.SocketHandler!");
-        this.socketConnectionImpl = socketConnectionImpl;
-    }
-
-    /**
-     * Creates a socket handler from the configured implementation class.
-     * @return SocketHandler
-     * @throws IOException
-     */
-    protected SocketHandler createConnectionImpl() throws IOException {
-        try {
-            return (SocketHandler)socketConnectionImpl.newInstance();
-        } catch(Throwable t) {
-            throw new IOException("Failed to create SocketConnection implementation class: " + t.getMessage());
-        }
-    }
 
     /**
      * Set the SO_KEEPALIVE socket option on connected sockets.

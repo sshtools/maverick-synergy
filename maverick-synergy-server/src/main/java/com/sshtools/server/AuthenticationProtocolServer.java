@@ -34,6 +34,7 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.permissions.IPPolicy;
 import com.sshtools.common.policy.AuthenticationPolicy;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionProtocol;
@@ -308,6 +309,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 		if (completed) {
 
 			authenticated = true;
+			authInProgress = false;
 			
 			// Send our success message and when sent start the Connection
 			// Protocol
@@ -376,7 +378,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 				}
 			});
 
-			authInProgress = false;
+			
 		} else {
 			failedAuthentication(true, true);
 		}
@@ -460,9 +462,11 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 
 			if (!ignoreFailed) {
 				failed++;
+				getContext().getPolicy(IPPolicy.class).flagAddress(transport.getConnection().getRemoteAddress());
 			}
 
 			if (failed >= transport.getSshContext().getPolicy(AuthenticationPolicy.class).getMaxAuthentications()) {
+				
 				transport.disconnect(TransportProtocol.BY_APPLICATION,
 						"Too many bad authentication attempts!");
 				return;
@@ -470,6 +474,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 		}
 
 		authInProgress = false;
+		
 		transport.postMessage(new SshMessage() {
 			public boolean writeMessageIntoBuffer(ByteBuffer buf) {
 				buf.put((byte) SSH_MSG_USERAUTH_FAILURE);

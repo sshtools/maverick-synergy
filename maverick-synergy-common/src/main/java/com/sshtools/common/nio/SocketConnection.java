@@ -80,11 +80,18 @@ public class SocketConnection implements SocketHandler {
      *
      * @param protocolEngine ProtocolEngine
      * @param daemon Daemon
+     * @throws IOException 
      */
-    public void initialize(ProtocolEngine protocolEngine, SshEngine daemon) {
+    public void initialize(ProtocolEngine protocolEngine, SshEngine daemon, SelectableChannel channel) throws IOException {
         this.protocolEngine = protocolEngine;
         this.daemon = daemon;
         this.daemonContext = daemon.getContext();
+        this.socketChannel = (SocketChannel)channel;
+        this.localAddress = socketChannel.getLocalAddress();
+        this.localPort = socketChannel.socket().getLocalPort();
+        this.remoteAddress = socketChannel.getRemoteAddress();
+        this.remotePort = socketChannel.socket().getPort();
+        
     }
 
     /**
@@ -98,15 +105,10 @@ public class SocketConnection implements SocketHandler {
     public void registrationCompleted(SelectableChannel channel,
                                       SelectionKey key,
                                       SelectorThread selectorThread) throws IOException {
-          this.socketChannel = (SocketChannel)channel;
+          
           this.selectorThread = selectorThread;
           this.key = key;
-          this.localAddress = socketChannel.getLocalAddress();
-          this.localPort = socketChannel.socket().getLocalPort();
-          this.remoteAddress = socketChannel.getRemoteAddress();
-          this.remotePort = socketChannel.socket().getPort();
           protocolEngine.onSocketConnect(this);
-          
     }
     
     public void setSelectionKey(SelectionKey key) {
@@ -126,6 +128,10 @@ public class SocketConnection implements SocketHandler {
      * Close this socket connection.
      */
     public void closeConnection() {
+    	 closeConnection(true);
+    }
+    
+    public void closeConnection(boolean closeProtocol) {
 
         if(!closed) {
             if (socketChannel != null && socketChannel.isOpen()) {
@@ -138,10 +144,12 @@ public class SocketConnection implements SocketHandler {
                 }
             }
 
-            if(Log.isTraceEnabled()) {
-            	Log.trace("Closing protocol engine");
+            if(closeProtocol) {
+	            if(Log.isTraceEnabled()) {
+	            	Log.trace("Closing protocol engine");
+	            }
+	            protocolEngine.onSocketClose();
             }
-            protocolEngine.onSocketClose();
             closed = true;
         }
     }

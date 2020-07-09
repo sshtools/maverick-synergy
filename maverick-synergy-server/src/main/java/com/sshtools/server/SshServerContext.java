@@ -768,5 +768,4 @@ public class SshServerContext extends SshContext {
 	public void setServerControlledKeyExchange(boolean serverControlledKeyExchange) {
 		this.serverControlledKeyExchange = serverControlledKeyExchange;
 	}
-
 }

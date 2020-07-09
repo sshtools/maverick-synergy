@@ -38,6 +38,7 @@ import com.sshtools.common.nio.ProtocolContextFactory;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.nio.SshEngineContext;
 import com.sshtools.common.nio.SshEngineListenerAdapter;
+import com.sshtools.common.permissions.IPPolicy;
 import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.publickey.InvalidPassphraseException;
@@ -69,6 +70,7 @@ public abstract class AbstractSshServer implements Closeable {
 	
 	ChannelFactory<SshServerContext> channelFactory; 
 	File confFolder = new File(".");
+	IPPolicy ipPolicy = new IPPolicy();
 	
 	protected AbstractSshServer() {
 	}
@@ -163,6 +165,14 @@ public abstract class AbstractSshServer implements Closeable {
 		this.channelFactory = channelFactory;
 	}
 	
+	public IPPolicy getIPPolicy() {
+		return ipPolicy;
+	}
+	
+	public void setIPPolicy(IPPolicy ipPolicy) {
+		this.ipPolicy = ipPolicy;
+	}
+	
 	public void enableSCP() {
 		enableScp = true;
 	}
@@ -255,7 +265,7 @@ public abstract class AbstractSshServer implements Closeable {
 	}
 	
 	protected void configure(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
-		
+		sshContext.setPolicy(IPPolicy.class, ipPolicy);
 	}
 	
 	public SshServerContext createServerContext(SshEngineContext daemonContext, SocketChannel sc)

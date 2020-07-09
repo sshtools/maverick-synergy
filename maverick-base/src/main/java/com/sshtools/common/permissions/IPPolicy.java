@@ -24,24 +24,36 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import com.sshtools.common.logger.Log;
 
 import com.sshtools.common.net.CIDRNetwork;
+import com.sshtools.common.util.ExpiringConcurrentHashMap;
 
 public class IPPolicy extends Permissions {
 
-	
-	
 	static final int ALLOW_CONNECT = 0x01;
 	
 	List<CIDRNetwork> blacklist = new ArrayList<CIDRNetwork>();
 	List<CIDRNetwork> whitelist = new ArrayList<CIDRNetwork>();
+	ExpiringConcurrentHashMap<InetAddress, Integer> flaggedAddressCounts;
+	int failedAuthenticationThreshold = 15;
+	ExpiringConcurrentHashMap<InetAddress, Boolean> temporaryBans = new ExpiringConcurrentHashMap<InetAddress, Boolean>(TimeUnit.HOURS.toMillis(5));
 	
 	public IPPolicy() {
 		add(ALLOW_CONNECT);
+		setFailedAuthenticationThresholdPeriod(5, TimeUnit.MINUTES);
 	}
 	
+	public void setFailedAuthenticationCountThreshold(int failedAuthenticationThreshold) {
+		this.failedAuthenticationThreshold = failedAuthenticationThreshold;
+	}
+	
+	public void setFailedAuthenticationThresholdPeriod(long failedAuthenticationThresholdPeriod, TimeUnit timeUnit) {
+		flaggedAddressCounts = new ExpiringConcurrentHashMap<InetAddress, Integer>(timeUnit.toMillis(failedAuthenticationThresholdPeriod));
+	}
 	
 	protected boolean assertConnection(SocketAddress remoteAddress, SocketAddress localAddress) {
 		if(check(ALLOW_CONNECT)) {
@@ -57,11 +69,17 @@ public class IPPolicy extends Permissions {
 			
 			String addr;
 			InetAddress resolved = ((InetSocketAddress)remoteAddress).getAddress();
-			if(resolved==null) {
-				addr = ((InetSocketAddress)remoteAddress).getHostString();
-			} else {
-				addr = resolved.getHostAddress();
+			
+			Boolean temporarilyBanned = temporaryBans.getOrDefault(resolved, false);
+			if(temporarilyBanned) {
+				Log.info("Rejecting IP %s because of temporary ban", resolved.getHostAddress());
+				return false;
 			}
+//			if(resolved==null) {
+//				addr = ((InetSocketAddress)remoteAddress).getHostString();
+//			} else {
+				addr = resolved.getHostAddress();
+//			}
 			
 			if(!whitelist.isEmpty()) {
 				allowed = isListed(addr, whitelist);
@@ -88,6 +106,22 @@ public class IPPolicy extends Permissions {
 		return false;
 	}
 	
+	public void flagAddress(InetAddress addr) {
+		
+		Integer count = flaggedAddressCounts.getOrDefault(addr, 0);
+		
+		if(count >= failedAuthenticationThreshold) {
+			Log.info("Temporarily banning IP address %s due to failed authentication count of %d", 
+					addr.getHostAddress(), count);
+			temporaryBans.put(addr, true);
+			return;
+		}
+		
+		++count;
+		Log.info("Flagging IP address %s with failed authentication count of %d", addr.getHostAddress(), count);
+		flaggedAddressCounts.put(addr, count);
+	}
+	
 	public final boolean checkConnection(SocketAddress remoteAddress, SocketAddress localAddress) {
 		return assertConnection(remoteAddress, localAddress);
 	}
@@ -107,10 +141,13 @@ public class IPPolicy extends Permissions {
 	}
 	
 	public void blacklist(String addr) throws UnknownHostException {
+		Log.info("Blacklisting IP address %s", addr);
 		blacklist.add(new CIDRNetwork(addr));
 	}
 	
 	public void whitelist(String addr) throws UnknownHostException {
+		Log.info("Whitelisting IP address %s", addr);
 		whitelist.add(new CIDRNetwork(addr));
 	}
+
 }

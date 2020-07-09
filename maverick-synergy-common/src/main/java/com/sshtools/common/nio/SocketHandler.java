@@ -19,6 +19,9 @@
 
 package com.sshtools.common.nio;
 
+import java.io.IOException;
+import java.nio.channels.SelectableChannel;
+
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshContext;
@@ -35,8 +38,9 @@ public interface SocketHandler extends SelectorRegistrationListener, SelectionKe
          *
          * @param engine ProtocolEngine
          * @param daemon Daemon
+         * @throws IOException 
          */
-        public void initialize(ProtocolEngine engine, SshEngine daemon);
+        public void initialize(ProtocolEngine engine, SshEngine daemon, SelectableChannel channel) throws IOException;
 
         /**
          * The selector is ready to be read.

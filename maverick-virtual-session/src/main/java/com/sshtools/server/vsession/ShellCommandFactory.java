@@ -71,7 +71,6 @@ public class ShellCommandFactory extends CommandFactory<ShellCommand> {
 		
 		commands.put("error", ShowLastError.class);
 		commands.put("help", Help.class);
-		commands.put("kill", Kill.class);
 		
 		commands.put("msh", Msh.class);
 		commands.put("source", Source.class);

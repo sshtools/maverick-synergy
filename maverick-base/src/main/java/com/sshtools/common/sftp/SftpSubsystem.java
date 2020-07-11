@@ -1370,13 +1370,14 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 					
 					con.setProperty("uploadQuota", new Long(quota + count));
 				}
-				
-				nfs.writeFile(handle, offset, bar.array(), bar.getPosition(),
-						count);
+				try {	
+					
+					nfs.writeFile(handle, offset, bar.array(), bar.getPosition(),
+							count);
+	
+					evt.bytesWritten += count;
 
-				evt.bytesWritten += count;
 
-				try {
 					if(context.getPolicy(FileSystemPolicy.class).isSFTPReadWriteEvents()) {
 						fireEvent(	new Event(
 								SftpSubsystem.this,

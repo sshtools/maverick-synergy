@@ -117,11 +117,11 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 
 			Integer numberOfConnections = sshContext.getConnectionManager().getNumberOfConnections();
 
-			if (sshContext.getMaximumConnections() > -1) {
+			if (sshContext.getEngine().getContext().getMaximumConnections() > -1) {
 
-				if (numberOfConnections.intValue() >= sshContext.getMaximumConnections()) {
+				if (numberOfConnections.intValue() >= sshContext.getEngine().getContext().getMaximumConnections()) {
 					denyConnection = true;
-					disconnectText = getContext().getTooManyConnectionsText();
+					disconnectText = sshContext.getEngine().getContext().getTooManyConnectionsText();
 					disconnectReason = TransportProtocol.TOO_MANY_CONNECTIONS;
 
 					if (!sshContext.isEnsureGracefulDisconnect()) {
@@ -157,7 +157,7 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	
 	protected void onKeyExchangeInit() throws SshException {
 		
-		if(getContext().isServerControlledKeyExchange()) {
+		if(getContext().isForceServerPreferences()) {
 			/**
 			 * Reconfigure before sending kex init to ensure we only
 			 * support the strongest algorithms of the client
@@ -189,7 +189,7 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 
 	@Override
 	protected boolean canSendKeyExchangeInit() {
-		return !getContext().isServerControlledKeyExchange();
+		return !getContext().isForceServerPreferences();
 	}
 	
 	@Override

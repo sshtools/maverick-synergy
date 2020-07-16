@@ -76,9 +76,7 @@ public class SshServerContext extends SshContext {
 	Map<String, Class<? extends ExecutableCommand>> commands 
 		= new ConcurrentHashMap<String, Class<? extends ExecutableCommand>>(8, 0.9f, 1);
 	
-	int maximumConnections = -1;
 	boolean ensureGracefulDisconnect = false;
-	String tooManyConnectionsText = "Too many connections";
 
 	ForwardingManager<SshServerContext> forwardingManager;
 	ConnectionManager<SshServerContext> connectionManager;
@@ -94,7 +92,7 @@ public class SshServerContext extends SshContext {
 
 	int maxDHGroupSize = 2048;
 
-	private boolean serverControlledKeyExchange = false;
+	private boolean forceServerPreferences = false;
 	
 	private static ComponentFactory<SshKeyExchange<SshServerContext>> verifiedKeyExchanges;
 	
@@ -146,24 +144,6 @@ public class SshServerContext extends SshContext {
 		return (GlobalRequestHandler<SshServerContext>) globalRequestHandlers.get(name);
 	}
 	
-	/**
-	 * Set the maximum number of connections allowed at any one time.
-	 * 
-	 * @param maximumConnections
-	 *            int
-	 */
-	public void setMaximumConnections(int maximumConnections) {
-		this.maximumConnections = maximumConnections;
-	}
-
-	/**
-	 * Get the maximum number of connections allowed at any one time.
-	 * 
-	 * @return int
-	 */
-	public int getMaximumConnections() {
-		return maximumConnections;
-	}
 	
 	/**
 	 * Get the currently preferred public key algorithm.
@@ -559,22 +539,6 @@ public class SshServerContext extends SshContext {
 	}
 
 	/**
-	 * Get the text used when disconnecting when the maximum connection threshold has been reached.
-	 * @return
-	 */
-	public String getTooManyConnectionsText() {
-		return tooManyConnectionsText;
-	}
-
-	/**
-	 * Set the text used when disconnecting when the maximum connection threshold has been reached.
-	 * @param tooManyConnectionsText
-	 */
-	public void setTooManyConnectionsText(String tooManyConnectionsText) {
-		this.tooManyConnectionsText = tooManyConnectionsText;
-	}
-
-	/**
 	 * This method loads an OpenSSH certificate file for use as a host key.
 	 * @param keyFile
 	 * @param passphrase
@@ -753,8 +717,8 @@ public class SshServerContext extends SshContext {
 	/**
 	 * Is the server wanting to control key exchange {@link #setServerControllerKeyExchange()}
 	 */
-	public boolean isServerControlledKeyExchange() {
-		return serverControlledKeyExchange;
+	public boolean isForceServerPreferences() {
+		return forceServerPreferences;
 	}
 	
 	/**
@@ -765,7 +729,7 @@ public class SshServerContext extends SshContext {
 	 * the server to control the output of key exchange.
 	 * @param serverControlledKeyExchange
 	 */
-	public void setServerControlledKeyExchange(boolean serverControlledKeyExchange) {
-		this.serverControlledKeyExchange = serverControlledKeyExchange;
+	public void setForceServerPreferences(boolean serverControlledKeyExchange) {
+		this.forceServerPreferences = serverControlledKeyExchange;
 	}
 }

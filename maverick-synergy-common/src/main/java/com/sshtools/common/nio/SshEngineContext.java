@@ -37,21 +37,8 @@ import com.sshtools.common.util.ByteBufferPool;
 public class SshEngineContext {
 
 	String product = "SSHD";
-
-	/**
-	 * Set the product name
-	 * 
-	 * @param String
-	 *            product
-	 */
-	public void setProduct(String product) {
-		this.product = product;
-	}
-
-	/** Get the product name used to prefix thread names */
-	public String getProduct() {
-		return product;
-	}
+	int maximumConnections = -1;
+	String tooManyConnectionsText = "Too many connections";
 
 	SshEngine daemon;
 
@@ -77,6 +64,56 @@ public class SshEngineContext {
 		this.daemon = daemon;
 	}
 
+	/**
+	 * Set the product name
+	 * 
+	 * @param String
+	 *            product
+	 */
+	public void setProduct(String product) {
+		this.product = product;
+	}
+
+	/** Get the product name used to prefix thread names */
+	public String getProduct() {
+		return product;
+	}
+	
+	/**
+	 * Set the maximum number of connections allowed at any one time.
+	 * 
+	 * @param maximumConnections
+	 *            int
+	 */
+	public void setMaximumConnections(int maximumConnections) {
+		this.maximumConnections = maximumConnections;
+	}
+
+	/**
+	 * Get the maximum number of connections allowed at any one time.
+	 * 
+	 * @return int
+	 */
+	public int getMaximumConnections() {
+		return maximumConnections;
+	}
+
+	/**
+	 * Get the text used when disconnecting when the maximum connection threshold has been reached.
+	 * @return
+	 */
+	public String getTooManyConnectionsText() {
+		return tooManyConnectionsText;
+	}
+
+	/**
+	 * Set the text used when disconnecting when the maximum connection threshold has been reached.
+	 * @param tooManyConnectionsText
+	 */
+	public void setTooManyConnectionsText(String tooManyConnectionsText) {
+		this.tooManyConnectionsText = tooManyConnectionsText;
+	}
+	
 	/**
 	 * Returns a direct buffer pool.
 	 * 

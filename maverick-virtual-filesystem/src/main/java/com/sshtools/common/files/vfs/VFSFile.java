@@ -114,8 +114,10 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 		} catch (FileSystemException e) {
 		}
 		
-		attr.setPermissions(String.format("%s%s-------", (isReadable() ? "r"
-				: "-"), (isWritable() ? "w" : "-")));
+		attr.setPermissions(String.format("%s%s%s------", 
+				isReadable() ? "r" : "-", 
+				isWritable() ? "w" : "-", 
+				isDirectory() ? "x" : "-"));
 
 
 		try {

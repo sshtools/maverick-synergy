@@ -576,7 +576,7 @@ public class SftpFileAttributes {
 	 * @param newPermissions
 	 */
 	public void setPermissions(String newPermissions) {
-		int cp = 0;
+		int cp = getModeType();
 
 		if (permissions != null) {
 			cp = cp
@@ -973,7 +973,7 @@ public class SftpFileAttributes {
 		}
 	}
 
-	public long getModeType() {
+	public int getModeType() {
 		
 		switch (type) {
 		case SSH_FILEXFER_TYPE_DIRECTORY:

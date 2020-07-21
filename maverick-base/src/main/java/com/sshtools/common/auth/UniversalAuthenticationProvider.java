@@ -43,7 +43,7 @@ public class UniversalAuthenticationProvider implements PublicKeyAuthenticationP
 	UniversalAuthenticatorAccountDatabase accountDatabase;
 	
 	public UniversalAuthenticationProvider(UniversalAuthenticatorAccountDatabase accountDatabase) {
-		this(accountDatabase, "gateway.sshtools.com", 443);
+		this(accountDatabase, "gateway.jadaptive.com", 443);
 	}
 	
 	public UniversalAuthenticationProvider(UniversalAuthenticatorAccountDatabase accountDatabase, String hostname) {

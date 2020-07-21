@@ -102,7 +102,7 @@ public class MutualCallbackAuthentication<C extends Context> implements Authenti
 					writer.writeString(username);
 					writer.writeBinaryString(transport.getSessionKey());
 					
-					SshKeyPair key = provider.getLocalPrivateKey(username);
+					SshKeyPair key = provider.getLocalPrivateKey(con);
 					if(Objects.isNull(key)) {
 						authentication.failedAuthentication();
 						return;
@@ -158,7 +158,7 @@ public class MutualCallbackAuthentication<C extends Context> implements Authenti
 					writer.writeString(username);
 					writer.writeBinaryString(transport.getSessionKey());
 
-					SshPublicKey key = provider.getRemotePublicKey(username);
+					SshPublicKey key = provider.getRemotePublicKey(con);
 					
 					if(Objects.isNull(key)) {
 						authentication.failedAuthentication();

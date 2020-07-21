@@ -97,7 +97,7 @@ public class MutualCallbackAuthenticator extends SimpleClientAuthenticator {
 				writer.writeString(username);
 				writer.writeBinaryString(transport.getSessionKey());
 				
-				SshPublicKey remotePublicKey = authenticationStore.getPublicKey(username);
+				SshPublicKey remotePublicKey = authenticationStore.getPublicKey(con);
 
 				if(Objects.isNull(remotePublicKey)) {
 					transport.disconnect(TransportProtocol.AUTH_CANCELLED_BY_USER, "There was no public key configured for the user");
@@ -115,7 +115,7 @@ public class MutualCallbackAuthenticator extends SimpleClientAuthenticator {
 				writer.writeString(username);
 				writer.writeBinaryString(transport.getSessionKey());
 				
-				SshKeyPair localPrivateKey = authenticationStore.getPrivateKey(username);
+				SshKeyPair localPrivateKey = authenticationStore.getPrivateKey(con);
 				byte[] signature2 = localPrivateKey.getPrivateKey().sign(writer.toByteArray());
 				
 				transport.postMessage(new SshMessage() {

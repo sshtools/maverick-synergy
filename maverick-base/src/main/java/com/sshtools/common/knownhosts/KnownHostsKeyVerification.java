@@ -114,7 +114,11 @@ public class KnownHostsKeyVerification implements
 			StringTokenizer tokens = new StringTokenizer(line, " ");
 
 			if (!tokens.hasMoreTokens()) {
-				onInvalidHostEntry(line);
+				entries.add(new InvalidEntry(line));
+				try {
+					onInvalidHostEntry(line);
+				} catch (SshException e) {
+				}
 				continue;
 			}
 
@@ -129,7 +133,11 @@ public class KnownHostsKeyVerification implements
 			
 			try {
 				if (!tokens.hasMoreTokens()) {
-					onInvalidHostEntry(line);
+					entries.add(new InvalidEntry(line));
+					try {
+						onInvalidHostEntry(line);
+					} catch (SshException e) {
+					}
 					continue;
 				}
 
@@ -138,7 +146,11 @@ public class KnownHostsKeyVerification implements
 				if(!loadSsh1PublicKey(host, algorithm, tokens, line)) {
 					
 					if (!tokens.hasMoreTokens()) {
-						onInvalidHostEntry(line);
+						entries.add(new InvalidEntry(line));
+						try {
+							onInvalidHostEntry(line);
+						} catch (SshException e) {
+						}
 						continue;
 					}
 					
@@ -154,7 +166,17 @@ public class KnownHostsKeyVerification implements
 				}
 
 			} catch(IOException e) { 
-				onInvalidHostEntry(line);
+				entries.add(new InvalidEntry(line));
+				try {
+					onInvalidHostEntry(line);
+				} catch (SshException e2) {
+				}
+			} catch(SshException e) { 
+				entries.add(new InvalidEntry(line));
+				try {
+					onInvalidHostEntry(line);
+				} catch (SshException e2) {
+				}
 			} catch (OutOfMemoryError ox) {
 				reader.close();
 				throw new SshException(
@@ -220,7 +242,7 @@ public class KnownHostsKeyVerification implements
 		if(!algorithm.matches("[0-9]+")) {
 			return false;
 		}
-		
+		entries.add(new InvalidEntry(line));
 		return true;
 	}
 
@@ -778,6 +800,20 @@ public class KnownHostsKeyVerification implements
 		@Override
 		String getFormattedLine() {
 			return String.format("#%s", comment);
+		}
+	}
+	
+	public class InvalidEntry extends NonValidatingFileEntry {
+		
+		String line;
+		
+		InvalidEntry(String line) {
+			this.line = line;
+		}
+
+		@Override
+		String getFormattedLine() {
+			return line;
 		}
 	}
 	

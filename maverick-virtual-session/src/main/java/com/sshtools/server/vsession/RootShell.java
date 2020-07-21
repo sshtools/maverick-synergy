@@ -56,11 +56,16 @@ public class RootShell extends Msh {
 			throws IOException, PermissionDeniedException {
 		
 		this.console = console;
+		VirtualConsole.setCurrentConsole(console);
 		
-		if (commands != null) {
-			runAndExit(commands, args, console);
-		} else {
-			promptForCommands(args, console);
+		try {
+			if (commands != null) {
+				runAndExit(commands, args, console);
+			} else {
+				promptForCommands(args, console);
+			}
+		} finally {
+			VirtualConsole.clearCurrentConsole();
 		}
 	}
 

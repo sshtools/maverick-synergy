@@ -46,6 +46,8 @@ public class VirtualConsole {
 	AbstractFile cwd;
 	AbstractFileFactory<?> fileFactory;
 	
+	static ThreadLocal<VirtualConsole> threadConsoles = new ThreadLocal<>();
+	
 	public VirtualConsole(SessionChannelServer channel, Environment env, Terminal terminal, LineReader reader, Msh shell) throws IOException, PermissionDeniedException {
 		this.channel = channel;
 		this.con = channel.getConnection();
@@ -170,6 +172,18 @@ public class VirtualConsole {
 
 	public AbstractFileFactory<?> getFileFactory() {
 		return fileFactory;
+	}
+	
+	public static VirtualConsole getCurrentConsole() {
+		return threadConsoles.get();
+	}
+
+	public static void setCurrentConsole(VirtualConsole console) {
+		threadConsoles.set(console);
+	}
+
+	public static void clearCurrentConsole() {
+		threadConsoles.remove();
 	}
 	
 }

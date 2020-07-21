@@ -517,11 +517,33 @@ public class SftpFileAttributes {
 	public void setPermissions(UnsignedInteger32 permissions) {
 		this.permissions = permissions;
 
-		// Set the flag
-		if (permissions != null) {
+		if(permissions!=null) {
+			if((permissions.longValue() & SftpFileAttributes.S_IFDIR) == SftpFileAttributes.S_IFDIR) {
+				this.type = SSH_FILEXFER_TYPE_DIRECTORY;
+			} else if((permissions.longValue() & SftpFileAttributes.S_IFREG) == SftpFileAttributes.S_IFREG) {
+				this.type = SSH_FILEXFER_TYPE_REGULAR;
+			} else if((permissions.longValue() & SftpFileAttributes.S_IFCHR) == SftpFileAttributes.S_IFCHR) {
+				this.type = SSH_FILEXFER_TYPE_SPECIAL;
+			} else if((permissions.longValue() & SftpFileAttributes.S_IFBLK) == SftpFileAttributes.S_IFBLK) {
+				this.type = SSH_FILEXFER_TYPE_SPECIAL;
+			} else if((permissions.longValue() & SftpFileAttributes.S_IFIFO) == SftpFileAttributes.S_IFIFO) {
+				this.type = SSH_FILEXFER_TYPE_SPECIAL;
+			} else if((permissions.longValue() & SftpFileAttributes.S_IFMT) == SftpFileAttributes.S_IFMT) {
+				this.type = SSH_FILEXFER_TYPE_SPECIAL;
+			} else if((permissions.longValue() & SftpFileAttributes.S_IFSOCK) == SftpFileAttributes.S_IFSOCK) {
+				this.type = SSH_FILEXFER_TYPE_SPECIAL;
+			} else if((permissions.longValue() & SftpFileAttributes.S_IFLNK) == SftpFileAttributes.S_IFLNK) {
+				this.type = SSH_FILEXFER_TYPE_SYMLINK;
+			} else {
+				this.type = SSH_FILEXFER_TYPE_UNKNOWN;
+			}
+
 			flags |= SSH_FILEXFER_ATTR_PERMISSIONS;
+		
 		} else {
-			flags ^= SSH_FILEXFER_ATTR_PERMISSIONS;
+			if((flags & SSH_FILEXFER_ATTR_PERMISSIONS) == SSH_FILEXFER_ATTR_PERMISSIONS) {
+				flags ^= SSH_FILEXFER_ATTR_PERMISSIONS;
+			}
 		}
 	}
 

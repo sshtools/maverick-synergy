@@ -415,6 +415,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 		loadExternalComponents("publickey.properties", publickeys);
 		
 		testPublicKey("ssh-rsa", Ssh2RsaPublicKey.class, publickeys);
+		testPublicKey("ssh-dss", Ssh2DsaPublicKey.class, publickeys);
 
 	}
 

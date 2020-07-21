@@ -28,6 +28,7 @@ import java.util.Objects;
 
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.logger.Log.Level;
+import com.sshtools.common.ssh.AbstractRequestFuture;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.Context;
@@ -311,6 +312,18 @@ public class MockConnection implements SshConnection {
 
 	@Override
 	public void sendGlobalRequest(GlobalRequest request, boolean wantReply) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public AbstractRequestFuture getAuthenticatedFuture() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void removeProperty(String string) {
 		// TODO Auto-generated method stub
 		
 	}

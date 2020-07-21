@@ -257,7 +257,6 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 
 	public void close() {
 		this.closed = true;
-		properties.clear();
 		listeners.clear();
 	}
 

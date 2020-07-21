@@ -35,15 +35,13 @@ import com.sshtools.common.events.EventListener;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.DisconnectRequestFuture;
-import com.sshtools.common.nio.ProtocolContext;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.nio.SshEngineContext;
 import com.sshtools.common.policy.AuthenticationPolicy;
 import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.ChannelFactory;
-import com.sshtools.common.ssh.Connection;
-import com.sshtools.common.ssh.GlobalRequestHandler;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
@@ -139,10 +137,6 @@ public class CallbackClient {
 		}
 	}
 	
-	protected void reload(CallbackSession client) throws IOException {
-		
-	}
-	
 	public void stop() {
 		
 		for(CallbackSession client : new ArrayList<CallbackSession>(clients)) {
@@ -161,7 +155,7 @@ public class CallbackClient {
 			case EventCodes.EVENT_DISCONNECTED:
 				
 				
-				final Connection<?> con = (Connection<?>)evt.getAttribute(EventCodes.ATTRIBUTE_CONNECTION);
+				final SshConnection con = (SshConnection)evt.getAttribute(EventCodes.ATTRIBUTE_CONNECTION);
 				
 				if(!executor.isShutdown()) {
 					executor.execute(new Runnable() {
@@ -179,7 +173,6 @@ public class CallbackClient {
 												Thread.sleep(client.getConfig().getReconnectIntervalMs() * Math.min(count, 12));
 											} catch (InterruptedException e1) {
 											}
-											reload(client);
 											client.connect();
 											break;
 										} catch (IOException e) {
@@ -187,7 +180,7 @@ public class CallbackClient {
 										count++;
 									}
 								}
-							}
+							} 
 						}
 					});
 				}

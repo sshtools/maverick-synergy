@@ -122,4 +122,8 @@ public interface SshConnection {
 
 	void sendGlobalRequest(GlobalRequest request, boolean wantReply);
 
+	AbstractRequestFuture getAuthenticatedFuture();
+
+	void removeProperty(String string);
+
 }

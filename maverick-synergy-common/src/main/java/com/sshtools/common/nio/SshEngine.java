@@ -39,6 +39,8 @@ import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
+import com.sshtools.common.ssh.AbstractRequestFuture;
+import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshException;
@@ -64,6 +66,7 @@ public class SshEngine {
 	List<ListeningInterface> listeningInterfaces = Collections.synchronizedList(new ArrayList<ListeningInterface>());
 	List<Runnable> shutdownHooks = new ArrayList<Runnable>();
 	Throwable lastError = null;
+	AbstractRequestFuture shutdownFuture = new ChannelRequestFuture();
 	
 	List<SshEngineListener> listeners = Collections.synchronizedList(new ArrayList<SshEngineListener>());
 	final protected static char[] hexArray = "0123456789abcdef".toCharArray();
@@ -462,6 +465,8 @@ public class SshEngine {
 			
 		} finally {
 			started = false;
+			
+			shutdownFuture.done(true);
 		}
 	}
 
@@ -876,5 +881,9 @@ public class SshEngine {
 			}
 			return defaultInstance;
 		}
+	}
+
+	public AbstractRequestFuture getShutdownFuture() {
+		return shutdownFuture;
 	}
 }

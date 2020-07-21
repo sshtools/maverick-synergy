@@ -27,7 +27,7 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ConnectRequestFuture;
 import com.sshtools.common.nio.DisconnectRequestFuture;
 import com.sshtools.common.nio.ProtocolContext;
-import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.server.SshServerContext;
@@ -44,7 +44,7 @@ public class CallbackSession implements Runnable {
 	CallbackConfiguration config;
 	CallbackClient app;
 	ConnectRequestFuture future;
-	Connection<?> currentConnection;
+	
 	boolean isStopped = false;
 	String hostname;
 	int port;
@@ -92,7 +92,7 @@ public class CallbackSession implements Runnable {
 						createContext(config));
 				future.waitFor(30000L);
 				if(future.isDone() && future.isSuccess()) {
-					currentConnection = future.getConnection();
+					SshConnection currentConnection = future.getConnection();
 					currentConnection.getAuthenticatedFuture().waitFor(30000L);
 					if(currentConnection.getAuthenticatedFuture().isDone() && currentConnection.getAuthenticatedFuture().isSuccess()) {
 						currentConnection.setProperty("callbackClient", this);
@@ -155,7 +155,6 @@ public class CallbackSession implements Runnable {
 		if(future.isDone() && future.isSuccess()) {
 			future.getTransport().disconnect(TransportProtocol.BY_APPLICATION, "The user disconnected.");
 		}
-		currentConnection = null;
 	}
 	
 	public DisconnectRequestFuture stop() {
@@ -179,10 +178,6 @@ public class CallbackSession implements Runnable {
 	public void setConfig(CallbackConfiguration config) {
 		this.config = config;
 	}
-	
-//	private void brokerConnection(String hostname, int port) throws IOException {
-//		app.start(app.createClient(config, hostname, port, true));
-//	}
 	
 	public boolean hasAttribute(String key) {
 		return attributes.containsKey(key);

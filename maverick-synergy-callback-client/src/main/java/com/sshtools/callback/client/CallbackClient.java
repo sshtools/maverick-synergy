@@ -43,6 +43,7 @@ import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.ChannelFactory;
 import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.GlobalRequestHandler;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
@@ -58,7 +59,7 @@ public class CallbackClient {
 	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory();
 	List<Object> defaultPolicies = new ArrayList<>();
 	FileFactory fileFactory;
-	
+
 	public CallbackClient() {
 		executor = getExecutorService();
 		EventServiceImplementation.getInstance().addListener(new DisconnectionListener());
@@ -93,7 +94,7 @@ public class CallbackClient {
 	}
 	
 	public synchronized void start(CallbackConfiguration config, String hostname, int port) throws IOException {
-		start(new CallbackSession(config, this, hostname, port, false));
+		start(new CallbackSession(config, this, hostname, port));
 	}
 	
 	public synchronized void start(CallbackSession client) {
@@ -199,7 +200,7 @@ public class CallbackClient {
 		
 	}
 
-	public ProtocolContext createContext(SshEngineContext daemonContext, CallbackConfiguration config) throws IOException, SshException {
+	public SshServerContext createContext(SshEngineContext daemonContext, CallbackConfiguration config) throws IOException, SshException {
 		
 		SshServerContext sshContext = new SshServerContext(getSshEngine(), JCEComponentManager.getDefaultInstance());
 		

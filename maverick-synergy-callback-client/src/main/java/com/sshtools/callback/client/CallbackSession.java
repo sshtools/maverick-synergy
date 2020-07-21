@@ -26,8 +26,11 @@ import java.util.concurrent.TimeUnit;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.ConnectRequestFuture;
 import com.sshtools.common.nio.DisconnectRequestFuture;
+import com.sshtools.common.nio.ProtocolContext;
 import com.sshtools.common.ssh.Connection;
+import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.TransportProtocol;
+import com.sshtools.server.SshServerContext;
 
 /**
  * Implements a reverse SSH server. Making a client socket connection out to the CallbackServer which is listening
@@ -45,17 +48,14 @@ public class CallbackSession implements Runnable {
 	boolean isStopped = false;
 	String hostname;
 	int port;
-	boolean onDemand = false;
 	Map<String,Object> attributes = new HashMap<String,Object>();
 	int numberOfAuthenticationErrors = 0;
 	
-	public CallbackSession(CallbackConfiguration config, CallbackClient app, String hostname, int port, boolean onDemand) throws IOException {
+	public CallbackSession(CallbackConfiguration config, CallbackClient app, String hostname, int port) throws IOException {
 		this.config = config;
 		this.app = app;
-		this.onDemand = onDemand;
 		this.hostname = hostname;
 		this.port = port;
-
 	}
 	
 	public void run() {
@@ -89,7 +89,7 @@ public class CallbackSession implements Runnable {
 				future = app.getSshEngine().connect(
 						hostname, 
 						port, 
-						app.createContext(app.getSshEngine().getContext(), config));;
+						createContext(config));
 				future.waitFor(30000L);
 				if(future.isDone() && future.isSuccess()) {
 					currentConnection = future.getConnection();
@@ -146,6 +146,11 @@ public class CallbackSession implements Runnable {
 		}
 	}
 		
+	protected ProtocolContext createContext(CallbackConfiguration config) throws IOException, SshException {
+		SshServerContext ctx = app.createContext(app.getSshEngine().getContext(), config);
+		return ctx;
+	}
+
 	public void disconnect() {
 		if(future.isDone() && future.isSuccess()) {
 			future.getTransport().disconnect(TransportProtocol.BY_APPLICATION, "The user disconnected.");

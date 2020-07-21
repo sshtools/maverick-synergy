@@ -18,6 +18,9 @@
  */
 package com.sshtools.callback.client;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
 
@@ -31,7 +34,9 @@ public class CallbackConfiguration {
 	Long reconnectIntervalMs;
 	SshKeyPair privateKey;
 	SshPublicKey publicKey;
-
+	
+	Map<String,Object> properties = new HashMap<>();
+	
 	public CallbackConfiguration(String agentName, 
 			String serverHost, 
 			int serverPort, 
@@ -48,6 +53,15 @@ public class CallbackConfiguration {
 	
 	protected CallbackConfiguration() {
 		
+	}
+	
+	public CallbackConfiguration setProperty(String name, Object value) {
+		properties.put(name, value);
+		return this;
+	}
+	
+	public Object getProperty(String name) {
+		return properties.get(name);
 	}
 	
 	public String getAgentName() {

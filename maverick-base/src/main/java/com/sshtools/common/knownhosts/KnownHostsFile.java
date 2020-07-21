@@ -33,8 +33,6 @@ import com.sshtools.common.util.IOUtils;
 
 public class KnownHostsFile extends KnownHostsKeyVerification {
 
-	
-	
 	File file;
 	public KnownHostsFile(File file) throws SshException, IOException {
 		this.file = file;

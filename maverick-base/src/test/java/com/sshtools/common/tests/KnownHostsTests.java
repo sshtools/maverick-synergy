@@ -26,11 +26,11 @@ import com.sshtools.common.knownhosts.KnownHostsKeyVerification;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
 
-public class LegacyKnownHostsTests extends AbstractKnownHostsTests {
+public class KnownHostsTests extends AbstractKnownHostsTests {
 
 	@Override
 	public KnownHostsKeyVerification loadKnownHosts(InputStream in) throws SshException, IOException {
-		return new LegacyKnownHostsKeyVerification(in);
+		return new KnownHostsKeyVerification(in);
 	}
 
 	

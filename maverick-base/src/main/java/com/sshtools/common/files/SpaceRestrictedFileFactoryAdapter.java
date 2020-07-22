@@ -104,29 +104,34 @@ public class SpaceRestrictedFileFactoryAdapter implements AbstractFileFactory<Sp
 		@Override
 		public void write(byte[] b, int off, int len) throws IOException {
 			
-			bytesWritten+=len;
+			
 			if(restrictedSize > 0) {
-				if(bytesWritten > restrictedSize) {
+				if(bytesWritten + len > restrictedSize) {
 					throw new SftpStatusEventException(SftpStatusException.SSH_FX_QUOTA_EXCEEDED,
 							"Out of quota disk space [" + IOUtils.toByteSize(restrictedSize) + "]");
 				}
 			}
 			out.write(b, off, len);
+			bytesWritten+=len;
 		}
 		
 		@Override
 		public void write(int b) throws IOException {
 			
-			bytesWritten++;
 			if(restrictedSize > 0) {
-				if(bytesWritten > restrictedSize) {
+				if(bytesWritten + 1 > restrictedSize) {
 					throw new SftpStatusEventException(SftpStatusException.SSH_FX_QUOTA_EXCEEDED,
 							"Out of quota disk space [" + IOUtils.toByteSize(restrictedSize) + "]");
 				}
 			}
 			
 			out.write(b);
-			
+			++bytesWritten;
+		}
+		
+		
+		public void close() throws IOException {
+			out.close();
 		}
 		
 		

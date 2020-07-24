@@ -204,7 +204,7 @@ public class DiffieHellmanGroup extends SshKeyExchangeServer implements Abstract
 			calculateExchangeHash();
 
 			// Generate signature
-			signature = prvkey.sign(exchangeHash);
+			signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
 
 			// Send our reply message
 			transport.postMessage(new SshMessage() {

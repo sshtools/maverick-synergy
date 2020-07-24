@@ -365,7 +365,7 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 			calculateExchangeHash();
 
 			// Generate signature
-			signature = prvkey.sign(exchangeHash);
+			signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
 
 			// Send our reply message
 			transport.postMessage(new SshMessage() {

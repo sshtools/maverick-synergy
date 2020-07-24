@@ -189,7 +189,7 @@ public class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 
 		calculateExchangeHash();
 
-		signature = prvkey.sign(exchangeHash);
+		signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
 
 		transport.postMessage(new SshMessage() {
 			public boolean writeMessageIntoBuffer(ByteBuffer buf) {

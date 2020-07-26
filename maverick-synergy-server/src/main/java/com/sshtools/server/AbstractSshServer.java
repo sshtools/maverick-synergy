@@ -257,7 +257,10 @@ public abstract class AbstractSshServer implements Closeable {
 	}
 	
 	protected void configureChannels(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
-		sshContext.setChannelFactory(channelFactory);
+		
+		if(Objects.nonNull(channelFactory)) {
+			sshContext.setChannelFactory(channelFactory);
+		}
 	}
 	
 	protected void configureForwarding(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {

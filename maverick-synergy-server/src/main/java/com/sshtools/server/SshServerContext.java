@@ -85,7 +85,7 @@ public class SshServerContext extends SshContext {
 		
 	Collection<ServerConnectionStateListener> stateListeners = new ArrayList<>();
 	
-	ChannelFactory<SshServerContext> channelFactory;
+	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory();
 	
 	Map<String, GlobalRequestHandler<SshServerContext>> globalRequestHandlers = Collections
 			.synchronizedMap(new HashMap<String, GlobalRequestHandler<SshServerContext>>());

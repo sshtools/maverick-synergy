@@ -27,9 +27,7 @@ import java.security.cert.CertificateFactory;
 import java.security.interfaces.DSAPublicKey;
 
 import com.sshtools.common.logger.Log;
-
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.SshX509PublicKey;
 import com.sshtools.common.ssh.components.jce.Ssh2DsaPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;

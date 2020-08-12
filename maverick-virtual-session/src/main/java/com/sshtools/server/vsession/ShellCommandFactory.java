@@ -36,7 +36,6 @@ import com.sshtools.server.vsession.commands.Env;
 import com.sshtools.server.vsession.commands.Exit;
 import com.sshtools.server.vsession.commands.Help;
 import com.sshtools.server.vsession.commands.Input;
-import com.sshtools.server.vsession.commands.Kill;
 import com.sshtools.server.vsession.commands.ShowLastError;
 import com.sshtools.server.vsession.commands.Sleep;
 import com.sshtools.server.vsession.commands.Source;

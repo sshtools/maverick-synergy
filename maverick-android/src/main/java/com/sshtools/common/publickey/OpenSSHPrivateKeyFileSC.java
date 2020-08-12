@@ -266,4 +266,9 @@ public class OpenSSHPrivateKeyFileSC
     }
   }
 
+@Override
+public String getComment() {
+	return "";
+}
+
 }

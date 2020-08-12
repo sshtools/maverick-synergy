@@ -354,4 +354,9 @@ class PuTTYPrivateKeyFile implements SshPrivateKeyFile {
 		return formattedKey;
 	}
 
+	@Override
+	public String getComment() {
+		return "";
+	}
+
 }

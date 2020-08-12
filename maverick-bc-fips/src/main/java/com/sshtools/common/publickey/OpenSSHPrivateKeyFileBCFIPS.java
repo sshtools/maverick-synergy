@@ -267,4 +267,9 @@ public OpenSSHPrivateKeyFileBCFIPS(byte[] formattedkey)
     }
   }
 
+	@Override
+	public String getComment() {
+		return "";
+	}
+
 }

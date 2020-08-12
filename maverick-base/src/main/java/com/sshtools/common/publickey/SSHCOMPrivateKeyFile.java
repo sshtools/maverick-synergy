@@ -234,4 +234,9 @@ class SSHCOMPrivateKeyFile extends Base64EncodedFileFormat implements
 		return formattedkey;
 	}
 
+	@Override
+	public String getComment() {
+		return "";
+	}
+
 }

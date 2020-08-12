@@ -768,4 +768,9 @@ public String oidByteArrayToString(byte[] o)
 	  }
 	  
   }
+
+	@Override
+	public String getComment() {
+		return comment;
+	}
 }

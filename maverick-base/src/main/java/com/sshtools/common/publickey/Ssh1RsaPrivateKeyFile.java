@@ -287,4 +287,9 @@ class Ssh1RsaPrivateKeyFile implements SshPrivateKeyFile {
 		System.arraycopy(digest, 0, key, 16, 16);
 		return key;
 	}
+
+	@Override
+	public String getComment() {
+		return comment;
+	}
 }

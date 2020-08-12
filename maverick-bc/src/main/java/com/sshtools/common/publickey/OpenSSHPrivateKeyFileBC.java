@@ -265,5 +265,10 @@ public class OpenSSHPrivateKeyFileBC
       return false;
     }
   }
+  
+	@Override
+	public String getComment() {
+		return "";
+	}
 
 }

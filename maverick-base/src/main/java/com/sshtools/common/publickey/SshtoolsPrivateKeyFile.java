@@ -349,4 +349,9 @@ class SshtoolsPrivateKeyFile extends Base64EncodedFileFormat implements
 
 	}
 
+	@Override
+	public String getComment() {
+		return "";
+	}
+
 }

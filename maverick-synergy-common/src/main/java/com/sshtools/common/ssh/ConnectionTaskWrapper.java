@@ -18,8 +18,6 @@
  */
 package com.sshtools.common.ssh;
 
-import com.sshtools.common.ssh.SshConnection;
-
 public class ConnectionTaskWrapper extends ConnectionAwareTask {
 
 	Runnable r;

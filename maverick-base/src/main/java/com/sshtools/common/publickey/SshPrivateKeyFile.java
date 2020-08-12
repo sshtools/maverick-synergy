@@ -78,4 +78,10 @@ public interface SshPrivateKeyFile {
    * @throws IOException
    */
   public byte[] getFormattedKey() throws IOException;
+
+  /**
+   * The private key comment (if any).
+   * @return
+   */
+  public String getComment();
 }

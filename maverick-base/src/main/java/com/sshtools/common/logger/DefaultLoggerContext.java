@@ -221,7 +221,9 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	    }
 
 	    public boolean isStopped() { return stop.get(); }
-	    public void stopThread() { stop.set(true); }
+	    public void stopThread() { 
+	    	stop.set(true); 
+	    }
 
 	    public void doOnChange() {
 	        loadFile();
@@ -229,12 +231,12 @@ public class DefaultLoggerContext implements RootLoggerContext {
 
 	    @Override
 	    public void run() {
-	        try (WatchService watcher = FileSystems.getDefault().newWatchService()) {
+	        try (WatchService service = FileSystems.getDefault().newWatchService()) {
 	            Path path = file.getAbsoluteFile().toPath().getParent();
-	            path.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY);
+	            path.register(service, StandardWatchEventKinds.ENTRY_MODIFY);
 	            while (!isStopped()) {
 	                WatchKey key;
-	                try { key = watcher.poll(25, TimeUnit.MILLISECONDS); }
+	                try { key = service.poll(25, TimeUnit.MILLISECONDS); }
 	                catch (InterruptedException e) { return; }
 	                if (key == null) { Thread.yield(); continue; }
 

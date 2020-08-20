@@ -34,10 +34,13 @@ import com.sshtools.common.util.IOUtils;
 public class KnownHostsFile extends KnownHostsKeyVerification {
 
 	File file;
-	public KnownHostsFile(File file) throws SshException, IOException {
+	
+	public KnownHostsFile(File file) throws SshException {
 		this.file = file;
 		try(InputStream in = new FileInputStream(file)) {
 			load(in);
+		} catch (IOException e) {
+			throw new SshException(e);
 		}
 	}
 	
@@ -53,7 +56,7 @@ public class KnownHostsFile extends KnownHostsKeyVerification {
 		return file.canWrite();
 	}
 	
-	public KnownHostsFile() throws SshException, IOException {
+	public KnownHostsFile() throws SshException {
 		this(new File(new File(System.getProperty("user.home"), ".ssh"), "known_hosts"));
 	}
 	
@@ -80,6 +83,20 @@ public class KnownHostsFile extends KnownHostsKeyVerification {
 
 	@Override
 	protected void onHostKeyUpdated(Set<String> names, SshPublicKey key) {
+		save();
+	}
+	
+	@Override
+	protected void onHostKeyAdded(Set<String> names, SshPublicKey key) {
+		save();
+	}
+
+	@Override
+	protected void onHostKeyRemoved(Set<String> names, SshPublicKey key) {
+		save();
+	}
+
+	protected void save() {
 		try {
 			store();
 		} catch (IOException e) {

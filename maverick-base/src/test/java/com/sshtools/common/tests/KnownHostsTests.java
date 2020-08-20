@@ -33,7 +33,6 @@ public class KnownHostsTests extends AbstractKnownHostsTests {
 		return new KnownHostsKeyVerification(in);
 	}
 
-	
 	class LegacyKnownHostsKeyVerification extends KnownHostsKeyVerification {
 
 		public LegacyKnownHostsKeyVerification(InputStream knownHosts) throws SshException, IOException {

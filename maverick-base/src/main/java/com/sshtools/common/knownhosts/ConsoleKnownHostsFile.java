@@ -123,13 +123,4 @@ public class ConsoleKnownHostsFile extends KnownHostsFile {
 
 		// Do nothing on NO
 	}
-
-	private void allowHost(String host, SshPublicKey key, boolean save) throws IOException, SshException {
-
-		addEntry(key, "", resolveNames(host).toArray(new String[0]));
-		if (save) {
-			store();
-		}
-	}
-
 }

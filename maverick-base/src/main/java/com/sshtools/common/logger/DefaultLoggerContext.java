@@ -60,6 +60,10 @@ public class DefaultLoggerContext implements RootLoggerContext {
 		watcher.start();
 	}
 	
+	public void shutdown() {
+		watcher.stopThread();
+	}
+	
 	public String getProperty(String key, String defaultValue) {
 		return processTokenReplacements(props.getProperty(key, defaultValue), System.getProperties());
 	}
@@ -207,7 +211,13 @@ public class DefaultLoggerContext implements RootLoggerContext {
 
 	    public FileWatcher(File file) {
 	        this.file = file;
+	        setName("MaverickLoggerWatcher");
 	        setDaemon(true);
+	        Runtime.getRuntime().addShutdownHook(new Thread() {
+	        	public void run() {
+	        		stopThread();
+	        	}
+	        });
 	    }
 
 	    public boolean isStopped() { return stop.get(); }

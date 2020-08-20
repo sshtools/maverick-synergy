@@ -26,4 +26,6 @@ public interface RootLoggerContext extends LoggerContext {
 
 	String getProperty(String key, String defaultValue);
 
+	void shutdown();
+
 }

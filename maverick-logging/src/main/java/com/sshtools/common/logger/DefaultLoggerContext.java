@@ -174,7 +174,7 @@ public class DefaultLoggerContext implements RootLoggerContext {
 				df.format(new Date()), 
 				Thread.currentThread().getName(),
 				level.name(), 
-				String.format(msg, args),
+				String.format(processArgs(msg, args), args),
 				System.lineSeparator());
 		
 		if(Objects.isNull(e)) {
@@ -188,6 +188,15 @@ public class DefaultLoggerContext implements RootLoggerContext {
 		return log + System.lineSeparator() + s.toString() + System.lineSeparator();
 	}
 	
+	private static String processArgs(String msg, Object[] args) {
+		
+		int idx = 0;
+		while(msg.indexOf("{}") > -1 && idx < args.length) {
+			msg = msg.replace("{}", args[idx++].toString());
+		}
+		return msg;
+	}
+
 	@Override
 	public synchronized void log(Level level, String msg, Throwable e, Object... args) {
 		for(LoggerContext context : contexts) {

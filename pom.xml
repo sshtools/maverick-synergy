@@ -216,6 +216,8 @@
 	</dependencies>
 
 	<modules>
+		<module>maverick-utils</module>
+		<module>maverick-logging</module>
 		<module>maverick-base</module>
 
 		<module>maverick-synergy-common</module>

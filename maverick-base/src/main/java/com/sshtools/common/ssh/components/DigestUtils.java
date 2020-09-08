@@ -16,14 +16,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.util;
+package com.sshtools.common.ssh.components;
 
 import java.io.UnsupportedEncodingException;
 
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.Digest;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
+import com.sshtools.common.util.Utils;
 
 public class DigestUtils {
 

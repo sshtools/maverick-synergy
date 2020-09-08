@@ -27,40 +27,15 @@
 		<artifactId>maverick-synergy-group</artifactId>
 		<version>3.0.0-SNAPSHOT</version>
 	</parent>
-	<artifactId>maverick-base</artifactId>
-	<name>Base API</name>
-	<description>The core components shared between the Maverick Synergy and Maverick Legacy SSH APIs</description>
-
-	<dependencies>	
+	<artifactId>maverick-logging</artifactId>
+	<name>Logging API</name>
+	<description>The logging system used by Maverick Synergy and Maverick Legacy SSH APIs</description>
+	
+	<dependencies>
 		<dependency>
 			<groupId>com.sshtools</groupId>
-			<artifactId>maverick-logging</artifactId>
+			<artifactId>maverick-utils</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>2.5</version>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
-
-	<build>
-
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.4</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>test-jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-
-	</build>
 </project>

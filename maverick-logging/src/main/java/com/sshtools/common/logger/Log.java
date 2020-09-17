@@ -35,6 +35,10 @@ public class Log {
 		}
 	}
 	
+	public void shutdown() {
+		defaultContext.shutdown();
+	}
+	
 	public static void setDefaultContext(RootLoggerContext loggerContext) {
 		synchronized(Log.class) {
 			defaultContext = loggerContext;

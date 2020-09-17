@@ -56,6 +56,9 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	public DefaultLoggerContext() {
 		propertiesFile = new File(System.getProperty("maverick.log.config", "logging.properties"));
 		loadFile();
+		if("true".equalsIgnoreCase(getProperty("maverick.log.nothread", "false"))) {
+			return;
+		}
 		watcher = new FileWatcher(propertiesFile);
 		watcher.start();
 	}

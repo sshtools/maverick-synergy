@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
@@ -149,4 +150,18 @@ public abstract class AbstractDirectFile<T extends AbstractDirectFile<T>> extend
 	public void refresh() {
 		
 	}
+	@Override
+	public int hashCode() {
+		return Objects.hash(f, homeDir, hidden);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		AbstractDirectFile that = getClass().cast(o);
+		return Objects.equals(this.f, that.f)
+				&& Objects.equals(this.homeDir, that.homeDir)
+				&& Objects.equals(this.hidden, that.hidden);
+	} 
 }

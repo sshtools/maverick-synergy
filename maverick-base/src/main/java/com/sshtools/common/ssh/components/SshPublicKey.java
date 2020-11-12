@@ -19,7 +19,7 @@
 /* HEADER */
 package com.sshtools.common.ssh.components;
 
-import java.security.Key;
+import java.security.PublicKey;
 
 import com.sshtools.common.ssh.SecureComponent;
 import com.sshtools.common.ssh.SshException;
@@ -102,7 +102,7 @@ public interface SshPublicKey extends SecureComponent {
    * Return the JCE component for this key.
    * @return
    */
-  public Key getJCEPublicKey();
+  public PublicKey getJCEPublicKey();
 
   /**
    * Indicates if this key is part of a certificate.

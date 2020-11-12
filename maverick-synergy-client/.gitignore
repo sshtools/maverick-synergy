@@ -4,3 +4,4 @@
 *.dat
 /multiple-forwarding.properties
 /single-forwarding.properties
+/zero-forwarding.properties

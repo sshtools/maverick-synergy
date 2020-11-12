@@ -279,7 +279,7 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(parentMount, absolutePath)
+		return Objects.hash(parentMount, absolutePath);
 	}
 
 	@Override

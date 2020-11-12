@@ -127,4 +127,20 @@ public abstract class AbstractFileImpl<T extends AbstractFile> implements Abstra
     public AbstractFileFactory<T> getFileFactory() {
     	return fileFactory;
     }
+
+    protected abstract int doHashCode();
+    
+	@Override
+	public final int hashCode() {
+		return doHashCode();
+	}
+	
+	protected abstract boolean doEquals(Object obj);
+
+	@Override
+	public final boolean equals(Object obj) {
+		return doEquals(obj);
+	}
+    
+    
 }

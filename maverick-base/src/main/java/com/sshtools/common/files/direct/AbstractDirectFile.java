@@ -149,4 +149,15 @@ public abstract class AbstractDirectFile<T extends AbstractDirectFile<T>> extend
 	public void refresh() {
 		
 	}
+	
+
+	@Override
+	protected int doHashCode() {
+		return f.hashCode();
+	}
+
+	@Override
+	protected boolean doEquals(Object obj) {
+		return f.equals(obj);
+	}
 }

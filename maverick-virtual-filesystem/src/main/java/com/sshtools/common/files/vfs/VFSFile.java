@@ -371,4 +371,14 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 				(VFSFileFactory) fileFactory);
 	}
 
+	@Override
+	protected int doHashCode() {
+		return file.hashCode();
+	}
+
+	@Override
+	protected boolean doEquals(Object obj) {
+		return file.equals(obj);
+	}
+
 }

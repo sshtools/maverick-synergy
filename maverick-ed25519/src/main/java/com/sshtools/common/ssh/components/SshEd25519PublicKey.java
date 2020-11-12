@@ -20,7 +20,6 @@ package com.sshtools.common.ssh.components;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
@@ -215,7 +214,7 @@ public class SshEd25519PublicKey implements SshPublicKey {
 	}
 
 	@Override
-	public Key getJCEPublicKey() {
+	public PublicKey getJCEPublicKey() {
 		throw new UnsupportedOperationException("ed25519 is not part of JCE");
 	}
 }

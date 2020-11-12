@@ -174,7 +174,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 	 * @return SecureRandom
 	 * @throws NoSuchAlgorithmException
 	 */
-	public static SecureRandom getSecureRandom() throws NoSuchAlgorithmException {
+	public static SecureRandom getSecureRandom() {
 		return JCEProvider.getSecureRandom();
 	}
 

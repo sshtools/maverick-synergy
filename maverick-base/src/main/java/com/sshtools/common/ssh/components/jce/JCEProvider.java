@@ -135,7 +135,7 @@ public class JCEProvider implements JCEAlgorithms {
 	 * @return SecureRandom
 	 * @throws NoSuchAlgorithmException
 	 */
-	public static SecureRandom getSecureRandom() throws NoSuchAlgorithmException {
+	public static SecureRandom getSecureRandom() {
 
 		if(secureRandom==null) {
 			try {

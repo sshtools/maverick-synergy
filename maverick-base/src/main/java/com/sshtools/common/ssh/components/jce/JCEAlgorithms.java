@@ -109,6 +109,8 @@ public interface JCEAlgorithms {
 	
 	/** Elliptic Curve Diffie Hellmam **/
 	public static final String JCE_ECDH = "ECDH";
-	
+	public static final String JCE_RSA_CIPHER = "RSA_Cipher";
+	public static final String EdDSA = "EdDSA";
+	public static final String ED25519 = "Ed25519";
 	
 }

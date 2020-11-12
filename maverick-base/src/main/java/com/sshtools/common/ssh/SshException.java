@@ -192,6 +192,16 @@ public class SshException extends Exception {
 	public SshException(String msg, int reason) {
 		this(msg, reason, null);
 	}
+	
+	/**
+	 * Create an exception with the given description and reason (for compatibility with Legacy API).
+	 * 
+	 * @param msg
+	 * @param reason
+	 */
+	public SshException(int reason, String msg) {
+		this(msg, reason, null);
+	}
 
 	/**
 	 * Create an exception with the given cause and reason.

@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
@@ -210,6 +211,28 @@ public class VirtualMountFile implements VirtualFile {
 
 	public AbstractFileFactory<VirtualFile> getFileFactory() {
 		return mount.getVirtualFileFactory();
+	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hash(mount, path);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		
+		if(obj == this) {
+			return true;
+		}
+		if(Objects.isNull(obj)) {
+			return false;
+		}
+		if(getClass() != obj.getClass()) {
+			return false;
+		}
+		VirtualMountFile other = getClass().cast(obj);
+		return Objects.equals(other.path, this.path)
+				&& Objects.equals(other.mount, this.mount);
 	}
 
 }

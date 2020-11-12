@@ -21,6 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileAdapter;
@@ -275,4 +276,28 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 					+ " could not be found");
 		}
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(parentMount, absolutePath)
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		
+		if(obj == this) {
+			return true;
+		}
+		if(Objects.isNull(obj)) {
+			return false;
+		}
+		if(getClass() != obj.getClass()) {
+			return false;
+		}
+		VirtualMappedFile other = getClass().cast(obj);
+		return Objects.equals(other.absolutePath, this.absolutePath)
+				&& Objects.equals(other.parentMount, this.parentMount);
+	}
+	
+	
 }

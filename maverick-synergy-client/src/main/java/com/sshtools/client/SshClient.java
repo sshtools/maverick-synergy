@@ -52,47 +52,83 @@ public class SshClient implements Closeable {
 	String remotePublicKeys = "";
 	String hostname;
 	
+	public SshClient(String hostname, int port, String username, long connectTimeout, char[] password) throws IOException, SshException {
+		this(hostname, port, username, new SshClientContext(), connectTimeout, password);
+	}
+	
 	public SshClient(String hostname, int port, String username, char[] password) throws IOException, SshException {
-		this(hostname, port, username, new SshClientContext(), password);
+		this(hostname, port, username, new SshClientContext(), 30000L, password);
+	}
+	
+	public SshClient(String hostname, int port, String username, long connectTimeout, File key) throws IOException, SshException, InvalidPassphraseException {
+		this(hostname, port, username, connectTimeout, key, null);
 	}
 	
 	public SshClient(String hostname, int port, String username, File key) throws IOException, SshException, InvalidPassphraseException {
-		this(hostname, port, username, key, null);
+		this(hostname, port, username, 30000L, key, null);
 	}
 	
-	public SshClient(String hostname, int port, String username, File key, String passphrase) throws IOException, SshException, InvalidPassphraseException {
-		this(hostname, port, username, SshKeyUtils.getPrivateKey(key, passphrase));
+	public SshClient(String hostname, int port, String username, long connectTimeout, File key, String passphrase) throws IOException, SshException, InvalidPassphraseException {
+		this(hostname, port, username, connectTimeout, SshKeyUtils.getPrivateKey(key, passphrase));
+	}
+	
+	public SshClient(String hostname, int port, String username,  File key, String passphrase) throws IOException, SshException, InvalidPassphraseException {
+		this(hostname, port, username, 30000L, SshKeyUtils.getPrivateKey(key, passphrase));
+	}
+	
+	public SshClient(String hostname, int port, String username, long connectTimeout, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
+		this(hostname, port, username, new SshClientContext(), connectTimeout, identities);
 	}
 	
 	public SshClient(String hostname, int port, String username, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
-		this(hostname, port, username, new SshClientContext(), identities);
+		this(hostname, port, username, new SshClientContext(), 30000L, identities);
 	}
 
+	public SshClient(String hostname, int port, String username, SshClientContext sshContext, long connectTimeout, SshKeyPair... identities) throws IOException, SshException {
+		this(hostname, port, username, sshContext, connectTimeout, null, identities);
+	}
+	
 	public SshClient(String hostname, int port, String username, SshClientContext sshContext, SshKeyPair... identities) throws IOException, SshException {
-		this(hostname, port, username, sshContext, null, identities);
+		this(hostname, port, username, sshContext, 30000L, null, identities);
+	}
+	
+	public SshClient(String hostname, int port, String username, long connectTimeout, char[] password, SshKeyPair... identities) throws IOException, SshException {
+		this(hostname, port, username, new SshClientContext(), connectTimeout, password, identities);
 	}
 	
 	public SshClient(String hostname, int port, String username, char[] password, SshKeyPair... identities) throws IOException, SshException {
-		this(hostname, port, username, new SshClientContext(), password, identities);
+		this(hostname, port, username, new SshClientContext(), 30000L, password, identities);
 	}
 
+	public SshClient(String hostname, Integer port, String username, long connectTimeout, char[] password, File key, String passphrase) throws IOException, SshException, InvalidPassphraseException {
+		this(hostname, port, username, connectTimeout, password, SshKeyUtils.getPrivateKey(key, passphrase));
+	}
+	
 	public SshClient(String hostname, Integer port, String username, char[] password, File key, String passphrase) throws IOException, SshException, InvalidPassphraseException {
-		this(hostname, port, username, password, SshKeyUtils.getPrivateKey(key, passphrase));
+		this(hostname, port, username, 30000L, password, SshKeyUtils.getPrivateKey(key, passphrase));
+	}
+	
+	public SshClient(String hostname, Integer port, String username, long connectTimeout) throws IOException, SshException {
+		this(hostname, port, username, new SshClientContext(), connectTimeout);
 	}
 	
 	public SshClient(String hostname, Integer port, String username) throws IOException, SshException {
-		this(hostname, port, username, new SshClientContext());
+		this(hostname, port, username, new SshClientContext(), 30000L);
 	}
 
-	public SshClient(String hostname, Integer port, String username, SshClientContext sshContext) throws IOException, SshException {
-		this(hostname, port, username, sshContext, (char[])null);
+	public SshClient(String hostname, Integer port, String username, SshClientContext sshContext, long connectTimeout) throws IOException, SshException {
+		this(hostname, port, username, sshContext, connectTimeout, (char[])null);
 	}
 	
-	public SshClient(String hostname, int port, String username, SshClientContext sshContext, char[] password, SshKeyPair... identities) throws IOException, SshException {
+	public SshClient(String hostname, Integer port, String username, SshClientContext sshContext) throws IOException, SshException {
+		this(hostname, port, username, sshContext, 30000L, (char[])null);
+	}
+	
+	public SshClient(String hostname, int port, String username, SshClientContext sshContext, long connectTimeout, char[] password, SshKeyPair... identities) throws IOException, SshException {
 		this.sshContext = sshContext;
 		this.hostname = hostname;
 		sshContext.setUsername(username);
-		doConnect(hostname, port, username, sshContext);
+		doConnect(hostname, port, username, sshContext, connectTimeout);
 		boolean attempted = false;
 
 		if(!isAuthenticated() && identities.length > 0) {
@@ -120,10 +156,10 @@ public class SshClient implements Closeable {
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected void doConnect(String hostname, int port, String username, SshClientContext sshContext) throws SshException, IOException {
+	protected void doConnect(String hostname, int port, String username, SshClientContext sshContext, long connectTimeout) throws SshException, IOException {
 		configure(sshContext);
 		ConnectRequestFuture future = sshContext.getEngine().connect(hostname, port, sshContext);
-		future.waitForever();
+		future.waitFor(connectTimeout);
 		if(!future.isSuccess()) {
 			throw new IOException(String.format("Failed to connect to %s:%d", hostname, port));
 		}

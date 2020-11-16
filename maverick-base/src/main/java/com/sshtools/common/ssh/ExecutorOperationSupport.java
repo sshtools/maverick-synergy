@@ -18,10 +18,8 @@
  */
 package com.sshtools.common.ssh;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -39,7 +37,6 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 	String queueName;
 	
 	Map<Integer,OperationTask> operationQueues = new HashMap<Integer,OperationTask>();
-	List<ExecutorOperationListener> listeners = new ArrayList<ExecutorOperationListener>();
 	
 	protected ExecutorOperationSupport(String queueName) {
 		this.queueName = queueName;
@@ -47,14 +44,6 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 	
 	public abstract T getContext();
 
-	public synchronized void addOperationListener(ExecutorOperationListener listener) {
-		listeners.add(listener);
-	}
-	
-	public synchronized void removeOperationListener(ExecutorOperationListener listener) {
-		listeners.remove(listener);
-	}
-	
 	public void addOutgoingTask(ConnectionAwareTask r) {
 		addTask(MESSAGES_OUTGOING, r);
 	}
@@ -79,14 +68,6 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 		addTask(ExecutorOperationSupport.EVENTS, doCleanup);
 	}
 
-	public int getOperationsCount() {
-		int count = 0;
-		for(OperationTask task : operationQueues.values()) {
-			count += task.subsystemOperations.size();
-		}
-		return count;
-	}
-	
 	class OperationTask implements Runnable {
 
 		boolean running = false;
@@ -96,7 +77,7 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 		public void run() {
 
 			if(Log.isTraceEnabled()) {
-				Log.trace(queueName + ": Operation task is starting");
+				Log.trace("{}: Operation task is starting", queueName);
 			}
 
 			do {
@@ -104,35 +85,29 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 				executeAllTasks();
 
 				if(Log.isTraceEnabled()) {
-					Log.trace(queueName + ": No more tasks, will wait for a few more seconds before completing task");
+					Log.trace("{}: No more tasks, will wait for a few more seconds before completing task", queueName);
 				}
 
 				synchronized (this) {
-					try {
-						wait(1000);
-					} catch (InterruptedException e) {
-					}
 					running = !subsystemOperations.isEmpty();
 				}
 
 			} while (running);
 
 			if(Log.isTraceEnabled()) {
-				Log.trace(queueName + ": Operation task has ended");
+				Log.trace("{}: Operation task has ended");
 			}
 		}
 
 		public synchronized void addTask(Runnable r) {
 
 			subsystemOperations.addLast(r);
-
-			addedTask(r);
 			
 			if (!running) {
 				running = true;
 				
 				if(Log.isTraceEnabled()) {
-					Log.trace(queueName + ": Starting new subsystem task");
+					Log.trace("{}: Starting new subsystem task", queueName);
 				}
 				operationFuture = getContext().getExecutorService().submit(this);
 			} else {
@@ -150,23 +125,19 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 					}
 					if (r != null) {
 						try {
-							startTask(r);
 							r.run();
 						} catch (Throwable t) {
 							t.printStackTrace();
-							Log.error("Caught exception in operation remainingTasks=" + subsystemOperations.size(), t);
-						} finally {
-							completedTask(r);
-						}
-						
+							Log.error("{}: Caught exception in operation remainingTasks={}", queueName, subsystemOperations.size(), t);
+						} 
 					} else {
 						if(Log.isWarnEnabled()) {
-							Log.warn(queueName + ": Unexpected null task in operation queue");
+							Log.warn("{}: Unexpected null task in operation queue", queueName);
 						}
 					}
 				} catch (Throwable t) {
 					t.printStackTrace();
-					Log.error(queueName + ": Caught exception in operation remainingTasks=" + subsystemOperations.size(), t);
+					Log.error("{}: Caught exception in operation remainingTasks={}", queueName, subsystemOperations.size(), t);
 				}
 			}
 
@@ -177,7 +148,7 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 			if (!shutdown) {
 
 				if(Log.isTraceEnabled()) {
-					Log.trace(queueName + ": Submitting clean up operation to executor service");
+					Log.trace("{}: Submitting clean up operation to executor service", queueName);
 				}
 
 				getContext().getExecutorService().submit(new Runnable() {
@@ -185,16 +156,16 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 						if (operationFuture != null) {
 				
 							if(Log.isTraceEnabled()) {
-								Log.trace(queueName + ": Cleaning up operations");
+								Log.trace("{}: Cleaning up operations", queueName);
 							}
 							
 							try {
 								if(Log.isTraceEnabled()) {
-									Log.trace(queueName + ": Waiting for operations to complete");
+									Log.trace("{}: Waiting for operations to complete", queueName);
 								}
 								operationFuture.get();
 								if(Log.isTraceEnabled()) {
-									Log.trace(queueName + ": All operations have completed");
+									Log.trace("{}: All operations have completed", queueName);
 								}
 
 							} catch (InterruptedException e) {
@@ -208,54 +179,5 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 			}
 		}
 	}
-	
-	protected synchronized void addedTask(Runnable r) {
-		for(ExecutorOperationListener l : getContext().getExecutorListeners()) {
-			try {
-				l.addedTask(r);
-			} catch (Throwable t) {
-			}
-		}
-		for(ExecutorOperationListener l : listeners) {
-			try {
-				l.addedTask(r);
-			} catch (Throwable t) {
-			}
-		}
-	}
-	
-	protected synchronized void startTask(Runnable r) {
-		
-		if(Log.isTraceEnabled()) {
-			Log.trace(String.format("Executing task on thread %s", Thread.currentThread().getName()));
-		}
-		
-		for(ExecutorOperationListener l : getContext().getExecutorListeners()) {
-			try {
-				l.startedTask(r);
-			} catch (Throwable t) {
-			}
-		}
-		for(ExecutorOperationListener l : listeners) {
-			try {
-				l.startedTask(r);
-			} catch (Throwable t) {
-			}
-		}
-	}
-	
-	protected synchronized void completedTask(Runnable r) {
-		for(ExecutorOperationListener l : getContext().getExecutorListeners()) {
-			try {
-				l.completedTask(r);
-			} catch (Throwable t) {
-			}
-		}
-		for(ExecutorOperationListener l : listeners) {
-			try {
-				l.completedTask(r);
-			} catch (Throwable t) {
-			}
-		}
-	}
+
 }

@@ -47,7 +47,7 @@ public class IOUtils {
     /**
      * Default buffer size for stream utility methods
      */
-    public static int BUFFER_SIZE = 8192;
+    public static int BUFFER_SIZE = 65535;
 
     /**
      * Copy from an input stream to an output stream. It is up to the caller to

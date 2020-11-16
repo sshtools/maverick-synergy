@@ -32,9 +32,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Ignore;
 
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.ssh.SshException;
@@ -75,7 +77,6 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 	 * any integration with the SSH server. We do this so that we can be confident any issue in the forwarding
 	 * tests are the result of issues in the SSH code and not the client/server environment.
 	 */
-//	@Ignore
 	public void testRandomClientServer() throws IOException, SshException, InvalidPassphraseException, UnauthorizedException {
 		
 		log("Starting sanity check");
@@ -108,7 +109,6 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 	 * same data back from the server. The server side will create a digest of the data as well as the client
 	 * side to ensure the integrity of the data is not compromised during the forwarding operation.
 	 */
-	@Ignore
 	public void testLocalForwarding() throws IOException, SshException, InvalidPassphraseException, UnauthorizedException {
 		
 		log("Starting LOCAL forwarding test");
@@ -144,40 +144,50 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 			int clientChannels = config.getForwardingChannelsPerClientCount();
 			int channelInterval = config.getForwardingChannelInterval();
 			int totalTests = clientCount * clientChannels;
-			int currentTests = 0;
+			AtomicInteger currentTests = new AtomicInteger(0);
 			
-			RandomSocketServer rss = new RandomSocketServer(totalTests);
+			RandomSocketServer rss = new RandomSocketServer(totalTests, config.getForwardingDataAmount());
 			
 			long start = System.currentTimeMillis();
 			long last = start;
 			final List<RandomClient> clients = new ArrayList<>();
 			final List<T> sshClients = new ArrayList<>();
-			int x = 0;
-
+			int numClients = 0;
 			do {
 
-				if(x < clientCount) {
+				if(numClients++ < clientCount) {
 					T client = test.createClient(config);
 					sshClients.add(client);
 					int localPort = test.startForwarding(client, rss.getPort());
 					
-					for(int i=0;i<clientChannels; i++) {
-						new RandomClient(new Socket("127.0.0.1", localPort),
-								config.getForwardingDataAmount(),
-								config.getForwardingDataBlock(), x, i) {
-							@Override
-							protected void report(RandomClient c) {
-								clients.add(c);
+					new Thread() {
+						public void run() {
+							
+							for(int i=0;i<clientChannels; i++) {
+								try {
+									new RandomClient(new Socket("127.0.0.1", localPort),
+											config.getForwardingDataAmount(),
+											config.getForwardingDataBlock(),
+											config.getRandomBlockSize()) {
+										@Override
+										protected void report(RandomClient c) {
+											clients.add(c);
+										}
+									};
+									
+									currentTests.incrementAndGet();
+									try {
+										Thread.sleep(channelInterval);
+									} catch (InterruptedException e) {
+									}
+								
+								} catch(IOException ex) {
+									ex.printStackTrace();
+									System.exit(1);
+								}
 							}
-						};
-						
-						currentTests++;
-						try {
-							Thread.sleep(channelInterval);
-						} catch (InterruptedException e) {
 						}
-					}
-					x++;
+					}.start();
 				}
 				
 				try {
@@ -185,10 +195,10 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 				} catch (InterruptedException e) {
 				}
 				
-				if(System.currentTimeMillis() - last >= 60000) {
+				if(System.currentTimeMillis() - last >= 5000) {
 					last = System.currentTimeMillis();
 					log(String.format("The server is %s and there are still %d clients active with %d still to be created",
-								rss.isComplete() ? "complete" : "incomplete", currentTests - clients.size(), totalTests - currentTests));
+								rss.isComplete() ? "complete" : "incomplete", currentTests.get() - clients.size(), totalTests - currentTests.get()));
 				}
 			} while(System.currentTimeMillis() - start < maximumTime 
 					&& (!rss.isComplete() || clients.size() < totalTests));
@@ -209,7 +219,10 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 		
 	}
 	
+	static AtomicInteger count = new AtomicInteger(0);
+	
 	abstract class RandomClient extends Thread {
+		
 		
 		Socket s;
 		long totalDataAmount;
@@ -218,12 +231,14 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 		Throwable readError;
 		Throwable writeError;
 		String name;
-		RandomClient(Socket s, long totalDataAmount, int maximumBlockSize, int index, int channel) {
-			super(String.format("client-%d-%d_input", index, channel));
+		boolean randomBlock;
+		
+		RandomClient(Socket s, long totalDataAmount, int maximumBlockSize, boolean randomBlock) {
 			this.s = s;
 			this.totalDataAmount = totalDataAmount;
 			this.maximumBlockSize = maximumBlockSize;
-			this.name = String.format("client-%d-%d", index, channel);
+			this.name = String.format("client-%s", count.getAndAdd(1));
+			this.randomBlock = randomBlock;
 			start();
 		}
 		
@@ -237,7 +252,8 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 				
 				log(String.format("Random client %s is starting", name));
 				
-				final RandomInputStream in = new RandomInputStream(maximumBlockSize, totalDataAmount);
+				final RandomInputStream in = new RandomInputStream(
+						maximumBlockSize, totalDataAmount, randomBlock);
 				final OutputStream out = s.getOutputStream();
 				new Thread(String.format(name + "_output")) {
 					public void run() {
@@ -254,14 +270,19 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 				
 				DigestInputStream din = new DigestInputStream(s.getInputStream(), MessageDigest.getInstance("MD5"));
 				long t = 0;
-				while(din.read() > -1 && ++t < totalDataAmount) {
-					if(t % (1000000) == 0) {
+				byte[] tmp = new byte[32768];
+				int r;
+				int m = 0;
+				while((r = din.read(tmp)) > -1) {
+					t += r;
+					m += r;
+					if(m > 1000000) {
+						m = 0;
 						log(String.format("Random client %s has received %s of data of %s",
 									name, IOUtils.toByteSize(t), IOUtils.toByteSize(totalDataAmount)));
 					}
 				}
-				
-				
+
 				s.close();
 				checksumMatches = Arrays.areEqual(din.getMessageDigest().digest(), in.digest.digest());
 				
@@ -285,10 +306,12 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 		int maximumBlockSize;
 		Random r = new Random();
 		MessageDigest digest;
-		RandomInputStream(int maximumBlockSize, long totalDataAmount) throws NoSuchAlgorithmException {
+		boolean randomBlock;
+		
+		RandomInputStream(int maximumBlockSize, long totalDataAmount, boolean randomBlock) throws NoSuchAlgorithmException {
 			this.maximumBlockSize = maximumBlockSize;
 			this.totalDataAmount = totalDataAmount;
-			
+			this.randomBlock = randomBlock;
 			this.digest = MessageDigest.getInstance("MD5");
 		}
 		
@@ -301,11 +324,14 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 			if(totalDataAmount < max) {
 				max = (int) totalDataAmount;
 			}
-			int s = r.nextInt(max);
-			if(s==0) {
-				s = max;
-			}
+			int s = max;
 			
+			if(randomBlock) {
+				s = r.nextInt(max);
+				if(s==0) {
+					s = max;
+				}
+			}
 			byte[] b = new byte[s];
 			r.nextBytes(b);
 			
@@ -331,13 +357,15 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 		ServerSocket sock;
 		Throwable lastError;
 		int count;
+		long totalAmount;
 		List<RandomSocketClient> completed = new ArrayList<RandomSocketClient>();
 		List<RandomSocketClient> fatalErrors = new ArrayList<RandomSocketClient>();
 		List<RandomSocketClient> checksumErrors = new ArrayList<RandomSocketClient>();
 		
-		RandomSocketServer(int count) throws IOException {
+		RandomSocketServer(int count, long totalAmount) throws IOException {
 			super("RandomSocketServer");
 			this.count = count;
+			this.totalAmount = totalAmount;
 			sock = new ServerSocket(0);
 			start();
 		}
@@ -378,7 +406,7 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 			try {
 				int index = 0;
 				while(index < count && (s = sock.accept()) != null) {
-					new RandomSocketClient(this, s, index++).start();
+					new RandomSocketClient(this, s, index++, totalAmount).start();
 				}
 			} catch (Throwable e) {
 				e.printStackTrace();
@@ -393,10 +421,12 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 		Throwable lastError;
 		RandomSocketServer server;
 		Boolean matchingChecksums = false;
-		RandomSocketClient(RandomSocketServer server, Socket s, int index) {
+		long totalAmount;
+		RandomSocketClient(RandomSocketServer server, Socket s, int index, long totalAmount) {
 			super("RandomSocketClient_" + index);
 			this.server = server;
 			this.s = s;
+			this.totalAmount = totalAmount;
 		}
 		
 		public boolean hasError() {
@@ -409,16 +439,33 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 		
 		public void run() {
 			
+			Log.info("Server client has started");
+			
 			try {
 				DigestInputStream in = new DigestInputStream(s.getInputStream(), MessageDigest.getInstance("MD5"));
 				DigestOutputStream out = new DigestOutputStream(s.getOutputStream(), MessageDigest.getInstance("MD5"));
-				IOUtils.copy(in, out);
+				
+				long total = 0;
+				byte[] tmp = new byte[32768];
+				while(total < totalAmount) {
+					int r = in.read(tmp);
+					if(r==-1) {
+						break;
+					}
+					out.write(tmp, 0, r);
+					total += r;
+				}
+				
+				IOUtils.closeStream(in);
+				IOUtils.closeStream(out);
+				s.close();
 				
 				matchingChecksums = Arrays.areEqual(in.getMessageDigest().digest(), out.getMessageDigest().digest());
 			} catch (Throwable e) {
 				e.printStackTrace();
 				lastError = e;
 			} finally {
+				Log.info("Server client has completed");
 				server.report(this);
 			}
 		}

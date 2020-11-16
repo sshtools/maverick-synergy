@@ -57,6 +57,7 @@ public abstract class AbstractNGForwardingTests extends AbstractForwardingTests<
 				SshClient client = new SshClient(config.getHostname(), 
 				config.getPort(), 
 				config.getUsername(), 
+				5000L,
 				config.getPassword(), 
 				config.getIdentities());
 				
@@ -87,6 +88,7 @@ public abstract class AbstractNGForwardingTests extends AbstractForwardingTests<
 				SshClient client = new SshClient(config.getHostname(), 
 				config.getPort(), 
 				config.getUsername(), 
+				5000L,
 				config.getPassword(), 
 				config.getIdentities());
 				

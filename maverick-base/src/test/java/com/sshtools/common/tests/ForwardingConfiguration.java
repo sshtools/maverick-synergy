@@ -37,7 +37,7 @@ public abstract class ForwardingConfiguration extends TestConfiguration {
 	}
 	
 	public long getForwardingTimeout() {
-		return Long.parseLong(properties.getProperty("forwardingTestTimeout", "300000"));
+		return Long.parseLong(properties.getProperty("forwardingTestTimeout", "5")) * 60000 * 1000;
 	}
 
 	public int getForwardingClientInterval() {
@@ -45,7 +45,7 @@ public abstract class ForwardingConfiguration extends TestConfiguration {
 	}
 
 	public int getForwardingDataBlock() {
-		return Integer.parseInt(properties.getProperty("forwardingDataBlock", "4096"));
+		return Integer.parseInt(properties.getProperty("forwardingDataBlock", "33768"));
 	}
 	
 	public long getForwardingDataAmount() {
@@ -58,5 +58,9 @@ public abstract class ForwardingConfiguration extends TestConfiguration {
 
 	public int getForwardingChannelInterval() {
 		return Integer.parseInt(properties.getProperty("forwardingChannelInterval", "1000"));
+	}
+
+	public boolean getRandomBlockSize() {
+		return Boolean.parseBoolean(properties.getProperty("forwardingRandomBlock", "true"));
 	}
 }

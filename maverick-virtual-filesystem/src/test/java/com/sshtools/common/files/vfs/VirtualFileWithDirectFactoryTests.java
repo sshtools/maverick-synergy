@@ -50,5 +50,17 @@ public class VirtualFileWithDirectFactoryTests extends DirectFileTests {
 		return factory.getFile(path);
 	}
 
+
+	@Override
+	protected String getBasePath() throws IOException {
+		return "/";
+	}
+
+
+	@Override
+	protected String getCanonicalPath() throws IOException {
+		return "/";
+	}
+
 	
 }

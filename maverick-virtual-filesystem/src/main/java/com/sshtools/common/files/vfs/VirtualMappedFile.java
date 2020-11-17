@@ -128,7 +128,7 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 	@Override
 	public String getCanonicalPath() throws IOException,
 			PermissionDeniedException {
-		return toVirtualPath(super.getCanonicalPath());
+		return toVirtualPath(super.getAbsolutePath());
 	}
 
 	@Override
@@ -233,7 +233,7 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 				Log.debug("                     Mount: %s ", securemount);
 			}
 
-			boolean containsDotDot = path.indexOf("..") > -1;
+			boolean containsDotDot = path.indexOf("..") > -1 || path.indexOf('.') > -1;
 
 			AbstractFile f = parentMount.getActualFileFactory().getFile(path);
 			String canonical = containsDotDot ? f.getCanonicalPath().replace(
@@ -242,7 +242,12 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 			AbstractFile f2 = parentMount.getActualFileFactory().getFile(
 					securemount);
 			
-			containsDotDot = securemount.indexOf("..") > -1;
+			/**
+			 * LDP - Ensure both paths are treated the same for canonical purposes
+			 * as some systems may replace links with actual target. So if one
+			 * requires canonical translation we should process the other the same.
+			 */
+//			containsDotDot = securemount.indexOf("..") > -1
 			
 			String canonical2 = containsDotDot ? f2.getCanonicalPath().replace(
 					'\\', '/') : f2.getAbsolutePath().replace('\\', '/');

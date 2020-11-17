@@ -22,23 +22,31 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.Test;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.util.Arrays;
+import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.IOUtils;
 
 public abstract class AbstractFileTest {
 	
 	
 	protected abstract AbstractFile getFile(String path) throws PermissionDeniedException, IOException;
+	
+	protected abstract String getBasePath() throws IOException;
+	
+	protected abstract String getCanonicalPath() throws IOException;
 	
 	protected abstract void createFile(String path) throws IOException;
 	
@@ -60,9 +68,7 @@ public abstract class AbstractFileTest {
 		System.out.println("testFileExists");
 		
 		String path = "exists.txt";
-		assertExists(path, false);
 		createFile(path);
-		assertExists(path, true);
 		
 		AbstractFile file = getFile(path);
 		assertTrue("The object is not a file", file.isFile());
@@ -107,9 +113,7 @@ public abstract class AbstractFileTest {
 		System.out.println("testCreateFileAlreadyExists");
 		
 		String path = "exists.txt";
-		assertExists(path, false);
 		createFile(path);
-		assertExists(path, true);
 		
 		AbstractFile file = getFile(path);
 		assertTrue("The object is not a file", file.isFile());
@@ -168,9 +172,7 @@ public abstract class AbstractFileTest {
 		System.out.println("testDeleteFile");
 		
 		String path = "to-be-deleted.txt";
-		assertExists(path, false);
 		createFile(path);
-		assertExists(path, true);
 		
 		AbstractFile file = getFile(path);
 		assertTrue("The file should exist", file.exists());
@@ -234,11 +236,9 @@ public abstract class AbstractFileTest {
 	
 	protected void testInputStream(String path, String size) throws IOException, PermissionDeniedException, NoSuchAlgorithmException {
 		
-		assertExists(path, false);
 		createFile(path);
 		long length = IOUtils.fromByteSize(size);
 		byte[] contentHash = createContent(path, length);
-		assertExists(path, true);
 		
 		AbstractFile file = getFile(path);
 		assertTrue("The file must exist", file.exists());
@@ -342,11 +342,44 @@ public abstract class AbstractFileTest {
 		
 	}
 	
-	public void testName() {
+	@Test
+	public void testName() throws PermissionDeniedException, IOException {
 		
+		String path = "name.txt";
+		createFile(path);
+		
+		try {
+			AbstractFile file = getFile(path);
+			assertTrue("The name is incorrect", path.equals(file.getName()));
+		} finally {
+			deleteFile(path);
+		}
 	}
 	
-	public void testChildren() {
+	@Test
+	public void testChildren() throws IOException, PermissionDeniedException {
+		
+		createFolder("tree");
+		createFile("tree/1");
+		createFile("tree/2");
+		createFile("tree/3");
+		createFolder("tree/leaf");
+		
+		try {
+			Set<String> names = new HashSet<>(java.util.Arrays.asList("1", "2", "3", "leaf"));
+			AbstractFile dir = getFile("tree");
+			for(AbstractFile file : dir.getChildren()) {
+				assertTrue("Child is not valid", names.contains(file.getName()));
+			}
+			
+			assertEquals("There must be 4 children", 4, dir.getChildren().size());
+		} finally {
+			deleteFile("tree/1");
+			deleteFile("tree/2");
+			deleteFile("tree/3");
+			deleteFolder("tree/leaf");
+			deleteFolder("tree");
+		}
 		
 	}
 	
@@ -355,7 +388,6 @@ public abstract class AbstractFileTest {
 		
 		String path = "equals.txt";
 		createFile(path);
-		assertExists(path, true);
 		
 		AbstractFile file1 = getFile(path);
 		AbstractFile file2 = getFile(path);
@@ -371,11 +403,9 @@ public abstract class AbstractFileTest {
 		
 		String path1 = "not-equals1.txt";
 		createFile(path1);
-		assertExists(path1, true);
 		
 		String path2 = "not-equals2.txt";
 		createFile(path2);
-		assertExists(path2, true);
 		
 		AbstractFile file1 = getFile(path1);
 		AbstractFile file2 = getFile(path2);
@@ -392,7 +422,6 @@ public abstract class AbstractFileTest {
 		
 		String path = "hashcode.txt";
 		createFile(path);
-		assertExists(path, true);
 		
 		AbstractFile file1 = getFile(path);
 		AbstractFile file2 = getFile(path);
@@ -408,11 +437,9 @@ public abstract class AbstractFileTest {
 		
 		String path1 = "hashcode1.txt";
 		createFile(path1);
-		assertExists(path1, true);
 		
 		String path2 = "hashcode2.txt";
 		createFile(path2);
-		assertExists(path2, true);
 		
 		AbstractFile file1 = getFile(path1);
 		AbstractFile file2 = getFile(path2);
@@ -424,12 +451,35 @@ public abstract class AbstractFileTest {
 		deleteFile(path2);
 	}
 	
-	public void testAbsolutePath() {
+	@Test
+	public void testAbsolutePath() throws IOException, PermissionDeniedException {
+		
+		String path = "relative.txt";
+		createFile(path);
+		
+		AbstractFile file = getFile(path);
+		String absolutePath = file.getAbsolutePath();
+		String nativePath = FileUtils.checkEndsWithSlash(getBasePath()) + file.getName();
+		
+		assertTrue("Absolute path must equal the native absolute path", absolutePath.equals(nativePath));
+		deleteFile(path);
 		
 	}
 	
-	public void testCanonicalPath() {
+	@Test
+	public void testCanonicalPath() throws IOException, PermissionDeniedException {
 		
+		createFolder("child");
+		String path = "child/.././relative.txt";
+		createFile(path);
+		
+		AbstractFile file = getFile(path);
+		String canoncial = file.getCanonicalPath();
+		String nativePath =  FileUtils.checkEndsWithSlash(getCanonicalPath())  + file.getName();
+		
+		assertTrue("Absolute path must equal the native absolute path", canoncial.equals(nativePath));
+		deleteFile(path);
+		deleteFolder("child");
 	}
 	
 	public void testPermissions() {
@@ -444,25 +494,72 @@ public abstract class AbstractFileTest {
 		
 	}
 	
+	@Test
+	public void testCopyFromFile() throws NoSuchAlgorithmException, IOException, PermissionDeniedException {
+		
+		String path1 = "file-to-copy.dat";
+		createFile(path1);
+		long length = IOUtils.fromByteSize("1mb");
+		byte[] sourceHash = createContent(path1, length);
+		
+		String path2 = "copied-file.dat";
+		
+		AbstractFile file1 = getFile(path1);
+		assertTrue("The source file should exist", file1.exists());
+		assertEquals("The source length should be 1mb", length, file1.length());
+		
+		AbstractFile file2 = getFile(path2);
+		assertFalse("The desination file should not exist", file2.exists());
+		
+		file2.copyFrom(file1);
+		file2.refresh();
 
-	public void testCopyFromFileToFile() {
+		
+		assertTrue("The destination file should exist", file2.exists());
+		assertEquals("The destination length should be 1mb", length, file2.length());
+		
+		byte[] destinationHash = hashContent(path2, length);
+		assertTrue("The source and destination hash should match", Arrays.areEqual(sourceHash, destinationHash));
+		
+		deleteFile(path1);
+		deleteFile(path2);
 		
 	}
 	
-	public void testCopyFromFileToFolder() {
+	public void testCopyFromFolder() throws PermissionDeniedException, IOException, NoSuchAlgorithmException {
+		
 		
 	}
 	
-	public void testCopyFromFolderToFolder() {
+	@Test
+	public void testMoveFileToFile() throws PermissionDeniedException, IOException, NoSuchAlgorithmException {
 		
-	}
-	
-	public void testCopyFromFolderToFile() {
+		String path1 = "file-to-move.dat";
+		createFile(path1);
+		long length = IOUtils.fromByteSize("1mb");
+		byte[] sourceHash = createContent(path1, length);
 		
-	}
-	
-	public void testMoveFileToFile() {
+		String path2 = "moved-file.dat";
 		
+		AbstractFile file1 = getFile(path1);
+		assertTrue("The source file should exist", file1.exists());
+		assertEquals("The source length should be 1mb", length, file1.length());
+		
+		AbstractFile file2 = getFile(path2);
+		assertFalse("The desination file should not exist", file2.exists());
+		
+		file1.moveTo(file2);
+		file1.refresh();
+		file2.refresh();
+
+		assertFalse("The source file should not exist", file1.exists());
+		assertTrue("The destination file should exist", file2.exists());
+		assertEquals("The destination length should be 1mb", length, file2.length());
+		
+		byte[] destinationHash = hashContent(path2, length);
+		assertTrue("The source and destination hash should match", Arrays.areEqual(sourceHash, destinationHash));
+		
+		deleteFile(path2);
 	}
 	
 	public void testMoveFileToFolder() {

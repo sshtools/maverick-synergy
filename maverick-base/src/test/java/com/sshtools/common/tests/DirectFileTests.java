@@ -50,6 +50,17 @@ public class DirectFileTests extends AbstractFileTest {
 		return baseFolder;
  	}
 	
+
+	@Override
+	protected String getBasePath() throws IOException {
+		return baseFolder.getAbsolutePath();
+	}
+	
+	@Override
+	protected String getCanonicalPath() throws IOException {
+		return baseFolder.getCanonicalPath();
+	}
+	
 	@Override
 	protected AbstractFile getFile(String path) throws PermissionDeniedException, IOException {
 		return factory.getFile(path);
@@ -61,6 +72,7 @@ public class DirectFileTests extends AbstractFileTest {
 		File file = new File(getBaseFolder(), path);
 		System.out.println("createFile " + file.getAbsolutePath());
 		assertTrue(file.createNewFile());
+		assertTrue(file.exists());
 	}
 
 	@Override
@@ -68,12 +80,12 @@ public class DirectFileTests extends AbstractFileTest {
 		File file = new File(getBaseFolder(), path);
 		System.out.println("createFolder " + file.getAbsolutePath());
 		assertTrue(file.mkdir());
+		assertTrue(file.exists());
 	}
 
 	@Override
 	protected void assertExists(String path, boolean exists) throws IOException {
-		
-		
+				
 		File file = new File(getBaseFolder(), path);
 		System.out.println("assertExists " + file.getAbsolutePath());
 		assertEquals(file.exists(), exists);

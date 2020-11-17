@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.util.IOUtils;
 
 public abstract class AbstractFileImpl<T extends AbstractFile> implements AbstractFile {
 
@@ -40,8 +41,14 @@ public abstract class AbstractFileImpl<T extends AbstractFile> implements Abstra
 				resolveFile(f.getName()).copyFrom(f);
 			}
 		} else if(src.isFile()) {
-			copy(src.getInputStream(),
-					getOutputStream());
+			InputStream in = src.getInputStream();
+			OutputStream out = getOutputStream();
+			try {
+				copy(in, out);
+			} finally {
+				IOUtils.closeStream(in);
+				IOUtils.closeStream(out);
+			}
 		} else {
 			throw new IOException("Cannot copy object that is not directory or a regular file");
 		}
@@ -57,7 +64,14 @@ public abstract class AbstractFileImpl<T extends AbstractFile> implements Abstra
 				f.delete(false);
 			}
 		} else if(isFile()) {
-			copy(getInputStream(),target.getOutputStream());
+			InputStream in = getInputStream();
+			OutputStream out = target.getOutputStream();
+			try {
+				copy(in, out);
+			} finally {
+				IOUtils.closeStream(in);
+				IOUtils.closeStream(out);
+			}
 		} else {
 			throw new IOException("Cannot move object that is not directory or a regular file");
 		}

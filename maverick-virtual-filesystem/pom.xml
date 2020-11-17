@@ -40,5 +40,12 @@
 			<artifactId>commons-vfs2</artifactId>
 			<version>2.6.0</version>
 		</dependency>
+		<dependency>
+			<groupId>com.sshtools</groupId>
+			<artifactId>maverick-base</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
   </dependencies>
 </project>

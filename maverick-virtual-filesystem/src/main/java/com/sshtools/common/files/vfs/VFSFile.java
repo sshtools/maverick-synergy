@@ -37,6 +37,7 @@ import org.apache.commons.vfs2.util.RandomAccessMode;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileImpl;
 import com.sshtools.common.files.AbstractFileRandomAccess;
+import com.sshtools.common.files.direct.AbstractDirectFile;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
@@ -232,8 +233,11 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 
 	public boolean createNewFile() throws PermissionDeniedException,
 			IOException {
-		file.createFile();
-		return true;
+		if(!file.exists()) {
+			file.createFile();
+			return file.exists();
+		}
+		return false;
 	}
 
 	public void truncate() throws PermissionDeniedException, IOException {
@@ -378,7 +382,11 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 
 	@Override
 	protected boolean doEquals(Object obj) {
-		return file.equals(obj);
+		if(obj instanceof VFSFile) {
+			VFSFile f2 = (VFSFile) obj;
+			return file.equals(f2.file);
+		}
+		return false;
 	}
 
 }

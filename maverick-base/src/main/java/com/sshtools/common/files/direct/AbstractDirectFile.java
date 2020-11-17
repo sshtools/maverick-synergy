@@ -59,7 +59,7 @@ public abstract class AbstractDirectFile<T extends AbstractDirectFile<T>> extend
 	}
 
 	public boolean createFolder() throws PermissionDeniedException {
-		return f.mkdir();
+		return f.mkdirs();
 	}
 
 	public long lastModified() {
@@ -158,6 +158,10 @@ public abstract class AbstractDirectFile<T extends AbstractDirectFile<T>> extend
 
 	@Override
 	protected boolean doEquals(Object obj) {
-		return f.equals(obj);
+		if(obj instanceof AbstractDirectFile) {
+			AbstractDirectFile<?> f2 = (AbstractDirectFile<?>) obj;
+			return f.equals(f2.f);
+		}
+		return false;
 	}
 }

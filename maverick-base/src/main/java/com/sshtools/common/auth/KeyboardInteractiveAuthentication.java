@@ -151,11 +151,11 @@ public class KeyboardInteractiveAuthentication<C extends Context> implements
     		try {
     			String languageTag = bar.readString();
     			if(Log.isDebugEnabled()) {
-    				Log.debug("Language: " + languageTag);
+    				Log.debug("Language: {}", languageTag);
     			}
     			String submethods = bar.readString();
     			if(Log.isDebugEnabled()) {
-    				Log.debug("Submethods: " + submethods);
+    				Log.debug("Submethods: {}", submethods);
     			}
     			// Ignore submethods for now, we simply support one configured method
     			if(selectedProvider==null) {

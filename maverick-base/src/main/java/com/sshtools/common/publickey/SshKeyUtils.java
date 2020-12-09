@@ -18,7 +18,6 @@
  */
 package com.sshtools.common.publickey;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -26,9 +25,11 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
 import com.sshtools.common.ssh.SshKeyFingerprint;
+import com.sshtools.common.ssh.components.SshCertificate;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
+import com.sshtools.common.ssh.components.jce.OpenSshCertificate;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA256;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA512;
 import com.sshtools.common.util.IOUtils;
@@ -59,11 +60,11 @@ public class SshKeyUtils {
 	}
 	
 	public static SshPublicKey getPublicKey(File key) throws IOException {
-		return getPublicKey(toString(new FileInputStream(key)));
+		return getPublicKey(IOUtils.readUTF8StringFromStream(new FileInputStream(key)));
 	}
 	
 	public static SshPublicKey getPublicKey(InputStream key) throws IOException {
-		return getPublicKey(toString(key));
+		return getPublicKey(IOUtils.readUTF8StringFromStream(key));
 	}
 	
 	public static SshPublicKey getPublicKey(String formattedKey) throws IOException {
@@ -77,18 +78,52 @@ public class SshKeyUtils {
 	}
 	
 	public static SshKeyPair getPrivateKey(File key, String passphrase) throws IOException, InvalidPassphraseException {
-		return getPrivateKey(toString(new FileInputStream(key)), passphrase);
+		return getPrivateKey(IOUtils.readUTF8StringFromStream(new FileInputStream(key)), passphrase);
 	}
 	
 	public static SshKeyPair getPrivateKey(InputStream key, String passphrase) throws IOException, InvalidPassphraseException {
-		return getPrivateKey(toString(key), passphrase);
+		return getPrivateKey(IOUtils.readUTF8StringFromStream(key), passphrase);
 	}
 	
 	public static SshKeyPair getPrivateKey(String formattedKey, String passphrase) throws IOException, InvalidPassphraseException {
 		SshPrivateKeyFile file = SshPrivateKeyFileFactory.parse(formattedKey.getBytes("UTF-8"));
 		return file.toKeyPair(passphrase);
 	}
-
+	
+	public static SshCertificate getCertificate(File privateKey, String passphrase) throws IOException, InvalidPassphraseException {
+		return getCertificate(privateKey, passphrase, new File(privateKey.getAbsolutePath() + "-cert.pub"));
+	}
+	
+	public static SshCertificate getCertificate(File privateKey, String passphrase, File certFile) throws IOException, InvalidPassphraseException {
+		if(!certFile.exists()) {
+			throw new IOException(String.format("No certificate file %s to match private key file %s", certFile.getName(), privateKey.getName()));
+		}
+		SshKeyPair pair = getPrivateKey(privateKey, passphrase);
+		SshPublicKey publicKey = getPublicKey(certFile);
+		if(!(publicKey instanceof OpenSshCertificate)) {
+			throw new IOException(String.format("%s is not a certificate file", certFile.getName()));
+		}
+		return new SshCertificate(pair, (OpenSshCertificate)publicKey);
+	}
+	
+	public static SshCertificate getCertificate(InputStream privateKey, String passphrase, InputStream certFile) throws IOException, InvalidPassphraseException {
+		SshKeyPair pair = getPrivateKey(privateKey, passphrase);
+		SshPublicKey publicKey = getPublicKey(certFile);
+		if(!(publicKey instanceof OpenSshCertificate)) {
+			throw new IOException("Stream input is not a certificate file");
+		}
+		return new SshCertificate(pair, (OpenSshCertificate)publicKey);
+	}
+	
+	public static SshCertificate getCertificate(String privateKey, String passphrase, String certFile) throws IOException, InvalidPassphraseException {
+		SshKeyPair pair = getPrivateKey(privateKey, passphrase);
+		SshPublicKey publicKey = getPublicKey(certFile);
+		if(!(publicKey instanceof OpenSshCertificate)) {
+			throw new IOException("String input is not a certificate file");
+		}
+		return new SshCertificate(pair, (OpenSshCertificate)publicKey);
+	}
+	
 	public static SshKeyPair makeRSAWithSHA256Signature(SshKeyPair pair) {
 		SshKeyPair n = new SshKeyPair();
 		n.setPrivateKey(pair.getPrivateKey());
@@ -136,19 +171,7 @@ public class SshKeyUtils {
 	public static String getBubbleBabble(SshPublicKey pub) {
 		return SshKeyFingerprint.getBubbleBabble(pub);
 	}
-	
-	private static String toString(InputStream in) throws IOException {
 		
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		try {
-			IOUtils.copy(in, out);
-			IOUtils.closeStream(in);
-		
-			return new String(out.toByteArray(), "UTF-8");
-		} finally {
-			IOUtils.closeStream(out);
-		}
-	}	
 	public static void createPublicKeyFile(SshPublicKey publicKey, String comment, File file) throws IOException {
 		createPublicKeyFile(publicKey, comment, file, SshPublicKeyFileFactory.OPENSSH_FORMAT);
 	}
@@ -189,6 +212,32 @@ public class SshKeyUtils {
 		SshKeyPair pair = getPrivateKey(privateKey, passphrase);
 		pair.setPublicKey(getPublicKey(certFile));
 		return pair;
+	}
+	
+	public static void savePrivateKey(SshKeyPair pair, String passphrase, String comment, File privateKeyFile) throws IOException {
+		
+		SshPrivateKeyFile privateFile = SshPrivateKeyFileFactory.create(pair, passphrase, comment, SshPrivateKeyFileFactory.OPENSSH_FORMAT);
+		
+		IOUtils.writeBytesToFile(privateFile.getFormattedKey(), privateKeyFile);
+		
+		savePublicKey(pair.getPublicKey(), comment, new File(privateKeyFile.getParent(), privateKeyFile.getName() + ".pub"));
+	}
+	
+	public static void saveCertificate(SshCertificate pair, String passphrase, String comment, File privateKeyFile) throws IOException {
+		
+		SshPrivateKeyFile privateFile = SshPrivateKeyFileFactory.create(pair, passphrase, comment, SshPrivateKeyFileFactory.OPENSSH_FORMAT);
+		
+		IOUtils.writeBytesToFile(privateFile.getFormattedKey(), privateKeyFile);
+		
+		savePublicKey(pair.getPublicKey(), comment, new File(privateKeyFile.getParent(), privateKeyFile.getName() + ".pub"));
+		savePublicKey(pair.getCertificate(), comment, new File(privateKeyFile.getParent(), privateKeyFile.getName() + "-cert.pub"));
+	}
+
+	private static void savePublicKey(SshPublicKey publicKey, String comment, File publicKeyFile) throws IOException {
+		
+		SshPublicKeyFile publicFile = SshPublicKeyFileFactory.create(publicKey, comment, SshPublicKeyFileFactory.OPENSSH_FORMAT);
+		
+		IOUtils.writeBytesToFile(publicFile.getFormattedKey(), publicKeyFile);
 	}
 	
 	

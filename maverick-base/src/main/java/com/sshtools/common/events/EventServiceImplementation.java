@@ -137,7 +137,7 @@ public class EventServiceImplementation implements EventService {
         }
 
         if(Log.isDebugEnabled()) {
-        	Log.debug(String.format("Firing %s success=%s", getEventName(evt.getId()), evt.getState() ? "true" : "false"));
+        	Log.debug("Firing {} success={}", getEventName(evt.getId()), evt.getState() ? "true" : "false");
         }
         
         Object obj = (Object) evt.getAttribute(EventCodes.ATTRIBUTE_CONNECTION);

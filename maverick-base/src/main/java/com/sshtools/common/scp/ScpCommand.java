@@ -104,7 +104,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 		String command = Utils.mergeToArgsString(args);
 		
 		if(Log.isDebugEnabled())
-			Log.debug("Creating SCP with command line '" + command + "' and current working directory '" + currentDirectory + "'");
+			Log.debug("Creating SCP with command line '{}' and current working directory '{}'", command, currentDirectory);
 
 		try {
 
@@ -117,10 +117,10 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 			return true;
 		} catch (IOException ex) {
 			if(Log.isDebugEnabled())
-				Log.debug("Failed to start command: " + command, ex);
+				Log.debug("Failed to start command: {}", ex, command);
 		} catch (Throwable t) {
 			if(Log.isDebugEnabled())
-				Log.debug("SCP command could not be processed: " + command, t);
+				Log.debug("SCP command could not be processed: {}", t, command);
 		}
 
 		return false;
@@ -231,7 +231,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 
 					default:
 						if(Log.isDebugEnabled())
-							Log.debug("Unsupported SCP argument " + ch);
+							Log.debug("Unsupported SCP argument {}", ch);
 					}
 				}
 			}
@@ -267,19 +267,19 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
         }
 
 		if(Log.isDebugEnabled())
-			Log.debug("Destination is " + destination);
+			Log.debug("Destination is {}", destination);
 		if(Log.isDebugEnabled())
-			Log.debug("Recursive is " + recursive);
+			Log.debug("Recursive is {}", recursive);
 		if(Log.isDebugEnabled())
-			Log.debug("Directory is " + directory);
+			Log.debug("Directory is {}", directory);
 		if(Log.isDebugEnabled())
-			Log.debug("Verbosity is " + verbosity);
+			Log.debug("Verbosity is {}", verbosity);
 		if(Log.isDebugEnabled())
-			Log.debug("Sending files is " + from);
+			Log.debug("Sending files is {}", from);
 		if(Log.isDebugEnabled())
-			Log.debug("Receiving files is " + to);
+			Log.debug("Receiving files is {}", to);
 		if(Log.isDebugEnabled())
-			Log.debug("Preserve Attributes " + preserveAttributes);
+			Log.debug("Preserve Attributes {}", preserveAttributes);
 
 	}
 
@@ -308,7 +308,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 	 */
 	private void writeCommand(String cmd) throws IOException {
 		if(Log.isDebugEnabled())
-			Log.debug("Sending command '" + cmd + "'");
+			Log.debug("Sending command '{}'", cmd);
 		getOutputStream().write(cmd.getBytes());
 
 		if (!cmd.endsWith("\n")) {
@@ -346,12 +346,10 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 
 		if (session.isClosed()) {
 			if(Log.isDebugEnabled())
-				Log.debug("SCP received error '" + msg
-						+ "' but session is closed so cannot inform client");
+				Log.debug("SCP received error '{}' but session is closed so cannot inform client", msg);
 		} else {
 			if(Log.isDebugEnabled())
-				Log.debug("Sending error message '" + msg
-						+ "' to client (serious=" + serious + ")");
+				Log.debug("Sending error message '{}' to client (serious={})", msg, serious);
 
 			getOutputStream().write(serious ? (byte) 2 : (byte) 1);
 			getOutputStream().write(msg.getBytes());
@@ -396,7 +394,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					}
 
 					if(Log.isDebugEnabled()) {
-						Log.debug("Looking for matches in " + dir + " for " + base);
+						Log.debug("Looking for matches in {} for {}", dir, base);
 					}
 					
 					// Build a string pattern that may be used to match
@@ -417,8 +415,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 
 								for (int i = 0; i < files.length; i++) {
 									if(Log.isDebugEnabled())
-										Log.debug("Testing for match against "
-												+ files[i].getFilename());
+										Log.debug("Testing for match against {}", files[i].getFilename());
 
 									if (!files[i].getFilename().equals(".")
 											&& !files[i].getFilename().equals(
@@ -597,7 +594,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 			path = nfs.getRealPath(path);
 
 			if(Log.isDebugEnabled())
-				Log.debug("Opening file " + path);
+				Log.debug("Opening file {}", path);
 
 			fireEvent(
 					new Event(
@@ -675,7 +672,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 						offset = UnsignedInteger64.add(offset, read);
 						count += read;
 						if(Log.isDebugEnabled())
-							Log.debug("Writing block of " + read + " bytes");
+							Log.debug("Writing block of {} bytes", read);
 						getOutputStream().write(buf, 0, read);
 						
 
@@ -835,7 +832,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 
 		String msg = readString();
 		if(Log.isDebugEnabled())
-			Log.debug("Got error '" + msg + "'");
+			Log.debug("Got error '{}'", msg);
 
 		if (r == (byte) '\02') {
 			if(Log.isDebugEnabled())
@@ -863,7 +860,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 			}
 
 			if(Log.isDebugEnabled())
-				Log.debug("Got command '" + cmd + "'");
+				Log.debug("Got command '{}'", cmd);
 
 			char cmdChar = cmd.charAt(0);
 
@@ -898,10 +895,10 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					targetAttr = nfs.getFileAttributes(path);
 				} catch (FileNotFoundException ex) {
 					if(Log.isDebugEnabled())
-						Log.debug("File " + path + " not found");
+						Log.debug("File {} not found", path);
 				} catch (PermissionDeniedException ex) {
 					if(Log.isDebugEnabled())
-						Log.debug("File " + path + " permission denied!");
+						Log.debug("File {} permission denied!", path);
 				}
 
 				if (cmdChar == 'D') {
@@ -923,12 +920,11 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 						targetAttr = nfs.getFileAttributes(targetPath);
 					} catch (FileNotFoundException ex) {
 						if(Log.isDebugEnabled())
-							Log.debug("File " + targetPath + " not found");
+							Log.debug("File {} not found", targetPath);
 						targetAttr = null;
 					} catch (PermissionDeniedException ex) {
 						if(Log.isDebugEnabled())
-							Log.debug("File " + targetPath
-									+ " permission denied");
+							Log.debug("File {} permission denied", targetPath);
 						targetAttr = null;
 					}
 
@@ -942,7 +938,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					} else {
 						try {
 							if(Log.isDebugEnabled())
-								Log.debug("Creating directory " + targetPath);
+								Log.debug("Creating directory {}", targetPath);
 
 							if (!nfs.makeDirectory(targetPath, new SftpFileAttributes(
 									SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY,
@@ -1019,7 +1015,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					targetPath = nfs.getRealPath(targetPath);
 					
 					if(Log.isDebugEnabled())
-						Log.debug("Opening file for writing " + targetPath);
+						Log.debug("Opening file for writing {}", targetPath);
 					
 					// Open the file
 					handle = nfs.openFile(targetPath, new UnsignedInteger32(
@@ -1093,7 +1089,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 						}
 
 						if(Log.isDebugEnabled())
-							Log.debug("Got block of " + read);
+							Log.debug("Got block of {} bytes", read);
 						nfs.writeFile(handle, offset, buffer, 0, read);
 						offset = UnsignedInteger64.add(offset, read);
 						count += read;
@@ -1189,8 +1185,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 				if (preserveAttributes) {
 					targetAttr.setPermissionsFromMaskString(cmdParts[0]);
 					if(Log.isDebugEnabled())
-						Log.debug("Setting permissions on directory to "
-								+ targetAttr.getPermissionsString());
+						Log.debug("Setting permissions on directory to {}", targetAttr.getPermissionsString());
 
 					try {
 						nfs.setFileAttributes(targetPath, targetAttr);

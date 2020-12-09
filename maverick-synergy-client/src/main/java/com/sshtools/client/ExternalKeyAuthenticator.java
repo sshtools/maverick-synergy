@@ -21,18 +21,14 @@ package com.sshtools.client;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 
 import com.sshtools.common.publickey.SignatureGenerator;
-import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.TransportProtocol;
-import com.sshtools.common.ssh.components.SshCertificate;
-import com.sshtools.common.ssh.components.SshKeyPair;
-import com.sshtools.common.ssh.components.SshPrivateKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
@@ -40,46 +36,25 @@ import com.sshtools.common.util.ByteArrayWriter;
 /**
  * Implements public key authentication taking a separately loaded SshKeyPair as the private key for authentication.
  */
-public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements ClientAuthenticator /*, SignatureGenerator*/ {
+public class ExternalKeyAuthenticator extends SimpleClientAuthenticator implements ClientAuthenticator, SignatureGenerator {
 
 	public final static int SSH_MSG_USERAUTH_PK_OK = 60;
 	
 	boolean isAuthenticating = false;
 	TransportProtocolClient transport;
 	String username;
-//	Collection<SshPublicKey> publicKeys;
-	Collection<SshKeyPair> keypairs;
-//	Collection<SshPrivateKeyFile> privateKeyFiles;
+	Collection<SshPublicKey> publicKeys;
 	
 	SignatureGenerator signatureGenerator;
+	SshPublicKey authenticatingKey = null;
+
 	
-//	SshPublicKey authenticatingKey = null;
-	SshKeyPair authenticatingPair = null;
-	SshPrivateKeyFile authenticatingFile = null;
-	
-	public PublicKeyAuthenticator() {
+	public ExternalKeyAuthenticator(SignatureGenerator signatureGenerator) {
+		this.signatureGenerator = signatureGenerator;
 	}
 	
-//	public PublicKeyAuthenticator(File... privateKeyFiles) throws IOException {
-//		this.privateKeyFiles = new ArrayList<>();
-//		for(File file : privateKeyFiles) {
-//			try(FileInputStream in = new FileInputStream(file)) {
-//				this.privateKeyFiles.add(SshPrivateKeyFileFactory.parse(in));
-//			}
-//		}
-//	}
-	
-//	public PublicKeyAuthenticator(SignatureGenerator signatureGenerator) {
-//		this.signatureGenerator = signatureGenerator;
-//	}
-	
-	public PublicKeyAuthenticator(SshKeyPair... keys) {
-		keypairs = new ArrayList<SshKeyPair>();
-		keypairs.addAll(Arrays.asList(keys));
-	}
-	
-	public void setKeyPair(SshKeyPair... pair) {
-		keypairs = Arrays.asList(pair);
+	public ExternalKeyAuthenticator() {
+		
 	}
 
 	@Override
@@ -90,8 +65,8 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 		this.transport = transport;
 		this.username = username;
 
-//		this.publicKeys = new ArrayList<SshPublicKey>(getSignatureGenerator(transport.getConnection()).getPublicKeys());
-//		
+		this.publicKeys = new ArrayList<SshPublicKey>(getSignatureGenerator(transport.getConnection()).getPublicKeys());
+		
 		doPublicKeyAuth();
 
 	}
@@ -131,11 +106,11 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 	byte[] generateSignatureData() throws IOException,
 			SshException {
 		
-		if(Objects.isNull(authenticatingPair) && !keypairs.isEmpty()) {
-			authenticatingPair = keypairs.iterator().next();
+		if(Objects.isNull(authenticatingKey) && !publicKeys.isEmpty()) {
+			authenticatingKey = publicKeys.iterator().next();
 		}
 	
-		if(Objects.isNull(authenticatingPair)) {
+		if(Objects.isNull(authenticatingKey)) {
 			throw new IOException("No suitable key found");
 		}
 		
@@ -146,8 +121,7 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 			baw.writeString("ssh-connection");
 			baw.writeString("publickey");
 			baw.writeBoolean(isAuthenticating);
-			writePublicKey(baw, getPublicKey(authenticatingPair));
-			
+			writePublicKey(baw, authenticatingKey);
 
 			return baw.toByteArray();
 
@@ -160,47 +134,24 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 		baw.writeBinaryString(key.getEncoded());
 		
 	}
-	
-	private SshPublicKey getPublicKey(SshKeyPair pair) {
-		if(pair instanceof SshCertificate) {
-			return ((SshCertificate)pair).getCertificate();
-		}
-		return pair.getPublicKey();
-	}
 
 	byte[] generateAuthenticationRequest(byte[] data) throws IOException, SshException {
 
 		ByteArrayWriter baw = new ByteArrayWriter();
-		
-		
+	
 		try {
+			
 			baw.writeBoolean(isAuthenticating);
-			writePublicKey(baw, getPublicKey(authenticatingPair));
+			writePublicKey(baw, authenticatingKey);
 	
 			if (isAuthenticating) {
-	
-//				if(Objects.isNull(signatureGenerator)) {
-
-					byte[] signature = sign(authenticatingPair.getPrivateKey(), 
-							authenticatingPair.getPublicKey().getSigningAlgorithm(), data);
 					
-					// Format the signature correctly
-					ByteArrayWriter sig = new ByteArrayWriter();
-		
-					try {
-						sig.writeString(authenticatingPair.getPublicKey().getSigningAlgorithm());
-						sig.writeBinaryString(signature);
-						baw.writeBinaryString(sig.toByteArray());
-					} finally {
-						sig.close();
-					}
-//				} else {
-//					
-//					byte[] signature = getSignatureGenerator(
-//							transport.getConnection()).sign(authenticatingKey, authenticatingKey.getSigningAlgorithm(), data);
-//					
-//					baw.writeBinaryString(signature);
-//				}
+					byte[] signature = signatureGenerator.sign(
+							authenticatingKey, 
+							authenticatingKey.getSigningAlgorithm(), 
+							data);
+					
+					baw.writeBinaryString(signature);
 
 			}
 			
@@ -225,9 +176,9 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 		case AuthenticationProtocolClient.SSH_MSG_USERAUTH_FAILURE:
 		{
 			if(!isAuthenticating) {
-				keypairs.remove(authenticatingPair);
-				authenticatingPair = null;
-				if(!keypairs.isEmpty()) {
+				publicKeys.remove(authenticatingKey);
+				authenticatingKey = null;
+				if(!publicKeys.isEmpty()) {
 					doPublicKeyAuth();
 					return true;
 				}
@@ -237,38 +188,23 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 
 		return false;
 	}
-
-//	@Override
-//	public byte[] sign(SshPublicKey key, String signingAlgorithm, byte[] data) throws SshException {
-//
-//		
-//	}
 	
-	public byte[] sign(SshPrivateKey prv, String signingAlgorithm, byte[] data) throws SshException {
-
-		try {
-			return prv.sign(data, signingAlgorithm);
-		} catch (IOException e) {
-			throw new SshException(e);
-		}
+	public SignatureGenerator getSignatureGenerator(Connection<SshClientContext> con) {
+		return Objects.isNull(signatureGenerator)? this : signatureGenerator;
 	}
-	
-//	public SignatureGenerator getSignatureGenerator(Connection<SshClientContext> con) {
-//		return Objects.isNull(signatureGenerator)? this : signatureGenerator;
-//	}
 
-//	@Override
-//	public Collection<SshPublicKey> getPublicKeys() {
-//		List<SshPublicKey> keys = new ArrayList<SshPublicKey>();
-//		for(SshKeyPair pair : keypairs) {
-//			keys.add(pair.getPublicKey());
-//		}
-//		return keys;
-//	}
-
+	@Override
+	public byte[] sign(SshPublicKey key, String signingAlgorithm, byte[] data) throws SshException {
+		return getSignatureGenerator(transport.getConnection()).sign(key, signingAlgorithm, data);
+	}
 
 	@Override
 	public String getName() {
 		return "publickey";
+	}
+
+	@Override
+	public Collection<SshPublicKey> getPublicKeys() throws IOException {
+		return Collections.emptyList();
 	}
 }

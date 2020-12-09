@@ -484,7 +484,7 @@ public class ExpectShell {
 			}
 
 			if(Log.isDebugEnabled()) {
-				Log.debug("Executing raw command: %s", echoCmd);
+				Log.debug("Executing raw command: {}", echoCmd);
 			}
 			
 			sessionOut.write(echoCmd.getBytes(charset));

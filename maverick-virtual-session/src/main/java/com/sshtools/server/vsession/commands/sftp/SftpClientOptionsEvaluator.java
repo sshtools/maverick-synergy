@@ -36,13 +36,13 @@ public class SftpClientOptionsEvaluator extends AbstractSshOptionsEvaluator{
 	public static SshClientArguments evaluate(CommandLine commandLine, VirtualConsole console) throws IOException, PermissionDeniedException {
 
 		if (Log.isDebugEnabled()) {
-			Log.debug("The argument list passed as %s", commandLine.getArgList());
+			Log.debug("The argument list passed as {}", commandLine.getArgList());
 
 			List<String> optionList = Arrays.asList(commandLine.getOptions()).stream()
-					.map(option -> String.format("%s -> %s", option.getArgName(), option.getValue()))
+					.map(option -> String.format("{} -> {}", option.getArgName(), option.getValue()))
 					.collect(Collectors.toList());
 
-			Log.debug("The option list passed as %s", optionList);
+			Log.debug("The option list passed as {}", optionList);
 		}
 
 		SshClientArguments arguments = new SshClientArguments();

@@ -41,6 +41,7 @@ import com.sshtools.common.nio.ProtocolEngine;
 import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyPairGenerator;
+import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.common.publickey.SshPublicKeyFile;
@@ -54,9 +55,11 @@ import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.ComponentFactory;
 import com.sshtools.common.ssh.components.ComponentManager;
+import com.sshtools.common.ssh.components.SshCertificate;
 import com.sshtools.common.ssh.components.SshKeyExchange;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
+import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKey;
 import com.sshtools.server.components.jce.DiffieHellmanEcdhNistp256;
 import com.sshtools.server.components.jce.DiffieHellmanEcdhNistp384;
 import com.sshtools.server.components.jce.DiffieHellmanEcdhNistp521;
@@ -262,11 +265,37 @@ public class SshServerContext extends SshContext {
 	 * @throws IOException
 	 */
 	public void addHostKey(SshKeyPair keyPair) throws IOException {
-		if (hostkeys.containsKey(keyPair.getPublicKey().getAlgorithm())) {
-			throw new IOException("The server already has a "
-					+ keyPair.getPublicKey().getAlgorithm() + " key configured");
+		if(keyPair instanceof SshCertificate) {
+			
+			SshKeyPair converted = new SshKeyPair();
+			converted.setPrivateKey(keyPair.getPrivateKey());
+			converted.setPublicKey(((SshCertificate)keyPair).getCertificate());
+			
+			if(hostkeys.containsKey(converted.getPublicKey().getAlgorithm())) {
+				Log.warn("The server already has a " + keyPair.getPublicKey().getAlgorithm() + " certificate configured.");
+			}
+			
+			hostkeys.put(converted.getPublicKey().getAlgorithm(), converted);
+		} else {
+
+			if(hostkeys.containsKey(keyPair.getPublicKey().getAlgorithm())) {
+				Log.warn("The server already has a " + keyPair.getPublicKey().getAlgorithm() + " key configured.");
+			}
+			
+			hostkeys.put(keyPair.getPublicKey().getAlgorithm(), keyPair);
+			if(keyPair.getPublicKey() instanceof Ssh2RsaPublicKey && keyPair.getPublicKey().getAlgorithm().equals(SshContext.PUBLIC_KEY_SSHRSA)) {
+				if(supportedPublicKeys().contains(SshContext.PUBLIC_KEY_RSA_SHA256) 
+						&& !hostkeys.containsKey(SshContext.PUBLIC_KEY_RSA_SHA256)) {
+					hostkeys.put(SshContext.PUBLIC_KEY_RSA_SHA256, SshKeyUtils.makeRSAWithSHA256Signature(keyPair));
+				}
+			}
+			if(keyPair.getPublicKey() instanceof Ssh2RsaPublicKey && keyPair.getPublicKey().getAlgorithm().equals(SshContext.PUBLIC_KEY_SSHRSA)) {
+				if(supportedPublicKeys().contains(SshContext.PUBLIC_KEY_RSA_SHA512)
+						&& !hostkeys.containsKey(SshContext.PUBLIC_KEY_RSA_SHA512)) {
+					hostkeys.put(SshContext.PUBLIC_KEY_RSA_SHA512, SshKeyUtils.makeRSAWithSHA512Signature(keyPair));
+				}
+			}
 		}
-		hostkeys.put(keyPair.getPublicKey().getAlgorithm(), keyPair);
 	}
 	
 	/**
@@ -390,29 +419,9 @@ public class SshServerContext extends SshContext {
 	 * @throws InvalidPassphraseException
 	 * @throws SshException
 	 */
-	public void loadHostKey(InputStream in, String type, int bitlength)
+	public void loadHostKey(InputStream in)
 			throws IOException, InvalidPassphraseException, SshException {
-		loadHostKey(in, type, bitlength,
-				SshPrivateKeyFileFactory.OPENSSH_FORMAT,
-				SshPublicKeyFileFactory.SECSH_FORMAT, "");
-	}
-
-	/**
-	 * Load a host key from an InputStream.
-	 * @param in
-	 * @param type
-	 * @param bitlength
-	 * @param passPhrase
-	 * @throws IOException
-	 * @throws InvalidPassphraseException
-	 * @throws SshException
-	 */
-	public void loadHostKey(InputStream in, String type, int bitlength,
-			String passPhrase) throws IOException, InvalidPassphraseException,
-			SshException {
-		loadHostKey(in, type, bitlength,
-				SshPrivateKeyFileFactory.OPENSSH_FORMAT,
-				SshPublicKeyFileFactory.SECSH_FORMAT, passPhrase);
+		loadHostKey(in, "");
 	}
 
 	/**
@@ -456,8 +465,7 @@ public class SshServerContext extends SshContext {
 	 * @throws InvalidPassphraseException
 	 * @throws SshException
 	 */
-	public void loadHostKey(InputStream in, String type, int bitlength,
-			int privateKeyFormat, int publicKeyFormat, String passPhrase)
+	public void loadHostKey(InputStream in, String passPhrase)
 			throws IOException, InvalidPassphraseException, SshException {
 
 		addHostKey(loadKey(in, passPhrase));
@@ -553,6 +561,10 @@ public class SshServerContext extends SshContext {
 		pair.setPublicKey(SshPublicKeyFileFactory.parse(
 				new FileInputStream(certFile)).toPublicKey());
 		addHostKey(pair);
+	}
+	
+	public void loadSshCertificate(SshCertificate cert) throws IOException, InvalidPassphraseException {
+		addHostKey(cert);
 	}
 
 	/**

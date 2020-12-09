@@ -96,7 +96,7 @@ public class ForwardingPolicy extends Permissions {
 				allow = addr.isLoopbackAddress() | check(GATEWAY_FORWARDING);
 			} catch (UnknownHostException e) {
 				if(Log.isErrorEnabled())
-					Log.error("Failed to determine local forwarding originators interface " + originHost, e);
+					Log.error("Failed to determine local forwarding originators interface {}", e, originHost);
 				return false;
 			}
 		}

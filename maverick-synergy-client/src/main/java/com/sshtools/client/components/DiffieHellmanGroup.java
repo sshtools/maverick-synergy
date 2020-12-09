@@ -177,10 +177,10 @@ public class DiffieHellmanGroup extends SshKeyExchangeClient {
 					signature = msg.readBinaryString();
 	
 					if(Log.isDebugEnabled()) {
-		    	    	Log.debug("Received SSH_MSG_KEXDH_INIT f=%s", f.toString(16));
-		    	    	Log.debug("Host key: %s", SshKeyUtils.getOpenSSHFormattedKey(
+		    	    	Log.debug("Received SSH_MSG_KEXDH_INIT f={}", f.toString(16));
+		    	    	Log.debug("Host key: {}", SshKeyUtils.getOpenSSHFormattedKey(
 		    	    			SshPublicKeyFileFactory.decodeSSH2PublicKey(hostKey)));
-		    	    	Log.debug("Signature: %s", Utils.bytesToHex(signature));
+		    	    	Log.debug("Signature: {}", Utils.bytesToHex(signature));
 		    	    }
 					
 					DHPublicKeySpec spec = new DHPublicKeySpec(f, p, g);

@@ -134,7 +134,7 @@ public class LocalForwardingChannel<T extends SshContext> extends SocketForwardi
 			if (socketChannel.connect(new InetSocketAddress(hostToConnect,
 					portToConnect))) {
 				if(Log.isInfoEnabled()) {
-					Log.info("Local forwarding socket to %s:%d has connected channel=%d", hostToConnect, 
+					Log.info("Local forwarding socket to {}:{} has connected channel={}", hostToConnect, 
 							portToConnect, getLocalId());
 				}
 				hasConnected = true;
@@ -142,7 +142,7 @@ public class LocalForwardingChannel<T extends SshContext> extends SocketForwardi
 			}
 			
 			if(Log.isTraceEnabled()) {
-				Log.trace("Deferring socket connection on %s:%d channel=%d", hostToConnect, portToConnect, getLocalId());
+				Log.trace("Deferring socket connection on {}:{} channel={}", hostToConnect, portToConnect, getLocalId());
 			}
 			
 			// Register the connector and we will confirm once weve connected
@@ -197,7 +197,7 @@ public class LocalForwardingChannel<T extends SshContext> extends SocketForwardi
 		
 		if(hasConnected) {
 			if(Log.isWarnEnabled()) {
-				Log.warn("Duplicate finishConnect call to %s:%d channel=%d", hostToConnect, 
+				Log.warn("Duplicate finishConnect call to {}:{} channel={}", hostToConnect, 
 					portToConnect, getLocalId());
 			}
 			return true;
@@ -210,7 +210,7 @@ public class LocalForwardingChannel<T extends SshContext> extends SocketForwardi
 				// Wait for the connection to complete
 			}
 			if(Log.isInfoEnabled()) {
-				Log.info("Local forwarding socket to %s:%d has connected channel=%d", hostToConnect, 
+				Log.info("Local forwarding socket to {}:{} has connected channel={}", hostToConnect, 
 						portToConnect, getLocalId());
 			}
 			
@@ -221,7 +221,7 @@ public class LocalForwardingChannel<T extends SshContext> extends SocketForwardi
 		} catch (IOException ex) {
 			if(Log.isInfoEnabled())
 				Log.info(
-						"Local forwarding socket to %s:%d has failed: %s channel=%d",
+						"Local forwarding socket to {}:{} has failed: {} channel={}",
 						hostToConnect, 
 						portToConnect, 
 						ex.getMessage(),

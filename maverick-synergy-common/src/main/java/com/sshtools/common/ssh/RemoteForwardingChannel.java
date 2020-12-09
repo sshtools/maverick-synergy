@@ -200,7 +200,7 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 					portToConnect))) {
 				if(Log.isInfoEnabled()) {
 					if(Log.isInfoEnabled()) {
-						Log.info("Remote forwarding socket to %s:%d has connected [synchronously] channel=%d remote=%d",
+						Log.info("Remote forwarding socket to {}:{} has connected [synchronously] channel={} remote={}",
 								hostToConnect,
 								portToConnect,
 								getLocalId(),
@@ -244,7 +244,7 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 
 		if(hasConnected) {
 			if(Log.isWarnEnabled()) {
-				Log.warn("Duplicate finishConnect call to %s:%d channel=%d", hostToConnect, 
+				Log.warn("Duplicate finishConnect call to {}:{} channel={}", hostToConnect, 
 					portToConnect, getLocalId());
 			}
 			return true;
@@ -258,7 +258,7 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 			}
 			if(Log.isInfoEnabled()) {
 				if(Log.isInfoEnabled()) {
-					Log.info("Remote forwarding socket to %s:%d has connected [asynchronously] channel=%d remote=%d",
+					Log.info("Remote forwarding socket to {}:{} has connected [asynchronously] channel={} remote={}",
 							hostToConnect,
 							portToConnect,
 							getLocalId(),
@@ -270,7 +270,7 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 
 		} catch (IOException ex) {
 			if(Log.isInfoEnabled()) {
-				Log.info("Remote forwarding socket to %s:%d has failed \"%s\" channel=%d remote=%d",
+				Log.info("Remote forwarding socket to {}:{} has failed \"{}\" channel={} remote={}",
 							hostToConnect,
 								portToConnect, 
 								ex.getMessage(),

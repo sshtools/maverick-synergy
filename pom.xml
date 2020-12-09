@@ -24,7 +24,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sshtools</groupId>
 	<artifactId>maverick-synergy-group</artifactId>
-	<version>3.0.0-SNAPSHOT</version>
+	<version>3.0.0-RC1</version>
 	<name>Maverick Synergy</name>
 	<description>Open source Java SSH API</description>
 	<url>http://www.jadaptive.com</url>
@@ -230,11 +230,8 @@
 		<module>maverick-virtual-filesystem</module>
 		<module>maverick-virtual-session</module>
 		<module>maverick-x509</module>
-		<module>maverick-openssh-certs</module>
 		<module>maverick-bc</module>
 		<module>maverick-bc-fips</module>
-		<module>maverick-android</module>
-		<module>maverick-ed25519</module>
 		<module>maverick-zip</module>
 		<module>maverick-sshagent</module>
 

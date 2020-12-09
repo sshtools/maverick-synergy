@@ -229,7 +229,7 @@ public abstract class AbstractSshServer implements Closeable {
 		try {
 			hostKeys.add(context.loadOrGenerateHostKey(file, type, bitlength));
 		} catch (IOException | InvalidPassphraseException | SshException e) {
-			Log.warn("Could not generate or load host key for algorithm %s: %s", type, e.getMessage());
+			Log.warn("Could not generate or load host key for algorithm {}: {}", type, e.getMessage());
 		}
 	}
 	

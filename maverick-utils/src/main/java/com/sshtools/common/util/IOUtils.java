@@ -427,4 +427,16 @@ public class IOUtils {
 	public static InputStream toInputStream(String value, String charset) throws IOException {
 		return new ByteArrayInputStream(value.getBytes(charset));
 	}
+
+
+	public static void writeBytesToFile(byte[] value, File file) throws IOException {
+		
+		OutputStream out = new FileOutputStream(file);
+		try {
+			out.write(value);
+		} finally {
+			closeStream(out);
+		}
+		
+	}
 }

@@ -173,31 +173,23 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	}
 
 	public static String prepareLog(Level level, String msg, Throwable e, Object... args) {
-		String log = String.format("%s [%20s] %6s - %s%s", 
-				df.format(new Date()), 
-				Thread.currentThread().getName(),
-				level.name(), 
-				String.format(processArgs(msg, args), args),
-				System.lineSeparator());
+		int i=0;
+		while(i < args.length && (msg.indexOf("{}") > -1)) {
+			msg = msg.replaceFirst("\\{\\}", String.valueOf(args[i++]));
+		}
 		
 		if(Objects.isNull(e)) {
-			return log;
+			return String.format("%s [%20s] %6s - ", 
+									df.format(new Date()), 
+									Thread.currentThread().getName(),
+									level.name()) + msg + System.lineSeparator();
 		}
 		
 		StringWriter s = new StringWriter();
 		PrintWriter w = new PrintWriter(s);
 		e.printStackTrace(w);
 		
-		return log + System.lineSeparator() + s.toString() + System.lineSeparator();
-	}
-	
-	private static String processArgs(String msg, Object[] args) {
-		
-		int idx = 0;
-		while(msg.indexOf("{}") > -1 && idx < args.length) {
-			msg = msg.replace("{}", args[idx++].toString());
-		}
-		return msg;
+		return msg + System.lineSeparator() + s.toString() + System.lineSeparator();
 	}
 
 	@Override

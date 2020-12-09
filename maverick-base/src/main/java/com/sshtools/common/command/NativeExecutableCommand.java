@@ -65,7 +65,7 @@ public class NativeExecutableCommand extends ExecutableCommand {
 		}
 		
 		if(Log.isDebugEnabled())
-			Log.debug("Creating native process: " + commandLine[0]);
+			Log.debug("Creating native process: {}", commandLine[0]);
 
 		this.commandLine = commandLine;
 

@@ -201,7 +201,7 @@ public class AuthorizedKeyFile {
 	}
 	
 	void addErrorEntry(String line) {
-		Log.error("Failed to parse authorized_keys line: " + line);
+		Log.error("Failed to parse authorized_keys line: {}", line);
 		allEntries.add(new ErrorEntry(line));
 	}
 	

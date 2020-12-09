@@ -117,7 +117,7 @@ public class CallbackServer extends AbstractSshServer {
 
 				@Override
 				public void connected(SshConnection con) {
-					Log.info("Callback client %s connected", con.getUsername());
+					Log.info("Callback client {} connected", con.getUsername());
 					callbackClients.put(con.getUsername(), con);
 				}
 
@@ -126,7 +126,7 @@ public class CallbackServer extends AbstractSshServer {
 					SshConnection connected = callbackClients.get(con.getUsername());
 					if(Objects.nonNull(connected)) {
 						if(connected.equals(con)) {
-							Log.info("Callback client %s disconnected", con.getUsername());
+							Log.info("Callback client {} disconnected", con.getUsername());
 							callbackClients.remove(con.getUsername());
 						}
 					}

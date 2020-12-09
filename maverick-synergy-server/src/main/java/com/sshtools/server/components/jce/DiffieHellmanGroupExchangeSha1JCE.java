@@ -279,7 +279,7 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 
 				public void messageSent(Long sequenceNo) {
 					if(Log.isDebugEnabled()) {
-						Log.debug("Sent SSH_MSG_KEY_DH_GEX_GROUP p=%s, g=%s", p.toString(16), g.toString(16));
+						Log.debug("Sent SSH_MSG_KEY_DH_GEX_GROUP p={}, g={}", p.toString(16), g.toString(16));
 					}
 				}
 			}, true);
@@ -307,11 +307,11 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 			e = bar.readBigInteger();
 			
 			if(Log.isDebugEnabled()) {
-				Log.debug("Recieved SSH_MSG_KEY_DH_GEX_INIT e=%s", e.toString(16));
+				Log.debug("Recieved SSH_MSG_KEY_DH_GEX_INIT e={}", e.toString(16));
 			}
 			
 			if (!DiffieHellmanGroups.verifyParameters(e, p)) {
-				throw new SshException(String.format("Key exchange detected invalid e value %s", e.toString(16)),
+				throw new SshException(String.format("Key exchange detected invalid e value {}", e.toString(16)),
 						SshException.PROTOCOL_VIOLATION);
 			}
 			
@@ -354,7 +354,7 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 			}
 			
 			if(!DiffieHellmanGroups.verifyParameters(secret, p)) {
-				throw new SshException(String.format("Key exchange detected invalid k value %s", e.toString(16)),
+				throw new SshException(String.format("Key exchange detected invalid k value {}", e.toString(16)),
 						SshException.PROTOCOL_VIOLATION);
 			}
 			
@@ -402,7 +402,7 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 
 				public void messageSent(Long sequenceNo) {
 					if(Log.isDebugEnabled())
-						Log.debug("Sent SSH_MSG_KEY_DH_GEX_REPLY f=%s", f.toString(16));
+						Log.debug("Sent SSH_MSG_KEY_DH_GEX_REPLY f={}", f.toString(16));
 				}
 			}, true);
 

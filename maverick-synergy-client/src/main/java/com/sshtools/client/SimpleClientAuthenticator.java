@@ -52,7 +52,7 @@ public abstract class SimpleClientAuthenticator extends AbstractRequestFuture im
 	public void success() {
 		
 		if(Log.isDebugEnabled()) {
-			Log.debug("%s authentication succeeded", getName());
+			Log.debug("{} authentication succeeded", getName());
 		}
 		
 		this.moreAuthenticationsRequired = false;
@@ -64,7 +64,7 @@ public abstract class SimpleClientAuthenticator extends AbstractRequestFuture im
 	public void success(boolean moreAuthenticationsRequired, String[] authenticationMethods) {
 
 		if(Log.isDebugEnabled()) {
-			Log.debug("%s authentication succeeded partial=%s", getName(), String.valueOf(moreAuthenticationsRequired));
+			Log.debug("{} authentication succeeded partial={}", getName(), String.valueOf(moreAuthenticationsRequired));
 		}
 		
 		this.moreAuthenticationsRequired = moreAuthenticationsRequired;
@@ -75,7 +75,7 @@ public abstract class SimpleClientAuthenticator extends AbstractRequestFuture im
 	public void failure() {
 		
 		if(Log.isDebugEnabled()) {
-			Log.debug("%s authentication failed", getName());
+			Log.debug("{} authentication failed", getName());
 		}
 		done(false);
 	}
@@ -89,7 +89,7 @@ public abstract class SimpleClientAuthenticator extends AbstractRequestFuture im
 	public void cancel() {
 		cancelled = true;
 		if(Log.isDebugEnabled()) {
-			Log.debug("%s authentication cancelled", getName());
+			Log.debug("{} authentication cancelled", getName());
 		}
 		done(false);
 	}

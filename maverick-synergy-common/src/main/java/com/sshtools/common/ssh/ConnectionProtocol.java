@@ -202,7 +202,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 				if (channelid == -1) {
 					
 					if(Log.isDebugEnabled()) {
-						Log.debug("Failed to allocate channel %s", 
+						Log.debug("Failed to allocate channel {}", 
 								channel.getChannelType());
 					}
 					channel.getOpenFuture().done(false);
@@ -217,7 +217,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 				 */
 			} catch (IOException ex1) {
 				if(Log.isDebugEnabled()) {
-					Log.debug("Failed to open channel %s", ex1, channel.getChannelType());
+					Log.debug("Failed to open channel {}", ex1, channel.getChannelType());
 				}
 				channel.getOpenFuture().done(false);
 			}
@@ -1001,7 +1001,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 
 		public void messageSent(Long sequenceNo) {
 			if(Log.isDebugEnabled())
-				Log.debug("Sent SSH_MSG_CHANNEL_OPEN_FAILURE %s %d remote=%d", description, reasoncode, remoteid);
+				Log.debug("Sent SSH_MSG_CHANNEL_OPEN_FAILURE {} {} remote={}", description, reasoncode, remoteid);
 		}
 
 	}

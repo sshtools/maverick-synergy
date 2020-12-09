@@ -137,7 +137,7 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
         activeConnections.put(con.getSessionId(), con);
        
 		if(Log.isDebugEnabled()) {
-				Log.debug("There %s now %d active connections on %s connection manager",
+				Log.debug("There {} now {} active connections on {} connection manager",
 						(activeConnections.size() > 1 ? "are" : "is"),
 						activeConnections.size(),
 						getName());

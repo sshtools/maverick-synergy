@@ -101,7 +101,7 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 		done(Objects.isNull(lastError));
 		
 		if(Log.isDebugEnabled()) {
-			Log.debug("Session task is done success=%s", String.valueOf(Objects.isNull(lastError)));
+			Log.debug("Session task is done success={}", String.valueOf(Objects.isNull(lastError)));
 		}
 	}
 	

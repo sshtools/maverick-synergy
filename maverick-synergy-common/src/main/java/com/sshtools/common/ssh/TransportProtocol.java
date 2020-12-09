@@ -331,7 +331,7 @@ public abstract class TransportProtocol<T extends SshContext>
 		this.socketConnection = connection;
 
 		if(Log.isInfoEnabled()) {
-			Log.info("Connnection created %s on interface %s", 
+			Log.info("Connnection created {} on interface {}", 
 					socketConnection.getRemoteAddress().toString(),
 					socketConnection.getLocalAddress().toString());
 		}
@@ -455,7 +455,7 @@ public abstract class TransportProtocol<T extends SshContext>
 		} catch (Throwable ex) {
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
-				Log.info("Read error from %s %s", 
+				Log.info("Read error from {} {}", 
 						getConnectionAddress().toString(),
 						ex.getMessage());
 			}
@@ -507,7 +507,7 @@ public abstract class TransportProtocol<T extends SshContext>
 				&& remoteIdentification.charAt(3) == '-') {
 
 			if(Log.isInfoEnabled()) {
-				Log.info("Connnection %s identifies itself as %s", 
+				Log.info("Connnection {} identifies itself as {}", 
 						getConnectionAddress().toString(),
 						remoteIdentification.toString().trim());
 			}
@@ -665,7 +665,7 @@ public abstract class TransportProtocol<T extends SshContext>
 		} catch (Throwable ex) {
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
-				Log.info("Transport error %s %s", 
+				Log.info("Transport error {} {}", 
 						getConnectionAddress().toString(),
 						ex.getMessage());
 			}
@@ -1177,7 +1177,7 @@ public abstract class TransportProtocol<T extends SshContext>
 		} catch (Throwable ex) {
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
-				Log.info("Write error from %s %s", 
+				Log.info("Write error from {} {}", 
 						getConnectionAddress().toString(),
 						ex.getMessage());
 			}
@@ -1468,7 +1468,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			description = "Failure";
 		disconnectStarted = new Date();
 		if(Log.isInfoEnabled()) {
-			Log.info("Disconnect %s %s", 
+			Log.info("Disconnect {} {}", 
 					getConnectionAddress().toString(),
 					description);
 		}
@@ -1486,7 +1486,7 @@ public abstract class TransportProtocol<T extends SshContext>
 				closed = true;
 
 				if(Log.isInfoEnabled()) {
-					Log.info("Connection closed %s", 
+					Log.info("Connection closed {}", 
 							getConnectionAddress().toString());
 				}
 				
@@ -1494,7 +1494,7 @@ public abstract class TransportProtocol<T extends SshContext>
 					disconnectStarted = new Date();
 
 				if(Log.isDebugEnabled())
-					Log.debug("Performing internal disconnect %s", getUUID());
+					Log.debug("Performing internal disconnect {}", getUUID());
 				
 				setTransportState(TransportProtocol.DISCONNECTED);
 
@@ -1677,24 +1677,24 @@ public abstract class TransportProtocol<T extends SshContext>
 							.getPreferredCompressionSC());
 			
 			if(Log.isDebugEnabled()) {
-				Log.debug("Remote Key Exchanges: %s", remoteKeyExchanges);
-				Log.debug("Remote Public Keys: %s", remotePublicKeys);
-				Log.debug("Remote Ciphers CS: %s", remoteCiphersCS);
-				Log.debug("Remote Ciphers SC: %s", remoteCiphersSC);
-				Log.debug("Remote Macs CS: %s", remoteCSMacs);
-				Log.debug("Remote Macs SC: %s", remoteSCMacs);
-				Log.debug("Remote Compression CS: %s", remoteCSCompressions);
-				Log.debug("Remote Compression SC: %s", remoteSCCompressions);
-				Log.debug("Lang: %s", lang);
+				Log.debug("Remote Key Exchanges: {}", remoteKeyExchanges);
+				Log.debug("Remote Public Keys: {}", remotePublicKeys);
+				Log.debug("Remote Ciphers CS: {}", remoteCiphersCS);
+				Log.debug("Remote Ciphers SC: {}", remoteCiphersSC);
+				Log.debug("Remote Macs CS: {}", remoteCSMacs);
+				Log.debug("Remote Macs SC: {}", remoteSCMacs);
+				Log.debug("Remote Compression CS: {}", remoteCSCompressions);
+				Log.debug("Remote Compression SC: {}", remoteSCCompressions);
+				Log.debug("Lang: {}", lang);
 				Log.debug("First Packet Follows: %b", firstPacketFollows);
-				Log.debug("Local Key Exchanges: %s", localKeyExchanges);
-				Log.debug("Local Public Keys: %s", localPublicKeys);
-				Log.debug("Local Ciphers CS: %s", localCiphersCS);
-				Log.debug("Local Ciphers SC: %s", localCiphersSC);
-				Log.debug("Local Macs CS: %s", localMacsCS);
-				Log.debug("Local Macs SC: %s", localMacsSC);
-				Log.debug("Local Compression CS: %s", localCompressionCS);
-				Log.debug("Local Compression SC: %s", localCompressionSC);
+				Log.debug("Local Key Exchanges: {}", localKeyExchanges);
+				Log.debug("Local Public Keys: {}", localPublicKeys);
+				Log.debug("Local Ciphers CS: {}", localCiphersCS);
+				Log.debug("Local Ciphers SC: {}", localCiphersSC);
+				Log.debug("Local Macs CS: {}", localMacsCS);
+				Log.debug("Local Macs SC: {}", localMacsSC);
+				Log.debug("Local Compression CS: {}", localCompressionCS);
+				Log.debug("Local Compression SC: {}", localCompressionSC);
 			}
 			
 
@@ -1800,14 +1800,14 @@ public abstract class TransportProtocol<T extends SshContext>
 					localCompressionSC);
 
 			if(Log.isDebugEnabled()) {
-				Log.debug("Negotiated Key Exchange: %s", keyExchangeAlgorithm);
-				Log.debug("Negotiated Public Key: %s", publicKey);
-				Log.debug("Negotiated Cipher CS: %s", cipherCS);
-				Log.debug("Negotiated Cipher SC: %s", cipherSC);
-				Log.debug("Negotiated Mac CS: %s", macCS);
-				Log.debug("Negotiated Mac SC: %s", macSC);
-				Log.debug("Negotiated Compression CS: %s", compressionCS);
-				Log.debug("Negotiated Compression SC: %s", compressionSC);
+				Log.debug("Negotiated Key Exchange: {}", keyExchangeAlgorithm);
+				Log.debug("Negotiated Public Key: {}", publicKey);
+				Log.debug("Negotiated Cipher CS: {}", cipherCS);
+				Log.debug("Negotiated Cipher SC: {}", cipherSC);
+				Log.debug("Negotiated Mac CS: {}", macCS);
+				Log.debug("Negotiated Mac SC: {}", macSC);
+				Log.debug("Negotiated Compression CS: {}", compressionCS);
+				Log.debug("Negotiated Compression SC: {}", compressionSC);
 			}
 			
 			keyExchangeInitialized();
@@ -1897,7 +1897,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			try {
 				bar.skip(5);
 				if(Log.isDebugEnabled()) {
-					Log.debug("Recieved SSH_MSG_DISCONNECT %s", bar.readString());
+					Log.debug("Recieved SSH_MSG_DISCONNECT {}", bar.readString());
 				}
 				socketConnection.closeConnection();
 			} finally {
@@ -2060,7 +2060,7 @@ public abstract class TransportProtocol<T extends SshContext>
 								.addAttribute(
 										EventCodes.ATTRIBUTE_REMOTE_COMPONENT_LIST,
 										clientlist));
-		throw new IOException(String.format("Failed to negotiate a transport component from %s and %s", clientlist, serverlist));
+		throw new IOException(String.format("Failed to negotiate a transport component from {} and {}", clientlist, serverlist));
 
 	}
 

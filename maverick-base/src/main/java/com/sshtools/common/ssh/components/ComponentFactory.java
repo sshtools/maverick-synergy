@@ -400,7 +400,7 @@ public class ComponentFactory<T> implements Cloneable {
 		}
 		
 		if(Log.isInfoEnabled()) {
-			Log.info("Selecting strongest component %s", strongest.getAlgorithm());
+			Log.info("Selecting strongest component {}", strongest.getAlgorithm());
 		}
 		return strongest.getAlgorithm();
 	}

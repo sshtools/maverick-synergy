@@ -504,20 +504,20 @@ public abstract class ComponentManager {
 								Class<T> componenetClz = (Class<T>) Class.forName(clz);
 								cachedComponents.put(alg.toString(), componenetClz);
 							} catch (ClassNotFoundException ex) {
-								Log.error("Cannot find class %s for algorithm %s", clz, alg);
+								Log.error("Cannot find class {} for algorithm {}", clz, alg);
 							}
 						}
 						
 						cachedExternalComponents.put(componentFile, cachedComponents);
 					} catch(IOException ex) {
-						Log.error("Error processing %s", ex, componentFile);
+						Log.error("Error processing {}", ex, componentFile);
 					} finally {
 						IOUtils.closeStream(in);
 					}
 				}
 				
 			} catch(Throwable ex) {
-				Log.error("Error processing %s", ex, componentFile);
+				Log.error("Error processing {}", ex, componentFile);
 			}
 		}
 		

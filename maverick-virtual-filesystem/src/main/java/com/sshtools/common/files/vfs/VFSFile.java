@@ -37,7 +37,6 @@ import org.apache.commons.vfs2.util.RandomAccessMode;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileImpl;
 import com.sshtools.common.files.AbstractFileRandomAccess;
-import com.sshtools.common.files.direct.AbstractDirectFile;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;

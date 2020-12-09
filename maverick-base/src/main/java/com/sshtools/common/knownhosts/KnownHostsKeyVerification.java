@@ -42,9 +42,9 @@ import java.util.regex.Pattern;
 import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.ComponentManager;
-import com.sshtools.common.ssh.components.SshCertificate;
 import com.sshtools.common.ssh.components.SshHmac;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.jce.OpenSshCertificate;
 import com.sshtools.common.util.Base64;
 import com.sshtools.common.util.Utils;
 
@@ -460,7 +460,7 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 			}
 		}
 
-		if (pk instanceof SshCertificate) {
+		if (pk instanceof OpenSshCertificate) {
 			for (CertAuthorityEntry ca : certificateAuthorities) {
 				if (ca.validate(pk, resolvedNames.toArray(new String[0]))) {
 					return true;
@@ -801,8 +801,8 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 		@Override
 		boolean validate(SshPublicKey key, String... resolvedNames) throws SshException {
 			if (matchesHost(resolvedNames)) {
-				if (key instanceof SshCertificate) {
-					return ((SshCertificate) key).getSignedBy().equals(this.key);
+				if (key instanceof OpenSshCertificate) {
+					return ((OpenSshCertificate) key).getSignedBy().equals(this.key);
 				}
 			}
 			return false;

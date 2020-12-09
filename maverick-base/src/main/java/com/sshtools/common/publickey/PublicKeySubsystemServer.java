@@ -166,7 +166,7 @@ public class PublicKeySubsystemServer extends Subsystem {
 	private void processVersion(ByteArrayReader bar) throws IOException {
 		int clientVersion = (int) bar.readInt();
 		if(Log.isDebugEnabled()) {
-			Log.debug("Client publickey subsystem version " + clientVersion);
+			Log.debug("Client publickey subsystem version {}", clientVersion);
 		}
 		Packet packet = new Packet();
 		packet.writeString(context.getPolicy(AuthenticationPolicy.class).getBannerMessage());

@@ -175,7 +175,7 @@ public class DiffieHellmanGroup extends SshKeyExchangeServer implements Abstract
 			e = bar.readBigInteger();
 
 			if (Log.isDebugEnabled()) {
-				Log.debug("Received SSH_MSG_KEXDH_INIT e=%s", e.toString(16));
+				Log.debug("Received SSH_MSG_KEXDH_INIT e={}", e.toString(16));
 			}
 
 			DHPublicKeySpec spec = new DHPublicKeySpec(e, p, g);

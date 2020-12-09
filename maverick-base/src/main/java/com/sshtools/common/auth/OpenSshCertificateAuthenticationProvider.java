@@ -30,8 +30,8 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.publickey.SshPublicKeyFile;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.SshCertificate;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.jce.OpenSshCertificate;
 
 public class OpenSshCertificateAuthenticationProvider implements PublicKeyAuthenticationProvider {
 
@@ -60,9 +60,9 @@ public class OpenSshCertificateAuthenticationProvider implements PublicKeyAuthen
 			return false;
 		}
 		
-		SshCertificate cert = (SshCertificate) key;
+		OpenSshCertificate cert = (OpenSshCertificate) key;
 		
-		if(cert.getType()!=SshCertificate.SSH_CERT_TYPE_USER) {
+		if(cert.getType()!=OpenSshCertificate.SSH_CERT_TYPE_USER) {
 			return false;
 		}
 		

@@ -130,22 +130,22 @@ public class SshPrivateKeyFileFactory {
 	}
 
 	public static SshPrivateKeyFile create(SshKeyPair pair) throws IOException {
-		return create(pair, null, SshPrivateKeyFileFactory.OPENSSH_FORMAT, null);
+		return create(pair, null, SshPrivateKeyFileFactory.OPENSSH_FORMAT);
 	}
 	
 	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase) throws IOException {
-		return create(pair, passphrase, SshPrivateKeyFileFactory.OPENSSH_FORMAT, null);
-	}
-	
-	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase, int format) throws IOException {
-		return create(pair, passphrase, format, null);
-	}
-	
-	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase, String comment) throws IOException {
 		return create(pair, passphrase, SshPrivateKeyFileFactory.OPENSSH_FORMAT);
 	}
 	
-	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase, int format, String comment) throws IOException {
+	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase, int format) throws IOException {
+		return create(pair, passphrase, "", format);
+	}
+	
+	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase, String comment) throws IOException {
+		return create(pair, passphrase, comment, SshPrivateKeyFileFactory.OPENSSH_FORMAT);
+	}
+	
+	public static SshPrivateKeyFile create(SshKeyPair pair, String passphrase, String comment, int format) throws IOException {
 
 		switch (format) {
 		case OPENSSL_FORMAT:

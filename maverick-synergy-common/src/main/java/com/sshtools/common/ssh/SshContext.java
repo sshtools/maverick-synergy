@@ -171,6 +171,17 @@ public abstract class SshContext extends ProtocolContext implements
 	/** ECDSA 521 bit Public Key **/
 	public static final String PUBLIC_KEY_ECDSA_SHA2_NISPTP_521 = "ecdsa-sha2-nistp521";
 
+	/**
+	 * RSA key with SHA256 signature
+	 */
+	public static final String PUBLIC_KEY_RSA_SHA256 = "rsa-sha2-256";
+	
+	/**
+	 * RSA key with SHA512 signature
+	 */
+	public static final String PUBLIC_KEY_RSA_SHA512 = "rsa-sha2-512";
+	
+	
 	/** Identifier for password authentication **/
 	public static final String PASSWORD_AUTHENTICATION = "password";
 

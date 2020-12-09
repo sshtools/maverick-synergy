@@ -70,7 +70,7 @@ public class IPPolicy extends Permissions {
 			
 			Boolean temporarilyBanned = temporaryBans.getOrDefault(resolved, false);
 			if(temporarilyBanned) {
-				Log.info("Rejecting IP %s because of temporary ban", resolved.getHostAddress());
+				Log.info("Rejecting IP {} because of temporary ban", resolved.getHostAddress());
 				return false;
 			}
 //			if(resolved==null) {
@@ -86,7 +86,7 @@ public class IPPolicy extends Permissions {
 			boolean rejected = isListed(addr, blacklist);
 			
 			if(Log.isTraceEnabled()) {
-				Log.trace("%s is %s by IP policy", remoteAddress.toString(), (allowed && !rejected) ? "allowed" : "denied");
+				Log.trace("{} is {} by IP policy", remoteAddress.toString(), (allowed && !rejected) ? "allowed" : "denied");
 			}
 			
 			return allowed && !rejected;
@@ -109,14 +109,14 @@ public class IPPolicy extends Permissions {
 		Integer count = flaggedAddressCounts.getOrDefault(addr, 0);
 		
 		if(count >= failedAuthenticationThreshold) {
-			Log.info("Temporarily banning IP address %s due to failed authentication count of %d", 
+			Log.info("Temporarily banning IP address {} due to failed authentication count of {}", 
 					addr.getHostAddress(), count);
 			temporaryBans.put(addr, true);
 			return;
 		}
 		
 		++count;
-		Log.info("Flagging IP address %s with failed authentication count of %d", addr.getHostAddress(), count);
+		Log.info("Flagging IP address {} with failed authentication count of {}", addr.getHostAddress(), count);
 		flaggedAddressCounts.put(addr, count);
 	}
 	
@@ -139,12 +139,12 @@ public class IPPolicy extends Permissions {
 	}
 	
 	public void blacklist(String addr) throws UnknownHostException {
-		Log.info("Blacklisting IP address %s", addr);
+		Log.info("Blacklisting IP address {}", addr);
 		blacklist.add(new CIDRNetwork(addr));
 	}
 	
 	public void whitelist(String addr) throws UnknownHostException {
-		Log.info("Whitelisting IP address %s", addr);
+		Log.info("Whitelisting IP address {}", addr);
 		whitelist.add(new CIDRNetwork(addr));
 	}
 

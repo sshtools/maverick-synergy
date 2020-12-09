@@ -1205,7 +1205,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 				channelid, 
 				remoteid,
 				localWindow.getWindowSpace(),
-				remoteWindow.getWindowSpace()));
+				remoteWindow.getWindowSpace());
 	}
 	
 	class ChannelClose implements SshMessage {

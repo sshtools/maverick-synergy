@@ -73,7 +73,7 @@ public class CallbackSession implements Runnable {
 		}
 		
 		if(Log.isInfoEnabled()) {
-			Log.info("Connecting to {}:{}", hostname, port));
+			Log.info("Connecting to {}:{}", hostname, port);
 		}
 		
 		synchronized(app) {
@@ -104,7 +104,7 @@ public class CallbackSession implements Runnable {
 						break;
 					} else {
 						if(Log.isInfoEnabled()) {
-							Log.info("Could not authenticate to {}:{}", hostname, port));
+							Log.info("Could not authenticate to {}:{}", hostname, port);
 						}
 						currentConnection.disconnect();
 						numberOfAuthenticationErrors++;

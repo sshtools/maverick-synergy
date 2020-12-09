@@ -199,7 +199,7 @@ public class JCEProvider implements JCEAlgorithms {
 		
 		if(add) {
 			if(Log.isInfoEnabled()) {
-				Log.info(String.format("Adding Bouncycastle %s provider to Security Providers", bcProvider.getName()));
+				Log.info("Adding Bouncycastle {} provider to Security Providers", bcProvider.getName());
 			}
 			if(bcFlavor==BC_FLAVOR.SC) {
 				Security.insertProviderAt(bcProvider, 1);
@@ -217,12 +217,12 @@ public class JCEProvider implements JCEAlgorithms {
 		
 		if(makeDefault) {
 			if(Log.isInfoEnabled()) {
-				Log.info(String.format("Configuring Bouncycastle %s provider as default for all algorithms", bcProvider.getName()));
+				Log.info("Configuring Bouncycastle {} provider as default for all algorithms", bcProvider.getName());
 			}
 			initializeDefaultProvider(bcProvider);
 		} else {
 			if(Log.isInfoEnabled()) {
-				Log.info(String.format("Configuring DH support with Bouncycastle %s provider", bcProvider.getName()));
+				Log.info("Configuring DH support with Bouncycastle {} provider", bcProvider.getName());
 			}
 			initializeProviderForAlgorithm(JCEAlgorithms.JCE_DH, bcProvider);
 			initializeProviderForAlgorithm(JCEAlgorithms.JCE_DH_KEY_AGREEMENT, bcProvider);
@@ -333,7 +333,7 @@ public class JCEProvider implements JCEAlgorithms {
 		
 		if(JCEProvider.isBCEnabled()) {
 			if(Log.isInfoEnabled()) {
-				Log.info(String.format("Disabling support for Bouncycastle %s provider", bcProvider.getName()));
+				Log.info("Disabling support for Bouncycastle {} provider", bcProvider.getName());
 			}
 			Security.removeProvider(bcProvider.getName());
 			initializeDefaultProvider((Provider)null);

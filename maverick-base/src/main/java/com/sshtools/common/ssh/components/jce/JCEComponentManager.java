@@ -424,7 +424,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 
 		if(System.getProperties().containsKey(String.format("disable.%s",  name))) {
 			if(Log.isDebugEnabled()) {
-				Log.debug(String.format("   %s WILL NOT be supported because it has been explicitly disabled by a system property", name));
+				Log.debug("   {} WILL NOT be supported because it has been explicitly disabled by a system property", name);
 			}
 			return;
 		}
@@ -481,7 +481,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 		
 		if(System.getProperties().containsKey(String.format("disable.%s",  name))) {
 			if(Log.isDebugEnabled()) {
-				Log.debug(String.format("   %s WILL NOT be supported because it has been explicitly disabled by a system property", name));
+				Log.debug("   {} WILL NOT be supported because it has been explicitly disabled by a system property", name);
 			}
 			return false;
 		}
@@ -511,7 +511,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 		
 		if(System.getProperties().containsKey(String.format("disable.%s",  name))) {
 			if(Log.isDebugEnabled()) {
-				Log.debug(String.format("   %s WILL NOT be supported because it has been explicitly disabled by a system property", name));
+				Log.debug("   {} WILL NOT be supported because it has been explicitly disabled by a system property", name);
 			}
 			return false;
 		}
@@ -542,7 +542,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 		
 		if(System.getProperties().containsKey(String.format("disable.%s",  name))) {
 			if(Log.isDebugEnabled()) {
-				Log.debug(String.format("   %s WILL NOT be supported because it has been explicitly disabled by a system property", name));
+				Log.debug("   {} WILL NOT be supported because it has been explicitly disabled by a system property", name);
 			}
 			return false;
 		}

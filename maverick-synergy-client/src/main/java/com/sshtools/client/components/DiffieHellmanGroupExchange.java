@@ -208,7 +208,7 @@ public class DiffieHellmanGroupExchange extends SshKeyExchangeClient
 			  	 }
 			  	 
 			  	 if(Log.isInfoEnabled()) {
-					Log.info(String.format("The supported DH prime range is %d to %d bits", minSupportedSize, maxSupportedSize));
+					Log.info("The supported DH prime range is {} to {} bits", minSupportedSize, maxSupportedSize);
 			  	 }
 			 }
 		  }
@@ -365,7 +365,7 @@ public class DiffieHellmanGroupExchange extends SshKeyExchangeClient
 			if(Boolean.getBoolean("maverick.dhBypassJCE")) {
 				Log.debug("Performing DH e parameter calculation manually because it has been forced by system configuration");
 			} else {
-				Log.debug(String.format("Performing DH e parameter calculation manually because P bit length is not multiple of 64 [%d]", p.bitLength()));
+				Log.debug("Performing DH e parameter calculation manually because P bit length is not multiple of 64 [{}]", p.bitLength());
 			}
 		}
 		

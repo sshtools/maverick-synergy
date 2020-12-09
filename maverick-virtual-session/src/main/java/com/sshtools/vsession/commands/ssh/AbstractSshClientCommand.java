@@ -80,7 +80,7 @@ public abstract class AbstractSshClientCommand extends ShellCommand {
 		SshClientArguments arguments = generateCommandArguments(cli, this.originalArguments);
 		
 		if (Log.isDebugEnabled()) {
-			Log.debug(String.format("The arguments parsed are %s", arguments));
+			Log.debug("The arguments parsed are {}", arguments);
 		}
 		
 		SshClient sshClient = null;

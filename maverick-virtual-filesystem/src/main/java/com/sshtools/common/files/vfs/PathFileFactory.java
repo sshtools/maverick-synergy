@@ -37,7 +37,7 @@ public class PathFileFactory implements AbstractFileFactory<PathFile> {
 	@Override
 	public PathFile getFile(String path) throws PermissionDeniedException, IOException {
 		if(Log.isTraceEnabled())
-			Log.trace(String.format("Resolving path '%s' in '%s'", path, base));
+			Log.trace("Resolving path '{}' in '{}'", path, base);
 		Path p;
 		if(path.toString().startsWith(base.toString()))
 			path = path.substring(base.toString().length());
@@ -53,7 +53,7 @@ public class PathFileFactory implements AbstractFileFactory<PathFile> {
 			p = base.resolve(path);
 		}
 		if(Log.isTraceEnabled())
-			Log.trace(String.format("Resolved path '%s' as '%s' in '%s'", path, p, base));
+			Log.trace("Resolved path '{}' as '{}' in '{}'", path, p, base);
 		return new PathFile(p, this);
 	}
 

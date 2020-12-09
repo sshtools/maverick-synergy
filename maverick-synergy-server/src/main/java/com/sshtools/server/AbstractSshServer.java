@@ -123,7 +123,7 @@ public abstract class AbstractSshServer implements Closeable {
 		}
 		
 		if(Log.isInfoEnabled()) {
-			Log.info("Listening on port %d", this.port);
+			Log.info("Listening on port {}", this.port);
 		}
 
 		engine.addListener(new SshEngineListenerAdapter() {

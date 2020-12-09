@@ -48,7 +48,7 @@ public abstract class AbstractNamedPipe implements Closeable {
 		this.pipeName = pipeName;
 		
 		if(Log.isInfoEnabled()) {
-			Log.info(String.format("Creating pipe %s", this.pipeName));
+			Log.info("Creating pipe {}", this.pipeName);
 		}
 	}
 	
@@ -78,7 +78,7 @@ public abstract class AbstractNamedPipe implements Closeable {
 		public void close() throws IOException {
 			
 			if(Log.isInfoEnabled()) {
-				Log.info(String.format("Closing pipe %s handle=%s", pipeName, hNamedPipe.toString()));
+				Log.info("Closing pipe {} handle={}", pipeName, hNamedPipe.toString());
 			}
 			assertCallSucceeded("DisconnectNamedPipe", Kernel32.INSTANCE.DisconnectNamedPipe(hNamedPipe));
 			assertCallSucceeded("Named pipe handle close", Kernel32.INSTANCE.CloseHandle(hNamedPipe));
@@ -109,7 +109,7 @@ public abstract class AbstractNamedPipe implements Closeable {
 	    		byte[] tmp = new byte[len];
 	    		
 				if(Log.isInfoEnabled()) {
-					Log.info(String.format("Reading %d maximum bytes from pipe %s handle=%s", len, pipeName, session.hNamedPipe.toString()));
+					Log.info("Reading {} maximum bytes from pipe {} handle={}", len, pipeName, session.hNamedPipe.toString());
 				}
 				
 	            IntByReference lpNumberOfBytesRead = new IntByReference(0);
@@ -121,13 +121,13 @@ public abstract class AbstractNamedPipe implements Closeable {
 	            }
 	            
 				if(Log.isInfoEnabled()) {
-					Log.info(String.format("Read %d bytes from pipe %s handle=%s", readSize, pipeName, session.hNamedPipe.toString()));
+					Log.info("Read {} bytes from pipe {} handle={}", readSize, pipeName, session.hNamedPipe.toString());
 				}
 				
 	            return readSize;
     		} catch(Throwable t) {
     			if(Log.isErrorEnabled()) {
-    				Log.error(String.format("Error reading bytes from pipe %s handle=%s", pipeName, session.hNamedPipe.toString()), t);
+    				Log.error("Error reading bytes from pipe {} handle={}", t, pipeName, session.hNamedPipe.toString());
     			}
     			close();
     			return -1;
@@ -156,7 +156,7 @@ public abstract class AbstractNamedPipe implements Closeable {
 		public void write(byte[] buf, int off, int len) throws IOException {
 			
 			if(Log.isInfoEnabled()) {
-				Log.info(String.format("Writing %d bytes to pipe %s handle=%s", len, pipeName, session.hNamedPipe.toString()));
+				Log.info("Writing {} bytes to pipe {} handle={}", len, pipeName, session.hNamedPipe.toString());
 			}
 			
 			byte[] tmp = new byte[len];
@@ -167,13 +167,13 @@ public abstract class AbstractNamedPipe implements Closeable {
             assertEquals("Mismatched write buffer size", len, lpNumberOfBytesWritten.getValue());
 
             if(Log.isInfoEnabled()) {
-				Log.info(String.format("Written %d bytes to pipe %s handle=%s", lpNumberOfBytesWritten.getValue(), pipeName, session.hNamedPipe.toString()));
+				Log.info("Written {} bytes to pipe {} handle={}", lpNumberOfBytesWritten.getValue(), pipeName, session.hNamedPipe.toString());
 			}
 		}
 		
 		public void flush() throws IOException {
 //            if(Log.isInfoEnabled()) {
-//				Log.info(String.format("Flushing pipe %s handle=%s", pipeName, session.hNamedPipe.toString()));
+//				Log.info("Flushing pipe {} handle={}", pipeName, session.hNamedPipe.toString());
 //			}
 //            assertCallSucceeded("FlushFileBuffers", Kernel32.INSTANCE.FlushFileBuffers(session.hNamedPipe));
 		}

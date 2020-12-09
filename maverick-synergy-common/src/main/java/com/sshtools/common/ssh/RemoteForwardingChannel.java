@@ -134,7 +134,7 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 
 	protected void onRegistrationComplete() {
 		if(Log.isTraceEnabled())
-			Log.trace("Registration Complete channel=%d", getLocalId());
+			Log.trace("Registration Complete channel={}", getLocalId());
 	}
 
 	protected void onChannelOpenConfirmation() {

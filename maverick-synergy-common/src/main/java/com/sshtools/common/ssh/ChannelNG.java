@@ -493,7 +493,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		ChannelData lastMessage = null;
 
 		if(Log.isTraceEnabled()) {
-			Log.debug(String.format("Queue Buffer rem=%d pos=%d limit=%d, capacity=%d", buf.remaining(), buf.position(), buf.limit(), buf.capacity()));
+			Log.debug("Queue Buffer rem={} pos={} limit={} capacity={}", buf.remaining(), buf.position(), buf.limit(), buf.capacity());
 		}
 		
 		synchronized(ChannelNG.this) {
@@ -527,9 +527,9 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 					buf.position(buf.position() + count);
 			
 					if(Log.isTraceEnabled()) {
-						Log.trace(String.format("Sliced Buffer rem=%d pos=%d limit=%d, capacity=%d", 
+						Log.trace("Sliced Buffer rem={} pos={} limit={} capacity={}", 
 								processedBuffer.remaining(), processedBuffer.position(), 
-								processedBuffer.limit(), processedBuffer.capacity()));
+								processedBuffer.limit(), processedBuffer.capacity());
 					}
 					for (ChannelEventListener listener : eventListeners) {
 						listener.onChannelDataOut(this, processedBuffer);
@@ -538,8 +538,8 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 				} else {
 					
 					if(Log.isTraceEnabled()) {	
-						Log.trace(String.format("Final Buffer rem=%d pos=%d limit=%d, capacity=%d", 
-								buf.remaining(), buf.position(), buf.limit(), buf.capacity()));
+						Log.trace("Final Buffer rem={} pos={} limit={}, capacity={}", 
+								buf.remaining(), buf.position(), buf.limit(), buf.capacity());
 					}
 					for (ChannelEventListener listener : eventListeners) {
 						listener.onChannelDataOut(this, buf);
@@ -1180,31 +1180,32 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	}
 	
 	protected void log(String action, String message) {
-		Log.debug(String.format("%s %s channel=%d remote=%d localWindow=%d remoteWindow=%d",
+		Log.debug("{} {} channel={} remote={} localWindow={} remoteWindow={}",
 				action,
 				message,
 				channelid, 
 				remoteid,
 				localWindow.getWindowSpace(),
-				remoteWindow.getWindowSpace()));
+				remoteWindow.getWindowSpace());
 	}
 	
 	protected void log(String message) {
-		Log.debug(String.format("%s channel=%d remote=%d localWindow=%d remoteWindow=%d",
+		Log.debug("{} channel={} remote={} localWindow={} remoteWindow={}",
+				message,
+				channelid, 
+				remoteid,
+				localWindow.getWindowSpace(),
+				remoteWindow.getWindowSpace());
+	}
+	
+	protected void log(String message, Throwable t) {
+		Log.debug("{} channel={} remote={} localWindow={} remoteWindow={}",
+				t,
 				message,
 				channelid, 
 				remoteid,
 				localWindow.getWindowSpace(),
 				remoteWindow.getWindowSpace()));
-	}
-	
-	protected void log(String message, Throwable t) {
-		Log.debug(String.format("%s channel=%d remote=%d localWindow=%d remoteWindow=%d",
-				message,
-				channelid, 
-				remoteid,
-				localWindow.getWindowSpace(),
-				remoteWindow.getWindowSpace()), t);
 	}
 	
 	class ChannelClose implements SshMessage {
@@ -1262,8 +1263,8 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 
 	void log() {
 		if(Log.isInfoEnabled()) {
-			Log.info(String.format("Channel id=%d type=%s localEOF=%s remoteEOF=%s sentClose=%s receivedClose=%s completedClose=%s remoteWindow=%d localWindow=%d",
-						getLocalId(), getChannelType(), isLocalEOF, isRemoteEOF, sentClose, receivedClose, completedClose, getRemoteWindow(), getLocalWindow()));
+			Log.info("Channel id={} type={} localEOF={} remoteEOF={} sentClose={} receivedClose={} completedClose={} remoteWindow={} localWindow={}",
+						getLocalId(), getChannelType(), isLocalEOF, isRemoteEOF, sentClose, receivedClose, completedClose, getRemoteWindow(), getLocalWindow());
 		}
 	}
 	
@@ -1313,7 +1314,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 			if(r > 0) {
 				int res = b[0] & 0xFF; 
 				if(Log.isTraceEnabled()) {
-					Log.trace("Read returning %d", res);
+					Log.trace("Read returning {}", res);
 				}
 				return res;
 			}

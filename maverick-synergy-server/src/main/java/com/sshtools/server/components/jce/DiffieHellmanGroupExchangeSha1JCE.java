@@ -177,7 +177,7 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 				n = bar.readUINT32();
 
 				if(Log.isDebugEnabled()) {
-					Log.debug("Received SSH_MSG_KEY_DH_GEX_REQUEST_OLD n=%d", n.longValue());
+					Log.debug("Received SSH_MSG_KEY_DH_GEX_REQUEST_OLD n={}", n.longValue());
 				}
 				
 				// get prime that is close to n but not larger than it
@@ -197,7 +197,7 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 				max = bar.readUINT32();
 
 				if(Log.isDebugEnabled()) {
-					Log.debug("Recieved SSH_MSG_KEY_DH_GEX_REQUEST min=%d n=%d max=%d", 
+					Log.debug("Recieved SSH_MSG_KEY_DH_GEX_REQUEST min={} n={} max={}", 
 							min.longValue(), n.longValue(), max.longValue());
 				}
 				// get prime that is close to max but not larger than it
@@ -209,7 +209,7 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 				g = group.getG();
 				
 				if(Log.isDebugEnabled()) {
-					Log.debug("Selected %d bit prime and %d bit group", p.bitLength(), g.bitLength());
+					Log.debug("Selected {} bit prime and {} bit group", p.bitLength(), g.bitLength());
 				}
 				break;
 			}
@@ -510,7 +510,7 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 					 maxSupportedSize = 8192;
 					 
 				  	 if(Log.isInfoEnabled()) {
-						Log.info(String.format("Using BC for DH; prime range is %d to %d bits", minSupportedSize, maxSupportedSize));
+						Log.info("Using BC for DH; prime range is {} to {} bits", minSupportedSize, maxSupportedSize);
 				  	 }
 				 } else {
 					maxSupportedSize = -1;
@@ -534,7 +534,7 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 					}
 					
 					if(Log.isInfoEnabled()) {
-						Log.info(String.format("The supported DH prime range is %d to %d bits", minSupportedSize, maxSupportedSize));
+						Log.info("The supported DH prime range is {} to {} bits", minSupportedSize, maxSupportedSize);
 					}
 				 }
 			}

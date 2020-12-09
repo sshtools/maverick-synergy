@@ -1686,7 +1686,7 @@ public abstract class TransportProtocol<T extends SshContext>
 				Log.debug("Remote Compression CS: {}", remoteCSCompressions);
 				Log.debug("Remote Compression SC: {}", remoteSCCompressions);
 				Log.debug("Lang: {}", lang);
-				Log.debug("First Packet Follows: %b", firstPacketFollows);
+				Log.debug("First Packet Follows: {}", firstPacketFollows);
 				Log.debug("Local Key Exchanges: {}", localKeyExchanges);
 				Log.debug("Local Public Keys: {}", localPublicKeys);
 				Log.debug("Local Ciphers CS: {}", localCiphersCS);
@@ -1887,7 +1887,7 @@ public abstract class TransportProtocol<T extends SshContext>
 		int msgId = msg[0];
 		
 		if(Log.isTraceEnabled()) {
-			Log.debug("Processing transport protocol message id %d", msgId);
+			Log.debug("Processing transport protocol message id {}", msgId);
 		}
 		
 		switch (msgId) {
@@ -1937,7 +1937,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			try {
 				bar.skip(1);
 				if(Log.isDebugEnabled())
-					Log.debug("Received SSH_MSG_UNIMPLEMENTED for sequence %d", bar.readInt());
+					Log.debug("Received SSH_MSG_UNIMPLEMENTED for sequence {}", bar.readInt());
 			} finally {
 				bar.close();
 			}
@@ -1959,7 +1959,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			}
 			
 			if(Log.isTraceEnabled()) {
-				Log.trace("Posting mesage id %d to active service for processing", msgId);
+				Log.trace("Posting mesage id {} to active service for processing", msgId);
 			}
 			
 			addTask(ACTIVE_SERVICE_IN, new ConnectionAwareTask(con) {
@@ -1967,7 +1967,7 @@ public abstract class TransportProtocol<T extends SshContext>
 					try {
 						
 						if(Log.isTraceEnabled()) {
-							Log.trace("Processing active service message id %d", msgId);
+							Log.trace("Processing active service message id {}", msgId);
 						}
 						
 						// Not a key exchange message so try the active service
@@ -1979,7 +1979,7 @@ public abstract class TransportProtocol<T extends SshContext>
 						 * If we reached here we have an unimplemented message
 						 */
 						if(Log.isDebugEnabled()) {
-							Log.debug("Unimplemented Message id=%d", msg[0]);
+							Log.debug("Unimplemented Message id={}", msg[0]);
 						}
 						postMessage(new UnimplementedMessage(sequenceNo));
 					} catch (IOException | SshException e) {
@@ -1987,9 +1987,7 @@ public abstract class TransportProtocol<T extends SshContext>
 					}
 				}
 			});
-			
-			
-		}
+		   }
 		}
 	}
 

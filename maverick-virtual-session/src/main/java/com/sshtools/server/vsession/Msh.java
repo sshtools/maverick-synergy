@@ -349,12 +349,12 @@ public class Msh extends ShellCommand {
 				.checkPermission(console.getConnection(),
 						ShellPolicy.EXEC, cmd.getCommandName())) {
 			if(Log.isDebugEnabled()) {
-				Log.debug(String.format("Executing command %s", Utils.join(args, " ")));
+				Log.debug("Executing command {}", Utils.join(args, " "));
 			}
 			return runCommandWithArgs(args, cmd, console, background);
 		} else {
 			if(Log.isDebugEnabled()) {
-				Log.debug(String.format("Cannot execute %s", Utils.join(args, " ")));
+				Log.debug("Cannot execute {}", Utils.join(args, " "));
 			}
 			throw new SecurityException(
 					"You are not allowed to run the command "

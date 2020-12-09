@@ -303,7 +303,7 @@ public class DiffieHellmanGroups {
 		
 		if(shared.compareTo(BigInteger.ONE) <= 0 
 				|| shared.compareTo(p.subtract(BigInteger.ONE)) >= 0) { 
-			Log.error(String.format("Invalid DH shared value (1 < y < p-1) %s", shared.toString(16)));
+			Log.error("Invalid DH shared value (1 < y < p-1) {}", shared.toString(16));
 			return false;
 		}
 		return true;

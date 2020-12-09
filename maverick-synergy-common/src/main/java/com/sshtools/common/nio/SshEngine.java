@@ -630,8 +630,8 @@ public class SshEngine {
 				key.interestOps(0);
 			
 				if(Log.isTraceEnabled()) {
-					Log.trace(String.format("Processing %s%s%s", listener.getName(),
-							key.isReadable() ? " READ" : "", key.isWritable() ? " WRITE" : ""));
+					Log.trace("Processing {}{}{}", listener.getName(),
+							key.isReadable() ? " READ" : "", key.isWritable() ? " WRITE" : "");
 				}
 				
 				listener.addTask(new SocketReadWriteTask(listener.getConnection(), key, listener));
@@ -659,14 +659,14 @@ public class SshEngine {
 			boolean cancel = false;
 			if (key.isValid() && key.isWritable()) {
 				if(Log.isTraceEnabled()) {
-					Log.trace(String.format("Starting %s WRITE", listener.getName()));
+					Log.trace("Starting {} WRITE", listener.getName());
 				}
 				cancel = listener.processWriteEvent();
 			}
 
 			if (key.isValid() && key.isReadable()) {
 				if(Log.isTraceEnabled()) {
-					Log.trace(String.format("Starting %s READ", listener.getName()));
+					Log.trace("Starting {} READ", listener.getName());
 				}
 				cancel |= listener.processReadEvent();
 			}
@@ -687,10 +687,10 @@ public class SshEngine {
 								ops |= SelectionKey.OP_READ;
 							}
 							if(Log.isTraceEnabled()) {
-								Log.trace(String.format("%s has state ops=%d %s",
+								Log.trace("{} has state ops={} {}",
 										listener.getName(),
 										ops,
-										wantsWrite && wantsRead ? "READ/WRITE" : wantsWrite ? "WRITE" : wantsRead ? "READ" : "NONE"));
+										wantsWrite && wantsRead ? "READ/WRITE" : wantsWrite ? "WRITE" : wantsRead ? "READ" : "NONE");
 							}
 							key.interestOps(ops); 
 						}

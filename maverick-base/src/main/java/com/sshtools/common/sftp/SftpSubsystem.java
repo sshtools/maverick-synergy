@@ -1559,8 +1559,8 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			openFilesByContext.get(getContext()).remove(key);
 			
 			if(Log.isDebugEnabled()) {
-				Log.debug(String.format("There are now %d file(s) open in the current context", 
-						openFilesByContext.get(getContext()).size()));
+				Log.debug("There are now {} file(s) open in the current context", 
+						openFilesByContext.get(getContext()).size());
 			}
 		} else if(openFolderHandles.containsKey(key)) {
 			TransferEvent evt = (TransferEvent) openFolderHandles.remove(key);

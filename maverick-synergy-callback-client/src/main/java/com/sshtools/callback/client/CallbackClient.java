@@ -82,7 +82,7 @@ public class CallbackClient {
 			try {
 				start(config, config.getServerHost(), config.getServerPort());						
 			} catch (Throwable e) {
-				Log.error(String.format("Could not load configuration %s", config.getAgentName()), e);
+				Log.error("Could not load configuration {}", e, config.getAgentName());
 			}
 		}
 	}
@@ -133,7 +133,7 @@ public class CallbackClient {
 		DisconnectRequestFuture future = client.stop();
 		
 		if(Log.isInfoEnabled()) {
-			Log.info(String.format("Callback client has disconnected [%s]", String.valueOf(future.isDone())));
+			Log.info("Callback client has disconnected [{}]", String.valueOf(future.isDone()));
 		}
 	}
 	

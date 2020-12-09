@@ -73,7 +73,7 @@ public class CallbackSession implements Runnable {
 		}
 		
 		if(Log.isInfoEnabled()) {
-			Log.info(String.format("Connecting to %s:%d", hostname, port));
+			Log.info("Connecting to {}:{}", hostname, port));
 		}
 		
 		synchronized(app) {
@@ -98,13 +98,13 @@ public class CallbackSession implements Runnable {
 						currentConnection.setProperty("callbackClient", this);
 						app.onClientConnected(this);
 						if(Log.isInfoEnabled()) {
-							Log.info(String.format("Client is connected to %s:%d", hostname, port));
+							Log.info("Client is connected to {}:{}", hostname, port);
 						}
 						numberOfAuthenticationErrors = 0;
 						break;
 					} else {
 						if(Log.isInfoEnabled()) {
-							Log.info(String.format("Could not authenticate to %s:%d", hostname, port));
+							Log.info("Could not authenticate to {}:{}", hostname, port));
 						}
 						currentConnection.disconnect();
 						numberOfAuthenticationErrors++;
@@ -119,19 +119,20 @@ public class CallbackSession implements Runnable {
 						interval = TimeUnit.MINUTES.toMillis(60);
 					}
 					if(Log.isInfoEnabled()) {
-						Log.info(String.format("Will reconnect to %s:%d in %d seconds", hostname, port, interval / 1000));
+						Log.info("Will reconnect to {}:{} in {} seconds", hostname, port, interval / 1000);
 					}
 					Thread.sleep(interval);
 				} catch (InterruptedException e) {
 				}
 			} catch(Throwable e) {
-				Log.error(String.format("%s on %s:%d", 
+				Log.error("{} on {}:{}", 
+						e,
 						e.getMessage(),
 						config.getServerHost(), 
-						config.getServerPort()), e);
+						config.getServerPort());
 				long interval = config.getReconnectIntervalMs() * Math.min(count, 12 * 60);
 				if(Log.isInfoEnabled()) {
-					Log.info(String.format("Reconnecting to %s:%d in %d seconds", hostname, port, interval / 1000));
+					Log.info("Reconnecting to {}:{} in {} seconds", hostname, port, interval / 1000);
 				}
 				try {
 					Thread.sleep(interval);

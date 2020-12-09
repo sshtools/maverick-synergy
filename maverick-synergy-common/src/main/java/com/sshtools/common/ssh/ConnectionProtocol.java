@@ -356,7 +356,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			ChannelNG<T> channel = getChannel(channelid);
 			if(channel==null) {
 				if(Log.isErrorEnabled()) {
-					Log.error("Channel response received with invalid channel id %d", channelid);
+					Log.error("Channel response received with invalid channel id {}", channelid);
 				}
 			} else {
 				channel.processChannelRequestResponse(success);
@@ -449,7 +449,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 
 			if (channel == null) {
 				if(Log.isErrorEnabled()) {
-					Log.error("Channel data received with invalid channel id %d", channelid);
+					Log.error("Channel data received with invalid channel id {}", channelid);
 				}
 			} else {
 				try {
@@ -493,7 +493,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 
 			if (channel == null) {
 				if(Log.isErrorEnabled()) {
-					Log.error("Channel window adjust received with invalid channel id %d", channelid);
+					Log.error("Channel window adjust received with invalid channel id {}", channelid);
 				}
 			} else {
 				if(Log.isDebugEnabled())
@@ -519,7 +519,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 
 			if (channel == null) {
 				if(Log.isErrorEnabled()) {
-					Log.error("Channel EOF received with invalid channel id %d", channelid);
+					Log.error("Channel EOF received with invalid channel id {}", channelid);
 				}
 			} else {
 
@@ -551,7 +551,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 
 			if (channel == null) {
 				if(Log.isErrorEnabled()) {
-					Log.error("Channel close received with invalid channel id %d", channelid);
+					Log.error("Channel close received with invalid channel id {}", channelid);
 				}
 			} else {
 
@@ -579,7 +579,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 
 			if (channel == null) {
 				if(Log.isErrorEnabled()) {
-					Log.error("Channel confirmation received with invalid channel id %d", channelid);
+					Log.error("Channel confirmation received with invalid channel id {}", channelid);
 				}
 			} else {
 
@@ -626,7 +626,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 
 			if (channel == null) {
 				if(Log.isErrorEnabled()) {
-					Log.error("Channel open failure received with invalid channel id %d", channelid);
+					Log.error("Channel open failure received with invalid channel id {}", channelid);
 				}
 			} else {
 
@@ -731,7 +731,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 
 	public void sendGlobalRequest(GlobalRequest request, boolean wantReply) {
 		if(Log.isDebugEnabled()) {
-			Log.debug(String.format("Sending SSH_MSG_GLOBAL_REQUEST request=%s wantReply=%s", request.getName(), String.valueOf(wantReply)));
+			Log.debug("Sending SSH_MSG_GLOBAL_REQUEST request={} wantReply={}", request.getName(), String.valueOf(wantReply));
 		}
 		if(wantReply) {
 			outstandingRequests.addLast(request);
@@ -831,7 +831,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 				channel.onChannelRequest(requesttype, wantreply, requestdata);
 			} else {
 				if(Log.isErrorEnabled()) {
-					Log.error("Channel request received with invalid channel id %d", channelid);
+					Log.error("Channel request received with invalid channel id {}", channelid);
 				}
 			}
 
@@ -1017,7 +1017,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 	public boolean idle() {
 		
 		if(Log.isDebugEnabled()) {
-			Log.debug(String.format("There are %d channels currently open", activeChannels.size()));
+			Log.debug("There are {} channels currently open", activeChannels.size());
 		}
 		
 		for(ChannelNG<?> c : activeChannels.values()) {
@@ -1027,7 +1027,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 				}
 				if(c.getTimeout() > 0 && System.currentTimeMillis()-c.getLastActivity() > c.getTimeout()) {
 					if(Log.isDebugEnabled()) {
-						Log.debug(String.format("Closing idle channel channel=%d remote=%d", c.getLocalId(), c.getRemoteId()));
+						Log.debug("Closing idle channel channel={} remote={}", c.getLocalId(), c.getRemoteId());
 					}
 					c.close(true);
 				}

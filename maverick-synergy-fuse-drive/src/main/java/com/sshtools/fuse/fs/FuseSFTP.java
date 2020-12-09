@@ -70,10 +70,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			sftp.chmod((int) mode, path);
 			return 0;
 		} catch (SftpStatusException e) {
-			Log.error(String.format("Failed to chmod %s to %d", path, mode), e);
+			Log.error("Failed to chmod {} to {}",e,  path, mode);
 			return toErr(e);
 		} catch (SshException e) {
-			Log.error(String.format("Failed to chmod %s to %d", path, mode), e);
+			Log.error("Failed to chmod {} to {}", e, path, mode);
 			return -ErrorCodes.EFAULT();
 		}
 	}
@@ -88,10 +88,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			sftp.chgrp(String.valueOf(gid), path);
 			return 0;
 		} catch (SftpStatusException e) {
-			Log.error(String.format("Failed to chown %s to %d:%d", path, uid, gid), e);
+			Log.error("Failed to chown {} to {}:{}", e, path, uid, gid);
 			return toErr(e);
 		} catch (SshException e) {
-			Log.error(String.format("Failed to chmod %s to %d:%d", path, uid, gid), e);
+			Log.error("Failed to chmod {} to {}:{}", e, path, uid, gid);
 			return -ErrorCodes.EFAULT();
 		}
 	}
@@ -112,10 +112,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			return fillStat(stat, sftp.stat(path), path);
 		} catch (SftpStatusException sftpse) {
 			if (Log.isDebugEnabled() && (Log.isTraceEnabled() || sftpse.getStatus() != SftpStatusException.SSH_FX_NO_SUCH_FILE))
-				Log.debug(String.format("Error retrieving attributes for %s.", path), sftpse);
+				Log.debug("Error retrieving attributes for {}", sftpse, path);
 			return toErr(sftpse);
 		} catch (Exception e) {
-			Log.error(String.format("Error retrieving attributes for %s.", path), e);
+			Log.error("Error retrieving attributes for {}", e, path);
 		}
 		return -ErrorCodes.EREMOTEIO();
 	}
@@ -130,10 +130,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			
 			return 0;
 		} catch (SftpStatusException e) {
-			Log.error(String.format("Failed to create directory %s", path), e);
+			Log.error("Failed to create directory {}", e, path);
 			return toErr(e);
 		} catch (SshException e) {
-			Log.error(String.format("Failed to create directory %s", path), e);
+			Log.error("Failed to create directory {}", e, path);
 			return -ErrorCodes.EFAULT();
 		}
 	}
@@ -159,10 +159,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			
 			return 0;
 		} catch (SftpStatusException e) {
-			Log.error(String.format("Failed to open %s", path), e);
+			Log.error("Failed to open {}", e, path);
 			return toErr(e);
 		} catch (SshException e) {
-			Log.error(String.format("Failed to open %s", path), e);
+			Log.error("Failed to open {}", e, path);
 			return -ErrorCodes.EFAULT();
 		}
 	}
@@ -213,10 +213,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			
 			return 0;
 		} catch (SftpStatusException e) {
-			Log.error(String.format("Failed to open %s", path), e);
+			Log.error("Failed to open {}", e, path);
 			return toErr(e);
 		} catch (SshException e) {
-			Log.error(String.format("Failed to open %s", path), e);
+			Log.error("Failed to open {}", e, path);
 			return -ErrorCodes.EFAULT();
 		}
 	}
@@ -233,10 +233,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			buf.put(0, b, 0, read);
 			return read;
 		} catch (SftpStatusException e) {
-			Log.error(String.format("Failed to open %s", path), e);
+			Log.error("Failed to open {}", e, path);
 			return toErr(e);
 		} catch (SshException e) {
-			Log.error(String.format("Failed to open %s", path), e);
+			Log.error("Failed to open {}", e, path);
 			return -ErrorCodes.EFAULT();
 		}
 	}
@@ -248,10 +248,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			return 0;
 		} catch (SftpStatusException sftpse) {
 			if (Log.isDebugEnabled() && (Log.isTraceEnabled() || sftpse.getStatus() != SftpStatusException.SSH_FX_NO_SUCH_FILE))
-				Log.debug(String.format("Error retrieving attributes for %s.", path), sftpse);
+				Log.debug("Error retrieving attributes for {}.", sftpse, path);;
 			return toErr(sftpse);
 		} catch (Exception e) {
-			Log.error(String.format("Error retrieving attributes for %s.", path), e);
+			Log.error("Error retrieving attributes for {}.", e, path);
 		}
 		return -ErrorCodes.ENOENT();
 	}
@@ -276,10 +276,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			
 			return 0;
 		} catch (SftpStatusException e) {
-			Log.error(String.format("Failed to open dir %s", path), e);
+			Log.error("Failed to open dir {}", e, path);
 			return toErr(e);
 		} catch (SshException e) {
-			Log.error(String.format("Failed to open dir %s", path), e);
+			Log.error("Failed to open dir {}", e, path);
 			return -ErrorCodes.EFAULT();
 		}
 	}
@@ -293,7 +293,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 	public int readdir(String path, Pointer buf, FuseFillDir filter, @off_t long offset, FuseFileInfo fi) {
 
 		if (Log.isInfoEnabled()) {
-			Log.info(String.format("Reading directory %s", path));
+			Log.info("Reading directory {}", path);
 		}
 		try {
 			SftpFile file = handles.get(fi.fh.longValue());
@@ -331,10 +331,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			
 			return 0;
 		} catch (SftpStatusException e) {
-			Log.error(String.format("Failed to open %s", path), e);
+			Log.error("Failed to open {}", e, path);
 			return toErr(e);
 		} catch (SshException e) {
-			Log.error(String.format("Failed to open %s", path), e);
+			Log.error("Failed to open {}", e, path);
 			return -ErrorCodes.EFAULT();
 		}
 	}
@@ -357,10 +357,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			return 0;
 			
 		} catch (SftpStatusException e) {
-			Log.error(String.format("Failed to open %s", path), e);
+			Log.error("Failed to open {}", e, path);
 			return toErr(e);
 		} catch (SshException e) {
-			Log.error(String.format("Failed to open %s", path), e);
+			Log.error("Failed to open {}", e, path);
 			return -ErrorCodes.EFAULT();
 		}
 	}
@@ -375,10 +375,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			sftp.rename(oldpath, newpath);
 			return 0;
 		} catch (SftpStatusException e) {
-			Log.error(String.format("Failed to rename %s to %s", oldpath, newpath), e);
+			Log.error("Failed to rename {} to {}", e, oldpath, newpath);
 			return toErr(e);
 		} catch (SshException e) {
-			Log.error(String.format("Failed to rename %s to %s", oldpath, newpath), e);
+			Log.error("Failed to rename {} to {}", e, oldpath, newpath);
 			return -ErrorCodes.EFAULT();
 		}
 	}
@@ -397,10 +397,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			sftp.symlink(oldpath, newpath);
 			return 0;
 		} catch (SftpStatusException e) {
-			Log.error(String.format("Failed to symlink %s to %s", oldpath, newpath), e);
+			Log.error("Failed to symlink {} to {}", e, oldpath, newpath);
 			return toErr(e);
 		} catch (SshException e) {
-			Log.error(String.format("Failed to remove %s to %s", oldpath, newpath), e);
+			Log.error("Failed to remove {} to {}", e, oldpath, newpath);
 			return -ErrorCodes.EFAULT();
 		}
 	}
@@ -414,10 +414,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			sftp.rm(path);
 			return 0;
 		} catch (SftpStatusException e) {
-			Log.error(String.format("Failed to remove %s", path), e);
+			Log.error("Failed to remove {}", e, path);
 			return toErr(e);
 		} catch (SshException e) {
-			Log.error(String.format("Failed to remove %s", path), e);
+			Log.error("Failed to remove {}", e, path);
 			return -ErrorCodes.EFAULT();
 		}
 	}
@@ -433,10 +433,10 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			file.write(offset, b, 0, b.length);
 			return b.length;
 		} catch (SftpStatusException e) {
-			Log.error(String.format("Failed to open %s", path), e);
+			Log.error("Failed to open {}", e, path);
 			return toErr(e);
 		} catch (SshException e) {
-			Log.error(String.format("Failed to open %s", path), e);
+			Log.error("Failed to open {}", e, path);
 			return -ErrorCodes.EFAULT();
 		}
 	}
@@ -452,7 +452,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 				return -ErrorCodes.EFAULT();
 			}
 		} catch (Exception e) {
-			Log.error(String.format("Error checking for existance for %s.", path), e);
+			Log.error("Error checking for existance for {}.", e, path);
 			return -ErrorCodes.EFAULT();
 		}
 	}

@@ -158,11 +158,11 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 						ops |= SelectionKey.OP_READ;
 					}
 					if(Log.isTraceEnabled()) {
-						Log.trace(String.format("%s channel=%d ops=%d has state %s",
+						Log.trace("{} channel={} ops={} has state {}",
 								getName(),
 								getLocalId(),
 								ops,
-								wantsWrite && wantsRead ? "READ/WRITE" : wantsWrite ? "WRITE" : wantsRead ? "READ" : "NONE"));
+								wantsWrite && wantsRead ? "READ/WRITE" : wantsWrite ? "WRITE" : wantsRead ? "READ" : "NONE");
 					}
 					key.interestOps(ops); 
 				}
@@ -199,7 +199,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 						log("Closing SocketChannel caused Exception", ex);
 				} finally {
 					if (Log.isTraceEnabled())
-						Log.trace("Socket is closed channel=%d remote=%d", getLocalId(), getRemoteId());
+						Log.trace("Socket is closed channel={} remote={}", getLocalId(), getRemoteId());
 				}
 			}
 			socketChannel = null;
@@ -503,11 +503,11 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 	void log() {
 		super.log();
 		if(Log.isInfoEnabled()) {
-			Log.info(String.format("socketCache=%d channelCache=%d closePending=%s connected=%s in=%d out=%d", 
+			Log.info("socketCache={} channelCache={} closePending={} connected={} in={} out={}", 
 					cache == null ? -1 : cache.remaining(), toChannel == null ? -1 : toChannel.remaining(),
 					closePending, socketChannel != null && socketChannel.isConnected(), 
 					totalIn,
-					totalOut));
+					totalOut);
 		}
 	}
 

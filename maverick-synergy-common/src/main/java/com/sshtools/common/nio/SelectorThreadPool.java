@@ -98,7 +98,7 @@ public class SelectorThreadPool {
 	public synchronized void shutdown() {
 
 		if(Log.isInfoEnabled()) {
-			Log.info(String.format("Shutting down %s thread pool", impl.getName()));
+			Log.info("Shutting down {} thread pool", impl.getName());
 		}
 		
 		isShuttingDown = true;
@@ -117,7 +117,7 @@ public class SelectorThreadPool {
 				try {
 					createThread();
 					if(Log.isWarnEnabled()) {
-						Log.warn(String.format("A permanent thread was re-created because %s shutdown", thread.getName()));
+						Log.warn("A permanent thread was re-created because {} shutdown", thread.getName());
 					}
 				} catch (IOException e) {
 					Log.error("Failed to create replacement thread", e);

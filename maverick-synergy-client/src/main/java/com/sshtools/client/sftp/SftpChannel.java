@@ -1319,8 +1319,8 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.writeInt(len);
 
 			if(Log.isDebugEnabled()) {
-				Log.debug(String.format("Sending SSH_FXP_READ channel=%d requestId=%s offset=%s blocksize=%d",
-				 						session.getLocalId(), requestId.toString(), offset, len));		
+				Log.debug("Sending SSH_FXP_READ channel={} requestId={} offset={} blocksize={}",
+				 						session.getLocalId(), requestId.toString(), offset, len);		
 				 			}
 			sendMessage(msg);
 
@@ -1376,8 +1376,8 @@ public class SftpChannel extends AbstractSubsystem {
 					System.arraycopy(msgdata, 0, output, off, msgdata.length);
 					
 					if(Log.isDebugEnabled()) {
-						Log.debug(String.format("Received SSH_FXP_DATA channel=%d requestId=%s offset=%s blocksize=%d",
-						 		session.getLocalId(), requestId.toString(), offset.toString(), msgdata.length));		
+						Log.debug("Received SSH_FXP_DATA channel={} requestId={} offset={} blocksize={}",
+						 		session.getLocalId(), requestId.toString(), offset.toString(), msgdata.length);		
 						 				}
 					return msgdata.length;
 				} else if (bar.getType() == SSH_FXP_STATUS) {

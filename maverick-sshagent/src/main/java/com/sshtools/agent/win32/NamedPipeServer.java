@@ -43,7 +43,7 @@ public class NamedPipeServer extends AbstractNamedPipe {
 		closed = true;
 		if(hNextHandle!=null) {
 			if(Log.isInfoEnabled()) {
-				Log.info(String.format("Closing pipe server %s handle=%s", pipeName, hNextHandle.toString()));
+				Log.info("Closing pipe server {} handle={}", pipeName, hNextHandle.toString());
 			}
 			try {
 				assertCallSucceeded("DisconnectNamedPipe", Kernel32.INSTANCE.DisconnectNamedPipe(hNextHandle));
@@ -60,7 +60,7 @@ public class NamedPipeServer extends AbstractNamedPipe {
 		}
 		
     	if(Log.isInfoEnabled()) {
-			Log.info(String.format("Waiting for client on pipe %s", this.pipeName));
+			Log.info("Waiting for client on pipe {}", this.pipeName);
 		}
     	
     	try {
@@ -78,13 +78,13 @@ public class NamedPipeServer extends AbstractNamedPipe {
     		}
     	
     		if(Log.isInfoEnabled()) {
-    			Log.info(String.format("Waiting for client to connect to pipe %s handle=%s", this.pipeName, hNextHandle.toString()));
+    			Log.info("Waiting for client to connect to pipe {} handle={}", this.pipeName, hNextHandle.toString());
     		}
     		
 	        assertCallSucceeded("ConnectNamedPipe", Kernel32.INSTANCE.ConnectNamedPipe(hNextHandle, null));
 	       
 	        if(Log.isInfoEnabled()) {
-				Log.info(String.format("Client connected to pipe %s handle=%s", this.pipeName, hNextHandle.toString()));
+				Log.info("Client connected to pipe {} handle={}", this.pipeName, hNextHandle.toString());
 			}
 	        
 	        synchronized(this) {

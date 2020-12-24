@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.util.EncodingUtils;
+import com.sshtools.synergy.common.util.EncodingUtils;
 
 /**
  * Implements the password authentication method.

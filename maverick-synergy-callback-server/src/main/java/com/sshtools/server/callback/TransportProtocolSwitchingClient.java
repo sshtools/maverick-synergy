@@ -20,11 +20,11 @@ package com.sshtools.server.callback;
 
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.TransportProtocolClient;
-import com.sshtools.common.nio.ConnectRequestFuture;
-import com.sshtools.common.nio.LicenseException;
-import com.sshtools.common.nio.ProtocolContextFactory;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.TransportProtocolServer;
+import com.sshtools.synergy.common.nio.ConnectRequestFuture;
+import com.sshtools.synergy.common.nio.LicenseException;
+import com.sshtools.synergy.common.nio.ProtocolContextFactory;
 
 class TransportProtocolSwitchingClient extends TransportProtocolClient {
 

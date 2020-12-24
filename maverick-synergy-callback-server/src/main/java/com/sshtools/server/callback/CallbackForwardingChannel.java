@@ -29,12 +29,12 @@ import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.ExecutorOperationQueues;
-import com.sshtools.common.ssh.ForwardingChannel;
-import com.sshtools.common.ssh.LocalForwardingChannel;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.synergy.common.ssh.ForwardingChannel;
+import com.sshtools.synergy.common.ssh.LocalForwardingChannel;
+import com.sshtools.synergy.common.ssh.SshContext;
 
 public class CallbackForwardingChannel<T extends SshContext> extends ForwardingChannel<T> {
 

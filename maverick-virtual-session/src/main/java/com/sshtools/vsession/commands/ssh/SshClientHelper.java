@@ -32,11 +32,11 @@ import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.common.ssh.SecurityLevel;
-import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.util.Utils;
 import com.sshtools.server.vsession.VirtualConsole;
+import com.sshtools.synergy.common.ssh.SshContext;
 
 public class SshClientHelper {
 

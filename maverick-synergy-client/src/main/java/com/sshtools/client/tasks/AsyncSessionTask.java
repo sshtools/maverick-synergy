@@ -27,8 +27,8 @@ import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.ChannelRequestFuture;
-import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SessionChannel;
+import com.sshtools.synergy.common.ssh.Connection;
 
 /**
  * An  task for using the SSH session asynchronously

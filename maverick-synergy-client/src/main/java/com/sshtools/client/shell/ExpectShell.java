@@ -32,9 +32,9 @@ import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.tasks.AbstractSessionTask;
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
+import com.sshtools.synergy.common.ssh.Connection;
 
 public class ExpectShell {
 

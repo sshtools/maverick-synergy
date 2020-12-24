@@ -19,11 +19,11 @@
 package com.sshtools.server.vsession;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.server.DefaultServerChannelFactory;
 import com.sshtools.server.SshServerContext;
+import com.sshtools.synergy.common.ssh.ChannelNG;
 
 public class VirtualChannelFactory extends DefaultServerChannelFactory {
 

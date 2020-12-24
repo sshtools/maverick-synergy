@@ -31,13 +31,13 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.synergy.common.ssh.TransportProtocol;
 
 public class MutualCallbackAuthenticator extends SimpleClientAuthenticator {
 

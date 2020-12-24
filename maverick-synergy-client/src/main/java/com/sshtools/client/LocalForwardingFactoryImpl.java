@@ -21,10 +21,10 @@ package com.sshtools.client;
 import java.nio.channels.SocketChannel;
 
 import com.sshtools.common.events.EventCodes;
-import com.sshtools.common.ssh.ForwardingChannel;
-import com.sshtools.common.ssh.LocalForwardingChannel;
-import com.sshtools.common.ssh.SocketListeningForwardingFactoryImpl;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.synergy.common.ssh.ForwardingChannel;
+import com.sshtools.synergy.common.ssh.LocalForwardingChannel;
+import com.sshtools.synergy.common.ssh.SocketListeningForwardingFactoryImpl;
 
 /**
  *  Implements the configuration of a local forwarding listening socket.

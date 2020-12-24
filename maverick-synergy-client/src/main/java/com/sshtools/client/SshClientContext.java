@@ -40,25 +40,25 @@ import com.sshtools.client.components.DiffieHellmanGroupExchangeSha256JCE;
 import com.sshtools.client.components.Rsa2048Sha256;
 import com.sshtools.common.knownhosts.HostKeyVerification;
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.nio.ConnectRequestFuture;
-import com.sshtools.common.nio.DefaultSocketConnectionFactory;
-import com.sshtools.common.nio.ProtocolEngine;
-import com.sshtools.common.nio.SocketConnectionFactory;
-import com.sshtools.common.nio.SshEngine;
-import com.sshtools.common.nio.SshEngineContext;
 import com.sshtools.common.ssh.AbstractRequestFuture;
-import com.sshtools.common.ssh.ChannelFactory;
-import com.sshtools.common.ssh.Connection;
-import com.sshtools.common.ssh.ConnectionManager;
-import com.sshtools.common.ssh.ForwardingManager;
-import com.sshtools.common.ssh.GlobalRequestHandler;
 import com.sshtools.common.ssh.SecurityLevel;
-import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.ComponentFactory;
 import com.sshtools.common.ssh.components.ComponentManager;
-import com.sshtools.common.ssh.components.SshKeyExchange;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
+import com.sshtools.synergy.common.nio.ConnectRequestFuture;
+import com.sshtools.synergy.common.nio.DefaultSocketConnectionFactory;
+import com.sshtools.synergy.common.nio.ProtocolEngine;
+import com.sshtools.synergy.common.nio.SocketConnectionFactory;
+import com.sshtools.synergy.common.nio.SshEngine;
+import com.sshtools.synergy.common.nio.SshEngineContext;
+import com.sshtools.synergy.common.ssh.ChannelFactory;
+import com.sshtools.synergy.common.ssh.Connection;
+import com.sshtools.synergy.common.ssh.ConnectionManager;
+import com.sshtools.synergy.common.ssh.ForwardingManager;
+import com.sshtools.synergy.common.ssh.GlobalRequestHandler;
+import com.sshtools.synergy.common.ssh.SshContext;
+import com.sshtools.synergy.common.ssh.components.SshKeyExchange;
 
 /**
  * Holds the configuration for an SSH connection.

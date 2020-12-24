@@ -23,10 +23,10 @@ import java.math.BigInteger;
 
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.SshTransport;
 import com.sshtools.common.ssh.components.Digest;
-import com.sshtools.common.ssh.components.SshKeyExchange;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.synergy.common.ssh.SshTransport;
+import com.sshtools.synergy.common.ssh.components.SshKeyExchange;
 
 /**
  *  An abstract base class for all key exchange implementations.

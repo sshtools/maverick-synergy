@@ -34,10 +34,6 @@ import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.Authenticator;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.nio.ProtocolContextFactory;
-import com.sshtools.common.nio.SshEngine;
-import com.sshtools.common.nio.SshEngineContext;
-import com.sshtools.common.nio.SshEngineListenerAdapter;
 import com.sshtools.common.permissions.IPPolicy;
 import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
@@ -46,10 +42,14 @@ import com.sshtools.common.publickey.SshKeyPairGenerator;
 import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.scp.ScpCommand;
 import com.sshtools.common.ssh.AbstractRequestFuture;
-import com.sshtools.common.ssh.ChannelFactory;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
+import com.sshtools.synergy.common.nio.ProtocolContextFactory;
+import com.sshtools.synergy.common.nio.SshEngine;
+import com.sshtools.synergy.common.nio.SshEngineContext;
+import com.sshtools.synergy.common.nio.SshEngineListenerAdapter;
+import com.sshtools.synergy.common.ssh.ChannelFactory;
 
 public abstract class AbstractSshServer implements Closeable {
 

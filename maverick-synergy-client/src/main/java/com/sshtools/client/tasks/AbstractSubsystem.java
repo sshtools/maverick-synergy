@@ -25,15 +25,15 @@ import java.util.UUID;
 
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.ssh.ByteArrays;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.Packet;
-import com.sshtools.common.ssh.PacketPool;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.IOUtils;
+import com.sshtools.synergy.common.ssh.ByteArrays;
+import com.sshtools.synergy.common.ssh.PacketPool;
 
 /**
  * An abstract task for connecting to an SSH subsystem.

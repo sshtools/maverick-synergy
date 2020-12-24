@@ -22,12 +22,12 @@ import java.util.Map;
 
 import com.sshtools.common.command.ExecutableCommand;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.ChannelFactory;
-import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.Subsystem;
 import com.sshtools.common.ssh.UnsupportedChannelException;
+import com.sshtools.synergy.common.ssh.ChannelFactory;
+import com.sshtools.synergy.common.ssh.ChannelNG;
 
 /**
  * Implements a default ChannelFactory for an SSH client.

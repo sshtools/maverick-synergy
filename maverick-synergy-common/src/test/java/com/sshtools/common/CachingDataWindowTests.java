@@ -25,10 +25,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 
-import com.sshtools.common.ssh.CachingDataWindow;
 import com.sshtools.common.util.Arrays;
 import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.Utils;
+import com.sshtools.synergy.common.ssh.CachingDataWindow;
 
 import junit.framework.TestCase;
 

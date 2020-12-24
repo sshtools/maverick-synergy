@@ -35,19 +35,19 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.SshPublicKeyFileFactory;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.SshTransport;
-import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.ssh.components.Digest;
 import com.sshtools.common.ssh.components.SshPrivateKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
-import com.sshtools.common.ssh.components.jce.AbstractKeyExchange;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.synergy.common.ssh.SshTransport;
+import com.sshtools.synergy.common.ssh.TransportProtocol;
+import com.sshtools.synergy.common.ssh.components.jce.AbstractKeyExchange;
 
 /**
  *

@@ -27,22 +27,22 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.nio.ConnectRequestFuture;
-import com.sshtools.common.nio.LicenseException;
-import com.sshtools.common.nio.SocketConnection;
 import com.sshtools.common.permissions.IPPolicy;
-import com.sshtools.common.ssh.ConnectionStateListener;
-import com.sshtools.common.ssh.Service;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.TransportProtocol;
-import com.sshtools.common.ssh.components.SshKeyExchange;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.sshd.AbstractServerTransport;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.synergy.common.nio.ConnectRequestFuture;
+import com.sshtools.synergy.common.nio.LicenseException;
+import com.sshtools.synergy.common.nio.SocketConnection;
+import com.sshtools.synergy.common.ssh.ConnectionStateListener;
+import com.sshtools.synergy.common.ssh.Service;
+import com.sshtools.synergy.common.ssh.TransportProtocol;
+import com.sshtools.synergy.common.ssh.components.SshKeyExchange;
 
 //#ifdef LICENSE
-//import com.sshtools.common.nio.LicenseManager;
+//import com.sshtools.synergy.common.nio.LicenseManager;
 //#endif
 
 public final class TransportProtocolServer extends TransportProtocol<SshServerContext> implements AbstractServerTransport<SshServerContext> {

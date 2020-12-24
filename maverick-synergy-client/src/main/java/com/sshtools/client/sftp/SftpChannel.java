@@ -43,9 +43,7 @@ import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.sftp.ACL;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
-import com.sshtools.common.ssh.ByteArrays;
 import com.sshtools.common.ssh.Packet;
-import com.sshtools.common.ssh.PacketPool;
 import com.sshtools.common.ssh.RequestFuture;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
@@ -53,6 +51,8 @@ import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
+import com.sshtools.synergy.common.ssh.ByteArrays;
+import com.sshtools.synergy.common.ssh.PacketPool;
 
 /**
  * Abstract task implementing SFTP operations.

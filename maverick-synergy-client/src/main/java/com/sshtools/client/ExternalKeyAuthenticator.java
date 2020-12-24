@@ -26,12 +26,12 @@ import java.util.Collections;
 import java.util.Objects;
 
 import com.sshtools.common.publickey.SignatureGenerator;
-import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.synergy.common.ssh.Connection;
+import com.sshtools.synergy.common.ssh.TransportProtocol;
 
 /**
  * Implements public key authentication taking a separately loaded SshKeyPair as the private key for authentication.

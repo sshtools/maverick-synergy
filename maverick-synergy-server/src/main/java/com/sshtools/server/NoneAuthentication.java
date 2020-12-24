@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import com.sshtools.common.auth.AuthenticationMechanism;
-import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.sshd.SshMessage;
+import com.sshtools.synergy.common.ssh.TransportProtocol;
 
 /**
  * <p>This authentication mechanism can be used to send custom banner messages

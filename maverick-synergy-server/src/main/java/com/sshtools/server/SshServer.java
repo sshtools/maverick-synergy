@@ -23,10 +23,10 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.channels.SocketChannel;
 
-import com.sshtools.common.nio.ProtocolContextFactory;
-import com.sshtools.common.nio.SshEngineContext;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
+import com.sshtools.synergy.common.nio.ProtocolContextFactory;
+import com.sshtools.synergy.common.nio.SshEngineContext;
 
 public class SshServer extends AbstractSshServer implements ProtocolContextFactory<SshServerContext> {
 

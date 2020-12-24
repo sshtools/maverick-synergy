@@ -36,17 +36,17 @@ import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.IPPolicy;
 import com.sshtools.common.policy.AuthenticationPolicy;
-import com.sshtools.common.ssh.Connection;
-import com.sshtools.common.ssh.ConnectionProtocol;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
-import com.sshtools.common.ssh.Service;
-import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.Utils;
+import com.sshtools.synergy.common.ssh.Connection;
+import com.sshtools.synergy.common.ssh.ConnectionProtocol;
+import com.sshtools.synergy.common.ssh.Service;
+import com.sshtools.synergy.common.ssh.SshContext;
+import com.sshtools.synergy.common.ssh.TransportProtocol;
 
 /**
  * This class implements the SSH Authentication Protocol. The only required

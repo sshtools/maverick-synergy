@@ -34,19 +34,19 @@ import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.nio.DisconnectRequestFuture;
-import com.sshtools.common.nio.SshEngine;
-import com.sshtools.common.nio.SshEngineContext;
 import com.sshtools.common.policy.AuthenticationPolicy;
 import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
-import com.sshtools.common.ssh.ChannelFactory;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.server.DefaultServerChannelFactory;
 import com.sshtools.server.SshServerContext;
+import com.sshtools.synergy.common.nio.DisconnectRequestFuture;
+import com.sshtools.synergy.common.nio.SshEngine;
+import com.sshtools.synergy.common.nio.SshEngineContext;
+import com.sshtools.synergy.common.ssh.ChannelFactory;
 
 public class CallbackClient {
 

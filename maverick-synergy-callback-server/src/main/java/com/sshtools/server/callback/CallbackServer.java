@@ -34,12 +34,12 @@ import com.sshtools.client.SshClientContext;
 import com.sshtools.common.auth.InMemoryMutualKeyAuthenticationStore;
 import com.sshtools.common.auth.MutualKeyAuthenticatonStore;
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.nio.ProtocolContextFactory;
-import com.sshtools.common.nio.SshEngineContext;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.server.AbstractSshServer;
 import com.sshtools.server.SshServerContext;
+import com.sshtools.synergy.common.nio.ProtocolContextFactory;
+import com.sshtools.synergy.common.nio.SshEngineContext;
 
 /**
  * An abstract server that provides a callback facility, listening on a port and acting as a client to 

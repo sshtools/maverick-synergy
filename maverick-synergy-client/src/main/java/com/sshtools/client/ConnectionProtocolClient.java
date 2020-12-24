@@ -25,20 +25,20 @@ import java.util.Map;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.permissions.UnauthorizedException;
-import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.ChannelOpenException;
-import com.sshtools.common.ssh.Connection;
-import com.sshtools.common.ssh.ConnectionProtocol;
-import com.sshtools.common.ssh.ConnectionStateListener;
-import com.sshtools.common.ssh.ConnectionTaskWrapper;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
 import com.sshtools.common.ssh.GlobalRequest;
-import com.sshtools.common.ssh.RemoteForward;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.synergy.common.ssh.ChannelNG;
+import com.sshtools.synergy.common.ssh.Connection;
+import com.sshtools.synergy.common.ssh.ConnectionProtocol;
+import com.sshtools.synergy.common.ssh.ConnectionStateListener;
+import com.sshtools.synergy.common.ssh.ConnectionTaskWrapper;
+import com.sshtools.synergy.common.ssh.RemoteForward;
+import com.sshtools.synergy.common.ssh.TransportProtocol;
 
 /**
  * Implements the client side of the SSH connection prototocol

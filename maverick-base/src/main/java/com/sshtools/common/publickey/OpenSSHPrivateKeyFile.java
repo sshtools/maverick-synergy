@@ -60,14 +60,14 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 	static final String AUTH_MAGIC = "openssh-key-v1";
 	String comment = "";
 	
-	OpenSSHPrivateKeyFile(byte[] formattedkey) throws IOException {
+	public OpenSSHPrivateKeyFile(byte[] formattedkey) throws IOException {
 		if (!isFormatted(formattedkey)) {
 			throw new IOException("Formatted key data is not a valid OpenSSH key format");
 		}
 		this.formattedkey = formattedkey;
 	}
 
-	OpenSSHPrivateKeyFile(SshKeyPair pair, String passphrase, String comment) throws IOException {
+	public OpenSSHPrivateKeyFile(SshKeyPair pair, String passphrase, String comment) throws IOException {
 		this.comment = comment;
 		formattedkey = encryptKey(pair, passphrase);
 	}

@@ -38,7 +38,6 @@ import com.sshtools.client.PublicKeyAuthenticator;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.RsaUtils;
 import com.sshtools.common.publickey.SshKeyPairGenerator;
@@ -48,6 +47,7 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshRsaPrivateKey;
 import com.sshtools.fuse.fs.FuseSFTP;
+import com.sshtools.synergy.common.nio.SshEngine;
 
 public class Main {
 	

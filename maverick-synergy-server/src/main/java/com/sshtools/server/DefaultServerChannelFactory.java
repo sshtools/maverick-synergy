@@ -25,8 +25,6 @@ import com.sshtools.common.command.ExecutableCommand;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpSubsystem;
-import com.sshtools.common.ssh.ChannelFactory;
-import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SshConnection;
@@ -34,6 +32,8 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.Subsystem;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.ssh.components.ComponentFactory;
+import com.sshtools.synergy.common.ssh.ChannelFactory;
+import com.sshtools.synergy.common.ssh.ChannelNG;
 
 public class DefaultServerChannelFactory implements ChannelFactory<SshServerContext> {
 
@@ -61,7 +61,7 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 	}
 
 	protected ChannelNG<SshServerContext> createLocalForwardingChannel(SshConnection con) {
-		return new com.sshtools.common.ssh.LocalForwardingChannel<SshServerContext>(
+		return new com.sshtools.synergy.common.ssh.LocalForwardingChannel<SshServerContext>(
 				LOCAL_FORWARDING_CHANNEL_TYPE,
 				con);
 	}

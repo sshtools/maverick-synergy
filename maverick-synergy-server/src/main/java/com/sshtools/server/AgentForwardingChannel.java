@@ -29,12 +29,12 @@ import java.nio.ByteBuffer;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.WriteOperationRequest;
-import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.ChannelOpenException;
-import com.sshtools.common.ssh.ChannelOutputStream;
 import com.sshtools.common.ssh.SessionChannelServer;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.synergy.common.ssh.ChannelNG;
+import com.sshtools.synergy.common.ssh.ChannelOutputStream;
 
 public class AgentForwardingChannel extends ChannelNG<SshServerContext> implements Closeable {
 

@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.sshd.SshMessage;
-import com.sshtools.common.util.EncodingUtils;
+import com.sshtools.synergy.common.util.EncodingUtils;
 
 public class AuthenticationMessage implements SshMessage {
 

@@ -36,9 +36,6 @@ import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.DefaultAuthenticationMechanismFactory;
 import com.sshtools.common.command.ExecutableCommand;
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.nio.ConnectRequestFuture;
-import com.sshtools.common.nio.ProtocolEngine;
-import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyPairGenerator;
 import com.sshtools.common.publickey.SshKeyUtils;
@@ -46,17 +43,11 @@ import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.common.publickey.SshPublicKeyFile;
 import com.sshtools.common.publickey.SshPublicKeyFileFactory;
-import com.sshtools.common.ssh.ChannelFactory;
-import com.sshtools.common.ssh.ConnectionManager;
-import com.sshtools.common.ssh.ForwardingManager;
-import com.sshtools.common.ssh.GlobalRequestHandler;
 import com.sshtools.common.ssh.SecurityLevel;
-import com.sshtools.common.ssh.SshContext;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.ComponentFactory;
 import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.ssh.components.SshCertificate;
-import com.sshtools.common.ssh.components.SshKeyExchange;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKey;
@@ -71,6 +62,15 @@ import com.sshtools.server.components.jce.DiffieHellmanGroup17Sha512JCE;
 import com.sshtools.server.components.jce.DiffieHellmanGroup18Sha512JCE;
 import com.sshtools.server.components.jce.DiffieHellmanGroupExchangeSha256JCE;
 import com.sshtools.server.components.jce.Rsa2048SHA2KeyExchange;
+import com.sshtools.synergy.common.nio.ConnectRequestFuture;
+import com.sshtools.synergy.common.nio.ProtocolEngine;
+import com.sshtools.synergy.common.nio.SshEngine;
+import com.sshtools.synergy.common.ssh.ChannelFactory;
+import com.sshtools.synergy.common.ssh.ConnectionManager;
+import com.sshtools.synergy.common.ssh.ForwardingManager;
+import com.sshtools.synergy.common.ssh.GlobalRequestHandler;
+import com.sshtools.synergy.common.ssh.SshContext;
+import com.sshtools.synergy.common.ssh.components.SshKeyExchange;
 
 public class SshServerContext extends SshContext {
 
@@ -330,7 +330,7 @@ public class SshServerContext extends SshContext {
 	}
 	
 	/**
-	 * Add an {@link com.sshtools.common.command.ExecutableCommand} to the configuration.
+	 * Add an {@link com.sshtools.synergy.common.command.ExecutableCommand} to the configuration.
 	 * If a request to execute a command with the name <em>name</em> is received
 	 * an instance of the class is created to handle the command execution.
 	 * 

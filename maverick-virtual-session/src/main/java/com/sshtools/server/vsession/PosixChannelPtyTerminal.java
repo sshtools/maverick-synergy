@@ -111,8 +111,8 @@ public class PosixChannelPtyTerminal extends AbstractPosixTerminal {
     }
 
     @Override
-    public void close() throws IOException {
-        super.close();
+	protected void doClose() throws IOException {
+		super.doClose();
         reader.close();
     }
 

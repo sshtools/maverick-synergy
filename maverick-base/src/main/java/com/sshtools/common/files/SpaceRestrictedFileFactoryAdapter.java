@@ -67,7 +67,7 @@ public class SpaceRestrictedFileFactoryAdapter implements AbstractFileFactory<Sp
 		return size;
 	}
 	
-	class SpaceRestrictedAbstractFile extends AbstractFileAdapter {
+	public class SpaceRestrictedAbstractFile extends AbstractFileAdapter {
 
 		public SpaceRestrictedAbstractFile(AbstractFile file) {
 			super(file);

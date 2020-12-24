@@ -50,11 +50,11 @@ public class IdleStateManager  {
      */
     public synchronized void reset(IdleStateListener obj) {
     	if(listeners.containsKey(obj))
-    		listeners.put(obj, new Long(System.currentTimeMillis()));
+    		listeners.put(obj, Long.valueOf(System.currentTimeMillis()));
     }
     
     public synchronized void register(IdleStateListener obj) {
-    	listeners.put(obj, new Long(System.currentTimeMillis()));
+    	listeners.put(obj, Long.valueOf(System.currentTimeMillis()));
     }
 
     /**

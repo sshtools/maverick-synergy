@@ -21,12 +21,12 @@ package com.sshtools.server.callback;
 import java.io.IOException;
 
 import com.sshtools.client.SshClientContext;
-import com.sshtools.common.nio.ConnectRequestFuture;
-import com.sshtools.common.nio.ProtocolContextFactory;
-import com.sshtools.common.nio.ProtocolEngine;
-import com.sshtools.common.nio.SshEngine;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.server.SshServerContext;
+import com.sshtools.synergy.common.nio.ConnectRequestFuture;
+import com.sshtools.synergy.common.nio.ProtocolContextFactory;
+import com.sshtools.synergy.common.nio.ProtocolEngine;
+import com.sshtools.synergy.common.nio.SshEngine;
 
 class SwitchingSshContext extends SshClientContext {
 

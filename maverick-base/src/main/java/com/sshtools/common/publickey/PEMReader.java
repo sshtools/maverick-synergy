@@ -29,7 +29,7 @@ import com.sshtools.common.ssh.components.jce.AES128Cbc;
 import com.sshtools.common.ssh.components.jce.TripleDesCbc;
 import com.sshtools.common.util.Base64;
 
-class PEMReader extends PEM {
+public class PEMReader extends PEM {
 	private LineNumberReader reader;
 	private String type;
 	private Hashtable<String, String> header;

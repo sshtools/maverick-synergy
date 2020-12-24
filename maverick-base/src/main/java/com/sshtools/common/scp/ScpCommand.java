@@ -612,7 +612,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 									new Date())
 							.addAttribute(
 									EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-									new Long(attr.getSize().longValue()))
+									Long.valueOf(attr.getSize().longValue()))
 							.addAttribute(
 									EventCodes.ATTRIBUTE_FILE_FACTORY,
 									nfs.getFileFactory())
@@ -645,7 +645,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 										new Date())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-										new Long(attr.getSize().longValue()))
+										Long.valueOf(attr.getSize().longValue()))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_FILE_FACTORY,
 										nfs.getFileFactory())
@@ -686,10 +686,10 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											session.getConnection())
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-											new Long(count))
+											Long.valueOf(count))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_READ,
-											new Long(read))
+											Long.valueOf(read))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_FILE_NAME,
 											path)
@@ -739,7 +739,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 										new Date())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-										new Long(count))
+										Long.valueOf(count))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_FILE_FACTORY,
 										nfs.getFileFactory())
@@ -795,7 +795,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 								new Date())
 						.addAttribute(
 								EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-								new Long(count))
+								Long.valueOf(count))
 						.addAttribute(
 								EventCodes.ATTRIBUTE_FILE_FACTORY,
 								nfs.getFileFactory())
@@ -1003,7 +1003,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 										new Date())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-										new Long(length))
+										Long.valueOf(length))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_FILE_FACTORY,
 										nfs.getFileFactory())
@@ -1046,7 +1046,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											new Date())
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-											new Long(length))
+											Long.valueOf(length))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_FILE_FACTORY,
 											nfs.getFileFactory())
@@ -1063,7 +1063,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					
 					if(filePolicy.hasUploadQuota()) {
 						if(!con.containsProperty("uploadQuota")) {
-							con.setProperty("uploadQuota", new Long(0L));
+							con.setProperty("uploadQuota", Long.valueOf(0L));
 						}
 						Long quota = (Long) con.getProperty("uploadQuota");
 						if(quota + length > filePolicy.getConnectionUploadQuota()) {
@@ -1071,7 +1071,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 							throw new IOException("User quota will be exceeded");
 						}
 						
-						con.setProperty("uploadQuota", new Long(quota + length));
+						con.setProperty("uploadQuota", Long.valueOf(quota + length));
 					}
 					
 					UnsignedInteger64 offset = new UnsignedInteger64(0);
@@ -1104,10 +1104,10 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											con)
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-											new Long(count))
+											Long.valueOf(count))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_WRITTEN,
-											new Long(read))
+											Long.valueOf(read))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_FILE_NAME,
 											targetPath)
@@ -1142,7 +1142,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											new Date())
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-											new Long(count))
+											Long.valueOf(count))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_FILE_FACTORY,
 											nfs.getFileFactory())
@@ -1225,7 +1225,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 								new Date())
 						.addAttribute(
 								EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-								new Long(count))
+								Long.valueOf(count))
 						.addAttribute(
 								EventCodes.ATTRIBUTE_FILE_FACTORY,
 								nfs.getFileFactory())

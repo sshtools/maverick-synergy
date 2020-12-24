@@ -1239,10 +1239,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												con)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-												new Long(evt.bytesRead))
+												Long.valueOf(evt.bytesRead))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_READ,
-												new Long(count))
+												Long.valueOf(count))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_FILE_NAME,
 												evt.path)
@@ -1309,7 +1309,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 								con)
 						.addAttribute(
 								EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-								new Long(evt.bytesRead))
+								Long.valueOf(evt.bytesRead))
 						.addAttribute(
 								EventCodes.ATTRIBUTE_FILE_NAME,
 								evt.path)
@@ -1360,7 +1360,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 
 				if(filePolicy.hasUploadQuota()) {
 					if(!con.containsProperty("uploadQuota")) {
-						con.setProperty("uploadQuota", new Long(0L));
+						con.setProperty("uploadQuota", Long.valueOf(0L));
 					}
 					Long quota = (Long) con.getProperty("uploadQuota");
 					if(quota + count > filePolicy.getConnectionUploadQuota()) {
@@ -1368,7 +1368,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 						return;
 					}
 					
-					con.setProperty("uploadQuota", new Long(quota + count));
+					con.setProperty("uploadQuota", Long.valueOf(quota + count));
 				}
 				try {	
 					
@@ -1388,10 +1388,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										con)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-										new Long(evt.bytesWritten))
+										Long.valueOf(evt.bytesWritten))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_WRITTEN,
-										new Long(count))
+										Long.valueOf(count))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_FILE_NAME,
 										evt.path)
@@ -1447,7 +1447,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 								con)
 						.addAttribute(
 								EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-								new Long(evt.bytesWritten))
+								Long.valueOf(evt.bytesWritten))
 						.addAttribute(
 								EventCodes.ATTRIBUTE_FILE_NAME,
 								evt.path)
@@ -1595,7 +1595,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												con)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-												new Long(evt.bytesWritten))
+												Long.valueOf(evt.bytesWritten))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_FILE_NAME,
 												evt.path)
@@ -1619,7 +1619,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												con)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-												new Long(evt.bytesWritten))
+												Long.valueOf(evt.bytesWritten))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_FILE_NAME,
 												evt.path)
@@ -1643,7 +1643,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												con)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-												new Long(evt.bytesRead))
+												Long.valueOf(evt.bytesRead))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_HANDLE,
 												evt.handle)
@@ -1674,10 +1674,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 													con)
 											.addAttribute(
 													EventCodes.ATTRIBUTE_BYTES_READ,
-													new Long(evt.bytesRead))
+													Long.valueOf(evt.bytesRead))
 											.addAttribute(
 													EventCodes.ATTRIBUTE_BYTES_WRITTEN,
-													new Long(evt.bytesWritten))
+													Long.valueOf(evt.bytesWritten))
 											.addAttribute(
 													EventCodes.ATTRIBUTE_HANDLE,
 													evt.handle)
@@ -1707,10 +1707,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 													con)
 											.addAttribute(
 													EventCodes.ATTRIBUTE_BYTES_READ,
-													new Long(evt.bytesRead))
+													Long.valueOf(evt.bytesRead))
 											.addAttribute(
 													EventCodes.ATTRIBUTE_BYTES_WRITTEN,
-													new Long(evt.bytesWritten))
+													Long.valueOf(evt.bytesWritten))
 											.addAttribute(
 													EventCodes.ATTRIBUTE_HANDLE,
 													evt.handle)
@@ -1744,7 +1744,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												con)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-												new Long(evt.bytesRead))
+												Long.valueOf(evt.bytesRead))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_FILE_NAME,
 												evt.path)
@@ -1769,10 +1769,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												con)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_READ,
-												new Long(evt.bytesRead))
+												Long.valueOf(evt.bytesRead))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_WRITTEN,
-												new Long(evt.bytesWritten))
+												Long.valueOf(evt.bytesWritten))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_FILE_NAME,
 												evt.path)
@@ -2029,7 +2029,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										con)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-										new Long(0))
+										Long.valueOf(0))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_HANDLE,
 										handle)

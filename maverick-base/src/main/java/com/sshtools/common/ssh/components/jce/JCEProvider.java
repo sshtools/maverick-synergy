@@ -237,7 +237,7 @@ public class JCEProvider implements JCEAlgorithms {
 			if(enableSC) {
 				@SuppressWarnings("unchecked")
 				Class<Provider> cls = (Class<Provider>) Class.forName("org.spongycastle.jce.provider.BouncyCastleProvider");
-				bcProvider = (Provider) cls.newInstance();
+				bcProvider = (Provider) cls.getConstructor().newInstance();
 				return BC_FLAVOR.SC;
 			}
 		} catch (Throwable e) {
@@ -246,13 +246,13 @@ public class JCEProvider implements JCEAlgorithms {
 		try {
 			@SuppressWarnings("unchecked")
 			Class<Provider> cls = (Class<Provider>) Class.forName("org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider");
-			bcProvider = (Provider) cls.newInstance();
+			bcProvider = (Provider) cls.getConstructor().newInstance();
 			return BC_FLAVOR.BCFIPS;
 		} catch(Throwable t) {
 			try {
 				@SuppressWarnings("unchecked")
 				Class<Provider> cls = (Class<Provider>) Class.forName("org.bouncycastle.jce.provider.BouncyCastleProvider");
-				bcProvider = (Provider) cls.newInstance();
+				bcProvider = (Provider) cls.getConstructor().newInstance();
 				return BC_FLAVOR.BC;
 			} catch(Throwable f) {
 				throw new IllegalStateException("Bouncycastle, BCFIPS or SpongyCastle is not installed");

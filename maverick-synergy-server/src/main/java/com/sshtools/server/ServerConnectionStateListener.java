@@ -18,8 +18,8 @@
  */
 package com.sshtools.server;
 
-import com.sshtools.common.ssh.ConnectionStateListener;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.synergy.common.ssh.ConnectionStateListener;
 
 public interface ServerConnectionStateListener extends ConnectionStateListener {
 

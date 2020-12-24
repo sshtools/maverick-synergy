@@ -28,19 +28,19 @@ import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.net.HttpRequest;
-import com.sshtools.common.nio.ConnectRequestFuture;
-import com.sshtools.common.nio.LicenseException;
-import com.sshtools.common.nio.SocketConnection;
 import com.sshtools.common.publickey.SshPublicKeyFileFactory;
-import com.sshtools.common.ssh.ConnectionTaskWrapper;
-import com.sshtools.common.ssh.Service;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.TransportProtocol;
-import com.sshtools.common.ssh.components.SshKeyExchange;
 import com.sshtools.common.sshd.SshMessage;
+import com.sshtools.synergy.common.nio.ConnectRequestFuture;
+import com.sshtools.synergy.common.nio.LicenseException;
+import com.sshtools.synergy.common.nio.SocketConnection;
+import com.sshtools.synergy.common.ssh.ConnectionTaskWrapper;
+import com.sshtools.synergy.common.ssh.Service;
+import com.sshtools.synergy.common.ssh.TransportProtocol;
+import com.sshtools.synergy.common.ssh.components.SshKeyExchange;
 
 //#ifdef LICENSE
-//import com.sshtools.common.nio.LicenseManager;
+//import com.sshtools.synergy.common.nio.LicenseManager;
 //#endif
 
 /**

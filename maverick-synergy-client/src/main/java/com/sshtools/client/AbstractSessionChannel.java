@@ -21,13 +21,13 @@ package com.sshtools.client;
 import java.io.IOException;
 
 import com.sshtools.common.nio.WriteOperationRequest;
-import com.sshtools.common.ssh.ChannelNG;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.RequestFuture;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.synergy.common.ssh.ChannelNG;
 
 /**
  * Implements the client side of the SSH Connection protocol session channel

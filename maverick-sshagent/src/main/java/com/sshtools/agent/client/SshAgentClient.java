@@ -282,29 +282,29 @@ public class SshAgentClient implements SignatureGenerator {
 
 	protected void registerMessages() {
 		
-		messages.put(new Integer(OpenSSHAgentMessages.SSH_AGENT_SUCCESS),
+		messages.put(Integer.valueOf(OpenSSHAgentMessages.SSH_AGENT_SUCCESS),
 				SshAgentSuccess.class);
-		messages.put(new Integer(OpenSSHAgentMessages.SSH_AGENT_FAILURE),
+		messages.put(Integer.valueOf(OpenSSHAgentMessages.SSH_AGENT_FAILURE),
 				SshAgentFailure.class);
-		messages.put(new Integer(OpenSSHAgentMessages.SSH2_AGENT_IDENTITIES_ANSWER),
+		messages.put(Integer.valueOf(OpenSSHAgentMessages.SSH2_AGENT_IDENTITIES_ANSWER),
 				SshAgentKeyList.class);
 		
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_VERSION_RESPONSE),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_VERSION_RESPONSE),
 				SshAgentVersionResponse.class);
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_SUCCESS),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_SUCCESS),
 				SshAgentSuccess.class);
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_FAILURE),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_FAILURE),
 				SshAgentFailure.class);
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_KEY_LIST),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_KEY_LIST),
 				SshAgentKeyList.class);
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_RANDOM_DATA),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_RANDOM_DATA),
 				SshAgentRandomData.class);
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_ALIVE),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_ALIVE),
 				SshAgentAlive.class);
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_OPERATION_COMPLETE),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_OPERATION_COMPLETE),
 				SshAgentOperationComplete.class);
 		
-		messages.put(new Integer(OpenSSHAgentMessages.SSH2_AGENT_SIGN_RESPONSE),
+		messages.put(Integer.valueOf(OpenSSHAgentMessages.SSH2_AGENT_SIGN_RESPONSE),
 				SshAgentOperationComplete.class);
 	}
 
@@ -448,11 +448,11 @@ public class SshAgentClient implements SignatureGenerator {
 				len += in.read(msgdata, len, msgdata.length - len);
 			}
 
-			Integer id = new Integer((int) msgdata[0] & 0xFF);
+			Integer id = Integer.valueOf((int) msgdata[0] & 0xFF);
 
 			if (messages.containsKey(id)) {
 				Class<? extends AgentMessage> cls = messages.get(id);
-				AgentMessage msg = cls.newInstance();
+				AgentMessage msg = cls.getConstructor().newInstance();
 				msg.fromByteArray(msgdata);
 				Log.info("Received message " + msg.getMessageName());
 

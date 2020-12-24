@@ -90,7 +90,7 @@ public class OpenDirectoryWithFilterExtension implements SftpExtension {
 										sftp.getConnection())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-										new Long(0))
+										Long.valueOf(0))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_HANDLE,
 										handle)

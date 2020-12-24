@@ -18,6 +18,7 @@
  */
 package com.sshtools.common.tests;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -46,10 +47,10 @@ public class MockContext implements Context {
 	public <P> P getPolicy(Class<P> clz) {
 		try {
 			if(!policy.containsKey(clz)) {
-				policy.put(clz, clz.newInstance());
+				policy.put(clz, clz.getConstructor().newInstance());
 			}
 			return (P) policy.get(clz);
-		} catch (InstantiationException | IllegalAccessException e) {
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			throw new IllegalStateException(e);
 		}
 	}

@@ -22,11 +22,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.ssh.ByteArrayMessage;
-import com.sshtools.common.ssh.ConnectionTaskWrapper;
-import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.synergy.common.ssh.ByteArrayMessage;
+import com.sshtools.synergy.common.ssh.ConnectionTaskWrapper;
+import com.sshtools.synergy.common.ssh.TransportProtocol;
 
 /**
  * Implements the keyboard-interactive authentication method.

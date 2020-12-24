@@ -30,13 +30,13 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.ssh.ConnectionProtocol;
-import com.sshtools.common.ssh.ConnectionTaskWrapper;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
-import com.sshtools.common.ssh.Service;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.TransportProtocol;
 import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.synergy.common.ssh.ConnectionProtocol;
+import com.sshtools.synergy.common.ssh.ConnectionTaskWrapper;
+import com.sshtools.synergy.common.ssh.Service;
+import com.sshtools.synergy.common.ssh.TransportProtocol;
 
 /**
  * Implements the client side of the SSH authentication protocol.

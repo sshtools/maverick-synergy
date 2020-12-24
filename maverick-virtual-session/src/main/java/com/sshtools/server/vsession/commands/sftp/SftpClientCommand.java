@@ -31,12 +31,12 @@ import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClient;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.server.vsession.CommandArgumentsParser;
 import com.sshtools.server.vsession.CommandFactory;
 import com.sshtools.server.vsession.Msh;
 import com.sshtools.server.vsession.VirtualConsole;
+import com.sshtools.synergy.common.ssh.Connection;
 import com.sshtools.vsession.commands.ssh.SshClientArguments;
 import com.sshtools.vsession.commands.ssh.SshClientHelper;
 

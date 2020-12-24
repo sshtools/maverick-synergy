@@ -22,8 +22,8 @@ import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
-import com.sshtools.common.ssh.Connection;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.synergy.common.ssh.Connection;
 
 public class StatTask extends Task {
 

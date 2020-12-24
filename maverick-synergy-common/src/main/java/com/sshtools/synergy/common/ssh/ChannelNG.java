@@ -31,6 +31,7 @@ import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.nio.IdleStateListener;
 import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
@@ -39,7 +40,6 @@ import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.sshd.SshMessage;
-import com.sshtools.synergy.common.nio.IdleStateListener;
 
 /**
  * This abstract class provides the basic functions of an SSH2 channel. All

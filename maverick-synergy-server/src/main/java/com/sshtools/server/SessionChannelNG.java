@@ -31,6 +31,7 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.nio.IdleStateListener;
 import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
@@ -43,7 +44,6 @@ import com.sshtools.common.ssh.Subsystem;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.Utils;
-import com.sshtools.synergy.common.nio.IdleStateListener;
 import com.sshtools.synergy.common.ssh.ChannelNG;
 import com.sshtools.synergy.common.ssh.ChannelOutputStream;
 

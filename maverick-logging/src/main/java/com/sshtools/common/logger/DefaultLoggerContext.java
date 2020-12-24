@@ -124,7 +124,7 @@ public class DefaultLoggerContext implements RootLoggerContext {
 					IOUtils.fromByteSize(getProperty("maverick.log.file.maxSize", "20MB")));
 		}
 		
-		log(Level.INFO, "Reloaded logging configuration %s [%s]", null, propertiesFile.getName(), propertiesFile.getAbsolutePath());
+		log(Level.INFO, "Reloaded logging configuration {} [{}]", null, propertiesFile.getName(), propertiesFile.getAbsolutePath());
 	}
 	
 	public synchronized void enableConsole(Level level) {
@@ -173,23 +173,45 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	}
 
 	public static String prepareLog(Level level, String msg, Throwable e, Object... args) {
+
 		int i=0;
-		while(i < args.length && (msg.indexOf("{}") > -1)) {
-			msg = msg.replaceFirst("\\{\\}", String.valueOf(args[i++]));
+		int idx=0;
+		int idx2=0;
+		StringBuffer buffer = new StringBuffer();
+		
+		buffer.append(String.format("%s [%20s] %6s - ", 
+				df.format(new Date()), 
+				Thread.currentThread().getName(),
+				level.name()));
+		
+		if(args.length > 0 && msg.indexOf("{}") > -1) {
+			
+			while(i < args.length && ((idx2 = msg.indexOf("{}", idx)) > -1)) {
+				buffer.append(msg.substring(idx, idx2));
+				buffer.append(args[i]);
+				idx = idx2 + 2;
+				i++;
+			}
+			
+			if(msg.length() > idx+2) {
+				buffer.append(msg.substring(idx2+2));
+			}
+		} else {
+			buffer.append(msg);
 		}
 		
-		if(Objects.isNull(e)) {
-			return String.format("%s [%20s] %6s - ", 
-									df.format(new Date()), 
-									Thread.currentThread().getName(),
-									level.name()) + msg + System.lineSeparator();
+		buffer.append(System.lineSeparator());
+		
+		if(Objects.nonNull(e)) {
+			StringWriter s = new StringWriter();
+			PrintWriter w = new PrintWriter(s);
+			e.printStackTrace(w);
+			
+			buffer.append(s.toString());
+			buffer.append(System.lineSeparator());
 		}
 		
-		StringWriter s = new StringWriter();
-		PrintWriter w = new PrintWriter(s);
-		e.printStackTrace(w);
-		
-		return msg + System.lineSeparator() + s.toString() + System.lineSeparator();
+		return buffer.toString();
 	}
 
 	@Override

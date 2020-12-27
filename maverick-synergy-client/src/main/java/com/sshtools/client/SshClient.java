@@ -40,8 +40,8 @@ import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.synergy.common.nio.ConnectRequestFuture;
-import com.sshtools.synergy.common.ssh.Connection;
+import com.sshtools.synergy.nio.ConnectRequestFuture;
+import com.sshtools.synergy.ssh.Connection;
 
 public class SshClient implements Closeable {
 

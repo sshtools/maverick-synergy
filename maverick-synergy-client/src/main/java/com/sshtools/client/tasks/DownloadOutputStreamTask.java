@@ -26,7 +26,7 @@ import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.IOUtils;
-import com.sshtools.synergy.common.ssh.ConnectionTaskWrapper;
+import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
 
 public class DownloadOutputStreamTask extends Task {
 

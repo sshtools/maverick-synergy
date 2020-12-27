@@ -47,7 +47,7 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshRsaPrivateKey;
 import com.sshtools.fuse.fs.FuseSFTP;
-import com.sshtools.synergy.common.nio.SshEngine;
+import com.sshtools.synergy.nio.SshEngine;
 
 public class Main {
 	

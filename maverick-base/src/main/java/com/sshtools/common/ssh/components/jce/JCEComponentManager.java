@@ -26,7 +26,6 @@ import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.DSAPublicKey;
 import java.security.interfaces.ECPrivateKey;
@@ -98,26 +97,6 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 			JCEProvider.enableBouncyCastle(false);
 		} catch(IllegalStateException ex) {
 			Log.error("Bouncycastle JCE not found in classpath");
-		}
-		
-		try {
-			enableEd25519Provider();
-		} catch(IllegalStateException e) {
-			if(Boolean.getBoolean("maverick.verbose")) {
-				Log.warn("ed25519 provider not installed. Support for ed25519 keys cannot be enabled", e);
-			} else {
-				Log.warn("ed25519 provider not installed. Support for ed25519 keys cannot be enabled");
-			}
-		}
-	}
-
-	private void enableEd25519Provider() {
-		try {
-			@SuppressWarnings({ "unchecked" })
-			Class<? extends Provider> clz = (Class<? extends Provider>) Class.forName("net.i2p.crypto.eddsa.EdDSASecurityProvider");
-			Security.addProvider(clz.newInstance());
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-			throw new IllegalStateException(e.getMessage(), e);
 		}
 	}
 
@@ -406,12 +385,21 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 
 	protected void initializePublicKeyFactory(ComponentFactory<SshPublicKey> publickeys) {
 
+		testPublicKey("ssh-ed25519", SshEd25519PublicKeyJCE.class, publickeys);
+		
 		testPublicKey("rsa-sha2-256", Ssh2RsaPublicKeySHA256.class, publickeys);
 		testPublicKey("rsa-sha2-512", Ssh2RsaPublicKeySHA512.class, publickeys);
+		
 		testPublicKey("ecdsa-sha2-nistp256", Ssh2EcdsaSha2Nist256PublicKey.class, publickeys);
 		testPublicKey("ecdsa-sha2-nistp384", Ssh2EcdsaSha2Nist384PublicKey.class, publickeys);
 		testPublicKey("ecdsa-sha2-nistp521", Ssh2EcdsaSha2Nist521PublicKey.class, publickeys);
 		
+		testPublicKey("ssh-rsa-cert-v01@openssh.com", OpenSshEcdsaSha2Nist256Certificate.class, publickeys);
+		testPublicKey("ecdsa-sha2-nistp256-cert-v01@openssh.com", OpenSshEcdsaSha2Nist256Certificate.class, publickeys);
+		testPublicKey("ecdsa-sha2-nistp384-cert-v01@openssh.com", OpenSshEcdsaSha2Nist384Certificate.class, publickeys);
+		testPublicKey("ecdsa-sha2-nistp521-cert-v01@openssh.com", OpenSshEcdsaSha2Nist521Certificate.class, publickeys);
+		testPublicKey("ssh-ed25519-cert-v01@openssh.com", OpenSshEd25519Certificate.class, publickeys);
+					
 		loadExternalComponents("publickey.properties", publickeys);
 		
 		testPublicKey("ssh-rsa", Ssh2RsaPublicKey.class, publickeys);

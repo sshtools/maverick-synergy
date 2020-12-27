@@ -38,8 +38,8 @@ import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.server.AbstractSshServer;
 import com.sshtools.server.SshServerContext;
-import com.sshtools.synergy.common.nio.ProtocolContextFactory;
-import com.sshtools.synergy.common.nio.SshEngineContext;
+import com.sshtools.synergy.nio.ProtocolContextFactory;
+import com.sshtools.synergy.nio.SshEngineContext;
 
 /**
  * An abstract server that provides a callback facility, listening on a port and acting as a client to 

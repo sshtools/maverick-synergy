@@ -22,10 +22,10 @@ import java.nio.channels.SocketChannel;
 
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.synergy.common.ssh.ForwardingChannel;
-import com.sshtools.synergy.common.ssh.LocalForwardingChannel;
-import com.sshtools.synergy.common.ssh.RemoteForwardingChannel;
-import com.sshtools.synergy.common.ssh.SocketListeningForwardingFactoryImpl;
+import com.sshtools.synergy.ssh.ForwardingChannel;
+import com.sshtools.synergy.ssh.LocalForwardingChannel;
+import com.sshtools.synergy.ssh.RemoteForwardingChannel;
+import com.sshtools.synergy.ssh.SocketListeningForwardingFactoryImpl;
 
 public class RemoteForwardingFactoryImpl extends
 		SocketListeningForwardingFactoryImpl<SshServerContext> {

@@ -46,8 +46,8 @@ import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
-import com.sshtools.synergy.common.ssh.SshTransport;
-import com.sshtools.synergy.common.ssh.components.SshKeyExchange;
+import com.sshtools.synergy.ssh.SshTransport;
+import com.sshtools.synergy.ssh.components.SshKeyExchange;
 
 public class DiffieHellmanEcdh extends SshKeyExchangeClient implements
 		SshKeyExchange<SshClientContext> {

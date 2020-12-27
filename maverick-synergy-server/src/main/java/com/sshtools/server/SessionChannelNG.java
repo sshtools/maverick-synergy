@@ -44,8 +44,8 @@ import com.sshtools.common.ssh.Subsystem;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.Utils;
-import com.sshtools.synergy.common.ssh.ChannelNG;
-import com.sshtools.synergy.common.ssh.ChannelOutputStream;
+import com.sshtools.synergy.ssh.ChannelNG;
+import com.sshtools.synergy.ssh.ChannelOutputStream;
 
 /**
  * <p>

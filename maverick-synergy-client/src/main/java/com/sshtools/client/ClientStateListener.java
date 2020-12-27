@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.synergy.common.ssh.ConnectionStateListener;
+import com.sshtools.synergy.ssh.ConnectionStateListener;
 
 public interface ClientStateListener extends ConnectionStateListener {
 

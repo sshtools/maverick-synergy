@@ -33,13 +33,13 @@ import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.sshd.AbstractServerTransport;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
-import com.sshtools.synergy.common.nio.ConnectRequestFuture;
-import com.sshtools.synergy.common.nio.LicenseException;
-import com.sshtools.synergy.common.nio.SocketConnection;
-import com.sshtools.synergy.common.ssh.ConnectionStateListener;
-import com.sshtools.synergy.common.ssh.Service;
-import com.sshtools.synergy.common.ssh.TransportProtocol;
-import com.sshtools.synergy.common.ssh.components.SshKeyExchange;
+import com.sshtools.synergy.nio.ConnectRequestFuture;
+import com.sshtools.synergy.nio.LicenseException;
+import com.sshtools.synergy.nio.SocketConnection;
+import com.sshtools.synergy.ssh.ConnectionStateListener;
+import com.sshtools.synergy.ssh.Service;
+import com.sshtools.synergy.ssh.TransportProtocol;
+import com.sshtools.synergy.ssh.components.SshKeyExchange;
 
 //#ifdef LICENSE
 //import com.sshtools.synergy.common.nio.LicenseManager;

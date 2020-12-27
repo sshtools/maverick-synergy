@@ -37,7 +37,7 @@ import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
-import com.sshtools.synergy.common.ssh.TransportProtocol;
+import com.sshtools.synergy.ssh.TransportProtocol;
 
 public class MutualCallbackAuthenticator extends SimpleClientAuthenticator {
 

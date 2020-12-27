@@ -23,7 +23,7 @@ import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.server.DefaultServerChannelFactory;
 import com.sshtools.server.SshServerContext;
-import com.sshtools.synergy.common.ssh.ChannelNG;
+import com.sshtools.synergy.ssh.ChannelNG;
 
 public class VirtualChannelFactory extends DefaultServerChannelFactory {
 

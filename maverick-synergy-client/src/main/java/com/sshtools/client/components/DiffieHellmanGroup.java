@@ -48,7 +48,7 @@ import com.sshtools.common.ssh.components.jce.JCEProvider;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.Utils;
-import com.sshtools.synergy.common.ssh.SshTransport;
+import com.sshtools.synergy.ssh.SshTransport;
 
 /**
  * Implementation of the required SSH Transport Protocol key exchange method

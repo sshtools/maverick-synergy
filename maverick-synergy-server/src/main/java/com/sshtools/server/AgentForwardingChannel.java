@@ -33,8 +33,8 @@ import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.SessionChannelServer;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.synergy.common.ssh.ChannelNG;
-import com.sshtools.synergy.common.ssh.ChannelOutputStream;
+import com.sshtools.synergy.ssh.ChannelNG;
+import com.sshtools.synergy.ssh.ChannelOutputStream;
 
 public class AgentForwardingChannel extends ChannelNG<SshServerContext> implements Closeable {
 

@@ -42,11 +42,11 @@ import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.Utils;
-import com.sshtools.synergy.common.ssh.Connection;
-import com.sshtools.synergy.common.ssh.ConnectionProtocol;
-import com.sshtools.synergy.common.ssh.Service;
-import com.sshtools.synergy.common.ssh.SshContext;
-import com.sshtools.synergy.common.ssh.TransportProtocol;
+import com.sshtools.synergy.ssh.Connection;
+import com.sshtools.synergy.ssh.ConnectionProtocol;
+import com.sshtools.synergy.ssh.Service;
+import com.sshtools.synergy.ssh.SshContext;
+import com.sshtools.synergy.ssh.TransportProtocol;
 
 /**
  * This class implements the SSH Authentication Protocol. The only required

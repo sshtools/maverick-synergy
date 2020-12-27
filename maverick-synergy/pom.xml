@@ -25,23 +25,13 @@
 	<parent>
 		<groupId>com.sshtools</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.0.0-SNAPSHOT</version>
+		<version>3.0.0-RC1-SNAPSHOT</version>
 	</parent>
 	<artifactId>maverick-synergy</artifactId>
 	<name>Unified API</name>
 	<description>Dependency group for the unified Maverick Synergy SSH API</description>
 
 	<dependencies>
-		<dependency>
-			<groupId>com.sshtools</groupId>
-			<artifactId>maverick-ed25519</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.sshtools</groupId>
-			<artifactId>maverick-openssh-certs</artifactId>
-			<version>${project.version}</version>
-		</dependency>
 		<dependency>
 			<groupId>com.sshtools</groupId>
 			<artifactId>maverick-x509</artifactId>

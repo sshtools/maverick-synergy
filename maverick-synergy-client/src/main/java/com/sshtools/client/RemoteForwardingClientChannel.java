@@ -19,7 +19,7 @@
 package com.sshtools.client;
 
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.synergy.common.ssh.RemoteForwardingChannel;
+import com.sshtools.synergy.ssh.RemoteForwardingChannel;
 
 /**
  * Concrete implementation of a remote forwarding channel for the client implementation.

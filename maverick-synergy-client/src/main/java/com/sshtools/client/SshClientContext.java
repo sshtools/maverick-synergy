@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.sshtools.client.components.Curve25519SHA256Client;
+import com.sshtools.client.components.Curve25519SHA256LibSshClient;
 import com.sshtools.client.components.DiffieHellmanEcdhNistp256;
 import com.sshtools.client.components.DiffieHellmanEcdhNistp384;
 import com.sshtools.client.components.DiffieHellmanEcdhNistp521;
@@ -46,19 +48,19 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.ComponentFactory;
 import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
-import com.sshtools.synergy.common.nio.ConnectRequestFuture;
-import com.sshtools.synergy.common.nio.DefaultSocketConnectionFactory;
-import com.sshtools.synergy.common.nio.ProtocolEngine;
-import com.sshtools.synergy.common.nio.SocketConnectionFactory;
-import com.sshtools.synergy.common.nio.SshEngine;
-import com.sshtools.synergy.common.nio.SshEngineContext;
-import com.sshtools.synergy.common.ssh.ChannelFactory;
-import com.sshtools.synergy.common.ssh.Connection;
-import com.sshtools.synergy.common.ssh.ConnectionManager;
-import com.sshtools.synergy.common.ssh.ForwardingManager;
-import com.sshtools.synergy.common.ssh.GlobalRequestHandler;
-import com.sshtools.synergy.common.ssh.SshContext;
-import com.sshtools.synergy.common.ssh.components.SshKeyExchange;
+import com.sshtools.synergy.nio.ConnectRequestFuture;
+import com.sshtools.synergy.nio.DefaultSocketConnectionFactory;
+import com.sshtools.synergy.nio.ProtocolEngine;
+import com.sshtools.synergy.nio.SocketConnectionFactory;
+import com.sshtools.synergy.nio.SshEngine;
+import com.sshtools.synergy.nio.SshEngineContext;
+import com.sshtools.synergy.ssh.ChannelFactory;
+import com.sshtools.synergy.ssh.Connection;
+import com.sshtools.synergy.ssh.ConnectionManager;
+import com.sshtools.synergy.ssh.ForwardingManager;
+import com.sshtools.synergy.ssh.GlobalRequestHandler;
+import com.sshtools.synergy.ssh.SshContext;
+import com.sshtools.synergy.ssh.components.SshKeyExchange;
 
 /**
  * Holds the configuration for an SSH connection.
@@ -201,6 +203,16 @@ public class SshClientContext extends SshContext {
 		verifiedKeyExchanges = new ComponentFactory<SshKeyExchange<SshClientContext>>(componentManager);
 		
 		JCEComponentManager.getDefaultInstance().loadExternalComponents("kex-client.properties", verifiedKeyExchanges);
+		
+		if(testClientKeyExchangeAlgorithm(
+				Curve25519SHA256Client.CURVE25519_SHA2, Curve25519SHA256Client.class)) {
+			verifiedKeyExchanges.add(Curve25519SHA256Client.CURVE25519_SHA2, Curve25519SHA256Client.class);
+		}
+		
+		if(testClientKeyExchangeAlgorithm(
+				Curve25519SHA256LibSshClient.CURVE25519_SHA2_AT_LIBSSH_ORG, Curve25519SHA256LibSshClient.class)) {
+			verifiedKeyExchanges.add(Curve25519SHA256LibSshClient.CURVE25519_SHA2_AT_LIBSSH_ORG, Curve25519SHA256LibSshClient.class);
+		}
 		
 		if (testClientKeyExchangeAlgorithm("diffie-hellman-group-exchange-sha256",
 				DiffieHellmanGroupExchangeSha256JCE.class)) {

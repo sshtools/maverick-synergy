@@ -36,7 +36,7 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.util.Utils;
 import com.sshtools.server.vsession.VirtualConsole;
-import com.sshtools.synergy.common.ssh.SshContext;
+import com.sshtools.synergy.ssh.SshContext;
 
 public class SshClientHelper {
 

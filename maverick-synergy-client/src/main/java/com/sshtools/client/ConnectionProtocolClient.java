@@ -32,13 +32,13 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
-import com.sshtools.synergy.common.ssh.ChannelNG;
-import com.sshtools.synergy.common.ssh.Connection;
-import com.sshtools.synergy.common.ssh.ConnectionProtocol;
-import com.sshtools.synergy.common.ssh.ConnectionStateListener;
-import com.sshtools.synergy.common.ssh.ConnectionTaskWrapper;
-import com.sshtools.synergy.common.ssh.RemoteForward;
-import com.sshtools.synergy.common.ssh.TransportProtocol;
+import com.sshtools.synergy.ssh.ChannelNG;
+import com.sshtools.synergy.ssh.Connection;
+import com.sshtools.synergy.ssh.ConnectionProtocol;
+import com.sshtools.synergy.ssh.ConnectionStateListener;
+import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
+import com.sshtools.synergy.ssh.RemoteForward;
+import com.sshtools.synergy.ssh.TransportProtocol;
 
 /**
  * Implements the client side of the SSH connection prototocol

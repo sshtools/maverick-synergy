@@ -26,7 +26,7 @@ import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.synergy.common.ssh.CachingDataWindow;
+import com.sshtools.synergy.ssh.CachingDataWindow;
 
 /**
  * Implements the client side of the SSH Connection protocol session channel

@@ -33,8 +33,8 @@ import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.IOUtils;
-import com.sshtools.synergy.common.ssh.ByteArrays;
-import com.sshtools.synergy.common.ssh.PacketPool;
+import com.sshtools.synergy.ssh.ByteArrays;
+import com.sshtools.synergy.ssh.PacketPool;
 
 /**
  * An abstract task for connecting to an SSH subsystem.

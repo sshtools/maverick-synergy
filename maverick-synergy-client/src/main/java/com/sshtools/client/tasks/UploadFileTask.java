@@ -27,8 +27,8 @@ import com.sshtools.client.sftp.TransferCancelledException;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.synergy.common.ssh.Connection;
-import com.sshtools.synergy.common.ssh.ConnectionTaskWrapper;
+import com.sshtools.synergy.ssh.Connection;
+import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
 
 public class UploadFileTask extends Task {
 

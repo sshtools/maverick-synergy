@@ -43,10 +43,10 @@ import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.server.DefaultServerChannelFactory;
 import com.sshtools.server.SshServerContext;
-import com.sshtools.synergy.common.nio.DisconnectRequestFuture;
-import com.sshtools.synergy.common.nio.SshEngine;
-import com.sshtools.synergy.common.nio.SshEngineContext;
-import com.sshtools.synergy.common.ssh.ChannelFactory;
+import com.sshtools.synergy.nio.DisconnectRequestFuture;
+import com.sshtools.synergy.nio.SshEngine;
+import com.sshtools.synergy.nio.SshEngineContext;
+import com.sshtools.synergy.ssh.ChannelFactory;
 
 public class CallbackClient {
 

@@ -27,7 +27,7 @@ import com.sshtools.common.ssh.RequestFuture;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
-import com.sshtools.synergy.common.ssh.ChannelNG;
+import com.sshtools.synergy.ssh.ChannelNG;
 
 /**
  * Implements the client side of the SSH Connection protocol session channel

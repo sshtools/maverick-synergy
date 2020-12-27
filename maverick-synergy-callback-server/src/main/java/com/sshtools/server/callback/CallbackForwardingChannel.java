@@ -32,9 +32,9 @@ import com.sshtools.common.ssh.ExecutorOperationQueues;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
-import com.sshtools.synergy.common.ssh.ForwardingChannel;
-import com.sshtools.synergy.common.ssh.LocalForwardingChannel;
-import com.sshtools.synergy.common.ssh.SshContext;
+import com.sshtools.synergy.ssh.ForwardingChannel;
+import com.sshtools.synergy.ssh.LocalForwardingChannel;
+import com.sshtools.synergy.ssh.SshContext;
 
 public class CallbackForwardingChannel<T extends SshContext> extends ForwardingChannel<T> {
 

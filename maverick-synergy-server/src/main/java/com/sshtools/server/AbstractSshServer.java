@@ -45,11 +45,11 @@ import com.sshtools.common.ssh.AbstractRequestFuture;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
-import com.sshtools.synergy.common.nio.ProtocolContextFactory;
-import com.sshtools.synergy.common.nio.SshEngine;
-import com.sshtools.synergy.common.nio.SshEngineContext;
-import com.sshtools.synergy.common.nio.SshEngineListenerAdapter;
-import com.sshtools.synergy.common.ssh.ChannelFactory;
+import com.sshtools.synergy.nio.ProtocolContextFactory;
+import com.sshtools.synergy.nio.SshEngine;
+import com.sshtools.synergy.nio.SshEngineContext;
+import com.sshtools.synergy.nio.SshEngineListenerAdapter;
+import com.sshtools.synergy.ssh.ChannelFactory;
 
 public abstract class AbstractSshServer implements Closeable {
 

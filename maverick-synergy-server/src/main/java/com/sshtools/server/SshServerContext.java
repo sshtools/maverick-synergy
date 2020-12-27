@@ -51,6 +51,8 @@ import com.sshtools.common.ssh.components.SshCertificate;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKey;
+import com.sshtools.server.components.jce.Curve25519SHA256LibSshServer;
+import com.sshtools.server.components.jce.Curve25519SHA256Server;
 import com.sshtools.server.components.jce.DiffieHellmanEcdhNistp256;
 import com.sshtools.server.components.jce.DiffieHellmanEcdhNistp384;
 import com.sshtools.server.components.jce.DiffieHellmanEcdhNistp521;
@@ -62,15 +64,15 @@ import com.sshtools.server.components.jce.DiffieHellmanGroup17Sha512JCE;
 import com.sshtools.server.components.jce.DiffieHellmanGroup18Sha512JCE;
 import com.sshtools.server.components.jce.DiffieHellmanGroupExchangeSha256JCE;
 import com.sshtools.server.components.jce.Rsa2048SHA2KeyExchange;
-import com.sshtools.synergy.common.nio.ConnectRequestFuture;
-import com.sshtools.synergy.common.nio.ProtocolEngine;
-import com.sshtools.synergy.common.nio.SshEngine;
-import com.sshtools.synergy.common.ssh.ChannelFactory;
-import com.sshtools.synergy.common.ssh.ConnectionManager;
-import com.sshtools.synergy.common.ssh.ForwardingManager;
-import com.sshtools.synergy.common.ssh.GlobalRequestHandler;
-import com.sshtools.synergy.common.ssh.SshContext;
-import com.sshtools.synergy.common.ssh.components.SshKeyExchange;
+import com.sshtools.synergy.nio.ConnectRequestFuture;
+import com.sshtools.synergy.nio.ProtocolEngine;
+import com.sshtools.synergy.nio.SshEngine;
+import com.sshtools.synergy.ssh.ChannelFactory;
+import com.sshtools.synergy.ssh.ConnectionManager;
+import com.sshtools.synergy.ssh.ForwardingManager;
+import com.sshtools.synergy.ssh.GlobalRequestHandler;
+import com.sshtools.synergy.ssh.SshContext;
+import com.sshtools.synergy.ssh.components.SshKeyExchange;
 
 public class SshServerContext extends SshContext {
 
@@ -628,6 +630,16 @@ public class SshServerContext extends SshContext {
 		
 		JCEComponentManager.getDefaultInstance().loadExternalComponents("/kex-server.properties", keyExchanges);
 		
+		if(testServerKeyExchangeAlgorithm(
+				Curve25519SHA256Server.CURVE25519_SHA2, Curve25519SHA256Server.class)) {
+			verifiedKeyExchanges.add(Curve25519SHA256Server.CURVE25519_SHA2, Curve25519SHA256Server.class);
+		}
+		
+		if(testServerKeyExchangeAlgorithm(
+				Curve25519SHA256LibSshServer.CURVE25519_SHA2_AT_LIBSSH_ORG, Curve25519SHA256LibSshServer.class)) {
+			verifiedKeyExchanges.add(Curve25519SHA256LibSshServer.CURVE25519_SHA2_AT_LIBSSH_ORG, Curve25519SHA256LibSshServer.class);
+		}
+
 		if(testServerKeyExchangeAlgorithm(
 				DiffieHellmanGroupExchangeSha256JCE.DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA256, DiffieHellmanGroupExchangeSha256JCE.class)) {
 			verifiedKeyExchanges.add(DiffieHellmanGroupExchangeSha256JCE.DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA256, DiffieHellmanGroupExchangeSha256JCE.class);

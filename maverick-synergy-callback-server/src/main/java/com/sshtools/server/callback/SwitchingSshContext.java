@@ -23,10 +23,10 @@ import java.io.IOException;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.server.SshServerContext;
-import com.sshtools.synergy.common.nio.ConnectRequestFuture;
-import com.sshtools.synergy.common.nio.ProtocolContextFactory;
-import com.sshtools.synergy.common.nio.ProtocolEngine;
-import com.sshtools.synergy.common.nio.SshEngine;
+import com.sshtools.synergy.nio.ConnectRequestFuture;
+import com.sshtools.synergy.nio.ProtocolContextFactory;
+import com.sshtools.synergy.nio.ProtocolEngine;
+import com.sshtools.synergy.nio.SshEngine;
 
 class SwitchingSshContext extends SshClientContext {
 

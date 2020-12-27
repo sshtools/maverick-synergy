@@ -24,9 +24,9 @@ import java.nio.ByteBuffer;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
-import com.sshtools.synergy.common.ssh.ByteArrayMessage;
-import com.sshtools.synergy.common.ssh.ConnectionTaskWrapper;
-import com.sshtools.synergy.common.ssh.TransportProtocol;
+import com.sshtools.synergy.ssh.ByteArrayMessage;
+import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
+import com.sshtools.synergy.ssh.TransportProtocol;
 
 /**
  * Implements the keyboard-interactive authentication method.

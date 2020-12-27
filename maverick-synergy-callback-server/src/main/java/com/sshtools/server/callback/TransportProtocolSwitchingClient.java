@@ -22,9 +22,9 @@ import com.sshtools.client.SshClientContext;
 import com.sshtools.client.TransportProtocolClient;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.TransportProtocolServer;
-import com.sshtools.synergy.common.nio.ConnectRequestFuture;
-import com.sshtools.synergy.common.nio.LicenseException;
-import com.sshtools.synergy.common.nio.ProtocolContextFactory;
+import com.sshtools.synergy.nio.ConnectRequestFuture;
+import com.sshtools.synergy.nio.LicenseException;
+import com.sshtools.synergy.nio.ProtocolContextFactory;
 
 class TransportProtocolSwitchingClient extends TransportProtocolClient {
 

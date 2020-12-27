@@ -23,7 +23,7 @@
   <parent>
     <groupId>com.sshtools</groupId>
     <artifactId>maverick-synergy-group</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0-RC1-SNAPSHOT</version>
   </parent>
 
   <artifactId>maverick-synergy-assembly</artifactId>
@@ -43,11 +43,6 @@
   	<dependency>
   		<groupId>com.sshtools</groupId>
   		<artifactId>maverick-synergy-server</artifactId>
-  		<version>${project.version}</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.sshtools</groupId>
-  		<artifactId>maverick-ed25519</artifactId>
   		<version>${project.version}</version>
   	</dependency>
   	<dependency>
@@ -77,22 +72,12 @@
   	</dependency>
   	<dependency>
   		<groupId>com.sshtools</groupId>
-  		<artifactId>maverick-android</artifactId>
-  		<version>${project.version}</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.sshtools</groupId>
   		<artifactId>maverick-bc</artifactId>
   		<version>${project.version}</version>
   	</dependency>
   	<dependency>
   		<groupId>com.sshtools</groupId>
   		<artifactId>maverick-bc-fips</artifactId>
-  		<version>${project.version}</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.sshtools</groupId>
-  		<artifactId>maverick-openssh-certs</artifactId>
   		<version>${project.version}</version>
   	</dependency>
   	<dependency>
@@ -106,8 +91,7 @@
   		<version>${project.version}</version>
   	</dependency>
   </dependencies>
-  
-  
+
   <build>
   <pluginManagement>
       <plugins>
@@ -170,10 +154,8 @@
 							<artifactSet>
 								<includes>
 									<include>com.sshtools:maverick-base</include>
-									<include>com.sshtools:maverick-ed25519</include>
 									<include>com.sshtools:maverick-zip</include>
 									<include>com.sshtools:maverick-x509</include>
-									<include>com.sshtools:maverick-openssh-certs</include>
 									<include>com.sshtools:maverick-synergy-common</include>
 									<include>com.sshtools:maverick-synergy-client</include>
 								</includes>
@@ -194,10 +176,8 @@
 							<artifactSet>
 								<includes>
 									<include>com.sshtools:maverick-base</include>
-									<include>com.sshtools:maverick-ed25519</include>
 									<include>com.sshtools:maverick-zip</include>
 									<include>com.sshtools:maverick-x509</include>
-									<include>com.sshtools:maverick-openssh-certs</include>
 									<include>com.sshtools:maverick-synergy-common</include>
 									<include>com.sshtools:maverick-synergy-server</include>
 									<include>com.sshtools:maverick-virtual-filesystem</include>
@@ -220,10 +200,8 @@
 							<artifactSet>
 								<includes>
 									<include>com.sshtools:maverick-base</include>
-									<include>com.sshtools:maverick-ed25519</include>
 									<include>com.sshtools:maverick-zip</include>
 									<include>com.sshtools:maverick-x509</include>
-									<include>com.sshtools:maverick-openssh-certs</include>
 									<include>com.sshtools:maverick-synergy-common</include>
 									<include>com.sshtools:maverick-synergy-client</include>
 									<include>com.sshtools:maverick-synergy-server</include>

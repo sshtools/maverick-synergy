@@ -25,8 +25,8 @@ import java.nio.channels.SocketChannel;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
-import com.sshtools.synergy.common.nio.ProtocolContextFactory;
-import com.sshtools.synergy.common.nio.SshEngineContext;
+import com.sshtools.synergy.nio.ProtocolContextFactory;
+import com.sshtools.synergy.nio.SshEngineContext;
 
 public class SshServer extends AbstractSshServer implements ProtocolContextFactory<SshServerContext> {
 

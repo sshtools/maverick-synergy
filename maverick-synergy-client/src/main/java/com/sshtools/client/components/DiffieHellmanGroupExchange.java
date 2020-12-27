@@ -52,9 +52,9 @@ import com.sshtools.common.ssh.components.jce.JCEProvider;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.UnsignedInteger32;
-import com.sshtools.synergy.common.ssh.SshTransport;
-import com.sshtools.synergy.common.ssh.TransportProtocol;
-import com.sshtools.synergy.common.ssh.components.jce.AbstractKeyExchange;
+import com.sshtools.synergy.ssh.SshTransport;
+import com.sshtools.synergy.ssh.TransportProtocol;
+import com.sshtools.synergy.ssh.components.jce.AbstractKeyExchange;
 
 /**
  * Implementation of the required SSH Transport Protocol key exchange method

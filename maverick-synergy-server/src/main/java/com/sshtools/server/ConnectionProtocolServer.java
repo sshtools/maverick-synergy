@@ -28,11 +28,11 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
-import com.sshtools.synergy.common.ssh.ChannelNG;
-import com.sshtools.synergy.common.ssh.Connection;
-import com.sshtools.synergy.common.ssh.ConnectionProtocol;
-import com.sshtools.synergy.common.ssh.ConnectionStateListener;
-import com.sshtools.synergy.common.ssh.ConnectionTaskWrapper;
+import com.sshtools.synergy.ssh.ChannelNG;
+import com.sshtools.synergy.ssh.Connection;
+import com.sshtools.synergy.ssh.ConnectionProtocol;
+import com.sshtools.synergy.ssh.ConnectionStateListener;
+import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
 
 public class ConnectionProtocolServer extends ConnectionProtocol<SshServerContext> {
 

@@ -22,9 +22,9 @@ import java.nio.channels.SocketChannel;
 
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.synergy.common.ssh.ForwardingChannel;
-import com.sshtools.synergy.common.ssh.LocalForwardingChannel;
-import com.sshtools.synergy.common.ssh.SocketListeningForwardingFactoryImpl;
+import com.sshtools.synergy.ssh.ForwardingChannel;
+import com.sshtools.synergy.ssh.LocalForwardingChannel;
+import com.sshtools.synergy.ssh.SocketListeningForwardingFactoryImpl;
 
 /**
  *  Implements the configuration of a local forwarding listening socket.

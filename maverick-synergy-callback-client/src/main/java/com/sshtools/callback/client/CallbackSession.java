@@ -27,10 +27,10 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.server.SshServerContext;
-import com.sshtools.synergy.common.nio.ConnectRequestFuture;
-import com.sshtools.synergy.common.nio.DisconnectRequestFuture;
-import com.sshtools.synergy.common.nio.ProtocolContext;
-import com.sshtools.synergy.common.ssh.TransportProtocol;
+import com.sshtools.synergy.nio.ConnectRequestFuture;
+import com.sshtools.synergy.nio.DisconnectRequestFuture;
+import com.sshtools.synergy.nio.ProtocolContext;
+import com.sshtools.synergy.ssh.TransportProtocol;
 
 /**
  * Implements a reverse SSH server. Making a client socket connection out to the CallbackServer which is listening

@@ -35,7 +35,7 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.IOUtils;
 import com.sshtools.server.vsession.VirtualConsole;
 import com.sshtools.server.vsession.commands.sftp.SftpClientOptions;
-import com.sshtools.synergy.common.ssh.Connection;
+import com.sshtools.synergy.ssh.Connection;
 
 public class SshClientCommand extends AbstractSshClientCommand {
 

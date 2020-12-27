@@ -27,8 +27,8 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPrivateKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.server.SshServerContext;
-import com.sshtools.synergy.common.ssh.SshTransport;
-import com.sshtools.synergy.common.ssh.components.SshKeyExchange;
+import com.sshtools.synergy.ssh.SshTransport;
+import com.sshtools.synergy.ssh.components.SshKeyExchange;
 
 /**
  * 

@@ -267,7 +267,23 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 			pair.setPublicKey(new Ssh2RsaPublicKey((RSAPublicKey) publicKey));
 
 			return pair;
-		} catch (java.security.NoSuchAlgorithmException e) {
+		} catch (NoSuchAlgorithmException e) {
+			throw new SshException(e);
+		}
+	}
+	
+	public SshKeyPair generateEd25519KeyPair() throws SshException {
+		
+		try {
+			KeyPairGenerator keyGen = KeyPairGenerator.getInstance(JCEAlgorithms.ED25519);
+			KeyPair kp = keyGen.generateKeyPair();
+
+			SshKeyPair pair = new SshKeyPair();
+			pair.setPrivateKey(new SshEd25519PrivateKeyJCE(kp.getPrivate()));
+			pair.setPublicKey(new SshEd25519PublicKeyJCE(kp.getPublic()));
+			
+			return pair;
+		} catch (NoSuchAlgorithmException e) {
 			throw new SshException(e);
 		}
 	}

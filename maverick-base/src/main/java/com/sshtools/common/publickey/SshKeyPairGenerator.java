@@ -106,6 +106,9 @@ public class SshKeyPairGenerator {
 
 		
 		switch(algorithm) {
+		case ED25519:
+		case "ssh-ed25519":
+			return ComponentManager.getDefaultInstance().generateEd25519KeyPair();
 		case ECDSA:
 			return ComponentManager.getDefaultInstance().generateEcdsaKeyPair(bits);
 		case SSH2_RSA:

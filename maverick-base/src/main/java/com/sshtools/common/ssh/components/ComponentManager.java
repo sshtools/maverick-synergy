@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.URL;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,7 +35,10 @@ import java.util.Set;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
+import com.sshtools.common.ssh.components.jce.SshEd25519PrivateKeyJCE;
+import com.sshtools.common.ssh.components.jce.SshEd25519PublicKeyJCE;
 import com.sshtools.common.util.IOUtils;
 
 /**
@@ -347,6 +352,10 @@ public abstract class ComponentManager {
 	public abstract SshKeyPair generateEcdsaKeyPair(int bits)
 			throws SshException;
 
+	
+	
+	public abstract SshKeyPair generateEd25519KeyPair() throws SshException;
+	
 	/**
 	 * Create an instance of an RSA public key.
 	 * 

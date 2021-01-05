@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.URL;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,10 +33,7 @@ import java.util.Set;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
-import com.sshtools.common.ssh.components.jce.SshEd25519PrivateKeyJCE;
-import com.sshtools.common.ssh.components.jce.SshEd25519PublicKeyJCE;
 import com.sshtools.common.util.IOUtils;
 
 /**

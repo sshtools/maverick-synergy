@@ -1,4 +1,4 @@
-(c) 2002-2019 JADAPTIVE Limited. All Rights Reserved.
+(c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
 
 This file is part of the Maverick Synergy Java SSH API.
 

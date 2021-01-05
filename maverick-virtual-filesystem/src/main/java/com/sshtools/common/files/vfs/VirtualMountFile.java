@@ -96,15 +96,11 @@ public class VirtualMountFile implements VirtualFile {
 
 		VirtualMountManager mgr = fileFactory.getMountManager();
 		
-		if(mount.isFilesystemRoot()) {
+		//if(mount.isFilesystemRoot()) {
 			for(VirtualMount m : mgr.getMounts()) {
-				if(m.getMount().startsWith(currentPath)) {
-					if(m.getMount().equals(currentPath)) {
-						// We need to list the contents of the actual folder
-						VirtualMount actualMount = mgr.getMount(currentPath);
-						AbstractFile parent = actualMount.getActualFileFactory().getFile(actualMount.getRoot());
-						files.addAll(parent.getChildren());
-					} else {
+				String mpath = FileUtils.checkEndsWithSlash(m.getMount());
+				if(mpath.startsWith(currentPath)) {
+					if(!mpath.equals(currentPath)) {
 						String child = m.getMount().substring(currentPath.length());
 						if(child.indexOf('/') > -1) {
 							child = child.substring(0,child.indexOf('/'));
@@ -113,15 +109,19 @@ public class VirtualMountFile implements VirtualFile {
 					}
 				}
 			}
-		} else {
-			// Just return the next path element from the mount path.
-			String child = mount.getMount().substring(path.length());
-			if(child.indexOf('/') > -1) {
-				child = child.substring(0,child.indexOf('/'));
-			}
-			files.add(new VirtualMountFile(path + child, mount, fileFactory));
-		}
+//		} else {
+//			// Just return the next path element from the mount path.
+//			String child = mount.getMount().substring(path.length());
+//			if(child.indexOf('/') > -1) {
+//				child = child.substring(0,child.indexOf('/'));
+//			}
+//			files.add(new VirtualMountFile(path + child, mount, fileFactory));
+//		}
 		
+		VirtualMount actualMount = mgr.getMount(currentPath);
+		for(AbstractFile child : file.getChildren()) {
+			files.add(new VirtualMountFile(currentPath + child.getName(), actualMount, fileFactory));
+		}
 		return files;
 
 	}

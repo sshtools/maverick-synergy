@@ -107,6 +107,10 @@ public abstract class AbstractSshServer implements Closeable {
 		engine.getContext().addListeningInterface(addressToBind, portToBind, contextFactory, true);
 	}
 	
+	public void removeInterface(String addressToBind, int portToBind) throws UnknownHostException {
+		engine.getContext().removeListeningInterface(addressToBind, portToBind);
+	}
+	
 	public void start(boolean requireListeningInterface) throws IOException {
 		
 		beforeStart();

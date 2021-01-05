@@ -185,8 +185,7 @@ public abstract class SshContext extends ProtocolContext implements
 	 * RSA key with SHA512 signature
 	 */
 	public static final String PUBLIC_KEY_RSA_SHA512 = "rsa-sha2-512";
-	
-	
+
 	/** Identifier for password authentication **/
 	public static final String PASSWORD_AUTHENTICATION = "password";
 

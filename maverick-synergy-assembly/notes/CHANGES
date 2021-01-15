@@ -1,3 +1,12 @@
+Maverick Synergy 3.0.0-RC2 - TBC
+
+Bug Fixes
+    o Fixed implicit narrowing of long to int from code scan warning. 
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.0-RC1 - Dec 27, 2020
 
 Features
@@ -10,10 +19,8 @@ Features
     
 Bug Fixes
     o Selector threads and executor service threads have now been marked as daemon threads.
-        
-=================
-=  HISTORY      =
-=================
+    
+------------------
 
 Maverick NG 2.0.5 - Jun 20, 2019
 

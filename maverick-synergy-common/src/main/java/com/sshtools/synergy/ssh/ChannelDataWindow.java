@@ -32,11 +32,11 @@ public class ChannelDataWindow {
 		this.windowSpace = initialWindowSpace;
 	}
 	
-	public synchronized void consume(long count) {
+	public synchronized void consume(int count) {
 		windowSpace -= count;
 	}
 	
-	public synchronized void adjust(long count) {
+	public synchronized void adjust(int count) {
 		windowSpace += count;
 		notifyAll();
 	}

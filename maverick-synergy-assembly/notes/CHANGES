@@ -2,6 +2,7 @@ Maverick Synergy 3.0.0-RC2 - TBC
 
 Bug Fixes
     o Fixed implicit narrowing of long to int from code scan warning. 
+    o SshServer required a method to be able to set the default Security Level.
     
 =================
 =  HISTORY      =

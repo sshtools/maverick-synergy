@@ -42,6 +42,7 @@ import com.sshtools.common.publickey.SshKeyPairGenerator;
 import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.scp.ScpCommand;
 import com.sshtools.common.ssh.AbstractRequestFuture;
+import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
@@ -71,6 +72,7 @@ public abstract class AbstractSshServer implements Closeable {
 	ChannelFactory<SshServerContext> channelFactory; 
 	File confFolder = new File(".");
 	IPPolicy ipPolicy = new IPPolicy();
+	SecurityLevel securityLevel = SecurityLevel.STRONG;
 	
 	protected AbstractSshServer() {
 	}
@@ -97,6 +99,10 @@ public abstract class AbstractSshServer implements Closeable {
 	
 	public void start() throws IOException {
 		start(false);
+	}
+	
+	public void setSecurityLevel(SecurityLevel securityLevel) {
+		this.securityLevel = securityLevel;
 	}
 	
 	public void addInterface(String addressToBind, int portToBind) throws IOException {
@@ -278,7 +284,7 @@ public abstract class AbstractSshServer implements Closeable {
 	public SshServerContext createServerContext(SshEngineContext daemonContext, SocketChannel sc)
 			throws IOException, SshException {
 		
-		SshServerContext sshContext = new SshServerContext(daemonContext.getEngine());
+		SshServerContext sshContext = new SshServerContext(daemonContext.getEngine(), securityLevel);
 		
 		configureHostKeys(sshContext, sc);
 

@@ -93,6 +93,13 @@ public class ByteArrayReader
     return CHARSET_ENCODING;
   }
 
+  private void checkLength(long len) throws IOException {
+    if(len > available()) {
+    	throw new IOException(
+    			String.format("Unexpected length of %d bytes exceeds available data of %d bytes", 
+    					len, available()));
+    }
+  }
   /**
    * Read until the buffer supplied is full.
    * @param b
@@ -103,6 +110,7 @@ public class ByteArrayReader
   public void readFully(byte b[], int off, int len) throws IOException {
    if (len < 0)
        throw new IndexOutOfBoundsException();
+   checkLength(len);
    int n = 0;
    while (n < len) {
        int count = read(b, off + n, len - n);
@@ -132,6 +140,7 @@ public class ByteArrayReader
    */
   public BigInteger readBigInteger() throws IOException {
     int len = (int) readInt();
+    checkLength(len);
     byte[] raw = new byte[len];
     readFully(raw);
     return new BigInteger(raw);
@@ -178,6 +187,7 @@ public class ByteArrayReader
    */
   public byte[] readBinaryString() throws IOException {
     int len = (int) readInt();
+    checkLength(len);
     byte[] buf = new byte[len];
     readFully(buf);
     return buf;
@@ -219,10 +229,7 @@ public class ByteArrayReader
   public String readString(String charset) throws IOException {
     long len = readInt();
 
-    if(len > available())
-        throw new IOException("Cannot read string of length " + len
-                              + " bytes when only " + available()
-                              + " bytes are available");
+   checkLength(len);
 
     byte[] raw = new byte[ (int) len];
     readFully(raw);
@@ -251,7 +258,7 @@ public class ByteArrayReader
    */
   public BigInteger readMPINT32() throws IOException {
     int bits = (int)readInt();
-
+    checkLength((bits + 7) / 8 + 1);
     byte[] raw = new byte[ (bits + 7) / 8 + 1];
 
     raw[0] = 0;
@@ -268,7 +275,7 @@ public class ByteArrayReader
    */
   public BigInteger readMPINT() throws IOException {
     short bits = readShort();
-
+    checkLength((bits + 7) / 8 + 1);
     byte[] raw = new byte[ (bits + 7) / 8 + 1];
 
     raw[0] = 0;

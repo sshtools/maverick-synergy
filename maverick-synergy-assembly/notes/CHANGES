@@ -1,4 +1,4 @@
-Maverick Synergy 3.0.0-RC2 - TBC
+Maverick Synergy 3.0.0-RC2 - Jan 25, 2021
 
 Bug Fixes
     o Fixed implicit narrowing of long to int from code scan warning. 

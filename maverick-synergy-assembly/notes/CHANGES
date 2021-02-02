@@ -1,13 +1,22 @@
+Maverick Synergy 3.0.0-RC3 - Feb 2, 2021
+
+Bug Fixes
+    o Ensure console logger flushes out after a log statement has been written to console.
+    o Forwarding channel receiving SSH_MSG_CHANNEL_CLOSE before SSH_MSG_CHANNEL_EOF could hang due to reliance on remote EOF state being received prior to accepting channel close. 
+    o Added default timeout support to CachingDataWindow during put operation.
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.0-RC2 - Jan 25, 2021
 
 Bug Fixes
     o Fixed implicit narrowing of long to int from code scan warning. 
     o SshServer required a method to be able to set the default Security Level.
     o Made ByteArrayReader more resilient to length errors when processing messages.
-     
-=================
-=  HISTORY      =
-=================
+    
+-----------------
 
 Maverick Synergy 3.0.0-RC1 - Dec 27, 2020
 

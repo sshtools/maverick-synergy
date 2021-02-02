@@ -38,8 +38,10 @@ public class CachingDataWindowTests extends TestCase {
 	/**
 	 * Loop placing data on the cache and reading it back again. Checking each time the buffer
 	 * returned is exactly what was written
+	 * @throws IOException 
+	 * @throws InterruptedException 
 	 */
-	public void testInputIsOutput() throws NoSuchAlgorithmException {
+	public void testInputIsOutput() throws NoSuchAlgorithmException, InterruptedException, IOException {
 		
 		
 		final CachingDataWindow window = new CachingDataWindow(1024000, true);

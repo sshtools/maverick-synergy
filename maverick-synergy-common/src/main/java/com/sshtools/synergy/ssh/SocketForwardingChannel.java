@@ -292,6 +292,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 	 */
 	@Override
 	protected void onRemoteClose() {
+		isRemoteEOF.set(true);
 		evaluateClosure();
 	}
 
@@ -334,7 +335,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 			int numBytesRead = toChannel.read(socketChannel);
 			
 
-			if(Log.isTraceEnabled()) {
+			if(Log.isDebugEnabled()) {
 				log(String.format("Processed FORWARDING READ read=%d", numBytesRead));
 			}
 			
@@ -360,7 +361,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 
 				totalIn += numBytesRead;
 				
-				if(Log.isTraceEnabled())
+				if(Log.isDebugEnabled())
 					log("Processing FORWARDING READ read=" + numBytesRead);
 
 				getConnectionProtocol().addOutgoingTask(new QueueChannelDataTask(con, numBytesRead));
@@ -408,7 +409,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 				if (cache.hasRemaining()) {
 					written = ((ForwardingDataWindow)cache).write(socketChannel);
 
-					if(Log.isTraceEnabled()) {
+					if(Log.isDebugEnabled()) {
 						log(String.format("Processed FORWARDING WRITE written=%d", written));
 					}
 					
@@ -428,6 +429,8 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 			if (closePending && canClose()) {
 				close();
 			}
+			
+			
 			
 		} catch (Throwable t) {
 			

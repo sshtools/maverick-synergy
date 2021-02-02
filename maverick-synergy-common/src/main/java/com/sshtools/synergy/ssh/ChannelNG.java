@@ -749,7 +749,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	/**
 	 * This method closes the channel and free's its resources.
 	 */
-	void close(boolean forceClose) {
+	protected void close(boolean forceClose) {
 
 		if(Log.isTraceEnabled()) {
 				log("Checking", "close state force="

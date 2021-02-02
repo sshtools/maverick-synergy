@@ -34,6 +34,7 @@ public class ConsoleLoggingContext extends AbstractLoggingContext {
 	public void log(Level level, String msg, Throwable e, Object... args) {
 		if(isLogging(level)) {
 			System.out.print(DefaultLoggerContext.prepareLog(level, msg, e, args));
+			System.out.flush();
 		}
 	}
 
@@ -42,6 +43,7 @@ public class ConsoleLoggingContext extends AbstractLoggingContext {
 		if(isLogging(level)) {
 			System.out.print(DefaultLoggerContext.prepareLog(level, "", null));
 			System.out.println(msg);
+			System.out.flush();
 		}
 	}		
 
@@ -55,6 +57,7 @@ public class ConsoleLoggingContext extends AbstractLoggingContext {
 	@Override
 	public void newline() {
 		System.out.println();
+		System.out.flush();
 	}
 
 

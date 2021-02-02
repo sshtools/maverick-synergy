@@ -28,7 +28,7 @@ public class CachingDataWindow {
 	ByteBuffer cache;
 	boolean blocking = false;
 	boolean open = true;
-	
+	long timeout = 30000;
 	public CachingDataWindow(int size, boolean blocking) {
 		this.blocking = blocking;
 		cache = ByteBuffer.allocate(size);
@@ -52,15 +52,26 @@ public class CachingDataWindow {
 	}
 	
 	public synchronized void put(ByteBuffer data) {
-		try {
+		
 				
 			cache.compact();
 			
 			if(blocking) {
+				long start = System.currentTimeMillis();
 				while(cache.remaining() < data.remaining()) {
 					cache.flip();
-					wait(1000);
+					try {
+						wait(1000);
+					} catch (InterruptedException e) {
+						throw new IllegalStateException("Interrupted during cache put wait");
+					}
 					cache.compact();
+					if(System.currentTimeMillis() - start > timeout) {
+						throw new IllegalStateException(String.format("Timeout trying to put %d bytes into cache with %d remaining", 
+								data.remaining(),
+								cache.remaining()));
+						
+					}
 				}
 			}
 			
@@ -80,9 +91,7 @@ public class CachingDataWindow {
 			}
 			
 			notifyAll();
-		} catch (Exception e) {
-			Log.error("Buffer overflow?", e);
-		}
+
 	}
 
 	public synchronized int get(byte[] tmp, int offset, int length) {

@@ -1,3 +1,11 @@
+Maverick Synergy 3.0.0-RC4 - TBC
+
+-
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.0-RC3 - Feb 2, 2021
 
 Bug Fixes
@@ -5,9 +13,7 @@ Bug Fixes
     o Forwarding channel receiving SSH_MSG_CHANNEL_CLOSE before SSH_MSG_CHANNEL_EOF could hang due to reliance on remote EOF state being received prior to accepting channel close. 
     o Added default timeout support to CachingDataWindow during put operation.
     
-=================
-=  HISTORY      =
-=================
+-----------------
 
 Maverick Synergy 3.0.0-RC2 - Jan 25, 2021
 

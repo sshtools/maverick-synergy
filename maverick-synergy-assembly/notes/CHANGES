@@ -1,6 +1,7 @@
 Maverick Synergy 3.0.0-RC4 - TBC
 
--
+Bug Fixes
+    o OpenSSH RSA certificate incorrectly attempted to be decoded as ECDSA.
     
 =================
 =  HISTORY      =

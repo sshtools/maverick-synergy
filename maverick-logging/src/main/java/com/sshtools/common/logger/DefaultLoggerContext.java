@@ -64,7 +64,9 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	}
 	
 	public void shutdown() {
-		watcher.stopThread();
+		if(watcher!=null) {
+			watcher.stopThread();
+		}
 	}
 	
 	public String getProperty(String key, String defaultValue) {

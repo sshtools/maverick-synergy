@@ -469,6 +469,11 @@ public class SshEngine {
 			shutdownFuture.done(true);
 		}
 	}
+	
+	public void shutdownAndExit() {
+		shutdownNow(false, 0L);
+		Log.getDefaultContext().shutdown();
+	}
 
 	public void restart() throws IOException {
 		restart(false, 0);

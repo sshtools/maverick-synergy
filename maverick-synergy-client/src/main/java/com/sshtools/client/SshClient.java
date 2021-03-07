@@ -141,13 +141,6 @@ public class SshClient implements Closeable {
 			authenticate(new PasswordAuthenticator(password), 30000);
 		}
 		
-		if(!isAuthenticated() && Objects.nonNull(password) && password.length > 0) {
-			attempted = true;
-			authenticate(new KeyboardInteractiveAuthenticator(
-					new PasswordOverKeyboardInteractiveCallback(
-						new PasswordAuthenticator(password))), 30000);
-		}
-		
 		if(attempted && !isAuthenticated()) {
 			close();
 			throw new IOException("Authentication failed");
@@ -365,7 +358,7 @@ public class SshClient implements Closeable {
 	
 	public boolean authenticate(ClientAuthenticator authenticator, long timeout) throws IOException, SshException {
 		
-		sshContext.getAuthenticationClient().doAuthentication(authenticator);
+		sshContext.getAuthenticationClient().addAuthentication(authenticator);
 		authenticator.waitFor(timeout);
 		if(authenticator.isCancelled())
 			throw new SshException("Authentication cancelled.", SshException.CANCELLED_CONNECTION);

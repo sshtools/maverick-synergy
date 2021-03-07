@@ -107,6 +107,8 @@ public class SshClientContext extends SshContext {
 				= new ConnectionManager<SshClientContext>("client");
 	
 	private ProxyType proxyType = ProxyType.NONE;
+
+	private boolean preferKeyboardInteractiveOverPassword = true;
 	
 	private static ComponentFactory<SshKeyExchange<SshClientContext>> verifiedKeyExchanges;
 	
@@ -392,19 +394,19 @@ public class SshClientContext extends SshContext {
 		return this;
 	}
 
-	public AbstractRequestFuture authenticate(Connection<?> con, PasswordAuthenticator authenticator) throws IOException, SshException {
-
-		if(transport==null) {
-			throw new IllegalStateException("You cannot call authenticate until the connection has been established");
-		}
-		
-		if(!(transport.getActiveService() instanceof AuthenticationProtocolClient)) {
-			throw new IllegalStateException("You cannot call authenticate until the connection has been established");
-		}
-		
-		((AuthenticationProtocolClient) transport.getActiveService()).doAuthentication(authenticator);
-		return authenticator;
-	}
+//	public AbstractRequestFuture authenticate(Connection<?> con, PasswordAuthenticator authenticator) throws IOException, SshException {
+//
+//		if(transport==null) {
+//			throw new IllegalStateException("You cannot call authenticate until the connection has been established");
+//		}
+//		
+//		if(!(transport.getActiveService() instanceof AuthenticationProtocolClient)) {
+//			throw new IllegalStateException("You cannot call authenticate until the connection has been established");
+//		}
+//		
+//		((AuthenticationProtocolClient) transport.getActiveService()).addAuthentication(authenticator);
+//		return authenticator;
+//	}
 
 	public void enableSocks4Proxy(String proxyHostname, int proxyPort, 
 			String remoteHostname, int remotePort, String userId) {
@@ -476,5 +478,13 @@ public class SshClientContext extends SshContext {
 
 	public ProxyType getProxyType() {
 		return proxyType;
+	}
+
+	public boolean getPreferKeyboardInteractiveOverPassword() {
+		return preferKeyboardInteractiveOverPassword;
+	}
+	
+	public void setPreferKeyboardInteractiveOverPassword(boolean preferKeyboardInteractiveOverPassword) {
+		this.preferKeyboardInteractiveOverPassword = preferKeyboardInteractiveOverPassword;
 	}
 }

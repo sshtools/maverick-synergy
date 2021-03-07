@@ -67,9 +67,13 @@ public class AuthenticationProtocolClient implements Service {
 		this.username = username;
 		transport.getConnection().setUsername(username);
 		
-		for (ClientStateListener stateListener : context.getStateListeners()) {
-			stateListener.authenticationStarted(AuthenticationProtocolClient.this, transport.getConnection());
-		}
+		transport.addTask(ExecutorOperationSupport.EVENTS, new ConnectionTaskWrapper(transport.getConnection(), new Runnable() {
+			public void run() {
+				for (ClientStateListener stateListener : context.getStateListeners()) {
+					stateListener.authenticationStarted(AuthenticationProtocolClient.this, transport.getConnection());
+				}
+			}
+		}));
 
 		transport.getConnection().addEventListener(new EventListener() {
 			@Override
@@ -258,43 +262,48 @@ public class AuthenticationProtocolClient implements Service {
 		}
 	}
 	
-	public synchronized void addAuthentication(ClientAuthenticator authenticator) throws IOException, SshException {
+	public void addAuthentication(ClientAuthenticator authenticator) throws IOException, SshException {
 		
 		checkReady();
 		
-		if(Log.isDebugEnabled()) {
-			Log.debug("Adding {} authentication", authenticator.getName());
-		}
-		
-		boolean start = authenticators.isEmpty();
-		
-		if(authenticator instanceof PasswordAuthenticator) {
-			if(supportedAuths.contains("keyboard-interactive") &&
-					context.getPreferKeyboardInteractiveOverPassword()) {
-				
-				if(Log.isDebugEnabled()) {
-					Log.debug("We prefer keyboard-interactive over password so injecting keyboard-interactive authenticator");
-				}
-				authenticators.addLast(new KeyboardInteractiveAuthenticator(
-						new PasswordOverKeyboardInteractiveCallback(
-								(PasswordAuthenticator) authenticator)));
-				if(supportedAuths.contains("password")) {
-					authenticators.addLast(authenticator);
-				}
+		synchronized(this) {
+			if(Log.isDebugEnabled()) {
+				Log.debug("Adding {} authentication", authenticator.getName());
 			}
 			
-		} else {
-			authenticators.addLast(authenticator);
-		}
-
-		if(start) {
-			doNextAuthentication();
+			boolean start = authenticators.isEmpty();
+			
+			if(authenticator instanceof PasswordAuthenticator) {
+				if(supportedAuths.contains("keyboard-interactive") &&
+						context.getPreferKeyboardInteractiveOverPassword()) {
+					
+					if(Log.isDebugEnabled()) {
+						Log.debug("We prefer keyboard-interactive over password so injecting keyboard-interactive authenticator");
+					}
+					authenticators.addLast(new KeyboardInteractiveAuthenticator(
+							new PasswordOverKeyboardInteractiveCallback(
+									(PasswordAuthenticator) authenticator)));
+					if(supportedAuths.contains("password")) {
+						authenticators.addLast(authenticator);
+					}
+				}
+				
+			} else {
+				authenticators.addLast(authenticator);
+			}
+	
+			if(start) {
+				doNextAuthentication();
+			}
 		}
 		
 	}
 	
 	private void checkReady() throws IOException {
 		if(!noneAuthenticator.isDone()) {
+			if(Log.isDebugEnabled()) {
+				Log.debug("Authentication protocol is NOT ready");
+			}
 			noneAuthenticator.waitFor(30000);
 			if(!noneAuthenticator.isDone()) {
 				throw new IOException("Timeout waiting for authentication protocol to start");

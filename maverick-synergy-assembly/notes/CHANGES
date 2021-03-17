@@ -8,6 +8,7 @@ Bug Fixes
     o Fixed race condition where authentication client can receive failure message from the none authenticator.
     o OpenSSH RSA certificate incorrectly attempted to be decoded as ECDSA.
     o NPE when DefaultLoggingContext.shutdown is called and no file watcher has been initialized.
+    o Removed synchronization from EventServiceImplementation to prevent delays in event handlers from slowing down other threads.
     
 =================
 =  HISTORY      =

@@ -410,7 +410,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 		testPublicKey("ecdsa-sha2-nistp384", Ssh2EcdsaSha2Nist384PublicKey.class, publickeys);
 		testPublicKey("ecdsa-sha2-nistp521", Ssh2EcdsaSha2Nist521PublicKey.class, publickeys);
 		
-		testPublicKey("ssh-rsa-cert-v01@openssh.com", OpenSshEcdsaSha2Nist256Certificate.class, publickeys);
+		testPublicKey("ssh-rsa-cert-v01@openssh.com", OpenSshRsaCertificate.class, publickeys);
 		testPublicKey("ecdsa-sha2-nistp256-cert-v01@openssh.com", OpenSshEcdsaSha2Nist256Certificate.class, publickeys);
 		testPublicKey("ecdsa-sha2-nistp384-cert-v01@openssh.com", OpenSshEcdsaSha2Nist384Certificate.class, publickeys);
 		testPublicKey("ecdsa-sha2-nistp521-cert-v01@openssh.com", OpenSshEcdsaSha2Nist521Certificate.class, publickeys);

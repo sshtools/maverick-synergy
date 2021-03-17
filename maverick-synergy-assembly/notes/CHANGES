@@ -1,3 +1,19 @@
+Maverick Synergy 3.0.0-RC4 - TBC
+
+Features
+    o Added shutdownAndExit method to SshEngine designed for calling before application shutdown (it is the applications responsibility to exit, this is just for clean up).
+    o Added context option to disable preference of using keyboard-interactive authentication over password.
+    
+Bug Fixes
+    o Fixed race condition where authentication client can receive failure message from the none authenticator.
+    o OpenSSH RSA certificate incorrectly attempted to be decoded as ECDSA.
+    o NPE when DefaultLoggingContext.shutdown is called and no file watcher has been initialized.
+    o Removed synchronization from EventServiceImplementation to prevent delays in event handlers from slowing down other threads.
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.0-RC3 - Feb 2, 2021
 
 Bug Fixes
@@ -5,9 +21,7 @@ Bug Fixes
     o Forwarding channel receiving SSH_MSG_CHANNEL_CLOSE before SSH_MSG_CHANNEL_EOF could hang due to reliance on remote EOF state being received prior to accepting channel close. 
     o Added default timeout support to CachingDataWindow during put operation.
     
-=================
-=  HISTORY      =
-=================
+-----------------
 
 Maverick Synergy 3.0.0-RC2 - Jan 25, 2021
 

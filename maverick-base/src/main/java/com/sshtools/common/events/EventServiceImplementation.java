@@ -22,10 +22,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.sshtools.common.logger.Log;
 
@@ -44,8 +45,9 @@ public class EventServiceImplementation implements EventService {
 	private static boolean got;
 
 	private static StackTraceElement[] gotStack;
-    protected final Hashtable<String,EventListener> keyedListeners;
-    protected List<EventListener> globalListeners = new ArrayList<EventListener>();
+
+    protected Collection<EventListener> globalListeners = new ConcurrentLinkedQueue<EventListener>();
+    
     @SuppressWarnings("rawtypes")
     protected List<Class> eventCodeDescriptors = new ArrayList<Class>(Arrays.asList(EventCodes.class));
     boolean processAllEventsOnEventException = false;
@@ -53,8 +55,6 @@ public class EventServiceImplementation implements EventService {
     Map<Integer,String> cachedEventNames = new HashMap<Integer,String>();
     
     protected EventServiceImplementation() {
-        keyedListeners = new Hashtable<String,EventListener>();
-        
         try {
 			registerEventCodeDescriptor(Class.forName("com.sshtools.common.events.EventCodes"));
 		} catch (ClassNotFoundException e) {
@@ -146,30 +146,27 @@ public class EventServiceImplementation implements EventService {
             ((EventTrigger)obj).fireEvent(evt);
         }
 
-        synchronized (this)
-        {
-            EventException lastException = null;
-            // Process global listeners
-            for(EventListener mListener : globalListeners) {
-            	try {
-            		mListener.processEvent(evt);
-            	} catch(Throwable t) {
-            		if(t instanceof EventException) {
-            			lastException = (EventException)t;
-            			if(!processAllEventsOnEventException) {
-            				throw lastException;
-            			}
-            		} else {
-            			if(Log.isWarnEnabled()) {
-            				Log.warn("Caught exception from event listener", t);
-            			}
-            		}
-            	}
-            }
+        EventException lastException = null;
+        // Process global listeners
+        for(EventListener mListener : globalListeners) {
+        	try {
+        		mListener.processEvent(evt);
+        	} catch(Throwable t) {
+        		if(t instanceof EventException) {
+        			lastException = (EventException)t;
+        			if(!processAllEventsOnEventException) {
+        				throw lastException;
+        			}
+        		} else {
+        			if(Log.isWarnEnabled()) {
+        				Log.warn("Caught exception from event listener", t);
+        			}
+        		}
+        	}
+        }
 
-            if(processAllEventsOnEventException && lastException!=null) {
-            	throw lastException;
-            }
+        if(processAllEventsOnEventException && lastException!=null) {
+        	throw lastException;
         }
     }
 

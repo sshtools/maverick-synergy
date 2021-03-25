@@ -1,3 +1,12 @@
+Maverick Synergy 3.0.0-RC5 - TBC
+
+Bug Fixes
+    o FileLoggingContext fails with NPE when log path is relative.   
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.0-RC4 - Mar 17, 2021
 
 Features
@@ -9,10 +18,8 @@ Bug Fixes
     o OpenSSH RSA certificate incorrectly attempted to be decoded as ECDSA.
     o NPE when DefaultLoggingContext.shutdown is called and no file watcher has been initialized.
     o Removed synchronization from EventServiceImplementation to prevent delays in event handlers from slowing down other threads.
-    
-=================
-=  HISTORY      =
-=================
+
+-----------------
 
 Maverick Synergy 3.0.0-RC3 - Feb 2, 2021
 

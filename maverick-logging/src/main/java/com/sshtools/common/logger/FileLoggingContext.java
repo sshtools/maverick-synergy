@@ -49,7 +49,7 @@ public class FileLoggingContext extends AbstractLoggingContext {
 		super(level);
 		this.logFile = logFile;
 		if(!logFile.exists()) {
-			logFile.getParentFile().mkdirs();
+			logFile.getAbsoluteFile().getParentFile().mkdirs();
 		}
 		this.maxFiles = maxFiles;
 		this.maxSize = maxSize;

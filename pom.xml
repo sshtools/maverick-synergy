@@ -24,7 +24,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sshtools</groupId>
 	<artifactId>maverick-synergy-group</artifactId>
-	<version>3.0.0-RC4-SNAPSHOT</version>
+	<version>3.0.0-RC5-SNAPSHOT</version>
 	<name>Maverick Synergy</name>
 	<description>Open source Java SSH API</description>
 	<url>http://www.jadaptive.com</url>
@@ -139,6 +139,7 @@
 								<dependencySourceInclude>com.sshtools:*</dependencySourceInclude>
 							</dependencySourceIncludes>
 							<additionalparam>-Xdoclint:none</additionalparam>
+							<detectJavaApiLink>false</detectJavaApiLink>
 						</configuration>
 					</execution>
 				</executions>

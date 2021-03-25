@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-Maverick Synergy 3.0.0-RC4 - TBC
-=======
 Maverick Synergy 3.0.0-RC5 - TBC
 
 Bug Fixes
@@ -11,7 +8,6 @@ Bug Fixes
 =================
 
 Maverick Synergy 3.0.0-RC4 - Mar 17, 2021
->>>>>>> 0add1f7... Fix relative path in logging context.
 
 Features
     o Added shutdownAndExit method to SshEngine designed for calling before application shutdown (it is the applications responsibility to exit, this is just for clean up).

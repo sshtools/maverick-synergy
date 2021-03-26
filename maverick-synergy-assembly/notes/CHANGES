@@ -2,6 +2,8 @@ Maverick Synergy 3.0.0-RC5 - TBC
 
 Bug Fixes
     o FileLoggingContext fails with NPE when log path is relative.   
+    o Authenticators setup in SshClientContext would incorrectly be attempted multiple times. 
+    o ClientStateListener authenticate method no longer passes a List of Authenticator objects to be started after it returns. Authentication should be initiated within the authenticate handler.
     
 =================
 =  HISTORY      =

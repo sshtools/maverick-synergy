@@ -29,6 +29,7 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
+import java.util.Objects;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
@@ -39,6 +40,9 @@ import com.sshtools.common.ssh.components.SshDsaPublicKey;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshRsaPrivateCrtKey;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
+import com.sshtools.common.ssh.components.jce.AES128Cbc;
+import com.sshtools.common.ssh.components.jce.AES192Cbc;
+import com.sshtools.common.ssh.components.jce.AES256Cbc;
 import com.sshtools.common.ssh.components.jce.ECUtils;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.ssh.components.jce.Ssh2DsaPrivateKey;
@@ -47,6 +51,7 @@ import com.sshtools.common.ssh.components.jce.Ssh2EcdsaSha2NistPublicKey;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPrivateCrtKey;
 import com.sshtools.common.ssh.components.jce.SshEd25519PrivateKeyJCE;
 import com.sshtools.common.ssh.components.jce.SshEd25519PublicKey;
+import com.sshtools.common.ssh.components.jce.TripleDesCbc;
 import com.sshtools.common.util.BCryptKDF;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
@@ -311,8 +316,28 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 						throw new IOException(String.format("Unsupported KDF type %s", kdfName));
 					}
 
-					cipher = (SshCipher) ComponentManager.getInstance().supportedSsh2CiphersCS()
-							.getInstance(cipherName);
+					switch(cipherName) {
+					case "aes128-cbc":
+						cipher = new AES128Cbc();
+						break;
+					case "aes192-cbc":
+						cipher = new AES192Cbc();
+						break;
+					case "aes256-cbc":
+						cipher = new AES256Cbc();
+						break;
+					case "3des-cbc":
+						cipher = new TripleDesCbc();
+						break;
+					default:
+						break;
+					}
+					
+					if(Objects.isNull(cipher)) {
+						cipher = (SshCipher) 
+							ComponentManager.getInstance().supportedSsh2CiphersCS()
+								.getInstance(cipherName);
+					}
 
 					byte[] salt = optionsReader.readBinaryString();
 					int rounds = (int) optionsReader.readInt();

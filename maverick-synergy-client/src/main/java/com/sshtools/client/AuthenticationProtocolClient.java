@@ -165,15 +165,8 @@ public class AuthenticationProtocolClient implements Service {
 				if(!doNextAuthentication()) {
 					transport.addTask(ExecutorOperationSupport.EVENTS, new ConnectionTaskWrapper(transport.getConnection(), new Runnable() {
 						public void run() {
-							List<ClientAuthenticator> auths = new ArrayList<ClientAuthenticator>();
 							for (ClientStateListener stateListener : context.getStateListeners()) {
-								stateListener.authenticate(AuthenticationProtocolClient.this, transport.getConnection(), supportedAuths, partial, auths);
-								try {
-									addAuthentication(context.getAuthenticators());
-								} catch (IOException | SshException e) {
-									Log.error("I/O error during authentication", e);
-									transport.disconnect(TransportProtocolClient.BY_APPLICATION, "I/O error during authentication");
-								}
+								stateListener.authenticate(AuthenticationProtocolClient.this, transport.getConnection(), supportedAuths, partial);
 							}
 						}
 					}));
@@ -210,6 +203,9 @@ public class AuthenticationProtocolClient implements Service {
 
 		try {
 			authenticators.add(noneAuthenticator);
+			if(!context.getAuthenticators().isEmpty()) {
+				authenticators.addAll(context.getAuthenticators());
+			}
 			doNextAuthentication();
 		} catch (IOException e) {
 			Log.error("Faild to send none authentication request", e);

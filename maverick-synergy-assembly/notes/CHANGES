@@ -4,6 +4,9 @@ Bug Fixes
     o FileLoggingContext fails with NPE when log path is relative.   
     o Authenticators setup in SshClientContext would incorrectly be attempted multiple times. 
     o ClientStateListener authenticate method no longer passes a List of Authenticator objects to be started after it returns. Authentication should be initiated within the authenticate handler.
+    o Ensure that password authenticator future is triggered when wrapped with in automatic keyboard-interactive conversion.
+    o Don't pass authenticator to PasswordOverKeyboardInteractiveCallback because there is no way for its future to be completed.
+    o OpenSSH certificate extensions values and critical options not encoded correctly during sign operation. 
     
 =================
 =  HISTORY      =

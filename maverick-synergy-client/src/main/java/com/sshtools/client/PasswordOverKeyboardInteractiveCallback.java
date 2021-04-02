@@ -29,8 +29,8 @@ public class PasswordOverKeyboardInteractiveCallback
 		private String password;
 
 		public PasswordOverKeyboardInteractiveCallback(
-				PasswordAuthenticator pwdAuth) {
-			password = pwdAuth.getPassword();
+				String password) {
+			this.password = password;
 		}
 
 		public void init(SshConnection con) {

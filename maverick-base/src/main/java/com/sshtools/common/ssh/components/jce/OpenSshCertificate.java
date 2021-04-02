@@ -240,6 +240,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 			criticalOptions.put(name, tmp.readString());
 		}
 		tmp.close();
+		
 		tmp = new ByteArrayReader(reader.readBinaryString());
 		this.extensions = new HashMap<>();
 		this.extensionOrder = new ArrayList<>();
@@ -249,6 +250,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 			extensions.put(name, tmp.readString());
 		}
 		tmp.close();
+		
 		reserved = reader.readString();
 
 		signedBy = SshPublicKeyFileFactory.decodeSSH2PublicKey(reader
@@ -265,10 +267,28 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 	}
 	
 	public void sign(SshPublicKey publicKey, UnsignedInteger64 serial, int type,
+			String keyId, List<String> validPrincipals, 
+			UnsignedInteger64 validAfter, UnsignedInteger64 validBefore,
+			Map<String, String> criticalOptions,
+			List<String> extensions,
+			SshKeyPair signingKey) throws SshException {
+		sign(publicKey, serial, type, keyId, validPrincipals, validAfter,
+				validBefore, criticalOptions, convertExtensionsToMap(extensions), signingKey);
+	}
+	
+	private Map<String,String> convertExtensionsToMap(List<String> extensions) {
+		Map<String,String> tmp = new HashMap<>();
+		for(String extension : extensions) {
+			tmp.put(extension, "");
+		}
+		return tmp;
+	}
+
+	public void sign(SshPublicKey publicKey, UnsignedInteger64 serial, int type,
 						String keyId, List<String> validPrincipals, 
 						UnsignedInteger64 validAfter, UnsignedInteger64 validBefore,
 						Map<String, String> criticalOptions,
-						List<String> extensions,
+						Map<String, String> extensions,
 						SshKeyPair signingKey) throws SshException {
 
 		this.publicKey = publicKey;
@@ -281,13 +301,12 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		this.validAfter = validAfter;
 		this.validBefore = validBefore;
 		this.criticalOptions = criticalOptions;
-		this.extensions = new HashMap<>();
+		this.extensions = extensions;
 		this.reserved = "";
 		this.signedBy = signingKey.getPublicKey();
 		
-		for(String ext : extensions) {
-			this.extensions.put(ext, "");
-		}
+		extensionOrder = new ArrayList<>(extensions.keySet());
+		optionsOrder = new ArrayList<>(criticalOptions.keySet());
 		
 		ByteArrayWriter blob = new ByteArrayWriter();
 

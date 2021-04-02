@@ -33,6 +33,8 @@ import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
+import com.sshtools.common.ssh.RequestFuture;
+import com.sshtools.common.ssh.RequestFutureListener;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.synergy.ssh.ConnectionProtocol;
@@ -276,9 +278,22 @@ public class AuthenticationProtocolClient implements Service {
 					if(Log.isDebugEnabled()) {
 						Log.debug("We prefer keyboard-interactive over password so injecting keyboard-interactive authenticator");
 					}
+
 					authenticators.addLast(new KeyboardInteractiveAuthenticator(
 							new PasswordOverKeyboardInteractiveCallback(
-									(PasswordAuthenticator) authenticator)));
+									((PasswordAuthenticator) authenticator).getPassword())) {
+
+						@Override
+						public synchronized void done(boolean success) {
+							if(success || (!success && !supportedAuths.contains("password"))) {
+								((PasswordAuthenticator)authenticator).done(success);
+							}
+							super.done(success);
+						}
+							
+						
+					}); 
+					
 					if(supportedAuths.contains("password")) {
 						authenticators.addLast(authenticator);
 					}

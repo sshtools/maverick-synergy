@@ -18,8 +18,11 @@
  */
 package com.sshtools.server.callback;
 
+
+
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.TransportProtocolClient;
+import com.sshtools.common.logger.Log;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.TransportProtocolServer;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
@@ -54,12 +57,13 @@ class TransportProtocolSwitchingClient extends TransportProtocolClient {
 				getSocketConnection().setProtocolEngine(engine);
 				
 			} catch (Exception e) {
+				Log.error("Failed to switch roles", e);
 				disconnect(PROTOCOL_ERROR, "Failed to switch SSH role");
 			}
 		} else {
 			/**
-			 * We need to know the username to initiate authentication since we are acting as the client. So
-			 * the callback client places the username in the initial SSH identification string.
+			 * We need to know the user name to initiate authentication since we are acting as the client. So
+			 * the callback client places the user name in the initial SSH identification string.
 			 */
 			String username = remoteIdentification.substring(8+callbackIdentifier.length()).trim();
 			getContext().setUsername(username);

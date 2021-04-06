@@ -140,7 +140,7 @@ public abstract class TransportProtocol<T extends SshContext>
 		transport.outgoingQueue.addAll(outgoingQueue);
 		transport.kexQueue.addAll(kexQueue);
 		transport.socketConnection = socketConnection;
-		
+		transport.postedIdentification = postedIdentification;
 		transport.onSocketConnect(socketConnection);
 		
 		receivedRemoteIdentification = false;
@@ -1488,7 +1488,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			if (!closed) {
 
 				closed = true;
-
+	
 				if(Log.isInfoEnabled()) {
 					Log.info("Connection closed {}", 
 							getConnectionAddress().toString());
@@ -2336,6 +2336,8 @@ public abstract class TransportProtocol<T extends SshContext>
 						localkex = TransportProtocolHelper.generateKexInit(getContext());
 
 						kexQueue.clear();
+						if(Log.isDebugEnabled())
+							Log.debug("Posting SSH_MSG_KEX_INIT");
 						postMessage(new SshMessage() {
 							public boolean writeMessageIntoBuffer(ByteBuffer buf) {
 								buf.put(localkex);

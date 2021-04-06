@@ -18,7 +18,6 @@
  */
 package com.sshtools.client;
 
-import java.util.List;
 import java.util.Set;
 
 import com.sshtools.common.ssh.SshConnection;
@@ -28,7 +27,7 @@ public interface ClientStateListener extends ConnectionStateListener {
 
 	default public void authenticate(AuthenticationProtocolClient auth, 
 			SshConnection con, Set<String> supportedAuths, 
-				boolean moreRequired, List<ClientAuthenticator> authsToTry) { 
+				boolean moreRequired) { 
 	}
 
 	default public void authenticationStarted(AuthenticationProtocolClient authenticationProtocolClient,

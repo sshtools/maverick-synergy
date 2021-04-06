@@ -157,7 +157,7 @@ public class ConnectionLoggingContext implements LoggerContext, EventListener {
 			
 		String v = getProperty(".user", "");
 		if("".equals(v)) {
-			return false;
+			return true;
 		}
 		Set<String> users = new HashSet<String>(Arrays.asList(v.split(",")));
 		if(!Objects.isNull(con.getUsername())) {
@@ -171,7 +171,7 @@ public class ConnectionLoggingContext implements LoggerContext, EventListener {
 		
 		String v = getProperty(".ident", "");
 		if("".equals(v)) {
-			return false;
+			return true;
 		}
 		if(v.startsWith("SSH-2.0-")) {
 			v = v.substring(8);

@@ -139,6 +139,7 @@
 								<dependencySourceInclude>com.sshtools:*</dependencySourceInclude>
 							</dependencySourceIncludes>
 							<additionalparam>-Xdoclint:none</additionalparam>
+							<detectJavaApiLink>false</detectJavaApiLink>
 						</configuration>
 					</execution>
 				</executions>

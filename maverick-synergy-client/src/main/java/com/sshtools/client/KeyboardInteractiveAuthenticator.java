@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.AbstractRequestFuture;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.synergy.ssh.ByteArrayMessage;
@@ -34,13 +35,13 @@ import com.sshtools.synergy.ssh.TransportProtocol;
 public class KeyboardInteractiveAuthenticator extends SimpleClientAuthenticator implements ClientAuthenticator {
 
 	
-	
 	final static int SSH_MSG_USERAUTH_INFO_REQUEST = 60;
 	final static int SSH_MSG_USERAUTH_INFO_RESPONSE = 61;
 	
 	KeyboardInteractiveCallback callback;
 	TransportProtocolClient transport;
 	String username;
+	boolean completeFutureOnFailure = true;
 	
 	public KeyboardInteractiveAuthenticator(KeyboardInteractiveCallback callback) {
 		this.callback = callback;
@@ -66,10 +67,8 @@ public class KeyboardInteractiveAuthenticator extends SimpleClientAuthenticator 
 			}
 			
 		});
-
-		
 	}
-
+	
 	@Override
 	public boolean processMessage(ByteArrayReader msg) throws IOException {
 		

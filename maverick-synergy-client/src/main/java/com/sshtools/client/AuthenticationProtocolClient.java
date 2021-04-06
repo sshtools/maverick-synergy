@@ -33,6 +33,8 @@ import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
+import com.sshtools.common.ssh.RequestFuture;
+import com.sshtools.common.ssh.RequestFutureListener;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.synergy.ssh.ConnectionProtocol;
@@ -165,15 +167,8 @@ public class AuthenticationProtocolClient implements Service {
 				if(!doNextAuthentication()) {
 					transport.addTask(ExecutorOperationSupport.EVENTS, new ConnectionTaskWrapper(transport.getConnection(), new Runnable() {
 						public void run() {
-							List<ClientAuthenticator> auths = new ArrayList<ClientAuthenticator>();
 							for (ClientStateListener stateListener : context.getStateListeners()) {
-								stateListener.authenticate(AuthenticationProtocolClient.this, transport.getConnection(), supportedAuths, partial, auths);
-								try {
-									addAuthentication(context.getAuthenticators());
-								} catch (IOException | SshException e) {
-									Log.error("I/O error during authentication", e);
-									transport.disconnect(TransportProtocolClient.BY_APPLICATION, "I/O error during authentication");
-								}
+								stateListener.authenticate(AuthenticationProtocolClient.this, transport.getConnection(), supportedAuths, partial);
 							}
 						}
 					}));
@@ -210,6 +205,9 @@ public class AuthenticationProtocolClient implements Service {
 
 		try {
 			authenticators.add(noneAuthenticator);
+			if(!context.getAuthenticators().isEmpty()) {
+				authenticators.addAll(context.getAuthenticators());
+			}
 			doNextAuthentication();
 		} catch (IOException e) {
 			Log.error("Faild to send none authentication request", e);
@@ -280,9 +278,22 @@ public class AuthenticationProtocolClient implements Service {
 					if(Log.isDebugEnabled()) {
 						Log.debug("We prefer keyboard-interactive over password so injecting keyboard-interactive authenticator");
 					}
+
 					authenticators.addLast(new KeyboardInteractiveAuthenticator(
 							new PasswordOverKeyboardInteractiveCallback(
-									(PasswordAuthenticator) authenticator)));
+									((PasswordAuthenticator) authenticator).getPassword())) {
+
+						@Override
+						public synchronized void done(boolean success) {
+							if(success || (!success && !supportedAuths.contains("password"))) {
+								((PasswordAuthenticator)authenticator).done(success);
+							}
+							super.done(success);
+						}
+							
+						
+					}); 
+					
 					if(supportedAuths.contains("password")) {
 						authenticators.addLast(authenticator);
 					}

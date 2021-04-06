@@ -1,3 +1,23 @@
+Maverick Synergy 3.0.0-RC5 - April 6, 2021
+
+Bug Fixes
+    o FileLoggingContext fails with NPE when log path is relative.   
+    o Authenticators setup in SshClientContext would incorrectly be attempted multiple times. 
+    o ClientStateListener authenticate method no longer passes a List of Authenticator objects to be started after it returns. Authentication should be initiated within the authenticate handler.
+    o Ensure that password authenticator future is triggered when wrapped with in automatic keyboard-interactive conversion.
+    o Don't pass authenticator to PasswordOverKeyboardInteractiveCallback because there is no way for its future to be completed.
+    o OpenSSH certificate extensions values and critical options not encoded correctly during sign operation. 
+    o Fixed connection-based logging which was incorrectly preventing logging without an identification or user configured value.
+    o Moved some VirtualFileFactory log statements to TRACE as they are even too chatty for DEBUG mode.
+    o Callback role switching was broken for normal SSH clients due to changes made in TransportProtocol relating to posting of identification string.
+    o Moved connection error TRACE statement to DEBUG
+    o Callback mount URI should be passed to VFSFactory as base path.
+    o AbstractFileSystem should be resilient to error during getAttributes call in readDirectory call.
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.0-RC4 - Mar 17, 2021
 
 Features
@@ -9,10 +29,8 @@ Bug Fixes
     o OpenSSH RSA certificate incorrectly attempted to be decoded as ECDSA.
     o NPE when DefaultLoggingContext.shutdown is called and no file watcher has been initialized.
     o Removed synchronization from EventServiceImplementation to prevent delays in event handlers from slowing down other threads.
-    
-=================
-=  HISTORY      =
-=================
+
+-----------------
 
 Maverick Synergy 3.0.0-RC3 - Feb 2, 2021
 

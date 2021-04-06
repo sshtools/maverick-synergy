@@ -39,6 +39,7 @@ import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.UnsignedInteger64;
+import com.sshtools.common.util.Utils;
 
 /**
  * To generate a key that supports this use
@@ -189,7 +190,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		ByteArrayWriter options = new ByteArrayWriter();
 		for(String option : optionsOrder) {
 			options.writeString(option);
-			options.writeString(criticalOptions.get(option));
+			options.writeString(Utils.defaultString(criticalOptions.get(option), ""));
 		}
 		
 		writer.writeBinaryString(options.toByteArray());
@@ -198,7 +199,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		ByteArrayWriter ext = new ByteArrayWriter();
 		for(String e : extensionOrder) {
 			ext.writeString(e);
-			ext.writeString(extensions.get(e));
+			ext.writeString(Utils.defaultString(extensions.get(e), ""));
 		}
 		
 		writer.writeBinaryString(ext.toByteArray());

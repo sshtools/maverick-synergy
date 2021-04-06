@@ -306,8 +306,8 @@ public class SocketConnection implements SocketHandler {
 
           return !isConnected();
         } catch (Throwable ex) {
-        	if(Log.isTraceEnabled()) {
-        		Log.trace("Connection closed on socket read: " + ex.getMessage());
+        	if(Log.isDebugEnabled()) {
+        		Log.debug("Connection closed on socket read: " + ex.getMessage());
         	}
         	if(Log.isTraceEnabled()) {
         		Log.trace("Trace: ", ex);

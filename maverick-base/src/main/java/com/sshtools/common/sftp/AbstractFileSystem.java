@@ -281,8 +281,12 @@ public final class AbstractFileSystem {
 			while(files.size() < 100 && pos < children.length) {
 				AbstractFile f = children[pos++];
 				if(dir.getFilter()==null || dir.getFilter().matches(f.getName())) {
-					SftpFile sftpfile = new SftpFile(f.getName(), f.getAttributes());
-					files.add(sftpfile);
+					try {
+						SftpFile sftpfile = new SftpFile(f.getName(), f.getAttributes());
+						files.add(sftpfile);
+					} catch(IOException | PermissionDeniedException e) {
+						Log.debug("Could not access attributes of file {}", e, f.getName());
+					}
 				}
 			}
 			

@@ -62,7 +62,7 @@ Include the server module to develop your own SSH/SFTP server.
 <dependency>
   <groupId>com.sshtools</groupId>
   <artifactId>maverick-synergy-server</artifactId>
-  <version>3.0.0-RC5</version>
+  <version>3.0.0-RC6</version>
 </dependency>
 
 <!-- You may also need this repository if the version is a SNAPSHOT -->

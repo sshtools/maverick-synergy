@@ -298,9 +298,6 @@ public class AuthenticationProtocolClient implements Service {
 						authenticators.addLast(authenticator);
 					}
 				}
-				else {
-					authenticators.addLast(authenticator);
-				}
 				
 			} else {
 				authenticators.addLast(authenticator);

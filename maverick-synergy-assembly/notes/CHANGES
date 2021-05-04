@@ -1,3 +1,12 @@
+Maverick Synergy 3.0.0-RC7 - TBC
+ 
+ Bug Fixes
+    o Do not read or write SSH_FILEXFER_ATTR_SUBSECOND_TIMES if parent time flag has not been specified.
+       
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.0-RC6 - May 4, 2021
 
 Bug Fixes
@@ -6,9 +15,7 @@ Bug Fixes
     o Authentication hangs if server does not support KBI authentication or if `preferKeyboardInteractiveOverPassword` is false.
     o The static executor field on SshContext can be shutdown and then reused by another SshClient, resulting in an exception.
     
-=================
-=  HISTORY      =
-=================
+-----------------
 
 Maverick Synergy 3.0.0-RC5 - April 6, 2021
 

@@ -1,3 +1,15 @@
+Maverick Synergy 3.0.0-RC6 - May 4, 2021
+
+Bug Fixes
+    o Upgraded BouncyCastle dependencies to 1.68 (BC) and 1.0.2 (BC-FIPS)
+    o Upgraded commons-io dependency to 2.7.
+    o Authentication hangs if server does not support KBI authentication or if `preferKeyboardInteractiveOverPassword` is false.
+    o The static executor field on SshContext can be shutdown and then reused by another SshClient, resulting in an exception.
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.0-RC5 - April 6, 2021
 
 Bug Fixes
@@ -14,9 +26,7 @@ Bug Fixes
     o Callback mount URI should be passed to VFSFactory as base path.
     o AbstractFileSystem should be resilient to error during getAttributes call in readDirectory call.
     
-=================
-=  HISTORY      =
-=================
+----------------- 
 
 Maverick Synergy 3.0.0-RC4 - Mar 17, 2021
 

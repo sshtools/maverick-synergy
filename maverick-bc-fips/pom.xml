@@ -25,7 +25,7 @@
 	<parent>
 		<groupId>com.sshtools</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.0.0-RC5</version>
+		<version>3.0.0-RC6-SNAPSHOT</version>
 	</parent>
 	<artifactId>maverick-bc-fips</artifactId>
 	<name>BouncyCastle FIPS</name>
@@ -40,14 +40,12 @@
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bc-fips</artifactId>
-			<version>1.0.1</version>
-			<scope>provided</scope>
+			<version>1.0.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcpkix-fips</artifactId>
-			<version>1.0.1</version>
-			<scope>provided</scope>
+			<version>1.0.2</version>
 		</dependency>
 
 		<dependency>
@@ -60,7 +58,7 @@
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
-			<version>2.5</version>
+			<version>2.7</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

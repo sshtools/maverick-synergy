@@ -1301,6 +1301,8 @@ public abstract class SshContext extends ProtocolContext implements
 		try {
 			getExecutorService().awaitTermination(30, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
+		} finally {
+			executor = null;
 		}
 	}
 

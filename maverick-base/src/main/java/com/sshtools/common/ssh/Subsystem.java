@@ -78,18 +78,6 @@ public abstract class Subsystem {
 
 		// We will manage our own data window
 		session.haltIncomingData();
-				
-		session.addEventListener(new ChannelEventListener() {
-
-			public void onChannelEOF(Channel channel) {
-				cleanup();
-			
-			}
-
-			public void onChannelClose(Channel channel) {
-				cleanup();
-			}
-		});
 
 	}
 	
@@ -251,11 +239,13 @@ public abstract class Subsystem {
 
 	public void free() {
 
-		onSubsystemFree();
-
 		if(Log.isTraceEnabled())
 			Log.trace("Cleaning up " + name + " subsystem references");
+		
+		onSubsystemFree();
 
+		cleanup();
+		
 		// Put back the buffer
 		if (buffer != null)
 			bufferPool.add(buffer);

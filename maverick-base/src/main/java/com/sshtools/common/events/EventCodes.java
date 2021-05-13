@@ -159,6 +159,7 @@ public class EventCodes {
 		public static final int EVENT_FAILED_TO_NEGOTIATE_TRANSPORT_COMPONENT = 0xFF000008;
 		
 		// Useful events
+		public static final int EVENT_AUTHENTICATION_STARTED =		0xFF000014;
 		public static final int EVENT_USERAUTH_STARTED = 			0xFF000013;
 		public static final int EVENT_USERAUTH_SUCCESS = 			0xFF000010;
 		public static final int EVENT_USERAUTH_FAILURE =  			0xFF000011;

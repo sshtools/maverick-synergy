@@ -132,6 +132,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 	protected void cleanupSubsystem() {
 
 		if (!nfsClosed) {
+
+			if(Log.isDebugEnabled()) {
+				Log.debug("Cleaning up SFTP subsystem");
+			}
 			
 			long started = System.currentTimeMillis();
 			
@@ -152,11 +156,9 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 					.addAttribute(
 							EventCodes.ATTRIBUTE_CONNECTION,
 							con));
-			if(Log.isDebugEnabled()) {
-				Log.debug("Cleaning up SFTP subsystem");
-			}
 			
 			cleanupOpenFiles();
+			
 			if(nfs!=null) {
 				nfs.closeFilesystem();
 			}

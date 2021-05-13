@@ -19,7 +19,6 @@
 package com.sshtools.common.publickey;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -27,8 +26,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.bouncycastle.pqc.jcajce.spec.McElieceCCA2KeyGenParameterSpec;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshCertificate;

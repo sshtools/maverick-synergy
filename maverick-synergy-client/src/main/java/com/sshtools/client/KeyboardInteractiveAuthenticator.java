@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.ssh.AbstractRequestFuture;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.synergy.ssh.ByteArrayMessage;

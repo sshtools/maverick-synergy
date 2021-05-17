@@ -71,7 +71,7 @@ public class X509HostKeyVerification implements HostKeyVerification {
 				+ "/lib/security/cacerts".replace('/', File.separatorChar);
 		FileInputStream is = new FileInputStream(filename);
 		KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-		String password = "changeit";
+		String password = System.getProperty("maverick.trustedCACertsPassword", "changeit");
 		keystore.load(is, password.toCharArray());
 		params = new PKIXParameters(keystore);
 		params.setRevocationEnabled(enableRevocation);

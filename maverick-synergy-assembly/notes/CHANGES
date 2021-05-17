@@ -5,7 +5,8 @@ Maverick Synergy 3.0.0-RC7 - TBC
     o Refactored SFTP session cleanup to ensure events are always generated.
     o EVENT_AUTHENTICATION_STARTED added and fired once to indicate client has started authentication service with username parameter, EVENT_USERAUTH_STARTED now is fired at the beginning of each separate authentication attempt with parameters for user and method being attempted. 
     o Fixed event started/finished attributes in authentication to encompass entire authentication step, and separately on each individual attempt.
-    
+    o Allow JVM default trusted CA certificate store password of "changeit" to be overridden with System property maverick.trustedCACertsPassword.
+  
 =================
 =  HISTORY      =
 =================

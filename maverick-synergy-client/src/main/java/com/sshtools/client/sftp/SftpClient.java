@@ -1436,9 +1436,9 @@ public class SftpClient {
 
 		String[] matchedFiles = matchLocalFiles(local);
 
-		// call put for each matched file
-		// call the correct put method depending on the put method that called
-		// this
+		if(Log.isDebugEnabled()) {
+			Log.debug("Matched {} files for {}", matchedFiles.length, local);
+		}
 
 		for (int i = 0; i < matchedFiles.length; i++) {
 			// use file exists once added rather than try catch

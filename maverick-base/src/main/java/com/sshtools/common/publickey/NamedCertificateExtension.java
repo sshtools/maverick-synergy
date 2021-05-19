@@ -16,24 +16,11 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.bcfips.tests;
-import com.sshtools.common.ssh.components.jce.JCEProvider;
-import com.sshtools.common.tests.RsaPublicKeyTests;
+package com.sshtools.common.publickey;
 
-public class BCFIPSRsaPublicKeyTest extends RsaPublicKeyTests {
-
-	@Override
-	protected void setUp() {
-		JCEProvider.enableBouncyCastle(true);
-	}
-	
-	@Override
-	protected String getTestingJCE() {
-		return "BCFIPS";
-	}
-	
-	@Override
-	protected boolean isJCETested() {
-		return true;
+public class NamedCertificateExtension extends CertificateExtension {
+	public NamedCertificateExtension(String name, boolean known) {
+		setName(name);
+		setKnown(known);
 	}
 }

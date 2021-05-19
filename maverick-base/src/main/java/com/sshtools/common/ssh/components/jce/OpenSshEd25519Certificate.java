@@ -25,6 +25,7 @@ import java.security.NoSuchProviderException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 
+import com.sshtools.common.publickey.OpenSshCertificate;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;

@@ -23,14 +23,11 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshCertificate;
 import com.sshtools.common.ssh.components.SshKeyPair;
-import com.sshtools.common.ssh.components.jce.OpenSshCertificate;
 import com.sshtools.common.ssh.components.jce.OpenSshEcdsaSha2Nist256Certificate;
 import com.sshtools.common.ssh.components.jce.OpenSshEcdsaSha2Nist384Certificate;
 import com.sshtools.common.ssh.components.jce.OpenSshEcdsaSha2Nist521Certificate;
@@ -40,19 +37,6 @@ import com.sshtools.common.util.UnsignedInteger64;
 
 public class SshCertificateAuthority {
 
-	static final Map<String,String> defaultExtensions;
-	
-	static {
-		Map<String,String> tmp = new HashMap<>();
-		tmp.put(OpenSshCertificate.PERMIT_AGENT_FORWARDING, "");
-		tmp.put(OpenSshCertificate.PERMIT_PORT_FORWARDING, "");
-		tmp.put(OpenSshCertificate.PERMIT_USER_PTY, "");
-		tmp.put(OpenSshCertificate.PERMIT_USER_RC, "");
-		tmp.put(OpenSshCertificate.PERMIT_X11_FORWARDING, "");
-		
-		defaultExtensions = Collections.unmodifiableMap(tmp);
-		
-	}
 	public static SshCertificate generateUserCertificate(SshKeyPair key,
 			long serial,
 			String principalName,
@@ -68,7 +52,8 @@ public class SshCertificateAuthority {
 			int validityDays,
 			SshKeyPair signedBy) throws SshException, IOException {
 		return generateCertificate(key, serial, SshCertificate.SSH_CERT_TYPE_HOST, hostname, Arrays.asList(hostname),
-				validityDays, new HashMap<String,String>(), new HashMap<String,String>(), signedBy);
+				validityDays, Collections.<CriticalOption>emptyList(), 
+				new CertificateExtension.Builder().defaultExtensions().build(), signedBy);
 	}
 	
 	public static SshCertificate generateCertificate(SshKeyPair key, 
@@ -78,8 +63,22 @@ public class SshCertificateAuthority {
 			String principal,
 			int validityDays,
 			SshKeyPair signedBy) throws SshException, IOException {
-		return generateCertificate(key, serial, type, keyId,Arrays.asList(principal),
-				validityDays, new HashMap<String,String>(), defaultExtensions, signedBy);
+		return generateCertificate(key, serial, type, keyId, Arrays.asList(principal),
+				validityDays, Collections.<CriticalOption>emptyList(), 
+				new CertificateExtension.Builder().defaultExtensions().build(), signedBy);
+	}
+	
+	public static SshCertificate generateCertificate(SshKeyPair key, 
+			long serial, 
+			int type,
+			String keyId,
+			String principal,
+			int validityDays,
+			List<CertificateExtension> extensions,
+			SshKeyPair signedBy) throws SshException, IOException {
+		return generateCertificate(key, serial, type, keyId, Arrays.asList(principal),
+				validityDays, Collections.<CriticalOption>emptyList(), 
+				extensions, signedBy);
 	}
 	
 	public static SshCertificate generateCertificate(SshKeyPair key, 
@@ -88,8 +87,8 @@ public class SshCertificateAuthority {
 			String keyId,
 			List<String> validPrincipals,
 			int validityDays,
-			Map<String,String> criticalOptions,
-			Map<String,String> extensions,
+			List<CriticalOption> criticalOptions,
+			List<CertificateExtension> extensions,
 			SshKeyPair signedBy) throws SshException, IOException {
 		
 		switch(type) {

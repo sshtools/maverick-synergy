@@ -39,12 +39,12 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.sshtools.common.publickey.OpenSshCertificate;
 import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.ssh.components.SshHmac;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.ssh.components.jce.OpenSshCertificate;
 import com.sshtools.common.util.Base64;
 import com.sshtools.common.util.Utils;
 

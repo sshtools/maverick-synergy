@@ -43,13 +43,17 @@ public abstract class AbstractPublicKeyTests extends TestCase {
 
 	protected abstract String getTestingJCE();
 	
+	protected abstract boolean isJCETested();
+	
 	protected void testPrivateKeyFile(InputStream in, String passphrase, String fingerprint) throws IOException, InvalidPassphraseException, SshException {
 		try {
 			SshPrivateKeyFile file = SshPrivateKeyFileFactory.parse(in);
 			SshKeyPair pair = file.toKeyPair(passphrase);
 			String fingerprint2 = pair.getPublicKey().getFingerprint();
 			assertEquals(fingerprint, fingerprint2);
-			assertEquals(getTestingJCE(), pair.getPublicKey().test());
+			if(isJCETested()) {
+				assertEquals(getTestingJCE(), pair.getPublicKey().test());
+			}
 
 		} finally {
 			IOUtils.closeStream(in);
@@ -69,13 +73,16 @@ public abstract class AbstractPublicKeyTests extends TestCase {
 		}
 	}
 	
-	protected void testPublicKeyFile(InputStream in, String fingerprint) throws IOException, InvalidPassphraseException, SshException {
+	protected SshPublicKey testPublicKeyFile(InputStream in, String fingerprint) throws IOException, InvalidPassphraseException, SshException {
 		try {
 			SshPublicKeyFile file = SshPublicKeyFileFactory.parse(in);
 			SshPublicKey key = file.toPublicKey();
 			String fingerprint2 = key.getFingerprint();
 			assertEquals(fingerprint, fingerprint2);
-			assertEquals(getTestingJCE(), key.test());
+			if(isJCETested()) {
+				assertEquals(getTestingJCE(), key.test());
+			}
+			return key;
 		} finally {
 			IOUtils.closeStream(in);
 		}
@@ -85,10 +92,14 @@ public abstract class AbstractPublicKeyTests extends TestCase {
 		
 		SshKeyPair generated = testKeyGeneration(type, bits);
 		assertEquals(generated.getPublicKey().getBitLength(), bits);
-		assertEquals(getTestingJCE(), generated.getPublicKey().test());
+		if(isJCETested()) {
+			assertEquals(getTestingJCE(), generated.getPublicKey().test());
+		}
 		byte[] formattedkey = saveKeyPair(generated, passphrase, format);
 		SshKeyPair loaded = loadKeyPair(formattedkey, passphrase);
-		assertEquals(getTestingJCE(), loaded.getPublicKey().test());
+		if(isJCETested()) {
+			assertEquals(getTestingJCE(), loaded.getPublicKey().test());
+		}
 		checkKeyPairs(generated, loaded);
 		return generated;
 	}

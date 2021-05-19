@@ -188,11 +188,27 @@ public class ByteArrayWriter
 
   public void writeUINT64(UnsignedInteger64 value) throws IOException {
     byte[] raw = new byte[8];
-    byte[] bi = value.bigIntValue().toByteArray();
+    byte[] bi = stripLeadingZeros(value.bigIntValue().toByteArray());
     System.arraycopy(bi, 0, raw, raw.length - bi.length, bi.length);
     // Pad the raw data
     write(raw);
   }
+  
+  public static byte[] stripLeadingZeros(byte[] data) {
+		int x;
+		for(x=0;x<data.length;x++) {
+			if(data[x] != 0) {
+				break;
+			}
+		}
+		if(x > 0) {
+			byte[] tmp = new byte[data.length - x];
+			System.arraycopy(data, x, tmp, 0, tmp.length);
+			return tmp;
+		} else {
+			return data;
+		}
+	}
 
   public void writeUINT64(long value) throws IOException {
     writeUINT64(new UnsignedInteger64(value));

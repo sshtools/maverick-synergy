@@ -33,4 +33,9 @@ public class BCEcdsaPublicKeyTest extends EcdsaPublicKeyTests {
 		return "BC";
 	}
 
+	@Override
+	protected boolean isJCETested() {
+		return true;
+	}
+
 }

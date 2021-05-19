@@ -25,10 +25,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.sshtools.common.auth.AbstractPublicKeyAuthenticationProvider;
+import com.sshtools.common.publickey.OpenSshCertificate;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.ssh.components.jce.OpenSshCertificate;
 
 public class OpenSshCACertificateStoreImpl extends AbstractPublicKeyAuthenticationProvider {
 

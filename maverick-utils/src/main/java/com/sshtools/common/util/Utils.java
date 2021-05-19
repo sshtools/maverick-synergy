@@ -18,6 +18,9 @@
  */
 package com.sshtools.common.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
@@ -296,6 +299,28 @@ public class Utils {
 
 	public static String randomAlphaNumericString(int length) {
 		 return new BigInteger(length * 8, new Random()).toString(32).substring(0,  length);
+	}
+	
+	public static String exec(String... cmd) throws IOException, InterruptedException {
+		
+		Process process = new ProcessBuilder(cmd).start();
+		
+		StringBuilder output = new StringBuilder();
+
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            output.append(line + "\n");
+        }
+
+        int exitVal = process.waitFor();
+        if (exitVal == 0) {
+            return output.toString();
+        } else {
+            throw new IOException("Unexpected exit code " + exitVal + "[" + output.toString() + "]");
+        }
 	}
 	
 }

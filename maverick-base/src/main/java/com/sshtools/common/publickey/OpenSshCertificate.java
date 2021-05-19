@@ -16,12 +16,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.common.ssh.components.jce;
+package com.sshtools.common.publickey;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,15 +32,14 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.publickey.SshPublicKeyFileFactory;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshKeyFingerprint;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.UnsignedInteger64;
-import com.sshtools.common.util.Utils;
 
 /**
  * To generate a key that supports this use
@@ -51,7 +51,7 @@ import com.sshtools.common.util.Utils;
  * 
  */
 public abstract class OpenSshCertificate implements SshPublicKey {
-
+	
 	public static final int SSH_CERT_TYPE_USER = 1;
 	public static final int SSH_CERT_TYPE_HOST = 2;
 
@@ -64,7 +64,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 	public static final String OPTION_FORCE_COMMAND = "force-command";
 	public static final String OPTION_SOURCE_ADDRESS = "source-address";
 
-	SshPublicKey publicKey;
+	protected SshPublicKey publicKey;
 	byte[] nonce;
 	UnsignedInteger64 serial;
 	int type;
@@ -72,10 +72,10 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 	List<String> validPrincipals = new ArrayList<String>();
 	UnsignedInteger64 validAfter;
 	UnsignedInteger64 validBefore;
-	List<String> optionsOrder = new ArrayList<String>();
-	Map<String, String> criticalOptions = new HashMap<String, String>();
-	List<String> extensionOrder = new ArrayList<String>();
-	Map<String,String> extensions = new HashMap<String,String>();
+	List<CriticalOption> criticalOptions = new ArrayList<>();
+	List<CertificateExtension> extensions =new ArrayList<>();
+	List<String> customExtensionsOrder = new ArrayList<>();
+	
 	String reserved;
 	SshPublicKey signedBy;
 	byte[] signature;
@@ -188,20 +188,48 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		writer.writeUINT64(validBefore);
 		
 		ByteArrayWriter options = new ByteArrayWriter();
-		for(String option : optionsOrder) {
-			options.writeString(option);
-			options.writeString(Utils.defaultString(criticalOptions.get(option), ""));
+		List<CriticalOption> exts = filterExtensions(criticalOptions, true);
+		
+		for(CriticalOption e : exts) {
+
+			options.writeString(e.getName());
+			options.writeBinaryString(e.getStoredValue());
+		}
+		
+		exts = filterExtensions(criticalOptions, false);
+		
+		for(CriticalOption e : exts) {
+
+			options.writeString(e.getName());
+			options.writeBinaryString(e.getStoredValue());
 		}
 		
 		writer.writeBinaryString(options.toByteArray());
 		options.close();
 		
 		ByteArrayWriter ext = new ByteArrayWriter();
-		for(String e : extensionOrder) {
-			ext.writeString(e);
-			ext.writeString(Utils.defaultString(extensions.get(e), ""));
+		
+		List<CertificateExtension> exts2 = filterExtensions(extensions, true);
+		
+		for(CertificateExtension e : exts2) {
+			ext.writeString(e.getName());
+			ext.writeBinaryString(e.getStoredValue());
 		}
 		
+		if(customExtensionsOrder.size() > 0) {
+			for(String key : customExtensionsOrder) {
+				CertificateExtension e = getExtension(key);
+				ext.writeString(e.getName());
+				ext.writeBinaryString(e.getStoredValue());
+			}
+		} else {
+			exts2 = filterExtensions(extensions, false);
+			for(CertificateExtension e : exts2) {
+				ext.writeString(e.getName());
+				ext.writeBinaryString(e.getStoredValue());
+			}
+		}
+
 		writer.writeBinaryString(ext.toByteArray());
 		ext.close();
 		
@@ -211,9 +239,37 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		
 	}
 	
+	public CertificateExtension getExtension(String key) {
+		for(CertificateExtension ext : extensions) {
+			if(ext.getName().equals(key)) {
+				return ext;
+			}
+		}
+		return null;
+	}
+
+	private <T extends EncodedExtension> List<T> filterExtensions(List<T> exts, boolean requireKnown) {
+		
+		List<T> certs = new ArrayList<>();
+		for(T ext : exts) {
+			if(ext.isKnown()==requireKnown) {
+				certs.add(ext);
+			}
+		}
+		Collections.sort(certs, new Comparator<T>() {
+
+			@Override
+			public int compare(T o1, T o2) {
+				return o1.getName().compareTo(o2.getName());
+			}
+			
+		});
+		return certs;
+	}
+
 	protected void decodeCertificate(ByteArrayReader reader) throws IOException,
 			SshException {
-
+	
 		serial = reader.readUINT64();
 
  		type = (int) reader.readInt();
@@ -233,25 +289,28 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 
 		validBefore = reader.readUINT64();
 		tmp = new ByteArrayReader(reader.readBinaryString());
-		optionsOrder = new ArrayList<String>();
+
+		criticalOptions.clear();
+		extensions.clear();
+		customExtensionsOrder.clear();
 		
 		while (tmp.available() > 0) {
 			String name = tmp.readString();
-			optionsOrder.add(name);
-			criticalOptions.put(name, tmp.readString());
+			criticalOptions.add(CriticalOption.createKnownOption(name, tmp.readBinaryString()));
 		}
-		tmp.close();
 		
+		tmp.close();
 		tmp = new ByteArrayReader(reader.readBinaryString());
-		this.extensions = new HashMap<>();
-		this.extensionOrder = new ArrayList<>();
+
 		while (tmp.available() > 0) {
 			String name = tmp.readString().trim();
-			extensionOrder.add(name);
-			extensions.put(name, tmp.readString());
+			CertificateExtension ext = CertificateExtension.createKnownExtension(name, tmp.readBinaryString());
+			if(!ext.isKnown()) {
+				customExtensionsOrder.add(ext.getName());
+			}
+			extensions.add(ext);
 		}
 		tmp.close();
-		
 		reserved = reader.readString();
 
 		signedBy = SshPublicKeyFileFactory.decodeSSH2PublicKey(reader
@@ -263,33 +322,15 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		System.arraycopy(reader.array(), 0, data, 0, data.length);
 
 		if(!signedBy.verifySignature(signature, data)) {
-			throw new SshException(SshException.JCE_ERROR, "Certificate file could not validate the signature supplied by the CA");
+			throw new SshException("Certificate file could not validate the signature supplied by the CA", SshException.JCE_ERROR);
 		}
 	}
 	
-	public void sign(SshPublicKey publicKey, UnsignedInteger64 serial, int type,
-			String keyId, List<String> validPrincipals, 
-			UnsignedInteger64 validAfter, UnsignedInteger64 validBefore,
-			Map<String, String> criticalOptions,
-			List<String> extensions,
-			SshKeyPair signingKey) throws SshException {
-		sign(publicKey, serial, type, keyId, validPrincipals, validAfter,
-				validBefore, criticalOptions, convertExtensionsToMap(extensions), signingKey);
-	}
-	
-	private Map<String,String> convertExtensionsToMap(List<String> extensions) {
-		Map<String,String> tmp = new HashMap<>();
-		for(String extension : extensions) {
-			tmp.put(extension, "");
-		}
-		return tmp;
-	}
-
 	public void sign(SshPublicKey publicKey, UnsignedInteger64 serial, int type,
 						String keyId, List<String> validPrincipals, 
 						UnsignedInteger64 validAfter, UnsignedInteger64 validBefore,
-						Map<String, String> criticalOptions,
-						Map<String, String> extensions,
+						List<CriticalOption> criticalOptions,
+						List<CertificateExtension> extensions,
 						SshKeyPair signingKey) throws SshException {
 
 		this.publicKey = publicKey;
@@ -301,14 +342,11 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		this.validPrincipals = validPrincipals;
 		this.validAfter = validAfter;
 		this.validBefore = validBefore;
-		this.criticalOptions = criticalOptions;
-		this.extensions = extensions;
+		this.criticalOptions = new ArrayList<>(criticalOptions);
+		this.extensions = new ArrayList<>(extensions);
 		this.reserved = "";
 		this.signedBy = signingKey.getPublicKey();
-		
-		extensionOrder = new ArrayList<>(extensions.keySet());
-		optionsOrder = new ArrayList<>(criticalOptions.keySet());
-		
+			
 		ByteArrayWriter blob = new ByteArrayWriter();
 
 		try {
@@ -387,34 +425,60 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 	/**
 	 * 
 	 * @return
-	 * @deprecated use getExtensionMap instead.
+	 * @deprecated Process CertificateExtension values directly.
 	 */
 	@Deprecated
 	public List<String> getExtensions() {
-		return Collections.unmodifiableList(new ArrayList<>(extensions.keySet()));
+		List<String> tmp = new ArrayList<>();
+		for(CertificateExtension ext : extensions) {
+			tmp.add(ext.getName());
+		}
+		return Collections.unmodifiableList(tmp);
 	}
 	
+	public List<CriticalOption> getCriticalOptionsList() {
+		return Collections.unmodifiableList(criticalOptions);
+	}
+	
+	public List<CertificateExtension> getExtensionsList() {
+		return Collections.unmodifiableList(extensions);
+	}
+	
+	/**
+	 * 
+	 * @return
+	 * @deprecated Process CertificateExtension values directly.
+	 */
 	public Map<String,String> getExtensionsMap() {
-		return Collections.unmodifiableMap(extensions);
+		Map<String,String> tmp = new HashMap<>();
+		for(CertificateExtension ext : extensions) {
+			tmp.put(ext.getName(), ext.getValue());
+		}
+		return Collections.unmodifiableMap(tmp);
 	}
 
 	public boolean isForceCommand() {
-		return criticalOptions.containsKey(OPTION_FORCE_COMMAND);
+		return getForcedCommand()!=null;
 	}
 
 	public String getForcedCommand() {
-		return criticalOptions.get(OPTION_FORCE_COMMAND);
+		for(CriticalOption ext : criticalOptions) {
+			if(ext.getName().equals(OPTION_FORCE_COMMAND)) {
+				return ext.getStringValue();
+			}
+		}
+		return null;
 	}
 
 	public Set<String> getSourceAddresses() {
 		Set<String> tmp = new HashSet<String>();
 
-		if (criticalOptions.containsKey(OPTION_SOURCE_ADDRESS)) {
-			StringTokenizer t = new StringTokenizer(
-					criticalOptions.get(OPTION_SOURCE_ADDRESS), ",");
-
-			while (t.hasMoreTokens()) {
-				tmp.add(t.nextToken());
+		for(CriticalOption ext : criticalOptions) {
+			if (ext.getName().equals(OPTION_SOURCE_ADDRESS)) {
+				StringTokenizer t = new StringTokenizer(ext.getStringValue(), ",");
+				while (t.hasMoreTokens()) {
+					tmp.add(t.nextToken());
+				}
 			}
 		}
 		return Collections.unmodifiableSet(tmp);
@@ -436,7 +500,16 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		return keyId;
 	}
 
+	/**
+	 * 
+	 * @return
+	 * @deprecated Process CertificateExtension values directly.
+	 */
 	public Map<String,String> getCriticalOptions() {
-		return Collections.unmodifiableMap(criticalOptions);
+		Map<String,String> tmp = new HashMap<>();
+		for(CriticalOption ext : criticalOptions) {
+			tmp.put(ext.getName(), ext.getStringValue());
+		}
+		return Collections.unmodifiableMap(tmp);
 	}
 }

@@ -871,6 +871,9 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				} catch (SftpStatusEventException ex) {
 					sendStatusMessage(id, ex.getStatus(), ex.getMessage());
 				}
+			} catch (FileIsDirectoryException fed) {
+				fireRemoveFileEvent(path, started, fed);
+				sendStatusMessage(id, SSH_FX_FILE_IS_A_DIRECTORY, fed.getMessage());
 			} catch (FileNotFoundException ioe) {
 				fireRemoveFileEvent(path, started, ioe);
 				sendStatusMessage(id, STATUS_FX_NO_SUCH_FILE, ioe.getMessage());

@@ -462,7 +462,7 @@ public final class AbstractFileSystem {
 						throw new IOException("Failed to delete " + path);
 					}
 				} else {
-					throw new IOException(path + " is a directory, use remove directory command to remove");
+					throw new FileIsDirectoryException(path + " is a directory, use remove directory command to remove");
 				}
 			} catch (SecurityException se) {
 				throw new PermissionDeniedException("Permission denied");

@@ -1192,7 +1192,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 				channelid, 
 				remoteid,
 				localWindow.getWindowSpace(),
-				remoteWindow.getWindowSpace());
+				remoteWindow == null ? "<null>" : remoteWindow.getWindowSpace());
 	}
 	
 	protected void log(String message) {
@@ -1201,7 +1201,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 				channelid, 
 				remoteid,
 				localWindow.getWindowSpace(),
-				remoteWindow.getWindowSpace());
+				remoteWindow == null ? "<null>" : remoteWindow.getWindowSpace());
 	}
 	
 	protected void log(String message, Throwable t) {
@@ -1211,7 +1211,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 				channelid, 
 				remoteid,
 				localWindow.getWindowSpace(),
-				remoteWindow.getWindowSpace());
+				remoteWindow == null ? "<null>" : remoteWindow.getWindowSpace());
 	}
 	
 	class ChannelClose implements SshMessage {

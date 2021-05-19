@@ -1486,6 +1486,7 @@ public abstract class TransportProtocol<T extends SshContext>
 
 		synchronized (this) {
 			if (!closed) {
+				Connection<T> connection = getConnection();
 
 				closed = true;
 	
@@ -1524,39 +1525,42 @@ public abstract class TransportProtocol<T extends SshContext>
 				}
 
 				
-				addTask(EVENTS, new ConnectionTaskWrapper(getConnection(), new Runnable() {
-					public void run() {
-						synchronized (lock) {
-							cleanupOperations(new ConnectionAwareTask(con) {
-								protected void doTask() {
-									
-									disconnected();
-									onDisconnected();
-									disconnectFuture.disconnected();
-									
-									EventServiceImplementation
-									.getInstance()
-									.fireEvent(
-											new Event(
-													this,
-													EventCodes.EVENT_DISCONNECTED,
-													true)
-													.addAttribute(
-															EventCodes.ATTRIBUTE_CONNECTION,
-															con)
-													.addAttribute(
-															EventCodes.ATTRIBUTE_OPERATION_STARTED,
-															disconnectStarted)
-													.addAttribute(
-															EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-															new Date()));
-									
-
-								}
-							});
+				if(connection != null) {
+					/* Connection may be null if a socket connection was made by the protocol never started */
+					addTask(EVENTS, new ConnectionTaskWrapper(connection, new Runnable() {
+						public void run() {
+							synchronized (lock) {
+								cleanupOperations(new ConnectionAwareTask(con) {
+									protected void doTask() {
+										
+										disconnected();
+										onDisconnected();
+										disconnectFuture.disconnected();
+										
+										EventServiceImplementation
+										.getInstance()
+										.fireEvent(
+												new Event(
+														this,
+														EventCodes.EVENT_DISCONNECTED,
+														true)
+														.addAttribute(
+																EventCodes.ATTRIBUTE_CONNECTION,
+																con)
+														.addAttribute(
+																EventCodes.ATTRIBUTE_OPERATION_STARTED,
+																disconnectStarted)
+														.addAttribute(
+																EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+																new Date()));
+										
+	
+									}
+								});
+							}
 						}
-					}
-				}));
+					}));
+				}
 				
 				
 			}

@@ -72,6 +72,8 @@ public class DirectFile extends AbstractDirectFile<DirectFile> {
 	public List<AbstractFile> getChildren() throws IOException {
 		
 		File[] files = f.listFiles();
+		if(files == null)
+			throw new IOException(String.format("%s is unreadable.", f));
 		List<AbstractFile> results = new ArrayList<AbstractFile>();
 		for(File f : files) {
 			results.add(new DirectFile(f.getAbsolutePath(), fileFactory, homeDir));

@@ -120,6 +120,8 @@ public class DirectFileJava7 extends DirectFile {
 	public List<AbstractFile> getChildren() throws IOException {
 		
 		File[] files = f.listFiles();
+		if(files == null)
+			throw new IOException(String.format("%s is unreadable.", f));
 		List<AbstractFile> files2 = new ArrayList<AbstractFile>();
 		for(File f : files) {
 			files2.add(new DirectFileJava7(f.getAbsolutePath(), fileFactory, homeDir));
@@ -129,6 +131,10 @@ public class DirectFileJava7 extends DirectFile {
 
 	public AbstractFile resolveFile(String child) throws IOException,
 			PermissionDeniedException {
-		return new DirectFileJava7(new File(f, child).getAbsolutePath(), fileFactory, homeDir);
+		File file = new File(child);
+		if(!file.isAbsolute()) {
+			file = new File(f, child);
+		}
+		return new DirectFileJava7(file.getAbsolutePath(), fileFactory, homeDir);
 	}
 }

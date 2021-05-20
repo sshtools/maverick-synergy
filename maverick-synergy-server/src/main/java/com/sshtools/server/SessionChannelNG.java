@@ -222,7 +222,7 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		boolean success = false;
 		
 		try {
-			command = connection.getContext().getChannelFactory().executeCommand(args, environment);
+			command = connection.getContext().getChannelFactory().executeCommand(this, args, environment);
 			success = true;
 		} catch (UnsupportedChannelException | PermissionDeniedException e) {
 			if(Log.isDebugEnabled())

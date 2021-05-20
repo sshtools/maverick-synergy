@@ -70,7 +70,7 @@ public class DefaultClientChannelFactory implements ChannelFactory<SshClientCont
 	}
 
 	@Override
-	public ExecutableCommand executeCommand(String[] args, Map<String, String> environment)
+	public ExecutableCommand executeCommand(SessionChannel channel, String[] args, Map<String, String> environment)
 			throws PermissionDeniedException, UnsupportedChannelException {
 		throw new PermissionDeniedException("Client cannot execute commands");
 	}

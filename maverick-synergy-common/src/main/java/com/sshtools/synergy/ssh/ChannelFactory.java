@@ -34,7 +34,6 @@ public interface ChannelFactory<T extends SshContext> {
     
 	Subsystem createSubsystem(String name, SessionChannel session) throws UnsupportedChannelException, PermissionDeniedException;
 
-	ExecutableCommand executeCommand(String[] args, Map<String, String> environment) throws PermissionDeniedException, UnsupportedChannelException;
-
+	ExecutableCommand executeCommand(SessionChannel channel, String[] args, Map<String, String> environment) throws PermissionDeniedException, UnsupportedChannelException;
 
 }

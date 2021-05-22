@@ -8,6 +8,7 @@ Maverick Synergy 3.0.0-RC7 - TBC
     o Allow JVM default trusted CA certificate store password of "changeit" to be overridden with System property maverick.trustedCACertsPassword.
     o Use ConcurrentLinkedQueue to prevent concurrent modification on shutdown hooks collection.
     o Refactored support for OpenSSH certificate extensions to include support for custom extension definitions.
+    o Fixed broken server-side SCP and command initialization.
   
 =================
 =  HISTORY      =

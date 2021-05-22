@@ -46,6 +46,10 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 	public DefaultServerChannelFactory() {
 	}
 
+	public ComponentFactory<ExecutableCommand> supportedCommands() {
+		return commands;
+	}
+	
 	public final ChannelNG<SshServerContext> createChannel(String channeltype, SshConnection con)
 			throws UnsupportedChannelException, PermissionDeniedException, ChannelOpenException {
 

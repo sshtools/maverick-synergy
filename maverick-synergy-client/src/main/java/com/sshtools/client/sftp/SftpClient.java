@@ -1097,6 +1097,7 @@ public class SftpClient {
 			// file and seek to end of the file ready to continue writing
 			if (resume && localPath.exists()) {
 				out = localPath.getOutputStream(true);
+				position = localPath.length();
 			} else {
 				out = localPath.getOutputStream();
 			}

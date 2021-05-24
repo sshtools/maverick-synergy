@@ -58,7 +58,7 @@ public abstract class AbstractDirectFile<T extends AbstractDirectFile<T>> extend
 	}
 
 	public boolean createFolder() throws PermissionDeniedException {
-		return f.mkdirs();
+		return f.mkdir();
 	}
 
 	public long lastModified() {

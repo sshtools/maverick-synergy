@@ -2269,7 +2269,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 						fireMakeDirectoryEvent(path, started,
 								exists ? new FileExistsException() : new IOException("The operation failed."));
 
-						sendStatusMessage(id, exists ? SSH_FX_FILE_ALREADY_EXISTS : STATUS_FX_FAILURE,
+						sendStatusMessage(id, exists ? SSH_FX_FILE_ALREADY_EXISTS : STATUS_FX_NO_SUCH_FILE,
 								"The operation failed");
 					} catch (SftpStatusEventException ex) {
 						sendStatusMessage(id, ex.getStatus(), ex.getMessage());

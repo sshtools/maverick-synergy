@@ -599,7 +599,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			int id = -1;
 			try {
 				id = (int) bar.readInt();
-				SftpFile[] files = new SftpFile[1];
+				SftpFile[] files = new SftpFile[1]; 
 				files[0] = nfs.readSymbolicLink(checkDefaultPath(bar
 						.readString(CHARSET_ENCODING)));
 				sendFilenameMessage(id, files, false, true);

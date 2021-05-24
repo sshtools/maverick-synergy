@@ -54,6 +54,14 @@ public abstract class AbstractFileImpl<T extends AbstractFile> implements Abstra
 		}
 	
 	}
+	
+	public void linkTo(String target) throws IOException, PermissionDeniedException {
+		throw new UnsupportedOperationException();
+	}
+	
+	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
+		throw new UnsupportedOperationException();
+	}
 
 	public void moveTo(AbstractFile target) throws IOException, PermissionDeniedException {
 

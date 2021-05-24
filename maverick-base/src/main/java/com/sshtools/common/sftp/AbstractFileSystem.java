@@ -580,14 +580,27 @@ public final class AbstractFileSystem {
 			throw new InvalidHandleException(shandle);
 	}
 
-	public SftpFile readSymbolicLink(String path)
+	public SftpFile readSymbolicLink(String link)
 			throws UnsupportedFileOperationException, FileNotFoundException, IOException, PermissionDeniedException {
-		throw new UnsupportedFileOperationException("Symbolic links are not supported by the Virtual File System");
+		try {
+			String linkTarget = resolveFile(link, con).readSymbolicLink();
+			AbstractFile f = resolveFile(linkTarget, con);
+			SftpFileAttributes a = f.getAttributes();
+			return new SftpFile(linkTarget, a);
+		}
+		catch(UnsupportedOperationException uoe) {
+			throw new UnsupportedFileOperationException("Symbolic links are not supported by the Virtual File System");
+		}		
 	}
 
 	public void createSymbolicLink(String link, String target)
 			throws UnsupportedFileOperationException, FileNotFoundException, IOException, PermissionDeniedException {
-		throw new UnsupportedFileOperationException("Symbolic links are not supported by the Virtual File System");
+		try {
+			resolveFile(link, con).symlinkTo(target); 
+		}
+		catch(UnsupportedOperationException uoe) {
+			throw new UnsupportedFileOperationException("Symbolic links are not supported by the Virtual File System");
+		}
 	}
 
 	public boolean fileExists(String path) throws IOException, PermissionDeniedException {

@@ -157,4 +157,14 @@ public class AbstractFileAdapter implements AbstractFile {
 	public AbstractFileFactory<? extends AbstractFile> getFileFactory() {
 		return file.getFileFactory();
 	}
+
+	@Override
+	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
+		file.symlinkTo(target);
+	}
+
+	@Override
+	public String readSymbolicLink() throws IOException, PermissionDeniedException {
+		return file.readSymbolicLink();
+	}
 }

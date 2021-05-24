@@ -89,4 +89,9 @@ public class DirectFile extends AbstractDirectFile<DirectFile> {
 		}
 		return new DirectFile(file.getAbsolutePath(), fileFactory, homeDir);
 	}
+
+	@Override
+	public String readSymbolicLink() throws IOException, PermissionDeniedException {
+		throw new UnsupportedOperationException();
+	}
 }

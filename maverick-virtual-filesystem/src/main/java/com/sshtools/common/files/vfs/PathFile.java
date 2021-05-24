@@ -315,4 +315,14 @@ public class PathFile implements AbstractFile {
 			return SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN;
 		}
 	}
+
+	@Override
+	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
+		Files.createSymbolicLink(path, factory.getFile(target).path);
+	}
+
+	@Override
+	public String readSymbolicLink() throws IOException, PermissionDeniedException {
+		return Files.readSymbolicLink(path).toString();
+	}
 }

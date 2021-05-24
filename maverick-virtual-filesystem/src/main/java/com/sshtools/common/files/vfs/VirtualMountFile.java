@@ -235,4 +235,14 @@ public class VirtualMountFile implements VirtualFile {
 				&& Objects.equals(other.mount, this.mount);
 	}
 
+	@Override
+	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
+		file.symlinkTo(target);
+	}
+
+	@Override
+	public String readSymbolicLink() throws IOException, PermissionDeniedException {
+		return file.readSymbolicLink();
+	}
+
 }

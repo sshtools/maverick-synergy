@@ -212,12 +212,13 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 			virtualPath = FileUtils.addTrailingSlash(parentMount.getMount()) + virtualPath;
 		}
 
-		String str = FileUtils.addTrailingSlash(parentMount.getRoot());
-		if (virtualPath.length() > str.length()) {
-			str += virtualPath.substring(str.length());
+		String actual = FileUtils.addTrailingSlash(parentMount.getRoot());
+		String mount = FileUtils.addTrailingSlash(parentMount.getMount());
+		if (virtualPath.length() > mount.length()) {
+			actual += virtualPath.substring(mount.length());
 		} 
 
-		return translateCanonicalPath(str, parentMount.getRoot());
+		return translateCanonicalPath(actual, parentMount.getRoot());
 	}
 	
 	static String canonicalise(String path) {

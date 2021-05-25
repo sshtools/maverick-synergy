@@ -369,7 +369,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 			ByteArrayWriter sig = new ByteArrayWriter();
 			try {
 				sig.writeString(signingKey.getPublicKey().getSigningAlgorithm());
-				sig.writeBinaryString(signingKey.getPrivateKey().sign(encoded));
+				sig.writeBinaryString(signingKey.getPrivateKey().sign(encoded, signingKey.getPublicKey().getSigningAlgorithm()));
 				this.signature = sig.toByteArray();
 			} finally {
 				sig.close();

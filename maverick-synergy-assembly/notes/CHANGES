@@ -11,6 +11,7 @@ Maverick Synergy 3.0.0-RC7 - TBC
     o Fixed broken server-side SCP and command initialization.
     o Removed NONE value from SecurityLevel. This was only used in NoneCipher and NoneHmac, which are not installed by default and the option was confusing in other context.
     o Add server socket channel to all permanent accept threads.
+    o Support for SHA2 signature usage in RSA certificates.
     
 =================
 =  HISTORY      =

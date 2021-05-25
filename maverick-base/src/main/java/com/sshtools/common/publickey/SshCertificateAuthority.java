@@ -118,6 +118,8 @@ public class SshCertificateAuthority {
 		OpenSshCertificate cert;
 		switch(key.getPublicKey().getAlgorithm()) {
 		case "ssh-rsa":
+		case "rsa-sha2-256":
+		case "rsa-sha2-512":
 			cert = new OpenSshRsaCertificate();
 			break;
 		case "ssh-ed25519":

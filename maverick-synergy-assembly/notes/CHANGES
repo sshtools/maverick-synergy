@@ -42,11 +42,7 @@ Bug Fixes
     o Callback mount URI should be passed to VFSFactory as base path.
     o AbstractFileSystem should be resilient to error during getAttributes call in readDirectory call.
     
-<<<<<<< HEAD
------------------ 
-=======
 -----------------
->>>>>>> 30b2627... Removed None Security Level.
 
 Maverick Synergy 3.0.0-RC4 - Mar 17, 2021
 

@@ -19,6 +19,8 @@
 package com.sshtools.synergy.nio;
 
 import java.io.IOException;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -197,6 +199,14 @@ public class SelectorThreadPool {
 			Log.debug("All threads are at maximum capacity");
 		return createThread();
 
+	}
+
+	public void register(ServerSocketChannel socketChannel, int ops, ClientAcceptor acceptor, boolean wakeup) throws ClosedChannelException {
+		for(SelectorThread t : threads) {
+			if(t.isPermanent()) {
+				t.register(socketChannel, ops, acceptor, wakeup);
+			}
+		}
 	}
 
 }

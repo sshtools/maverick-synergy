@@ -9,7 +9,9 @@ Maverick Synergy 3.0.0-RC7 - TBC
     o Use ConcurrentLinkedQueue to prevent concurrent modification on shutdown hooks collection.
     o Refactored support for OpenSSH certificate extensions to include support for custom extension definitions.
     o Fixed broken server-side SCP and command initialization.
-  
+    o Removed NONE value from SecurityLevel. This was only used in NoneCipher and NoneHmac, which are not installed by default and the option was confusing in other context.
+    o Add server socket channel to all permanent accept threads.
+    
 =================
 =  HISTORY      =
 =================
@@ -40,7 +42,11 @@ Bug Fixes
     o Callback mount URI should be passed to VFSFactory as base path.
     o AbstractFileSystem should be resilient to error during getAttributes call in readDirectory call.
     
+<<<<<<< HEAD
 ----------------- 
+=======
+-----------------
+>>>>>>> 30b2627... Removed None Security Level.
 
 Maverick Synergy 3.0.0-RC4 - Mar 17, 2021
 

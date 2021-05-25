@@ -42,7 +42,7 @@ import com.sshtools.common.ssh.SecurityLevel;
  */
 public class NoneCipher extends SshCipher {
     public NoneCipher() {
-        super("none", SecurityLevel.NONE, 0);
+        super("none", SecurityLevel.WEAK, 0);
     }
 
     /**

@@ -564,8 +564,7 @@ public class SshEngine {
 	public void registerAcceptor(ClientAcceptor acceptor,
 			ServerSocketChannel socketChannel) throws IOException {
 
-		SelectorThread t = acceptThreads.selectNextThread();
-		t.register(socketChannel, SelectionKey.OP_ACCEPT, acceptor, true);
+		acceptThreads.register(socketChannel, SelectionKey.OP_ACCEPT, acceptor, true);
 	}
 
 	/**

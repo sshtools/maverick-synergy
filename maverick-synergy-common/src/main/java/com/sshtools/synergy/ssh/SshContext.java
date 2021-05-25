@@ -1297,12 +1297,14 @@ public abstract class SshContext extends ProtocolContext implements
 	}
 
 	public void shutdown() {
-		getExecutorService().shutdown();
-		try {
-			getExecutorService().awaitTermination(30, TimeUnit.SECONDS);
-		} catch (InterruptedException e) {
-		} finally {
-			executor = null;
+		if(executor != null) {
+			executor.shutdown();
+			try {
+				executor.awaitTermination(30, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+			} finally {
+				executor = null;
+			}
 		}
 	}
 

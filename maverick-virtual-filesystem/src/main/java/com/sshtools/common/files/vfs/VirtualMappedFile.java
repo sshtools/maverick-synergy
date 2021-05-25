@@ -209,13 +209,17 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 			virtualPath = virtualPath.replaceFirst("./",
 					FileUtils.addTrailingSlash(parentMount.getMount()));
 		} else if (!virtualPath.startsWith("/")) {
-			virtualPath = FileUtils.addTrailingSlash(parentMount.getMount()) + virtualPath;
+			virtualPath = FileUtils.addTrailingSlash(parentMount
+					.getMount()) + virtualPath;
 		}
 
-		String str = FileUtils.addTrailingSlash(parentMount.getRoot());
-		if (virtualPath.length() > str.length()) {
-			str += virtualPath.substring(str.length());
-		} 
+		String str;
+		if (virtualPath.length() > parentMount.getMount().length()) {
+			str = FileUtils.addTrailingSlash(parentMount.getRoot())
+					+ FileUtils.removeStartingSlash(virtualPath.substring(parentMount.getMount().length()));
+		} else {
+			str = parentMount.getRoot();
+		}
 
 		return translateCanonicalPath(str, parentMount.getRoot());
 	}

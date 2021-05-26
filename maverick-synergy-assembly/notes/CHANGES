@@ -1,5 +1,8 @@
 Maverick Synergy 3.0.0-RC7 - May 26, 2021
  
+ Features
+    o Added optional symlinkTo and readSymbolicLink methods to AbstractFile.
+    
  Bug Fixes
     o Do not read or write SSH_FILEXFER_ATTR_SUBSECOND_TIMES if parent time flag has not been specified.
     o Refactored SFTP session cleanup to ensure events are always generated.
@@ -14,7 +17,8 @@ Maverick Synergy 3.0.0-RC7 - May 26, 2021
     o Support for SHA2 signature usage in RSA certificates.
     o Fixed VirtualMappedFile double slash problem when resolving actual file path.
     o Double shutdown results n OutOfMemoryError.
-    
+    o Creating a directory over SFTP should fail if the parent does not exist. This can be overridden with FileSystemPolicy method setMkdirParentMustExist.
+
 =================
 =  HISTORY      =
 =================

@@ -89,8 +89,12 @@ public interface AbstractFile {
 	
 	AbstractFileFactory<? extends AbstractFile> getFileFactory();
 	
-	void symlinkTo(String target) throws IOException, PermissionDeniedException;
+	default void symlinkTo(String target) throws IOException, PermissionDeniedException {
+		throw new UnsupportedOperationException();
+	}
 
-	String readSymbolicLink() throws IOException, PermissionDeniedException;
+	default String readSymbolicLink() throws IOException, PermissionDeniedException {
+		throw new UnsupportedOperationException();
+	}
 	
 }

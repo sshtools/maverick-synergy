@@ -49,6 +49,7 @@ public class FileSystemPolicy extends Permissions {
 	String sftpLongnameDateFormatWithTime = "MMM dd HH:mm";
 	List<SftpExtensionFactory> sftpExtensionFactories = new ArrayList<SftpExtensionFactory>();
 	boolean closeFileBeforeFailedTransferEvents = false;
+	boolean mkdirParentMustExist = true;
 	
 	private int sftpMaxPacketSize = 65536;
 	private int sftpMaxWindowSize = 1024000;
@@ -233,5 +234,13 @@ public class FileSystemPolicy extends Permissions {
 			return ff = fileFactory.getFileFactory(con);
 		}
 		
+	}
+
+	public void setMkdirParentMustExist(boolean mkdirParentMustExist) {
+		this.mkdirParentMustExist = mkdirParentMustExist;
+	}
+	
+	public boolean isMkdirParentMustExist() {
+		return mkdirParentMustExist;
 	}
 }

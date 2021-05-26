@@ -174,6 +174,10 @@ public final class AbstractFileSystem {
 			throw new PermissionDeniedException("The user does not have permission to write/create in " + parentPath);
 		}
 		
+		if(getConnection().getContext().getPolicy(FileSystemPolicy.class).isMkdirParentMustExist() && !parent.exists()) {
+			throw new FileNotFoundException("The parent folder does not exist!");
+		}
+		
 		AbstractFile f = resolveFile(path, con);
 		
 		if (f.createFolder()) {

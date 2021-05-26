@@ -19,11 +19,9 @@
 package com.sshtools.client;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -33,8 +31,6 @@ import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
-import com.sshtools.common.ssh.RequestFuture;
-import com.sshtools.common.ssh.RequestFutureListener;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.synergy.ssh.ConnectionProtocol;

@@ -31,4 +31,9 @@ public class SunEcdsaPublicKeyTest extends EcdsaPublicKeyTests {
 	protected String getTestingJCE() {
 		return "SunEC";
 	}
+	
+	@Override
+	protected boolean isJCETested() {
+		return true;
+	}
 }

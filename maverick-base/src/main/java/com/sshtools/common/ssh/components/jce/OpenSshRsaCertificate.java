@@ -30,6 +30,7 @@ import java.security.spec.InvalidKeySpecException;
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 
+import com.sshtools.common.publickey.OpenSshCertificate;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;

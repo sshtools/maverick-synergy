@@ -24,7 +24,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sshtools</groupId>
 	<artifactId>maverick-synergy-group</artifactId>
-	<version>3.0.0-RC6</version>
+	<version>3.0.0-RC7</version>
 	<name>Maverick Synergy</name>
 	<description>Open source Java SSH API</description>
 	<url>http://www.jadaptive.com</url>
@@ -68,6 +68,31 @@
 	</distributionManagement>
 
 	<profiles>
+		<profile>
+			<activation>
+				<jdk>[9,)</jdk>
+			</activation>
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-javadoc-plugin</artifactId>
+							<configuration>
+								<!-- TODO: Why is this STILL broken! -->
+								<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
+								<excludePackageNames>**.impl.*</excludePackageNames>
+								<!-- https://bugs.openjdk.java.net/browse/JDK-8212233 -->
+								<detectJavaApiLink>false</detectJavaApiLink>
+								<source>8</source>
+								<doclint>none</doclint>
+							</configuration>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
+		</profile>
+		
 		<profile>
 			<id>sign</id>
 			<build>
@@ -123,26 +148,15 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.9.1</version>
-				<executions>
-					<execution>
-						<id>javadoc-jar</id>
-						<phase>package</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-						<configuration>
-							<!-- switch on dependency-driven aggregation -->
-							<includeDependencySources>false</includeDependencySources>
-							<dependencySourceIncludes>
-								<!-- include ONLY dependencies I control -->
-								<dependencySourceInclude>com.sshtools:*</dependencySourceInclude>
-							</dependencySourceIncludes>
-							<additionalparam>-Xdoclint:none</additionalparam>
-							<detectJavaApiLink>false</detectJavaApiLink>
-						</configuration>
-					</execution>
-				</executions>
+				<version>3.2.0</version>
+				<configuration>
+					<encoding>UTF-8</encoding>
+					<excludePackageNames>**.impl.*</excludePackageNames>
+					<!-- https://bugs.openjdk.java.net/browse/JDK-8212233 -->
+					<detectJavaApiLink>false</detectJavaApiLink>
+					<source>8</source>
+					<doclint>none</doclint>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>com.mycila</groupId>

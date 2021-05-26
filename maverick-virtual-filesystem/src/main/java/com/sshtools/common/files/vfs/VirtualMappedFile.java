@@ -216,12 +216,24 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 		String str;
 		if (virtualPath.length() > parentMount.getMount().length()) {
 			str = FileUtils.addTrailingSlash(parentMount.getRoot())
-					+ virtualPath.substring(parentMount.getMount().length());
+					+ FileUtils.removeStartingSlash(virtualPath.substring(parentMount.getMount().length()));
 		} else {
 			str = parentMount.getRoot();
 		}
 
 		return translateCanonicalPath(str, parentMount.getRoot());
+	}
+	
+	static String canonicalise(String path) {
+		String[] pathElements = path.replace('\\', '/').split("/");
+		List<String> canonicalisedPathEls = new ArrayList<String>();
+		for(int i = 0 ; i < pathElements.length; i++) {
+			if(pathElements[i].equals("..") && canonicalisedPathEls.size() > 0) 
+				canonicalisedPathEls.remove(canonicalisedPathEls.size() - 1);
+			else if(!pathElements[i].equals("."))
+				canonicalisedPathEls.add(pathElements[i]);
+		}
+		return String.join("/", canonicalisedPathEls);
 	}
 
 	protected String translateCanonicalPath(String path, String securemount)
@@ -233,11 +245,7 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 				Log.trace("                     Mount: {} ", securemount);
 			}
 
-			boolean containsDotDot = path.indexOf("..") > -1 || path.indexOf('.') > -1;
-
-			AbstractFile f = parentMount.getActualFileFactory().getFile(path);
-			String canonical = containsDotDot ? f.getCanonicalPath().replace(
-					'\\', '/') : f.getAbsolutePath().replace('\\', '/');
+			String canonical = canonicalise(path);
 
 			AbstractFile f2 = parentMount.getActualFileFactory().getFile(
 					securemount);
@@ -249,8 +257,7 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 			 */
 //			containsDotDot = securemount.indexOf("..") > -1
 			
-			String canonical2 = containsDotDot ? f2.getCanonicalPath().replace(
-					'\\', '/') : f2.getAbsolutePath().replace('\\', '/');
+			String canonical2 = canonicalise(f2.getAbsolutePath());
 
 			if (!canonical2.endsWith("/")) {
 				canonical2 += "/";
@@ -302,6 +309,17 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 		VirtualMappedFile other = getClass().cast(obj);
 		return Objects.equals(other.absolutePath, this.absolutePath)
 				&& Objects.equals(other.parentMount, this.parentMount);
+	}
+
+	@Override
+	public String readSymbolicLink() throws IOException, PermissionDeniedException {
+		String linkPath = super.readSymbolicLink();
+		return toVirtualPath(linkPath);
+	}
+
+	@Override
+	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
+		super.symlinkTo(toActualPath(target));
 	}
 	
 	

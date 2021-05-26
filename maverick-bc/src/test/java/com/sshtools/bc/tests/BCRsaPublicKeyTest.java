@@ -31,5 +31,10 @@ public class BCRsaPublicKeyTest extends RsaPublicKeyTests {
 	protected String getTestingJCE() {
 		return "BC";
 	}
+	
+	@Override
+	protected boolean isJCETested() {
+		return true;
+	}
 
 }

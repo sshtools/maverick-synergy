@@ -1097,6 +1097,7 @@ public class SftpClient {
 			// file and seek to end of the file ready to continue writing
 			if (resume && localPath.exists()) {
 				out = localPath.getOutputStream(true);
+				position = localPath.length();
 			} else {
 				out = localPath.getOutputStream();
 			}
@@ -1436,9 +1437,9 @@ public class SftpClient {
 
 		String[] matchedFiles = matchLocalFiles(local);
 
-		// call put for each matched file
-		// call the correct put method depending on the put method that called
-		// this
+		if(Log.isDebugEnabled()) {
+			Log.debug("Matched {} files for {}", matchedFiles.length, local);
+		}
 
 		for (int i = 0; i < matchedFiles.length; i++) {
 			// use file exists once added rather than try catch
@@ -2393,7 +2394,7 @@ public class SftpClient {
 								SftpStatusException.SSH_FX_FAILURE,
 								"Directory has contents, cannot delete without recurse=true");
 					}
-				} else if (file.isFile()) {
+				} else if (file.isFile() || file.isLink()) {
 					sftp.removeFile(file.getAbsolutePath());
 				}
 			}
@@ -2974,10 +2975,12 @@ public class SftpClient {
 
 		for (int i = 0; i < files.length; i++) {
 			file = files[i];
+			System.out.println("Process: " + file.getAbsolutePath());
 
 			if (file.isDirectory() && !file.getFilename().equals(".")
 					&& !file.getFilename().equals("..")) {
 				if (recurse) {
+					System.out.println("   is dir "  + file.getAbsolutePath());
 					f = local.resolveFile(file.getFilename());
 					op.addDirectoryOperation(
 							getRemoteDirectory(file.getFilename(),
@@ -2987,11 +2990,16 @@ public class SftpClient {
 			} else if (file.isFile()) {
 				f = local.resolveFile(file.getFilename());
 
+				System.out.println("   file "  + f.getAbsolutePath() + " (exists " + f.exists() + ") len: " + f.length() + " vs " + file.getAttributes().getSize().longValue() + " date: " + ( f.lastModified() / 1000 ) + " vs " + file.getAttributes()
+				.getModifiedTime().longValue());
+
 				if (f.exists()
 						&& (f.length() == file.getAttributes().getSize()
 								.longValue())
 						&& ((f.lastModified() / 1000) == file.getAttributes()
 								.getModifiedTime().longValue())) {
+
+					System.out.println("   is unchanged "  + file.getAbsolutePath());
 					if (commit) {
 						op.addUnchangedFile(f);
 					} else {
@@ -3004,12 +3012,14 @@ public class SftpClient {
 				try {
 
 					if (f.exists()) {
+						System.out.println("   is updated "  + file.getAbsolutePath());
 						if (commit) {
 							op.addUpdatedFile(f);
 						} else {
 							op.addUpdatedFile(file);
 						}
 					} else {
+						System.out.println("   is new "  + file.getAbsolutePath());
 						if (commit) {
 							op.addNewFile(f);
 						} else {
@@ -3019,6 +3029,7 @@ public class SftpClient {
 
 					if (commit) {
 						// Get the file
+						System.out.println("   get "  + file.getAbsolutePath());
 						get(file.getFilename(), f.getAbsolutePath(), progress);
 					}
 
@@ -3041,12 +3052,14 @@ public class SftpClient {
 
 						if (f2.isDirectory() && !f2.getName().equals(".")
 								&& !f2.getName().equals("..")) {
+							System.out.println("   delete recurse into "  + f2.getAbsolutePath());
 							recurseMarkForDeletion(f2, op);
 
 							if (commit) {
 								f2.delete(true);
 							}
 						} else if (commit) {
+							System.out.println("   delete "  + f2.getAbsolutePath());
 							f2.delete(false);
 						}
 					}

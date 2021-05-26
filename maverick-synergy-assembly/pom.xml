@@ -23,7 +23,7 @@
   <parent>
     <groupId>com.sshtools</groupId>
     <artifactId>maverick-synergy-group</artifactId>
-    <version>3.0.0-RC6</version>
+    <version>3.0.0-RC7</version>
   </parent>
 
   <artifactId>maverick-synergy-assembly</artifactId>
@@ -104,6 +104,10 @@
             </descriptors>
           </configuration>
         </plugin>
+        <plugin>
+			<artifactId>maven-javadoc-plugin</artifactId>
+			<version>3.2.0</version>
+		</plugin>
       </plugins>
     </pluginManagement>
   	<plugins>
@@ -118,7 +122,6 @@
 		</plugin>
 		<plugin>
 			<artifactId>maven-javadoc-plugin</artifactId>
-			<version>2.9.1</version>
 			<executions>
 				<execution>
 					<id>javadoc-jar</id>
@@ -127,14 +130,12 @@
 						<goal>jar</goal>
 					</goals>
 					<configuration>
-						<!-- switch on dependency-driven aggregation -->
-						<includeDependencySources>true</includeDependencySources>
-						
-						<dependencySourceIncludes>
-							<!-- include ONLY dependencies I control -->
-							<dependencySourceInclude>com.sshtools:*</dependencySourceInclude>
-						</dependencySourceIncludes>
-						<additionalparam>-Xdoclint:none</additionalparam>
+						<encoding>UTF-8</encoding>
+						<excludePackageNames>**.impl.*</excludePackageNames>
+						<!-- https://bugs.openjdk.java.net/browse/JDK-8212233 -->
+						<detectJavaApiLink>false</detectJavaApiLink>
+						<source>8</source>
+						<doclint>none</doclint>
 					</configuration>
 				</execution>
 			</executions>

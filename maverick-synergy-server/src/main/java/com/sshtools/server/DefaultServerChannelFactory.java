@@ -27,6 +27,7 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpSubsystem;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.SessionChannel;
+import com.sshtools.common.ssh.SessionChannelServer;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.Subsystem;
@@ -45,6 +46,10 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 	public DefaultServerChannelFactory() {
 	}
 
+	public ComponentFactory<ExecutableCommand> supportedCommands() {
+		return commands;
+	}
+	
 	public final ChannelNG<SshServerContext> createChannel(String channeltype, SshConnection con)
 			throws UnsupportedChannelException, PermissionDeniedException, ChannelOpenException {
 
@@ -115,7 +120,7 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 	}
 
 	@Override
-	public ExecutableCommand executeCommand(String[] args, Map<String, String> environment) throws PermissionDeniedException, UnsupportedChannelException {
+	public ExecutableCommand executeCommand(SessionChannel sessionChannel, String[] args, Map<String, String> environment) throws PermissionDeniedException, UnsupportedChannelException {
 		
 		if(args.length==0) {
 			throw new UnsupportedChannelException("No arguments provided");
@@ -123,6 +128,7 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 		
 		try {
 			ExecutableCommand process = commands.getInstance(args[0]);
+			process.init((SessionChannelServer)sessionChannel);
 			process.createProcess(args, environment);
 			return process;
 		} catch (SshException e) {	

@@ -29,7 +29,6 @@ import com.sshtools.common.ssh.components.SshCertificate;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
-import com.sshtools.common.ssh.components.jce.OpenSshCertificate;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA256;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA512;
 import com.sshtools.common.util.IOUtils;

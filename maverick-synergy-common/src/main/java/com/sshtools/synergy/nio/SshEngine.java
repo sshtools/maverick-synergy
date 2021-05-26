@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
@@ -64,7 +65,7 @@ public class SshEngine {
 	boolean isStarting = false;
 	boolean startupRequiresListeningInterfaces = false;
 	List<ListeningInterface> listeningInterfaces = Collections.synchronizedList(new ArrayList<ListeningInterface>());
-	List<Runnable> shutdownHooks = new ArrayList<Runnable>();
+	ConcurrentLinkedQueue<Runnable> shutdownHooks = new ConcurrentLinkedQueue<Runnable>();
 	Throwable lastError = null;
 	AbstractRequestFuture shutdownFuture = new ChannelRequestFuture();
 	
@@ -189,8 +190,8 @@ public class SshEngine {
 				public void run() {
 					if(Log.isInfoEnabled())
 						Log.info("The system is shutting down");
-					shutdownNow(true, 
-							getLongValue(properties, "maverick.config.shutdown.defaultGracePeriod", 5000L));
+					shutdownNow(true, getLongValue(properties, 
+							"maverick.config.shutdown.defaultGracePeriod", 5000L));
 				}
 			};
 
@@ -465,7 +466,6 @@ public class SshEngine {
 			
 		} finally {
 			started = false;
-			
 			shutdownFuture.done(true);
 		}
 	}
@@ -564,8 +564,7 @@ public class SshEngine {
 	public void registerAcceptor(ClientAcceptor acceptor,
 			ServerSocketChannel socketChannel) throws IOException {
 
-		SelectorThread t = acceptThreads.selectNextThread();
-		t.register(socketChannel, SelectionKey.OP_ACCEPT, acceptor, true);
+		acceptThreads.register(socketChannel, SelectionKey.OP_ACCEPT, acceptor, true);
 	}
 
 	/**

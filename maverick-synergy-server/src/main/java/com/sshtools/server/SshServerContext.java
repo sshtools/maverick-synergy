@@ -34,7 +34,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.DefaultAuthenticationMechanismFactory;
-import com.sshtools.common.command.ExecutableCommand;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyPairGenerator;
@@ -77,9 +76,6 @@ import com.sshtools.synergy.ssh.components.SshKeyExchange;
 public class SshServerContext extends SshContext {
 
 	Map<String, SshKeyPair> hostkeys = new ConcurrentHashMap<String, SshKeyPair>(8, 0.9f, 1);
-
-	Map<String, Class<? extends ExecutableCommand>> commands 
-		= new ConcurrentHashMap<String, Class<? extends ExecutableCommand>>(8, 0.9f, 1);
 	
 	boolean ensureGracefulDisconnect = false;
 
@@ -329,42 +325,6 @@ public class SshServerContext extends SshContext {
 	
 	public void setForwardingManager(ForwardingManager<SshServerContext> forwardingManager) {
 		this.forwardingManager = forwardingManager;
-	}
-	
-	/**
-	 * Add an {@link com.sshtools.synergy.common.command.ExecutableCommand} to the configuration.
-	 * If a request to execute a command with the name <em>name</em> is received
-	 * an instance of the class is created to handle the command execution.
-	 * 
-	 * @param name
-	 *            String
-	 * @param cls
-	 *            Class
-	 */
-	public void addCommand(String name, Class<? extends ExecutableCommand> cls) {
-		commands.put(name.toLowerCase(), cls);
-	}
-
-	/**
-	 * Determine whether a command is configured.
-	 * 
-	 * @param name
-	 *            String
-	 * @return boolean
-	 */
-	public boolean containsCommand(String name) {
-		return commands.containsKey(name.toLowerCase());
-	}
-
-	/**
-	 * Get the Class implementation for a given command.
-	 * 
-	 * @param name
-	 *            String
-	 * @return Class
-	 */
-	public Class<? extends ExecutableCommand> getCommand(String name) {
-		return commands.get(name.toLowerCase());
 	}
 
 	/**

@@ -36,8 +36,6 @@ import com.sshtools.common.nio.IdleStateManager;
  */
 public class SelectorThread extends Thread {
 
-	
-
 	Selector selector;
 	boolean running;
 	LinkedList<Registration> pendingRegistrations;

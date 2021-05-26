@@ -52,14 +52,13 @@ public abstract class AbstractDirectFile<T extends AbstractDirectFile<T>> extend
 		
 		hidden = f.getName().startsWith(".");
 	}
-
 	
 	public boolean exists() {
 		return f.exists();
 	}
 
 	public boolean createFolder() throws PermissionDeniedException {
-		return f.mkdirs();
+		return f.mkdir();
 	}
 
 	public long lastModified() {
@@ -121,7 +120,7 @@ public abstract class AbstractDirectFile<T extends AbstractDirectFile<T>> extend
 		f.renameTo(new File(f2.getAbsolutePath()));
 	}
 
-	public void setAttributes(SftpFileAttributes attrs) {
+	public void setAttributes(SftpFileAttributes attrs) throws IOException {
 		
 		if(attrs.hasModifiedTime()) {
 			f.setLastModified(attrs.getModifiedTime().longValue() * 1000);

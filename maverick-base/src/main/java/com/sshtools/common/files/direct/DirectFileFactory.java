@@ -37,7 +37,7 @@ public class DirectFileFactory extends AbstractDirectFileFactory<DirectFile> {
 		
 		try {
 			clz = (Class<DirectFile>)DirectFileFactory.class.forName("com.sshtools.common.files.direct.DirectFileJava7");
-			constructor = clz.getConstructor(String.class, AbstractFileFactory.class, String.class);
+			constructor = clz.getConstructor(String.class, AbstractFileFactory.class, File.class);
 		} catch (Throwable e) {
 			Log.warn("Falling back to simple DirectFile implementation as current version of Java does not appear to support Path and FileAttributes APIs");
 		}

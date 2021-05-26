@@ -132,6 +132,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 	protected void cleanupSubsystem() {
 
 		if (!nfsClosed) {
+
+			if(Log.isDebugEnabled()) {
+				Log.debug("Cleaning up SFTP subsystem");
+			}
 			
 			long started = System.currentTimeMillis();
 			
@@ -152,11 +156,9 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 					.addAttribute(
 							EventCodes.ATTRIBUTE_CONNECTION,
 							con));
-			if(Log.isDebugEnabled()) {
-				Log.debug("Cleaning up SFTP subsystem");
-			}
 			
 			cleanupOpenFiles();
+			
 			if(nfs!=null) {
 				nfs.closeFilesystem();
 			}
@@ -597,7 +599,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			int id = -1;
 			try {
 				id = (int) bar.readInt();
-				SftpFile[] files = new SftpFile[1];
+				SftpFile[] files = new SftpFile[1]; 
 				files[0] = nfs.readSymbolicLink(checkDefaultPath(bar
 						.readString(CHARSET_ENCODING)));
 				sendFilenameMessage(id, files, false, true);
@@ -869,6 +871,9 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				} catch (SftpStatusEventException ex) {
 					sendStatusMessage(id, ex.getStatus(), ex.getMessage());
 				}
+			} catch (FileIsDirectoryException fed) {
+				fireRemoveFileEvent(path, started, fed);
+				sendStatusMessage(id, SSH_FX_FILE_IS_A_DIRECTORY, fed.getMessage());
 			} catch (FileNotFoundException ioe) {
 				fireRemoveFileEvent(path, started, ioe);
 				sendStatusMessage(id, STATUS_FX_NO_SUCH_FILE, ioe.getMessage());
@@ -2264,7 +2269,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 						fireMakeDirectoryEvent(path, started,
 								exists ? new FileExistsException() : new IOException("The operation failed."));
 
-						sendStatusMessage(id, exists ? SSH_FX_FILE_ALREADY_EXISTS : STATUS_FX_FAILURE,
+						sendStatusMessage(id, exists ? SSH_FX_FILE_ALREADY_EXISTS : STATUS_FX_NO_SUCH_FILE,
 								"The operation failed");
 					} catch (SftpStatusEventException ex) {
 						sendStatusMessage(id, ex.getStatus(), ex.getMessage());

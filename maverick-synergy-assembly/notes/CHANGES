@@ -1,3 +1,24 @@
+Maverick Synergy 3.0.0-RC7 - May 26, 2021
+ 
+ Bug Fixes
+    o Do not read or write SSH_FILEXFER_ATTR_SUBSECOND_TIMES if parent time flag has not been specified.
+    o Refactored SFTP session cleanup to ensure events are always generated.
+    o EVENT_AUTHENTICATION_STARTED added and fired once to indicate client has started authentication service with username parameter, EVENT_USERAUTH_STARTED now is fired at the beginning of each separate authentication attempt with parameters for user and method being attempted. 
+    o Fixed event started/finished attributes in authentication to encompass entire authentication step, and separately on each individual attempt.
+    o Allow JVM default trusted CA certificate store password of "changeit" to be overridden with System property maverick.trustedCACertsPassword.
+    o Use ConcurrentLinkedQueue to prevent concurrent modification on shutdown hooks collection.
+    o Refactored support for OpenSSH certificate extensions to include support for custom extension definitions.
+    o Fixed broken server-side SCP and command initialization.
+    o Removed NONE value from SecurityLevel. This was only used in NoneCipher and NoneHmac, which are not installed by default and the option was confusing in other context.
+    o Add server socket channel to all permanent accept threads.
+    o Support for SHA2 signature usage in RSA certificates.
+    o Fixed VirtualMappedFile double slash problem when resolving actual file path.
+    o Double shutdown results n OutOfMemoryError.
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.0-RC6 - May 4, 2021
 
 Bug Fixes
@@ -6,9 +27,7 @@ Bug Fixes
     o Authentication hangs if server does not support KBI authentication or if `preferKeyboardInteractiveOverPassword` is false.
     o The static executor field on SshContext can be shutdown and then reused by another SshClient, resulting in an exception.
     
-=================
-=  HISTORY      =
-=================
+-----------------
 
 Maverick Synergy 3.0.0-RC5 - April 6, 2021
 
@@ -26,7 +45,7 @@ Bug Fixes
     o Callback mount URI should be passed to VFSFactory as base path.
     o AbstractFileSystem should be resilient to error during getAttributes call in readDirectory call.
     
------------------ 
+-----------------
 
 Maverick Synergy 3.0.0-RC4 - Mar 17, 2021
 

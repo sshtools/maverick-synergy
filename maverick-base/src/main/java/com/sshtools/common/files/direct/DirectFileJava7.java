@@ -26,10 +26,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
@@ -43,6 +45,31 @@ public class DirectFileJava7 extends DirectFile {
 		super(path, fileFactory, homeDir);
 	}
 
+	@Override
+	public void setAttributes(SftpFileAttributes attrs) throws IOException {
+		Path file = FileSystems.getDefault().getPath(f.getAbsolutePath());
+		if(attrs.hasModifiedTime()) {
+			Files.setLastModifiedTime(file, FileTime.fromMillis(attrs.getModifiedTime().longValue() * 1000));
+		}
+		String str = attrs.getPermissionsString();
+		if(str != null && str.length() == 10) {
+			String current = null;
+			try {
+				current = PosixFilePermissions.toString(Files.getPosixFilePermissions(file));
+			}
+			catch(UnsupportedOperationException uoe) {
+			}
+			if(current != null) {
+				String wanted = str.substring(1);
+				if(!Objects.equals(current, wanted))
+					Files.setPosixFilePermissions(file, PosixFilePermissions.fromString(wanted));
+			}
+		}
+		if(attrs.hasUID()) {
+		}
+	}
+
+	@Override
 	public SftpFileAttributes getAttributes() throws IOException {
 		
 		if(!f.exists())
@@ -117,9 +144,12 @@ public class DirectFileJava7 extends DirectFile {
 		return SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN;
 	}
 
+	@Override
 	public List<AbstractFile> getChildren() throws IOException {
 		
 		File[] files = f.listFiles();
+		if(files == null)
+			throw new IOException(String.format("%s is unreadable.", f));
 		List<AbstractFile> files2 = new ArrayList<AbstractFile>();
 		for(File f : files) {
 			files2.add(new DirectFileJava7(f.getAbsolutePath(), fileFactory, homeDir));
@@ -127,8 +157,28 @@ public class DirectFileJava7 extends DirectFile {
 		return files2;
 	}
 
+	@Override
 	public AbstractFile resolveFile(String child) throws IOException,
 			PermissionDeniedException {
-		return new DirectFileJava7(new File(f, child).getAbsolutePath(), fileFactory, homeDir);
+		File file = new File(child);
+		if(!file.isAbsolute()) {
+			file = new File(f, child);
+		}
+		return new DirectFileJava7(file.getAbsolutePath(), fileFactory, homeDir);
+	}
+
+	@Override
+	public void linkTo(String target) throws IOException, PermissionDeniedException {
+		Files.createLink(f.toPath(), target.startsWith("/") ? fileFactory.getFile(target).f.toPath() : homeDir.toPath().resolve(target));
+	}
+
+	@Override
+	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
+		Files.createSymbolicLink(f.toPath(), target.startsWith("/") ? fileFactory.getFile(target).f.toPath() : homeDir.toPath().resolve(target));
+	}
+
+	@Override
+	public String readSymbolicLink() throws IOException, PermissionDeniedException {
+		return Files.readSymbolicLink(f.toPath()).toString();
 	}
 }

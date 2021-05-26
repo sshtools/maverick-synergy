@@ -31,4 +31,9 @@ public class BCFIPSEcdsaPublicKeyTest extends EcdsaPublicKeyTests {
 	protected String getTestingJCE() {
 		return "BCFIPS";
 	}
+	
+	@Override
+	protected boolean isJCETested() {
+		return true;
+	}
 }

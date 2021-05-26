@@ -30,5 +30,10 @@ public class SunRsaPublicKeyTest extends RsaPublicKeyTests {
 	protected String getTestingJCE() {
 		return "SunRsaSign";
 	}
+	
+	@Override
+	protected boolean isJCETested() {
+		return true;
+	}
 
 }

@@ -388,4 +388,9 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 		return false;
 	}
 
+	@Override
+	public String readSymbolicLink() throws IOException, PermissionDeniedException {
+		throw new UnsupportedOperationException();
+	}
+
 }

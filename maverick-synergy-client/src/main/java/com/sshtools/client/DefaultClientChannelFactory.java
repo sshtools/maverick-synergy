@@ -26,6 +26,7 @@ import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.Subsystem;
 import com.sshtools.common.ssh.UnsupportedChannelException;
+import com.sshtools.common.ssh.components.ComponentFactory;
 import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.ChannelNG;
 
@@ -34,10 +35,7 @@ import com.sshtools.synergy.ssh.ChannelNG;
  */
 public class DefaultClientChannelFactory implements ChannelFactory<SshClientContext> {
 
-	
-	
 	public DefaultClientChannelFactory() {
-		
 	}
 	
 	/**
@@ -70,8 +68,13 @@ public class DefaultClientChannelFactory implements ChannelFactory<SshClientCont
 	}
 
 	@Override
-	public ExecutableCommand executeCommand(String[] args, Map<String, String> environment)
+	public ExecutableCommand executeCommand(SessionChannel channel, String[] args, Map<String, String> environment)
 			throws PermissionDeniedException, UnsupportedChannelException {
 		throw new PermissionDeniedException("Client cannot execute commands");
+	}
+
+	@Override
+	public ComponentFactory<ExecutableCommand> supportedCommands() {
+		throw new UnsupportedOperationException("Commands are not supported in client configurations");
 	}
 }

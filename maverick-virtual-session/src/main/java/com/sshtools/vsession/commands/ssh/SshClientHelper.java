@@ -52,7 +52,7 @@ public class SshClientHelper {
 		}
 		
 		if (CommandUtil.isNotEmpty(arguments.getCiphers()) || CommandUtil.isNotEmpty(arguments.getHmacs())) {
-			return new SshClientContext(SecurityLevel.NONE);
+			return new SshClientContext(SecurityLevel.WEAK);
 		}
 				
 		return new SshClientContext();

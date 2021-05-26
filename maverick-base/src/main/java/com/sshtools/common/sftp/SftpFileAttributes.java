@@ -329,36 +329,40 @@ public class SftpFileAttributes {
 			atime = new UnsignedInteger64(bar.readInt());
 			mtime = new UnsignedInteger64(bar.readInt());
 		} else if (version > 3 && bar.available() > 0) {
-			if (isFlagSet(SSH_FILEXFER_ATTR_ACCESSTIME, version) && bar.available() >= 8)
+			if (isFlagSet(SSH_FILEXFER_ATTR_ACCESSTIME, version) && bar.available() >= 8) {
 				atime = bar.readUINT64();
-			if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)
-					&& bar.available() >= 4) {
-				atime_nano = bar.readUINT32();
+				if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)
+						&& bar.available() >= 4) {
+					atime_nano = bar.readUINT32();
+				}
 			}
 		}
 
 		if (version > 3 && bar.available() > 0) {
-			if (isFlagSet(SSH_FILEXFER_ATTR_CREATETIME, version) && bar.available() >= 8)
+			if (isFlagSet(SSH_FILEXFER_ATTR_CREATETIME, version) && bar.available() >= 8) {
 				createtime = bar.readUINT64();
-			if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)
-					&& bar.available() >= 4)
-				createtime_nano = bar.readUINT32();
+				if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)
+						&& bar.available() >= 4)
+					createtime_nano = bar.readUINT32();
+			}
 		}
 
 		if (version > 3 && bar.available() > 0) {
-			if (isFlagSet(SSH_FILEXFER_ATTR_MODIFYTIME, version) && bar.available() >= 8)
+			if (isFlagSet(SSH_FILEXFER_ATTR_MODIFYTIME, version) && bar.available() >= 8) {
 				mtime = bar.readUINT64();
-			if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)
-					&& bar.available() >= 4)
-				mtime_nano = bar.readUINT32();
+				if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)
+						&& bar.available() >= 4)
+					mtime_nano = bar.readUINT32();
+			}
 		}
 
 		if (version >= 6 && bar.available() > 0) {
-			if (isFlagSet(SSH_FILEXFER_ATTR_CTIME, version) && bar.available() >= 8)
+			if (isFlagSet(SSH_FILEXFER_ATTR_CTIME, version) && bar.available() >= 8) {
 				ctime = bar.readUINT64();
-			if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)
-					&& bar.available() >= 4)
-				ctime_nano = bar.readUINT32();
+				if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)
+						&& bar.available() >= 4)
+					ctime_nano = bar.readUINT32();
+			}
 		}
 		// We are currently ignoring ACL and extended attributes
 		if (version > 3 && isFlagSet(SSH_FILEXFER_ATTR_ACL, version)
@@ -922,26 +926,23 @@ public class SftpFileAttributes {
 
 				if (isFlagSet(SSH_FILEXFER_ATTR_ACCESSTIME, version)) {
 					baw.writeUINT64(atime);
-				}
-
-				if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)) {
-					baw.writeUINT32(atime_nano);
+					if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)) {
+						baw.writeUINT32(atime_nano);
+					}
 				}
 
 				if (isFlagSet(SSH_FILEXFER_ATTR_CREATETIME, version)) {
 					baw.writeUINT64(createtime);
-				}
-
-				if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)) {
-					baw.writeUINT32(createtime_nano);
+					if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)) {
+						baw.writeUINT32(createtime_nano);
+					}
 				}
 
 				if (isFlagSet(SSH_FILEXFER_ATTR_MODIFYTIME, version)) {
 					baw.writeUINT64(mtime);
-				}
-
-				if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)) {
-					baw.writeUINT32(mtime_nano);
+					if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)) {
+						baw.writeUINT32(mtime_nano);
+					}
 				}
 
 			}

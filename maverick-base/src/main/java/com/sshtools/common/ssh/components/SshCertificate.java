@@ -18,7 +18,7 @@
  */
 package com.sshtools.common.ssh.components;
 
-import com.sshtools.common.ssh.components.jce.OpenSshCertificate;
+import com.sshtools.common.publickey.OpenSshCertificate;
 
 public class SshCertificate extends SshKeyPair {
 

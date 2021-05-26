@@ -27,11 +27,11 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.publickey.OpenSshCertificate;
 import com.sshtools.common.publickey.SshPublicKeyFile;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.ssh.components.jce.OpenSshCertificate;
 
 public class OpenSshCertificateAuthenticationProvider implements PublicKeyAuthenticationProvider {
 

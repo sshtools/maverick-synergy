@@ -107,6 +107,7 @@ public abstract class ComponentManager {
 	ComponentFactory<SshHmac> hmacsSC;
 	ComponentFactory<SshPublicKey> publickeys;
 	ComponentFactory<Digest> digests;
+	
 	static Object lock = new Object();
 
 	/**
@@ -135,6 +136,13 @@ public abstract class ComponentManager {
 
 	public static ComponentManager getDefaultInstance() {
 		return getInstance();
+	}
+	
+	public static void reset() {
+		synchronized (lock) {
+			instance = null;
+			getInstance();
+		}
 	}
 	
 	protected void init() throws SshException {

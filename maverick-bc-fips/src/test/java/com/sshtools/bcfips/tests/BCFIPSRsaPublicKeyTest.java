@@ -31,4 +31,9 @@ public class BCFIPSRsaPublicKeyTest extends RsaPublicKeyTests {
 	protected String getTestingJCE() {
 		return "BCFIPS";
 	}
+	
+	@Override
+	protected boolean isJCETested() {
+		return true;
+	}
 }

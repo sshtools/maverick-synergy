@@ -61,7 +61,7 @@ public class NoneHmac implements SshHmac {
 
 	@Override
 	public SecurityLevel getSecurityLevel() {
-		return SecurityLevel.NONE;
+		return SecurityLevel.WEAK;
 	}
 
 	@Override

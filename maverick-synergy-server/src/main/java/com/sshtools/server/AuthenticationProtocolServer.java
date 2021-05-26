@@ -69,10 +69,11 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	String service;
 	ArrayList<String> completedAuthentications = new ArrayList<String>();
 	Map<String, Object> authenticationParameters = new ConcurrentHashMap<String, Object>(8, 0.9f, 1);
-	Date started = new Date();
+	Date authenticationStarted = new Date();
+	Date methodStarted;
 	String[] requiredAuthentications = null;
 	boolean authenticated = false;
-	boolean firstAttempt = false;
+	boolean firstAttempt = true;
 	
 	/** The name of this service "ssh-userauth" */
 	static final String SERVICE_NAME = "ssh-userauth";
@@ -109,6 +110,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	 * check for an authentication banner and send if configured.
 	 */
 	public void start() {
+		
 		/**
 		 * Send a banner message if we have one configured
 		 */
@@ -188,14 +190,11 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 			Connection<SshServerContext> con = transport.getConnection();
 			con.setUsername(username);			
 			
-			if(!firstAttempt) {
-				
-				EventServiceImplementation
-				.getInstance()
-				.fireEvent(
+			if(firstAttempt) {
+				EventServiceImplementation.getInstance().fireEvent(
 						new Event(
 								this,
-								EventCodes.EVENT_USERAUTH_STARTED,
+								EventCodes.EVENT_AUTHENTICATION_STARTED,
 								true)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_CONNECTION,
@@ -204,17 +203,37 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 										EventCodes.ATTRIBUTE_ATTEMPTED_USERNAME,
 										username)
 								.addAttribute(
-										EventCodes.ATTRIBUTE_AUTHENTICATION_METHOD,
-										currentMethod)
-								.addAttribute(
 										EventCodes.ATTRIBUTE_OPERATION_STARTED,
-										started)
+										authenticationStarted)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
 										new Date()));
 				
-				firstAttempt = true;
+				firstAttempt = false;
 			}
+			
+			methodStarted = new Date();
+			
+			EventServiceImplementation.getInstance().fireEvent(
+					new Event(
+							this,
+							EventCodes.EVENT_USERAUTH_STARTED,
+							true)
+							.addAttribute(
+									EventCodes.ATTRIBUTE_CONNECTION,
+									transport.getConnection())
+							.addAttribute(
+									EventCodes.ATTRIBUTE_ATTEMPTED_USERNAME,
+									username)
+							.addAttribute(
+									EventCodes.ATTRIBUTE_AUTHENTICATION_METHOD,
+									currentMethod)
+							.addAttribute(
+									EventCodes.ATTRIBUTE_OPERATION_STARTED,
+									methodStarted)
+							.addAttribute(
+									EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+									new Date()));
 			
 			if(requiredAuthentications == null
 					|| transport.getSshContext().getPolicy(AuthenticationPolicy.class).getRequiredAuthenticationStrategy()
@@ -350,7 +369,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 													currentMethod)
 											.addAttribute(
 													EventCodes.ATTRIBUTE_OPERATION_STARTED,
-													started)
+													methodStarted)
 											.addAttribute(
 													EventCodes.ATTRIBUTE_OPERATION_FINISHED,
 													new Date()));
@@ -367,7 +386,13 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 													transport.getConnection())
 											.addAttribute(
 													EventCodes.ATTRIBUTE_AUTHENTICATION_METHODS,
-													completedAuthentications));
+													completedAuthentications)
+											.addAttribute(
+													EventCodes.ATTRIBUTE_OPERATION_STARTED,
+													authenticationStarted)
+											.addAttribute(
+													EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+													new Date()));
 
 					for(ServerConnectionStateListener listener : getContext().getStateListeners()) {
 						listener.authenticationComplete(transport.getConnection());

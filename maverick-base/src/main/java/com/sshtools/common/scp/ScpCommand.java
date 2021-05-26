@@ -1061,7 +1061,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					if(Log.isDebugEnabled())
 						Log.debug("Reading from client");
 					
-					if(filePolicy.hasUploadQuota()) {
+					if(filePolicy != null && filePolicy.hasUploadQuota()) {
 						if(!con.containsProperty("uploadQuota")) {
 							con.setProperty("uploadQuota", new Long(0L));
 						}
@@ -1166,7 +1166,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					fireUploadErrorEvent(handle, targetPath, started, count, ex, con);
 					throw new IOException("Permission denied");
 				} catch (Throwable ex) {
-					writeError("Received exception during transfer to file system");
+					writeError("Received exception during transfer to file system. " + ex.getMessage());
 					fireUploadErrorEvent(handle, targetPath, started, count, ex, con);
 					throw new IOException(ex.getMessage(), ex);
 				} finally {

@@ -92,7 +92,6 @@
 				</pluginManagement>
 			</build>
 		</profile>
-		
 		<profile>
 			<id>sign</id>
 			<build>
@@ -149,14 +148,28 @@
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>3.2.0</version>
-				<configuration>
-					<encoding>UTF-8</encoding>
-					<excludePackageNames>**.impl.*</excludePackageNames>
-					<!-- https://bugs.openjdk.java.net/browse/JDK-8212233 -->
-					<detectJavaApiLink>false</detectJavaApiLink>
-					<source>8</source>
-					<doclint>none</doclint>
-				</configuration>
+				<executions>
+					<execution>
+						<id>javadoc-jar</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<!-- switch on dependency-driven aggregation -->
+							<includeDependencySources>false</includeDependencySources>
+							<dependencySourceIncludes>
+								<!-- include ONLY dependencies I control -->
+								<dependencySourceInclude>com.sshtools:*</dependencySourceInclude>
+							</dependencySourceIncludes>
+							<excludePackageNames>**.impl.*</excludePackageNames>
+							<additionalparam>-Xdoclint:none</additionalparam>
+							<detectJavaApiLink>false</detectJavaApiLink>
+							<doclint>none</doclint>
+							<source>8</source>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>com.mycila</groupId>

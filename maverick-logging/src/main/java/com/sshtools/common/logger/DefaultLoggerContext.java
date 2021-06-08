@@ -142,10 +142,12 @@ public class DefaultLoggerContext implements RootLoggerContext {
 		}
 	}
 
+	@Override
 	public void enableFile(Level level, String logFile) {
 		enableFile(level, new File(logFile));
 	}
 	
+	@Override
 	public synchronized void enableFile(Level level, File logFile) {
 		try {
 			contexts.add(new FileLoggingContext(level, logFile));
@@ -155,6 +157,7 @@ public class DefaultLoggerContext implements RootLoggerContext {
 		}
 	}
 	
+	@Override
 	public synchronized void enableFile(Level level, File logFile, int maxFiles, long maxSize) {
 		try {
 			contexts.add(new FileLoggingContext(level, logFile, maxFiles, maxSize));

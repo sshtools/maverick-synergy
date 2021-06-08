@@ -35,8 +35,10 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManagerFactory;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.nio.SelectorThread;
 import com.sshtools.synergy.nio.SocketConnection;
 import com.sshtools.synergy.nio.SocketWriteCallback;
@@ -67,14 +69,22 @@ public class SSLContextConnection extends SocketConnection {
     
 
     LinkedList<SocketWriteCallback> socketWriteCallbacks = new LinkedList<SocketWriteCallback>();
+    boolean requireClientCertificate;
+    boolean allowClientCertificate; 
     
     /**
      * Default constructor. We need one of these so we can dynamically create
      * a SocketConnection on demand.
      */
     public SSLContextConnection() {
+    	this(true, false);
     }
-
+    
+    public SSLContextConnection(boolean allowClientCertificate, boolean requireClientCertificate) {
+    	this.allowClientCertificate = allowClientCertificate;
+    	this.requireClientCertificate = requireClientCertificate;
+    }
+    
     /**
      * This method is called once the socket is registered with a SelectorThread. At
      * this point we're ready to start transfering data.
@@ -97,7 +107,9 @@ public class SSLContextConnection extends SocketConnection {
 
               // Duh! we're the server
               engine.setUseClientMode(false);
-
+             
+              engine.setWantClientAuth(allowClientCertificate);
+              engine.setNeedClientAuth(requireClientCertificate);
               // Get the session and begin the handshake
               session = engine.getSession();
               engine.beginHandshake();
@@ -159,8 +171,30 @@ public class SSLContextConnection extends SocketConnection {
             // KeyManager's decide which key material to use.
             KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
             kmf.init(ks, passphrase);
-            sslContext.init(kmf.getKeyManagers(), null, null);
 
+                        
+            password = System.getProperty("javax.net.ssl.trustStorePassword");
+
+            // Default to a blank password if no property is found
+            if (password == null) {
+                password = "";
+            }
+
+            passphrase = password.toCharArray();
+
+            TrustManagerFactory tmf = null;
+            String trustStore = System.getProperty("javax.net.ssl.trustStore", "");
+            
+            if(Utils.isNotBlank(trustStore)) {
+	            KeyStore tm = KeyStore.getInstance("JKS");
+	            tm.load(new FileInputStream(trustStore), passphrase);
+	            tmf = TrustManagerFactory.getInstance("SunX509");
+	            tmf.init(tm);
+            }
+            
+            sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(kmf.getKeyManagers(), tmf!=null ? tmf.getTrustManagers() : null, null);
+            
         } catch (Exception ex) {
             throw new IOException("SSL initialization failed: " + ex.getMessage());
         }
@@ -232,7 +266,10 @@ public class SSLContextConnection extends SocketConnection {
 
                           // Record the current position in the buffer
                           int currentDestinationPos = destinationBuffer.position();
-
+                         
+                          int remaining = socketDataIn.remaining();
+                          int noUnwrap = 0;
+                          
                           do {
 
                               SSLEngineResult res;
@@ -243,6 +280,17 @@ public class SSLContextConnection extends SocketConnection {
                               do {
                                   res = engine.unwrap(socketDataIn, destinationBuffer);
 
+                                  if(remaining == socketDataIn.remaining()) {
+                                  	  noUnwrap++;
+                                  	  if(noUnwrap > 50) {
+                                  		  shutdown();
+                                  		  return true;
+                                  	  }
+                                  } else {
+                                  	  noUnwrap = 0;
+                                  	  remaining = socketDataIn.remaining();
+                                  }
+                                  
                                   destinationBuffer.flip();
 
                                   if (destinationBuffer.hasRemaining() && !initialHandshake)
@@ -413,6 +461,7 @@ public class SSLContextConnection extends SocketConnection {
                  * This state should never be caught here
                  */
                 Log.error("doHandshake has caught a NOT_HANDSHAKING state.. This is impossible!");
+                return;
             }
         }
     }

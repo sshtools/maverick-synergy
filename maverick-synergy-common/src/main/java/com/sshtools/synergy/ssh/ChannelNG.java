@@ -941,6 +941,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	 */
 	protected void evaluateWindowSpace() {
 		synchronized (localWindow) {
+			if(Log.isDebugEnabled()) {
+				Log.debug("Checking window space on channel=" + getLocalId() + " window=" + localWindow.getWindowSpace()
+							+ (Objects.nonNull(cache) ? " cached=" + cache.remaining() : ""));
+			}
 			if (localWindow.isAdjustRequired() && isOpen() && !haltIncomingData.get() ) {
 				sendWindowAdjust();
 			}
@@ -1294,6 +1298,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	}
 
 	protected boolean checkWindowSpace() {
+		if(Log.isTraceEnabled()) {
+			Log.trace("Checking window space on channel=" + getLocalId() + " window=" + localWindow.getWindowSpace()
+						+ (Objects.nonNull(cache) ? " cached=" + cache.remaining() : ""));
+		}
 		return localWindow.getWindowSpace() + (Objects.nonNull(cache) ? cache.remaining() : 0) <= localWindow.getMinimumWindowSpace();
 	}
 	

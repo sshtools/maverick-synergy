@@ -1533,7 +1533,7 @@ public class SftpClient {
 			}
 
 
-			sftp.performOptimizedRead(file.getHandle(), attrs.getSize()
+			sftp.performOptimizedRead(remotePath, file.getHandle(), attrs.getSize()
 					.longValue(), blocksize, local, asyncRequests, progress,
 					position);
 		} catch(IOException ex) {
@@ -2014,7 +2014,7 @@ public class SftpClient {
 		}
 
 		try {
-			sftp.performOptimizedWrite(file.getHandle(), blocksize, asyncRequests, in, buffersize, progress, position < 0 ? 0 : position);
+			sftp.performOptimizedWrite(remotePath, file.getHandle(), blocksize, asyncRequests, in, buffersize, progress, position < 0 ? 0 : position);
 		} catch (SftpStatusException e) {
 			Log.error("SFTP status exception during transfer [" + e.getStatus() + "]", e);
 			throw e;

@@ -203,7 +203,7 @@ public abstract class Subsystem {
 				}
 			}
 		} while(data.hasRemaining());
-
+		
 		if (!buffer.hasRemaining()) {
 			bufferPool.add(buffer);
 			buffer = null;

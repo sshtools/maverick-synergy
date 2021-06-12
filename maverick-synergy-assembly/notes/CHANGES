@@ -7,7 +7,8 @@ Bug Fixes
   o When changing user/group via SftpFileAttributes create new attribute set with just the field being changed to avoid passing attributes that the server does not want to change.
   o Missing enableFile methods from RootLoggerContext interface.
   o Window space lockup when transfering to Maverick Legacy server due to Synergy attempting to write all blocks of data without checking responses.
-  
+  o SFTP channel does not exit after SSH_MSG_CHANNEL_EOF.
+   
 =================
 =  HISTORY      =
 =================

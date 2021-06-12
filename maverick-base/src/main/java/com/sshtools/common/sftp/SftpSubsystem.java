@@ -46,6 +46,7 @@ import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.Context;
+import com.sshtools.common.ssh.ExecutorOperationQueues;
 import com.sshtools.common.ssh.Packet;
 import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SessionChannelHelper;
@@ -67,6 +68,9 @@ import com.sshtools.common.util.Version;
  * @author Lee David Painter
  */
 public class SftpSubsystem extends Subsystem implements SftpSpecification {
+	
+	public static final Integer SFTP_QUEUE = ExecutorOperationQueues.generateUniqueQueue("Subsystem.queue");
+	
 	private AbstractFileSystem nfs;
 	private List<SftpOperationWrapper> wrappers = new ArrayList<SftpOperationWrapper>();
 	private SshConnection con;
@@ -74,8 +78,6 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 	
 	int writeBlockSize = 4096;
 	
-	final static int SFTP_QUEUE = Integer.MAX_VALUE;
-
 	// maximum version of SFTP protocol supported
 	static final int MAX_VERSION = 4;
 	
@@ -119,7 +121,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			addWrapper((SftpOperationWrapper)ff);
 		}
 		
-		executeOperation(SFTP_QUEUE, new InitOperation());
+		executeOperation(SUBSYSTEM_INCOMING, new InitOperation());
 
 		// Add event listener
 		session.addEventListener(new ChannelEventListener() {

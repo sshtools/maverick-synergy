@@ -38,8 +38,6 @@ public interface SessionChannel extends Channel {
 	 * happens once the user has either started the shell or executed a command.
 	 */
 	void onSessionOpen();
-
-	boolean isEOF();
 	
 	InputStream getInputStream();
 	

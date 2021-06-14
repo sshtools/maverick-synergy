@@ -712,7 +712,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			} catch (ChannelOpenException e) {
 				transport.postMessage(new ChannelFailureMessage(remoteid,
 						e.getReason(),
-						e.getMessage()));
+						e.getMessage() == null ? "<null>" : e.getMessage()));
 				return;
 			}
 
@@ -731,7 +731,8 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					return;
 				} catch (ChannelOpenException ex) {
 					transport.postMessage(new ChannelFailureMessage(
-							remoteid, ex.getReason(), ex.getMessage()));
+							remoteid, ex.getReason(), 
+							ex.getMessage() == null ? "<null>" : ex.getMessage()));
 				} catch (WriteOperationRequest ex) {
 					// Just return as the channel has decided to
 					// perform this asynchronously

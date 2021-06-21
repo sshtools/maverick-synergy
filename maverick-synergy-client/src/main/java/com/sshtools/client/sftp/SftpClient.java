@@ -1533,7 +1533,7 @@ public class SftpClient {
 			}
 
 
-			sftp.performOptimizedRead(file.getHandle(), attrs.getSize()
+			sftp.performOptimizedRead(remotePath, file.getHandle(), attrs.getSize()
 					.longValue(), blocksize, local, asyncRequests, progress,
 					position);
 		} catch(IOException ex) {
@@ -2014,7 +2014,7 @@ public class SftpClient {
 		}
 
 		try {
-			sftp.performOptimizedWrite(file.getHandle(), blocksize, asyncRequests, in, buffersize, progress, position < 0 ? 0 : position);
+			sftp.performOptimizedWrite(remotePath, file.getHandle(), blocksize, asyncRequests, in, buffersize, progress, position < 0 ? 0 : position);
 		} catch (SftpStatusException e) {
 			Log.error("SFTP status exception during transfer [" + e.getStatus() + "]", e);
 			throw e;
@@ -2106,13 +2106,16 @@ public class SftpClient {
 	 * @throws TransferCancelledException
 	 * 
 	 */
-	public void chown(String uid, String path) throws SftpStatusException,
-			SshException {
+	public void chown(String uid, String path) throws SftpStatusException, SshException {
 		String actual = resolveRemotePath(path);
 
 		SftpFileAttributes attrs = sftp.getAttributes(actual);
-		attrs.setUID(uid);
-		sftp.setAttributes(actual, attrs);
+		SftpFileAttributes newAttrs = new SftpFileAttributes(attrs.getType(), sftp.getCharsetEncoding());
+		newAttrs.setUID(uid);
+		if(sftp.getVersion() <= 3) {
+			newAttrs.setGID(attrs.getGID());
+		}
+		sftp.setAttributes(actual, newAttrs);
 
 	}
 
@@ -2129,13 +2132,16 @@ public class SftpClient {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
-	public void chgrp(String gid, String path) throws SftpStatusException,
-			SshException {
+	public void chgrp(String gid, String path) throws SftpStatusException, SshException {
 		String actual = resolveRemotePath(path);
 
 		SftpFileAttributes attrs = sftp.getAttributes(actual);
-		attrs.setGID(gid);
-		sftp.setAttributes(actual, attrs);
+		SftpFileAttributes newAttrs = new SftpFileAttributes(attrs.getType(), sftp.getCharsetEncoding());
+		newAttrs.setGID(gid);
+		if(sftp.getVersion() <= 3) {
+			newAttrs.setUID(attrs.getUID());
+		}
+		sftp.setAttributes(actual, newAttrs);
 
 	}
 

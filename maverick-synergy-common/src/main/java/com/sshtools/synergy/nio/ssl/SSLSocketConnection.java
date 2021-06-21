@@ -46,6 +46,9 @@ public class SSLSocketConnection extends SocketConnection {
 
     SSLContext sslContext = null;
 
+    private static String[] protocols;
+    private static String[] cipherSuites;
+    
     /**
      * SSL variables
      */
@@ -63,13 +66,21 @@ public class SSLSocketConnection extends SocketConnection {
     
 
     LinkedList<SocketWriteCallback> socketWriteCallbacks = new LinkedList<SocketWriteCallback>();
+    boolean requireClientCertificate;
+    boolean allowClientCertificate; 
     
     /**
      * Default constructor. We need one of these so we can dynamically create
      * a SocketConnection on demand.
      */
     public SSLSocketConnection(SSLContext context) {
+    	this(context, true, false);
+    }
+    
+    public SSLSocketConnection(SSLContext context, boolean allowClientCertificate, boolean requireClientCertificate) {
     	this.sslContext = context;
+    	this.allowClientCertificate = allowClientCertificate;
+    	this.requireClientCertificate = requireClientCertificate;
     }
 
     /**
@@ -92,9 +103,22 @@ public class SSLSocketConnection extends SocketConnection {
               // Create an SSLEngine to use
               engine = sslContext.createSSLEngine();
 
+              if (protocols != null)
+              {
+                  engine.setEnabledProtocols(protocols);
+              }
+
+              if (cipherSuites != null)
+              {
+                  engine.setEnabledCipherSuites(cipherSuites);
+              }
+              
               // Duh! we're the server
               engine.setUseClientMode(false);
 
+              engine.setWantClientAuth(allowClientCertificate);
+              engine.setNeedClientAuth(requireClientCertificate);
+              
               // Get the session and begin the handshake
               session = engine.getSession();
               engine.beginHandshake();
@@ -179,7 +203,9 @@ public class SSLSocketConnection extends SocketConnection {
 
                           // Record the current position in the buffer
                           int currentDestinationPos = destinationBuffer.position();
-
+                          int remaining = socketDataIn.remaining();
+                          int noUnwrap = 0;
+                          
                           do {
 
                               SSLEngineResult res;
@@ -190,6 +216,17 @@ public class SSLSocketConnection extends SocketConnection {
                               do {
                                   res = engine.unwrap(socketDataIn, destinationBuffer);
 
+                                  if(remaining == socketDataIn.remaining()) {
+                                	  noUnwrap++;
+                                	  if(noUnwrap > 50) {
+                                		  shutdown();
+                                		  return true;
+                                	  }
+                                  } else {
+                                	  noUnwrap = 0;
+                                	  remaining = socketDataIn.remaining();
+                                  }
+                                  
                                   destinationBuffer.flip();
 
                                   if (destinationBuffer.hasRemaining() && !initialHandshake)
@@ -237,8 +274,10 @@ public class SSLSocketConnection extends SocketConnection {
                               /**
                                * Check that the engine hasn't closed
                                */
-                              if (status == SSLEngineResult.Status.CLOSED)
+                              if (status == SSLEngineResult.Status.CLOSED) {
                                   shutdown();
+                                  return true;
+                              }
 
                               /**
                                * If we have a handshake status lets process it
@@ -357,6 +396,7 @@ public class SSLSocketConnection extends SocketConnection {
                  * This state should never be caught here
                  */
                 Log.error("doHandshake has caught a NOT_HANDSHAKING state.. This is impossible!");
+                return;
             }
         }
     }
@@ -499,5 +539,13 @@ public class SSLSocketConnection extends SocketConnection {
 		return wantsWrite;
 	}
     
-    
+    public static void setEnabledProtocols(String[] aProtocols)
+    {
+        protocols = aProtocols;
+    }
+
+    public static void setEnabledCipherSuites(String[] aCipherSuites)
+    {
+        cipherSuites = aCipherSuites;
+    }
 }

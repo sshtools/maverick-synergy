@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.SessionChannel;
@@ -78,6 +79,11 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 	}
 
 	protected boolean checkWindowSpace() {
+		if(Log.isTraceEnabled()) {
+			Log.trace("Checking window space on channel=" + getLocalId() + " window=" + localWindow.getWindowSpace()
+						+ (Objects.nonNull(cache) ? " cached=" + cache.remaining() : "")
+						+ (Objects.nonNull(extendedData) ? " extended=" + extendedData.remaining() : ""));
+		}
 		return localWindow.getWindowSpace() 
 				+ (Objects.nonNull(cache) ? cache.remaining() : 0) 
 				+ (Objects.nonNull(extendedData) ? extendedData.remaining() : 0) 

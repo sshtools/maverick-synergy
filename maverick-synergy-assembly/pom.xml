@@ -23,7 +23,7 @@
   <parent>
     <groupId>com.sshtools</groupId>
     <artifactId>maverick-synergy-group</artifactId>
-    <version>3.0.0-RC7</version>
+    <version>3.0.0-RC8</version>
   </parent>
 
   <artifactId>maverick-synergy-assembly</artifactId>

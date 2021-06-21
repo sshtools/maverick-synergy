@@ -161,16 +161,6 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	public int getMaxiumRemotePacketSize() {
 		return remoteWindow.getMaximumPacketSize();
 	}
-	
-	/**
-	 * Indicates that the channel is EOF (it will not be receiving any more data
-	 * from the remote side).
-	 * 
-	 * @return boolean
-	 */
-	public boolean isEOF() {
-		return isRemoteEOF.get();
-	}
 
 	void init(ConnectionProtocol<T> connection) {
 		this.connection = connection;
@@ -941,6 +931,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	 */
 	protected void evaluateWindowSpace() {
 		synchronized (localWindow) {
+			if(Log.isDebugEnabled()) {
+				Log.debug("Checking window space on channel=" + getLocalId() + " window=" + localWindow.getWindowSpace()
+							+ (Objects.nonNull(cache) ? " cached=" + cache.remaining() : ""));
+			}
 			if (localWindow.isAdjustRequired() && isOpen() && !haltIncomingData.get() ) {
 				sendWindowAdjust();
 			}
@@ -1259,10 +1253,12 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		}
 	}
 
+	@Override
 	public boolean isLocalEOF() {
 		return isLocalEOF.get();
 	}
 	
+	@Override
 	public boolean isRemoteEOF() {
 		return isRemoteEOF.get();
 	}
@@ -1294,6 +1290,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	}
 
 	protected boolean checkWindowSpace() {
+		if(Log.isTraceEnabled()) {
+			Log.trace("Checking window space on channel=" + getLocalId() + " window=" + localWindow.getWindowSpace()
+						+ (Objects.nonNull(cache) ? " cached=" + cache.remaining() : ""));
+		}
 		return localWindow.getWindowSpace() + (Objects.nonNull(cache) ? cache.remaining() : 0) <= localWindow.getMinimumWindowSpace();
 	}
 	

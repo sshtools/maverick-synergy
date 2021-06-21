@@ -362,6 +362,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			return;
 		}
 		
+		connection.getIdleStates().register(this);
 		onConnected();
 
 		if (!sentLocalIdentification) {
@@ -1062,6 +1063,18 @@ public abstract class TransportProtocol<T extends SshContext>
 
 		long idleTimeSeconds = (System.currentTimeMillis() - lastActivity) / 1000;
 
+		if(currentState == NEGOTIATING_PROTOCOL 
+				|| currentState == PERFORMING_KEYEXCHANGE) {
+			if(con.getContext().getIdleAuthenticationTimeoutSeconds() < idleTimeSeconds) {
+				if(Log.isDebugEnabled()) {
+					Log.debug("Idle time of {} seconds exceeded threshold of {} seconds", 
+							idleTimeSeconds,
+							con.getContext().getIdleAuthenticationTimeoutSeconds());
+				}
+				disconnect(BY_APPLICATION, "Remote exceeded idle timeout for unauthenticated connections");
+				return true;
+			}
+		}
 		if (currentState == TransportProtocol.CONNECTED
 				|| currentState == TransportProtocol.PERFORMING_KEYEXCHANGE) {
 			if(getContext().isSendIgnorePacketOnIdle()) {
@@ -1081,7 +1094,8 @@ public abstract class TransportProtocol<T extends SshContext>
 				}
 			}
 		}
-
+		
+		
 		if (activeService!=null && activeService.getIdleTimeoutSeconds() > 0) {
 			if(activeService!=null && idleTimeSeconds >= activeService.getIdleTimeoutSeconds()) {
 				return activeService.idle();

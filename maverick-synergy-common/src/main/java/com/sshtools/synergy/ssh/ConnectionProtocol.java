@@ -529,11 +529,17 @@ public abstract class ConnectionProtocol<T extends SshContext>
 				}
 			} else {
 
-				if(Log.isDebugEnabled())
-					Log.debug("Received SSH_MSG_CHANNEL_EOF channel="
-							+ channelid + " remote="
-							+ channel.remoteid);
-				channel.processChannelEOF();
+				addTask(CHANNEL_DATA_IN, new ConnectionAwareTask(con) {
+					protected  void doTask() throws Throwable {
+						if(Log.isDebugEnabled())
+							Log.debug("Received SSH_MSG_CHANNEL_EOF channel="
+									+ channelid + " remote="
+									+ channel.remoteid);
+						channel.processChannelEOF();
+					}
+				});
+				
+
 			}
 		} finally {
 			bar.close();
@@ -561,13 +567,21 @@ public abstract class ConnectionProtocol<T extends SshContext>
 				}
 			} else {
 
-				if(Log.isDebugEnabled()) {
-					Log.debug("Received SSH_MSG_CHANNEL_CLOSE channel="
-							+ channelid + " remote="
-							+ channel.remoteid);
-				}
-
-				channel.processChannelClose();
+				/**
+				 * LDP - ensure channel is closed on the same queue as data processing
+				 * to avoid data truncation.
+				 */
+				addTask(CHANNEL_DATA_IN, new ConnectionAwareTask(con) {
+					protected  void doTask() throws Throwable {
+						if(Log.isDebugEnabled()) {
+							Log.debug("Received SSH_MSG_CHANNEL_CLOSE channel="
+									+ channelid + " remote="
+									+ channel.remoteid);
+						}
+						channel.processChannelClose();
+					}
+				});
+				
 			}
 		} finally {
 			bar.close();
@@ -698,7 +712,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			} catch (ChannelOpenException e) {
 				transport.postMessage(new ChannelFailureMessage(remoteid,
 						e.getReason(),
-						e.getMessage()));
+						e.getMessage() == null ? "<null>" : e.getMessage()));
 				return;
 			}
 
@@ -717,7 +731,8 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					return;
 				} catch (ChannelOpenException ex) {
 					transport.postMessage(new ChannelFailureMessage(
-							remoteid, ex.getReason(), ex.getMessage()));
+							remoteid, ex.getReason(), 
+							ex.getMessage() == null ? "<null>" : ex.getMessage()));
 				} catch (WriteOperationRequest ex) {
 					// Just return as the channel has decided to
 					// perform this asynchronously

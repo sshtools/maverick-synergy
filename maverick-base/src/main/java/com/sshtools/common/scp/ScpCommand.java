@@ -848,7 +848,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 		String[] cmdParts = new String[3];
 		writeOk();
 
-		while (!session.isClosed() && !session.isEOF()) {
+		while (!session.isClosed() && !session.isRemoteEOF()) {
 			if(Log.isDebugEnabled())
 				Log.debug("Waiting for command");
 

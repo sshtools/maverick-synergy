@@ -46,4 +46,8 @@ public interface Channel {
 	SshConnection getConnection();
 
 	Context getContext();
+
+	boolean isRemoteEOF();
+
+	boolean isLocalEOF();
 }

@@ -33,6 +33,9 @@ import com.sshtools.common.util.ByteBufferPool;
  */
 public abstract class Subsystem {
 	
+	public static final Integer SUBSYSTEM_INCOMING = ExecutorOperationQueues.generateUniqueQueue("Subsystem.queue.in");
+	public static final Integer SUBSYSTEM_OUTGOING = ExecutorOperationQueues.generateUniqueQueue("Subsystem.queue.out");
+	
 	protected SessionChannel session;
 	protected Context context;
 	String name;
@@ -78,26 +81,65 @@ public abstract class Subsystem {
 
 		// We will manage our own data window
 		session.haltIncomingData();
+		
+		session.addEventListener(new ChannelEventListener() {
+
+			@Override
+			public void onChannelClose(Channel channel) {
+				
+				if(!channel.isRemoteEOF()) {
+					session.getConnection().addTask(SUBSYSTEM_INCOMING, new ConnectionAwareTask(getConnection()) {
+	
+						@Override
+						protected void doTask() throws Throwable {
+							cleanup();
+						}
+						
+					});
+				}
+				
+				ChannelEventListener.super.onChannelClose(channel);
+			}
+
+			@Override
+			public void onChannelEOF(Channel channel) {
+				
+				session.getConnection().addTask(SUBSYSTEM_INCOMING, new ConnectionAwareTask(getConnection()) {
+
+					@Override
+					protected void doTask() throws Throwable {
+						cleanup();
+					}
+					
+				});
+				
+				ChannelEventListener.super.onChannelEOF(channel);
+			}
+			
+		});
 
 	}
 	
 	protected void executeOperation(Integer messageQueue, ConnectionAwareTask r) {
-		session.getConnection().addTask(messageQueue, r);
+		
+		if(Boolean.getBoolean("maverick.additionalSFTPIncomingQueue")) {
+			session.getConnection().addTask(messageQueue, r);
+		} else {
+			try {
+				r.doTask();
+			} catch (Throwable e) {
+				Log.error("Caught error in processing SFTP message", e);
+				cleanup();
+			}
+		}
 	}
 	
 	protected synchronized void cleanup() {
 		
 		if(!shutdown) {
 
-			session.getConnection().addTask(ExecutorOperationSupport.EVENTS, new ConnectionAwareTask(session.getConnection()) {
-				public void doTask() {
-					if(Log.isTraceEnabled()) {
-						Log.trace("Cleaning up operations");
-					}
-					cleanupSubsystem();
-					session.close();
-				}
-			});
+			cleanupSubsystem();
+			session.close();
 			
 			shutdown = true;
 		}
@@ -186,7 +228,7 @@ public abstract class Subsystem {
 		
 					buffer.get(msg);
 		
-					session.getConnection().addTask(ExecutorOperationSupport.EVENTS, new ProcessMessageOperation(msg));
+					session.getConnection().addTask(SUBSYSTEM_INCOMING, new ProcessMessageOperation(msg));
 					
 					buffer(data, true);
 					
@@ -203,7 +245,7 @@ public abstract class Subsystem {
 				}
 			}
 		} while(data.hasRemaining());
-
+		
 		if (!buffer.hasRemaining()) {
 			bufferPool.add(buffer);
 			buffer = null;
@@ -274,6 +316,21 @@ public abstract class Subsystem {
 	 * @throws IOException
 	 */
 	public void sendMessage(Packet packet) throws IOException {
+		
+		if(Boolean.getBoolean("maverick.outgoingSubsystemQueue")) {
+			session.getConnection().addTask(SUBSYSTEM_OUTGOING, new ConnectionAwareTask(getConnection()) {
+	
+				@Override
+				protected void doTask() throws Throwable {
+					doSendMessage(packet);
+				}
+			});
+		} else {
+			doSendMessage(packet);
+		}
+	}
+
+	private void doSendMessage(Packet packet) throws IOException {
 		if (session.isClosed()) {
 			throw new IOException("Failed to send subsystem packet, session closed");
 		} else {
@@ -284,7 +341,7 @@ public abstract class Subsystem {
 			session.sendData(packet.array(), 0, packet.size());
 		}
 	}
-
+	
 	public void onFreeMessage(byte[] msg) {
 	
 		if(maximumPacketSize < msg.length + 4) {

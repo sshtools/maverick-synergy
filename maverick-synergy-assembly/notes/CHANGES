@@ -1,3 +1,11 @@
+Maverick Synergy 3.0.0-FINAL - TBC
+
+  o This release is a repackaging of 3.0.0-RC8 as 3.0.0-FINAL. 
+   
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.0-RC8 - Jun 21, 2021
 
 Features
@@ -10,10 +18,8 @@ Bug Fixes
   o SFTP channel does not exit after SSH_MSG_CHANNEL_EOF.
   o Transport idle mechanism not engaged causing idle timeout settings to be ignored. 
   o Added additional support for extending authentication idle timeout setting to any part of the communication prior to successful authentication.
-   
-=================
-=  HISTORY      =
-=================
+  
+------------------
 
 Maverick Synergy 3.0.0-RC7 - May 26, 2021
  

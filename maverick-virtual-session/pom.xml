@@ -26,9 +26,8 @@
 	<parent>
 		<groupId>com.sshtools</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.0.0-RC8</version>
+		<version>3.0.0-FINAL</version>
 	</parent>
-	<packaging>jar</packaging>
 	<artifactId>maverick-virtual-session</artifactId>
 	<name>Virtual Sessions</name>
 	<description>Support for a virtual sessions, custom command execution etc.</description>

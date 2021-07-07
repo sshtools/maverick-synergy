@@ -147,6 +147,10 @@ public abstract class AbstractSshServer implements Closeable {
 		afterStart();
 	}
 	
+	public boolean isRunning() {
+		return engine.isStarted();
+	}
+	
 	public void stop() {
 		engine.shutdownNow(false, 0L);
 	}

@@ -24,10 +24,10 @@
 	<parent>
 		<groupId>com.sshtools</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.0.0-RC8</version>
+		<version>3.0.0-FINAL</version>
 	</parent>
 	<artifactId>maverick-synergy-fuse-drive</artifactId>
-	<name>Server API</name>
+	<name>Fuse Drive</name>
 	<description>A FUSE implementation for connecting drive to a remote SFTP service.</description>
 
 	<dependencies>

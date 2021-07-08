@@ -110,7 +110,7 @@ public class VirtualMountFile implements VirtualFile {
 		}
 	
 		/**
-		 * LDP - Here we are mergin a potential real path from a lower mount. Check that the file
+		 * LDP - Here we are merging a potential real path from a lower mount. Check that the file
 		 * really exists as we do not want to generate an error here.
 		 */
 		if(file.exists()) {

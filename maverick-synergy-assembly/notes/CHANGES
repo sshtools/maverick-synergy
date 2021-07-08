@@ -2,7 +2,10 @@ Maverick Synergy 3.0.0-FINAL - TBC
 
 Features
   o Added isRunning method to AbstractSshServer.
-  
+
+Bug Fixes
+    o VirtualMountFile fails when it's path within it's parent mount does not exist. 
+    
 =================
 =  HISTORY      =
 =================

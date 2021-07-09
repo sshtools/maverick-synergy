@@ -1,4 +1,13 @@
-Maverick Synergy 3.0.0-FINAL - Jul 9, 2021
+Maverick Synergy 3.0.1-FINAL - Jul 9, 2021
+
+Bug Fixes
+    o Idle connection timeout issues after authentication.
+    
+=================
+=  HISTORY      =
+=================
+
+Maverick Synergy 3.0.0-FINAL - Jul 7, 2021
 
 Features
   o Added isRunning method to AbstractSshServer.
@@ -7,9 +16,7 @@ Bug Fixes
     o VirtualMountFile fails when it's path within it's parent mount does not exist. 
     o Idle connection timeout issues after authentication.
     
-=================
-=  HISTORY      =
-=================
+------------------
 
 Maverick Synergy 3.0.0-RC8 - Jun 21, 2021
 

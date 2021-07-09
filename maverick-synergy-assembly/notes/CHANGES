@@ -5,6 +5,7 @@ Features
 
 Bug Fixes
     o VirtualMountFile fails when it's path within it's parent mount does not exist. 
+    o Idle connection timeout issues after authentication.
     
 =================
 =  HISTORY      =

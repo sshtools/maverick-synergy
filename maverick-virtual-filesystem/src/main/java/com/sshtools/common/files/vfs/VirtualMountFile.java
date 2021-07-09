@@ -96,33 +96,31 @@ public class VirtualMountFile implements VirtualFile {
 
 		VirtualMountManager mgr = fileFactory.getMountManager();
 		
-		//if(mount.isFilesystemRoot()) {
-			for(VirtualMount m : mgr.getMounts()) {
-				String mpath = FileUtils.checkEndsWithSlash(m.getMount());
-				if(mpath.startsWith(currentPath)) {
-					if(!mpath.equals(currentPath)) {
-						String child = m.getMount().substring(currentPath.length());
-						if(child.indexOf('/') > -1) {
-							child = child.substring(0,child.indexOf('/'));
-						}
-						files.add(new VirtualMountFile(currentPath + child, m, fileFactory));
+		for(VirtualMount m : mgr.getMounts()) {
+			String mpath = FileUtils.checkEndsWithSlash(m.getMount());
+			if(mpath.startsWith(currentPath)) {
+				if(!mpath.equals(currentPath)) {
+					String child = m.getMount().substring(currentPath.length());
+					if(child.indexOf('/') > -1) {
+						child = child.substring(0,child.indexOf('/'));
 					}
+					files.add(new VirtualMountFile(currentPath + child, m, fileFactory));
 				}
 			}
-//		} else {
-//			// Just return the next path element from the mount path.
-//			String child = mount.getMount().substring(path.length());
-//			if(child.indexOf('/') > -1) {
-//				child = child.substring(0,child.indexOf('/'));
-//			}
-//			files.add(new VirtualMountFile(path + child, mount, fileFactory));
-//		}
-		
-		VirtualMount actualMount = mgr.getMount(currentPath);
-		for(AbstractFile child : file.getChildren()) {
-			files.add(new VirtualMountFile(currentPath + child.getName(), actualMount, fileFactory));
+		}
+	
+		/**
+		 * LDP - Here we are merging a potential real path from a lower mount. Check that the file
+		 * really exists as we do not want to generate an error here.
+		 */
+		if(file.exists()) {
+			VirtualMount actualMount = mgr.getMount(currentPath);
+			for(AbstractFile child : file.getChildren()) {
+				files.add(new VirtualMountFile(currentPath + child.getName(), actualMount, fileFactory));
+			}
 		}
 		return files;
+		
 
 	}
 

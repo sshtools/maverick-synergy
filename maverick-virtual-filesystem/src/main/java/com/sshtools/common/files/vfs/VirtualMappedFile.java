@@ -3,7 +3,10 @@ package com.sshtools.common.files.vfs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
@@ -12,11 +15,9 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.util.FileUtils;
 
-public class VirtualMappedFile extends AbstractFileAdapter implements
-		VirtualFile {
+public class VirtualMappedFile extends VirtualFileObject {
 
 	private VirtualMount parentMount;
-	private VirtualFileFactory fileFactory;
 	private String absolutePath;
 	private String name;
 	
@@ -24,6 +25,8 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 			VirtualMount parentMount, VirtualFileFactory fileFactory)
 			throws IOException, PermissionDeniedException {
 
+		super(fileFactory);
+		
 		this.parentMount = parentMount;
 		this.fileFactory = fileFactory;
 
@@ -45,6 +48,8 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 			VirtualFileFactory fileFactory) throws IOException,
 			PermissionDeniedException {
 
+		super(fileFactory);
+		
 		this.parentMount = parentMount;
 		this.fileFactory = fileFactory;
 		init(actualFile);
@@ -68,21 +73,10 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 		VirtualMountManager mgr = fileFactory.getMountManager();
 		
 		if (absolutePath.equals("/")) {
-			for (VirtualMount m : mgr.getMounts()) {
-				if (!m.isFilesystemRoot()) {
-					String child = m.getMount().substring(1);
-					if (child.indexOf('/') > -1) {
-						child = child.substring(0, child.indexOf('/'));
-					}
-					files.add(new VirtualMountFile(absolutePath + child, 
-							m,
-							fileFactory));
-				}
-			}
+			files.addAll(getVirtualMounts().values());
 
 			for (AbstractFile f : super.getChildren()) {
-				VirtualFile f2 = new VirtualMappedFile(f, parentMount,
-						fileFactory);
+				VirtualFile f2 = new VirtualMappedFile(f, parentMount, fileFactory);
 				if (!mgr.isMounted(f2.getAbsolutePath())) {
 					files.add(f2);
 				}
@@ -97,6 +91,8 @@ public class VirtualMappedFile extends AbstractFileAdapter implements
 
 		return files;
 	}
+
+	
 
 	public AbstractFile getMappedFile() {
 		return file;

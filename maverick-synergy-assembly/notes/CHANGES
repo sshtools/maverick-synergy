@@ -1,10 +1,31 @@
-Maverick Synergy 3.0.0-FINAL - TBC
+Maverick Synergy 3.0.2-FINAL - Jul 20, 2021
 
-  o This release is a repackaging of 3.0.0-RC8 as 3.0.0-FINAL. 
-   
+Bug Fixes
+    o File listing in VirtualFileFactory returns duplicate path entries for parents of mount entries.
+    o VirtualMountFile no longer attempts to resolve its target file during construction and defers this until some operation is attempted on the file object.
+    o Change junixsocket dependency of maverick-sshagent to version 2.3.4 to remove its transitive dependency of log4j 1.2
+
 =================
 =  HISTORY      =
 =================
+
+Maverick Synergy 3.0.1-FINAL - Jul 9, 2021
+
+Bug Fixes
+    o Idle connection timeout issues after authentication.
+    
+-----------------
+
+Maverick Synergy 3.0.0-FINAL - Jul 7, 2021
+
+Features
+  o Added isRunning method to AbstractSshServer.
+
+Bug Fixes
+    o VirtualMountFile fails when it's path within it's parent mount does not exist. 
+    o Idle connection timeout issues after authentication.
+    
+------------------
 
 Maverick Synergy 3.0.0-RC8 - Jun 21, 2021
 
@@ -18,7 +39,7 @@ Bug Fixes
   o SFTP channel does not exit after SSH_MSG_CHANNEL_EOF.
   o Transport idle mechanism not engaged causing idle timeout settings to be ignored. 
   o Added additional support for extending authentication idle timeout setting to any part of the communication prior to successful authentication.
-  
+ 
 ------------------
 
 Maverick Synergy 3.0.0-RC7 - May 26, 2021

@@ -176,7 +176,7 @@
 				<artifactId>license-maven-plugin</artifactId>
 				<version>4.1</version>
 				<configuration>
-					<header>templates/LGPL3.txt</header>
+					<header>templates/JAD.txt</header>
 					<properties>
 						<owner>JADAPTIVE Limited</owner>
 						<email>support@jadaptive.com</email>

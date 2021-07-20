@@ -1,11 +1,19 @@
+Maverick Synergy 3.0.2-FINAL - TBC
+
+Bug Fixes
+    o File listing in VirtualFileFactory returns duplicate path entries for parents of mount entries.
+    o VirtualMountFile no longer attempts to resolve its target file during construction and defers this until some operation is attempted on the file object.
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.1-FINAL - Jul 9, 2021
 
 Bug Fixes
     o Idle connection timeout issues after authentication.
     
-=================
-=  HISTORY      =
-=================
+-----------------
 
 Maverick Synergy 3.0.0-FINAL - Jul 7, 2021
 

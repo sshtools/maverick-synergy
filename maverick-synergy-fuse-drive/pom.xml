@@ -22,9 +22,9 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.sshtools</groupId>
-		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.0.0-FINAL</version>
+		<groupId>com.sshtools.hotfixes</groupId>
+		<artifactId>maverick-synergy-hotfixes</artifactId>
+		<version>3.0.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>maverick-synergy-fuse-drive</artifactId>
 	<name>Fuse Drive</name>
@@ -32,7 +32,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.sshtools</groupId>
+			<groupId>com.sshtools.hotfixes</groupId>
 			<artifactId>maverick-synergy-client</artifactId>
 			<version>${project.version}</version>
 		</dependency>

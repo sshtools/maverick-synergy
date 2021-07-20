@@ -22,9 +22,9 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.sshtools</groupId>
-	<artifactId>maverick-synergy-group</artifactId>
-	<version>3.0.0-FINAL</version>
+	<groupId>com.sshtools.hotfixes</groupId>
+	<artifactId>maverick-synergy-hotfixes</artifactId>
+	<version>3.0.1-SNAPSHOT</version>
 	<name>Maverick Synergy</name>
 	<description>Open source Java SSH API</description>
 	<url>http://www.jadaptive.com</url>
@@ -174,9 +174,9 @@
 			<plugin>
 				<groupId>com.mycila</groupId>
 				<artifactId>license-maven-plugin</artifactId>
-				<version>2.3</version>
+				<version>4.1</version>
 				<configuration>
-					<header>templates/LGPL3.txt</header>
+					<header>templates/JAD.txt</header>
 					<properties>
 						<owner>JADAPTIVE Limited</owner>
 						<email>support@jadaptive.com</email>
@@ -189,8 +189,6 @@
 					<execution>
 						<goals>
 							<goal>check</goal>
-							<goal>format</goal>
-							<goal>remove</goal>
 						</goals>
 					</execution>
 				</executions>

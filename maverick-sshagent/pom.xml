@@ -21,9 +21,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.sshtools</groupId>
-    <artifactId>maverick-synergy-group</artifactId>
-    <version>3.0.0-FINAL</version>
+    <groupId>com.sshtools.hotfixes</groupId>
+    <artifactId>maverick-synergy-hotfixes</artifactId>
+    <version>3.0.1-SNAPSHOT</version>
   </parent>
   <artifactId>maverick-sshagent</artifactId>
   <name>Key Agent</name>
@@ -43,19 +43,19 @@
 			<version>4.5.1</version>
 		</dependency>
 		<dependency>
-			<groupId>com.sshtools</groupId>
+			<groupId>com.sshtools.hotfixes</groupId>
 			<artifactId>maverick-base</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.kohlschutter.junixsocket</groupId>
 			<artifactId>junixsocket-common</artifactId>
-			<version>2.0.4</version>
+			<version>2.3.4</version>
 		</dependency>
 		<dependency>
 			<groupId>com.kohlschutter.junixsocket</groupId>
 			<artifactId>junixsocket-native-common</artifactId>
-			<version>2.0.4</version>
+			<version>2.3.4</version>
 		</dependency>
   </dependencies>
 </project>

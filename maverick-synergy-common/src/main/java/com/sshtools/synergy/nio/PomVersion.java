@@ -35,7 +35,7 @@ public class PomVersion {
 	static String version;
 	
 	public static String getVersion() {
-		return getVersion("maverick-ng-common");
+		return getVersion("maverick-synergy-common");
 	}
 
 	
@@ -48,9 +48,9 @@ public class PomVersion {
 	    // try to load from maven properties first
 	    try {
 	        Properties p = new Properties();
-	        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("META-INF/maven/com.sshtools/" + artifactId + "/pom.properties");
+	        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("META-INF/maven/com.sshtools.hotfixes/" + artifactId + "/pom.properties");
 	        if(is == null) {
-		        is = PomVersion.class.getResourceAsStream("/META-INF/maven/com.sshtools/" + artifactId + "/pom.properties");
+		        is = PomVersion.class.getResourceAsStream("/META-INF/maven/com.sshtools.hotfixes/" + artifactId + "/pom.properties");
 	        }
 	        if (is != null) {
 	            p.load(is);

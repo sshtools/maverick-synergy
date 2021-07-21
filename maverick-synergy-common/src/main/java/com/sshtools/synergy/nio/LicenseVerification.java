@@ -18,15 +18,18 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
-package com.sshtools.synergy.ssh;
+package com.sshtools.synergy.nio;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.net.URL;
 import java.util.Date;
 import java.util.Vector;
 
@@ -95,10 +98,115 @@ final class LicenseVerification {
 	
 	LicenseVerification(Date verifyDate) {
 		this.verifyDate = verifyDate;
+		loadLicenses();
 	}
 	
 	LicenseVerification() {
 		this(new Date(System.currentTimeMillis()));
+	}
+	
+	void loadLicenses() {
+		// Load from resource on classpath
+		tryResource(getClass().getClassLoader().getResource(
+				"synergy-license.txt"));
+		tryResource(getClass().getClassLoader().getResource(
+				"META-INF/synergy-license.txt"));
+
+		// Load from file in current directory
+		// Load from file in current directory
+		try {
+			tryLicenseFile(new File(System.getProperty(
+					"synergy.license.directory",
+					System.getProperty("user.dir"))
+					+ File.separator
+					+ System.getProperty("synergy.license.filename",
+							".synergy-license.txt")));
+		} catch (Exception e) {
+			// In case sand boxed
+		}
+		
+		try {
+			tryLicenseFile(new File(System.getProperty(
+					"synergy.license.directory",
+					System.getProperty("user.dir"))
+					+ File.separator
+					+ System.getProperty("synergy.license.filename",
+							"synergy-license.txt")));
+		} catch (Exception e) {
+			// In case sand boxed
+		}
+	}
+
+	private void tryResource(URL resource) {
+		if (resource != null) {
+			try {
+				InputStream in = resource.openStream();
+				try {
+					loadLicense(in);
+				} finally {
+					in.close();
+				}
+			} catch (Exception ioe) {
+				System.err
+						.println("WARNING: Failed to read Maverick license resource "
+								+ resource + ". " + ioe.getMessage());
+			}
+		}
+	}
+
+	private void tryLicenseFile(File file) {
+		if (file.exists()) {
+			try {
+				InputStream in = new FileInputStream(file);
+				try {
+					loadLicense(in);
+				} finally {
+					in.close();
+				}
+			} catch (Exception e) {
+				System.err
+						.println("WARNING: Failed to read Maverick license file "
+								+ file + ". " + e.getMessage());
+			}
+		}
+	}
+
+	void loadLicense(InputStream in) throws IOException {
+		String fullText = readToString(in);
+		while (!fullText.startsWith("\"----BEGIN")) {
+			fullText = fullText.substring(1);
+		}
+		while (!fullText.startsWith("----END")) {
+			fullText = fullText.substring(0, fullText.length() - 1);
+		}
+		StringBuffer buf = new StringBuffer();
+		boolean inQuote = false;
+		boolean escape = false;
+		for (int i = 0; i < fullText.length(); i++) {
+			char ch = fullText.charAt(i);
+			if (ch == '"' && !inQuote && !escape) {
+				inQuote = true;
+			} else if (ch == '"' && inQuote && !escape) {
+				inQuote = false;
+			} else if (inQuote) {
+				if (!escape && ch == '\\') {
+					escape = true;
+				} else {
+					if (inQuote) {
+						if (escape) {
+							if (ch == 'r') {
+								ch = '\r';
+							} else if (ch == 'n') {
+								ch = '\n';
+							}
+							escape = false;
+						}
+						buf.append(ch);
+					}
+				}
+			}
+		}
+		license = buf.toString();
 	}
 
 	final void setLicense(String license) {
@@ -147,6 +255,14 @@ final class LicenseVerification {
 
 		try {
 
+//			Calendar release = Calendar.getInstance();
+//			release.setTime(new Date(releaseDate));
+//			Calendar now = Calendar.getInstance();
+//			if(release.get(Calendar.DAY_OF_YEAR)==now.get(Calendar.DAY_OF_YEAR)
+//					&& release.get(Calendar.YEAR)==now.get(Calendar.YEAR)) {
+//				return OK | 0x100;
+//			}
+			
 			SshPublicKeyFile file = SshPublicKeyFileFactory.parse(productKey.getBytes("UTF8"));
 			SshPublicKey key = file.toPublicKey();
 			
@@ -271,7 +387,7 @@ final class LicenseVerification {
 	                        this.updatesUntil = supportdate;
 	                        byte[] s = dout.toByteArray();
 	
-	                        Log.debug(String.format("Verifyign signature for type %d", t));
+	                        Log.trace(String.format("Verifying signature for type %d", type + t));
 	                        if (key.verifySignature(signature, s)) {
 	                        	this.hash = Utils.bytesToHex(DigestUtils.md5(s));
 	                        	

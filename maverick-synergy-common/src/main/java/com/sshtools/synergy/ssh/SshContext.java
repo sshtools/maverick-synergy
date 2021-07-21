@@ -236,7 +236,7 @@ public abstract class SshContext extends ProtocolContext implements
 	protected boolean killTunnelsOnRemoteForwardingCancel = false;
 	
 	protected boolean sendIgnorePacketOnIdle = false;
-	protected int idleConnectionTimeout = 0;
+	protected int idleConnectionTimeout = 600;
 	protected int idleAuthenticationTimeoutSeconds = 30;
 	protected int keepAliveInterval = 30;
 	protected int keepAliveDataMaxLength = 128;

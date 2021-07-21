@@ -1064,7 +1064,8 @@ public abstract class TransportProtocol<T extends SshContext>
 		long idleTimeSeconds = (System.currentTimeMillis() - lastActivity) / 1000;
 
 		if(!hasCompletedKeyExchange()) {
-			if(con.getContext().getIdleAuthenticationTimeoutSeconds() < idleTimeSeconds) {
+			if(con.getContext().getIdleAuthenticationTimeoutSeconds() > 0 && 
+					con.getContext().getIdleAuthenticationTimeoutSeconds() < idleTimeSeconds) {
 				if(Log.isDebugEnabled()) {
 					Log.debug("Idle time of {} seconds exceeded threshold of {} seconds", 
 							idleTimeSeconds,
@@ -1075,7 +1076,8 @@ public abstract class TransportProtocol<T extends SshContext>
 			}
 		}
 		if(currentState == CONNECTED) { 
-			if(con.getContext().getIdleConnectionTimeoutSeconds() < idleTimeSeconds) {
+			if(con.getContext().getIdleConnectionTimeoutSeconds() > 0 && 
+					con.getContext().getIdleConnectionTimeoutSeconds() < idleTimeSeconds) {
 				if(Log.isDebugEnabled()) {
 					Log.debug("Idle time of {} seconds exceeded threshold of {} seconds", 
 							idleTimeSeconds,

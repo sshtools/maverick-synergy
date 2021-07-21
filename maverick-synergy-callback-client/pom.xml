@@ -23,7 +23,7 @@
   <parent>
     <groupId>com.sshtools</groupId>
     <artifactId>maverick-synergy-group</artifactId>
-    <version>3.0.2-FINAL</version>
+    <version>3.0.3-FINAL</version>
   </parent>
   <artifactId>maverick-synergy-callback-client</artifactId>
   <name>Callback Client API</name>

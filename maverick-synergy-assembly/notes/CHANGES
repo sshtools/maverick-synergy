@@ -1,13 +1,21 @@
+Maverick Synergy 3.0.3-FINAL - Jul 21, 2021
+
+Bug Fixes
+    o Configure default connection timeout value of 600 seconds and ensure zero value is treated as no timeout.
+    o VirtualMountFile and VirtualMappedFile now cache children until refreshed.
+
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.2-FINAL - Jul 20, 2021
 
 Bug Fixes
     o File listing in VirtualFileFactory returns duplicate path entries for parents of mount entries.
     o VirtualMountFile no longer attempts to resolve its target file during construction and defers this until some operation is attempted on the file object.
     o Change junixsocket dependency of maverick-sshagent to version 2.3.4 to remove its transitive dependency of log4j 1.2
-
-=================
-=  HISTORY      =
-=================
+    
+-----------------
 
 Maverick Synergy 3.0.1-FINAL - Jul 9, 2021
 

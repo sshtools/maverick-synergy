@@ -18,7 +18,6 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
- */
 package com.sshtools.synergy.ssh;
 
 import java.io.BufferedReader;

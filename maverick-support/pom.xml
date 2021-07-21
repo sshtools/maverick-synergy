@@ -3,7 +3,7 @@
   
   <parent>
     <groupId>com.sshtools.hotfixes</groupId>
-    <artifactId>maverick-synergy</artifactId>
+    <artifactId>maverick-synergy-hotfixes</artifactId>
     <version>3.0.1-SNAPSHOT</version>
   </parent>
   

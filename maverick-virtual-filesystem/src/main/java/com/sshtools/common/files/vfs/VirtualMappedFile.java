@@ -37,6 +37,8 @@ public class VirtualMappedFile extends VirtualFileObject {
 	private String absolutePath;
 	private String name;
 	
+	List<AbstractFile> cachedChildren = null;
+	
 	public VirtualMappedFile(String path,
 			VirtualMount parentMount, VirtualFileFactory fileFactory)
 			throws IOException, PermissionDeniedException {
@@ -77,35 +79,43 @@ public class VirtualMappedFile extends VirtualFileObject {
 		name = absolutePath.substring(idx + 1);
 	}
 
+	
 	@Override
-	public List<AbstractFile> getChildren() throws IOException,
+	public synchronized void refresh() {
+		cachedChildren = null;
+		super.refresh();
+	}
+
+	@Override
+	public synchronized List<AbstractFile> getChildren() throws IOException,
 			PermissionDeniedException {
 
-		List<AbstractFile> files = new ArrayList<AbstractFile>();
+		if(Objects.isNull(cachedChildren)) {
+			List<AbstractFile> files = new ArrayList<AbstractFile>();
 
-		// First check to see if this file is the file system root and if so
-		// list out all the mounts.
-		
-		VirtualMountManager mgr = fileFactory.getMountManager();
-		
-		if (absolutePath.equals("/")) {
-			files.addAll(getVirtualMounts().values());
-
-			for (AbstractFile f : super.getChildren()) {
-				VirtualFile f2 = new VirtualMappedFile(f, parentMount, fileFactory);
-				if (!mgr.isMounted(f2.getAbsolutePath())) {
-					files.add(f2);
+			VirtualMountManager mgr = fileFactory.getMountManager();
+			
+			if (absolutePath.equals("/")) {
+				files.addAll(getVirtualMounts().values());
+	
+				for (AbstractFile f : super.getChildren()) {
+					VirtualFile f2 = new VirtualMappedFile(f, parentMount, fileFactory);
+					if (!mgr.isMounted(f2.getAbsolutePath())) {
+						files.add(f2);
+					}
+				}
+	
+			} else {
+				for (AbstractFile f : super.getChildren()) {
+					files.add(new VirtualMappedFile(f, parentMount,
+							fileFactory));
 				}
 			}
-
-		} else {
-			for (AbstractFile f : super.getChildren()) {
-				files.add(new VirtualMappedFile(f, parentMount,
-						fileFactory));
-			}
+	
+			cachedChildren = files;
 		}
-
-		return files;
+		
+		return cachedChildren;
 	}
 
 	

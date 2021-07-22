@@ -850,6 +850,9 @@ public class SftpChannel extends AbstractSubsystem {
 			throws SftpStatusException, SshException,
 			TransferCancelledException {
 
+		long started = System.currentTimeMillis();
+		long transfered = position;
+		
 		try {
 			if (blocksize < 4096) {
 				throw new SshException("Block size cannot be less than 4096",
@@ -897,8 +900,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 			byte[] buf = new byte[blocksize];
 
-			long started = System.currentTimeMillis();
-			long transfered = position;
+			
 			int buffered = 0;
 
 			buffered = in.read(buf);
@@ -954,13 +956,6 @@ public class SftpChannel extends AbstractSubsystem {
 				while(requests.size() > 0) {
 					getOKRequestStatus(requests.remove(0));
 				}
-				
-				long finished = System.currentTimeMillis();
-				long transferTime = finished - started;
-				long seconds = TimeUnit.MILLISECONDS.toSeconds(transferTime);
-				if(Log.isInfoEnabled()) {
-					Log.info("Optimized write to {} took {} seconds at {}",  filename, seconds, IOUtils.toByteSize(transfered / seconds, 1));
-				}
 			}
 
 		} catch (IOException ex) {
@@ -970,7 +965,16 @@ public class SftpChannel extends AbstractSubsystem {
 					"Resource Shortage: try reducing the local file buffer size",
 					SshException.BAD_API_USAGE);
 		} finally {
-			
+			long finished = System.currentTimeMillis();
+			long transferTime = finished - started;
+			double seconds = transferTime > 1000 ? transferTime / 1000 : 1D;
+			if(Log.isInfoEnabled()) {
+				if(transfered > 0) {
+					Log.info("Optimized write of {} to {} took {} seconds at {} per second",  IOUtils.toByteSize(transfered), filename, seconds, IOUtils.toByteSize(transfered / seconds, 1));
+				} else {
+					Log.info("Optimized write did not transfer any data");
+				}
+			}
 		}
 
 	}
@@ -1037,6 +1041,10 @@ public class SftpChannel extends AbstractSubsystem {
 			throws SftpStatusException, SshException,
 			TransferCancelledException {
 
+		long transfered = 0;
+		boolean reachedEOF = false;
+		long started = System.currentTimeMillis();
+		
 		if (blocksize < 1 || blocksize > 65536) {
 			if(Log.isTraceEnabled()) {
 				Log.trace("Blocksize to large for some SFTP servers, reseting to 32K");
@@ -1099,10 +1107,6 @@ public class SftpChannel extends AbstractSubsystem {
 					SshException.BAD_API_USAGE);
 		}
 
-		long transfered = 0;
-		boolean reachedEOF = false;
-		long started = System.currentTimeMillis();
-		
 		try {
 			byte[] tmp = new byte[blocksize];
 	
@@ -1240,9 +1244,11 @@ public class SftpChannel extends AbstractSubsystem {
 			
 			long finished = System.currentTimeMillis();
 			long transferTime = finished - started;
-			long seconds = TimeUnit.MILLISECONDS.toSeconds(transferTime);
-			if(Log.isInfoEnabled()) {
-				Log.info("Optimized read from {} took {} seconds at {}",  filename, seconds, IOUtils.toByteSize(transfered / seconds, 1));
+			double seconds = transferTime > 1000 ? transferTime / 1000 : 1D;
+			if(transfered > 0) {
+				Log.info("Optimized read of {} from {} took seconds {} at {} per second", IOUtils.toByteSize(transfered), filename, seconds, IOUtils.toByteSize(transfered / seconds, 1));
+			} else {
+				Log.info("Optimized read did not transfer any data");
 			}
 			
 			if(reachedEOF && performVerification && transfered > 0) {

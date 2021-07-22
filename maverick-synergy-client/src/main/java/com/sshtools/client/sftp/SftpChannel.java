@@ -959,7 +959,7 @@ public class SftpChannel extends AbstractSubsystem {
 				long transferTime = finished - started;
 				long seconds = TimeUnit.MILLISECONDS.toSeconds(transferTime);
 				if(Log.isInfoEnabled()) {
-					Log.info("Optimized write to {} took {} seconds at {}",  filename, seconds, IOUtils.toByteSize(transfered / seconds, 1));
+					Log.info("Optimized write to {} took {} seconds at {}",  filename, seconds, IOUtils.toByteSize(transfered / transferTime * 1000, 1));
 				}
 			}
 

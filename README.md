@@ -1,6 +1,13 @@
 # Maverick Synergy Java SSH API
 Maverick Synergy is the third generation Java SSH API developed by JADAPTIVE Limited (previously known as SSHTOOLS Limited). It is a pure Java implementation of the SSH2 protocol enabling you to create both client and server solutions under the open source and commercial friendly LGPL license.
 
+---
+:grey_exclamation: Maverick Synergy is open-source software that is developed by a commercial organization. Whilst we strive to provide support to the open-source edition whenever we can; if you require immediate help, please consider purchasing a support subscription from [Jadaptive Limited](https://www.jadaptive.com). Subscriptions include access to security hotfixes and new features in advance of their open-source release.
+
+Community developers should seek support at the [Jadaptive Forums](https://forums.jadaptive.com) or alternatively raise issues or Pull Requests directly in Github. Please ensure you have read our [Contribution Agreement](https://github.com/sshtools/maverick-synergy/blob/master/CONTRIBUTING.md) before submitting any PR requests.
+
+---
+
 Built upon the Java NIO framework, this third generation of the API for the first time provides a unified framework for developing both client and server solutions.
 
 ## Features

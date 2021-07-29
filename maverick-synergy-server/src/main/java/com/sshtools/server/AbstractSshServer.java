@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
@@ -54,6 +55,7 @@ import com.sshtools.synergy.nio.SshEngine;
 import com.sshtools.synergy.nio.SshEngineContext;
 import com.sshtools.synergy.nio.SshEngineListenerAdapter;
 import com.sshtools.synergy.ssh.ChannelFactory;
+import com.sshtools.synergy.ssh.GlobalRequestHandler;
 
 public abstract class AbstractSshServer implements Closeable {
 
@@ -73,6 +75,7 @@ public abstract class AbstractSshServer implements Closeable {
 	ForwardingPolicy forwardingPolicy = new ForwardingPolicy();
 	
 	ChannelFactory<SshServerContext> channelFactory; 
+	List<GlobalRequestHandler<SshServerContext>> globalRequestHandlers = new ArrayList<>();
 	File confFolder = new File(".");
 	IPPolicy ipPolicy = new IPPolicy();
 	SecurityLevel securityLevel = SecurityLevel.STRONG;
@@ -118,6 +121,10 @@ public abstract class AbstractSshServer implements Closeable {
 	
 	public void removeInterface(String addressToBind, int portToBind) throws UnknownHostException {
 		engine.getContext().removeListeningInterface(addressToBind, portToBind);
+	}
+	
+	public void addGlobalRequestHandler(GlobalRequestHandler<SshServerContext> handler) {
+		globalRequestHandlers.add(handler);
 	}
 	
 	public void start(boolean requireListeningInterface) throws IOException {
@@ -286,6 +293,10 @@ public abstract class AbstractSshServer implements Closeable {
 	
 	protected void configure(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
 		sshContext.setPolicy(IPPolicy.class, ipPolicy);
+		
+		for(GlobalRequestHandler<SshServerContext> globalRequestHandler : globalRequestHandlers) {
+			sshContext.addGlobalRequestHandler(globalRequestHandler);
+		}
 	}
 	
 	public SshServerContext createServerContext(SshEngineContext daemonContext, SocketChannel sc)

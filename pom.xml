@@ -28,12 +28,12 @@
 		<repository>
 			<id>public-releases</id>
 			<name>public-releases</name>
-			<url>http://artifactory.javassh.com/public-releases</url>
+			<url>https://artifactory.jadaptive.com/public-releases</url>
 		</repository>
 		<snapshotRepository>
 			<id>public-snapshots</id>
 			<name>public-snapshots</name>
-			<url>http://artifactory.javassh.com/public-snapshots</url>
+			<url>https://artifactory.jadaptive.com/public-snapshots</url>
 		</snapshotRepository>
 	</distributionManagement>
 

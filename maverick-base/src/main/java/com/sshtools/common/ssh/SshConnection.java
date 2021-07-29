@@ -47,6 +47,7 @@ public interface SshConnection {
 	void setUsername(String username);
 
 	void disconnect(String message);
+	
 	void disconnect(int reason, String message);
 	
 	InetAddress getRemoteAddress();

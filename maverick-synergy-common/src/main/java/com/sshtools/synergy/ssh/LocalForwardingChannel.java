@@ -43,8 +43,9 @@ import com.sshtools.synergy.nio.SshEngine;
  * the client machine through the server to some endpoint reachable from the
  * server machine.
  */
-public class LocalForwardingChannel<T extends SshContext> extends SocketForwardingChannel<T> implements
-		ClientConnector {
+public class LocalForwardingChannel<T extends SshContext> 
+		extends SocketForwardingChannel<T> 
+		implements ClientConnector {
 
 	boolean hasConnected = false;
 
@@ -62,12 +63,12 @@ public class LocalForwardingChannel<T extends SshContext> extends SocketForwardi
 	 * @param socketChannel
 	 *            SocketChannel
 	 */
-	public LocalForwardingChannel(String channelType, SshConnection con, String addressToBind, int portToBind,
+	public LocalForwardingChannel(String channelType, SshConnection con, String hostToConnect, int portToConnect,
 			SocketChannel socketChannel) {
 		super(channelType,  con);
 		this.socketChannel = socketChannel;
-		this.hostToConnect = addressToBind;
-		this.portToConnect = portToBind;
+		this.hostToConnect = hostToConnect;
+		this.portToConnect = portToConnect;
 	}
 	/**
 	 * Create the forwarding channel.

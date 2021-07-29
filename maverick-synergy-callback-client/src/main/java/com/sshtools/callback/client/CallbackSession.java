@@ -99,7 +99,7 @@ public class CallbackSession implements Runnable {
 					currentConnection.getAuthenticatedFuture().waitFor(30000L);
 					if(currentConnection.getAuthenticatedFuture().isDone() && currentConnection.getAuthenticatedFuture().isSuccess()) {
 						currentConnection.setProperty("callbackClient", this);
-						app.onClientConnected(this);
+						app.onClientConnected(this, currentConnection);
 						if(Log.isInfoEnabled()) {
 							Log.info("Client is connected to {}:{}", hostname, port);
 						}

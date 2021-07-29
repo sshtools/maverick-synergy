@@ -31,7 +31,7 @@ import com.sshtools.synergy.nio.ProtocolContextFactory;
 import com.sshtools.synergy.nio.ProtocolEngine;
 import com.sshtools.synergy.nio.SshEngine;
 
-class SwitchingSshContext extends SshClientContext {
+public class SwitchingSshContext extends SshClientContext {
 
 	ProtocolContextFactory<SshServerContext> serverFactory;
 	String clientIdentifier;

@@ -106,9 +106,9 @@ public class CallbackClient {
 		executor.execute(client);
 	}
 	
-	void onClientConnected(CallbackSession client) {
+	void onClientConnected(CallbackSession client, SshConnection connection) {
 		clients.add(client);
-		onClientStart(client);
+		onClientStart(client, connection);
 	}
 	
 	public boolean isConnected() {
@@ -119,11 +119,11 @@ public class CallbackClient {
 		return clients;
 	}
 	
-	protected void onClientStart(CallbackSession client) {
+	protected void onClientStart(CallbackSession client, SshConnection connection) {
 		
 	}
 	
-	protected void onClientStop(CallbackSession client) {
+	protected void onClientStop(CallbackSession client, SshConnection connection) {
 		
 	}
 	
@@ -165,7 +165,7 @@ public class CallbackClient {
 						public void run() {
 							if(con.containsProperty("callbackClient")) {
 								CallbackSession client = (CallbackSession) con.getProperty("callbackClient");
-								onClientStop(client);
+								onClientStop(client, con);
 								con.removeProperty("callbackClient");
 								clients.remove(client);
 								if(!client.isStopped()) {

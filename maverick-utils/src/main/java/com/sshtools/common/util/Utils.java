@@ -325,5 +325,25 @@ public class Utils {
             throw new IOException("Unexpected exit code " + exitVal + "[" + output.toString() + "]");
         }
 	}
+
+	public static String before(String value, char token) {
+		int idx = value.indexOf(token);
+		if(idx < 0) {
+			return value;
+		}
+		return value.substring(0, idx);
+	}
 	
+	public static String after(String value, char token) {
+		int idx = value.indexOf(token);
+		if(idx < 0) {
+			return value;
+		}
+		if(value.length() > idx-1) {
+			return value.substring(idx+1);
+		} else {
+			return "";
+		}
+	}
+
 }

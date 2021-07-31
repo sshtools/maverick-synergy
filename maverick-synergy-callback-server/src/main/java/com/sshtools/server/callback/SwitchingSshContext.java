@@ -36,7 +36,7 @@ public class SwitchingSshContext extends SshClientContext {
 	ProtocolContextFactory<SshServerContext> serverFactory;
 	String clientIdentifier;
 	
-	SwitchingSshContext(SshEngine engine, 
+	public SwitchingSshContext(SshEngine engine, 
 			String clientIdentifier,
 			ProtocolContextFactory<SshServerContext> serverFactory) throws IOException, SshException {
 		super(engine);

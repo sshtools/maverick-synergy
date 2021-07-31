@@ -60,6 +60,10 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 		return callbackClients.get(username);
 	}
 	
+	protected SshServerContext createServerContext(SshEngineContext daemonContext) throws IOException, SshException {
+		return new SshServerContext(daemonContext.getEngine());
+	}
+	
 	@Override
 	public SshClientContext createContext(SshEngineContext daemonContext, SocketChannel sc)
 			throws IOException, SshException {
@@ -72,7 +76,7 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 					public SshServerContext createContext(SshEngineContext daemonContext, SocketChannel sc)
 							throws IOException, SshException {
 						
-						SshServerContext serverContext=  new SshServerContext(daemonContext.getEngine());
+						SshServerContext serverContext=  createServerContext(daemonContext);
 						configureServerContext(serverContext);
 						return serverContext;
 					}
@@ -108,11 +112,11 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 			}
 		});
 		
-		configureClientContext(clientContext);
+		configureCallbackContext(clientContext);
 		return clientContext;
 	}
 
-	protected void configureClientContext(SshClientContext clientContext) {
+	protected void configureCallbackContext(SshClientContext clientContext) {
 		
 	}
 
@@ -125,7 +129,7 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 		
 	}
 
-	protected void configureServerContext(SshServerContext serverContext) {
+	protected void configureServerContext(SshServerContext serverContext) throws IOException, SshException {
 		
 	}
 }

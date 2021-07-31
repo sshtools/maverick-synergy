@@ -18,7 +18,6 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
-
 package com.sshtools.client;
 
 import java.io.IOException;
@@ -42,10 +41,6 @@ import com.sshtools.synergy.ssh.Service;
 import com.sshtools.synergy.ssh.TransportProtocol;
 import com.sshtools.synergy.ssh.components.SshKeyExchange;
 
-//#ifdef LICENSE
-//import com.sshtools.synergy.common.nio.LicenseManager;
-//#endif
-
 /**
  * The implementation of the client side of the SSH transport protocol.
  */
@@ -61,43 +56,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 	//#endif
 	public TransportProtocolClient(SshClientContext sshContext, ConnectRequestFuture connectFuture) throws LicenseException {
 		super(sshContext,connectFuture);
-		//#ifdef LICENSE
-		//checkLicensing();
-		//#endif
 	}
-
-	//#ifdef LICENSE
-	/*
-	 	private final void checkLicensing() throws LicenseException {
-		
-		if(!license.isLicensed()) {
-			license.verifyLicense();
-			
-			if(license.isValid()) {
-				if(Log.isInfoEnabled()) {
-					Log.info("This Maverick NG API product is licensed to " + license.getLicensee());
-				}
-			}
-		}
-		
-		switch (license.getStatus() & LicenseVerification.LICENSE_VERIFICATION_MASK) {
-			case LicenseVerification.EXPIRED:
-				throw new LicenseException("Your license has expired! visit http://www.sshtools.com to obtain an update version of the software.");
-			case LicenseVerification.OK:
-				break;
-			case LicenseVerification.INVALID:
-				throw new LicenseException("Your license is invalid!");
-			case LicenseVerification.NOT_LICENSED:
-				throw new LicenseException("NOT_LICENSED_TEXT");
-			case LicenseVerification.EXPIRED_MAINTENANCE:
-				throw new LicenseException(
-						"Your support and maintenance has expired! visit http://www.sshtools.com to purchase a subscription");
-			default:
-				throw new LicenseException("An unexpected license status was received.");
-		}
-	}
-	*/
-	//#endif
 
 	@Override
 	protected boolean canConnect(SocketConnection connection) {

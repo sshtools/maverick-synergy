@@ -41,7 +41,7 @@ import com.sshtools.synergy.nio.SshEngineContext;
 
 public class CallbackContextFactory implements ProtocolContextFactory<SshClientContext> {
 
-	public static final String CALLBACK_IDENTIFIER = "CallbackClient-";
+	public static final String CALLBACK_IDENTIFIER = "CallbackClient_";
 	
 	String callbackIdentifier = CALLBACK_IDENTIFIER;
 	Map<String,SshConnection> callbackClients = new HashMap<>();

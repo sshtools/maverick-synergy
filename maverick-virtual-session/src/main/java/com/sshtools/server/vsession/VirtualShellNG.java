@@ -73,8 +73,8 @@ public class VirtualShellNG extends SessionChannelNG {
 	}
 
 	RootShell shell;
-	VirtualConsole console;
-	ShellCommandFactory commandFactory;
+	protected VirtualConsole console;
+	protected ShellCommandFactory commandFactory;
 
 	boolean rawMode = false;
 	

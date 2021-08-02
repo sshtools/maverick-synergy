@@ -18,22 +18,24 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+package com.sshtools.server.callback;
 
-package com.sshtools.server.callback.commands;
+import java.util.Collection;
 
-import com.sshtools.server.callback.CallbackRegistrationService;
-import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.common.ssh.SshConnection;
 
-public abstract class CallbackCommand extends ShellCommand {
+public interface CallbackRegistrationService {
 
-	protected CallbackRegistrationService service;
+	Collection<SshConnection> getCallbackClients();
+
+	SshConnection getCallbackClient(String clientName);
+
+	void registerCallbackClient(String clientName, SshConnection con);
+
+	void unregisterCallbackClient(String clientName);
+
+	boolean isRegistered(String clientName);
 	
-	public CallbackCommand(String name, String subsystem, String signature, String description) {
-		super(name, subsystem, signature, description);
-	}
 	
-	public void setRegistrationService(CallbackRegistrationService service) { 
-		this.service = service;
-	}
 
 }

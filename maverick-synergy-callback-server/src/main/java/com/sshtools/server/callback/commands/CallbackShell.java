@@ -50,7 +50,7 @@ public class CallbackShell extends CallbackCommand {
 		}
 		
 		String clientName = args[1];
-		SshConnection con = server.getCallbackClient(clientName);
+		SshConnection con = service.getCallbackClient(clientName);
 		
 		if(Objects.isNull(con)) {
 			console.println(String.format("%s is not currently connected", clientName));

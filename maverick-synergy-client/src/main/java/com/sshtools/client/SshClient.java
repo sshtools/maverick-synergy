@@ -40,9 +40,11 @@ import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyUtils;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.ssh.Connection;
 
@@ -127,6 +129,14 @@ public class SshClient implements Closeable {
 		this(hostname, port, username, sshContext, 30000L, (char[])null);
 	}
 	
+	@SuppressWarnings("unchecked")
+	public SshClient(SshConnection con) {
+		this.con = (Connection<SshClientContext>) con;
+		this.sshContext = (SshClientContext) con.getContext();
+		this.hostname = con.getRemoteAddress().getHostAddress();
+		this.remotePublicKeys = Utils.csv(con.getRemotePublicKeys());
+	}
+	
 	public SshClient(String hostname, int port, String username, SshClientContext sshContext, long connectTimeout, char[] password, SshKeyPair... identities) throws IOException, SshException {
 		this.sshContext = sshContext;
 		this.hostname = hostname;
@@ -148,7 +158,6 @@ public class SshClient implements Closeable {
 			close();
 			throw new IOException("Authentication failed");
 		}
-
 	}
 	
 	@SuppressWarnings("unchecked")

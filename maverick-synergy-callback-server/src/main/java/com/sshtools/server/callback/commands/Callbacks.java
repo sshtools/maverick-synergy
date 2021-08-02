@@ -38,7 +38,7 @@ public class Callbacks extends CallbackCommand {
 	public void run(String[] args, VirtualConsole console)
 			throws IOException, PermissionDeniedException, UsageException {
 
-		for(SshConnection con : server.getCallbackClients()) {
+		for(SshConnection con : service.getCallbackClients()) {
 			console.println(String.format("%-20s %-15s", con.getUsername(), con.getRemoteAddress()));
 		}
 	}

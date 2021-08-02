@@ -42,4 +42,8 @@ public class VirtualChannelFactory extends DefaultServerChannelFactory {
 			throws UnsupportedChannelException, PermissionDeniedException {
 		return new VirtualShellNG(con,  new ShellCommandFactory(factories));
 	}
+	
+	protected CommandFactory<? extends ShellCommand>[] getCommandFactories() {
+		return factories;
+	}
 }

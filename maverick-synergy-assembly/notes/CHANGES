@@ -3,9 +3,17 @@ Maverick Synergy 3.0.3-SNAPSHOT
 Features
     o Refactor of callback client; separated CallbackContextFactory and added SshConnection parameter to event methods.
     o Added before/after methods to Utils.
+    o Create an SshClient from an existing SshConnection to allow wrapping of "jump" hosts.
+    o Added CallbackRegistrationService for management of callback clients within a callback server.
     
 Bug Fixes
     o Missing server-level collection of GlobalRequestHandlers.
+    o Changed use of VFS SFTP 3.2.0 from snapshot to final version.
+    o Made SwitchingCallbackContext constructor public.
+    o Don't print stack trace of unsupported command, just log the error.
+    o Allow protected access to child channel factories of ShellCommandFactory.
+    o Allow protected access to console and ShellCommandFactory of VirtualShellNG session implementation.
+    o Default callback identifier made consistent with SSH identification practices. 
     
 =================
 =  HISTORY      =

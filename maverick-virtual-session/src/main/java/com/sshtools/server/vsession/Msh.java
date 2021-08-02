@@ -317,6 +317,10 @@ public class Msh extends ShellCommand {
 		} catch(EndOfFileException eofe) {
 			exit = true;
 			return 0;
+		} catch(UnsupportedCommandException e) { 
+			console.println(String.format("Unsupported command: %s", args[0]));
+			Log.error(e.getMessage());
+			return -1;
 		} catch (Throwable t) {
 			if(t.getCause()!=null) {
 				lastError = t.getCause();

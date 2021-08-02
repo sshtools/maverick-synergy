@@ -55,7 +55,7 @@ public class CallbackMount extends CallbackCommand {
 		}
 		
 		String clientName = args[1];
-		SshConnection remoteConnection = server.getCallbackClient(clientName);
+		SshConnection remoteConnection = service.getCallbackClient(clientName);
 		
 		if(Objects.isNull(remoteConnection)) {
 			console.println(String.format("%s is not currently connected", clientName));

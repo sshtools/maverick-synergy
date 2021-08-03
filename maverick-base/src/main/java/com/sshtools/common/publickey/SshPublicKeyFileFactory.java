@@ -247,7 +247,7 @@ public class SshPublicKeyFileFactory {
 			 * previous implementation
 			 */
 			@SuppressWarnings("unchecked")
-			Class<SshPublicKeyFile> clz = (Class<SshPublicKeyFile>) Class.forName("com.sshtools.common.publickey.OpenSSLPublicKeyFile" + JCEProvider.getBCProvider().getName());
+			Class<SshPublicKeyFile> clz = (Class<SshPublicKeyFile>) Class.forName("com.sshtools.common.publickey.bc.OpenSSLPublicKeyFile" + JCEProvider.getBCProvider().getName());
 			
 			Constructor<SshPublicKeyFile> c = clz.getDeclaredConstructor(SshPublicKey.class, String.class);
 			c.setAccessible(true);

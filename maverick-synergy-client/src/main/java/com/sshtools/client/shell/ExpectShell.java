@@ -382,6 +382,10 @@ public class ExpectShell {
 		}
 	}
 
+	public synchronized void execute(String cmd) throws SshException {
+		executeCommand(cmd, true);
+	}
+	
 	public synchronized ShellProcess executeCommand(String origCmd)
 			throws SshException {
 		return executeCommand(origCmd, false, false, "UTF-8");

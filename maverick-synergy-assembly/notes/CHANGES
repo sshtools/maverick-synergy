@@ -6,6 +6,8 @@ Features
 Bug Fixes
     o Fixed some issues with transfer statistics logging.
     o Added some useful methods to Utils for prompting in example code and extracting port number from a host string.
+    o Dynamic loading of OpenSSLPublicKeyFile used incorrect package name.
+    o OpenSSLPublicKeyFileBCFIPS is in the wrong package.
 
 =================
 =  HISTORY      =

@@ -17,7 +17,7 @@
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
 /* HEADER */
-package com.sshtools.common.publickey;
+package com.sshtools.common.publickey.bc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -46,6 +46,9 @@ import org.bouncycastle.operator.InputDecryptorProvider;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.jcajce.JcePKCSPBEInputDecryptorProviderBuilder;
 
+import com.sshtools.common.publickey.InvalidPassphraseException;
+import com.sshtools.common.publickey.OpenSSHPrivateKeyFile;
+import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.ECUtils;
 import com.sshtools.common.ssh.components.jce.JCEProvider;

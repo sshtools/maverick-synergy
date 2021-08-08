@@ -1490,7 +1490,13 @@ public abstract class TransportProtocol<T extends SshContext>
 					getConnectionAddress().toString(),
 					description);
 		}
-		postMessage(new DisconnectMessage(reason, description));
+		postMessage(new DisconnectMessage(reason, description) {
+			@Override
+			public void messageSent(Long sequenceNo) {
+				onSocketClose();
+				super.messageSent(sequenceNo);
+			}
+		});
 	}
 
 	/**

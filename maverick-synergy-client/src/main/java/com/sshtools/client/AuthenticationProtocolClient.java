@@ -37,6 +37,7 @@ import com.sshtools.synergy.ssh.ConnectionProtocol;
 import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
 import com.sshtools.synergy.ssh.Service;
 import com.sshtools.synergy.ssh.TransportProtocol;
+import com.sshtools.synergy.ssh.TransportProtocolListener;
 
 /**
  * Implements the client side of the SSH authentication protocol.
@@ -73,6 +74,16 @@ public class AuthenticationProtocolClient implements Service {
 			}
 		}));
 
+		transport.addEventListener(new TransportProtocolListener() {
+			@Override
+			public void onDisconnect(TransportProtocol<?> transport) {
+				if(currentAuthenticator != null) {
+					synchronized(currentAuthenticator) {
+						currentAuthenticator.notifyAll();
+					}
+				}
+			}
+		});
 		transport.getConnection().addEventListener(new EventListener() {
 			@Override
 			public void processEvent(Event evt) {

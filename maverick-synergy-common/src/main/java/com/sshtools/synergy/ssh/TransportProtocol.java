@@ -1490,13 +1490,7 @@ public abstract class TransportProtocol<T extends SshContext>
 					getConnectionAddress().toString(),
 					description);
 		}
-		postMessage(new DisconnectMessage(reason, description) {
-			@Override
-			public void messageSent(Long sequenceNo) {
-				onSocketClose();
-				super.messageSent(sequenceNo);
-			}
-		});
+		postMessage(new DisconnectMessage(reason, description, true));
 	}
 
 	/**
@@ -2550,10 +2544,12 @@ public abstract class TransportProtocol<T extends SshContext>
 
 		int reason;
 		String description;
+		boolean closeProtocol;
 
-		DisconnectMessage(int reason, String description) {
+		DisconnectMessage(int reason, String description, boolean closeProtocol) {
 			this.reason = reason;
 			this.description = description;
+			this.closeProtocol = closeProtocol;
 		}
 
 		public boolean writeMessageIntoBuffer(ByteBuffer buf) {
@@ -2569,7 +2565,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			if(Log.isDebugEnabled())
 				Log.debug("Sent SSH_MSG_DISCONNECT reason=" + reason + " "
 						+ description);
-			socketConnection.closeConnection();
+			socketConnection.closeConnection(closeProtocol);
 		}
 	}
 

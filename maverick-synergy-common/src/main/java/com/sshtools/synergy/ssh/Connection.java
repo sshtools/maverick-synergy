@@ -189,7 +189,7 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	}
 	
 	public boolean isDisconnected() {
-		return closed;
+		return getDisconnectFuture().isDone();
 	}
 	
 	public void disconnect() {

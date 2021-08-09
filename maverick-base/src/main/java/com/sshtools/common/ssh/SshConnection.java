@@ -124,6 +124,8 @@ public interface SshConnection {
 
 	AbstractRequestFuture getAuthenticatedFuture();
 
+	AbstractRequestFuture getDisconnectedFuture();
+	
 	void removeProperty(String string);
 
 }

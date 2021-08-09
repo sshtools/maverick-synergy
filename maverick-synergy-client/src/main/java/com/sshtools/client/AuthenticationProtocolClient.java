@@ -313,6 +313,9 @@ public class AuthenticationProtocolClient implements Service {
 	}
 	
 	private void checkReady() throws IOException {
+		if(transport.getDisconnectFuture().isDone()) {
+			throw new IOException("SSH client has been disconnected!");
+		}
 		if(!noneAuthenticator.isDone()) {
 			if(Log.isDebugEnabled()) {
 				Log.debug("Authentication protocol is NOT ready");

@@ -72,7 +72,6 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 			@Override
 			public void processEvent(Event evt) {
 				if(evt.getId()==EventCodes.EVENT_DISCONNECTED) {
-					transport.getDisconnectFuture().disconnected();
 					if(!getAuthenticatedFuture().isDone()) {
 						getAuthenticatedFuture().authenticated(false);
 					}

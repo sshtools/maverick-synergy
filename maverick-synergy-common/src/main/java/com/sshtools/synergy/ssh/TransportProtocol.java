@@ -1554,6 +1554,7 @@ public abstract class TransportProtocol<T extends SshContext>
 					Log.debug("Submitting transport cleanup to executor service");
 				}
 
+				disconnectFuture.disconnected();
 				
 				if(connection != null) {
 					/* Connection may be null if a socket connection was made by the protocol never started */
@@ -1565,7 +1566,6 @@ public abstract class TransportProtocol<T extends SshContext>
 										
 										disconnected();
 										onDisconnected();
-										disconnectFuture.disconnected();
 										
 										EventServiceImplementation
 										.getInstance()

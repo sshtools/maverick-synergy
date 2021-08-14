@@ -39,6 +39,7 @@ import org.bouncycastle.asn1.DLSequence;
 import org.bouncycastle.asn1.edec.EdECObjectIdentifiers;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.util.Arrays;
 
 import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.Utils;
@@ -56,7 +57,7 @@ public class SshEd25519PrivateKeyJCE implements SshEd25519PrivateKey {
 		KeyFactory keyFactory = KeyFactory.getInstance(JCEAlgorithms.ED25519, "BC");
 		PrivateKeyInfo privKeyInfo = new PrivateKeyInfo(
 				new AlgorithmIdentifier(EdECObjectIdentifiers.id_Ed25519), 
-				new DEROctetString(sk),
+				new DEROctetString(Arrays.copyOf(sk, 32)),
 				null,
 				pk);
 		PKCS8EncodedKeySpec pkcs8KeySpec = new PKCS8EncodedKeySpec(privKeyInfo.getEncoded());

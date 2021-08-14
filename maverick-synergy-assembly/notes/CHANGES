@@ -1,4 +1,4 @@
-Maverick Synergy 3.0.3-SNAPSHOT
+Maverick Synergy 3.0.4-SNAPSHOT
 
 Features
     o Refactor of callback client; separated CallbackContextFactory and added SshConnection parameter to event methods.
@@ -14,6 +14,8 @@ Bug Fixes
     o Allow protected access to child channel factories of ShellCommandFactory.
     o Allow protected access to console and ShellCommandFactory of VirtualShellNG session implementation.
     o Default callback identifier made consistent with SSH identification practices. 
+    o Authentication future is not processed as part of client disconnect.
+    o BouncyCastle 1.69 cannot load ED25519 key.
     
 =================
 =  HISTORY      =

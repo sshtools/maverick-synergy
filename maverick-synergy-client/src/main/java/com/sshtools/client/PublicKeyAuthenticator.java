@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.SignatureGenerator;
 import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.ssh.SshException;
@@ -120,11 +121,11 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 				
 			});
 		} catch (IOException e) {
+			Log.error("Public key operation failed",e);
 			failure();
-			throw e;
 		} catch (SshException e) {
+			Log.error("Public key operation failed",e);
 			failure();
-			throw e;
 		}
 	}
 	
@@ -219,7 +220,12 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 		case SSH_MSG_USERAUTH_PK_OK:
 		{
 			isAuthenticating = true;
-			doPublicKeyAuth();
+			try {
+				doPublicKeyAuth();
+			} catch (SshException | IOException e) {
+				Log.error("Public key operation failed",e);
+				failure();
+			}
 			return true;
 		}
 		case AuthenticationProtocolClient.SSH_MSG_USERAUTH_FAILURE:

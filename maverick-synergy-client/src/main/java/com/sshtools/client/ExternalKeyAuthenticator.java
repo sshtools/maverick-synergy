@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.SignatureGenerator;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
@@ -81,7 +82,7 @@ public class ExternalKeyAuthenticator extends SimpleClientAuthenticator implemen
 		
 		try {
 
-			final byte[] msg = generateAuthenticationRequest(generateSignatureData());
+			byte[] msg = generateAuthenticationRequest(generateSignatureData());
 			
 			transport.postMessage(new AuthenticationMessage(username, "ssh-connection", "publickey") {
 
@@ -94,12 +95,12 @@ public class ExternalKeyAuthenticator extends SimpleClientAuthenticator implemen
 				}
 				
 			});
-		} catch (IOException e) { 
-			failure();
-			throw e;			
+		} catch(IOException e) {
+			Log.error("Public key operation failed",e);
+		 	failure();
 		} catch(SshException e) {
+			Log.error("Public key operation failed",e);
 			failure();
-			throw e;
 		} 
 	}
 
@@ -174,6 +175,7 @@ public class ExternalKeyAuthenticator extends SimpleClientAuthenticator implemen
 			try {
 				doPublicKeyAuth();
 			} catch (SshException | IOException e) {
+				Log.error("Public key operation failed",e);
 				failure();
 			}
 			return true;

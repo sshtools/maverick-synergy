@@ -34,7 +34,6 @@ import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.synergy.ssh.Connection;
-import com.sshtools.synergy.ssh.TransportProtocol;
 
 /**
  * Implements public key authentication taking a separately loaded SshKeyPair as the private key for authentication.
@@ -61,7 +60,7 @@ public class ExternalKeyAuthenticator extends SimpleClientAuthenticator implemen
 	}
 
 	@Override
-	public void authenticate(TransportProtocolClient transport, String username) throws IOException {
+	public void authenticate(TransportProtocolClient transport, String username) throws SshException, IOException {
 		
 		onStartAuthentication(transport.getConnection());
 		
@@ -78,7 +77,7 @@ public class ExternalKeyAuthenticator extends SimpleClientAuthenticator implemen
 		
 	}
 	
-	void doPublicKeyAuth() {
+	void doPublicKeyAuth() throws SshException, IOException {
 		
 		try {
 
@@ -95,16 +94,15 @@ public class ExternalKeyAuthenticator extends SimpleClientAuthenticator implemen
 				}
 				
 			});
-		} catch (IOException e) {
-			disconnect("Internal error");
-		} catch (SshException e) {
-			disconnect("Internal error");
-		}
+		} catch (IOException e) { 
+			failure();
+			throw e;			
+		} catch(SshException e) {
+			failure();
+			throw e;
+		} 
 	}
-	
-	private void disconnect(String desc) {
-		transport.disconnect(TransportProtocol.AUTH_CANCELLED_BY_USER, desc);
-	}
+
 	
 	byte[] generateSignatureData() throws IOException,
 			SshException {
@@ -173,7 +171,11 @@ public class ExternalKeyAuthenticator extends SimpleClientAuthenticator implemen
 		case SSH_MSG_USERAUTH_PK_OK:
 		{
 			isAuthenticating = true;
-			doPublicKeyAuth();
+			try {
+				doPublicKeyAuth();
+			} catch (SshException | IOException e) {
+				failure();
+			}
 			return true;
 		}
 		case AuthenticationProtocolClient.SSH_MSG_USERAUTH_FAILURE:
@@ -182,7 +184,11 @@ public class ExternalKeyAuthenticator extends SimpleClientAuthenticator implemen
 				publicKeys.remove(authenticatingKey);
 				authenticatingKey = null;
 				if(!publicKeys.isEmpty()) {
-					doPublicKeyAuth();
+					try {
+						doPublicKeyAuth();
+					} catch (SshException | IOException e) {
+						failure();
+					}
 					return true;
 				}
 			}

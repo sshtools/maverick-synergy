@@ -103,11 +103,13 @@ public class MutualCallbackAuthenticator extends SimpleClientAuthenticator {
 				SshPublicKey remotePublicKey = authenticationStore.getPublicKey(con);
 
 				if(Objects.isNull(remotePublicKey)) {
+					failure();
 					transport.disconnect(TransportProtocol.AUTH_CANCELLED_BY_USER, "There was no public key configured for the user");
 					return;
 				} 
 				
 				if(!remotePublicKey.verifySignature(signature, writer.toByteArray())) {
+					failure();
 					transport.disconnect(TransportProtocol.AUTH_CANCELLED_BY_USER, "Failed to verify remote public key signature");
 					return;
 				}
@@ -162,6 +164,7 @@ public class MutualCallbackAuthenticator extends SimpleClientAuthenticator {
 					
 				});
 			} catch (Throwable e) {
+				failure();
 				transport.disconnect(TransportProtocol.BY_APPLICATION, "Internal error");
 			} 
 		}

@@ -263,6 +263,10 @@ final class LicenseVerification {
 //				return OK | 0x100;
 //			}
 			
+			if(Utils.isBlank(license)) {
+				return status;
+			}
+			
 			SshPublicKeyFile file = SshPublicKeyFileFactory.parse(productKey.getBytes("UTF8"));
 			SshPublicKey key = file.toPublicKey();
 			

@@ -16,6 +16,9 @@ Bug Fixes
     o Default callback identifier made consistent with SSH identification practices. 
     o Authentication future is not processed as part of client disconnect.
     o BouncyCastle 1.69 cannot load ED25519 key.
+    o ClientAuthenticator should allow SshException to propagate. 
+    o NPE when no license is set.
+    o Client authenticators need to signal failure of the authenticator to their parent future.
     
 =================
 =  HISTORY      =

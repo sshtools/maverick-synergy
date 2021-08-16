@@ -121,6 +121,7 @@ public class KeyboardInteractiveAuthenticator extends SimpleClientAuthenticator 
 								});
 							} catch (IOException e) {
 								Log.error("Error during showPrompts", e);
+								failure();
 								transport.disconnect(TransportProtocol.AUTH_CANCELLED_BY_USER, "User cancelled auth.");
 							} finally {
 								try {
@@ -133,6 +134,7 @@ public class KeyboardInteractiveAuthenticator extends SimpleClientAuthenticator 
 						@Override
 						public void cancel() {
 							KeyboardInteractiveAuthenticator.this.cancel();
+							failure();
 							transport.disconnect(TransportProtocol.AUTH_CANCELLED_BY_USER, "User cancelled auth.");
 						}
 						

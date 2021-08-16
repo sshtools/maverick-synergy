@@ -35,7 +35,6 @@ import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.synergy.ssh.Connection;
-import com.sshtools.synergy.ssh.TransportProtocol;
 
 /**
  * Implements public key authentication taking a separately loaded SshKeyPair as the private key for authentication.
@@ -83,7 +82,7 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 	}
 
 	@Override
-	public void authenticate(TransportProtocolClient transport, String username) throws IOException {
+	public void authenticate(TransportProtocolClient transport, String username) throws IOException, SshException {
 		
 		onStartAuthentication(transport.getConnection());
 		
@@ -100,7 +99,7 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 		
 	}
 	
-	void doPublicKeyAuth() {
+	void doPublicKeyAuth() throws SshException, IOException {
 		
 		try {
 
@@ -118,14 +117,12 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 				
 			});
 		} catch (IOException e) {
-			disconnect("Internal error");
+			failure();
+			throw e;
 		} catch (SshException e) {
-			disconnect("Internal error");
+			failure();
+			throw e;
 		}
-	}
-	
-	private void disconnect(String desc) {
-		transport.disconnect(TransportProtocol.AUTH_CANCELLED_BY_USER, desc);
 	}
 	
 	byte[] generateSignatureData() throws IOException,
@@ -213,7 +210,7 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 	}
 
 	@Override
-	public boolean processMessage(ByteArrayReader msg) throws IOException {
+	public boolean processMessage(ByteArrayReader msg) throws IOException, SshException {
 		
 		switch(msg.read()) {
 		case SSH_MSG_USERAUTH_PK_OK:

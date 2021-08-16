@@ -34,6 +34,7 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.forwarding.ForwardingPolicy;
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyUtils;
@@ -358,6 +359,9 @@ public class SshClient implements Closeable {
 	
 	public boolean authenticate(ClientAuthenticator authenticator, long timeout) throws IOException, SshException {
 		
+		if(Log.isDebugEnabled()) {
+			Log.debug("Authenticating with {}", authenticator.getName());
+		}
 		sshContext.getAuthenticationClient().addAuthentication(authenticator);
 		authenticator.waitFor(timeout);
 		if(authenticator.isCancelled())

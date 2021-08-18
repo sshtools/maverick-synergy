@@ -1,4 +1,4 @@
-Maverick Synergy 3.0.4-SNAPSHOT
+Maverick Synergy 3.0.4 - Aug 18, 2021
 
 Features
     o Refactor of callback client; separated CallbackContextFactory and added SshConnection parameter to event methods.

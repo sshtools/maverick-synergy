@@ -1,21 +1,24 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
+/*
+ *    _           _             _   _
+ *   (_) __ _  __| | __ _ _ __ | |_(_)_   _____
+ *   | |/ _` |/ _` |/ _` | '_ \| __| \ \ / / _ \
+ *   | | (_| | (_| | (_| | |_) | |_| |\ V /  __/
+ *  _/ |\__,_|\__,_|\__,_| .__/ \__|_| \_/ \___|
+ * |__/                  |_|
  *
- * This file is part of the Maverick Synergy Java SSH API.
+ * This file is part of the Maverick Synergy Hotfixes Java SSH API
  *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Unauthorized copying of this file, via any medium is strictly prohibited.
  *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * Copyright (C) 2002-2021 JADAPTIVE Limited - All Rights Reserved
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
+ * Use of this software may also be covered by third-party licenses depending on the choices you make about what features to use.
+ *
+ * Please visit the link below to see additional third-party licenses and copyrights
+ *
+ * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+
 package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
@@ -40,8 +43,9 @@ import com.sshtools.synergy.nio.SshEngine;
  * the client machine through the server to some endpoint reachable from the
  * server machine.
  */
-public class LocalForwardingChannel<T extends SshContext> extends SocketForwardingChannel<T> implements
-		ClientConnector {
+public class LocalForwardingChannel<T extends SshContext> 
+		extends SocketForwardingChannel<T> 
+		implements ClientConnector {
 
 	boolean hasConnected = false;
 
@@ -59,12 +63,12 @@ public class LocalForwardingChannel<T extends SshContext> extends SocketForwardi
 	 * @param socketChannel
 	 *            SocketChannel
 	 */
-	public LocalForwardingChannel(String channelType, SshConnection con, String addressToBind, int portToBind,
+	public LocalForwardingChannel(String channelType, SshConnection con, String hostToConnect, int portToConnect,
 			SocketChannel socketChannel) {
 		super(channelType,  con);
 		this.socketChannel = socketChannel;
-		this.hostToConnect = addressToBind;
-		this.portToConnect = portToBind;
+		this.hostToConnect = hostToConnect;
+		this.portToConnect = portToConnect;
 	}
 	/**
 	 * Create the forwarding channel.

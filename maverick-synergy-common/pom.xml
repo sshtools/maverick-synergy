@@ -1,30 +1,11 @@
-<!--
 
-    (c) 2002-2019 JADAPTIVE Limited. All Rights Reserved.
-
-    This file is part of the Maverick Synergy Java SSH API.
-
-    Maverick Synergy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Maverick Synergy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
-
--->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.sshtools</groupId>
+		<groupId>com.sshtools.hotfixes</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.0.0-FINAL</version>
+		<version>3.0.4</version>
 	</parent>
 	<artifactId>maverick-synergy-common</artifactId>
 	<name>Common API</name>
@@ -32,9 +13,45 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.sshtools</groupId>
+			<groupId>com.sshtools.hotfixes</groupId>
 			<artifactId>maverick-base</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.sshtools</groupId>
+				<artifactId>codeswitcher-maven-plugin</artifactId>
+				<version>2.0.1-SNAPSHOT</version>
+				<executions>
+					<execution>
+						<id>enterprise-build</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>pre-process</goal>
+						</goals>
+						<configuration>
+							<changeBuildSourceDirectory>true</changeBuildSourceDirectory>
+							<temporaryDirectory>target/enterprise-src</temporaryDirectory>
+							<comment>false</comment>
+							<workOnCopy>true</workOnCopy>
+							<timestampToken>/* RELEASE_DATE */</timestampToken>
+							<tokens>
+								<token>
+									<key>SOFTWARE_VERSION_COMMENTS</key>
+									<value>MaverickSynergy_${project.version}</value>
+								</token>
+								<token>
+									<key>/* VERSION */</key>
+									<value>${project.version}</value>
+								</token>
+							</tokens>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>

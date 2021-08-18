@@ -1,21 +1,24 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
+/*
+ *    _           _             _   _
+ *   (_) __ _  __| | __ _ _ __ | |_(_)_   _____
+ *   | |/ _` |/ _` |/ _` | '_ \| __| \ \ / / _ \
+ *   | | (_| | (_| | (_| | |_) | |_| |\ V /  __/
+ *  _/ |\__,_|\__,_|\__,_| .__/ \__|_| \_/ \___|
+ * |__/                  |_|
  *
- * This file is part of the Maverick Synergy Java SSH API.
+ * This file is part of the Maverick Synergy Hotfixes Java SSH API
  *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Unauthorized copying of this file, via any medium is strictly prohibited.
  *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * Copyright (C) 2002-2021 JADAPTIVE Limited - All Rights Reserved
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
+ * Use of this software may also be covered by third-party licenses depending on the choices you make about what features to use.
+ *
+ * Please visit the link below to see additional third-party licenses and copyrights
+ *
+ * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+
 package com.sshtools.common.util;
 
 import java.io.BufferedReader;
@@ -40,6 +43,26 @@ public class Utils {
 	 * From https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
 	 */
 	private final static char[] hexArray = "0123456789abcdef".toCharArray();
+
+	public static String before(String value, char token) {
+		int idx = value.indexOf(token);
+		if(idx < 0) {
+			return value;
+		}
+		return value.substring(0, idx);
+	}
+	
+	public static String after(String value, char token) {
+		int idx = value.indexOf(token);
+		if(idx < 0) {
+			return value;
+		}
+		if(value.length() > idx-1) {
+			return value.substring(idx+1);
+		} else {
+			return "";
+		}
+	}
 	
 	public static String bytesToHex(byte[] bytes) {
 		return bytesToHex(bytes, 0, bytes.length);
@@ -323,4 +346,51 @@ public class Utils {
         }
 	}
 	
+	public static String prompt(BufferedReader reader, String message) throws IOException {
+		
+		System.out.print(String.format("%s: ", message));
+		return reader.readLine();
+		
+	}
+	
+	public static String prompt(BufferedReader reader, String message, String defaultValue) throws IOException {
+		
+		System.out.print(String.format("%s [%s]: ", message, defaultValue));
+		String line = reader.readLine();
+		if(isBlank(line)) {
+			return defaultValue;
+		}
+		return line;
+		
+	}
+
+	public static boolean hasPort(String hostname) {
+		int idx = hostname.indexOf(":");
+		if(idx > -1) {
+			String portString = hostname.substring(idx+1);
+			if(portString.matches("^[0-9]*$")) {
+				int value = Integer.parseInt(portString);
+				if(value > 0 && value < 65536) {
+					return true;
+				}
+			} 
+			return false;
+		}
+		return false;
+	}
+	
+	public static int getPort(String hostname) {
+		int idx = hostname.indexOf(":");
+		if(idx > -1) {
+			String portString = hostname.substring(idx+1);
+			if(portString.matches("^[0-9]*$")) {
+				int value = Integer.parseInt(portString);
+				if(value > 0 && value < 65536) {
+					return value;
+				}
+			} 
+		}
+		throw new IllegalArgumentException("Input does not contain a port value");
+	}
+
 }

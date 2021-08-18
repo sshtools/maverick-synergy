@@ -1,21 +1,24 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
+/*
+ *    _           _             _   _
+ *   (_) __ _  __| | __ _ _ __ | |_(_)_   _____
+ *   | |/ _` |/ _` |/ _` | '_ \| __| \ \ / / _ \
+ *   | | (_| | (_| | (_| | |_) | |_| |\ V /  __/
+ *  _/ |\__,_|\__,_|\__,_| .__/ \__|_| \_/ \___|
+ * |__/                  |_|
  *
- * This file is part of the Maverick Synergy Java SSH API.
+ * This file is part of the Maverick Synergy Hotfixes Java SSH API
  *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Unauthorized copying of this file, via any medium is strictly prohibited.
  *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * Copyright (C) 2002-2021 JADAPTIVE Limited - All Rights Reserved
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
+ * Use of this software may also be covered by third-party licenses depending on the choices you make about what features to use.
+ *
+ * Please visit the link below to see additional third-party licenses and copyrights
+ *
+ * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+
 package com.sshtools.client;
 
 import java.io.BufferedReader;
@@ -34,12 +37,15 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.forwarding.ForwardingPolicy;
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyUtils;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.ssh.Connection;
 
@@ -124,6 +130,14 @@ public class SshClient implements Closeable {
 		this(hostname, port, username, sshContext, 30000L, (char[])null);
 	}
 	
+	@SuppressWarnings("unchecked")
+	public SshClient(SshConnection con) {
+		this.con = (Connection<SshClientContext>) con;
+		this.sshContext = (SshClientContext) con.getContext();
+		this.hostname = con.getRemoteAddress().getHostAddress();
+		this.remotePublicKeys = Utils.csv(con.getRemotePublicKeys());
+	}
+	
 	public SshClient(String hostname, int port, String username, SshClientContext sshContext, long connectTimeout, char[] password, SshKeyPair... identities) throws IOException, SshException {
 		this.sshContext = sshContext;
 		this.hostname = hostname;
@@ -145,7 +159,6 @@ public class SshClient implements Closeable {
 			close();
 			throw new IOException("Authentication failed");
 		}
-
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -358,6 +371,9 @@ public class SshClient implements Closeable {
 	
 	public boolean authenticate(ClientAuthenticator authenticator, long timeout) throws IOException, SshException {
 		
+		if(Log.isDebugEnabled()) {
+			Log.debug("Authenticating with {}", authenticator.getName());
+		}
 		sshContext.getAuthenticationClient().addAuthentication(authenticator);
 		authenticator.waitFor(timeout);
 		if(authenticator.isCancelled())

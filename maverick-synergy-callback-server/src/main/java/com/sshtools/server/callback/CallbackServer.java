@@ -1,45 +1,33 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
+/*
+ *    _           _             _   _
+ *   (_) __ _  __| | __ _ _ __ | |_(_)_   _____
+ *   | |/ _` |/ _` |/ _` | '_ \| __| \ \ / / _ \
+ *   | | (_| | (_| | (_| | |_) | |_| |\ V /  __/
+ *  _/ |\__,_|\__,_|\__,_| .__/ \__|_| \_/ \___|
+ * |__/                  |_|
  *
- * This file is part of the Maverick Synergy Java SSH API.
+ * This file is part of the Maverick Synergy Hotfixes Java SSH API
  *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Unauthorized copying of this file, via any medium is strictly prohibited.
  *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * Copyright (C) 2002-2021 JADAPTIVE Limited - All Rights Reserved
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
+ * Use of this software may also be covered by third-party licenses depending on the choices you make about what features to use.
+ *
+ * Please visit the link below to see additional third-party licenses and copyrights
+ *
+ * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+
 package com.sshtools.server.callback;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.channels.SocketChannel;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
-import com.sshtools.client.AuthenticationProtocolClient;
-import com.sshtools.client.ClientStateListener;
-import com.sshtools.client.SshClientContext;
-import com.sshtools.common.auth.InMemoryMutualKeyAuthenticationStore;
-import com.sshtools.common.auth.MutualKeyAuthenticatonStore;
-import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.common.ssh.SshException;
 import com.sshtools.server.AbstractSshServer;
-import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.nio.ProtocolContextFactory;
-import com.sshtools.synergy.nio.SshEngineContext;
 
 /**
  * An abstract server that provides a callback facility, listening on a port and acting as a client to 
@@ -51,100 +39,26 @@ import com.sshtools.synergy.nio.SshEngineContext;
  */
 public class CallbackServer extends AbstractSshServer {
 
-	public static final String CALLBACK_IDENTIFIER = "CallbackClient-";
 	
-	String callbackIdentifier = CALLBACK_IDENTIFIER;
-	MutualKeyAuthenticatonStore authenticationStore = new InMemoryMutualKeyAuthenticationStore();
-	ClientContextFactory defaultContextFactory = new ClientContextFactory();
-	Map<String,SshConnection> callbackClients = new HashMap<>();
+	CallbackContextFactory defaultContextFactory;
 	
-	public CallbackServer() {
+	public CallbackServer(CallbackContextFactory callbackContextFactory) {
+		this.defaultContextFactory = callbackContextFactory;
 	}
 	
-	public CallbackServer(InetAddress addressToBind, int port) {
+	public CallbackServer(CallbackContextFactory callbackContextFactory, InetAddress addressToBind, int port) {
 		super(addressToBind, port);
+		this.defaultContextFactory = callbackContextFactory;
 	}
 	
-	public CallbackServer(int port) throws UnknownHostException {
+	public CallbackServer(CallbackContextFactory callbackContextFactory, int port) throws UnknownHostException {
 		super(port);
+		this.defaultContextFactory = callbackContextFactory;
 	}
 
-	public CallbackServer(String addressToBind, int port) throws UnknownHostException {
+	public CallbackServer(CallbackContextFactory callbackContextFactory, String addressToBind, int port) throws UnknownHostException {
 		super(addressToBind, port);
-	}
-
-	public void setCallbackIdentifier(String callbackIdentifier) {
-		this.callbackIdentifier = callbackIdentifier;
-	}
-	
-	public void setMutualKeyAuthenticationStore(MutualKeyAuthenticatonStore authenticationStore) {
-		this.authenticationStore = authenticationStore;
-	}
-	
-	public Collection<SshConnection> getCallbackClients() {
-		return Collections.unmodifiableCollection(callbackClients.values());
-	}
-	
-	public SshConnection getCallbackClient(String username) {
-		return callbackClients.get(username);
-	}
-	
-	protected void configureClientContext(SshClientContext clientContext) {
-		
-	}
-
-	protected class ClientContextFactory implements ProtocolContextFactory<SshClientContext> {
-
-		public ClientContextFactory() {
-		}
-
-		@Override
-		public SshClientContext createContext(SshEngineContext daemonContext, SocketChannel sc)
-				throws IOException, SshException {
-			SshClientContext clientContext = new SwitchingSshContext(
-					getEngine(), callbackIdentifier, new ServerContextFactory());
-			configureClientContext(clientContext);
-			clientContext.addAuthenticator(new MutualCallbackAuthenticator(authenticationStore));
-			clientContext.addStateListener(new ClientStateListener() {
-
-				@Override
-				public void authenticationStarted(AuthenticationProtocolClient authClient,
-						SshConnection con) {
-					if(callbackClients.containsKey(con.getUsername())) {
-						con.disconnect(String.format("Only one connection allowed by %s at anyone time", con.getUsername()));
-					}
-				}
-
-				@Override
-				public void connected(SshConnection con) {
-					Log.info("Callback client {} connected", con.getUsername());
-					callbackClients.put(con.getUsername(), con);
-				}
-
-				@Override
-				public void disconnected(SshConnection con) {
-					SshConnection connected = callbackClients.get(con.getUsername());
-					if(Objects.nonNull(connected)) {
-						if(connected.equals(con)) {
-							Log.info("Callback client {} disconnected", con.getUsername());
-							callbackClients.remove(con.getUsername());
-						}
-					}
-					
-				}
-			});
-			return clientContext;
-		}
-	}
-	
-	class ServerContextFactory implements ProtocolContextFactory<SshServerContext> {
-
-		@Override
-		public SshServerContext createContext(SshEngineContext daemonContext, SocketChannel sc)
-				throws IOException, SshException {
-			SshServerContext serverContext = createServerContext(daemonContext, sc);
-			return serverContext;
-		}
+		this.defaultContextFactory = callbackContextFactory;
 	}
 
 	@Override
@@ -152,5 +66,12 @@ public class CallbackServer extends AbstractSshServer {
 		return defaultContextFactory;
 	}
 
+	public SshConnection getCallbackClient(String hostToConnect) {
+		return defaultContextFactory.getCallbackClient(hostToConnect);
+	}
+
+	public Collection<SshConnection> getCallbackClients() {
+		return defaultContextFactory.getCallbackClients();
+	}
 
 }

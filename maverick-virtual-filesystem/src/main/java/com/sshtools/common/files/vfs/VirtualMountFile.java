@@ -1,21 +1,24 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
+/*
+ *    _           _             _   _
+ *   (_) __ _  __| | __ _ _ __ | |_(_)_   _____
+ *   | |/ _` |/ _` |/ _` | '_ \| __| \ \ / / _ \
+ *   | | (_| | (_| | (_| | |_) | |_| |\ V /  __/
+ *  _/ |\__,_|\__,_|\__,_| .__/ \__|_| \_/ \___|
+ * |__/                  |_|
  *
- * This file is part of the Maverick Synergy Java SSH API.
+ * This file is part of the Maverick Synergy Hotfixes Java SSH API
  *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Unauthorized copying of this file, via any medium is strictly prohibited.
  *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * Copyright (C) 2002-2021 JADAPTIVE Limited - All Rights Reserved
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
+ * Use of this software may also be covered by third-party licenses depending on the choices you make about what features to use.
+ *
+ * Please visit the link below to see additional third-party licenses and copyrights
+ *
+ * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+
 package com.sshtools.common.files.vfs;
 
 import java.io.FileNotFoundException;
@@ -23,7 +26,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
@@ -33,17 +38,20 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.util.FileUtils;
 
-public class VirtualMountFile implements VirtualFile {
+public class VirtualMountFile extends VirtualFileObject {
 
 	private VirtualMount mount;
-	private VirtualFileFactory fileFactory;
 	private String name;
 	private String path;
 	private AbstractFile file;
 	
+	Map<String,AbstractFile> cachedChildren;
+	
 	public VirtualMountFile(String path, VirtualMount mount, VirtualFileFactory fileFactory) throws PermissionDeniedException, IOException {
+		super(fileFactory);
+		
 		this.mount = mount;
-		this.fileFactory = fileFactory;
+
 		int idx = path.lastIndexOf('/');
 		if(idx > -1) {
 			name = path.substring(idx+1);
@@ -51,19 +59,25 @@ public class VirtualMountFile implements VirtualFile {
 			name = path;
 		}
 		this.path = path;
-		file = mount.getActualFileFactory().getFile(mount.getResolvePath(path));
+	}
+	
+	private AbstractFile resolveFile() throws PermissionDeniedException, IOException {
+		if(Objects.nonNull(file)) {
+			return file;
+		}
+		return file = mount.getActualFileFactory().getFile(mount.getResolvePath(path));
 	}
 	
 	public boolean exists() throws IOException, PermissionDeniedException {
-		return file.exists();
+		return resolveFile().exists();
 	}
 
 	public boolean createFolder() throws PermissionDeniedException, IOException {
-		return file.createFolder();
+		return resolveFile().createFolder();
 	}
 
 	public long lastModified() throws IOException, PermissionDeniedException {
-		return file.lastModified();
+		return resolveFile().lastModified();
 	}
 
 	public String getName() {
@@ -71,63 +85,55 @@ public class VirtualMountFile implements VirtualFile {
 	}
 
 	public long length() throws IOException, PermissionDeniedException {
-		return file.length();
+		return resolveFile().length();
 	}
 
 	public SftpFileAttributes getAttributes() throws FileNotFoundException,
 			IOException, PermissionDeniedException {
-		return file.getAttributes();
+		return resolveFile().getAttributes();
 	}
 
 	public boolean isHidden() throws IOException, PermissionDeniedException {
-		return file.isHidden();
+		return resolveFile().isHidden();
 	}
 
 	public boolean isDirectory() throws IOException, PermissionDeniedException {
-		return file.isDirectory();
+		return resolveFile().isDirectory();
 	}
 
-	public List<AbstractFile> getChildren() throws IOException,
+	public synchronized List<AbstractFile> getChildren() throws IOException,
 			PermissionDeniedException {
 
-		List<AbstractFile> files = new ArrayList<AbstractFile>();
+		if(Objects.isNull(cachedChildren)) {
+			
+			Map<String,AbstractFile> files = new HashMap<>(getVirtualMounts());
+			
+			String currentPath = FileUtils.checkEndsWithSlash(path);
+	
+			VirtualMountManager mgr = fileFactory.getMountManager();
 		
-		String currentPath = FileUtils.checkEndsWithSlash(path);
-
-		VirtualMountManager mgr = fileFactory.getMountManager();
-		
-		//if(mount.isFilesystemRoot()) {
-			for(VirtualMount m : mgr.getMounts()) {
-				String mpath = FileUtils.checkEndsWithSlash(m.getMount());
-				if(mpath.startsWith(currentPath)) {
-					if(!mpath.equals(currentPath)) {
-						String child = m.getMount().substring(currentPath.length());
-						if(child.indexOf('/') > -1) {
-							child = child.substring(0,child.indexOf('/'));
-						}
-						files.add(new VirtualMountFile(currentPath + child, m, fileFactory));
-					}
+			/**
+			 * LDP - Here we are merging a potential real path from a lower mount. Check that the file
+			 * really exists as we do not want to generate an error here.
+			 */
+			AbstractFile file = resolveFile();
+			if(file.exists()) {
+				VirtualMount actualMount = mgr.getMount(currentPath);
+				for(AbstractFile child : file.getChildren()) {
+					files.put(currentPath + child.getName(), new VirtualMountFile(currentPath + child.getName(), actualMount, fileFactory));
 				}
 			}
-//		} else {
-//			// Just return the next path element from the mount path.
-//			String child = mount.getMount().substring(path.length());
-//			if(child.indexOf('/') > -1) {
-//				child = child.substring(0,child.indexOf('/'));
-//			}
-//			files.add(new VirtualMountFile(path + child, mount, fileFactory));
-//		}
-		
-		VirtualMount actualMount = mgr.getMount(currentPath);
-		for(AbstractFile child : file.getChildren()) {
-			files.add(new VirtualMountFile(currentPath + child.getName(), actualMount, fileFactory));
+			
+			cachedChildren = files;
 		}
-		return files;
+		
+		return new ArrayList<>(cachedChildren.values());
+		
 
 	}
 
 	public boolean isFile() throws IOException, PermissionDeniedException {
-		return file.isFile();
+		return resolveFile().isFile();
 	}
 
 	public String getAbsolutePath() throws IOException,
@@ -136,47 +142,53 @@ public class VirtualMountFile implements VirtualFile {
 	}
 
 	public InputStream getInputStream() throws IOException, PermissionDeniedException {
-		return file.getInputStream();
+		return resolveFile().getInputStream();
 	}
 
 	public OutputStream getOutputStream() throws IOException, PermissionDeniedException {
-		return file.getOutputStream();
+		return resolveFile().getOutputStream();
 	}
 
 	public boolean isReadable() throws IOException, PermissionDeniedException {
-		return file.isReadable();
+		return resolveFile().isReadable();
 	}
 
 	public void copyFrom(AbstractFile src) throws IOException,
 			PermissionDeniedException {
-		file.copyFrom(src);
+		resolveFile().copyFrom(src);
 	}
 
 	public void moveTo(AbstractFile target) throws IOException,
 			PermissionDeniedException {
-		file.moveTo(target);
+		resolveFile().moveTo(target);
 	}
 
 	public boolean delete(boolean recursive) throws IOException,
 			PermissionDeniedException {
-		return file.delete(recursive);
+		return resolveFile().delete(recursive);
 	}
 
-	public void refresh() {
-		file.refresh();
+	public synchronized void refresh() {
+		try {
+			cachedChildren = null;
+			super.refresh();
+			resolveFile().refresh();
+		} catch (PermissionDeniedException | IOException e) {
+			// Purposely ignored
+		}
 	}
 
 	public boolean isWritable() throws IOException, PermissionDeniedException {
-		return file.isWritable();
+		return resolveFile().isWritable();
 	}
 
 	public boolean createNewFile() throws PermissionDeniedException,
 			IOException {
-		return file.createNewFile();
+		return resolveFile().createNewFile();
 	}
 
 	public void truncate() throws PermissionDeniedException, IOException {
-		file.truncate();
+		resolveFile().truncate();
 	}
 
 	public void setAttributes(SftpFileAttributes attrs) throws IOException {
@@ -189,16 +201,20 @@ public class VirtualMountFile implements VirtualFile {
 	}
 
 	public boolean supportsRandomAccess() {
-		return file.supportsRandomAccess();
+		try {
+			return resolveFile().supportsRandomAccess();
+		} catch (PermissionDeniedException | IOException e) {
+			return false;
+		}
 	}
 
 	public AbstractFileRandomAccess openFile(boolean writeAccess)
 			throws IOException, PermissionDeniedException {
-		return file.openFile(writeAccess);
+		return resolveFile().openFile(writeAccess);
 	}
 
 	public OutputStream getOutputStream(boolean append) throws IOException, PermissionDeniedException {
-		return file.getOutputStream(append);
+		return resolveFile().getOutputStream(append);
 	}
 
 	public AbstractFile resolveFile(String child) throws IOException, PermissionDeniedException {
@@ -237,12 +253,12 @@ public class VirtualMountFile implements VirtualFile {
 
 	@Override
 	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
-		file.symlinkTo(target);
+		resolveFile().symlinkTo(target);
 	}
 
 	@Override
 	public String readSymbolicLink() throws IOException, PermissionDeniedException {
-		return file.readSymbolicLink();
+		return resolveFile().readSymbolicLink();
 	}
 
 }

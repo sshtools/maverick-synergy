@@ -1,21 +1,24 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
+/*
+ *    _           _             _   _
+ *   (_) __ _  __| | __ _ _ __ | |_(_)_   _____
+ *   | |/ _` |/ _` |/ _` | '_ \| __| \ \ / / _ \
+ *   | | (_| | (_| | (_| | |_) | |_| |\ V /  __/
+ *  _/ |\__,_|\__,_|\__,_| .__/ \__|_| \_/ \___|
+ * |__/                  |_|
  *
- * This file is part of the Maverick Synergy Java SSH API.
+ * This file is part of the Maverick Synergy Hotfixes Java SSH API
  *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Unauthorized copying of this file, via any medium is strictly prohibited.
  *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * Copyright (C) 2002-2021 JADAPTIVE Limited - All Rights Reserved
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
+ * Use of this software may also be covered by third-party licenses depending on the choices you make about what features to use.
+ *
+ * Please visit the link below to see additional third-party licenses and copyrights
+ *
+ * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+
 
 package com.sshtools.synergy.ssh;
 
@@ -1063,9 +1066,9 @@ public abstract class TransportProtocol<T extends SshContext>
 
 		long idleTimeSeconds = (System.currentTimeMillis() - lastActivity) / 1000;
 
-		if(currentState == NEGOTIATING_PROTOCOL 
-				|| currentState == PERFORMING_KEYEXCHANGE) {
-			if(con.getContext().getIdleAuthenticationTimeoutSeconds() < idleTimeSeconds) {
+		if(!hasCompletedKeyExchange()) {
+			if(con.getContext().getIdleAuthenticationTimeoutSeconds() > 0 && 
+					con.getContext().getIdleAuthenticationTimeoutSeconds() < idleTimeSeconds) {
 				if(Log.isDebugEnabled()) {
 					Log.debug("Idle time of {} seconds exceeded threshold of {} seconds", 
 							idleTimeSeconds,
@@ -1075,6 +1078,19 @@ public abstract class TransportProtocol<T extends SshContext>
 				return true;
 			}
 		}
+		if(currentState == CONNECTED) { 
+			if(con.getContext().getIdleConnectionTimeoutSeconds() > 0 && 
+					con.getContext().getIdleConnectionTimeoutSeconds() < idleTimeSeconds) {
+				if(Log.isDebugEnabled()) {
+					Log.debug("Idle time of {} seconds exceeded threshold of {} seconds", 
+							idleTimeSeconds,
+							con.getContext().getIdleConnectionTimeoutSeconds());
+				}
+				disconnect(BY_APPLICATION, "Remote exceeded idle timeout for authenticated connections");
+				return true;
+			}
+		}
+		
 		if (currentState == TransportProtocol.CONNECTED
 				|| currentState == TransportProtocol.PERFORMING_KEYEXCHANGE) {
 			if(getContext().isSendIgnorePacketOnIdle()) {
@@ -1516,7 +1532,8 @@ public abstract class TransportProtocol<T extends SshContext>
 					Log.debug("Performing internal disconnect {}", getUUID());
 				
 				setTransportState(TransportProtocol.DISCONNECTED);
-
+				disconnectFuture.disconnected();
+				
 				if (socketConnection != null)
 					socketConnection.getIdleStates().remove(TransportProtocol.this);
 
@@ -1539,6 +1556,7 @@ public abstract class TransportProtocol<T extends SshContext>
 				}
 
 				
+				
 				if(connection != null) {
 					/* Connection may be null if a socket connection was made by the protocol never started */
 					addTask(EVENTS, new ConnectionTaskWrapper(connection, new Runnable() {
@@ -1549,7 +1567,6 @@ public abstract class TransportProtocol<T extends SshContext>
 										
 										disconnected();
 										onDisconnected();
-										disconnectFuture.disconnected();
 										
 										EventServiceImplementation
 										.getInstance()

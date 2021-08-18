@@ -1,21 +1,24 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
+/*
+ *    _           _             _   _
+ *   (_) __ _  __| | __ _ _ __ | |_(_)_   _____
+ *   | |/ _` |/ _` |/ _` | '_ \| __| \ \ / / _ \
+ *   | | (_| | (_| | (_| | |_) | |_| |\ V /  __/
+ *  _/ |\__,_|\__,_|\__,_| .__/ \__|_| \_/ \___|
+ * |__/                  |_|
  *
- * This file is part of the Maverick Synergy Java SSH API.
+ * This file is part of the Maverick Synergy Hotfixes Java SSH API
  *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Unauthorized copying of this file, via any medium is strictly prohibited.
  *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * Copyright (C) 2002-2021 JADAPTIVE Limited - All Rights Reserved
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
+ * Use of this software may also be covered by third-party licenses depending on the choices you make about what features to use.
+ *
+ * Please visit the link below to see additional third-party licenses and copyrights
+ *
+ * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+
 package com.sshtools.synergy.nio;
 
 import java.io.IOException;
@@ -26,6 +29,7 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -71,6 +75,10 @@ public class SshEngine {
 	
 	List<SshEngineListener> listeners = Collections.synchronizedList(new ArrayList<SshEngineListener>());
 	final protected static char[] hexArray = "0123456789abcdef".toCharArray();
+
+	private static final String SYNERGY_PUBLIC_KEY = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC/nnUXFJF0Izzc2NFnay0s2eAA40e0FKI70PkwHBMwgtYklVdRsWBtR0V3ZJzkoNZxvzmHg4wacQrySFR57BnZuCgWbHlCQCAgTVwRadWCUE50T/XlWACSmTEugkEHUdrKpG0aJVCZhq7DmUtET2TsvIzYo3bsOLAxB43bTYAj6r1kGpyGvY9Sd5pI78svQi2hmSOdF05IdMzA/bLK5TKgIYEqbNJy/xmUQ3kTb7JreUAV2RjjSakAMt92gl0j2xqcaARn7QebpwMbRk6kAiH0iOK8kx8KaCRcGocZoB+kJuZ8an5EgsFtYdTde9caVjeNFmm2jnn76OP7eSRshvlf";
+	
+	static LicenseVerification v = new LicenseVerification();
 	
 	/**
 	 * Constructs the Daemon.
@@ -89,11 +97,6 @@ public class SshEngine {
 	}
 
 	private static String version = PomVersion.getVersion();
-	
-	private static long releaseDate = 0L;
-
-	// LICENSE static {releaseDate = /* RELEASE_DATE */;}
-	Object license;
 	
 	public Throwable getLastError() {
 		return lastError;
@@ -123,7 +126,7 @@ public class SshEngine {
 	 * @returns the release date of the current version.
 	 */
 	public static Date getReleaseDate() {
-		return new Date(releaseDate);
+		return new Date(/* RELEASE_DATE */);
 	}
 
 	public boolean isStarting() {
@@ -182,6 +185,29 @@ public class SshEngine {
 		lastError = null;
 		try {
 
+			Log.info("Validating license key for release date {}", new SimpleDateFormat("dd MMM yyyy HH:mm").format(getReleaseDate()));
+			int status = v.verifyLicense(SYNERGY_PUBLIC_KEY, "JADAPTIVE Limited", getReleaseDate().getTime());
+			
+			switch(status & LicenseVerification.LICENSE_VERIFICATION_MASK) {
+			case LicenseVerification.EXPIRED:
+				throw new LicenseException("Your license has expired! visit http://www.jadaptive.com to obtain an update version of the software.");
+			case LicenseVerification.OK:
+				break;
+			case LicenseVerification.INVALID:
+				throw new LicenseException("Your license is invalid!");
+			case LicenseVerification.NOT_LICENSED:
+				throw new LicenseException("The Maverick Synergy Hotfixes API requires a valid license key!");
+			case LicenseVerification.EXPIRED_MAINTENANCE:
+				throw new LicenseException(
+						"Your support and maintenance has expired! You should either downgrade to a version your license supports, or purchase a new maintenance package.");
+			default:
+				throw new LicenseException("An unexpected license status was received " + Integer.toHexString(status));
+			}
+
+			if(Log.isInfoEnabled()) {
+			  Log.info("This Maverick Legacy API product is licensed to " + v.getLicensee());
+			}
+			
 			for(SshEngineListener listener : listeners) {
 				listener.starting(this);
 			}
@@ -276,7 +302,7 @@ public class SshEngine {
 
 		} catch (Throwable ex) {
 			if(Log.isInfoEnabled())
-				Log.info("The server failed to start", ex);
+				Log.info("The engine failed to start", ex);
 			lastError = ex;
 			shutdownNow(false, 0);
 			if (ex instanceof LicenseException)
@@ -889,5 +915,9 @@ public class SshEngine {
 
 	public AbstractRequestFuture getShutdownFuture() {
 		return shutdownFuture;
+	}
+
+	public static void setLicense(String license) {
+		v.setLicense(license);
 	}
 }

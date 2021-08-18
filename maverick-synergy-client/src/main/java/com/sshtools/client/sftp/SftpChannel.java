@@ -1,21 +1,24 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
+/*
+ *    _           _             _   _
+ *   (_) __ _  __| | __ _ _ __ | |_(_)_   _____
+ *   | |/ _` |/ _` |/ _` | '_ \| __| \ \ / / _ \
+ *   | | (_| | (_| | (_| | |_) | |_| |\ V /  __/
+ *  _/ |\__,_|\__,_|\__,_| .__/ \__|_| \_/ \___|
+ * |__/                  |_|
  *
- * This file is part of the Maverick Synergy Java SSH API.
+ * This file is part of the Maverick Synergy Hotfixes Java SSH API
  *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Unauthorized copying of this file, via any medium is strictly prohibited.
  *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * Copyright (C) 2002-2021 JADAPTIVE Limited - All Rights Reserved
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
+ * Use of this software may also be covered by third-party licenses depending on the choices you make about what features to use.
+ *
+ * Please visit the link below to see additional third-party licenses and copyrights
+ *
+ * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+
 package com.sshtools.client.sftp;
 
 import java.io.BufferedInputStream;
@@ -32,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
-import java.util.concurrent.TimeUnit;
 
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.tasks.AbstractSubsystem;
@@ -850,6 +852,9 @@ public class SftpChannel extends AbstractSubsystem {
 			throws SftpStatusException, SshException,
 			TransferCancelledException {
 
+		long started = System.currentTimeMillis();
+		long transfered = position;
+		
 		try {
 			if (blocksize < 4096) {
 				throw new SshException("Block size cannot be less than 4096",
@@ -897,8 +902,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 			byte[] buf = new byte[blocksize];
 
-			long started = System.currentTimeMillis();
-			long transfered = position;
+			
 			int buffered = 0;
 
 			buffered = in.read(buf);
@@ -954,13 +958,6 @@ public class SftpChannel extends AbstractSubsystem {
 				while(requests.size() > 0) {
 					getOKRequestStatus(requests.remove(0));
 				}
-				
-				long finished = System.currentTimeMillis();
-				long transferTime = finished - started;
-				long seconds = TimeUnit.MILLISECONDS.toSeconds(transferTime);
-				if(Log.isInfoEnabled()) {
-					Log.info("Optimized write to {} took {} seconds at {}",  filename, seconds, IOUtils.toByteSize(transfered / seconds, 1));
-				}
 			}
 
 		} catch (IOException ex) {
@@ -970,7 +967,16 @@ public class SftpChannel extends AbstractSubsystem {
 					"Resource Shortage: try reducing the local file buffer size",
 					SshException.BAD_API_USAGE);
 		} finally {
-			
+			long finished = System.currentTimeMillis();
+			long transferTime = finished - started;
+			double seconds = transferTime > 1000 ? transferTime / 1000 : 1D;
+			if(Log.isInfoEnabled()) {
+				if(transfered > 0) {
+					Log.info("Optimized write of {} to {} took {} seconds at {} per second",  IOUtils.toByteSize(transfered), filename, seconds, IOUtils.toByteSize(transfered / seconds, 1));
+				} else {
+					Log.info("Optimized write did not transfer any data");
+				}
+			}
 		}
 
 	}
@@ -1037,6 +1043,10 @@ public class SftpChannel extends AbstractSubsystem {
 			throws SftpStatusException, SshException,
 			TransferCancelledException {
 
+		long transfered = 0;
+		boolean reachedEOF = false;
+		long started = System.currentTimeMillis();
+		
 		if (blocksize < 1 || blocksize > 65536) {
 			if(Log.isTraceEnabled()) {
 				Log.trace("Blocksize to large for some SFTP servers, reseting to 32K");
@@ -1099,10 +1109,6 @@ public class SftpChannel extends AbstractSubsystem {
 					SshException.BAD_API_USAGE);
 		}
 
-		long transfered = 0;
-		boolean reachedEOF = false;
-		long started = System.currentTimeMillis();
-		
 		try {
 			byte[] tmp = new byte[blocksize];
 	
@@ -1240,9 +1246,11 @@ public class SftpChannel extends AbstractSubsystem {
 			
 			long finished = System.currentTimeMillis();
 			long transferTime = finished - started;
-			long seconds = TimeUnit.MILLISECONDS.toSeconds(transferTime);
-			if(Log.isInfoEnabled()) {
-				Log.info("Optimized read from {} took {} seconds at {}",  filename, seconds, IOUtils.toByteSize(transfered / seconds, 1));
+			double seconds = transferTime > 1000 ? transferTime / 1000 : 1D;
+			if(transfered > 0) {
+				Log.info("Optimized read of {} from {} took seconds {} at {} per second", IOUtils.toByteSize(transfered), filename, seconds, IOUtils.toByteSize(transfered / seconds, 1));
+			} else {
+				Log.info("Optimized read did not transfer any data");
 			}
 			
 			if(reachedEOF && performVerification && transfered > 0) {

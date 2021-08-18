@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.sshtools.hotfixes</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.0.4-SNAPSHOT</version>
+		<version>3.0.4</version>
 	</parent>
 	<artifactId>maverick-synergy</artifactId>
 	<name>Unified API</name>

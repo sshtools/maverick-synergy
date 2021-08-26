@@ -1,3 +1,14 @@
+Maverick Synergy 3.0.5 - TBC
+
+Bug Fixes
+    o If PasswordAuthenticator is passed to SshClient.authenticate it should be translated into keyboard-interactive if the remote server only supports keyboard-interactive regardless of context preference to support password over keyboard-interactive.
+    o PasswordOverKeyboardInteractiveCallback should defer obtaining password until authentication is being performed.
+    o Loading a license from file was broken.
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.4 - Aug 18, 2021
 
 Features
@@ -20,9 +31,7 @@ Bug Fixes
     o NPE when no license is set.
     o Client authenticators need to signal failure of the authenticator to their parent future.
     
-=================
-=  HISTORY      =
-=================
+-----------------
 
 Maverick Synergy 3.0.3-FINAL - Jul 21, 2021
 

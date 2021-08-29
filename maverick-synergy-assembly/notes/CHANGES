@@ -1,5 +1,8 @@
 Maverick Synergy 3.0.5 - TBC
 
+Features
+    o Support signals. See AbstractSessionChannel.signal(String) .
+
 Bug Fixes
     o If PasswordAuthenticator is passed to SshClient.authenticate it should be translated into keyboard-interactive if the remote server only supports keyboard-interactive regardless of context preference to support password over keyboard-interactive.
     o PasswordOverKeyboardInteractiveCallback should defer obtaining password until authentication is being performed.

@@ -22,7 +22,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	
+
 	<parent>
 		<groupId>com.sshtools</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
@@ -38,6 +38,29 @@
 			<artifactId>maverick-base</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.jetbrains.pty4j/pty4j -->
+		<dependency>
+			<groupId>org.jetbrains.pty4j</groupId>
+			<artifactId>pty4j</artifactId>
+			<version>0.9.8</version>
+		</dependency>
+
+
+		<!-- https://mvnrepository.com/artifact/org.jetbrains.pty4j/purejavacomm -->
+		<dependency>
+			<groupId>org.jetbrains.pty4j</groupId>
+			<artifactId>purejavacomm</artifactId>
+			<version>0.0.11.1</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/net.java.dev.jna/jna-platform -->
+		<dependency>
+			<groupId>net.java.dev.jna</groupId>
+			<artifactId>jna-platform</artifactId>
+			<version>5.9.0</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.jline</groupId>
 			<artifactId>jline</artifactId>
@@ -53,6 +76,13 @@
 			<artifactId>commons-cli</artifactId>
 			<version>1.3.1</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.12.0</version>
+		</dependency>
+
 		<dependency>
 			<groupId>com.sshtools</groupId>
 			<artifactId>maverick-synergy-server</artifactId>
@@ -64,7 +94,7 @@
 			<artifactId>maverick-synergy-client</artifactId>
 			<version>${project.version}</version>
 			<scope>provided</scope>
-		</dependency>	
+		</dependency>
 		<dependency>
 			<groupId>com.sshtools</groupId>
 			<artifactId>maverick-sshagent</artifactId>
@@ -72,4 +102,12 @@
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>central</id>
+			<name>artifactory.javassh.com-releases</name>
+			<url>http://artifactory.jadaptive.com/ext-releases-local</url>
+		</repository>
+	</repositories>
 </project>

@@ -61,7 +61,7 @@ public class SshPrivateKeyFileFactory {
 		if(JCEProvider.hasBCProvider() && JCEProvider.isBCEnabled()) {
 			try {
 					@SuppressWarnings("unchecked")
-					Class<SshPrivateKeyFile> clz = (Class<SshPrivateKeyFile>) Class.forName("com.sshtools.publickey.OpenSSHPrivateKeyFile" + JCEProvider.getBCProvider().getName());
+					Class<SshPrivateKeyFile> clz = (Class<SshPrivateKeyFile>) Class.forName("com.sshtools.common.publickey.bc.OpenSSHPrivateKeyFile" + JCEProvider.getBCProvider().getName());
 					
 					Method is = clz.getMethod("isFormatted", byte[].class);
 					

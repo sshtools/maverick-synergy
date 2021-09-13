@@ -184,7 +184,7 @@ public class SshPrivateKeyFileFactory {
 			 * previous implementation
 			 */
 			@SuppressWarnings("unchecked")
-			Class<SshPrivateKeyFile> clz = (Class<SshPrivateKeyFile>) Class.forName("com.sshtools.common.publickey.OpenSSHPrivateKeyFile" + JCEProvider.getBCProvider().getName());
+			Class<SshPrivateKeyFile> clz = (Class<SshPrivateKeyFile>) Class.forName("com.sshtools.common.publickey.bc.OpenSSHPrivateKeyFile" + JCEProvider.getBCProvider().getName());
 			
 			Constructor<SshPrivateKeyFile> c = clz.getDeclaredConstructor(SshKeyPair.class, String.class);
 			c.setAccessible(true);

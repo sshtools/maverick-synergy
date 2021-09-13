@@ -74,6 +74,11 @@ public class SshPublicKeyFileFactory {
 	
 	public static final int OPENSSH_FORMAT = 0;
 	public static final int SECSH_FORMAT = 1;
+	
+	/**
+	 * @deprecated Never correctly implemented. 
+	 */
+	@Deprecated
 	public static final int OPENSSL_FORMAT = 4;
 
 	/**

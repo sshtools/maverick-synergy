@@ -36,6 +36,7 @@ import java.security.interfaces.RSAPublicKey;
 
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.jce.spec.ECNamedCurveSpec;
+import org.bouncycastle.openssl.EncryptionException;
 import org.bouncycastle.openssl.PEMEncryptedKeyPair;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
@@ -192,6 +193,8 @@ public class OpenSSHPrivateKeyFileBC
 	    }
 	    throw new IOException("Unsupported type");
 
+    } catch(EncryptionException e) {
+    	throw new InvalidPassphraseException();
     } catch(InvalidPassphraseException | IOException e) {
     	throw e;
     } catch(Throwable ex) { 

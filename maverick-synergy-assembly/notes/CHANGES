@@ -1,14 +1,16 @@
 Maverick Synergy 3.0.5 - TBC
 
 Features
-    o Support signals. See AbstractSessionChannel.signal(String) .
+    o Added setTimes method that allow SFTP v4 creation time attribute to be set, including sub-second times.
+    o Support signals. See AbstractSessionChannel.signal(String).
     o Native session implementation and associated factory for "osshell" command to drop virtual session into a native session.
 
 Bug Fixes
     o If PasswordAuthenticator is passed to SshClient.authenticate it should be translated into keyboard-interactive if the remote server only supports keyboard-interactive regardless of context preference to support password over keyboard-interactive.
     o PasswordOverKeyboardInteractiveCallback should defer obtaining password until authentication is being performed.
     o Loading a license from file was broken.
-    o OpenSSL private key file support broken due to incorrect reflection class name.
+    o OpenSSL private key file support broken due to incorrect reflection class name. 
+    o Removed broken BouncyCastle OpenSSL public key file support as this was not complete and never implemented correctly.
     
 =================
 =  HISTORY      =

@@ -83,7 +83,7 @@
 		<repository>
 			<id>central</id>
 			<name>artifactory.javassh.com-releases</name>
-			<url>http://artifactory.jadaptive.com/ext-releases-local</url>
+			<url>https://artifactory.jadaptive.com/ext-releases-local</url>
 		</repository>
 	</repositories>
 </project>

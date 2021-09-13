@@ -100,8 +100,8 @@
 
 	<repositories>
 		<repository>
-			<id>central</id>
-			<name>artifactory.javassh.com-releases</name>
+			<id>artifactory.jadaptive.com-releases</id>
+			<name>artifactory.jadaptive.com-releases</name>
 			<url>https://artifactory.jadaptive.com/ext-releases-local</url>
 		</repository>
 	</repositories>

@@ -35,6 +35,8 @@ public class VirtualMount extends AbstractMount {
 	VirtualFileFactory virtualFileFactory;
 	boolean cached;
 	boolean createMountFolder;
+	boolean readOnly;
+	long lastModified = 0;
 	
 	VirtualMount(String mount, String path,
 			VirtualFileFactory virtualFileFactory,
@@ -91,5 +93,29 @@ public class VirtualMount extends AbstractMount {
 
 	public boolean isCreateMountFolder() {
 		return createMountFolder;
+	}
+
+	public boolean isParentOf(VirtualMount o2) {
+		return o2.getMount().startsWith(getMount());
+	}
+
+	public boolean isChildOf(VirtualMount o2) {
+		return getMount().startsWith(o2.getMount());
+	}
+
+	public long lastModified() {
+		return lastModified;
+	}
+	
+	public void setLastModified(long lastModified) {
+		this.lastModified = lastModified;
+	}
+
+	public boolean isReadOnly() {
+		return readOnly;
+	}
+	
+	public void setReadOnly(boolean readOnly) {
+		this.readOnly = readOnly;
 	}
 }

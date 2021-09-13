@@ -102,7 +102,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		VirtualMount[] mounts = mgr.getMounts(virtualPath);
 		if (!virtualPath.equals("") && mounts.length > 0) {
 			String mountPath = FileUtils.addTrailingSlash(virtualPath);
-
+			
 			if (!mountPath.equals("/")) {
 				for (VirtualMount m : mounts) {
 					String thisMountPath = FileUtils.addTrailingSlash(m

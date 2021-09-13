@@ -36,7 +36,9 @@ import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.util.FileUtils;
+import com.sshtools.common.util.UnsignedInteger64;
 
 public class VirtualMountFile extends VirtualFileObject {
 
@@ -61,6 +63,10 @@ public class VirtualMountFile extends VirtualFileObject {
 		this.path = path;
 	}
 	
+	public boolean isMount() {
+		return FileUtils.addTrailingSlash(mount.getMount()).equals(FileUtils.addTrailingSlash(path));
+	}
+	
 	private AbstractFile resolveFile() throws PermissionDeniedException, IOException {
 		if(Objects.nonNull(file)) {
 			return file;
@@ -69,14 +75,20 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 	
 	public boolean exists() throws IOException, PermissionDeniedException {
-		return resolveFile().exists();
+		return isMount() || resolveFile().exists();
 	}
 
 	public boolean createFolder() throws PermissionDeniedException, IOException {
+		if(isMount()) {
+			return false;
+		}
 		return resolveFile().createFolder();
 	}
 
 	public long lastModified() throws IOException, PermissionDeniedException {
+		if(isMount()) {
+			return mount.lastModified();
+		}
 		return resolveFile().lastModified();
 	}
 
@@ -85,20 +97,37 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 
 	public long length() throws IOException, PermissionDeniedException {
+		if(isMount() ) {
+			return 0;
+		}
 		return resolveFile().length();
 	}
 
 	public SftpFileAttributes getAttributes() throws FileNotFoundException,
 			IOException, PermissionDeniedException {
+		if(isMount()) {
+			SftpFileAttributes attrs = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY, "UTF-8");
+			try {
+				attrs.setReadOnly(mount.isReadOnly());
+			} catch (SftpStatusException e) {
+			}
+			attrs.setTimes(new UnsignedInteger64(mount.lastModified()),
+					new UnsignedInteger64(mount.lastModified()),
+					new UnsignedInteger64(mount.lastModified()));
+			return attrs;
+		}
 		return resolveFile().getAttributes();
 	}
 
 	public boolean isHidden() throws IOException, PermissionDeniedException {
+		if(isMount()) {
+			return true;
+		}
 		return resolveFile().isHidden();
 	}
 
 	public boolean isDirectory() throws IOException, PermissionDeniedException {
-		return resolveFile().isDirectory();
+		return isMount() || resolveFile().isDirectory();
 	}
 
 	public synchronized List<AbstractFile> getChildren() throws IOException,
@@ -133,7 +162,7 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 
 	public boolean isFile() throws IOException, PermissionDeniedException {
-		return resolveFile().isFile();
+		return !isMount() && resolveFile().isFile();
 	}
 
 	public String getAbsolutePath() throws IOException,
@@ -142,15 +171,21 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 
 	public InputStream getInputStream() throws IOException, PermissionDeniedException {
+		if(isDirectory()) {
+			throw new IOException("No I/O stream supported on non-file");
+		}
 		return resolveFile().getInputStream();
 	}
 
 	public OutputStream getOutputStream() throws IOException, PermissionDeniedException {
+		if(isDirectory()) {
+			throw new IOException("No I/O stream supported on non-file");
+		}
 		return resolveFile().getOutputStream();
 	}
 
 	public boolean isReadable() throws IOException, PermissionDeniedException {
-		return resolveFile().isReadable();
+		return isMount() || resolveFile().isReadable();
 	}
 
 	public void copyFrom(AbstractFile src) throws IOException,
@@ -165,7 +200,7 @@ public class VirtualMountFile extends VirtualFileObject {
 
 	public boolean delete(boolean recursive) throws IOException,
 			PermissionDeniedException {
-		return resolveFile().delete(recursive);
+		return !isMount() && resolveFile().delete(recursive);
 	}
 
 	public synchronized void refresh() {
@@ -179,16 +214,18 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 
 	public boolean isWritable() throws IOException, PermissionDeniedException {
-		return resolveFile().isWritable();
+		return !mount.isReadOnly() || resolveFile().isWritable();
 	}
 
 	public boolean createNewFile() throws PermissionDeniedException,
 			IOException {
-		return resolveFile().createNewFile();
+		return !isMount() && resolveFile().createNewFile();
 	}
 
 	public void truncate() throws PermissionDeniedException, IOException {
-		resolveFile().truncate();
+		if(!isMount()) {
+			resolveFile().truncate();
+		}
 	}
 
 	public void setAttributes(SftpFileAttributes attrs) throws IOException {
@@ -202,7 +239,7 @@ public class VirtualMountFile extends VirtualFileObject {
 
 	public boolean supportsRandomAccess() {
 		try {
-			return resolveFile().supportsRandomAccess();
+			return !isMount() && resolveFile().supportsRandomAccess();
 		} catch (PermissionDeniedException | IOException e) {
 			return false;
 		}
@@ -214,6 +251,9 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 
 	public OutputStream getOutputStream(boolean append) throws IOException, PermissionDeniedException {
+		if(isDirectory()) {
+			throw new IOException("No I/O stream supported on non-file");
+		}
 		return resolveFile().getOutputStream(append);
 	}
 
@@ -253,11 +293,18 @@ public class VirtualMountFile extends VirtualFileObject {
 
 	@Override
 	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
+		if(isMount()) {
+			throw new PermissionDeniedException("Cannot symlink a mount");
+		}
+			
 		resolveFile().symlinkTo(target);
 	}
 
 	@Override
 	public String readSymbolicLink() throws IOException, PermissionDeniedException {
+		if(isMount()) {
+			return getAbsolutePath();
+		}
 		return resolveFile().readSymbolicLink();
 	}
 

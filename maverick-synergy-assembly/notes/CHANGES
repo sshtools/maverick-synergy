@@ -4,6 +4,7 @@ Features
     o Added setTimes method that allow SFTP v4 creation time attribute to be set, including sub-second times.
     o Support signals. See AbstractSessionChannel.signal(String).
     o Native session implementation and associated factory for "osshell" command to drop virtual session into a native session.
+    o VirtualMount option for lastModified and read-only flag which is now used by VirtualMountFile to return values.
 
 Bug Fixes
     o If PasswordAuthenticator is passed to SshClient.authenticate it should be translated into keyboard-interactive if the remote server only supports keyboard-interactive regardless of context preference to support password over keyboard-interactive.
@@ -11,6 +12,7 @@ Bug Fixes
     o Loading a license from file was broken.
     o OpenSSL private key file support broken due to incorrect reflection class name. 
     o Removed broken BouncyCastle OpenSSL public key file support as this was not complete and never implemented correctly.
+    o VirtualMountFile should not resolve child until absolutely necessary to prevent list of mounts becoming slow due to destination resolution.
     
 =================
 =  HISTORY      =

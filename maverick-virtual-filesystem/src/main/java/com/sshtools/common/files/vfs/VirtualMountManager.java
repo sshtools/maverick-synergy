@@ -137,12 +137,19 @@ public class VirtualMountManager {
 	}
 
 	private void sort() {
-		Collections.sort(mounts, new Comparator<AbstractMount>() {
+		Collections.sort(mounts, new Comparator<VirtualMount>() {
 
-			public int compare(AbstractMount o1, AbstractMount o2) {
-				return o1.getMount().compareTo(o2.getMount()) * -1;
+			@Override
+			public int compare(VirtualMount o1, VirtualMount o2) {
+				if(o1.isParentOf(o2)) {
+					return 1;
+				} else if(o1.isChildOf(o2)) {
+					return -1;
+				} else {
+					return o2.getMount().compareTo(o1.getMount());
+				}
 			}
-
+			
 		});
 	}
 
@@ -228,7 +235,8 @@ public class VirtualMountManager {
 			if (path.startsWith(mountPath) || mountPath.startsWith(path)) {
 				matched.add(m);
 			}
-		}
+		}		
+		
 		return matched.toArray(new VirtualMount[0]);
 	}
 

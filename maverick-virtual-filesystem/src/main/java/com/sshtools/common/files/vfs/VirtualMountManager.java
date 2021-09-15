@@ -21,6 +21,7 @@ package com.sshtools.common.files.vfs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -73,7 +74,7 @@ public class VirtualMountManager {
 			mounts.add(vm);
 		}
 
-		sort();
+		sort(mounts);
 	}
 	
 	public void mount(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
@@ -136,7 +137,7 @@ public class VirtualMountManager {
 
 	}
 
-	private void sort() {
+	private void sort(List<VirtualMount> mounts) {
 		Collections.sort(mounts, new Comparator<VirtualMount>() {
 
 			@Override
@@ -151,6 +152,13 @@ public class VirtualMountManager {
 			}
 			
 		});
+		
+		if(Log.isDebugEnabled()) {
+			Log.debug("Sorting mounts by path and with child relationship preferred");
+			for(VirtualMount m : mounts) {
+				Log.debug("Mount {} on {}", m.getMount(), m.getRoot());
+			}
+		}
 	}
 
 	public void unmount(VirtualMount mount) throws IOException {
@@ -166,8 +174,10 @@ public class VirtualMountManager {
 			throw new IOException(String.format("Could not find mount %s", mount.getMount()));
 		}
 		mounts.remove(mounted);
-		sort();
+		
 		Log.info("Unmounted " + mounted.getMount() + " from " + mounted.getRoot());
+		sort(mounts);
+		
 	}
 
 	public VirtualMount getDefaultMount() {
@@ -181,6 +191,7 @@ public class VirtualMountManager {
 			tmp.add(testingMount.get());
 		}
 		tmp.addAll(mounts);
+		sort(tmp);
 		return tmp.toArray(new VirtualMount[0]);
 	}
 

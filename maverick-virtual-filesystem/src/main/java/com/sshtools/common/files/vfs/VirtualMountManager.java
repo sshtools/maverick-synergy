@@ -131,7 +131,7 @@ public class VirtualMountManager {
 		
 		// Add the mount
 		mounts.add(mount);
-		sort();
+		sort(mounts);
 
 		Log.info("Mounted " + mount.getMount() + " on " + mount.getRoot());
 
@@ -174,8 +174,6 @@ public class VirtualMountManager {
 			throw new IOException(String.format("Could not find mount %s", mount.getMount()));
 		}
 		mounts.remove(mounted);
-		
-		Log.info("Unmounted " + mounted.getMount() + " from " + mounted.getRoot());
 		sort(mounts);
 		
 	}

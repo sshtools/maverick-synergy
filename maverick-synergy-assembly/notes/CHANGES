@@ -1,4 +1,4 @@
-Maverick Synergy 3.0.5 - TBC
+Maverick Synergy 3.0.5 - Sept 20, 2021
 
 Features
     o Added setTimes method that allow SFTP v4 creation time attribute to be set, including sub-second times.

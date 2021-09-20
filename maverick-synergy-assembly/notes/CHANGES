@@ -13,6 +13,7 @@ Bug Fixes
     o OpenSSL private key file support broken due to incorrect reflection class name. 
     o Removed broken BouncyCastle OpenSSL public key file support as this was not complete and never implemented correctly.
     o VirtualMountFile should not resolve child until absolutely necessary to prevent list of mounts becoming slow due to destination resolution.
+    o Regular expression file matching exists but not used in matchRemoteFiles.
     
 =================
 =  HISTORY      =

@@ -21,7 +21,6 @@ package com.sshtools.common.files.vfs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -53,7 +52,9 @@ public class VirtualMountManager {
 
 		if (homeMount != null) {
 			defaultMount = new VirtualMount(homeMount.getMount(), 
-					homeMount.getRoot(), fileFactory, homeMount.getActualFileFactory(), true, false, homeMount.isCreateMountFolder());
+					homeMount.getRoot(), fileFactory, homeMount.getActualFileFactory(), 
+					true, false, homeMount.isCreateMountFolder(),
+					homeMount.lastModified());
 			if(defaultMount.isCreateMountFolder()) {
 				defaultMount.getActualFileFactory().getFile(defaultMount.getRoot()).createFolder();
 			}
@@ -65,7 +66,8 @@ public class VirtualMountManager {
 			VirtualMount vm = createMount(m.getMount(), 
 					m.getRoot(),
 					m.getActualFileFactory(),
-					m.isCreateMountFolder());
+					m.isCreateMountFolder(),
+					m.lastModified());
 			
 
 			if(vm.isCreateMountFolder()) {
@@ -85,7 +87,8 @@ public class VirtualMountManager {
 		mount(createMount(template.getMount(),
 				template.getRoot(), 
 				template.getActualFileFactory(),
-				template.isCreateMountFolder()), unmount);
+				template.isCreateMountFolder(),
+				template.lastModified()), unmount);
 	}
 
 	public void test(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
@@ -93,7 +96,8 @@ public class VirtualMountManager {
 		test(createMount(template.getMount(),
 				template.getRoot(), 
 				template.getActualFileFactory(),
-				template.isCreateMountFolder()));
+				template.isCreateMountFolder(),
+				template.lastModified()));
 		
 	}
 	
@@ -208,9 +212,9 @@ public class VirtualMountManager {
 	}
 
 	private VirtualMount createMount(String mount, String path,
-			AbstractFileFactory<?> actualFileFactory, boolean createMoundFolder) throws IOException,
+			AbstractFileFactory<?> actualFileFactory, boolean createMoundFolder, long lastModified) throws IOException,
 			PermissionDeniedException {
-		return new VirtualMount(mount, path, fileFactory, actualFileFactory, createMoundFolder);
+		return new VirtualMount(mount, path, fileFactory, actualFileFactory, createMoundFolder, lastModified);
 	}
 
 	public VirtualMount getMount(String path) throws IOException {

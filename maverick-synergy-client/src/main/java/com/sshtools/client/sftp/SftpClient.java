@@ -1287,6 +1287,10 @@ public class SftpClient {
 			matcher = new GlobRegExpMatching();
 			files = ls(actualDir);
 			break;
+		case Perl5Syntax:
+			matcher = new RegExpMatching();
+			files = ls(actualDir);
+			break;
 		default:
 			matcher = new NoRegExpMatching();
 			files = new SftpFile[1];

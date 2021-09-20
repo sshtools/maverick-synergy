@@ -59,8 +59,7 @@ public class AbstractMount {
 			boolean isImaginary) {
 
 		this.filesystemRoot = mount.equals("/");
-		this.mount = mount.equals("/") ? mount : FileUtils
-				.removeTrailingSlash(mount);
+		this.mount = mount.equals("/") ? mount : FileUtils.removeTrailingSlash(mount);
 		this.path = FileUtils.removeTrailingSlash(path);
 		this.isDefault = isDefault;
 		this.isImaginary = isImaginary;

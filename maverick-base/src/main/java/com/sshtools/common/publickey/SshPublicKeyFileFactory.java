@@ -29,6 +29,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshException;
@@ -75,6 +77,11 @@ public class SshPublicKeyFileFactory {
 	
 	public static final int OPENSSH_FORMAT = 0;
 	public static final int SECSH_FORMAT = 1;
+	
+	/**
+	 * @deprecated Never correctly implemented. 
+	 */
+	@Deprecated
 	public static final int OPENSSL_FORMAT = 4;
 
 	/**
@@ -232,31 +239,11 @@ public class SshPublicKeyFileFactory {
 			return new OpenSSHPublicKeyFile(key, comment, options);
 		case SECSH_FORMAT:
 			return new SECSHPublicKeyFile(key, comment);
-		case OPENSSL_FORMAT:
-			return tryBC(key, comment);
 		default:
 			throw new IOException("Invalid format type specified!");
 		}
 	}
 
-	private static SshPublicKeyFile tryBC(SshPublicKey key, String comment) throws UnsupportedOperationException {
-		
-		try {
-			/**
-			 * Try BouncyCastle based PEM / OpenSSH else failover to
-			 * previous implementation
-			 */
-			@SuppressWarnings("unchecked")
-			Class<SshPublicKeyFile> clz = (Class<SshPublicKeyFile>) Class.forName("com.sshtools.common.publickey.bc.OpenSSLPublicKeyFile" + JCEProvider.getBCProvider().getName());
-			
-			Constructor<SshPublicKeyFile> c = clz.getDeclaredConstructor(SshPublicKey.class, String.class);
-			c.setAccessible(true);
-			SshPublicKeyFile f = c.newInstance(key, comment);
-			return f;
-		} catch(Throwable t) {
-			throw new UnsupportedOperationException(t);
-		}
-	}
 	/**
 	 * Take a <a href="SshPublicKey.html">SshPublicKey</a> and write it to a
 	 * file

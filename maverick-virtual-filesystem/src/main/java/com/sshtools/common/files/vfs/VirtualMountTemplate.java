@@ -53,4 +53,12 @@ public final class VirtualMountTemplate extends AbstractMount {
 	public void setFileSystemOptions(FileSystemOptions fileSystemOptions) {
 		this.fileSystemOptions = fileSystemOptions;
 	}
+	
+	public boolean isParentOf(VirtualMountTemplate o2) {
+		return o2.getMount().startsWith(getMount());
+	}
+
+	public boolean isChildOf(VirtualMountTemplate o2) {
+		return getMount().startsWith(o2.getMount());
+	}
 }

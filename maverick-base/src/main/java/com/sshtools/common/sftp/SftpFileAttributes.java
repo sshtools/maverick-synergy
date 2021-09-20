@@ -737,9 +737,75 @@ public class SftpFileAttributes {
 			flags ^= SSH_FILEXFER_ATTR_MODIFYTIME;
 		}
 	}
+	
+	/**
+	 * Sets SFTP v4 time attributes including sub-second times. If you pass a null value
+	 * for any sub-second time it will be defaulted to zero. If you pass null value for 
+	 * any time value if will be not be included in the attributes and its sub-second
+	 * value will also not be included. 
+	 * @param atime
+	 * @param atime_nano
+	 * @param mtime
+	 * @param mtime_nano
+	 * @param ctime
+	 * @param ctime_nano
+	 */
+	public void setTimes(UnsignedInteger64 atime, UnsignedInteger32 atime_nano,
+			UnsignedInteger64 mtime, UnsignedInteger32 mtime_nano,
+			UnsignedInteger64 ctime, UnsignedInteger32 ctime_nano) {
+		
+		setTimes(atime, mtime);
+		
+		
+		flags |= SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
+		
+		this.atime_nano = atime_nano != null ? atime_nano : new UnsignedInteger32(0);
+		this.mtime_nano = mtime_nano != null ? mtime_nano : new UnsignedInteger32(0);
+		this.createtime_nano = ctime_nano != null ? ctime_nano : new UnsignedInteger32(0);
+		
+		this.createtime = ctime;
+	
+		if(ctime != null) {
+			flags |= SSH_FILEXFER_ATTR_CREATETIME;
+		} else {
+			flags ^= SSH_FILEXFER_ATTR_CREATETIME;
+		}
+	}
+	
+	/**
+	 * Set SFTP v4 time attributes without any sub-second times. 
+	 * @param atime last accessed time
+	 * @param mtime last modified time
+	 * @param ctime creation time
+	 */
+	public void setTimes(UnsignedInteger64 atime, 
+			UnsignedInteger64 mtime, 
+			UnsignedInteger64 ctime) {
+		
+		setTimes(atime, mtime);
+		
+		flags ^= SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
+		
+		this.atime_nano = null;
+		this.mtime_nano = null;
+		this.createtime_nano = null;
+		
+		this.createtime = ctime;
+	
+		if(ctime != null) {
+			flags |= SSH_FILEXFER_ATTR_CREATETIME;
+			this.createtime_nano = ctime_nano;
+		} else {
+			flags ^= SSH_FILEXFER_ATTR_CREATETIME;
+		}
+	}
 
 	public boolean hasAccessTime() {
 		return atime!=null;
+	}
+	
+	public boolean hasCreateTime() {
+		return createtime!=null;
 	}
 	
 	/**
@@ -791,10 +857,6 @@ public class SftpFileAttributes {
 			time += (mtime_nano.longValue() / 1000000);
 		}
 		return new Date(time);
-	}
-
-	public boolean hasCreateTime() {
-		return createtime!=null;
 	}
 	
 	/**

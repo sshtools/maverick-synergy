@@ -173,10 +173,10 @@ final class LicenseVerification {
 
 	void loadLicense(InputStream in) throws IOException {
 		String fullText = readToString(in);
-		while (!fullText.startsWith("\"----BEGIN")) {
+		while (!fullText.startsWith("----BEGIN")) {
 			fullText = fullText.substring(1);
 		}
-		while (!fullText.startsWith("----END")) {
+		while (!fullText.endsWith("----END SYNERGY LICENSE")) {
 			fullText = fullText.substring(0, fullText.length() - 1);
 		}
 		StringBuffer buf = new StringBuffer();
@@ -201,10 +201,12 @@ final class LicenseVerification {
 							}
 							escape = false;
 						}
-						buf.append(ch);
 					}
+					buf.append(ch);
 				}
 			}
+			else
+				buf.append(ch);
 		}
 		license = buf.toString();
 	}

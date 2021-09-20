@@ -125,6 +125,44 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 		}
 	}
 
+	/**
+	 * Send a signal to the remote process. A signal can be delivered to the
+	 * remote process using this method, some systems may not implement signals.
+	 * The signal name should be one of the following values: <blockquote>
+	 * 
+	 * <pre>
+	 * ABRT
+	 * ALRM
+	 * FPE
+	 * HUP
+	 * ILL
+	 * INT
+	 * KILL
+	 * PIPE
+	 * QUIT
+	 * SEGV
+	 * TERM
+	 * USR1
+	 * USR2
+	 * </pre>
+	 * 
+	 * </blockquote>
+	 * 
+	 * @param signal
+	 * @return future
+	 * @throws IOException
+	 */
+	public RequestFuture signal(String signal) throws SshException {
+		try(ByteArrayWriter request = new ByteArrayWriter()) {
+			request.writeString(signal);
+			ChannelRequestFuture future = new ChannelRequestFuture();
+			sendChannelRequest("signal", true, request.toByteArray(), future);
+			return future;
+		} catch (IOException ex) {
+			throw new SshException(ex, SshException.INTERNAL_ERROR);
+		} 
+	}
+
 	public RequestFuture allocatePseudoTerminal(String type, int cols, int rows, int width, int height,
 			PseudoTerminalModes modes) {
 

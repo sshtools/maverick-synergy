@@ -24,6 +24,7 @@ package com.sshtools.common.files.vfs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -76,7 +77,7 @@ public class VirtualMountManager {
 			mounts.add(vm);
 		}
 
-		sort();
+		sort(mounts);
 	}
 	
 	public void mount(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
@@ -133,20 +134,34 @@ public class VirtualMountManager {
 		
 		// Add the mount
 		mounts.add(mount);
-		sort();
+		sort(mounts);
 
 		Log.info("Mounted " + mount.getMount() + " on " + mount.getRoot());
 
 	}
 
-	private void sort() {
-		Collections.sort(mounts, new Comparator<AbstractMount>() {
+	private void sort(List<VirtualMount> mounts) {
+		Collections.sort(mounts, new Comparator<VirtualMount>() {
 
-			public int compare(AbstractMount o1, AbstractMount o2) {
-				return o1.getMount().compareTo(o2.getMount()) * -1;
+			@Override
+			public int compare(VirtualMount o1, VirtualMount o2) {
+				if(o1.isParentOf(o2)) {
+					return 1;
+				} else if(o1.isChildOf(o2)) {
+					return -1;
+				} else {
+					return o2.getMount().compareTo(o1.getMount());
+				}
 			}
-
+			
 		});
+		
+		if(Log.isDebugEnabled()) {
+			Log.debug("Sorting mounts by path and with child relationship preferred");
+			for(VirtualMount m : mounts) {
+				Log.debug("Mount {} on {}", m.getMount(), m.getRoot());
+			}
+		}
 	}
 
 	public void unmount(VirtualMount mount) throws IOException {
@@ -162,8 +177,8 @@ public class VirtualMountManager {
 			throw new IOException(String.format("Could not find mount %s", mount.getMount()));
 		}
 		mounts.remove(mounted);
-		sort();
-		Log.info("Unmounted " + mounted.getMount() + " from " + mounted.getRoot());
+		sort(mounts);
+		
 	}
 
 	public VirtualMount getDefaultMount() {
@@ -177,6 +192,7 @@ public class VirtualMountManager {
 			tmp.add(testingMount.get());
 		}
 		tmp.addAll(mounts);
+		sort(tmp);
 		return tmp.toArray(new VirtualMount[0]);
 	}
 
@@ -231,7 +247,8 @@ public class VirtualMountManager {
 			if (path.startsWith(mountPath) || mountPath.startsWith(path)) {
 				matched.add(m);
 			}
-		}
+		}		
+		
 		return matched.toArray(new VirtualMount[0]);
 	}
 

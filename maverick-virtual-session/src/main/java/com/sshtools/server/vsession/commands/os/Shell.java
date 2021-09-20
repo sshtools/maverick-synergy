@@ -166,20 +166,20 @@ public class Shell extends ShellCommand {
 		return stdbuf;
 	}
 
-	private String escapeArg(String arg) {
-		char[] ch = arg.toCharArray();
-		StringBuffer buf = new StringBuffer();
-		for (int i = 0; i < ch.length; i++) {
-			char c = ch[i];
-			if (c == '\\') {
-				buf.append('\\');
-			} else if (c == '"') {
-				buf.append('\\');
-			}
-			buf.append(c);
-		}
-		return buf.toString();
-	}
+//	private String escapeArg(String arg) {
+//		char[] ch = arg.toCharArray();
+//		StringBuffer buf = new StringBuffer();
+//		for (int i = 0; i < ch.length; i++) {
+//			char c = ch[i];
+//			if (c == '\\') {
+//				buf.append('\\');
+//			} else if (c == '"') {
+//				buf.append('\\');
+//			}
+//			buf.append(c);
+//		}
+//		return buf.toString();
+//	}
 
 	private void setScreenSize() {
 		try {
@@ -190,29 +190,29 @@ public class Shell extends ShellCommand {
 		}
 	}
 
-	private void addShCommand(List<String> args, String cmd, List<String> cmdArgs) {
-		cmd = appendArguments(cmd, cmdArgs);
-		if (!cmd.equals("")) {
-			args.add("-c");
-			args.add(cmd);
-		}
-	}
-
-	private void addArgs(List<String> args, List<String> cmdArgs) {
-		args.addAll(cmdArgs);
-	}
-
-	private String appendArguments(String cmd, List<String> cmdArgs) {
-		if (cmdArgs != null) {
-			for (String arg : cmdArgs) {
-				if (cmd.length() > 0) {
-					cmd += " ";
-				}
-				cmd += "\"" + escapeArg(arg) + "\"";
-			}
-		}
-		return cmd;
-	}
+//	private void addShCommand(List<String> args, String cmd, List<String> cmdArgs) {
+//		cmd = appendArguments(cmd, cmdArgs);
+//		if (!cmd.equals("")) {
+//			args.add("-c");
+//			args.add(cmd);
+//		}
+//	}
+//
+//	private void addArgs(List<String> args, List<String> cmdArgs) {
+//		args.addAll(cmdArgs);
+//	}
+//
+//	private String appendArguments(String cmd, List<String> cmdArgs) {
+//		if (cmdArgs != null) {
+//			for (String arg : cmdArgs) {
+//				if (cmd.length() > 0) {
+//					cmd += " ";
+//				}
+//				cmd += "\"" + escapeArg(arg) + "\"";
+//			}
+//		}
+//		return cmd;
+//	}
 
 	private final static String execAndCapture(String... args) {
 		try {
@@ -232,9 +232,9 @@ public class Shell extends ShellCommand {
 		return null;
 	}
 
-	private static final class SinkOutputStream extends OutputStream {
-		@Override
-		public void write(int b) throws IOException {
-		}
-	}
+//	private static final class SinkOutputStream extends OutputStream {
+//		@Override
+//		public void write(int b) throws IOException {
+//		}
+//	}
 }

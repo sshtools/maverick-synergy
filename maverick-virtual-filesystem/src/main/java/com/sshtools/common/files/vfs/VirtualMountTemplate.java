@@ -30,6 +30,7 @@ public final class VirtualMountTemplate extends AbstractMount {
 	private AbstractFileFactory<?> actualFileFactory;
 	private FileSystemOptions fileSystemOptions;
 	private boolean createMountFolder;
+	private long lastModified = 0;
 	
 	public VirtualMountTemplate(String mount, String path,
 			AbstractFileFactory<?> actualFileFactory,
@@ -37,6 +38,16 @@ public final class VirtualMountTemplate extends AbstractMount {
 		super(mount, path, false, false);
 		this.actualFileFactory = actualFileFactory;
 		this.createMountFolder = createMountFolder;
+	}
+	
+	public VirtualMountTemplate(String mount, String path,
+			AbstractFileFactory<?> actualFileFactory,
+			boolean createMountFolder, 
+			long lastModified) {
+		super(mount, path, false, false);
+		this.actualFileFactory = actualFileFactory;
+		this.createMountFolder = createMountFolder;
+		this.lastModified = lastModified;
 	}
 
 	public boolean isCreateMountFolder() {
@@ -60,5 +71,9 @@ public final class VirtualMountTemplate extends AbstractMount {
 
 	public boolean isChildOf(VirtualMountTemplate o2) {
 		return getMount().startsWith(o2.getMount());
+	}
+
+	public long lastModified() {
+		return lastModified;
 	}
 }

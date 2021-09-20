@@ -121,7 +121,7 @@ public class VirtualMountFile extends VirtualFileObject {
 
 	public boolean isHidden() throws IOException, PermissionDeniedException {
 		if(isMount()) {
-			return true;
+			return false;
 		}
 		return resolveFile().isHidden();
 	}

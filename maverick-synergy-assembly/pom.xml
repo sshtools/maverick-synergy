@@ -112,8 +112,11 @@
 					</goals>
 					<configuration>
 						<encoding>UTF-8</encoding>
-						<excludePackageNames>**.impl.*</excludePackageNames>
-						<!-- https://bugs.openjdk.java.net/browse/JDK-8212233 -->
+						<!-- switch on dependency-driven aggregation -->
+						<includeDependencySources>true</includeDependencySources>
+						<dependencySourceIncludes>
+							<dependencySourceInclude>com.sshtools.hotfixes:*</dependencySourceInclude>
+						</dependencySourceIncludes>
 						<detectJavaApiLink>false</detectJavaApiLink>
 						<source>8</source>
 						<doclint>none</doclint>

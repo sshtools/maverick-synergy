@@ -69,7 +69,7 @@ Include the server module to develop your own SSH/SFTP server.
 <dependency>
   <groupId>com.sshtools</groupId>
   <artifactId>maverick-synergy-server</artifactId>
-  <version>3.0.0-RC7</version>
+  <version>3.0.4-FINAL</version>
 </dependency>
 
 <!-- You may also need this repository if the version is a SNAPSHOT -->
@@ -89,7 +89,7 @@ We also have done a lot of the hard work for you implementing a virtual file sys
 <dependency>
   <groupId>com.sshtools</groupId>
   <artifactId>maverick-virtual-filesystem</artifactId>
-  <version>3.0.0-RC7</version>
+  <version>3.0.4-FINAL</version>
 </dependency>
 ```	
 Creating a server is made equally as easy as the client API. You just need to make a few desisions about how users authenticate and what they can do, for example, the code below creates a simple SFTP server that provides users with their own home folder. To the user, all they see is their own sandboxed home directoy.

@@ -40,7 +40,7 @@ In the first instance, for a no dependency Java SSH client API simply use the ma
 <dependency>
   <groupId>com.sshtools</groupId>
   <artifactId>maverick-synergy-client</artifactId>
-  <version>3.0.0-RC7</version>
+  <version>3.0.4-FINAL</version>
 </dependency>
 
 <!-- You may also need this repository if the version is a SNAPSHOT -->

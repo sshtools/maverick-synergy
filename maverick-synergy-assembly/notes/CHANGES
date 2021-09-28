@@ -1,3 +1,12 @@
+Maverick Synergy 3.0.6 - TBC
+
+Bug Fixes
+    o SSH.com key fails parsing due to incorrectly encoded parameter. As the parameter is not used we simply no longer decode the parameter from the encoded MPINT.
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.5 - Sept 20, 2021
 
 Features
@@ -15,9 +24,7 @@ Bug Fixes
     o VirtualMountFile should not resolve child until absolutely necessary to prevent list of mounts becoming slow due to destination resolution.
     o Regular expression file matching exists but not used in matchRemoteFiles.
     
-=================
-=  HISTORY      =
-=================
+-----------------
 
 Maverick Synergy 3.0.4 - Aug 18, 2021
 

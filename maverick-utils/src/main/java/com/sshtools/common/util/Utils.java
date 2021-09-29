@@ -351,53 +351,6 @@ public class Utils {
 		
 	}
 	
-public static String prompt(BufferedReader reader, String message, String defaultValue) throws IOException {
-		
-		System.out.print(String.format("%s [%s]: ", message, defaultValue));
-		String line = reader.readLine();
-		if(isBlank(line)) {
-			return defaultValue;
-		}
-		return line;
-		
-	}
-
-	public static boolean hasPort(String hostname) {
-		int idx = hostname.indexOf(":");
-		if(idx > -1) {
-			String portString = hostname.substring(idx+1);
-			if(portString.matches("^[0-9]*$")) {
-				int value = Integer.parseInt(portString);
-				if(value > 0 && value < 65536) {
-					return true;
-				}
-			} 
-			return false;
-		}
-		return false;
-	}
-	
-	public static int getPort(String hostname) {
-		int idx = hostname.indexOf(":");
-		if(idx > -1) {
-			String portString = hostname.substring(idx+1);
-			if(portString.matches("^[0-9]*$")) {
-				int value = Integer.parseInt(portString);
-				if(value > 0 && value < 65536) {
-					return value;
-				}
-			} 
-		}
-		throw new IllegalArgumentException("Input does not contain a port value");
-	}
-	
-	public static String prompt(BufferedReader reader, String message) throws IOException {
-		
-		System.out.print(String.format("%s: ", message));
-		return reader.readLine();
-		
-	}
-	
 	public static String prompt(BufferedReader reader, String message, String defaultValue) throws IOException {
 		
 		System.out.print(String.format("%s [%s]: ", message, defaultValue));
@@ -437,5 +390,4 @@ public static String prompt(BufferedReader reader, String message, String defaul
 		}
 		throw new IllegalArgumentException("Input does not contain a port value");
 	}
-
 }

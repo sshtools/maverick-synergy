@@ -1,3 +1,10 @@
+Maverick Synergy 3.0.5-SNAPSHOT - TBC
+
+
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.4-SNAPSHOT - 27 Sept, 2021
 
 Features
@@ -8,10 +15,8 @@ Bug Fixes
     o Added some useful methods to Utils for prompting in example code and extracting port number from a host string.
     o OpenSSL key file support is broken due to incorrect reflection class names.
     o Logged version is incorrect because its extracting the version from an incorrect pom.
-
-=================
-=  HISTORY      =
-=================
+    
+-----------------
 
 Maverick Synergy 3.0.3-FINAL - Jul 21, 2021
 

@@ -32,7 +32,7 @@ public class PomVersion {
 	static String version;
 	
 	public static String getVersion() {
-		return getVersion("maverick-ng-common");
+		return getVersion("maverick-synergy-common");
 	}
 
 	

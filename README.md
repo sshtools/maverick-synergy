@@ -1,6 +1,13 @@
 # Maverick Synergy Java SSH API
 Maverick Synergy is the third generation Java SSH API developed by JADAPTIVE Limited (previously known as SSHTOOLS Limited). It is a pure Java implementation of the SSH2 protocol enabling you to create both client and server solutions under the open source and commercial friendly LGPL license.
 
+---
+:grey_exclamation: Maverick Synergy is open-source software that is developed by a commercial organization. Whilst we strive to provide support to the open-source edition whenever we can; if you require immediate help, please consider purchasing a support subscription from [Jadaptive Limited](https://www.jadaptive.com). Subscriptions include access to security hotfixes and new features in advance of their open-source release.
+
+Community developers should seek support at the [Jadaptive Forums](https://forums.jadaptive.com) or alternatively raise issues or Pull Requests directly in Github. Please ensure you have read our [Contribution Agreement](https://github.com/sshtools/maverick-synergy/blob/master/CONTRIBUTING.md) before submitting any PR requests.
+
+---
+
 Built upon the Java NIO framework, this third generation of the API for the first time provides a unified framework for developing both client and server solutions.
 
 ## Features
@@ -33,7 +40,7 @@ In the first instance, for a no dependency Java SSH client API simply use the ma
 <dependency>
   <groupId>com.sshtools</groupId>
   <artifactId>maverick-synergy-client</artifactId>
-  <version>3.0.0-RC7</version>
+  <version>3.0.4-FINAL</version>
 </dependency>
 
 <!-- You may also need this repository if the version is a SNAPSHOT -->
@@ -62,7 +69,7 @@ Include the server module to develop your own SSH/SFTP server.
 <dependency>
   <groupId>com.sshtools</groupId>
   <artifactId>maverick-synergy-server</artifactId>
-  <version>3.0.0-RC7</version>
+  <version>3.0.4-FINAL</version>
 </dependency>
 
 <!-- You may also need this repository if the version is a SNAPSHOT -->
@@ -82,7 +89,7 @@ We also have done a lot of the hard work for you implementing a virtual file sys
 <dependency>
   <groupId>com.sshtools</groupId>
   <artifactId>maverick-virtual-filesystem</artifactId>
-  <version>3.0.0-RC7</version>
+  <version>3.0.4-FINAL</version>
 </dependency>
 ```	
 Creating a server is made equally as easy as the client API. You just need to make a few desisions about how users authenticate and what they can do, for example, the code below creates a simple SFTP server that provides users with their own home folder. To the user, all they see is their own sandboxed home directoy.

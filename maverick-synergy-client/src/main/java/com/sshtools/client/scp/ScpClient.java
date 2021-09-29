@@ -67,6 +67,17 @@ public class ScpClient extends ScpClientIO {
     }
 
     /**
+     * 
+     * @param cwd
+     * @param ssh
+     * @throws PermissionDeniedException
+     * @throws IOException
+     */
+    public ScpClient(File cwd, SshClient ssh) throws PermissionDeniedException, IOException {
+        this(new DirectFileFactory(cwd), ssh);
+    }
+    
+    /**
      * <p>
      * Creates an SCP client.
      * </p>
@@ -81,6 +92,7 @@ public class ScpClient extends ScpClientIO {
         this.lcwd = fileFactory.getFile("");
     }
 
+    
     private AbstractFile resolveLocalPath(String path) throws IOException, PermissionDeniedException {
 		return lcwd.resolveFile(path);
 	}
@@ -134,8 +146,26 @@ public class ScpClient extends ScpClientIO {
      * @throws ChannelOpenException
      * @throws PermissionDeniedException 
      * @throws IOException 
+     * @deprecated Use put method instead.
      */
     public void putFile(String localFile, String remoteFile, boolean recursive, FileTransferProgress progress, boolean remoteIsDir)
+                    throws SshException, ChannelOpenException, IOException, PermissionDeniedException {
+    	put(localFile, remoteFile, recursive, progress, remoteIsDir);
+    }
+    
+    /**
+     * @param localFile
+     * @param remoteFile
+     * @param recursive
+     * @param progress
+     * @param remoteIsDir if called by put(string[]...) then remoteFile must be
+     *        a directory so need -d option.
+     * @throws SshException
+     * @throws ChannelOpenException
+     * @throws PermissionDeniedException 
+     * @throws IOException 
+     */
+    public void put(String localFile, String remoteFile, boolean recursive, FileTransferProgress progress, boolean remoteIsDir)
                     throws SshException, ChannelOpenException, IOException, PermissionDeniedException {
 
         AbstractFile lf = resolveLocalPath(localFile);
@@ -223,15 +253,11 @@ public class ScpClient extends ScpClientIO {
         if (matchedFiles.length == 0) {
             throw new SshException(localFileRegExp+"No file matches/File does not exist", SshException.CHANNEL_FAILURE);
         }
-        
-        /*if(!relativePath.equals(""))
-        	for(int i=0;i<matchedFiles.length;i++)
-        		matchedFiles[i] = relativePath + matchedFiles[i];*/
-        
+
 		if (matchedFiles.length > 1) {
 		    put(matchedFiles, remoteFile, recursive, progress);
 		} else {
-		    putFile(parentDir + File.separator + matchedFiles[0], remoteFile, recursive, progress, false);
+		    put(parentDir + File.separator + matchedFiles[0], remoteFile, recursive, progress, false);
 		}
     }
 

@@ -1,14 +1,22 @@
 /*
- * Copyright (c) 2003-2021 JADAPTIVE Limited. All Rights Reserved.
+ *    _           _             _   _
+ *   (_) __ _  __| | __ _ _ __ | |_(_)_   _____
+ *   | |/ _` |/ _` |/ _` | '_ \| __| \ \ / / _ \
+ *   | | (_| | (_| | (_| | |_) | |_| |\ V /  __/
+ *  _/ |\__,_|\__,_|\__,_| .__/ \__|_| \_/ \___|
+ * |__/                  |_|
  *
- * This file contains Original Code and/or Modifications of Original Code and
- * its use is subject to the terms of the JADAPTIVE Software License. You may not use
- * this file except in compliance with the license terms.
+ * This file is part of the Maverick Synergy Hotfixes Java SSH API
  *
- * https://www.jadaptive.com/en/content/api-software-license
+ * Unauthorized copying of this file, via any medium is strictly prohibited.
  *
- * Email: support@jadaptive.com
- * WWW: https://www.jadaptive.com
+ * Copyright (C) 2002-2021 JADAPTIVE Limited - All Rights Reserved
+ *
+ * Use of this software may also be covered by third-party licenses depending on the choices you make about what features to use.
+ *
+ * Please visit the link below to see additional third-party licenses and copyrights
+ *
+ * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
 package com.sshtools.common.config;
 

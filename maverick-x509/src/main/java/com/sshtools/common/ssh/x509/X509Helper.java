@@ -52,7 +52,7 @@ public class X509Helper {
 	 *            the passphrase of the key
 	 * @throws IOException
 	 */
-	public SshKeyPair[] loadKeystore(InputStream in, String alias, String storePassphrase, String keyPassphrase)
+	public static SshKeyPair[] loadKeystore(InputStream in, String alias, String storePassphrase, String keyPassphrase)
 			throws IOException {
 		return loadKeystore(in, alias, storePassphrase, keyPassphrase, "PKCS12");
 	}
@@ -72,7 +72,7 @@ public class X509Helper {
 	 *            the passphrase of the key
 	 * @throws IOException
 	 */
-	public SshKeyPair[] loadKeystore(InputStream in, String alias, String storePassphrase, String keyPassphrase,
+	public static SshKeyPair[] loadKeystore(InputStream in, String alias, String storePassphrase, String keyPassphrase,
 			String storeType) throws IOException {
 		try {
 			KeyStore keystore = KeyStore.getInstance(storeType);
@@ -138,13 +138,13 @@ public class X509Helper {
 		}
 	}
 
-	public SshKeyPair[] loadKeystore(File keystoreFile, String alias, String storePassphrase, String keyPassphrase)
+	public static SshKeyPair[] loadKeystore(File keystoreFile, String alias, String storePassphrase, String keyPassphrase)
 			throws IOException {
 		return loadKeystore(keystoreFile, alias, storePassphrase, keyPassphrase, "PKCS12");
 
 	}
 
-	public SshKeyPair[] loadKeystore(File keystoreFile, String alias, String storePassphrase, String keyPassphrase,
+	public static SshKeyPair[] loadKeystore(File keystoreFile, String alias, String storePassphrase, String keyPassphrase,
 			String storeType) throws IOException {
 		return loadKeystore(new FileInputStream(keystoreFile), alias, storePassphrase, keyPassphrase, storeType);
 

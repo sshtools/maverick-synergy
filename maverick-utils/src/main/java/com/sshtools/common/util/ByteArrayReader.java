@@ -258,7 +258,7 @@ public class ByteArrayReader
    */
   public BigInteger readMPINT32() throws IOException {
     int bits = (int)readInt();
-    checkLength((bits + 7) / 8 + 1);
+    checkLength((bits + 7) / 8);
     byte[] raw = new byte[ (bits + 7) / 8 + 1];
 
     raw[0] = 0;
@@ -275,7 +275,7 @@ public class ByteArrayReader
    */
   public BigInteger readMPINT() throws IOException {
     short bits = readShort();
-    checkLength((bits + 7) / 8 + 1);
+    checkLength((bits + 7)/ 8);
     byte[] raw = new byte[ (bits + 7) / 8 + 1];
 
     raw[0] = 0;

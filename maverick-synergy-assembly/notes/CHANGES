@@ -2,6 +2,9 @@ Maverick Synergy 3.0.6 - TBC
 
 Bug Fixes
     o SSH.com key fails parsing due to check length operation on array constructed from declaration of length; however, an additional byte to protect the MPINT from being negative was added to the length. Causing the final check length operation to fail.
+    o SftpClient pattern matching put methods use wrong parent path resulting in incorrect file transfer results. 
+    o Implemented the setting of attributes bits in SFTP v6 SftpFileAttributes.
+    o VirtualMount needed a default set of permissions in order to provide a valid long name response.
     
 =================
 =  HISTORY      =

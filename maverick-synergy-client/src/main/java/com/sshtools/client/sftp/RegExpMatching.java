@@ -21,11 +21,13 @@
 
 package com.sshtools.client.sftp;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import com.sshtools.common.files.AbstractFile;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
 
@@ -49,7 +51,7 @@ public class RegExpMatching implements RegularExpressionMatching {
 
 	@Override
 	public String[] matchFileNamesWithPattern(AbstractFile[] files, String pattern)
-			throws SftpStatusException, SshException {
+			throws SftpStatusException, SshException, IOException, PermissionDeniedException {
 		
 		Pattern p = Pattern.compile(pattern);
 		
@@ -57,7 +59,7 @@ public class RegExpMatching implements RegularExpressionMatching {
 		
 		for(AbstractFile file : files) {
 			if(p.matcher(file.getName()).matches()) {
-				matched.add(file.getName());
+				matched.add(file.getAbsolutePath());
 			}
 		}
 		

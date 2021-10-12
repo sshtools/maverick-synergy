@@ -1449,7 +1449,6 @@ public class SftpClient {
 		}
 
 		for (int i = 0; i < matchedFiles.length; i++) {
-			// use file exists once added rather than try catch
 			try {
 				put(matchedFiles[i], remotePath, progress, resume);
 			} catch (SftpStatusException ex) {

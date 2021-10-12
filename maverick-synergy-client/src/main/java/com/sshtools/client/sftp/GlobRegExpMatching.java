@@ -63,7 +63,7 @@ public class GlobRegExpMatching implements RegularExpressionMatching {
 		for(AbstractFile file : files) {
 			Path path = Paths.get(file.getName());
 			if(matcher.matches(path)) {
-				matched.add(file.getName());
+				matched.add(file.getAbsolutePath());
 			}
 		}
 		

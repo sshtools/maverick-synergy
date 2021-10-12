@@ -229,7 +229,7 @@ public class ScpClient extends ScpClientIO {
         GlobRegExpMatching globMatcher = new GlobRegExpMatching();
         String parentDir;
         int fileSeparatorIndex;
-        parentDir=lcwd.getAbsolutePath();
+        parentDir = lcwd.getAbsolutePath();
         String relativePath = "";
         if ((fileSeparatorIndex = localFileRegExp.lastIndexOf(System.getProperty("file.separator"))) > -1
         		|| (fileSeparatorIndex = localFileRegExp.lastIndexOf('/')) > -1) {
@@ -253,12 +253,8 @@ public class ScpClient extends ScpClientIO {
         if (matchedFiles.length == 0) {
             throw new SshException(localFileRegExp+"No file matches/File does not exist", SshException.CHANNEL_FAILURE);
         }
-
-		if (matchedFiles.length > 1) {
-		    put(matchedFiles, remoteFile, recursive, progress);
-		} else {
-		    put(parentDir + File.separator + matchedFiles[0], remoteFile, recursive, progress, false);
-		}
+        
+		put(matchedFiles, remoteFile, recursive, progress);
     }
 
     /**

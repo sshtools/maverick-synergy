@@ -523,29 +523,31 @@ public class SftpFileAttributes {
 	 */
 	public void setPermissions(UnsignedInteger32 permissions) {
 		this.permissions = permissions;
-
+		
 		if(permissions!=null) {
-			if((permissions.longValue() & SftpFileAttributes.S_IFDIR) == SftpFileAttributes.S_IFDIR) {
-				this.type = SSH_FILEXFER_TYPE_DIRECTORY;
-			} else if((permissions.longValue() & SftpFileAttributes.S_IFREG) == SftpFileAttributes.S_IFREG) {
-				this.type = SSH_FILEXFER_TYPE_REGULAR;
-			} else if((permissions.longValue() & SftpFileAttributes.S_IFCHR) == SftpFileAttributes.S_IFCHR) {
-				this.type = SSH_FILEXFER_TYPE_SPECIAL;
-			} else if((permissions.longValue() & SftpFileAttributes.S_IFBLK) == SftpFileAttributes.S_IFBLK) {
-				this.type = SSH_FILEXFER_TYPE_SPECIAL;
-			} else if((permissions.longValue() & SftpFileAttributes.S_IFIFO) == SftpFileAttributes.S_IFIFO) {
-				this.type = SSH_FILEXFER_TYPE_SPECIAL;
-			} else if((permissions.longValue() & SftpFileAttributes.S_IFMT) == SftpFileAttributes.S_IFMT) {
-				this.type = SSH_FILEXFER_TYPE_SPECIAL;
-			} else if((permissions.longValue() & SftpFileAttributes.S_IFSOCK) == SftpFileAttributes.S_IFSOCK) {
-				this.type = SSH_FILEXFER_TYPE_SPECIAL;
-			} else if((permissions.longValue() & SftpFileAttributes.S_IFLNK) == SftpFileAttributes.S_IFLNK) {
-				this.type = SSH_FILEXFER_TYPE_SYMLINK;
-			} else {
-				this.type = SSH_FILEXFER_TYPE_UNKNOWN;
+			if(type == 0) {
+				if((permissions.longValue() & SftpFileAttributes.S_IFDIR) == SftpFileAttributes.S_IFDIR) {
+					this.type = SSH_FILEXFER_TYPE_DIRECTORY;
+				} else if((permissions.longValue() & SftpFileAttributes.S_IFREG) == SftpFileAttributes.S_IFREG) {
+					this.type = SSH_FILEXFER_TYPE_REGULAR;
+				} else if((permissions.longValue() & SftpFileAttributes.S_IFCHR) == SftpFileAttributes.S_IFCHR) {
+					this.type = SSH_FILEXFER_TYPE_SPECIAL;
+				} else if((permissions.longValue() & SftpFileAttributes.S_IFBLK) == SftpFileAttributes.S_IFBLK) {
+					this.type = SSH_FILEXFER_TYPE_SPECIAL;
+				} else if((permissions.longValue() & SftpFileAttributes.S_IFIFO) == SftpFileAttributes.S_IFIFO) {
+					this.type = SSH_FILEXFER_TYPE_SPECIAL;
+				} else if((permissions.longValue() & SftpFileAttributes.S_IFMT) == SftpFileAttributes.S_IFMT) {
+					this.type = SSH_FILEXFER_TYPE_SPECIAL;
+				} else if((permissions.longValue() & SftpFileAttributes.S_IFSOCK) == SftpFileAttributes.S_IFSOCK) {
+					this.type = SSH_FILEXFER_TYPE_SPECIAL;
+				} else if((permissions.longValue() & SftpFileAttributes.S_IFLNK) == SftpFileAttributes.S_IFLNK) {
+					this.type = SSH_FILEXFER_TYPE_SYMLINK;
+				} else {
+					this.type = SSH_FILEXFER_TYPE_UNKNOWN;
+				}
 			}
 
-			flags |= SSH_FILEXFER_ATTR_PERMISSIONS;
+			flags |= SSH_FILEXFER_ATTR_PERMISSIONS;	
 		
 		} else {
 			if((flags & SSH_FILEXFER_ATTR_PERMISSIONS) == SSH_FILEXFER_ATTR_PERMISSIONS) {
@@ -1119,10 +1121,37 @@ public class SftpFileAttributes {
 		if (permissions != null) {
 			StringBuffer str = new StringBuffer();
 			boolean has_ifmt = ((int) permissions.longValue() & S_IFMT) > 0;
-			if (has_ifmt)
+			if (has_ifmt) {
 				str.append(types[(int) (permissions.longValue() & S_IFMT) >>> 13]);
-			else
-				str.append('-');
+			} else {
+				switch(type) {
+				case SSH_FILEXFER_TYPE_BLOCK_DEVICE:
+					str.append('b');
+					break;
+				case SSH_FILEXFER_TYPE_CHAR_DEVICE:
+					str.append('c');
+					break;
+				case SSH_FILEXFER_TYPE_DIRECTORY:
+					str.append('d');
+					break;
+				case SSH_FILEXFER_TYPE_FIFO:
+					str.append('p');
+					break;
+				case SSH_FILEXFER_TYPE_SOCKET:
+					str.append('s');
+					break;
+				case SSH_FILEXFER_TYPE_SYMLINK:
+					str.append('l');
+					break;
+				case SSH_FILEXFER_TYPE_UNKNOWN:
+				case SSH_FILEXFER_TYPE_REGULAR:
+				default:
+					str.append('-');
+					break;
+				}
+				
+			}
+
 			str.append(rwxString((int) permissions.longValue(), 6));
 			str.append(rwxString((int) permissions.longValue(), 3));
 			str.append(rwxString((int) permissions.longValue(), 0));
@@ -1231,7 +1260,7 @@ public class SftpFileAttributes {
 	private void setAttributeBit(long attributeBit, boolean value) throws SftpStatusException {
 		
 		if(!hasAttributeBits()) {
-			throw new SftpStatusException(SftpStatusException.ATTRIBUTE_BITS_NOT_AVAILABLE);
+			attributeBits = new UnsignedInteger32(0);
 		}
 		
 		flags = flags | SSH_FILEXFER_ATTR_BITS;
@@ -1248,7 +1277,7 @@ public class SftpFileAttributes {
 	
 	public boolean isAttributeBitSet(long attributeBit) throws SftpStatusException {
 		if(!hasAttributeBits()) {
-			throw new SftpStatusException(SftpStatusException.ATTRIBUTE_BITS_NOT_AVAILABLE);
+			return false;
 		}
 		return ((attributeBits.longValue() & (attributeBit & 0xFFFFFFFFL)) == (attributeBit & 0xFFFFFFFFL));
 	}

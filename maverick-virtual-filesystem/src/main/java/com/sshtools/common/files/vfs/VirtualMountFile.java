@@ -104,6 +104,7 @@ public class VirtualMountFile extends VirtualFileObject {
 			IOException, PermissionDeniedException {
 		if(isMount()) {
 			SftpFileAttributes attrs = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY, "UTF-8");
+			attrs.setPermissions(mount.defaultPermissions());
 			try {
 				attrs.setReadOnly(mount.isReadOnly());
 			} catch (SftpStatusException e) {

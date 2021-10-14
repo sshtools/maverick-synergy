@@ -56,6 +56,7 @@ public class CallbackConfiguration {
 		this.serverPort = serverPort;
 		this.privateKey = privateKey;
 		this.publicKey = publicKey;
+		this.memo = memo;
 	}
 	
 	protected CallbackConfiguration() {

@@ -33,15 +33,21 @@ import com.sshtools.client.ClientStateListener;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.common.auth.MutualKeyAuthenticatonStore;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.nio.ProtocolContextFactory;
 import com.sshtools.synergy.nio.SshEngineContext;
+import com.sshtools.synergy.ssh.ConnectionProtocol;
+import com.sshtools.synergy.ssh.GlobalRequestHandler;
 
 public class CallbackContextFactory implements ProtocolContextFactory<SshClientContext> {
 
 	public static final String CALLBACK_IDENTIFIER = "CallbackClient_";
+	
+	public static final String CALLBACK_MEMO = "MEMO";
 	
 	String callbackIdentifier = CALLBACK_IDENTIFIER;
 	Map<String,SshConnection> callbackClients = new HashMap<>();
@@ -112,6 +118,25 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 			}
 		});
 		
+		clientContext.addGlobalRequestHandler(new GlobalRequestHandler<SshClientContext>() {
+			
+			@Override
+			public String[] supportedRequests() {
+				return new String[] { "memo@jadaptive.com" };
+			}
+			
+			@Override
+			public boolean processGlobalRequest(GlobalRequest request, ConnectionProtocol<SshClientContext> connection) {
+				if("memo@jadaptive.com".equals(request.getName())) {
+					try {
+						connection.getConnection().setProperty(CALLBACK_MEMO, ByteArrayReader.decodeString(request.getData()));
+					} catch (IOException e) {
+					}
+					return true;
+				}
+				return false;
+			}
+		});
 		configureCallbackContext(clientContext);
 		return clientContext;
 	}

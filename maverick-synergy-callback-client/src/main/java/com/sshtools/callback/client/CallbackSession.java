@@ -27,8 +27,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.nio.DisconnectRequestFuture;
@@ -99,6 +101,9 @@ public class CallbackSession implements Runnable {
 					currentConnection.getAuthenticatedFuture().waitFor(30000L);
 					if(currentConnection.getAuthenticatedFuture().isDone() && currentConnection.getAuthenticatedFuture().isSuccess()) {
 						currentConnection.setProperty("callbackClient", this);
+						GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
+								currentConnection, ByteArrayWriter.encodeString(config.getMemo()));
+						currentConnection.sendGlobalRequest(req, false);
 						app.onClientConnected(this, currentConnection);
 						if(Log.isInfoEnabled()) {
 							Log.info("Client is connected to {}:{}", hostname, port);
@@ -113,6 +118,11 @@ public class CallbackSession implements Runnable {
 						numberOfAuthenticationErrors++;
 					}
 				}
+				
+				if(!config.isReconnect()) {
+					break;
+				}
+				
 				try {
 					long interval = config.getReconnectIntervalMs();
 					if(numberOfAuthenticationErrors >= 3) {

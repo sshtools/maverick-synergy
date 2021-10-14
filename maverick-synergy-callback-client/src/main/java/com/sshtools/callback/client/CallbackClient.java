@@ -168,7 +168,7 @@ public class CallbackClient {
 								onClientStop(client, con);
 								con.removeProperty("callbackClient");
 								clients.remove(client);
-								if(!client.isStopped()) {
+								if(!client.isStopped() && client.getConfig().isReconnect()) {
 									int count = 1;
 									while(getSshEngine().isStarted()) {
 										try {
@@ -208,7 +208,7 @@ public class CallbackClient {
 			sshContext.setPolicy(policy.getClass(), policy);
 		}
 		
-		sshContext.setSoftwareVersionComments(CallbackSession.CALLBACK_IDENTIFIER + config.getAgentName());
+		sshContext.setSoftwareVersionComments(String.format("%s_%s", config.getCallbackIdentifier(), config.getAgentName()));
 		
 		InMemoryMutualKeyAuthenticationStore authenticationStore = new InMemoryMutualKeyAuthenticationStore();
 		authenticationStore.addKey(config.getAgentName(), config.getPrivateKey(), config.getPublicKey());

@@ -305,4 +305,11 @@ public class ByteArrayReader
 		  super.close();
 	  } catch(IOException e) { }
   }
+
+  public static String decodeString(byte[] data) throws IOException {
+	
+	try(ByteArrayReader r = new ByteArrayReader(data)) {
+		return r.readString();
+	}
+  }
 }

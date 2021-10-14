@@ -49,7 +49,7 @@ public class Shell extends ShellCommand {
 	private PtyProcess pty;
 
 	public Shell() {
-		super("bash", ShellCommand.SUBSYSTEM_SYSTEM, "bash", "Run a native shell");
+		super("osshell", ShellCommand.SUBSYSTEM_SYSTEM, "osshell", "Run a native shell");
 		setDescription("An operating system shell");
 		setBuiltIn(false);
 	}

@@ -41,7 +41,7 @@ import com.sshtools.synergy.ssh.TransportProtocol;
  */
 public class CallbackSession implements Runnable {
 
-	public static final String CALLBACK_IDENTIFIER = "CallbackClient-";
+	//public static final String CALLBACK_IDENTIFIER = "CallbackClient_";
 
 	CallbackConfiguration config;
 	CallbackClient app;

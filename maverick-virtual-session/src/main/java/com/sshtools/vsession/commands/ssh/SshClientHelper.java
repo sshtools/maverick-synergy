@@ -93,6 +93,9 @@ public class SshClientHelper {
 
 	public static SshClient connectClient(SshClientArguments arguments, VirtualConsole console) throws IOException, SshException, PermissionDeniedException {
 		
+		if(arguments.hasConnection()) {
+			return new SshClient(arguments.getConnection());
+		}
 
 		SshClientContext ctx = getSshContext(arguments);
 		

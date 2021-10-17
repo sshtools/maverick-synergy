@@ -36,7 +36,7 @@ public class CallbackCommandFactory extends CommandFactory<CallbackCommand> {
 	
 	protected void installShellCommands() {
 		installCommand(Callbacks.class);
-		installCommand(CallbackShell.class);
+		//installCommand(CallbackShell.class); // Use ssh command instead. 
 		installCommand(CallbackMount.class);
 	}
 

@@ -1063,7 +1063,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 						"ping@sshtools.com", 
 						con, null);
 				sendGlobalRequest(global, true);
-				global.waitFor(30000);
+				global.waitFor(30000L);
 				if(!global.isDone()) {
 					if(Log.isInfoEnabled()) {
 						Log.error("Remote node is unresponsive");

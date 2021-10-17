@@ -98,8 +98,12 @@ public class CallbackSession implements Runnable {
 					currentConnection.getAuthenticatedFuture().waitFor(30000L);
 					if(currentConnection.getAuthenticatedFuture().isDone() && currentConnection.getAuthenticatedFuture().isSuccess()) {
 						currentConnection.setProperty("callbackClient", this);
+					
+						if(Log.isInfoEnabled()) {
+							Log.info("Callback {} registering with memo {}", currentConnection.getUUID(), config.getMemo());
+						}
 
-						GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
+  					    GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
 								currentConnection, ByteArrayWriter.encodeString(config.getMemo()));
 						currentConnection.sendGlobalRequest(req, false);
 						app.onClientConnected(this, currentConnection);

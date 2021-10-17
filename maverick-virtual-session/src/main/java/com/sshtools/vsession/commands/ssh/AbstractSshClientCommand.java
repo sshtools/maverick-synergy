@@ -25,10 +25,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.commons.lang3.StringUtils;
+import org.jline.reader.Candidate;
+import org.jline.reader.LineReader;
+import org.jline.reader.ParsedLine;
 
 import com.sshtools.client.SshClient;
 import com.sshtools.common.logger.Log;
@@ -83,7 +88,11 @@ public abstract class AbstractSshClientCommand extends ShellCommand {
 		SshClientArguments arguments = generateCommandArguments(cli, this.originalArguments);
 		
 		if (Log.isDebugEnabled()) {
-			Log.debug("The arguments parsed are {}", arguments);
+			if(arguments.hasConnection()) {
+				Log.debug("Using existing connection from {}", arguments.getConnection().getRemoteAddress())
+			} else {
+				Log.debug("The arguments parsed are {}", arguments);
+			}
 		}
 		
 		SshClient sshClient = null;
@@ -100,6 +109,24 @@ public abstract class AbstractSshClientCommand extends ShellCommand {
 				sshClient.close();
 			}
 		}
+	}
+	
+	public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
+		if(line.wordIndex() > 0) {
+			if(!line.word().startsWith("-")) {
+				
+					String hostname = getHostname(line);
+					SshClientOptionsEvaluator.complete(hostname, candidates);
+				
+			}
+		}
+	}
+
+	private String getHostname(ParsedLine line) {
+		if(line.word().contains("@")) {
+			return line.word().substring(line.word().indexOf('@')+1);
+		}
+		return line.word();
 	}
 
 	protected abstract void runCommand(SshClient sshClient, SshClientArguments arguments, VirtualConsole console);

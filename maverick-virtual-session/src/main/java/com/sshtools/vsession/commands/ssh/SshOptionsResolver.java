@@ -22,9 +22,12 @@
 package com.sshtools.vsession.commands.ssh;
 
 import java.io.IOException;
+import java.util.Collection;
 
 public interface SshOptionsResolver {
 
 	boolean resolveOptions(String destination, SshClientArguments arguments) throws IOException;
+
+	Collection<String> matchDestinations(String destination);
 
 }

@@ -22,8 +22,10 @@
 package com.sshtools.vsession.commands.ssh;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.components.SshKeyPair;
 
 public class SshClientArguments {
@@ -40,7 +42,19 @@ public class SshClientArguments {
 	private String securityLevel;
 	private String[] configOptions;
 	private boolean compression;
+	private SshConnection con;
 	
+	public boolean hasConnection() {
+		return Objects.nonNull(con);
+	}
+	
+	public void setConnection(SshConnection con) {
+		this.con = con;
+	}
+	
+	public SshConnection getConnection() {
+		return con;
+	}
 
 	public int getPort() {
 		return port;

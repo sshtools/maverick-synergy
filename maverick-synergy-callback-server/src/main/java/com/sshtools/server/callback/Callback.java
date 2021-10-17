@@ -18,29 +18,23 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+package com.sshtools.server.callback;
 
-package com.sshtools.server.callback.commands;
+import com.sshtools.client.tasks.Task;
+import com.sshtools.common.ssh.SshConnection;
 
-import java.io.IOException;
+public interface Callback {
 
-import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.server.callback.Callback;
-import com.sshtools.server.vsession.UsageException;
-import com.sshtools.server.vsession.VirtualConsole;
+	String getUUID();
 
-public class Callbacks extends CallbackCommand {
+	String getUsername();
 
-	public Callbacks() {
-		super("callbacks", "Callback", "callbacks", "List the connected callback clients");
-	}
+	SshConnection getConnection();
 
-	@Override
-	public void run(String[] args, VirtualConsole console)
-			throws IOException, PermissionDeniedException, UsageException {
+	String getRemoteAddress();
 
-		for(Callback con : service.getCallbacks()) {
-			console.println(String.format("%-25s %-15s %s/%s", con.getUUID(), con.getRemoteAddress(), con.getUsername(), con.getMemo()));
-		}
-	}
+	String getMemo();
+
+	void addTask(Task task);
 
 }

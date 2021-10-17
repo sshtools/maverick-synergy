@@ -23,18 +23,19 @@ package com.sshtools.server.callback;
 import java.util.Collection;
 
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.vsession.commands.ssh.SshOptionsResolver;
 
-public interface CallbackRegistrationService {
+public interface CallbackRegistrationService extends SshOptionsResolver {
 
-	Collection<SshConnection> getCallbackClients();
+	Collection<? extends Callback> getCallbacks();
 
-	SshConnection getCallbackClient(String clientName);
+	Callback getCallbackByUUID(String uuid);
 
-	void registerCallbackClient(String clientName, SshConnection con);
+	void registerCallbackClient(SshConnection con);
 
-	void unregisterCallbackClient(String clientName);
+	void unregisterCallbackClient(String uuid);
 
-	boolean isRegistered(String clientName);
+	boolean isRegistered(String uuid);
 	
 	
 

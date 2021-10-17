@@ -55,8 +55,8 @@ public class SshClientOptionsExtractor {
 		// the arguments starts with ssh client 'ssh' followed by arguments passed, hence we start from 1
 		int i = 1;
 		
-		if (values == null || values.length < 1) {
-			throw new IllegalArgumentException("Cannot process null or arrays with length less than 1.");
+		if (values == null || values.length < 2) {
+			throw new IllegalArgumentException("Not enough arguments!");
 		}
 		
 		if (!values[1].startsWith("-")) {

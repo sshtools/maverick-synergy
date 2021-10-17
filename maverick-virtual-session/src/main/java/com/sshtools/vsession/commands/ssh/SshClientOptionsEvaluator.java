@@ -35,7 +35,6 @@ import com.sshtools.server.vsession.VirtualConsole;
 
 public class SshClientOptionsEvaluator extends AbstractSshOptionsEvaluator {
 
-
 	public static SshClientArguments evaluate(CommandLine commandLine, String[] originalArguments, VirtualConsole console) throws IOException, PermissionDeniedException {
 		
 		if (Log.isDebugEnabled()) {

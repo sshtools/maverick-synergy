@@ -129,7 +129,11 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 			public boolean processGlobalRequest(GlobalRequest request, ConnectionProtocol<SshClientContext> connection) {
 				if("memo@jadaptive.com".equals(request.getName())) {
 					try {
-						connection.getConnection().setProperty(CALLBACK_MEMO, ByteArrayReader.decodeString(request.getData()));
+						String memo = ByteArrayReader.decodeString(request.getData());
+						if(Log.isInfoEnabled()) {
+							Log.info("Callback {} registered with memo {}", connection.getUUID(), memo);
+						}
+						connection.getConnection().setProperty(CALLBACK_MEMO, memo);
 					} catch (IOException e) {
 					}
 					return true;

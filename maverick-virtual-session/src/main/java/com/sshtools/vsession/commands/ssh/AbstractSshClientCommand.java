@@ -86,7 +86,7 @@ public abstract class AbstractSshClientCommand extends ShellCommand {
 		
 		if (Log.isDebugEnabled()) {
 			if(arguments.hasConnection()) {
-				Log.debug("Using existing connection from {}", arguments.getConnection().getRemoteAddress())
+				Log.debug("Using existing connection from {}", arguments.getConnection().getRemoteAddress());
 			} else {
 				Log.debug("The arguments parsed are {}", arguments);
 			}

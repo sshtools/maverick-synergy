@@ -205,7 +205,7 @@ public class SshEngine {
 			}
 
 			if(Log.isInfoEnabled()) {
-			  Log.info("This Maverick Legacy API product is licensed to " + v.getLicensee());
+			  Log.info("This Maverick Synergy product is licensed to " + v.getLicensee());
 			}
 			
 			for(SshEngineListener listener : listeners) {

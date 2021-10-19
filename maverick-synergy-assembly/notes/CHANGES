@@ -1,5 +1,8 @@
 Maverick Synergy 3.0.6 - Oct 19, 2021
 
+Features
+    o Improvements and refactoring of reverse SSH connection "callback" API after testing in reference product.
+
 Bug Fixes
     o SSH.com key fails parsing due to check length operation on array constructed from declaration of length; however, an additional byte to protect the MPINT from being negative was added to the length. Causing the final check length operation to fail.
     o SftpClient pattern matching put methods use wrong parent path resulting in incorrect file transfer results. 

@@ -132,4 +132,6 @@ public interface SshConnection {
 	
 	void removeProperty(String string);
 
+	int getSessionCount();
+
 }

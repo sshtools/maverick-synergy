@@ -72,7 +72,7 @@ public class CallbackMount extends CallbackCommand {
 		
 		FileSystemOptions opts = new FileSystemOptions();
 		SftpFileSystemConfigBuilder.getInstance().setSshConnection(opts, remoteConnection.getConnection());
-		String path = String.format("sftp://%s/", remoteConnection.getUUID());
+		String path = String.format("sftp://%s/", remoteConnection.getUuid());
 		vff.getMountManager().mount(new VirtualMountTemplate(
 				"/" + remoteConnection.getUsername(), path,
 					new VFSFileFactory(m, opts, path), false), false);

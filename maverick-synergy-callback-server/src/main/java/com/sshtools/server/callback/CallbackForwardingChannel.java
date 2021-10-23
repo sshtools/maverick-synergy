@@ -31,6 +31,7 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.ConnectionAwareTask;
+import com.sshtools.common.ssh.Context;
 import com.sshtools.common.ssh.ExecutorOperationQueues;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.ByteArrayReader;
@@ -42,27 +43,27 @@ import com.sshtools.synergy.ssh.SshContext;
 public class CallbackForwardingChannel<T extends SshContext> extends ForwardingChannel<T> {
 
 	CallbackForwardingChannel<?> channel;
-	CallbackServer server;
+	SshConnection callbackClient;
 	final static Integer CHANNEL_QUEUE = ExecutorOperationQueues.generateUniqueQueue("callbackDataQueue");
 	
-	public CallbackForwardingChannel(SshConnection con, CallbackServer server) {
+	public CallbackForwardingChannel(Context ctx, SshConnection callbackClient) {
 		super(LocalForwardingChannel.LOCAL_FORWARDING_CHANNEL_TYPE, 
-				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
-				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
-				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
-				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize(),
+				ctx.getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
+				ctx.getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
+				ctx.getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
+				ctx.getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize(),
 				true);
-		this.server = server;
+		this.callbackClient = callbackClient;
 	}
 	
-	public CallbackForwardingChannel(SshConnection con, CallbackServer server, String hostToConnect, int portToConnect) {
+	public CallbackForwardingChannel(Context ctx, SshConnection callbackClient, String hostToConnect, int portToConnect) {
 		super(LocalForwardingChannel.LOCAL_FORWARDING_CHANNEL_TYPE, 
-				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
-				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
-				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
-				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize(),
+				ctx.getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
+				ctx.getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
+				ctx.getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
+				ctx.getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize(),
 				true);
-		this.server = server;
+		this.callbackClient = callbackClient;
 		this.hostToConnect = hostToConnect;
 		this.portToConnect = portToConnect;
 	}
@@ -140,7 +141,7 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 						+ (success ? "authorized" : "denied") + " "
 						+ connection.getUsername()
 						+ (success ? " to open" : " from opening")
-						+ " a " + getChannelType() + " forwarding channel to " + hostToConnect
+						+ " a " + getChannelType() + " callback forwarding channel to " + hostToConnect
 						+ ":" + portToConnect);
 			}
 
@@ -149,7 +150,6 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 						ChannelOpenException.ADMINISTRATIVIVELY_PROHIBITED);
 			}
 
-			SshConnection callbackClient = server.getCallbackClient(hostToConnect);
 			if(Objects.isNull(callbackClient)) {
 				throw new ChannelOpenException(
 						String.format("Callback client %s is not connected", hostToConnect),
@@ -162,7 +162,7 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 				protected void doTask() throws Throwable {
 					
 				    channel = new CallbackForwardingChannel<SshClientContext>( 
-								callbackClient, server, "localhost", portToConnect);
+								connection.getContext(), callbackClient, hostToConnect, portToConnect);
 					
 				    channel.setBoundChannel(CallbackForwardingChannel.this);
 					callbackClient.openChannel(channel);

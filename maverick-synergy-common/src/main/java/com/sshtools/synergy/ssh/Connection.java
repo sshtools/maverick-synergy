@@ -291,6 +291,17 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	public void addTask(Integer queue, ConnectionAwareTask r) {
 		transport.addTask(queue, r);
 	}
+	
+	@Override
+	public int getSessionCount() {
+		int count = 0;
+		for(ChannelNG<T> channel : connection.getActiveChannels()) {
+			if(channel.getChannelType().equals("session")) {
+				count++;
+			}
+		}
+		return count;
+	}
 
 	@Override
 	public void disconnect(int reason, String message) {

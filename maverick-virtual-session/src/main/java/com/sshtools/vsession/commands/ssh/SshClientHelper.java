@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 import com.sshtools.client.ClientAuthenticator;
+import com.sshtools.client.ClientStateListener;
 import com.sshtools.client.PasswordAuthenticator;
 import com.sshtools.client.PublicKeyAuthenticator;
 import com.sshtools.client.SshClient;
@@ -105,8 +106,13 @@ public class SshClientHelper {
 		setUpCipherSpecs(arguments, ctx);
 		setUpMacSpecs(arguments, ctx);
 		setUpCompression(arguments, ctx);
+
+		for(ClientStateListener listener : arguments.getListeners()) {
+			ctx.addStateListener(listener);
+		}
 		
 		SshClient sshClient = new SshClient(arguments.getDestination(), arguments.getPort(), arguments.getLoginName(), ctx);
+		
 		ClientAuthenticator auth;
 
 		if (Objects.nonNull(arguments.getIdentityFile())) {

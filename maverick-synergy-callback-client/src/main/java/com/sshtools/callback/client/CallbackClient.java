@@ -143,6 +143,7 @@ public class CallbackClient {
 			stop(client);
 		}
 		
+		ssh.shutdownAndExit();
 		executor.shutdownNow();
 	}
 	
@@ -179,6 +180,8 @@ public class CallbackClient {
 										}
 										count++;
 									}
+								} else {
+									stop();
 								}
 							} 
 						}

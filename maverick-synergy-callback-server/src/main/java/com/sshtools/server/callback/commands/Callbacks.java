@@ -36,7 +36,7 @@ public class Callbacks extends CallbackCommand {
 			throws IOException, PermissionDeniedException, UsageException {
 
 		for(Callback con : service.getCallbacks()) {
-			console.println(String.format("%-25s %-15s %s/%s", con.getUUID(), con.getRemoteAddress(), con.getUsername(), con.getMemo()));
+			console.println(String.format("%-25s %-15s %s/%s", con.getUuid(), con.getRemoteAddress(), con.getUsername(), con.getMemo()));
 		}
 	}
 

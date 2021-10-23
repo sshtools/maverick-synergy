@@ -71,7 +71,7 @@ public class AbstractSshOptionsEvaluator {
 		
 		
 		for(SshOptionsResolver resolver : resolvers) {
-			if(resolver.resolveOptions(destination, arguments)) {
+			if(resolver.resolveOptions(destination, arguments, VirtualConsole.getCurrentConsole())) {
 				break;
 			}
 		}

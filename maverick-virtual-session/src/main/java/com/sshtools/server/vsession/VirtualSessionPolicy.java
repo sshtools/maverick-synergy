@@ -21,7 +21,7 @@ package com.sshtools.server.vsession;
 public class VirtualSessionPolicy {
 
 	String welcomeText = "Maverick Synergy\r\nVirtual Shell ${version}";
-
+	String shellCommand = null;
 	public VirtualSessionPolicy() {
 		
 	}
@@ -37,7 +37,14 @@ public class VirtualSessionPolicy {
 	public void setWelcomeText(String welcomeText) {
 		this.welcomeText = welcomeText;
 	}
-	
+
+	public String getShellCommand() {
+		return shellCommand;
+	}
+
+	public void setShellCommand(String shellCommand) {
+		this.shellCommand = shellCommand;
+	}
 	
 	
 	

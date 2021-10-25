@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.lang3.SystemUtils;
 
@@ -39,6 +40,7 @@ import com.sshtools.common.util.IOUtils;
 import com.sshtools.server.vsession.ShellCommand;
 import com.sshtools.server.vsession.UsageException;
 import com.sshtools.server.vsession.VirtualConsole;
+import com.sshtools.server.vsession.VirtualSessionPolicy;
 import com.sshtools.server.vsession.VirtualShellNG;
 import com.sshtools.server.vsession.VirtualShellNG.WindowSizeChangeListener;
 
@@ -71,22 +73,30 @@ public class Shell extends ShellCommand {
 			}
 		}
 
+		String shellCommand = console.getContext().getPolicy(VirtualSessionPolicy.class).getShellCommand();
 		if (SystemUtils.IS_OS_WINDOWS) {
-			args.add("cmd.exe");
-			args.add("/c");
-			args.add("start");
-			if (!cmd.equals("")) {
-				args.add(cmd);
-			} else {
+			if(Objects.isNull(shellCommand)) {
 				args.add("cmd.exe");
+				args.add("/c");
+				args.add("start");
+				if (!cmd.equals("")) {
+					args.add(cmd);
+				} else {
+					args.add("cmd.exe");
+				}
+			} else {
+				args.add(shellCommand);
 			}
 		}
 		else { 
 			// The shell, should be in /bin but just in case
-			String shLocation = findCommand("bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh");
-			if(shLocation == null)
-				throw new IOException("Cannot find shell.");
-			args.add(shLocation);
+			if(Objects.isNull(shellCommand)) {
+				shellCommand = findCommand("bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh");
+				if(shellCommand == null)
+					throw new IOException("Cannot find shell.");
+			}
+		
+			args.add(shellCommand);
 		}
 
 		env = env == null ? new HashMap<String, String>() : new HashMap<String, String>(env);

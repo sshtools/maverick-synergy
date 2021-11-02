@@ -237,10 +237,6 @@ public class VirtualShellNG extends SessionChannelNG {
 		
 	}
 
-	@Override
-	protected void onChannelClosed() {
-	}
-	
 	class VirtualShellCompletor implements Completer, MshListener {
 
 		Command currentCommand = null;

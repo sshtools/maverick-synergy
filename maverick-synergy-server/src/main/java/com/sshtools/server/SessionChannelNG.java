@@ -105,7 +105,7 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	long lastActivity = System.currentTimeMillis();
 	boolean agentForwardingRequested;
 	boolean rawMode = false;
-	
+	boolean singleSession = false;
 	ChannelOutputStream stderrOutputStream = new ChannelOutputStream(this, SSH_EXTENDED_DATA_STDERR);
 	
 	public SessionChannelNG(SshConnection con) {
@@ -120,6 +120,21 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 				autoConsume);
 	}
 
+	public boolean isSingleSession() {
+		return singleSession;
+	}
+
+	public void setSingleSession(boolean singleSession) {
+		this.singleSession = singleSession;
+	}
+	
+	@Override
+	protected void onChannelClosed() {
+		if(singleSession) {
+			con.disconnect();
+		}
+	}
+	
 	public void enableRawMode() {
 		rawMode = true;
 	}

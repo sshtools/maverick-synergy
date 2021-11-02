@@ -37,10 +37,11 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 	public static final int EXITCODE_NOT_RECEIVED = Integer.MIN_VALUE;
 	public static final int SSH_EXTENDED_DATA_STDERR = 1;
 
-	int exitcode = EXITCODE_NOT_RECEIVED;
-	String exitsignalinfo;
-	boolean flowControlEnabled;
-
+	private int exitcode = EXITCODE_NOT_RECEIVED;
+	private String exitsignalinfo;
+	private boolean flowControlEnabled;
+	private boolean singleSession = false;
+	
 
 	public AbstractSessionChannel(int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
 			int minimumWindowSpace, boolean autoConsume) {
@@ -51,6 +52,14 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 	public AbstractSessionChannel(int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
 			int minimumWindowSpace, ChannelRequestFuture closeFuture, boolean autoConsume) {
 		super("session", maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
+	}
+
+	public boolean isSingleSession() {
+		return singleSession;
+	}
+
+	public void setSingleSession(boolean singleSession) {
+		this.singleSession = singleSession;
 	}
 
 	@Override
@@ -80,7 +89,9 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 	
 	@Override
 	protected void onChannelClosed() {
-
+		if(singleSession) {
+			con.disconnect();
+		}
 	}
 
 	@Override
@@ -149,14 +160,14 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 	 * @return future
 	 * @throws IOException
 	 */
-	public RequestFuture signal(String signal) throws SshException {
+	public RequestFuture signal(String signal) {
 		try(ByteArrayWriter request = new ByteArrayWriter()) {
 			request.writeString(signal);
 			ChannelRequestFuture future = new ChannelRequestFuture();
 			sendChannelRequest("signal", true, request.toByteArray(), future);
 			return future;
 		} catch (IOException ex) {
-			throw new SshException(ex, SshException.INTERNAL_ERROR);
+			throw new IllegalStateException(ex.getMessage(), ex);
 		} 
 	}
 
@@ -219,7 +230,7 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 		return future;
 	}
 
-	public RequestFuture executeCommand(String cmd) throws SshException {
+	public RequestFuture executeCommand(String cmd) {
 
 		ByteArrayWriter request = new ByteArrayWriter();
 

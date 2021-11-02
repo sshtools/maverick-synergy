@@ -2060,6 +2060,8 @@ public abstract class TransportProtocol<T extends SshContext>
 	protected String selectNegotiatedComponent(String clientlist, String serverlist)
 			throws IOException {
 
+		String originalClient = clientlist;
+		String originalServer = serverlist;
 		Vector<String> r = new Vector<String>();
 		int idx;
 		String name;
@@ -2097,7 +2099,7 @@ public abstract class TransportProtocol<T extends SshContext>
 								.addAttribute(
 										EventCodes.ATTRIBUTE_REMOTE_COMPONENT_LIST,
 										clientlist));
-		throw new IOException(String.format("Failed to negotiate a transport component from {} and {}", clientlist, serverlist));
+		throw new IOException(String.format("Failed to negotiate a transport component from %s and %s", originalClient, originalServer));
 
 	}
 

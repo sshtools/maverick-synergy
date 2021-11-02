@@ -224,8 +224,11 @@ public class SshEngineContext {
 		
 		interfacesToBind.put(ISA.toString(), li);
 
-		if (daemon.isStarted() && !daemon.isStarting())
-			daemon.startListeningInterface(li);
+		if (daemon.isStarted() && !daemon.isStarting()) {
+			if(!daemon.startListeningInterface(li)) {
+				throw new IOException("Failed to start interface " + li.getAddressToBind());
+			}
+		}
 		return li;
 
 	}
@@ -238,8 +241,7 @@ public class SshEngineContext {
 	 */
 	public void removeListeningInterface(InetAddress addressBound, int portBound) {
 		InetSocketAddress ISA = new InetSocketAddress(addressBound, portBound);
-		ListeningInterface li = (ListeningInterface) interfacesToBind
-				.remove(ISA.toString());
+		ListeningInterface li = (ListeningInterface) interfacesToBind.remove(ISA.toString());
 		if (li != null) {
 			daemon.removeAcceptor(li);
 		}

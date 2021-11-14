@@ -125,6 +125,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	int numIncomingPacketsSinceKEX;
 
 	long lastActivity = System.currentTimeMillis();
+	long lastIdleEvent = System.currentTimeMillis();
 	boolean closed = false;
 	
 	protected boolean completedFirstKeyExchange = false;
@@ -1113,7 +1114,9 @@ public abstract class TransportProtocol<T extends SshContext>
 		
 		
 		if (activeService!=null && activeService.getIdleTimeoutSeconds() > 0) {
+			idleTimeSeconds = (System.currentTimeMillis() - lastIdleEvent) / 1000;
 			if(activeService!=null && idleTimeSeconds >= activeService.getIdleTimeoutSeconds()) {
+				lastIdleEvent = System.currentTimeMillis();
 				return activeService.idle();
 			}
 		}
@@ -2666,6 +2669,9 @@ public abstract class TransportProtocol<T extends SshContext>
 
 	public void resetIdleState(IdleStateListener listener) {
 		
+		if(Log.isTraceEnabled()) {
+			Log.trace("Resetting idle state");
+		}
 		lastActivity = System.currentTimeMillis();
 		if (getContext().getIdleConnectionTimeoutSeconds() > 0
 				&& socketConnection != null)

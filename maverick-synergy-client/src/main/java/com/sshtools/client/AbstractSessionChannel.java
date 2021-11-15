@@ -27,7 +27,6 @@ import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.RequestFuture;
-import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.synergy.ssh.ChannelNG;

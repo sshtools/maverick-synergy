@@ -62,7 +62,7 @@ public class CallbackServer extends AbstractSshServer {
 	}
 
 	@Override
-	protected ProtocolContextFactory<?> getDefaultContextFactory() {
+	public ProtocolContextFactory<?> getDefaultContextFactory() {
 		return defaultContextFactory;
 	}
 

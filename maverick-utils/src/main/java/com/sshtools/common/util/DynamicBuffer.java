@@ -71,6 +71,15 @@ public class DynamicBuffer {
     in = new DynamicBufferInputStream();
     out = new DynamicBufferOutputStream();
   }
+  
+  public DynamicBuffer(int bufferSize) {
+	  	if(bufferSize <= 0) {
+	  		throw new IllegalArgumentException("Buffer size cannot be negative");
+	  	}
+	    buf = new byte[bufferSize];
+	    in = new DynamicBufferInputStream();
+	    out = new DynamicBufferOutputStream();
+	  }
 
   /**
    * Get the InputStream of this buffer. Use the stream to read data from
@@ -127,14 +136,18 @@ public class DynamicBuffer {
         : (closed ? -1 : 0);
   }
 
-  private synchronized void block() throws InterruptedException, InterruptedIOException {
+  private synchronized void block() throws InterruptedException, IOException {
 
 		long start = System.currentTimeMillis();
 		
 	    // Block and wait for more data
 	    if (!closed) {
-	      while ( (readpos >= writepos) && !closed) {
-	        wait(interrupt);
+	    
+	      while ((readpos >= writepos) && !closed) {
+    		if(closedWithError) {
+    			throw new IOException("The buffer was closed due to an unspecified error");
+    		}
+	    	wait(interrupt);
 	        if(timeout > 0 && (System.currentTimeMillis() - start) > timeout) {
 	        	throw new InterruptedIOException();
 	        }
@@ -151,10 +164,12 @@ public class DynamicBuffer {
    */
   public synchronized void close(boolean closedWithError) {
 	this.closedWithError = closedWithError;
-    if (!closed) {
-      closed = true;
-      notifyAll();
-    }
+    if(!this.closedWithError) {
+		if (!closed) {
+	      closed = true;
+	      notifyAll();
+		}
+	}
   }
 
   /**
@@ -165,7 +180,12 @@ public class DynamicBuffer {
    * @throws IOException
    */
   protected synchronized void write(int b) throws IOException {
-    if (closed) {
+    
+	if(closedWithError) {
+		throw new IOException("The buffer was closed due to an unspecified error");
+	}
+	
+	if (closed) {
       throw new IOException("The buffer is closed");
     }
 
@@ -247,21 +267,13 @@ public class DynamicBuffer {
   protected synchronized int read(byte[] data, int offset, int len) throws
       IOException {
 	  
-	if(closedWithError) {
-		throw new IOException("The buffer was closed due to an unspecified error");
-	}
     try {
-
-      block();
+       block();
     }
     catch (InterruptedException ex) {
       throw new InterruptedIOException(
           "The blocking operation was interrupted");
     }
-
-	if(closedWithError) {
-		throw new IOException("The buffer was closed due to an unspecified error");
-	}
 	
     if (closed && available() <= 0) {
       return -1;

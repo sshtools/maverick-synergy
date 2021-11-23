@@ -58,6 +58,40 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 		return sshContext;
 	}
 	
+	private void processProxyProtocol(String tmp) {
+		
+		if(Log.isInfoEnabled()) {
+			Log.info(String.format("Parsing PROXY protocol string [%s]", tmp));
+		}
+		
+		String[] elements = tmp.split(" ");
+		if(elements.length < 4) {
+		
+				if(Log.isInfoEnabled()) {
+					Log.info("Not enough parameters in PROXY statement");
+				}
+				return;
+		}
+		
+		if("TCP4".equals(elements[1]) || "TCP6".equals(elements[1])) {
+			String sourceAddress = elements[2].trim();
+			String targetAddress = elements[3].trim();
+			int sourcePort = Integer.parseInt(elements[4].trim());
+			int targetPort = Integer.parseInt(elements[5].trim());
+			
+			con.setRemoteAddress(InetSocketAddress.createUnresolved(sourceAddress, sourcePort));
+			con.setLocalAddress(InetSocketAddress.createUnresolved(targetAddress, targetPort));
+		}
+		
+	}
+
+	@Override
+	protected void processNegotiationString(String value) {
+		if(value.startsWith("PROXY")) {
+			processProxyProtocol(value);
+		}
+	}
+	
 	@Override
 	protected boolean canConnect(SocketConnection connection) {
 

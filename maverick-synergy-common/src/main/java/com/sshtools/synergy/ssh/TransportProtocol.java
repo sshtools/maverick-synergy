@@ -504,85 +504,84 @@ public abstract class TransportProtocol<T extends SshContext>
 			c = (char) applicationData.get();
 
 			if (c == '\n') {
-				break;
+				
+				if(remoteIdentification.toString().startsWith("SSH-")) {
+					if(startBinaryProtocol()) {
+						if (sentLocalIdentification) {
+							if(canSendKeyExchangeInit()) {
+								sendKeyExchangeInit();
+							}
+	
+							// Make sure that any remaining data is
+							// processed by the binary packet protocol
+							processBinaryPackets(applicationData);
+						}
+					}
+					return;
+				}
+				
+				try {
+					processNegotiationString(remoteIdentification.toString().trim());
+				} catch(Throwable t) {
+					if(Log.isDebugEnabled())
+						Log.debug("Bad value in negotiation string!", t);
+					socketConnection.closeConnection();
+					return;
+				}
+				remoteIdentification.setLength(0);
+				continue;
 			}
+			
 			remoteIdentification.append(c);
 		}
-
-		if (c == '\n' && remoteIdentification.length() > 4 
-				&& remoteIdentification.charAt(0) == 'S'
-				&& remoteIdentification.charAt(1) == 'S'
-				&& remoteIdentification.charAt(2) == 'H'
-				&& remoteIdentification.charAt(3) == '-') {
-
-			if(Log.isInfoEnabled()) {
-				Log.info("Connnection {} identifies itself as {}", 
-						getConnectionAddress().toString(),
-						remoteIdentification.toString().trim());
-			}
-
-			sendLocalIdentification(false, null);
-			
-			// Check the remote client version
-			String tmp = remoteIdentification.toString();
-
-			if (!tmp.startsWith("SSH-2.0-") && !tmp.startsWith("SSH-1.99-")) {
-				if(Log.isDebugEnabled())
-					Log.debug("Remote client reported an invalid protocol version!");
-				socketConnection.closeConnection();
-				return;
-			}
-			
-			if(Log.isDebugEnabled())
-				Log.debug("Remote client version OK");
-
-			receivedRemoteIdentification = true;
-
-			EventServiceImplementation.getInstance().fireEvent(
-					(new Event(this, EventCodes.EVENT_NEGOTIATED_PROTOCOL, true))
-							.addAttribute(
-									EventCodes.ATTRIBUTE_CONNECTION,
-									con)
-							.addAttribute(
-									EventCodes.ATTRIBUTE_OPERATION_STARTED,
-									started)
-							.addAttribute(
-									EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-									new Date()));
-			
-			onRemoteIdentificationReceived(tmp);
-			
-			// Send our kex init
-			if (sentLocalIdentification) {
-				if(canSendKeyExchangeInit()) {
-					sendKeyExchangeInit();
-				}
-
-				// Make sure that any remaining data is
-				// processed by the binary packet protocol
-				processBinaryPackets(applicationData);
-			}
-			
-			return;
-		}
-		
-		if(sshContext.isHttpRedirect()) {
-			String line = remoteIdentification.toString();
-			if(line.startsWith("Host:")) {
-				String hostname = line.substring(5).trim();
-				if(hostname.contains(":")) {
-					hostname = hostname.substring(0, hostname.indexOf(':'));
-				}
-				sendLocalIdentification(true, hostname);
-			}
-		}
-		
-		remoteIdentification.setLength(0);
-		
-		if(applicationData.hasRemaining()) {
-			negotiateProtocol(applicationData);
-		}
 	}
+	
+	protected void processNegotiationString(String value) {
+		
+	}
+	
+	protected boolean startBinaryProtocol() {
+		
+		if(Log.isInfoEnabled()) {
+			Log.info("Connnection {} identifies itself as {}", 
+					getConnectionAddress().toString(),
+					remoteIdentification.toString().trim());
+		}
+
+		sendLocalIdentification(false, null);
+		
+		// Check the remote client version
+		String tmp = remoteIdentification.toString();
+
+		if (!tmp.startsWith("SSH-2.0-") && !tmp.startsWith("SSH-1.99-")) {
+			if(Log.isDebugEnabled())
+				Log.debug("Remote client reported an invalid protocol version!");
+			socketConnection.closeConnection();
+			return false;
+		}
+		
+		if(Log.isDebugEnabled())
+			Log.debug("Remote client version OK");
+
+		receivedRemoteIdentification = true;
+
+		EventServiceImplementation.getInstance().fireEvent(
+				(new Event(this, EventCodes.EVENT_NEGOTIATED_PROTOCOL, true))
+						.addAttribute(
+								EventCodes.ATTRIBUTE_CONNECTION,
+								con)
+						.addAttribute(
+								EventCodes.ATTRIBUTE_OPERATION_STARTED,
+								started)
+						.addAttribute(
+								EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+								new Date()));
+		
+		onRemoteIdentificationReceived(tmp);
+	
+		return true;
+	}
+	
 	
 	protected void onRemoteIdentificationReceived(String remoteIdentification) {
 		

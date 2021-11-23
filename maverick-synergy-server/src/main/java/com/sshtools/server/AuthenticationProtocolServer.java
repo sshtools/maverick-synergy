@@ -487,7 +487,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 
 			if (!ignoreFailed) {
 				failed++;
-				getContext().getPolicy(IPPolicy.class).flagAddress(transport.getConnection().getRemoteAddress());
+				getContext().getPolicy(IPPolicy.class).flagAddress(transport.getConnection().getRemoteIPAddress());
 			}
 
 			if (failed >= transport.getSshContext().getPolicy(AuthenticationPolicy.class).getMaxAuthentications()) {

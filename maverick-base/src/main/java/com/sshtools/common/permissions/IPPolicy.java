@@ -112,6 +112,14 @@ public class IPPolicy extends Permissions {
 		return false;
 	}
 	
+	public void flagAddress(String addr) {
+		try {
+			flagAddress(InetAddress.getByName(addr));
+		} catch (UnknownHostException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		}
+	}
+	
 	public void flagAddress(InetAddress addr) {
 		
 		Integer count = flaggedAddressCounts.getOrDefault(addr, 0);

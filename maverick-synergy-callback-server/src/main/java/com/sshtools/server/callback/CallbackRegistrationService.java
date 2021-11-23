@@ -16,7 +16,5 @@ public interface CallbackRegistrationService extends SshOptionsResolver {
 	void unregisterCallbackClient(String uuid);
 
 	boolean isRegistered(String uuid);
-	
-	
 
 }

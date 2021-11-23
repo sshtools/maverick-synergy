@@ -162,25 +162,48 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 		return transport.outgoingBytes;
 	}
 	
+	@Deprecated
+	/**
+	 * @deprecated Use getRemoteIPAddress and getRemotePort instead.
+	 */
 	public InetAddress getRemoteAddress() {
    		return remoteAddress.getAddress();
+	}
+	
+	public String getRemoteIPAddress() {
+		return remoteAddress.getHostString();
 	}
 	
 	public int getRemotePort() {
 		return remoteAddress.getPort();
 	}
 	
+	@Deprecated
+	/**
+	 * @deprecated Use getRemoteIPAddress and getRemotePort instead.
+	 */
 	public SocketAddress getRemoteSocketAddress(){ 
 		return remoteAddress;
 	}
 	
+	@Deprecated
+	/**
+	 * @deprecated Use getLocalIPAddress and getLocalPort instead.
+	 */
 	public SocketAddress getLocalSocketAddress() {
 		return localAddress;
 	}
 	
+	@Deprecated
+	/**
+	 * @deprecated Use getLocalIPAddress and getLocalPort instead.
+	 */
 	public InetAddress getLocalAddress() {
 		return localAddress.getAddress();
-    	
+	}
+	
+	public String getLocalIPAddress() {
+		return localAddress.getHostString();
 	}
 	
 	public int getLocalPort() {
@@ -389,6 +412,14 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	@Override
 	public void sendGlobalRequest(GlobalRequest request, boolean wantReply) {
 		connection.sendGlobalRequest(request, wantReply);;
+	}
+
+	public void setLocalAddress(InetSocketAddress localAddress) {
+		this.localAddress = localAddress;
+	}
+	
+	public void setRemoteAddress(InetSocketAddress remoteAddress) {
+		this.remoteAddress = remoteAddress;
 	}
 
 }

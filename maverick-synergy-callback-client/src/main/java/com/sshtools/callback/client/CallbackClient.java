@@ -95,7 +95,9 @@ public class CallbackClient {
 	}
 	
 	public synchronized void start(CallbackConfiguration config, String hostname, int port) throws IOException {
-		start(new CallbackSession(config, this, hostname, port));
+		CallbackSession session = new CallbackSession(config, this, hostname, port);
+		onClientStarting(session);
+		start(session);
 	}
 	
 	public synchronized void start(CallbackSession client) {
@@ -119,6 +121,14 @@ public class CallbackClient {
 		return clients;
 	}
 	
+	protected void onClientStarting(CallbackSession client) {
+		
+	}
+	
+	protected void onClientStopping(CallbackSession client) {
+		
+	}
+	
 	protected void onClientStart(CallbackSession client, SshConnection connection) {
 		
 	}
@@ -128,6 +138,8 @@ public class CallbackClient {
 	}
 	
 	public synchronized void stop(CallbackSession client) {
+		
+		onClientStopping(client);
 		
 		if(Log.isInfoEnabled()) {
 			Log.info("Stopping callback client");
@@ -157,7 +169,6 @@ public class CallbackClient {
 			
 			switch(evt.getId()) {
 			case EventCodes.EVENT_DISCONNECTED:
-				
 				
 				final SshConnection con = (SshConnection)evt.getAttribute(EventCodes.ATTRIBUTE_CONNECTION);
 				

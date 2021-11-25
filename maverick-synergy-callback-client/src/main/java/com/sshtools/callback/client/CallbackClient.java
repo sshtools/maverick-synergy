@@ -214,6 +214,8 @@ public class CallbackClient {
 		
 		SshServerContext sshContext = new SshServerContext(getSshEngine(), JCEComponentManager.getDefaultInstance());
 		
+		sshContext.setIdleConnectionTimeoutSeconds(0);
+		
 		for(SshKeyPair key : hostKeys) {
 			sshContext.addHostKey(key);
 		}

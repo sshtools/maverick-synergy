@@ -1071,7 +1071,8 @@ public abstract class TransportProtocol<T extends SshContext>
 							idleTimeSeconds,
 							con.getContext().getIdleAuthenticationTimeoutSeconds());
 				}
-				disconnect(BY_APPLICATION, "Remote exceeded idle timeout for unauthenticated connections");
+				disconnect(BY_APPLICATION,String.format("Remote exceeded idle timeout of %d seconds for unauthenticated connections", 
+						con.getContext().getIdleAuthenticationTimeoutSeconds()));
 				return true;
 			}
 		}
@@ -1083,7 +1084,8 @@ public abstract class TransportProtocol<T extends SshContext>
 							idleTimeSeconds,
 							con.getContext().getIdleConnectionTimeoutSeconds());
 				}
-				disconnect(BY_APPLICATION, "Remote exceeded idle timeout for authenticated connections");
+				disconnect(BY_APPLICATION, String.format("Remote exceeded idle timeout of %d seconds for authenticated connections",
+						con.getContext().getIdleConnectionTimeoutSeconds()));
 				return true;
 			}
 		}

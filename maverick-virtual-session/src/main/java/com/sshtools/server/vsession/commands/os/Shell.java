@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.pty4j.PtyProcess;
@@ -77,7 +78,7 @@ public class Shell extends ShellCommand {
 
 		String shellCommand = console.getContext().getPolicy(VirtualSessionPolicy.class).getShellCommand();
 		if (SystemUtils.IS_OS_WINDOWS) {
-			if(Objects.isNull(shellCommand)) {
+			if(StringUtils.isBlank(shellCommand)) {
 				args.add("cmd.exe");
 				args.add("/c");
 				args.add("start");
@@ -88,17 +89,19 @@ public class Shell extends ShellCommand {
 				}
 			} else {
 				args.add(shellCommand);
+				args.addAll(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellArguments());
 			}
 		}
 		else { 
 			// The shell, should be in /bin but just in case
-			if(Objects.isNull(shellCommand)) {
+			if(StringUtils.isBlank(shellCommand)) {
 				shellCommand = findCommand("bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh");
 				if(shellCommand == null)
 					throw new IOException("Cannot find shell.");
 			}
 		
 			args.add(shellCommand);
+			args.addAll(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellArguments());
 		}
 
 		env = env == null ? new HashMap<String, String>() : new HashMap<String, String>(env);

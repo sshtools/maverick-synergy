@@ -31,7 +31,6 @@ import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayWriter;
-import com.sshtools.server.ServerConnectionStateListener;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.nio.DisconnectRequestFuture;

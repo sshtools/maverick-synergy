@@ -1039,11 +1039,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 	}
 	
 	public boolean idle() {
-		
-		if(Log.isDebugEnabled()) {
-			Log.debug("There are {} channels currently open", activeChannels.size());
-		}
-		
+
 		for(ChannelNG<?> c : activeChannels.values()) {
 			try {
 				if(Log.isDebugEnabled()) {
@@ -1089,5 +1085,9 @@ public abstract class ConnectionProtocol<T extends SshContext>
 	
 	public Connection<T> getConnection() {
 		return con;
+	}
+	
+	public String getIdleLog() {
+		return String.format("%d channels currently open", activeChannels.size());
 	}
 }

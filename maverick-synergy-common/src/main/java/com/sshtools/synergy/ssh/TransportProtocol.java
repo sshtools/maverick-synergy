@@ -2536,7 +2536,7 @@ public abstract class TransportProtocol<T extends SshContext>
 
 		public void messageSent(Long sequenceNo) {
 			if(Log.isDebugEnabled())
-				Log.debug("Sent SSH_MSG_IGNORE");
+				Log.debug("Sent SSH_MSG_IGNORE {}", activeService.getIdleLog());
 		}
 
 	}

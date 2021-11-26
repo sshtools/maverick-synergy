@@ -18,10 +18,16 @@
  */
 package com.sshtools.server.vsession;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 public class VirtualSessionPolicy {
 
 	String welcomeText = "Maverick Synergy\r\nVirtual Shell ${version}";
 	String shellCommand = null;
+	List<String> shellArguments = new ArrayList<>();
+	
 	public VirtualSessionPolicy() {
 		
 	}
@@ -40,6 +46,10 @@ public class VirtualSessionPolicy {
 
 	public String getShellCommand() {
 		return shellCommand;
+	}
+	
+	public Collection<String> getShellArguments() {
+		return shellArguments;
 	}
 
 	public void setShellCommand(String shellCommand) {

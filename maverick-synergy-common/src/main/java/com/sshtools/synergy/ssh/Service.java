@@ -71,4 +71,10 @@ public interface Service {
 	 * @return 
 	 */
 	public boolean idle();
+
+	/**
+	 * Information for logging purposes when an ignore message is sent during idle.
+	 * @return
+	 */
+	public String getIdleLog();
 }

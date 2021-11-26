@@ -608,4 +608,9 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	public void markFailed() {
 		failed++;
 	}
+
+	@Override
+	public String getIdleLog() {
+		return String.format("%d failed authentication attempts", failed);
+	}
 }

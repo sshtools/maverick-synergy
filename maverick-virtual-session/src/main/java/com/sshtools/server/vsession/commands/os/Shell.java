@@ -77,14 +77,14 @@ public class Shell extends ShellCommand {
 		String shellCommand = console.getContext().getPolicy(VirtualSessionPolicy.class).getShellCommand();
 		if (SystemUtils.IS_OS_WINDOWS) {
 			if(StringUtils.isBlank(shellCommand)) {
-				args.add("cmd.exe");
-				args.add("/c");
-				args.add("start");
-				if (!cmd.equals("")) {
-					args.add(cmd);
-				} else {
-					args.add("cmd.exe");
-				}
+				args.add("C:\\Windows\\System32\\cmd.exe");
+//				args.add("/c");
+//				args.add("start");
+//				if (!cmd.equals("")) {
+//					args.add(cmd);
+//				} else {
+//					args.add("cmd.exe");
+//				}
 			} else {
 				args.add(shellCommand);
 				args.addAll(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellArguments());
@@ -105,7 +105,7 @@ public class Shell extends ShellCommand {
 		env = env == null ? new HashMap<String, String>() : new HashMap<String, String>(env);
 		env.put("TERM", console.getTerminal().getType());
 
-		pty = PtyProcess.exec(args.toArray(new String[0]), env, directory == null ? null : directory.getAbsolutePath());
+		pty = PtyProcess.exec(args.toArray(new String[0]), env, directory == null ? null : directory.getAbsolutePath(), false);
 
 		final InputStream in = pty.getInputStream();
 		final OutputStream out = pty.getOutputStream();

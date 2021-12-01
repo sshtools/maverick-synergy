@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.Vector;
@@ -462,7 +463,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
 				Log.info("Read error from {} {}", 
-						getConnectionAddress().toString(),
+						getRemoteAddress().toString(),
 						ex.getMessage());
 			}
 			if(Log.isDebugEnabled())
@@ -541,7 +542,7 @@ public abstract class TransportProtocol<T extends SshContext>
 		
 		if(Log.isInfoEnabled()) {
 			Log.info("Connnection {} identifies itself as {}", 
-					getConnectionAddress().toString(),
+					getRemoteAddress().toString(),
 					remoteIdentification.toString().trim());
 		}
 
@@ -671,7 +672,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
 				Log.info("Transport error {} {}", 
-						getConnectionAddress().toString(),
+						getRemoteAddress().toString(),
 						ex.getMessage());
 			}
 			if(Log.isDebugEnabled())
@@ -1213,7 +1214,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
 				Log.info("Write error from {} {}", 
-						getConnectionAddress().toString(),
+						getRemoteAddress().toString(),
 						ex.getMessage());
 			}
 			if(Log.isDebugEnabled()) {
@@ -1488,7 +1489,7 @@ public abstract class TransportProtocol<T extends SshContext>
 		return uuid.toString();
 	}
 
-	protected abstract SocketAddress getConnectionAddress();
+//	protected abstract SocketAddress getConnectionAddress();
 	
 	/**
 	 * Disconnect from the remote host. No more messages can be sent after this
@@ -1504,7 +1505,7 @@ public abstract class TransportProtocol<T extends SshContext>
 		disconnectStarted = new Date();
 		if(Log.isInfoEnabled()) {
 			Log.info("Disconnect {} {}", 
-					getConnectionAddress().toString(),
+					getRemoteAddress().toString(),
 					description);
 		}
 		postMessage(new DisconnectMessage(reason, description));
@@ -1523,7 +1524,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	
 				if(Log.isInfoEnabled()) {
 					Log.info("Connection closed {}", 
-							getConnectionAddress().toString());
+							getRemoteAddress().toString());
 				}
 				
 				if (disconnectStarted == null)
@@ -2522,15 +2523,21 @@ public abstract class TransportProtocol<T extends SshContext>
 	class IgnoreMessage implements SshMessage {
 
 		SecureRandom rnd = new SecureRandom();
-		byte[] tmp = new byte[getContext().getKeepAliveDataMaxLength()];
+
 
 		public boolean writeMessageIntoBuffer(ByteBuffer buf) {
-			buf.put((byte) SSH_MSG_IGNORE);
-			int len = (int) (Math.random() * (tmp.length + 1));
-			rnd.nextBytes(tmp);
-			buf.putInt(len);
-			buf.put(tmp, 0, len);
-			return true;
+			byte[] tmp = new byte[Math.min(getContext().getKeepAliveDataMaxLength(), 1024)];
+			try {
+				buf.put((byte) SSH_MSG_IGNORE);
+				int len = (int) (Math.random() * (tmp.length + 1));
+				rnd.nextBytes(tmp);
+				buf.putInt(len);
+				buf.put(tmp, 0, len);
+				return true;
+			} finally {
+				tmp = null;
+			}
+			
 		}
 
 		public void messageSent(Long sequenceNo) {

@@ -339,10 +339,10 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 		return "transport-server";
 	}
 	
-	@Override
-	protected SocketAddress getConnectionAddress() {
-		return getRemoteAddress();
-	}
+//	@Override
+//	protected SocketAddress getConnectionAddress() {
+//		return getRemoteAddress();
+//	}
 
 	@Override
 	public void startService(com.sshtools.common.sshd.Service<SshServerContext> service) {

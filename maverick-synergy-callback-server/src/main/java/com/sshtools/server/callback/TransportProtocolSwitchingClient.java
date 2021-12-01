@@ -58,7 +58,9 @@ class TransportProtocolSwitchingClient extends TransportProtocolClient {
 				
 			} catch (Exception e) {
 				Log.error("Failed to switch roles", e);
-				disconnect(PROTOCOL_ERROR, "Failed to switch SSH role");
+				socketConnection.closeConnection(true);
+			} finally {
+				getContext().getConnectionManager().unregisterTransport(this);
 			}
 		} else {
 			/**

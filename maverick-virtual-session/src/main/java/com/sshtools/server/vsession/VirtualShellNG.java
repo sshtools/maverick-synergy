@@ -29,21 +29,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.lang3.SystemUtils;
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.ParsedLine;
 import org.jline.terminal.Attributes;
+import org.jline.terminal.Attributes.InputFlag;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import org.jline.terminal.Attributes.InputFlag;
 import org.jline.terminal.impl.AbstractPosixTerminal;
 import org.jline.terminal.impl.ExternalTerminal;
 
@@ -196,11 +194,6 @@ public class VirtualShellNG extends SessionChannelNG {
 
 		return new VirtualConsole(this, this.env, terminal, lineReaderBuilder.build(), shell);
 	}
-
-    private <S> S load(Class<S> clazz) {
-        return ServiceLoader.load(clazz, clazz.getClassLoader()).iterator().next();
-    }
-
 
 	@Override
 	protected boolean requestAgentForwarding(String requestType) {

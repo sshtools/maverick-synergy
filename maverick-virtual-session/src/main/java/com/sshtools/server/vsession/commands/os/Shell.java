@@ -25,11 +25,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -38,8 +38,11 @@ import com.pty4j.PtyProcess;
 import com.pty4j.WinSize;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.ssh.Channel;
+import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.util.IOUtils;
+import com.sshtools.common.util.Utils;
 import com.sshtools.server.vsession.ShellCommand;
 import com.sshtools.server.vsession.UsageException;
 import com.sshtools.server.vsession.VirtualConsole;
@@ -49,13 +52,11 @@ import com.sshtools.server.vsession.VirtualShellNG.WindowSizeChangeListener;
 
 public class Shell extends ShellCommand {
 
-	private int width;
-	private int height;
 	private PtyProcess pty;
 
 	public Shell() {
 		super("osshell", ShellCommand.SUBSYSTEM_SYSTEM, "osshell", "Run a native shell");
-		setDescription("An operating system shell");
+		setDescription("The current operating systems shell");
 		setBuiltIn(false);
 	}
 
@@ -80,13 +81,6 @@ public class Shell extends ShellCommand {
 		if (SystemUtils.IS_OS_WINDOWS) {
 			if(StringUtils.isBlank(shellCommand)) {
 				args.add("C:\\Windows\\System32\\cmd.exe");
-//				args.add("/c");
-//				args.add("start");
-//				if (!cmd.equals("")) {
-//					args.add(cmd);
-//				} else {
-//					args.add("cmd.exe");
-//				}
 			} else {
 				args.add(shellCommand);
 				args.addAll(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellArguments());
@@ -112,18 +106,14 @@ public class Shell extends ShellCommand {
 		final InputStream in = pty.getInputStream();
 		final OutputStream out = pty.getOutputStream();
 
-		width = console.getTerminal().getWidth();
-		height = console.getTerminal().getHeight();
-
-		setScreenSize();
+		setScreenSize(console.getTerminal().getWidth(),
+				console.getTerminal().getHeight());
 
 		// Listen for window size changes
 		VirtualShellNG shell = (VirtualShellNG) console.getSessionChannel();
 		WindowSizeChangeListener listener = new WindowSizeChangeListener() {
 			public void newSize(int rows, int cols) {
-				width = cols;
-				height = rows;
-				setScreenSize();
+				setScreenSize(cols, rows);
 			}
 		};
 		shell.addWindowSizeChangeListener(listener);
@@ -131,23 +121,26 @@ public class Shell extends ShellCommand {
 		
 		console.getSessionChannel().enableRawMode();
 		
-		console.getConnection().addTask(new ConnectionAwareTask(console.getConnection()) {
+		console.getSessionChannel().addEventListener(new ChannelEventListener() {
+
 			@Override
-			protected void doTask() throws Throwable {
-				IOUtils.copy(console.getSessionChannel().getInputStream(), out);
+			public void onChannelDataIn(Channel channel, ByteBuffer buffer) {
+				
+				byte[] tmp = new byte[buffer.remaining()];
+				buffer.get(tmp);
+				
+				try {
+					out.write(tmp);
+					out.flush();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		});
+
 		IOUtils.copy(in, console.getSessionChannel().getOutputStream());
-//		new IOStreamConnector(process.getTerminal().input(), out);
-//		int read = -1;
-//		byte[] buf = new byte[IOStreamConnector.DEFAULT_BUFFER_SIZE];
-//		try {
-//			while ((read = in.read(buf)) > -1) {
-//				process..write(buf, 0, read);
-//				termIo.getAttachedOutputStream().flush();
-//			}
-//		} catch (IOException ioe) {
-//		}
+
 		out.close();
 		try {
 			int result = pty.waitFor();
@@ -179,22 +172,7 @@ public class Shell extends ShellCommand {
 		return stdbuf;
 	}
 
-//	private String escapeArg(String arg) {
-//		char[] ch = arg.toCharArray();
-//		StringBuffer buf = new StringBuffer();
-//		for (int i = 0; i < ch.length; i++) {
-//			char c = ch[i];
-//			if (c == '\\') {
-//				buf.append('\\');
-//			} else if (c == '"') {
-//				buf.append('\\');
-//			}
-//			buf.append(c);
-//		}
-//		return buf.toString();
-//	}
-
-	private void setScreenSize() {
+	private void setScreenSize(int width, int height) {
 		try {
 			pty.setWinSize(new WinSize(width, height));
 		} catch (Exception e) {
@@ -202,30 +180,6 @@ public class Shell extends ShellCommand {
 
 		}
 	}
-
-//	private void addShCommand(List<String> args, String cmd, List<String> cmdArgs) {
-//		cmd = appendArguments(cmd, cmdArgs);
-//		if (!cmd.equals("")) {
-//			args.add("-c");
-//			args.add(cmd);
-//		}
-//	}
-//
-//	private void addArgs(List<String> args, List<String> cmdArgs) {
-//		args.addAll(cmdArgs);
-//	}
-//
-//	private String appendArguments(String cmd, List<String> cmdArgs) {
-//		if (cmdArgs != null) {
-//			for (String arg : cmdArgs) {
-//				if (cmd.length() > 0) {
-//					cmd += " ";
-//				}
-//				cmd += "\"" + escapeArg(arg) + "\"";
-//			}
-//		}
-//		return cmd;
-//	}
 
 	private final static String execAndCapture(String... args) {
 		try {
@@ -244,10 +198,4 @@ public class Shell extends ShellCommand {
 		}
 		return null;
 	}
-
-//	private static final class SinkOutputStream extends OutputStream {
-//		@Override
-//		public void write(int b) throws IOException {
-//		}
-//	}
 }

@@ -36,7 +36,8 @@ public class Environment extends HashMap<String, Object> {
 		super();
 	}
 
-	public Object getOrDefault(String name, Object defaultValue) {
-		return containsKey(name) ? get(name) : defaultValue;
+	@SuppressWarnings("unchecked")
+	public <T> T getOrDefault(String name, T defaultValue) {
+		return containsKey(name) ? (T) get(name) : defaultValue;
 	}
 }

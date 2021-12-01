@@ -116,6 +116,7 @@ public class Shell extends ShellCommand {
 				setScreenSize(cols, rows);
 			}
 		};
+		
 		shell.addWindowSizeChangeListener(listener);
 
 		
@@ -128,21 +129,22 @@ public class Shell extends ShellCommand {
 				
 				byte[] tmp = new byte[buffer.remaining()];
 				buffer.get(tmp);
-				
+				Log.info(Utils.bytesToHex(tmp, 32, true, true));
 				try {
 					out.write(tmp);
 					out.flush();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					Log.error("Error writing data to pty", e);
+					IOUtils.closeStream(out);
+					IOUtils.closeStream(in);
 				}
 			}
 		});
 
-		IOUtils.copy(in, console.getSessionChannel().getOutputStream());
-
-		out.close();
 		try {
+			IOUtils.copy(in, console.getSessionChannel().getOutputStream());
+			out.close();
+
 			int result = pty.waitFor();
 			if (result > 0) {
 				throw new IOException("System command exited with error " + result);

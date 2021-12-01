@@ -20,7 +20,6 @@ package com.sshtools.server;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 
 import com.sshtools.common.events.Event;

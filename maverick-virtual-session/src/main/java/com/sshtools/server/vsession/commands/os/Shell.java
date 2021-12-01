@@ -38,7 +38,6 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
-import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.Utils;
 import com.sshtools.server.vsession.ShellCommand;

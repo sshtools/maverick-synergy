@@ -33,6 +33,7 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
@@ -43,6 +44,7 @@ import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.jline.terminal.Attributes.InputFlag;
+import org.jline.terminal.impl.AbstractPosixTerminal;
 import org.jline.terminal.impl.ExternalTerminal;
 
 import com.sshtools.common.files.nio.AbstractFileURI;
@@ -125,14 +127,22 @@ public class VirtualShellNG extends SessionChannelNG {
 
 		byte[] tmp = new byte[data.remaining()];
 		data.get(tmp);
+		
+		
 		try {
-			if(terminal instanceof PosixChannelPtyTerminal)
-				((PosixChannelPtyTerminal)terminal).in(tmp, 0, tmp.length);
+			
+
+			Log.info(Utils.bytesToHex(tmp, 32, true, true));
+			
+			if(terminal instanceof AbstractPosixTerminal) {
+				((AbstractPosixTerminal)terminal).getPty().getMasterOutput().write(tmp);
+				((AbstractPosixTerminal)terminal).getPty().getMasterOutput().flush();
+			}
 			else {
 				((ExternalTerminal)terminal).processInputBytes(tmp, 0, tmp.length);
 			}
 			evaluateWindowSpace();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			Log.error("Failed to send input to terminal.", e);
 			close();
 		}
@@ -167,8 +177,9 @@ public class VirtualShellNG extends SessionChannelNG {
 	private VirtualConsole createConsole() throws IOException, PermissionDeniedException {
 		
 		Attributes attrs = new Attributes();
-		attrs.setInputFlag(InputFlag.INLCR, true);
+		attrs.setInputFlag(InputFlag.ICRNL, true);
 		terminal = TerminalBuilder.builder().
+					attributes(attrs).
 					system(false).
 					streams(getInputStream(), getOutputStream()).
 					type(env.getOrDefault("TERM", "ansi").toString()).

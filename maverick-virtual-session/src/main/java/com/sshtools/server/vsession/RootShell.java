@@ -212,7 +212,7 @@ public class RootShell extends Msh {
 							.getInstance()
 							.fireEvent(
 									new Event(
-											this,
+											RootShell.this,
 											EventCodes.EVENT_ROOT_SHELL_STOPPED,
 											true)
 											.addAttribute(

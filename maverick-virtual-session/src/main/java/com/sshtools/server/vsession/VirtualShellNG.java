@@ -128,12 +128,7 @@ public class VirtualShellNG extends SessionChannelNG {
 		byte[] tmp = new byte[data.remaining()];
 		data.get(tmp);
 		
-		
 		try {
-			
-
-			Log.info(Utils.bytesToHex(tmp, 32, true, true));
-			
 			if(terminal instanceof AbstractPosixTerminal) {
 				((AbstractPosixTerminal)terminal).getPty().getMasterOutput().write(tmp);
 				((AbstractPosixTerminal)terminal).getPty().getMasterOutput().flush();
@@ -179,7 +174,6 @@ public class VirtualShellNG extends SessionChannelNG {
 		Attributes attrs = new Attributes();
 		attrs.setInputFlag(InputFlag.ICRNL, true);
 		terminal = TerminalBuilder.builder().
-					attributes(attrs).
 					system(false).
 					streams(getInputStream(), getOutputStream()).
 					type(env.getOrDefault("TERM", "ansi").toString()).

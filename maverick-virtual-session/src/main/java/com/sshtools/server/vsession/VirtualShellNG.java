@@ -172,7 +172,7 @@ public class VirtualShellNG extends SessionChannelNG {
 					system(false).
 					streams(getInputStream(), getOutputStream()).
 					type(env.getOrDefault("TERM", "ansi").toString()).
-					size(new Size(80, 25)).
+					size(new Size(env.getOrDefault("COLS", 80), env.getOrDefault("ROWS", 80))).
 					encoding(Charset.forName("UTF-8")).
 					attributes(attrs).build();
 		

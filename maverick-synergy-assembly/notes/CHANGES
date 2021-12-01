@@ -1,3 +1,41 @@
+Maverick Synergy 3.0.5-SNAPSHOT - Dec 1, 2021
+
+Features
+    o Refactor of callback client; separated CallbackContextFactory and added SshConnection parameter to event methods.
+    o Added before/after methods to Utils.
+    o Create an SshClient from an existing SshConnection to allow wrapping of "jump" hosts.
+    o Added CallbackRegistrationService for management of callback clients within a callback server.
+    o Added setTimes method that allow SFTP v4 creation time attribute to be set, including sub-second times.
+    o Support signals. See AbstractSessionChannel.signal(String).
+    o Native session implementation and associated factory for "osshell" command to drop virtual session into a native session.
+    o VirtualMount option for lastModified and read-only flag which is now used by VirtualMountFile to return values.
+    
+Bug Fixes
+    o Missing server-level collection of GlobalRequestHandlers.
+    o Changed use of VFS SFTP 3.2.0 from snapshot to final version.
+    o Made SwitchingCallbackContext constructor public.
+    o Don't print stack trace of unsupported command, just log the error.
+    o Allow protected access to child channel factories of ShellCommandFactory.
+    o Allow protected access to console and ShellCommandFactory of VirtualShellNG session implementation.
+    o Default callback identifier made consistent with SSH identification practices. 
+    o Authentication future is not processed as part of client disconnect.
+    o BouncyCastle 1.69 cannot load ED25519 key.
+    o ClientAuthenticator should allow SshException to propagate. 
+    o NPE when no license is set.
+    o Client authenticators need to signal failure of the authenticator to their parent future.
+    o OpenSSL public key file support broken due to incorrect reflection class name.
+    o If PasswordAuthenticator is passed to SshClient.authenticate it should be translated into keyboard-interactive if the remote server only supports keyboard-interactive regardless of context preference to support password over keyboard-interactive.
+    o PasswordOverKeyboardInteractiveCallback should defer obtaining password until authentication is being performed.
+    o Loading a license from file was broken.
+    o OpenSSL private key file support broken due to incorrect reflection class name. 
+    o Removed broken BouncyCastle OpenSSL public key file support as this was not complete and never implemented correctly.
+    o VirtualMountFile should not resolve child until absolutely necessary to prevent list of mounts becoming slow due to destination resolution.
+    o Regular expression file matching exists but not used in matchRemoteFiles.
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.4-SNAPSHOT - 27 Sept, 2021
 
 Features
@@ -8,10 +46,8 @@ Bug Fixes
     o Added some useful methods to Utils for prompting in example code and extracting port number from a host string.
     o OpenSSL key file support is broken due to incorrect reflection class names.
     o Logged version is incorrect because its extracting the version from an incorrect pom.
-
-=================
-=  HISTORY      =
-=================
+    
+-----------------
 
 Maverick Synergy 3.0.3-FINAL - Jul 21, 2021
 

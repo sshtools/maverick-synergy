@@ -24,7 +24,7 @@
 	<parent>
 		<groupId>com.sshtools</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.0.4-FINAL</version>
+		<version>3.0.5-FINAL</version>
 	</parent>
 	<artifactId>maverick-synergy-common</artifactId>
 	<name>Common API</name>

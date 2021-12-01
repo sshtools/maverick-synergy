@@ -151,6 +151,9 @@ public class Shell extends ShellCommand {
 		} finally {
 			console.getSessionChannel().disableRawMode();
 		}
+		
+		console.println("===============");
+		console.println();
 	}
 
 	private String findCommand(String command, String... places) {

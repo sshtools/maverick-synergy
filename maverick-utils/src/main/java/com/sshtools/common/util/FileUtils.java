@@ -234,4 +234,8 @@ public class FileUtils {
 		}
 	}
 
+	public static boolean isSamePath(String path1, String path2) {
+		return checkEndsWithNoSlash(path1).equals(checkEndsWithNoSlash(path2));
+	}
+
 }

@@ -22,7 +22,7 @@ import org.apache.commons.vfs2.FileSystemOptions;
 
 import com.sshtools.common.files.AbstractFileFactory;
 
-public final class VirtualMountTemplate extends AbstractMount {
+public class VirtualMountTemplate extends AbstractMount {
 
 	private AbstractFileFactory<?> actualFileFactory;
 	private FileSystemOptions fileSystemOptions;

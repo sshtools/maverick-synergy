@@ -30,7 +30,6 @@ import com.sshtools.common.util.FileUtils;
 
 public class VirtualMappedFile extends VirtualFileObject {
 
-	private VirtualMount parentMount;
 	private String absolutePath;
 	private String name;
 	
@@ -40,11 +39,8 @@ public class VirtualMappedFile extends VirtualFileObject {
 			VirtualMount parentMount, VirtualFileFactory fileFactory)
 			throws IOException, PermissionDeniedException {
 
-		super(fileFactory);
+		super(fileFactory, parentMount);
 		
-		this.parentMount = parentMount;
-		this.fileFactory = fileFactory;
-
 		toActualPath(path);
 
 		init(parentMount.getActualFileFactory()
@@ -63,10 +59,8 @@ public class VirtualMappedFile extends VirtualFileObject {
 			VirtualFileFactory fileFactory) throws IOException,
 			PermissionDeniedException {
 
-		super(fileFactory);
-		
-		this.parentMount = parentMount;
-		this.fileFactory = fileFactory;
+		super(fileFactory, parentMount);
+
 		init(actualFile);
 
 		absolutePath = toVirtualPath(super.getAbsolutePath());
@@ -324,5 +318,8 @@ public class VirtualMappedFile extends VirtualFileObject {
 		super.symlinkTo(toActualPath(target));
 	}
 	
+	public VirtualMount getParentMount() {
+		return parentMount;
+	}
 	
 }

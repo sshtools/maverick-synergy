@@ -38,8 +38,9 @@ public class VirtualMount extends AbstractMount {
 	boolean createMountFolder;
 	boolean readOnly;
 	long lastModified = 0;
+	VirtualMountTemplate mountTemplate;
 	
-	VirtualMount(String mount, String path,
+	VirtualMount(VirtualMountTemplate mountTemplate, 
 			VirtualFileFactory virtualFileFactory,
 			AbstractFileFactory<?> actualFileFactory,
 			boolean isDefault,
@@ -47,7 +48,11 @@ public class VirtualMount extends AbstractMount {
 			boolean createMountFolder,
 			long lastModified)
 				throws IOException, PermissionDeniedException {
-		super(mount, path, isDefault, isImaginary);
+		super(mountTemplate.getMount(), 
+				mountTemplate.getRoot(),
+				isDefault, isImaginary);
+
+		this.mountTemplate = mountTemplate;
 		this.actualFileFactory = actualFileFactory;
 		this.virtualFileFactory = virtualFileFactory;
 		this.createMountFolder = createMountFolder;
@@ -59,15 +64,19 @@ public class VirtualMount extends AbstractMount {
 
 	}
 
-	public VirtualMount(String mount, String path,
+	public VirtualMount(VirtualMountTemplate mountTemplate, 
 			VirtualFileFactory virtualFileFactory,
 			AbstractFileFactory<?> actualFileFactory,
 			boolean createMountFolder, long lastModified) throws IOException,
 			PermissionDeniedException {
-		this(mount, path, virtualFileFactory, actualFileFactory, false,
+		this(mountTemplate, virtualFileFactory, actualFileFactory, false,
 				false, createMountFolder, lastModified);
 	}
 
+	public VirtualMountTemplate getTemplate() {
+		return mountTemplate;
+	}
+	
 	public AbstractFileFactory<? extends AbstractFile> getActualFileFactory() {
 		return actualFileFactory;
 	}

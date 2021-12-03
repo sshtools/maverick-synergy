@@ -54,8 +54,8 @@ public class VirtualMountManager {
 		this.fileFactory = fileFactory;
 
 		if (homeMount != null) {
-			defaultMount = new VirtualMount(homeMount.getMount(), 
-					homeMount.getRoot(), fileFactory, homeMount.getActualFileFactory(), 
+			defaultMount = new VirtualMount(homeMount, 
+					fileFactory, homeMount.getActualFileFactory(), 
 					true, false, homeMount.isCreateMountFolder(),
 					homeMount.lastModified());
 			if(defaultMount.isCreateMountFolder()) {
@@ -66,8 +66,7 @@ public class VirtualMountManager {
 
 		// Add any remaining templates
 		for (VirtualMountTemplate m : additionalMounts) {
-			VirtualMount vm = createMount(m.getMount(), 
-					m.getRoot(),
+			VirtualMount vm = createMount(m,
 					m.getActualFileFactory(),
 					m.isCreateMountFolder(),
 					m.lastModified());
@@ -87,8 +86,7 @@ public class VirtualMountManager {
 	}
 	
 	public void mount(VirtualMountTemplate template, boolean unmount) throws IOException, PermissionDeniedException {
-		mount(createMount(template.getMount(),
-				template.getRoot(), 
+		mount(createMount(template, 
 				template.getActualFileFactory(),
 				template.isCreateMountFolder(),
 				template.lastModified()), unmount);
@@ -96,8 +94,7 @@ public class VirtualMountManager {
 
 	public void test(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
 		
-		test(createMount(template.getMount(),
-				template.getRoot(), 
+		test(createMount(template, 
 				template.getActualFileFactory(),
 				template.isCreateMountFolder(),
 				template.lastModified()));
@@ -214,10 +211,10 @@ public class VirtualMountManager {
 		return false;
 	}
 
-	private VirtualMount createMount(String mount, String path,
+	private VirtualMount createMount(VirtualMountTemplate template,
 			AbstractFileFactory<?> actualFileFactory, boolean createMoundFolder, long lastModified) throws IOException,
 			PermissionDeniedException {
-		return new VirtualMount(mount, path, fileFactory, actualFileFactory, createMoundFolder, lastModified);
+		return new VirtualMount(template, fileFactory, actualFileFactory, createMoundFolder, lastModified);
 	}
 
 	public VirtualMount getMount(String path) throws IOException {

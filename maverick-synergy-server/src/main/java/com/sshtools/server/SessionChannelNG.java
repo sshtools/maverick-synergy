@@ -276,6 +276,8 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		return false;
 	}
 
+
+	
 	/**
 	 * Process session requests and invoke the relevant abstract methods of this
 	 * class to handle the requests. If you overide this method make sure that
@@ -397,18 +399,9 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 										ShellPolicy.SUBSYSTEM, name);
 							
 				if (success) {
-					try {
-						subsystem = connection.getContext().getChannelFactory().createSubsystem(name, this);
-					} catch (UnsupportedChannelException e) {
-						success = false;
-						if(Log.isDebugEnabled()) {
-							Log.debug(name + " is an unsupported subsystem");
-						}
-					} catch (PermissionDeniedException e) {
-						success = false;
-						if(Log.isDebugEnabled()) {
-							Log.debug(name + " could not be opened. Permission denied.");
-						}
+					success = startSubsystem(name);
+					if(Log.isDebugEnabled()) {
+						Log.debug("{} was {}", name, success? "opened" : "not opened");
 					}
 				}
 
@@ -688,5 +681,22 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	@Override
 	public void onSessionOpen() {
 		
+	}
+	
+	protected boolean startSubsystem(String name) {
+		boolean success = false;
+		
+		try {
+			subsystem = connection.getContext().getChannelFactory().createSubsystem(name, this);
+			success = true;
+		} catch (UnsupportedChannelException | PermissionDeniedException e) {
+			if (Log.isDebugEnabled())
+				Log.debug(
+						"Failed to create instance of supported subsystem "
+								+ name, e);
+			success = false;
+		}
+		
+		return success;
 	}
 }

@@ -9,6 +9,7 @@ Features
     o Updated to PTY4J 0.12.5
     
 Bug Fixes
+    o SessionChannelNG does not delegate subsystem creation to protected method making it impossible to override behaviour.
     o Default ping mechanism now only used when idle time configuration is zero.
     o Idle state mechanism incorrectly generates idle events every second after idle threshold is reached.
     o Failed to negotiate algorithm reports incorrect list of algorithms in exception text.

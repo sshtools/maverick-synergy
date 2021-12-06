@@ -730,13 +730,17 @@ public class SftpFileAttributes {
 		if (atime != null) {
 			flags |= SSH_FILEXFER_ATTR_ACCESSTIME;
 		} else {
-			flags ^= SSH_FILEXFER_ATTR_ACCESSTIME;
+			if(isFlagSet(SSH_FILEXFER_ATTR_ACCESSTIME)) {
+				flags ^= SSH_FILEXFER_ATTR_ACCESSTIME;
+			}
 		}
 
 		if (mtime != null) {
 			flags |= SSH_FILEXFER_ATTR_MODIFYTIME;
 		} else {
-			flags ^= SSH_FILEXFER_ATTR_MODIFYTIME;
+			if(isFlagSet(SSH_FILEXFER_ATTR_MODIFYTIME)) {
+				flags ^= SSH_FILEXFER_ATTR_MODIFYTIME;
+			}
 		}
 	}
 	
@@ -758,7 +762,6 @@ public class SftpFileAttributes {
 		
 		setTimes(atime, mtime);
 		
-		
 		flags |= SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
 		
 		this.atime_nano = atime_nano != null ? atime_nano : new UnsignedInteger32(0);
@@ -770,7 +773,9 @@ public class SftpFileAttributes {
 		if(ctime != null) {
 			flags |= SSH_FILEXFER_ATTR_CREATETIME;
 		} else {
-			flags ^= SSH_FILEXFER_ATTR_CREATETIME;
+			if(isFlagSet(SSH_FILEXFER_ATTR_CREATETIME)) {
+				flags ^= SSH_FILEXFER_ATTR_CREATETIME;
+			}
 		}
 	}
 	
@@ -786,7 +791,9 @@ public class SftpFileAttributes {
 		
 		setTimes(atime, mtime);
 		
-		flags ^= SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
+		if(isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES)) {
+			flags ^= SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
+		}
 		
 		this.atime_nano = null;
 		this.mtime_nano = null;
@@ -796,9 +803,10 @@ public class SftpFileAttributes {
 	
 		if(ctime != null) {
 			flags |= SSH_FILEXFER_ATTR_CREATETIME;
-			this.createtime_nano = ctime_nano;
 		} else {
-			flags ^= SSH_FILEXFER_ATTR_CREATETIME;
+			if(isFlagSet(SSH_FILEXFER_ATTR_CREATETIME)) {
+				flags ^= SSH_FILEXFER_ATTR_CREATETIME;
+			}
 		}
 	}
 
@@ -925,7 +933,12 @@ public class SftpFileAttributes {
 			if(set) {
 				set =  ((supportedAttributeMask & (flag & 0xFFFFFFFFL)) == (flag & 0xFFFFFFFFL));
 			}
+			return set;
 		}
+		return ((flags & (flag & 0xFFFFFFFFL)) == (flag & 0xFFFFFFFFL));
+	}
+	
+	private boolean isFlagSet(long flag) {
 		return ((flags & (flag & 0xFFFFFFFFL)) == (flag & 0xFFFFFFFFL));
 	}
 

@@ -17,6 +17,8 @@ Bug Fixes
     o Guard against NullPointerException in ComponentFactory configureSecurityLevel method.
     o Close event from RootShell was not providing RootShell instance as event source.
     o Incorrect XOR of flag causes NPE in SftpFileAttributes setTimes methods.
+    o ConcurrentModificationExceptions seen with local forwarding under load when implementation uses ChannelEventListeners for feedback.
+    o Fixes to VirtualShell "raw" mode to prevent duplicate reading of the session streams when a command needs direct access to the session.
      
 =================
 =  HISTORY      =

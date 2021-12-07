@@ -126,7 +126,7 @@ public class Shell extends ShellCommand {
 				
 				byte[] tmp = new byte[buffer.remaining()];
 				buffer.get(tmp);
-				Log.info(Utils.bytesToHex(tmp, 32, true, true));
+
 				try {
 					out.write(tmp);
 					out.flush();

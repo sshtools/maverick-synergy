@@ -60,6 +60,19 @@ public class IOUtils {
     public static void copy(InputStream in, OutputStream out) throws IOException {
         copy(in, out, -1);
     }
+    
+    /**
+     * Copy from an input stream to an output stream. It is up to the caller to
+     * close the streams.
+     * 
+     * @param in input stream
+     * @param out output stream
+     * @param forceFlush force flush of the OutputStream on each block
+     * @throws IOException on any error
+     */
+    public static void copy(InputStream in, OutputStream out, boolean forceFlush) throws IOException {
+        copy(in, out, -1, BUFFER_SIZE, true);
+    }
 
 
     /**
@@ -72,7 +85,7 @@ public class IOUtils {
      * @throws IOException on any error
      */
     public static void copy(InputStream in, OutputStream out, long count) throws IOException {
-    	copy(in, out, count, BUFFER_SIZE);
+    	copy(in, out, count, BUFFER_SIZE, false);
     }
 
     /**
@@ -85,7 +98,7 @@ public class IOUtils {
      * @param bufferSize buffer size
      * @throws IOException on any error
      */
-    public static void copy(InputStream in, OutputStream out, long count, int bufferSize) throws IOException {
+    public static void copy(InputStream in, OutputStream out, long count, int bufferSize, boolean forceFlush) throws IOException {
         byte buffer[] = new byte[bufferSize];
         int i = bufferSize;
         if (count >= 0) {
@@ -100,6 +113,9 @@ public class IOUtils {
 
                 count -= i;
                 out.write(buffer, 0, i);
+                if(forceFlush) {
+                	out.flush();
+                }
             }
         } else {
             while (true) {
@@ -107,6 +123,9 @@ public class IOUtils {
                 if (i < 0)
                     break;
                 out.write(buffer, 0, i);
+                if(forceFlush) {
+                	out.flush();
+                }
             }
         }
     }

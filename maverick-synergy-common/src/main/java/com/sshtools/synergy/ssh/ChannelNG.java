@@ -28,9 +28,8 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
 import java.util.Objects;
-import java.util.Vector;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.sshtools.common.logger.Log;
@@ -85,10 +84,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	
 	int state = CHANNEL_UNINITIALIZED;
 
-	Vector<ChannelEventListener> eventListeners = new Vector<ChannelEventListener>();
+	ConcurrentLinkedQueue<ChannelEventListener> eventListeners = new ConcurrentLinkedQueue<ChannelEventListener>();
 	
 	ChannelRequestFuture openFuture = new ChannelRequestFuture();
-	LinkedList<ChannelRequestFuture> requests = new LinkedList<ChannelRequestFuture>();
+	ConcurrentLinkedQueue<ChannelRequestFuture> requests = new ConcurrentLinkedQueue<ChannelRequestFuture>();
 	ChannelRequestFuture closeFuture;
 	
 	protected SshConnection con;
@@ -678,7 +677,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		if(!wantreply) {
 			future.done(true);
 		} else {
-			requests.addLast(future);
+			requests.add(future);
 		}
 		connection.sendMessage(new ChannelRequest(type, wantreply, requestdata));
 	}
@@ -686,14 +685,14 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	public void sendChannelRequest(String type, boolean wantreply,
 			byte[] requestdata) {
 		if(wantreply) {
-			requests.addLast(new ChannelRequestFuture());
+			requests.add(new ChannelRequestFuture());
 		}
 		connection.sendMessage(new ChannelRequest(type, wantreply, requestdata));
 	}
 	
 	protected void processChannelRequestResponse(boolean success) {
 		
-		ChannelRequestFuture future = requests.removeFirst();
+		ChannelRequestFuture future = requests.remove();
 		
 		if(Log.isDebugEnabled()) {
 			log("Received", (success ? "SSH_MSG_CHANNEL_SUCCESS" : "SSH_MSG_CHANNEL_FAILURE"));

@@ -245,6 +245,19 @@ public class VirtualShellNG extends SessionChannelNG {
 		
 	}
 
+	@Override
+	public void enableRawMode() {
+		console.getTerminal().pause();
+		super.enableRawMode();
+		
+	}
+
+	@Override
+	public void disableRawMode() {
+		console.getTerminal().resume();
+		super.disableRawMode();
+	}
+
 	class VirtualShellCompletor implements Completer, MshListener {
 
 		Command currentCommand = null;

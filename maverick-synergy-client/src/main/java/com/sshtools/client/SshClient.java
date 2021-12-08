@@ -57,6 +57,7 @@ public class SshClient implements Closeable {
 	SshClientContext sshContext;
 	String remotePublicKeys = "";
 	String hostname;
+	boolean closeConnection = true;
 	
 	public SshClient(String hostname, int port, String username, long connectTimeout, char[] password) throws IOException, SshException {
 		this(hostname, port, username, new SshClientContext(), connectTimeout, password);
@@ -130,9 +131,14 @@ public class SshClient implements Closeable {
 		this(hostname, port, username, sshContext, 30000L, (char[])null);
 	}
 	
-	@SuppressWarnings("unchecked")
 	public SshClient(SshConnection con) {
+		this(con, true);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public SshClient(SshConnection con, boolean closeConnection) {
 		this.con = (Connection<SshClientContext>) con;
+		this.closeConnection = closeConnection;
 		this.sshContext = (SshClientContext) con.getContext();
 		this.hostname = con.getRemoteAddress().getHostAddress();
 		this.remotePublicKeys = Utils.csv(con.getRemotePublicKeys());
@@ -208,7 +214,9 @@ public class SshClient implements Closeable {
 
 	@Override
 	public void close() throws IOException {
-		con.disconnect();
+		if(closeConnection) {
+			con.disconnect();
+		}
 	}
 	
 	public SshClientContext getContext() {
@@ -258,7 +266,7 @@ public class SshClient implements Closeable {
 	}
 
 	public void disconnect() {
-		if(isConnected()) {
+		if(isConnected() && closeConnection) {
 			con.disconnect();
 		}
 	}

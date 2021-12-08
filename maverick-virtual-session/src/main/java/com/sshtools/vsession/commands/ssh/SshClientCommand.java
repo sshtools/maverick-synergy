@@ -49,7 +49,7 @@ public class SshClientCommand extends AbstractSshClientCommand {
 	
 
 	@Override
-	protected void runCommand(SshClient sshClient, SshClientArguments arguments, VirtualConsole console) {
+	public void runCommand(SshClient sshClient, SshClientArguments arguments, VirtualConsole console) {
 
 		console.getSessionChannel().enableRawMode();
 		

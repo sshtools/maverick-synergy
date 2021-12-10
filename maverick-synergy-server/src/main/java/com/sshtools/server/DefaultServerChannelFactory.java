@@ -20,6 +20,7 @@ package com.sshtools.server;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.sshtools.common.command.ExecutableCommand;
 import com.sshtools.common.logger.Log;
@@ -34,6 +35,7 @@ import com.sshtools.common.ssh.Subsystem;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.ssh.components.ComponentFactory;
 import com.sshtools.synergy.ssh.ChannelFactory;
+import com.sshtools.synergy.ssh.ChannelFactoryListener;
 import com.sshtools.synergy.ssh.ChannelNG;
 
 public class DefaultServerChannelFactory implements ChannelFactory<SshServerContext> {
@@ -42,8 +44,18 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 	public static final String LOCAL_FORWARDING_CHANNEL_TYPE = "direct-tcpip";
 	
 	protected ComponentFactory<ExecutableCommand> commands = new ComponentFactory<>(null);
-	
+	private ConcurrentLinkedQueue<ChannelFactoryListener<SshServerContext>> listeners 
+					= new ConcurrentLinkedQueue<ChannelFactoryListener<SshServerContext>>();
 	public DefaultServerChannelFactory() {
+	}
+	
+	public DefaultServerChannelFactory addListener(ChannelFactoryListener<SshServerContext> listener) {
+		listeners.add(listener);
+		return this;
+	}
+	
+	public void removeListener(ChannelFactoryListener<SshServerContext> listener) {
+		listeners.remove(listener);
 	}
 
 	public ComponentFactory<ExecutableCommand> supportedCommands() {
@@ -55,14 +67,21 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 
 		
 		if (channeltype.equals("session")) {
-			return createSessionChannel(con);
+			return onChannelCreated(createSessionChannel(con));
 		}
 		
 		if(channeltype.equals(LOCAL_FORWARDING_CHANNEL_TYPE)) {
-			return createLocalForwardingChannel(con);
+			return onChannelCreated(createLocalForwardingChannel(con));
 		}
 		
-		return onCreateChannel(channeltype, con);
+		return onChannelCreated(onCreateChannel(channeltype, con));
+	}
+
+	protected ChannelNG<SshServerContext> onChannelCreated(ChannelNG<SshServerContext> channel) {
+		for(ChannelFactoryListener<SshServerContext> listener : listeners) {
+			listener.onChannelCreated(channel);
+		}
+		return channel;
 	}
 
 	protected ChannelNG<SshServerContext> createLocalForwardingChannel(SshConnection con) {

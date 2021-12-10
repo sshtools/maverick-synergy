@@ -50,20 +50,22 @@ import com.sshtools.synergy.nio.DisconnectRequestFuture;
 import com.sshtools.synergy.nio.SshEngine;
 import com.sshtools.synergy.nio.SshEngineContext;
 import com.sshtools.synergy.ssh.ChannelFactory;
+import com.sshtools.synergy.ssh.ChannelFactoryListener;
 
-public class CallbackClient {
+public class CallbackClient implements ChannelFactoryListener<SshServerContext> {
 
 	SshEngine ssh = new SshEngine();
 	Set<CallbackSession> clients = new HashSet<CallbackSession>();
 	ExecutorService executor;
 	List<SshKeyPair> hostKeys = new ArrayList<>();
-	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory();
+	ChannelFactory<SshServerContext> channelFactory;
 	List<Object> defaultPolicies = new ArrayList<>();
 	FileFactory fileFactory;
-
+	
 	public CallbackClient() {
 		executor = getExecutorService();
 		EventServiceImplementation.getInstance().addListener(new DisconnectionListener());
+		channelFactory = new DefaultServerChannelFactory();
 	}
 	
 	public SshEngine getSshEngine() {
@@ -77,6 +79,8 @@ public class CallbackClient {
 	public void setDefaultPolicies(Object... policies) {
 		defaultPolicies.addAll(Arrays.asList(policies));
 	}
+	
+	
 	
 	public void start(Collection<CallbackConfiguration> configs) {
 		

@@ -18,9 +18,8 @@
  */
 package com.sshtools.common.ssh;
 
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -36,7 +35,7 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 	boolean shutdown = false;
 	String queueName;
 	
-	Map<Integer,OperationTask> operationQueues = new HashMap<Integer,OperationTask>();
+	ConcurrentHashMap<Integer,OperationTask> operationQueues = new ConcurrentHashMap<Integer,OperationTask>();
 	
 	protected ExecutorOperationSupport(String queueName) {
 		this.queueName = queueName;

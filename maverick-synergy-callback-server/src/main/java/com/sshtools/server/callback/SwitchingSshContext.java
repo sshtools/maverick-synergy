@@ -39,6 +39,7 @@ class SwitchingSshContext extends SshClientContext {
 		super(engine);
 		this.clientIdentifier = clientIdentifier;
 		this.serverFactory = serverFactory;
+		setSoftwareVersionComments("CallbackServer");
 	}
 
 	@Override

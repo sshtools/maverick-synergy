@@ -6,6 +6,8 @@ Features
     o Added getSessionCount method to SshConnection.
     o Enhancement to ExpiringConcurrentHashMap adding ExpiryConfiguration callback interface that allows external service to provide its own expiry setting.
     o VirtualShell now supports option for configuring the native command used when user executes the 'osshell' command.
+    o Added ChannelFactoryListener interface for modification of channels as they are created in DefaultServerChannelFactory.
+    o Require each channel declares its channel type through getChannelType method.
     
 Bug Fixes
     o SessionChannelNG does not delegate subsystem creation to protected method making it impossible to override behaviour.
@@ -21,6 +23,10 @@ Bug Fixes
     o Fixed replacements when UnknownHostException captured in virtual shell welcome message.
     o Wrapping SshConnection in SshClient can now optionally disable disconnection.
     o Allow SshClientCommand runCommand to be executed from another class by making it public.
+    o Callback client reconnect interval is now fixed to interval provided rather than accumulative delay. 
+    o Ensure channel without a data cache evaluates window space on channel data receive. 
+    o Use ConcurrentHashMap in ExecutorOperationSupprot listener collection.
+    o A callback server should be identifiable by its identification string e.g. SSH-2.0-CallbackServer
     
 =================
 =  HISTORY      =

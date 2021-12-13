@@ -182,18 +182,16 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 								con.removeProperty("callbackClient");
 								clients.remove(client);
 								if(!client.isStopped() && client.getConfig().isReconnect()) {
-									int count = 1;
 									while(getSshEngine().isStarted()) {
 										try {
 											try {
-												Thread.sleep(client.getConfig().getReconnectIntervalMs() * Math.min(count, 12));
+												Thread.sleep(client.getConfig().getReconnectIntervalMs());
 											} catch (InterruptedException e1) {
 											}
 											client.connect();
 											break;
 										} catch (IOException e) {
 										}
-										count++;
 									}
 								} else {
 									stop();

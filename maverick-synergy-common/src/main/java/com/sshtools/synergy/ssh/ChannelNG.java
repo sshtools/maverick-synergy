@@ -411,7 +411,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		}
 		if(Objects.nonNull(cache)) {
 			cache.put(data);
+		} else {
+			evaluateWindowSpace();
 		}
+		
 	}
 	
 	void processChannelData(ByteBuffer data) throws IOException {
@@ -629,6 +632,9 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	protected void onExtendedData(ByteBuffer data, int type) {
 		for (ChannelEventListener listener : eventListeners) {
 			listener.onChannelExtendedData(this, data, type);
+		}
+		if(Objects.isNull(cache)) {
+			evaluateWindowSpace();
 		}
 	}
 

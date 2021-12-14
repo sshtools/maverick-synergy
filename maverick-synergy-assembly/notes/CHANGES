@@ -1,4 +1,4 @@
-Maverick Synergy 3.0.7 - TBC
+Maverick Synergy 3.0.7 - Dec 14, 2021
 
 Features
     o Proxy protocol v1 is now supported for IP resolution through load balancers. Remote address on Connection object is replaced with unresolved InetAddress containing the IP and port of the source connection.

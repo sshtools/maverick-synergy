@@ -1,3 +1,37 @@
+Maverick Synergy 3.0.7 - Dec 14, 2021
+
+Features
+    o Proxy protocol v1 is now supported for IP resolution through load balancers. Remote address on Connection object is replaced with unresolved InetAddress containing the IP and port of the source connection.
+    o Further improvements to callback client and server.
+    o Added getSessionCount method to SshConnection.
+    o Enhancement to ExpiringConcurrentHashMap adding ExpiryConfiguration callback interface that allows external service to provide its own expiry setting.
+    o VirtualShell now supports option for configuring the native command used when user executes the 'osshell' command.
+    o Added ChannelFactoryListener interface for modification of channels as they are created in DefaultServerChannelFactory.
+    o Require each channel declares its channel type through getChannelType method.
+    
+Bug Fixes
+    o SessionChannelNG does not delegate subsystem creation to protected method making it impossible to override behaviour.
+    o Default ping mechanism now only used when idle time configuration is zero.
+    o Idle state mechanism incorrectly generates idle events every second after idle threshold is reached.
+    o Failed to negotiate algorithm reports incorrect list of algorithms in exception text.
+    o addInterface in SshEngineContext is expected to throw an error when an interface cannot be started when the server itself is already running.
+    o Guard against NullPointerException in ComponentFactory configureSecurityLevel method.
+    o Close event from RootShell was not providing RootShell instance as event source.
+    o Incorrect XOR of flag causes NPE in SftpFileAttributes setTimes methods.
+    o ConcurrentModificationExceptions seen with local forwarding under load when implementation uses ChannelEventListeners for feedback.
+    o Fixes to VirtualShell "raw" mode to prevent duplicate reading of the session streams when a command needs direct access to the session.
+    o Fixed replacements when UnknownHostException captured in virtual shell welcome message.
+    o Wrapping SshConnection in SshClient can now optionally disable disconnection.
+    o Allow SshClientCommand runCommand to be executed from another class by making it public.
+    o Callback client reconnect interval is now fixed to interval provided rather than accumulative delay. 
+    o Ensure channel without a data cache evaluates window space on channel data receive. 
+    o Use ConcurrentHashMap in ExecutorOperationSupprot listener collection.
+    o A callback server should be identifiable by its identification string e.g. SSH-2.0-CallbackServer
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.6 - Oct 19, 2021
 
 Features
@@ -8,10 +42,8 @@ Bug Fixes
     o SftpClient pattern matching put methods use wrong parent path resulting in incorrect file transfer results. 
     o Implemented the setting of attributes bits in SFTP v6 SftpFileAttributes.
     o VirtualMount needed a default set of permissions in order to provide a valid long name response.
-    
-=================
-=  HISTORY      =
-=================
+
+----------------
 
 Maverick Synergy 3.0.5 - Sept 20, 2021
 

@@ -21,9 +21,13 @@
 
 package com.sshtools.vsession.commands.ssh;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
+import com.sshtools.client.ClientStateListener;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.components.SshKeyPair;
@@ -43,6 +47,7 @@ public class SshClientArguments {
 	private String[] configOptions;
 	private boolean compression;
 	private SshConnection con;
+	private List<ClientStateListener> listeners = new ArrayList<>();
 	
 	public boolean hasConnection() {
 		return Objects.nonNull(con);
@@ -56,6 +61,14 @@ public class SshClientArguments {
 		return con;
 	}
 
+	public void addListener(ClientStateListener listener) {
+		listeners.add(listener);
+	}
+	
+	public Collection<ClientStateListener> getListeners() {
+		return listeners;
+	}
+	
 	public int getPort() {
 		return port;
 	}

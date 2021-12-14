@@ -347,10 +347,12 @@ public class ComponentFactory<T> implements Cloneable {
 		List<SecureComponent> list = new ArrayList<>();
 		for (String name : supported.keySet()) {
 			SecureComponent o = (SecureComponent) getInstance(name);
-			if(o.getSecurityLevel().ordinal() < securityLevel.ordinal()) {
-				remove(name);
-			} else {
-				list.add(o);
+			if(Objects.nonNull(o)) {
+				if(o.getSecurityLevel().ordinal() < securityLevel.ordinal()) {
+					remove(name);
+				} else {
+					list.add(o);
+				}
 			}
 		}
 		

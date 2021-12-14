@@ -18,26 +18,38 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+package com.sshtools.common.permissions;
 
-package com.sshtools.server.vsession;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-import java.util.HashMap;
+import com.sshtools.common.net.CIDRNetwork;
 
-public class Environment extends HashMap<String, Object> {
+public class IPStore {
 
-	private static final long serialVersionUID = 1L;
-	public final static String ENV_HOME = "HOME";
-
-	public Environment(Environment environment) {
-		super(environment);
+	ConcurrentLinkedQueue<CIDRNetwork> entries = new ConcurrentLinkedQueue<>();
+	
+	public boolean isEmpty() {
+		return entries.isEmpty();
 	}
 
-	public Environment() {
-		super();
+	public Collection<CIDRNetwork> getIPs() {
+		return entries;
 	}
 
-	@SuppressWarnings("unchecked")
-	public <T> T getOrDefault(String name, T defaultValue) {
-		return containsKey(name) ? (T) get(name) : defaultValue;
+	public void add(String ip) throws UnknownHostException {
+		entries.add(new CIDRNetwork(ip));
+	}
+	
+	public void reset(Collection<String> ips) throws UnknownHostException {
+		
+		Collection<CIDRNetwork> tmp = new ArrayList<>();
+		for(String ip : ips) {
+			tmp.add(new CIDRNetwork(ip));
+		}
+		this.entries.clear();
+		this.entries.addAll(tmp);
 	}
 }

@@ -336,6 +336,12 @@ public class MockConnection implements SshConnection {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public int getSessionCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 	
 
 }

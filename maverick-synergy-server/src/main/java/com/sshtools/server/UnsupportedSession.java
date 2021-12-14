@@ -23,7 +23,6 @@
 package com.sshtools.server;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ConnectionAwareTask;
@@ -44,33 +43,9 @@ public class UnsupportedSession extends SessionChannelNG {
     public UnsupportedSession(SshConnection con) {
     	super(con);
     }
-    
-    protected void processStdinData(ByteBuffer data) {
-        // Do nothing
-    }
-
-    protected void processStderrData(ByteBuffer data) {
-        // Do nothing
-    }
-
-    protected void onChannelClosed() {
-        // Do nothing
-    }
 
     protected boolean executeCommand(String cmd) {
         return false;
-    }
-
-    protected void changeWindowDimensions(int cols, int rows, int width, int height) {
-        // Do nothing
-    }
-
-    public void onSessionOpen() {
-        // Do nothing
-    }
-
-    protected void onLocalEOF() {
-        // The local side is EOF no more data can be sent
     }
 
     protected boolean startShell() {
@@ -99,16 +74,24 @@ public class UnsupportedSession extends SessionChannelNG {
     protected boolean allocatePseudoTerminal(String parm1, int parm2, int parm3, int parm4, int parm5, byte[] parm6) {
         return true;
     }
-
-    protected void processSignal(String signal) {
-        // Do Nothing
-    }
-
-    protected void onRemoteEOF() {
-        // The remote side is EOF no more data will be received
-    }
+    
 
     public boolean setEnvironmentVariable(String name, String value) {
         return false;
     }
+
+	@Override
+	protected void changeWindowDimensions(int cols, int rows, int width, int height) {
+
+	}
+
+	@Override
+	protected void onLocalEOF() {
+
+	}
+
+	@Override
+	protected void processSignal(String signal) {
+		
+	}
 }

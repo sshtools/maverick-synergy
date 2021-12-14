@@ -50,20 +50,22 @@ import com.sshtools.synergy.nio.DisconnectRequestFuture;
 import com.sshtools.synergy.nio.SshEngine;
 import com.sshtools.synergy.nio.SshEngineContext;
 import com.sshtools.synergy.ssh.ChannelFactory;
+import com.sshtools.synergy.ssh.ChannelFactoryListener;
 
-public class CallbackClient {
+public class CallbackClient implements ChannelFactoryListener<SshServerContext> {
 
 	SshEngine ssh = new SshEngine();
 	Set<CallbackSession> clients = new HashSet<CallbackSession>();
 	ExecutorService executor;
 	List<SshKeyPair> hostKeys = new ArrayList<>();
-	ChannelFactory<SshServerContext> channelFactory = new DefaultServerChannelFactory();
+	ChannelFactory<SshServerContext> channelFactory;
 	List<Object> defaultPolicies = new ArrayList<>();
 	FileFactory fileFactory;
-
+	
 	public CallbackClient() {
 		executor = getExecutorService();
 		EventServiceImplementation.getInstance().addListener(new DisconnectionListener());
+		channelFactory = new DefaultServerChannelFactory();
 	}
 	
 	public SshEngine getSshEngine() {
@@ -77,6 +79,8 @@ public class CallbackClient {
 	public void setDefaultPolicies(Object... policies) {
 		defaultPolicies.addAll(Arrays.asList(policies));
 	}
+	
+	
 	
 	public void start(Collection<CallbackConfiguration> configs) {
 		
@@ -95,7 +99,9 @@ public class CallbackClient {
 	}
 	
 	public synchronized void start(CallbackConfiguration config, String hostname, int port) throws IOException {
-		start(new CallbackSession(config, this, hostname, port));
+		CallbackSession session = new CallbackSession(config, this, hostname, port);
+		onClientStarting(session);
+		start(session);
 	}
 	
 	public synchronized void start(CallbackSession client) {
@@ -119,6 +125,14 @@ public class CallbackClient {
 		return clients;
 	}
 	
+	protected void onClientStarting(CallbackSession client) {
+		
+	}
+	
+	protected void onClientStopping(CallbackSession client) {
+		
+	}
+	
 	protected void onClientStart(CallbackSession client, SshConnection connection) {
 		
 	}
@@ -128,6 +142,8 @@ public class CallbackClient {
 	}
 	
 	public synchronized void stop(CallbackSession client) {
+		
+		onClientStopping(client);
 		
 		if(Log.isInfoEnabled()) {
 			Log.info("Stopping callback client");
@@ -146,6 +162,7 @@ public class CallbackClient {
 			stop(client);
 		}
 		
+		ssh.shutdownAndExit();
 		executor.shutdownNow();
 	}
 	
@@ -156,7 +173,6 @@ public class CallbackClient {
 			
 			switch(evt.getId()) {
 			case EventCodes.EVENT_DISCONNECTED:
-				
 				
 				final SshConnection con = (SshConnection)evt.getAttribute(EventCodes.ATTRIBUTE_CONNECTION);
 				
@@ -169,19 +185,19 @@ public class CallbackClient {
 								con.removeProperty("callbackClient");
 								clients.remove(client);
 								if(!client.isStopped() && client.getConfig().isReconnect()) {
-									int count = 1;
 									while(getSshEngine().isStarted()) {
 										try {
 											try {
-												Thread.sleep(client.getConfig().getReconnectIntervalMs() * Math.min(count, 12));
+												Thread.sleep(client.getConfig().getReconnectIntervalMs());
 											} catch (InterruptedException e1) {
 											}
 											client.connect();
 											break;
 										} catch (IOException e) {
 										}
-										count++;
 									}
+								} else {
+									stop();
 								}
 							} 
 						}
@@ -199,6 +215,8 @@ public class CallbackClient {
 	public SshServerContext createContext(SshEngineContext daemonContext, CallbackConfiguration config) throws IOException, SshException {
 		
 		SshServerContext sshContext = new SshServerContext(getSshEngine(), JCEComponentManager.getDefaultInstance());
+		
+		sshContext.setIdleConnectionTimeoutSeconds(0);
 		
 		for(SshKeyPair key : hostKeys) {
 			sshContext.addHostKey(key);

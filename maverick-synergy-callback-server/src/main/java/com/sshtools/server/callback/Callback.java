@@ -25,7 +25,7 @@ import com.sshtools.common.ssh.SshConnection;
 
 public interface Callback {
 
-	String getUUID();
+	String getUuid();
 
 	String getUsername();
 

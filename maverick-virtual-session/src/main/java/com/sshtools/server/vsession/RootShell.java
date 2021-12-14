@@ -91,7 +91,7 @@ public class RootShell extends Msh {
 				welcomeText = welcomeText.replace("${hostname}",
 						java.net.InetAddress.getLocalHost().getHostName());
 			} catch (UnknownHostException e) {
-				welcomeText=  welcomeText.replaceAll("${hostname}", "localhost");
+				welcomeText=  welcomeText.replace("${hostname}", "localhost");
 			}
 			
 			// Just in case its not set in the configuration we set it
@@ -215,7 +215,7 @@ public class RootShell extends Msh {
 							.getInstance()
 							.fireEvent(
 									new Event(
-											this,
+											RootShell.this,
 											EventCodes.EVENT_ROOT_SHELL_STOPPED,
 											true)
 											.addAttribute(

@@ -18,26 +18,9 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+package com.sshtools.synergy.ssh;
 
-package com.sshtools.server.vsession;
+public interface ChannelFactoryListener<T extends SshContext> {
 
-import java.util.HashMap;
-
-public class Environment extends HashMap<String, Object> {
-
-	private static final long serialVersionUID = 1L;
-	public final static String ENV_HOME = "HOME";
-
-	public Environment(Environment environment) {
-		super(environment);
-	}
-
-	public Environment() {
-		super();
-	}
-
-	@SuppressWarnings("unchecked")
-	public <T> T getOrDefault(String name, T defaultValue) {
-		return containsKey(name) ? (T) get(name) : defaultValue;
-	}
+	default void onChannelCreated(ChannelNG<T> channel) {  }
 }

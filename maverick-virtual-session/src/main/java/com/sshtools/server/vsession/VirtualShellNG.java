@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -41,10 +40,13 @@ import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.ParsedLine;
+import org.jline.terminal.Attributes;
+import org.jline.terminal.Attributes.InputFlag;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
-import org.jline.terminal.spi.JnaSupport;
-import org.jline.terminal.spi.Pty;
+import org.jline.terminal.TerminalBuilder;
+import org.jline.terminal.impl.AbstractPosixTerminal;
+import org.jline.terminal.impl.ExternalTerminal;
 
 import com.sshtools.common.files.nio.AbstractFileURI;
 import com.sshtools.common.logger.Log;
@@ -79,6 +81,7 @@ public class VirtualShellNG extends SessionChannelNG {
 	boolean rawMode = false;
 	
 	List<WindowSizeChangeListener> listeners = new ArrayList<WindowSizeChangeListener>();
+	private Terminal terminal;
 	
 	public VirtualShellNG(SshConnection con,
 			ShellCommandFactory commandFactory) {
@@ -125,10 +128,17 @@ public class VirtualShellNG extends SessionChannelNG {
 
 		byte[] tmp = new byte[data.remaining()];
 		data.get(tmp);
+		
 		try {
-			((PosixChannelPtyTerminal)console.getTerminal()).in(tmp, 0, tmp.length);
+			if(terminal instanceof AbstractPosixTerminal) {
+				((AbstractPosixTerminal)terminal).getPty().getMasterOutput().write(tmp);
+				((AbstractPosixTerminal)terminal).getPty().getMasterOutput().flush();
+			}
+			else {
+				((ExternalTerminal)terminal).processInputBytes(tmp, 0, tmp.length);
+			}
 			evaluateWindowSpace();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			Log.error("Failed to send input to terminal.", e);
 			close();
 		}
@@ -148,7 +158,7 @@ public class VirtualShellNG extends SessionChannelNG {
 		
 		try {
 			shell = createShell(con);			
-			shell.startShell(getInputStream(), console = createConsole());
+			shell.startShell(null, console = createConsole());
 			return true;
 		} catch (Throwable t) {
 			Log.warn("Failed to start shell.", t);
@@ -162,15 +172,15 @@ public class VirtualShellNG extends SessionChannelNG {
 	
 	private VirtualConsole createConsole() throws IOException, PermissionDeniedException {
 		
-        Pty pty = load(JnaSupport.class).open(null, null);
-
-        Terminal terminal = new PosixChannelPtyTerminal("Maverick Terminal", 
-				env.getOrDefault("TERM", "ansi").toString(), 
-				pty,
-				(int) env.getOrDefault("COLS", 80),
-				(int) env.getOrDefault("ROWS", 25),
-				this,
-				Charset.forName("UTF-8"));
+		Attributes attrs = new Attributes();
+		attrs.setInputFlag(InputFlag.ICRNL, true);
+		terminal = TerminalBuilder.builder().
+					system(false).
+					streams(getInputStream(), getOutputStream()).
+					type(env.getOrDefault("TERM", "ansi").toString()).
+					size(new Size(env.getOrDefault("COLS", 80), env.getOrDefault("ROWS", 80))).
+					encoding(Charset.forName("UTF-8")).
+					attributes(attrs).build();
 		
         Map<String,Object> env = new HashMap<>();
 		env.put("connection", getConnection());
@@ -187,11 +197,6 @@ public class VirtualShellNG extends SessionChannelNG {
 
 		return new VirtualConsole(this, this.env, terminal, lineReaderBuilder.build(), shell);
 	}
-
-    private <S> S load(Class<S> clazz) {
-        return ServiceLoader.load(clazz, clazz.getClassLoader()).iterator().next();
-    }
-
 
 	@Override
 	protected boolean requestAgentForwarding(String requestType) {
@@ -241,9 +246,18 @@ public class VirtualShellNG extends SessionChannelNG {
 	}
 
 	@Override
-	protected void onChannelClosed() {
+	public void enableRawMode() {
+		console.getTerminal().pause();
+		super.enableRawMode();
+		
 	}
-	
+
+	@Override
+	public void disableRawMode() {
+		console.getTerminal().resume();
+		super.disableRawMode();
+	}
+
 	class VirtualShellCompletor implements Completer, MshListener {
 
 		Command currentCommand = null;

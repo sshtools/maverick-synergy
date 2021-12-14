@@ -94,12 +94,13 @@ public class VirtualConsole {
 	}
 	
 	public void println(String str) {
-		terminal.writer().println(str);
+		terminal.writer().print(str);
+		terminal.writer().print("\r\n");
 		terminal.writer().flush();
 	}
 	
 	public void println() {
-		terminal.writer().println();
+		terminal.writer().print("\r\n");
 		terminal.writer().flush();
 	}
 	

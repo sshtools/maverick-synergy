@@ -1039,11 +1039,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 	}
 	
 	public boolean idle() {
-		
-		if(Log.isDebugEnabled()) {
-			Log.debug("There are {} channels currently open", activeChannels.size());
-		}
-		
+
 		for(ChannelNG<?> c : activeChannels.values()) {
 			try {
 				if(Log.isDebugEnabled()) {
@@ -1060,21 +1056,27 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			}
 		}
 
-		addTask(ExecutorOperationSupport.CALLBACKS, new ConnectionTaskWrapper(getConnection(), new Runnable() {
-			public void run() {
-				GlobalRequest global = new GlobalRequest(
-						"ping@sshtools.com", 
-						con, null);
-				sendGlobalRequest(global, true);
-				global.waitFor(30000L);
-				if(!global.isDone()) {
-					if(Log.isInfoEnabled()) {
-						Log.error("Remote node is unresponsive");
+		if(getContext().getIdleConnectionTimeoutSeconds() == 0) {
+			/**
+			 * LDP - This mechanism will keep a connection open. Which will override an idle timeout
+			 * when set, so we only use it when the idle timeout is zero.
+			 */
+			addTask(ExecutorOperationSupport.CALLBACKS, new ConnectionTaskWrapper(getConnection(), new Runnable() {
+				public void run() {
+					GlobalRequest global = new GlobalRequest(
+							"ping@sshtools.com", 
+							con, null);
+					sendGlobalRequest(global, true);
+					global.waitFor(30000L);
+					if(!global.isDone()) {
+						if(Log.isInfoEnabled()) {
+							Log.error("Remote node is unresponsive");
+						}
+						getTransport().kill();
 					}
-					getTransport().kill();
 				}
-			}
-		}));
+			}));
+		}
 
 		return false;
 	}
@@ -1083,5 +1085,9 @@ public abstract class ConnectionProtocol<T extends SshContext>
 	
 	public Connection<T> getConnection() {
 		return con;
+	}
+	
+	public String getIdleLog() {
+		return String.format("%d channels currently open", activeChannels.size());
 	}
 }

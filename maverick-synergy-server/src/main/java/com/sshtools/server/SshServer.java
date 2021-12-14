@@ -37,7 +37,7 @@ public class SshServer extends AbstractSshServer implements ProtocolContextFacto
 		JCEComponentManager.getDefaultInstance();
 	}
 	
-	protected ProtocolContextFactory<?> getDefaultContextFactory() {
+	public ProtocolContextFactory<?> getDefaultContextFactory() {
 		return this;
 	}
 

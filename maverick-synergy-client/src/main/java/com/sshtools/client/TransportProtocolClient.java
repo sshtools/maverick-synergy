@@ -22,7 +22,6 @@ package com.sshtools.client;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 
 import com.sshtools.common.events.Event;
@@ -332,8 +331,8 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 		return "transport-client";
 	}
 
-	@Override
-	protected SocketAddress getConnectionAddress() {
-		return getLocalAddress();
-	}
+//	@Override
+//	protected SocketAddress getConnectionAddress() {
+//		return getRemoteAddress();
+//	}
 }

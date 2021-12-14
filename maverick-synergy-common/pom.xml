@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.sshtools.hotfixes</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.0.6</version>
+		<version>3.0.7-RC1</version>
 	</parent>
 	<artifactId>maverick-synergy-common</artifactId>
 	<name>Common API</name>
@@ -54,4 +54,28 @@
 			</plugin>
 		</plugins>
 	</build>
+	
+	<pluginRepositories>
+		<pluginRepository>
+			<id>artifactory-jadaptive-snapshots</id>
+			<url>https://artifactory.jadaptive.com/public-snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+		</pluginRepository>
+		<pluginRepository>
+			<id>artifactory-ext-snapshots</id>
+			<url>https://artifactory.jadaptive.com/ext-snapshots-local</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+		</pluginRepository>
+		<pluginRepository>
+			<id>artifactory-oss-snapshots</id>
+			<url>https://artifactory.jadaptive.com/opensource-snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+		</pluginRepository>
+	</pluginRepositories>
 </project>

@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.sshtools.hotfixes</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.0.7-RC1</version>
+		<version>3.0.7</version>
 	</parent>
 	<artifactId>maverick-logging</artifactId>
 	<name>Logging API</name>

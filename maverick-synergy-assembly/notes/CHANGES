@@ -25,7 +25,7 @@ Bug Fixes
     o Allow SshClientCommand runCommand to be executed from another class by making it public.
     o Callback client reconnect interval is now fixed to interval provided rather than accumulative delay. 
     o Ensure channel without a data cache evaluates window space on channel data receive. 
-    o Use ConcurrentHashMap in ExecutorOperationSupprot listener collection.
+    o Use ConcurrentHashMap in ExecutorOperationSupport listener collection.
     o A callback server should be identifiable by its identification string e.g. SSH-2.0-CallbackServer
     
 =================

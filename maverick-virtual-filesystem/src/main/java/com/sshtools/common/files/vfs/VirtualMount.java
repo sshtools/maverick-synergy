@@ -32,17 +32,22 @@ public class VirtualMount extends AbstractMount {
 	VirtualFileFactory virtualFileFactory;
 	boolean cached;
 	boolean createMountFolder;
+	boolean readOnly;
+	long lastModified = 0;
 	
 	VirtualMount(String mount, String path,
 			VirtualFileFactory virtualFileFactory,
 			AbstractFileFactory<?> actualFileFactory,
 			boolean isDefault,
-			boolean isImaginary, boolean createMountFolder)
+			boolean isImaginary, 
+			boolean createMountFolder,
+			long lastModified)
 				throws IOException, PermissionDeniedException {
 		super(mount, path, isDefault, isImaginary);
 		this.actualFileFactory = actualFileFactory;
 		this.virtualFileFactory = virtualFileFactory;
 		this.createMountFolder = createMountFolder;
+		this.lastModified = lastModified;
 		if (!isImaginary()) {
 			AbstractFile f = actualFileFactory.getFile(path);
 			this.path = f.getAbsolutePath();
@@ -53,10 +58,10 @@ public class VirtualMount extends AbstractMount {
 	public VirtualMount(String mount, String path,
 			VirtualFileFactory virtualFileFactory,
 			AbstractFileFactory<?> actualFileFactory,
-			boolean createMountFolder) throws IOException,
+			boolean createMountFolder, long lastModified) throws IOException,
 			PermissionDeniedException {
 		this(mount, path, virtualFileFactory, actualFileFactory, false,
-				false, createMountFolder);
+				false, createMountFolder, lastModified);
 	}
 
 	public AbstractFileFactory<? extends AbstractFile> getActualFileFactory() {
@@ -88,5 +93,29 @@ public class VirtualMount extends AbstractMount {
 
 	public boolean isCreateMountFolder() {
 		return createMountFolder;
+	}
+
+	public boolean isParentOf(VirtualMount o2) {
+		return o2.getMount().startsWith(getMount());
+	}
+
+	public boolean isChildOf(VirtualMount o2) {
+		return getMount().startsWith(o2.getMount());
+	}
+
+	public long lastModified() {
+		return lastModified;
+	}
+	
+	public void setLastModified(long lastModified) {
+		this.lastModified = lastModified;
+	}
+
+	public boolean isReadOnly() {
+		return readOnly;
+	}
+	
+	public void setReadOnly(boolean readOnly) {
+		this.readOnly = readOnly;
 	}
 }

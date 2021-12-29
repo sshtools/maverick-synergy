@@ -269,7 +269,7 @@ public class AuthenticationProtocolClient implements Service {
 			
 			if(authenticator instanceof PasswordAuthenticator) {
 				if(supportedAuths.contains("keyboard-interactive") &&
-						context.getPreferKeyboardInteractiveOverPassword()) {
+						(supportedAuths.contains("password") || context.getPreferKeyboardInteractiveOverPassword())) {
 					
 					if(Log.isDebugEnabled()) {
 						Log.debug("We prefer keyboard-interactive over password so injecting keyboard-interactive authenticator");
@@ -277,8 +277,7 @@ public class AuthenticationProtocolClient implements Service {
 
 					authenticators.addLast(new KeyboardInteractiveAuthenticator(
 							new PasswordOverKeyboardInteractiveCallback(
-									((PasswordAuthenticator) authenticator).getPassword())) {
-
+									((PasswordAuthenticator) authenticator))) {
 						@Override
 						public synchronized void done(boolean success) {
 							if(success || (!success && !supportedAuths.contains("password"))) {
@@ -286,8 +285,6 @@ public class AuthenticationProtocolClient implements Service {
 							}
 							super.done(success);
 						}
-							
-						
 					}); 
 					
 					if(supportedAuths.contains("password")) {
@@ -310,6 +307,9 @@ public class AuthenticationProtocolClient implements Service {
 	}
 	
 	private void checkReady() throws IOException {
+		if(transport.getDisconnectFuture().isDone()) {
+			throw new IOException("SSH client has been disconnected!");
+		}
 		if(!noneAuthenticator.isDone()) {
 			if(Log.isDebugEnabled()) {
 				Log.debug("Authentication protocol is NOT ready");

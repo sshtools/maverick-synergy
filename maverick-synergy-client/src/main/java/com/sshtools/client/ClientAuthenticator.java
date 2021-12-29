@@ -49,8 +49,9 @@ public interface ClientAuthenticator extends RequestFuture {
 	 * @param msg
 	 * @return
 	 * @throws IOException
+	 * @throws SshException 
 	 */
-	boolean processMessage(ByteArrayReader msg) throws IOException;
+	boolean processMessage(ByteArrayReader msg) throws IOException, SshException;
 
 	/**
 	 * Called by the API to indicate authentication success.

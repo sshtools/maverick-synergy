@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.AbstractRequestFuture;
+import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayReader;
 
 /**
@@ -35,7 +36,7 @@ public abstract class SimpleClientAuthenticator extends AbstractRequestFuture im
 	boolean cancelled;
 	
 	@Override
-	public boolean processMessage(ByteArrayReader msg) throws IOException {
+	public boolean processMessage(ByteArrayReader msg) throws IOException, SshException {
 		return false;
 	}
 

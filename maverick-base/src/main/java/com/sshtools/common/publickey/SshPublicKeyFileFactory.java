@@ -25,14 +25,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.ssh.components.jce.JCEProvider;
 import com.sshtools.common.util.ByteArrayReader;
 
 /**
@@ -72,6 +70,11 @@ public class SshPublicKeyFileFactory {
 	
 	public static final int OPENSSH_FORMAT = 0;
 	public static final int SECSH_FORMAT = 1;
+	
+	/**
+	 * @deprecated Never correctly implemented. 
+	 */
+	@Deprecated
 	public static final int OPENSSL_FORMAT = 4;
 
 	/**

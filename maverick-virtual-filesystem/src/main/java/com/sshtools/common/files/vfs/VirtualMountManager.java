@@ -52,7 +52,9 @@ public class VirtualMountManager {
 
 		if (homeMount != null) {
 			defaultMount = new VirtualMount(homeMount.getMount(), 
-					homeMount.getRoot(), fileFactory, homeMount.getActualFileFactory(), true, false, homeMount.isCreateMountFolder());
+					homeMount.getRoot(), fileFactory, homeMount.getActualFileFactory(), 
+					true, false, homeMount.isCreateMountFolder(),
+					homeMount.lastModified());
 			if(defaultMount.isCreateMountFolder()) {
 				defaultMount.getActualFileFactory().getFile(defaultMount.getRoot()).createFolder();
 			}
@@ -64,7 +66,8 @@ public class VirtualMountManager {
 			VirtualMount vm = createMount(m.getMount(), 
 					m.getRoot(),
 					m.getActualFileFactory(),
-					m.isCreateMountFolder());
+					m.isCreateMountFolder(),
+					m.lastModified());
 			
 
 			if(vm.isCreateMountFolder()) {
@@ -73,7 +76,7 @@ public class VirtualMountManager {
 			mounts.add(vm);
 		}
 
-		sort();
+		sort(mounts);
 	}
 	
 	public void mount(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
@@ -84,7 +87,8 @@ public class VirtualMountManager {
 		mount(createMount(template.getMount(),
 				template.getRoot(), 
 				template.getActualFileFactory(),
-				template.isCreateMountFolder()), unmount);
+				template.isCreateMountFolder(),
+				template.lastModified()), unmount);
 	}
 
 	public void test(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
@@ -92,7 +96,8 @@ public class VirtualMountManager {
 		test(createMount(template.getMount(),
 				template.getRoot(), 
 				template.getActualFileFactory(),
-				template.isCreateMountFolder()));
+				template.isCreateMountFolder(),
+				template.lastModified()));
 		
 	}
 	
@@ -130,20 +135,34 @@ public class VirtualMountManager {
 		
 		// Add the mount
 		mounts.add(mount);
-		sort();
+		sort(mounts);
 
 		Log.info("Mounted " + mount.getMount() + " on " + mount.getRoot());
 
 	}
 
-	private void sort() {
-		Collections.sort(mounts, new Comparator<AbstractMount>() {
+	private void sort(List<VirtualMount> mounts) {
+		Collections.sort(mounts, new Comparator<VirtualMount>() {
 
-			public int compare(AbstractMount o1, AbstractMount o2) {
-				return o1.getMount().compareTo(o2.getMount()) * -1;
+			@Override
+			public int compare(VirtualMount o1, VirtualMount o2) {
+				if(o1.isParentOf(o2)) {
+					return 1;
+				} else if(o1.isChildOf(o2)) {
+					return -1;
+				} else {
+					return o2.getMount().compareTo(o1.getMount());
+				}
 			}
-
+			
 		});
+		
+		if(Log.isDebugEnabled()) {
+			Log.debug("Sorting mounts by path and with child relationship preferred");
+			for(VirtualMount m : mounts) {
+				Log.debug("Mount {} on {}", m.getMount(), m.getRoot());
+			}
+		}
 	}
 
 	public void unmount(VirtualMount mount) throws IOException {
@@ -159,8 +178,8 @@ public class VirtualMountManager {
 			throw new IOException(String.format("Could not find mount %s", mount.getMount()));
 		}
 		mounts.remove(mounted);
-		sort();
-		Log.info("Unmounted " + mounted.getMount() + " from " + mounted.getRoot());
+		sort(mounts);
+		
 	}
 
 	public VirtualMount getDefaultMount() {
@@ -174,6 +193,7 @@ public class VirtualMountManager {
 			tmp.add(testingMount.get());
 		}
 		tmp.addAll(mounts);
+		sort(tmp);
 		return tmp.toArray(new VirtualMount[0]);
 	}
 
@@ -192,9 +212,9 @@ public class VirtualMountManager {
 	}
 
 	private VirtualMount createMount(String mount, String path,
-			AbstractFileFactory<?> actualFileFactory, boolean createMoundFolder) throws IOException,
+			AbstractFileFactory<?> actualFileFactory, boolean createMoundFolder, long lastModified) throws IOException,
 			PermissionDeniedException {
-		return new VirtualMount(mount, path, fileFactory, actualFileFactory, createMoundFolder);
+		return new VirtualMount(mount, path, fileFactory, actualFileFactory, createMoundFolder, lastModified);
 	}
 
 	public VirtualMount getMount(String path) throws IOException {
@@ -228,7 +248,8 @@ public class VirtualMountManager {
 			if (path.startsWith(mountPath) || mountPath.startsWith(path)) {
 				matched.add(m);
 			}
-		}
+		}		
+		
 		return matched.toArray(new VirtualMount[0]);
 	}
 

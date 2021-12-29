@@ -21,7 +21,6 @@ package com.sshtools.common.util;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
@@ -343,7 +342,7 @@ public class Utils {
             throw new IOException("Unexpected exit code " + exitVal + "[" + output.toString() + "]");
         }
 	}
-	
+
 	public static String prompt(BufferedReader reader, String message) throws IOException {
 		
 		System.out.print(String.format("%s: ", message));
@@ -390,5 +389,4 @@ public class Utils {
 		}
 		throw new IllegalArgumentException("Input does not contain a port value");
 	}
-
 }

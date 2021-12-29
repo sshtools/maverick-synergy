@@ -276,7 +276,7 @@ public class SshEngine {
 
 		} catch (Throwable ex) {
 			if(Log.isInfoEnabled())
-				Log.info("The server failed to start", ex);
+				Log.info("The engine failed to start", ex);
 			lastError = ex;
 			shutdownNow(false, 0);
 			if (ex instanceof LicenseException)

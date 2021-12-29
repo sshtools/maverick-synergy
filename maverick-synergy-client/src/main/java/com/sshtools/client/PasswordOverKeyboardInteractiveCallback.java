@@ -26,11 +26,11 @@ import com.sshtools.common.ssh.SshConnection;
 public class PasswordOverKeyboardInteractiveCallback
 			implements KeyboardInteractiveCallback {
 		
-		private String password;
-
+		
+		PasswordAuthenticator auth;
 		public PasswordOverKeyboardInteractiveCallback(
-				String password) {
-			this.password = password;
+				PasswordAuthenticator auth) {
+			this.auth = auth;
 		}
 
 		public void init(SshConnection con) {
@@ -51,7 +51,7 @@ public class PasswordOverKeyboardInteractiveCallback
 				KeyboardInteractivePrompt[] prompts,
 				KeyboardInteractivePromptCompletor completor) {
 			for (int i = 0; i < prompts.length; i++) {
-				prompts[i].setResponse(password);
+				prompts[i].setResponse(auth.getPassword());
 			}
 			completor.complete();
 		}

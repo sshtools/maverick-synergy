@@ -17,7 +17,7 @@
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
 /* HEADER */
-package com.sshtools.common.publickey;
+package com.sshtools.common.publickey.bc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,6 +35,7 @@ import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.interfaces.RSAPublicKey;
 
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.openssl.EncryptionException;
 import org.bouncycastle.openssl.PEMEncryptedKeyPair;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
@@ -46,6 +47,9 @@ import org.bouncycastle.operator.InputDecryptorProvider;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.jcajce.JcePKCSPBEInputDecryptorProviderBuilder;
 
+import com.sshtools.common.publickey.InvalidPassphraseException;
+import com.sshtools.common.publickey.OpenSSHPrivateKeyFile;
+import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.ECUtils;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
@@ -190,6 +194,8 @@ public OpenSSHPrivateKeyFileBCFIPS(byte[] formattedkey)
 	    }
 	    throw new IOException("Unsupported type");
 
+    } catch(EncryptionException e) {
+    	throw new InvalidPassphraseException();
     } catch(InvalidPassphraseException | IOException e) {
     	throw e;
     } catch(Throwable ex) { 

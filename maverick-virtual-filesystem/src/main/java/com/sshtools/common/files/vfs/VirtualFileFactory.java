@@ -28,6 +28,7 @@ import java.util.StringTokenizer;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.util.FileUtils;
 
@@ -97,9 +98,17 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		}
 
 		VirtualMount[] mounts = mgr.getMounts(virtualPath);
+		
+		if(Log.isDebugEnabled()) {
+			Log.debug("Resolved the following mounts for the path {}", path);
+			for(VirtualMount m : mounts) {
+				Log.debug("Mount {} on {}", m.getMount(), m.getRoot());
+			}
+		}
+		
 		if (!virtualPath.equals("") && mounts.length > 0) {
 			String mountPath = FileUtils.addTrailingSlash(virtualPath);
-
+			
 			if (!mountPath.equals("/")) {
 				for (VirtualMount m : mounts) {
 					String thisMountPath = FileUtils.addTrailingSlash(m

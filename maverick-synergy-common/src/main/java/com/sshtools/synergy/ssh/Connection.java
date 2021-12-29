@@ -72,7 +72,9 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 			@Override
 			public void processEvent(Event evt) {
 				if(evt.getId()==EventCodes.EVENT_DISCONNECTED) {
-					transport.getDisconnectFuture().disconnected();
+					if(!getAuthenticatedFuture().isDone()) {
+						getAuthenticatedFuture().authenticated(false);
+					}
 				}
 			}
 		});
@@ -186,7 +188,7 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	}
 	
 	public boolean isDisconnected() {
-		return closed;
+		return getDisconnectFuture().isDone();
 	}
 	
 	public void disconnect() {

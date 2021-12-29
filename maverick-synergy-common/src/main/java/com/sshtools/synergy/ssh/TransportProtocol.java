@@ -1529,7 +1529,8 @@ public abstract class TransportProtocol<T extends SshContext>
 					Log.debug("Performing internal disconnect {}", getUUID());
 				
 				setTransportState(TransportProtocol.DISCONNECTED);
-
+				disconnectFuture.disconnected();
+				
 				if (socketConnection != null)
 					socketConnection.getIdleStates().remove(TransportProtocol.this);
 
@@ -1552,6 +1553,7 @@ public abstract class TransportProtocol<T extends SshContext>
 				}
 
 				
+				
 				if(connection != null) {
 					/* Connection may be null if a socket connection was made by the protocol never started */
 					addTask(EVENTS, new ConnectionTaskWrapper(connection, new Runnable() {
@@ -1562,7 +1564,6 @@ public abstract class TransportProtocol<T extends SshContext>
 										
 										disconnected();
 										onDisconnected();
-										disconnectFuture.disconnected();
 										
 										EventServiceImplementation
 										.getInstance()

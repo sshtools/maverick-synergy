@@ -70,8 +70,16 @@ class TransportProtocolSwitchingClient extends TransportProtocolClient {
 			 * We need to know the user name to initiate authentication since we are acting as the client. So
 			 * the callback client places the user name in the initial SSH identification string.
 			 */
-			String username = remoteIdentification.substring(8+callbackIdentifier.length()+1).trim();
-			getContext().setUsername(username);
+			int idx = remoteIdentification.indexOf('_');
+			if(idx > -1) {
+				if(remoteIdentification.trim().length() > idx+1) {
+					String username = remoteIdentification.substring(idx+1).trim();
+					getContext().setUsername(username);
+					return;
+				}
+			}
+			
+			throw new IllegalStateException(String.format("Callback identifier missing _ or username token [%s]", remoteIdentification.trim()));
 		}
 		
 	}

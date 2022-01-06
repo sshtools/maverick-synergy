@@ -43,7 +43,7 @@ import com.sshtools.synergy.ssh.GlobalRequestHandler;
 
 public class CallbackContextFactory implements ProtocolContextFactory<SshClientContext> {
 
-	public static final String CALLBACK_IDENTIFIER = "CallbackClient_";
+	public static final String CALLBACK_IDENTIFIER = "CallbackClient";
 	
 	public static final String CALLBACK_MEMO = "MEMO";
 	

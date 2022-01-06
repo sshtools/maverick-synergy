@@ -132,6 +132,92 @@ public class IOUtils {
             }
         }
     }
+    
+    /**
+     * Copy from an input stream to an output stream. It is up to the caller to
+     * close the streams.
+     * 
+     * @param in input stream
+     * @param out output stream
+     * @throws IOException on any error
+     */
+    public static long copyWithCount(InputStream in, OutputStream out) throws IOException {
+        return copyWithCount(in, out, -1);
+    }
+    
+    /**
+     * Copy from an input stream to an output stream. It is up to the caller to
+     * close the streams.
+     * 
+     * @param in input stream
+     * @param out output stream
+     * @param forceFlush force flush of the OutputStream on each block
+     * @throws IOException on any error
+     */
+    public static long copyWithCount(InputStream in, OutputStream out, boolean forceFlush) throws IOException {
+    	return copyWithCount(in, out, -1, BUFFER_SIZE, true);
+    }
+
+
+    /**
+     * Copy the specified number of bytes from an input stream to an output
+     * stream. It is up to the caller to close the streams.
+     * 
+     * @param in input stream
+     * @param out output stream
+     * @param count number of bytes to copy
+     * @throws IOException on any error
+     */
+    public static long copyWithCount(InputStream in, OutputStream out, long count) throws IOException {
+    	return copyWithCount(in, out, count, BUFFER_SIZE, false);
+    }
+    
+    /**
+     * Copy the specified number of bytes from an input stream to an output
+     * stream. It is up to the caller to close the streams.
+     * 
+     * @param in input stream
+     * @param out output stream
+     * @param count number of bytes to copy
+     * @param bufferSize buffer size
+     * @throws IOException on any error
+     */
+    public static long copyWithCount(InputStream in, OutputStream out, long count, int bufferSize, boolean forceFlush) throws IOException {
+        byte buffer[] = new byte[bufferSize];
+        int i = bufferSize;
+        long total = 0L;
+        if (count >= 0) {
+            while (count > 0) {
+                if (count < bufferSize)
+                    i = in.read(buffer, 0, (int) count);
+                else
+                    i = in.read(buffer, 0, bufferSize);
+
+                if (i == -1)
+                    break;
+
+                count -= i;
+                total += i;
+                
+                out.write(buffer, 0, i);
+                if(forceFlush) {
+                	out.flush();
+                }
+            }
+        } else {
+            while (true) {
+                i = in.read(buffer, 0, bufferSize);
+                if (i < 0)
+                    break;
+                out.write(buffer, 0, i);
+                total += i;
+                if(forceFlush) {
+                	out.flush();
+                }
+            }
+        }
+        return total;
+    }
   /**
    *
    *

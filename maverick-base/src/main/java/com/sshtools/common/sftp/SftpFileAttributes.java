@@ -995,12 +995,16 @@ public class SftpFileAttributes {
 					baw.writeInt(0);
 				}
 			} else if (version > 3 && isFlagSet(SSH_FILEXFER_ATTR_OWNERGROUP, version)) {
-				if (uid != null)
+				if (username != null)
+					baw.writeString(username, charsetEncoding);
+				else if(uid!=null) 
 					baw.writeString(uid, charsetEncoding);
 				else
 					baw.writeString("");
 
-				if (gid != null)
+				if (group != null)
+					baw.writeString(username, charsetEncoding);
+				else if(gid!=null)
 					baw.writeString(gid, charsetEncoding);
 				else
 					baw.writeString("");

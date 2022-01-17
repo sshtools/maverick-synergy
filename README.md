@@ -10,6 +10,14 @@ Community developers should seek support at the [Jadaptive Forums](https://forum
 
 Built upon the Java NIO framework, this third generation of the API for the first time provides a unified framework for developing both client and server solutions.
 
+## Built with Maverick Synergy
+
+The following solutions utilize the Maverick Synergy API in some form. If you would like your own project adding here, please get in touch or create a PR with the necersary changes to this page. 
+
+From the API Developers, JADAPTIVE Limited
+- [Virtual SFTP Server](https://jadaptive.com/en/products/virtual-sftp)
+- [Desktop SSH Agent](https://jadaptive.com/en/products/desktop-ssh-agent)
+
 ## Features
 Here are just some of the notable features of the APIs
 
@@ -40,7 +48,7 @@ In the first instance, for a no dependency Java SSH client API simply use the ma
 <dependency>
   <groupId>com.sshtools</groupId>
   <artifactId>maverick-synergy-client</artifactId>
-  <version>3.0.4-FINAL</version>
+  <version>3.0.6</version>
 </dependency>
 
 <!-- You may also need this repository if the version is a SNAPSHOT -->
@@ -69,7 +77,7 @@ Include the server module to develop your own SSH/SFTP server.
 <dependency>
   <groupId>com.sshtools</groupId>
   <artifactId>maverick-synergy-server</artifactId>
-  <version>3.0.4-FINAL</version>
+  <version>3.0.6</version>
 </dependency>
 
 <!-- You may also need this repository if the version is a SNAPSHOT -->
@@ -89,7 +97,7 @@ We also have done a lot of the hard work for you implementing a virtual file sys
 <dependency>
   <groupId>com.sshtools</groupId>
   <artifactId>maverick-virtual-filesystem</artifactId>
-  <version>3.0.4-FINAL</version>
+  <version>3.0.6</version>
 </dependency>
 ```	
 Creating a server is made equally as easy as the client API. You just need to make a few desisions about how users authenticate and what they can do, for example, the code below creates a simple SFTP server that provides users with their own home folder. To the user, all they see is their own sandboxed home directoy.

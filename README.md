@@ -18,6 +18,9 @@ From the API Developers, JADAPTIVE Limited
 - [Virtual SFTP Server](https://jadaptive.com/en/products/virtual-sftp)
 - [Desktop SSH Agent](https://jadaptive.com/en/products/desktop-ssh-agent)
 
+Third-party Solutions
+- [LogonBox SSPR](https://www.logonbox.com/)
+
 ## Features
 Here are just some of the notable features of the APIs
 

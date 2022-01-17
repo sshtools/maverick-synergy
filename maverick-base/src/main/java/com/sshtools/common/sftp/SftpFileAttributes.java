@@ -441,6 +441,12 @@ public class SftpFileAttributes {
 	 * @param uid
 	 */
 	public void setUID(String uid) {
+		if(uid==null) {
+			throw new IllegalArgumentException("uid cannot be null!");
+		}
+		if(!uid.matches("\\d+")) {
+			throw new IllegalArgumentException("uid must be a user id containing only digits");
+		}
 		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
 		flags |= SSH_FILEXFER_ATTR_UIDGID;
 		this.uid = uid;
@@ -452,7 +458,12 @@ public class SftpFileAttributes {
 	 * @param gid
 	 */
 	public void setGID(String gid) {
-
+		if(gid==null) {
+			throw new IllegalArgumentException("gid cannot be null!");
+		}
+		if(!gid.matches("\\d+")) {
+			throw new IllegalArgumentException("gid must be a group id containing only digits");
+		}
 		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
 		flags |= SSH_FILEXFER_ATTR_UIDGID;
 		this.gid = gid;
@@ -474,11 +485,11 @@ public class SftpFileAttributes {
 	}
 
 	public boolean hasUID() {
-		return uid != null;
+		return username!=null || uid != null;
 	}
 
 	public boolean hasGID() {
-		return gid != null;
+		return group != null || gid != null;
 	}
 
 	/**
@@ -1256,10 +1267,12 @@ public class SftpFileAttributes {
 	}
 
 	public void setUsername(String username) {
+		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
 		this.username = username;
 	}
 
 	public void setGroup(String group) {
+		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
 		this.group = group;
 	}
 	

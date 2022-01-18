@@ -142,7 +142,9 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		VirtualMount m = mgr.getMount(virtualPath);
 		VirtualFile cached = getCachedObject(virtualPath);
 		if(Objects.nonNull(cached)) {
-			return cached;
+			if(cached.getMount().lastModified() == m.lastModified()) {
+				return cached;
+			}
 		}
 		VirtualFile f = new VirtualMappedFile(virtualPath, m, this);
 		if (m.isCached()) {

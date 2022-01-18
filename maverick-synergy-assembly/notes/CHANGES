@@ -4,6 +4,7 @@ Bug Fixes
     o SftpFileAttributes setGroup and setUsername never set flag SSH_FILEXFER_ATTR_OWNERGROUP.
     o SftpFileAttributes does not use values set by setGroup/setUsername in v4 binary blob.
     o SftpFileAttributes does not validate UID/GID are numeric values.
+    o Added getMount to VirtualFile interface for consistent mount returning function across virtual file types. Deprecated getParentMount on VirtualFileObject for same reasons.
     
 =================
 =  HISTORY      =

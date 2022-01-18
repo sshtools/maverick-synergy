@@ -26,4 +26,5 @@ import com.sshtools.common.files.AbstractFile;
 
 public interface VirtualFile extends AbstractFile {
 
+	VirtualMount getMount();
 }

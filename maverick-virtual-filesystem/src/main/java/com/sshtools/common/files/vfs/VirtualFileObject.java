@@ -66,6 +66,15 @@ public class VirtualFileObject extends AbstractFileAdapter implements VirtualFil
 		super.refresh();
 	}
 
+	public VirtualMount getMount() {
+		return parentMount;
+	}
+	
+	@Deprecated
+	/**
+	 * @deprecated Use getMount instead as it's now part of the VirtualFile interface.
+	 * @return
+	 */
 	public VirtualMount getParentMount() {
 		return parentMount;
 	}

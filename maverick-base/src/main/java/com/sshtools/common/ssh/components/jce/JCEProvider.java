@@ -28,6 +28,7 @@ import java.security.NoSuchProviderException;
 import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.security.Signature;
 import java.util.Hashtable;
 
 import javax.crypto.Cipher;
@@ -378,5 +379,33 @@ public class JCEProvider implements JCEAlgorithms {
 	
 	public static void setRSAOAEPSHA1AlgorithmName(String rsaOAEPWithMG1Padding) {
 		JCEProvider.rsaOAEPSHA1WithMG1Padding = rsaOAEPWithMG1Padding;
+	}
+	
+	public static KeyFactory getKeyFactory(String alg) throws NoSuchAlgorithmException {
+		if(JCEProvider.getProviderForAlgorithm(alg)==null) {
+			if(Log.isTraceEnabled()) {
+				Log.trace("Getting key factory algorithm {} from default provider", alg);
+			}
+			return KeyFactory.getInstance(alg);
+		} else {
+			if(Log.isTraceEnabled()) {
+				Log.trace("Getting key factory algorithm {} from provider {}", alg, JCEProvider.getProviderForAlgorithm(alg));
+			}
+		    return KeyFactory.getInstance(alg, JCEProvider.getProviderForAlgorithm(alg));
+		}
+	}
+
+	public static Signature getSignature(String alg) throws NoSuchAlgorithmException {
+		if(JCEProvider.getProviderForAlgorithm(alg)==null) {
+			if(Log.isTraceEnabled()) {
+				Log.trace("Getting signature algorithm {} from default provider", alg);
+			}
+			return Signature.getInstance(alg);
+		} else {
+			if(Log.isTraceEnabled()) {
+				Log.trace("Getting signature algorithm {} from provider {}", alg, JCEProvider.getProviderForAlgorithm(alg));
+			}
+		    return Signature.getInstance(alg, JCEProvider.getProviderForAlgorithm(alg));
+		}		
 	}
 }

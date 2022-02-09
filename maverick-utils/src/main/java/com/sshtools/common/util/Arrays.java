@@ -128,4 +128,21 @@ public class Arrays {
 		}
 		return true;
 	}
+	
+	public static byte[] copy(byte[] array, int len) {
+		return copy(array, 0, len);
+	}
+	
+	public static byte[] copy(byte[] array, int offset, int len) {
+		byte[] tmp = new byte[len];
+		System.arraycopy(array, offset, tmp, 0, len);
+		return tmp;
+	}
+
+	public static byte[] cat(byte[] a, byte[] b) {
+		byte[] tmp = new byte[a.length + b.length];
+		System.arraycopy(a, 0, tmp, 0, a.length);
+		System.arraycopy(b, 0, tmp, a.length, b.length);
+		return tmp;
+	}
 }

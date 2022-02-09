@@ -30,25 +30,20 @@ import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.DLSequence;
-import org.bouncycastle.asn1.edec.EdECObjectIdentifiers;
-import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshKeyFingerprint;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.util.Arrays;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
-import com.sshtools.common.util.IOUtils;
 
 
 public class SshEd25519PublicKeyJCE implements SshEd25519PublicKey {
 
+	public final static byte[] ASN_HEADER = { 0x30, 0x2A, 0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70, 0x03, 0x21, 0x00 };
+	
 	public static final String ALGORITHM_NAME = "ssh-ed25519";
 	
 	PublicKey publicKey;
@@ -71,9 +66,9 @@ public class SshEd25519PublicKeyJCE implements SshEd25519PublicKey {
 	}
 	
 	private void loadPublicKey(byte[] pk) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException, NoSuchProviderException {
-		KeyFactory keyFactory = KeyFactory.getInstance(JCEAlgorithms.ED25519, "BC");
-		SubjectPublicKeyInfo pubKeyInfo = new SubjectPublicKeyInfo(new AlgorithmIdentifier(EdECObjectIdentifiers.id_Ed25519), pk);
-		EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(pubKeyInfo.getEncoded());
+		KeyFactory keyFactory = JCEProvider.getKeyFactory(JCEAlgorithms.ED25519);
+		byte[] encoded = Arrays.cat(ASN_HEADER, pk);
+		EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(encoded);
 		publicKey = keyFactory.generatePublic(x509KeySpec);
 	}
 
@@ -136,16 +131,9 @@ public class SshEd25519PublicKeyJCE implements SshEd25519PublicKey {
 	}
 
 	private byte[] decodeJCEKey() {
-		ASN1InputStream asn = new ASN1InputStream(publicKey.getEncoded());
-		try {
-			DLSequence id = (DLSequence) asn.readObject();
-			DERBitString raw = (DERBitString) id.getObjectAt(1).toASN1Primitive();
-			return raw.getBytes();
-		} catch (IOException e) {
-			throw new IllegalStateException("Unable to parse ASN output of JCE key",e);
-		} finally {
-			IOUtils.closeStream(asn);
-		}
+		byte[] encoded = publicKey.getEncoded();
+		byte[] seed = Arrays.copy(encoded, encoded.length-32, 32);
+		return seed;
 	}
 
 	public byte[] getA() {
@@ -183,11 +171,11 @@ public class SshEd25519PublicKeyJCE implements SshEd25519PublicKey {
 	
 	private boolean verifyJCESignature(byte[] signature, byte[] data) throws SshException {
 		try {
-			Signature sgr = Signature.getInstance(JCEAlgorithms.ED25519, "BC");
+			Signature sgr = JCEProvider.getSignature(JCEAlgorithms.ED25519);
 			sgr.initVerify(publicKey);
 			sgr.update(data);
 			return sgr.verify(signature);
-		} catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException | NoSuchProviderException e) {
+		} catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException e) {
 			throw new SshException(e, SshException.INTERNAL_ERROR);
 		}
 	}
@@ -221,9 +209,9 @@ public class SshEd25519PublicKeyJCE implements SshEd25519PublicKey {
 	public String test() {
 
 		try {
-			KeyFactory factory = KeyFactory.getInstance(JCEAlgorithms.ED25519, "BC");
+			KeyFactory factory = JCEProvider.getKeyFactory(JCEAlgorithms.ED25519);
 			return factory.getProvider().getName();
-		} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException(e.getMessage(), e);
 		}
 			 

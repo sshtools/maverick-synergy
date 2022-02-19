@@ -57,7 +57,7 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 	
 	public boolean isMount() {
-		return FileUtils.addTrailingSlash(parentMount.getMount()).equals(FileUtils.addTrailingSlash(path));
+		return true;
 	}
 	
 	private AbstractFile resolveFile() throws PermissionDeniedException, IOException {
@@ -68,7 +68,7 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 	
 	public boolean exists() throws IOException, PermissionDeniedException {
-		return isMount() || resolveFile().exists();
+		return resolveFile().exists();
 	}
 
 	public boolean createFolder() throws PermissionDeniedException, IOException {

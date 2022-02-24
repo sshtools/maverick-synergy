@@ -606,10 +606,10 @@ public class SshEngine {
 	    	sendHTTPProxyRequest(socketChannel, protocolContext, hostToConnect, portToConnect);
 	    	break;
 	    case SOCKS4:
-//	    	sendSOCKS4ProxyRequest(socketChannel, protocolContext, hostToConnect, portToConnect);
+	    	sendSOCKS4ProxyRequest(socketChannel, protocolContext, hostToConnect, portToConnect);
 	    	break;
 	    case SOCKS5:
-//	    	sendSOCKS5ProxyRequest(socketChannel, protocolContext, hostToConnect, portToConnect);
+	    	sendSOCKS5ProxyRequest(socketChannel, protocolContext, hostToConnect, portToConnect);
 	    	break;
 	    default:
 	    	break;
@@ -617,7 +617,263 @@ public class SshEngine {
 		return socketChannel;
 	}
 	
+	private void sendSOCKS4ProxyRequest(SocketChannel socketChannel, ProtocolContext protocolContext,
+			String hostToConnect, int portToConnect) throws IOException {
+		
+		if(Log.isDebugEnabled()) {
+			Log.debug("Connecting via SOCKS4 proxy {}:{}", protocolContext.getProxyHostname(), protocolContext.getProxyPort());
+		}
+		
+		InetAddress hostAddr = InetAddress.getByName(hostToConnect);
+		ByteBuffer buf = ByteBuffer.allocate(1024);
+		
+		buf.put((byte)0x04);
+		buf.put((byte)0x01);
+		buf.put((byte)((portToConnect >>> 8) & 0xff));
+		buf.put((byte)(portToConnect & 0xff));
+		buf.put(hostAddr.getAddress());
+		buf.put(protocolContext.getProxyUsername().getBytes("UTF-8"));
+		buf.put((byte)0x00);
+
+		buf.flip();
+		
+		socketChannel.write(buf);
+		
+		buf = ByteBuffer.allocate(1);
+		
+		socketChannel.read(buf);
+		
+		int res = buf.get(0);
+		
+		if (res == -1) {
+            throw new IOException("SOCKS4 server " + protocolContext.getProxyHostname() + ":" +
+                protocolContext.getProxyPort() + " disconnected");
+        }
+
+        if (res != 0x00) {
+            throw new IOException("Invalid response from SOCKS4 server (" +
+                res + ") " + protocolContext.getProxyHostname() + ":" + protocolContext.getProxyPort());
+        }
+        
+        buf.clear();
+        socketChannel.read(buf);
+        
+        int code = buf.get(0);
+
+        if (code != 90) {
+            if ((code > 90) && (code < 93)) {
+                throw new IOException(
+                    "SOCKS4 server unable to connect, reason: " +
+                    SOCKSV4_ERROR[code - 91]);
+            }
+			throw new IOException(
+			    "SOCKS4 server unable to connect, reason: " + code);
+        }
+
+        ByteBuffer data = ByteBuffer.allocate(6);
+        
+        int c = 0;
+        while(c < 6) {
+        	int r = socketChannel.read(data);
+        	if(r > 0) {
+        		c+= r;
+        	}
+        }
+
+	}
+
+	private void sendSOCKS5ProxyRequest(SocketChannel socketChannel, ProtocolContext protocolContext,
+			String hostToConnect, int portToConnect) throws IOException {
+		
+		if(Log.isDebugEnabled()) {
+			Log.debug("Connecting via SOCKS5 proxy {}:{}", protocolContext.getProxyHostname(), protocolContext.getProxyPort());
+		}
+		
+		byte[] request = {
+                (byte) SOCKS5, (byte) 0x02, (byte) 0x00, (byte) 0x02
+        };
+		
+		ByteBuffer b = ByteBuffer.allocate(1);
+
+        socketChannel.write(ByteBuffer.wrap(request));
+
+        if(socketChannel.read(b) != 1) {
+        	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
+                    protocolContext.getProxyPort() + " disconnected");
+        }
+        
+        int res = b.get(0);
+
+        if (res != 0x05) {
+            throw new IOException("Invalid response from SOCKS5 server (" +
+                res + ") " + protocolContext.getProxyHostname() + ":" +
+                protocolContext.getProxyPort());
+        }
+
+        b.clear();
+        if(socketChannel.read(b) != 1) {
+        	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
+                    protocolContext.getProxyPort() + " disconnected");
+        }
+        
+        int method = b.get(0);
+
+        switch (method) {
+        case 0x00:
+            break;
+
+        case 0x02:
+
+        	try(ByteArrayWriter baw  = new ByteArrayWriter()) {
+        		baw.write(0x01);
+        		
+        		byte[] h = protocolContext.getProxyUsername().getBytes("UTF-8");
+	            baw.write(h.length);
+	            baw.write(h);
+	            
+	            h = protocolContext.getProxyPassword().getBytes("UTF-8");
+	            baw.write(h.length);
+	            baw.write(h);
+
+	            socketChannel.write(ByteBuffer.wrap(baw.toByteArray()));
+        	}
+        	
+        	b.clear();
+            if(socketChannel.read(b) != 1) {
+            	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
+                        protocolContext.getProxyPort() + " disconnected");
+            }
+            
+            res = b.get(0);
+
+            if ((res != 0x01) && (res != 0x05)) {
+                throw new IOException("Invalid response from SOCKS5 server (" +
+                    res + ") " + protocolContext.getProxyHostname() + ":" + protocolContext.getProxyPort());
+            }
+
+            b.clear();
+            if(socketChannel.read(b) != 1) {
+            	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
+                        protocolContext.getProxyPort() + " disconnected");
+            }
+            if (b.get(0) != 0x00) {
+                throw new IOException("Invalid username/password for SOCKS5 server");
+            }
+            break;
+
+        default:
+            throw new IOException(
+                "SOCKS5 server does not support our authentication methods");
+        }
+
+        try(ByteArrayWriter baw = new ByteArrayWriter()) {
+	        if (protocolContext.isResolveLocally()) {
+	            InetAddress hostAddr;
 	
+	            try {
+	                hostAddr = InetAddress.getByName(hostToConnect);
+	            } catch (UnknownHostException e) {
+	                throw new IOException("Can't do local lookup on: " +
+	                		hostToConnect + ", try socks5 without local lookup");
+	            }
+	
+	            request = new byte[] {
+	                    (byte) SOCKS5, (byte) 0x01, (byte) 0x00, (byte) 0x01
+	            };
+	
+	            baw.write(request);
+	            baw.write(hostAddr.getAddress());
+	        } else {
+	            request = new byte[] {
+	                (byte) SOCKS5, (byte) 0x01, (byte) 0x00, (byte) 0x03
+	            };
+	            
+	            baw.write(request);
+	            byte[] h = hostToConnect.getBytes("UTF-8");
+	            baw.write(h.length);
+	            baw.write(h);
+	            
+	        }
+	
+	        baw.write((portToConnect >>> 8) & 0xff);
+	        baw.write(portToConnect & 0xff);
+	        
+	        socketChannel.write(ByteBuffer.wrap(baw.toByteArray()));
+        }
+        
+        b.clear();
+        if(socketChannel.read(b) != 1) {
+        	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
+                    protocolContext.getProxyPort() + " disconnected");
+        }
+        
+        res = b.get(0);
+
+        if (res != 0x05) {
+            throw new IOException("Invalid response from SOCKS5 server (" +
+                res + ") " + protocolContext.getProxyHostname() + ":" + protocolContext.getProxyPort());
+        }
+
+        b.clear();
+        if(socketChannel.read(b) != 1) {
+        	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
+                    protocolContext.getProxyPort() + " disconnected");
+        }
+        
+        int status = b.get(0);
+
+        if (status != 0x00) {
+            if ((status > 0) && (status < 9)) {
+                throw new IOException(
+                    "SOCKS5 server unable to connect, reason: " +
+                    SOCKSV5_ERROR[status]);
+            }
+			throw new IOException(
+			    "SOCKS5 server unable to connect, reason: " + status);
+        }
+
+        b.clear();
+        if(socketChannel.read(b) != 1) {
+        	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
+                    protocolContext.getProxyPort() + " disconnected");
+        }
+        
+        b.clear();
+        if(socketChannel.read(b) != 1) {
+        	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
+                    protocolContext.getProxyPort() + " disconnected");
+        }
+
+        int aType = b.get(0);
+
+        switch (aType) {
+        case 0x01:
+
+        	socketChannel.read(ByteBuffer.allocate(4));
+            break;
+
+        case 0x03:
+
+        	b.clear();
+            if(socketChannel.read(b) != 1) {
+            	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
+                        protocolContext.getProxyPort() + " disconnected");
+            }
+            int n = b.get(0);
+            socketChannel.read(ByteBuffer.allocate(n));
+
+            break;
+
+        default:
+            throw new IOException("SOCKS5 gave unsupported address type: " +
+                aType);
+        }
+
+        if(socketChannel.read(ByteBuffer.allocate(2)) != 2) {
+        	throw new IOException("SOCKS5 error reading port");
+        }
+
+	}
 
 	public boolean isStartupRequiresListeningInterfaces() {
 		return startupRequiresListeningInterfaces;

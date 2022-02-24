@@ -323,6 +323,10 @@ public class SshClient implements Closeable {
 		return executeCommandWithResult(cmd, buffer, 0L);
 	}
 	
+	public int executeCommandWithResult(String cmd) throws IOException {
+		return executeCommandWithResult(cmd, new StringBuffer(), 0L);
+	}
+	
 	public int executeCommandWithResult(String cmd, StringBuffer buffer, long timeout) throws IOException {
 		return executeCommandWithResult(cmd, buffer, timeout, "UTF-8");
 	}

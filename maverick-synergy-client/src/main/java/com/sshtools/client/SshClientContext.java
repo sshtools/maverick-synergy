@@ -86,15 +86,9 @@ public class SshClientContext extends SshContext {
 	AuthenticationProtocolClient authenticationClient; 
 	
 	private HostKeyVerification hkv = null;
-	private String proxyHostname;
-	private int proxyPort;
-	private String remoteHostname;
-	private int remotePort;
-	private String proxyUsername;
-	private String proxyPassword;
-	private boolean resolveLocally;
-	private String userAgent;
-	private Map<String,String> optionalHeaders;
+	
+//	private String remoteHostname;
+//	private int remotePort;
 	
 	ForwardingManager<SshClientContext> forwardingManager;
 	ConnectionManager<SshClientContext> connectionManager;
@@ -104,7 +98,7 @@ public class SshClientContext extends SshContext {
 	static ConnectionManager<SshClientContext> defaultConnectionManager 
 				= new ConnectionManager<SshClientContext>("client");
 	
-	private ProxyType proxyType = ProxyType.NONE;
+	
 
 	private boolean preferKeyboardInteractiveOverPassword = true;
 	
@@ -405,78 +399,6 @@ public class SshClientContext extends SshContext {
 //		((AuthenticationProtocolClient) transport.getActiveService()).addAuthentication(authenticator);
 //		return authenticator;
 //	}
-
-	public void enableSocks4Proxy(String proxyHostname, int proxyPort, 
-			String remoteHostname, int remotePort, String userId) {
-		
-	}
-	
-	public void enableSocks5Proxy(String proxyHostname, int proxyPort, 
-			String remoteHostname, int remotePort, 
-			String username, String password, boolean localLookup) {
-		
-	}
-	
-	public void enableHTTPProxy(String proxyHostname, int proxyPort,
-		String remoteHostname, int remotePort, 
-        String proxyUsername, String proxyPassword, 
-        String userAgent, Map<String,String> optionalHeaders ) {
-		
-		this.proxyType = ProxyType.HTTP;
-		this.proxyHostname = proxyHostname;
-		this.proxyPort = proxyPort;
-		this.remoteHostname = remoteHostname;
-		this.remotePort = remotePort;
-		this.proxyUsername = proxyUsername;
-		this.proxyPassword = proxyPassword;
-		this.userAgent = userAgent;
-		this.optionalHeaders = optionalHeaders;
-		
-	}
-	
-	public boolean isProxyEnabled() {
-		return proxyType != ProxyType.NONE;
-	}
-
-	public String getProxyHostname() {
-		return proxyHostname;
-	}
-
-	public int getProxyPort() {
-		return proxyPort;
-	}
-
-	public String getRemoteHostname() {
-		return remoteHostname;
-	}
-
-	public int getRemotePort() {
-		return remotePort;
-	}
-
-	public String getProxyUsername() {
-		return proxyUsername;
-	}
-
-	public String getProxyPassword() {
-		return proxyPassword;
-	}
-
-	public boolean isResolveLocally() {
-		return resolveLocally;
-	}
-	
-	public String getUserAgent() {
-		return userAgent;
-	}
-
-	public Map<String, String> getOptionalHeaders() {
-		return optionalHeaders;
-	}
-
-	public ProxyType getProxyType() {
-		return proxyType;
-	}
 
 	public boolean getPreferKeyboardInteractiveOverPassword() {
 		return preferKeyboardInteractiveOverPassword;

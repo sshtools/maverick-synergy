@@ -645,6 +645,18 @@ public class SshEngine {
 		return socketChannel;
 	}
 	
+	private int readByte(SocketChannel channel) throws IOException {
+		ByteBuffer b = ByteBuffer.allocate(1);
+		int r = channel.read(b);
+		if(r == -1) {
+			throw new IOException("Socket disconnected whilst expecting data");
+		}
+		if(r == 0) {
+			throw new IOException("Unexecpted zero bytes returned from socket");
+		}
+		return b.get(0) & 0xFF;
+	}
+	
 	private void sendSOCKS4ProxyRequest(SocketChannel socketChannel, ProtocolContext protocolContext,
 			String hostToConnect, int portToConnect) throws IOException {
 		
@@ -667,26 +679,14 @@ public class SshEngine {
 		
 		socketChannel.write(buf);
 		
-		buf = ByteBuffer.allocate(1);
-		
-		socketChannel.read(buf);
-		
-		int res = buf.get(0);
-		
-		if (res == -1) {
-            throw new IOException("SOCKS4 server " + protocolContext.getProxyHostname() + ":" +
-                protocolContext.getProxyPort() + " disconnected");
-        }
+		int res = readByte(socketChannel);
 
         if (res != 0x00) {
             throw new IOException("Invalid response from SOCKS4 server (" +
                 res + ") " + protocolContext.getProxyHostname() + ":" + protocolContext.getProxyPort());
         }
         
-        buf.clear();
-        socketChannel.read(buf);
-        
-        int code = buf.get(0);
+        int code = readByte(socketChannel);
 
         if (code != 90) {
             if ((code > 90) && (code < 93)) {
@@ -721,30 +721,17 @@ public class SshEngine {
                 (byte) SOCKS5, (byte) 0x02, (byte) 0x00, (byte) 0x02
         };
 		
-		ByteBuffer b = ByteBuffer.allocate(1);
-
         socketChannel.write(ByteBuffer.wrap(request));
-
-        if(socketChannel.read(b) != 1) {
-        	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
-                    protocolContext.getProxyPort() + " disconnected");
-        }
         
-        int res = b.get(0);
+        int res = readByte(socketChannel);
 
         if (res != 0x05) {
             throw new IOException("Invalid response from SOCKS5 server (" +
                 res + ") " + protocolContext.getProxyHostname() + ":" +
                 protocolContext.getProxyPort());
         }
-
-        b.clear();
-        if(socketChannel.read(b) != 1) {
-        	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
-                    protocolContext.getProxyPort() + " disconnected");
-        }
         
-        int method = b.get(0);
+        int method = readByte(socketChannel);
 
         switch (method) {
         case 0x00:
@@ -765,26 +752,15 @@ public class SshEngine {
 
 	            socketChannel.write(ByteBuffer.wrap(baw.toByteArray()));
         	}
-        	
-        	b.clear();
-            if(socketChannel.read(b) != 1) {
-            	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
-                        protocolContext.getProxyPort() + " disconnected");
-            }
             
-            res = b.get(0);
+            res = readByte(socketChannel);
 
             if ((res != 0x01) && (res != 0x05)) {
                 throw new IOException("Invalid response from SOCKS5 server (" +
                     res + ") " + protocolContext.getProxyHostname() + ":" + protocolContext.getProxyPort());
             }
 
-            b.clear();
-            if(socketChannel.read(b) != 1) {
-            	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
-                        protocolContext.getProxyPort() + " disconnected");
-            }
-            if (b.get(0) != 0x00) {
+            if (readByte(socketChannel) != 0x00) {
                 throw new IOException("Invalid username/password for SOCKS5 server");
             }
             break;
@@ -829,26 +805,14 @@ public class SshEngine {
 	        socketChannel.write(ByteBuffer.wrap(baw.toByteArray()));
         }
         
-        b.clear();
-        if(socketChannel.read(b) != 1) {
-        	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
-                    protocolContext.getProxyPort() + " disconnected");
-        }
-        
-        res = b.get(0);
+        res = readByte(socketChannel);
 
         if (res != 0x05) {
             throw new IOException("Invalid response from SOCKS5 server (" +
                 res + ") " + protocolContext.getProxyHostname() + ":" + protocolContext.getProxyPort());
         }
-
-        b.clear();
-        if(socketChannel.read(b) != 1) {
-        	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
-                    protocolContext.getProxyPort() + " disconnected");
-        }
         
-        int status = b.get(0);
+        int status = readByte(socketChannel);
 
         if (status != 0x00) {
             if ((status > 0) && (status < 9)) {
@@ -860,19 +824,9 @@ public class SshEngine {
 			    "SOCKS5 server unable to connect, reason: " + status);
         }
 
-        b.clear();
-        if(socketChannel.read(b) != 1) {
-        	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
-                    protocolContext.getProxyPort() + " disconnected");
-        }
-        
-        b.clear();
-        if(socketChannel.read(b) != 1) {
-        	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
-                    protocolContext.getProxyPort() + " disconnected");
-        }
+        readByte(socketChannel);
 
-        int aType = b.get(0);
+        int aType = readByte(socketChannel);
 
         switch (aType) {
         case 0x01:
@@ -882,12 +836,7 @@ public class SshEngine {
 
         case 0x03:
 
-        	b.clear();
-            if(socketChannel.read(b) != 1) {
-            	throw new IOException("SOCKS5 server " + protocolContext.getProxyHostname() + ":" +
-                        protocolContext.getProxyPort() + " disconnected");
-            }
-            int n = b.get(0);
+            int n = readByte(socketChannel);
             socketChannel.read(ByteBuffer.allocate(n));
 
             break;

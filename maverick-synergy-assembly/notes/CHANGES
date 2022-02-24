@@ -1,4 +1,13 @@
-Maverick Synergy 3.0.5-SNAPSHOT - Dec 1, 2021
+Maverick Synergy 3.0.7 - TBC
+
+Features
+    o Refactor of proxy support because existing support is incomplete and non-functional.
+    
+=================
+=  HISTORY      =
+=================
+
+Maverick Synergy 3.0.6 - Dec 1, 2021
 
 Features
     o Refactor of callback client; separated CallbackContextFactory and added SshConnection parameter to event methods.
@@ -31,12 +40,10 @@ Bug Fixes
     o Removed broken BouncyCastle OpenSSL public key file support as this was not complete and never implemented correctly.
     o VirtualMountFile should not resolve child until absolutely necessary to prevent list of mounts becoming slow due to destination resolution.
     o Regular expression file matching exists but not used in matchRemoteFiles.
-    
-=================
-=  HISTORY      =
-=================
 
-Maverick Synergy 3.0.4-SNAPSHOT - 27 Sept, 2021
+-----------------
+
+Maverick Synergy 3.0.4 - 27 Sept, 2021
 
 Features
     o Added execute method to ExpectShell so it has a method to execute, wait for completion and discarding output without having to provide set of arguments. 

@@ -27,26 +27,9 @@ import com.sshtools.common.publickey.SshKeyPairGenerator;
 import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.ComponentManager;
-import com.sshtools.common.ssh.components.jce.JCEProvider;
 
-public class Ed25519PublicKeyTests extends AbstractPublicKeyTests {
+public abstract class Ed25519PublicKeyTests extends AbstractPublicKeyTests {
 
-	public void setUp() {
-		JCEProvider.enableBouncyCastle(false);
-		ComponentManager.reset();
-	}
-	
-	public void tearDown() {
-		JCEProvider.disableBouncyCastle();
-		ComponentManager.reset();
-	}
-	
-	@Override
-	protected String getTestingJCE() {
-		return "BC";
-	}
-	
 	@Override
 	protected boolean isJCETested() {
 		return true;

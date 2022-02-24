@@ -172,6 +172,20 @@ public abstract class ProtocolContext {
 		this.resolveLocally = localLookup;
 	}
 	
+	public void enableHTTPProxy(String proxyHostname, int proxyPort) {
+		enableHTTPProxy(proxyHostname, proxyPort, null, null, null, null);
+	}
+	
+	public void enableHTTPProxy(String proxyHostname, int proxyPort,
+			String proxyUsername, String proxyPassword) {
+		enableHTTPProxy(proxyHostname, proxyPort, proxyUsername, proxyPassword, null, null);
+	}
+	
+	public void enableHTTPProxy(String proxyHostname, int proxyPort,
+			String proxyUsername, String proxyPassword, String userAgent) {
+		enableHTTPProxy(proxyHostname, proxyPort, proxyUsername, proxyPassword, userAgent, null);
+	}
+	
 	public void enableHTTPProxy(String proxyHostname, int proxyPort,
 	        String proxyUsername, String proxyPassword, 
 	        String userAgent, Map<String,String> optionalHeaders ) {

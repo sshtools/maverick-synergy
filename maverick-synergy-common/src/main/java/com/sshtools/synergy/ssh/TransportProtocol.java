@@ -536,7 +536,7 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 	}
 	
-	protected void processNegotiationString(String value) {
+	protected void processNegotiationString(String value) throws IOException {
 		
 	}
 	

@@ -57,7 +57,21 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 		return sshContext;
 	}
 	
-	private void processProxyProtocol(String tmp) {
+	private void processProxyProtocol(String tmp) throws IOException {
+		
+		if(!getContext().getPolicy(LoadBalancerPolicy.class).isProxyProtocolEnabled()) {
+			throw new IOException("Received PROXY protocol directive but the current policy does not support it");
+		}
+		
+		if(getContext().getPolicy(LoadBalancerPolicy.class).isRestrictedAccess()) {
+			String remoteAddress = ((InetSocketAddress)socketConnection.getRemoteAddress()).getAddress().getHostAddress();
+			if(!getContext().getPolicy(LoadBalancerPolicy.class).isSupportedIPAddress(remoteAddress)) {
+				throw new IOException(String.format("Received PROXY protocol string from unsupported IP address %s", remoteAddress));
+			}
+			if(Log.isDebugEnabled()) {
+				Log.debug("PROXY protocol directive enabled by remote IP adresss {}", remoteAddress);
+			}
+		}
 		
 		if(Log.isInfoEnabled()) {
 			Log.info(String.format("Parsing PROXY protocol string [%s]", tmp));
@@ -85,7 +99,7 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	}
 
 	@Override
-	protected void processNegotiationString(String value) {
+	protected void processNegotiationString(String value) throws IOException {
 		if(value.startsWith("PROXY")) {
 			processProxyProtocol(value);
 		}

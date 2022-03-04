@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sshtools.hotfixes</groupId>
 	<artifactId>maverick-synergy-group</artifactId>
-	<version>3.0.8-SNAPSHOT</version>
+	<version>3.0.8</version>
 	<name>Maverick Synergy</name>
 	<description>Open source Java SSH API</description>
 	<url>http://www.jadaptive.com</url>

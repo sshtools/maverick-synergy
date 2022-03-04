@@ -1,4 +1,4 @@
-Maverick Synergy 3.0.8 - TBC
+Maverick Synergy 3.0.8 - March 4, 2022
 
 Features
     o Removed hard dependency on BouncyCastle JCE for ed25519 keys. This now supports any JCE provider that supports ed25519 algorithm.
@@ -9,6 +9,7 @@ Bug Fixes
     o SftpFileAttributes does not use values set by setGroup/setUsername in v4 binary blob.
     o SftpFileAttributes does not validate UID/GID are numeric values.
     o Added getMount to VirtualFile interface for consistent mount returning function across virtual file types. Deprecated getParentMount on VirtualFileObject for same reasons.
+    o Added security options for PROXY protocol which are restrictive by default to ensure a user cannot spoof their IP address.
     
 =================
 =  HISTORY      =

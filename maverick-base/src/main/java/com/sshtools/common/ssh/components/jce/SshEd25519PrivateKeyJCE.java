@@ -84,7 +84,7 @@ public class SshEd25519PrivateKeyJCE implements SshEd25519PrivateKey {
 
 	public byte[] getSeed() {
 		byte[] encoded = key.getEncoded();
-		byte[] seed = Arrays.copy(encoded, encoded.length-32, 32);
+		byte[] seed = Arrays.copy(encoded, ASN_HEADER.length, 32);
 		return seed;
 	}
 

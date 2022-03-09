@@ -1,3 +1,13 @@
+Maverick Synergy 3.0.9 - TBC
+
+Bug Fixes
+    o New generic JCE based Ed25519 key implementation incorrectly writes the public key parameter to the private key field resulting in the key being unusable after reload from file.
+    o Setting the read-only attribute on a SftpFileAttributes when version is <5 causes WinSCP to error during directory listing.
+    
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.8 - March 4, 2022
 
 Features
@@ -11,9 +21,7 @@ Bug Fixes
     o Added getMount to VirtualFile interface for consistent mount returning function across virtual file types. Deprecated getParentMount on VirtualFileObject for same reasons.
     o Added security options for PROXY protocol which are restrictive by default to ensure a user cannot spoof their IP address.
     
-=================
-=  HISTORY      =
-=================
+-----------------
 
 Maverick Synergy 3.0.7 - Dec 14, 2021
 

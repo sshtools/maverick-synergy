@@ -34,6 +34,7 @@ import com.sshtools.common.util.ExpiringConcurrentHashMap;
 public class IPPolicy extends Permissions {
 
 	static final int ALLOW_CONNECT = 0x01;
+	static final int DISABLE_BAN = 0x02;
 	
 	IPStore blacklist = new IPStore();
 	IPStore whitelist = new IPStore();
@@ -64,12 +65,24 @@ public class IPPolicy extends Permissions {
 		this.temporaryBans = temporaryBans;
 	}
 	
+	public void disableTemporaryBanning() {
+		add(DISABLE_BAN);
+	}
+	
+	public void enableTemporaryBanning() {
+		remove(DISABLE_BAN);
+	}
+	
 	public long getTemporaryBanTime() {
 		return temporaryBans.getExpiryTime();
 	}
 	
 	protected boolean assertConnection(SocketAddress remoteAddress, SocketAddress localAddress) {
+		
 		if(check(ALLOW_CONNECT)) {
+			if(check(DISABLE_BAN)) {
+				return true;
+			}
 			return assertAllowed(remoteAddress, localAddress);
 		}
 		return false;

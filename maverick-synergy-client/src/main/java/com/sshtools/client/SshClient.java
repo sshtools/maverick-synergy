@@ -38,9 +38,11 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyUtils;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.ssh.Connection;
 

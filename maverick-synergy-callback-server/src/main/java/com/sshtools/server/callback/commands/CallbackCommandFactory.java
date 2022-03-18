@@ -22,14 +22,14 @@ import java.io.IOException;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.server.callback.CallbackServer;
+import com.sshtools.server.callback.CallbackRegistrationService;
 import com.sshtools.server.vsession.CommandFactory;
 
 public class CallbackCommandFactory extends CommandFactory<CallbackCommand> {
 
-	CallbackServer server;
+	CallbackRegistrationService server;
 	
-	public CallbackCommandFactory(CallbackServer server) {
+	public CallbackCommandFactory(CallbackRegistrationService server) {
 		this.server = server;
 		installShellCommands();
 	}
@@ -42,7 +42,7 @@ public class CallbackCommandFactory extends CommandFactory<CallbackCommand> {
 
 	@Override
 	protected void configureCommand(CallbackCommand c, SshConnection con) throws IOException, PermissionDeniedException {
-		c.setServer(server);
+		c.setRegistrationService(server);
 		super.configureCommand(c, con);
 	}
 

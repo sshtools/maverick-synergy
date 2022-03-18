@@ -20,7 +20,6 @@ package com.sshtools.synergy.nio;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
@@ -49,7 +48,6 @@ import com.sshtools.common.ssh.AbstractRequestFuture;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.ssh.Connection;
 

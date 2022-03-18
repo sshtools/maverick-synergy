@@ -19,7 +19,6 @@
 package com.sshtools.client;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 

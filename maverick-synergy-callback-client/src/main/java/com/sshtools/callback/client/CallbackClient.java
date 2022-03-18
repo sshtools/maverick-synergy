@@ -109,9 +109,9 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		executor.execute(client);
 	}
 	
-	void onClientConnected(CallbackSession client) {
+	void onClientConnected(CallbackSession client, SshConnection con) {
 		clients.add(client);
-		onClientStart(client);
+		onClientStart(client, con);
 	}
 	
 	public boolean isConnected() {

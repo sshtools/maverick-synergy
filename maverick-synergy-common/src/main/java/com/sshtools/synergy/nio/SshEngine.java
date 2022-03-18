@@ -667,13 +667,13 @@ public class SshEngine {
 		InetAddress hostAddr = InetAddress.getByName(hostToConnect);
 		ByteBuffer buf = ByteBuffer.allocate(1024);
 		
-		buf.put((byte)0x04);
-		buf.put((byte)0x01);
+		buf.put((byte)SOCKS4);
+		buf.put((byte)CONNECT);
 		buf.put((byte)((portToConnect >>> 8) & 0xff));
 		buf.put((byte)(portToConnect & 0xff));
 		buf.put(hostAddr.getAddress());
 		buf.put(protocolContext.getProxyUsername().getBytes("UTF-8"));
-		buf.put((byte)0x00);
+		buf.put((byte)NULL_TERMINATION);
 
 		buf.flip();
 		
@@ -1136,6 +1136,11 @@ public class SshEngine {
 					if(protocolContext.getSendBufferSize() > 0) {
 						sc.socket().setSendBufferSize(
 							protocolContext.getSendBufferSize());
+					}
+					
+					if(protocolContext.getReceiveBufferSize() > 0) {
+						sc.socket().setReceiveBufferSize(
+							protocolContext.getReceiveBufferSize());
 					}
 					
 					sc.configureBlocking(false);

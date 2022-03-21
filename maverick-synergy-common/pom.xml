@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.sshtools.hotfixes</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.0.8</version>
+		<version>3.0.9</version>
 	</parent>
 	<artifactId>maverick-synergy-common</artifactId>
 	<name>Common API</name>

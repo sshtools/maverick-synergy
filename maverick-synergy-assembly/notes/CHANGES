@@ -1,10 +1,11 @@
-Maverick Synergy 3.0.9 - TBC
+Maverick Synergy 3.0.9 - March 21, 2022
 
 Bug Fixes
     o New generic JCE based Ed25519 key implementation incorrectly writes the public key parameter to the private key field resulting in the key being unusable after reload from file.
     o Setting the read-only attribute on a SftpFileAttributes when version is <5 causes WinSCP to error during directory listing.
     o Azure SFTP disconnects if SSH identification string contains an additional hyphen in the software/version/comments part of the identifier. These are now replaced with an underscore character.
     o You cannot turn off the default IP banning policy which sometimes might get in the way of testing scripts.
+    o Upload performance is constrained compared to download performance due to insufficient default window space in SFTP configuration. Default SFTP window space changed to 16MB. 
     
 =================
 =  HISTORY      =

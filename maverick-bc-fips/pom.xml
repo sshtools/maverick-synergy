@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.sshtools.hotfixes</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.0.9</version>
+		<version>3.0.10-SNAPSHOT</version>
 	</parent>
 	<artifactId>maverick-bc-fips</artifactId>
 	<name>BouncyCastle FIPS</name>

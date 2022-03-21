@@ -35,6 +35,7 @@ import com.sshtools.common.sftp.SftpExtension;
 import com.sshtools.common.sftp.SftpExtensionFactory;
 import com.sshtools.common.sftp.extensions.DefaultSftpExtensionFactory;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.IOUtils;
 
 public class FileSystemPolicy extends Permissions {
 
@@ -55,7 +56,7 @@ public class FileSystemPolicy extends Permissions {
 	boolean mkdirParentMustExist = true;
 	
 	private int sftpMaxPacketSize = 65536;
-	private int sftpMaxWindowSize = 1024000;
+	private int sftpMaxWindowSize = IOUtils.fromByteSize("16MB").intValue();
 	private int sftpMinWindowSize = 131072;
 	
 	public FileSystemPolicy() {

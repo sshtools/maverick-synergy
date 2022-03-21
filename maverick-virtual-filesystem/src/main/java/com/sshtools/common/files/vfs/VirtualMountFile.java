@@ -36,7 +36,6 @@ import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.UnsignedInteger64;
 
@@ -101,19 +100,19 @@ public class VirtualMountFile extends VirtualFileObject {
 
 	public SftpFileAttributes getAttributes() throws FileNotFoundException,
 			IOException, PermissionDeniedException {
+		
+		SftpFileAttributes  attrs;
 		if(isMount()) {
-			SftpFileAttributes attrs = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY, "UTF-8");
+			attrs = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY, "UTF-8");
 			attrs.setPermissions(parentMount.defaultPermissions());
-			try {
-				attrs.setReadOnly(parentMount.isReadOnly());
-			} catch (SftpStatusException e) {
-			}
 			attrs.setTimes(new UnsignedInteger64(parentMount.lastModified()),
 					new UnsignedInteger64(parentMount.lastModified()),
 					new UnsignedInteger64(parentMount.lastModified()));
-			return attrs;
+		} else {
+			attrs = resolveFile().getAttributes();
 		}
-		return resolveFile().getAttributes();
+
+		return attrs;
 	}
 
 	public boolean isHidden() throws IOException, PermissionDeniedException {

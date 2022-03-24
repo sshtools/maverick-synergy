@@ -43,11 +43,11 @@ public class VirtualMountFile extends VirtualFileObject {
 
 	private String name;
 	private String path;
-	private AbstractFile file;
 	
 	Map<String,AbstractFile> cachedChildren;
+	boolean isPartialMount;
 	
-	public VirtualMountFile(String path, VirtualMount mount, VirtualFileFactory fileFactory) throws PermissionDeniedException, IOException {
+	public VirtualMountFile(String path, VirtualMount mount, boolean isPartialMount, VirtualFileFactory fileFactory) throws PermissionDeniedException, IOException {
 		super(fileFactory, mount);
 		int idx = path.lastIndexOf('/');
 		if(idx > -1) {
@@ -56,10 +56,11 @@ public class VirtualMountFile extends VirtualFileObject {
 			name = path;
 		}
 		this.path = path;
+		this.isPartialMount = isPartialMount;
 	}
 	
 	public boolean isMount() {
-		return FileUtils.addTrailingSlash(parentMount.getMount()).equals(FileUtils.addTrailingSlash(path));
+		return isPartialMount || FileUtils.addTrailingSlash(parentMount.getMount()).equals(FileUtils.addTrailingSlash(path));
 	}
 	
 	private AbstractFile resolveFile() throws PermissionDeniedException, IOException {
@@ -145,7 +146,7 @@ public class VirtualMountFile extends VirtualFileObject {
 			if(file.exists()) {
 				VirtualMount actualMount = mgr.getMount(currentPath);
 				for(AbstractFile child : file.getChildren()) {
-					files.put(currentPath + child.getName(), new VirtualMountFile(currentPath + child.getName(), actualMount, fileFactory));
+					files.put(currentPath + child.getName(), new VirtualMountFile(currentPath + child.getName(), actualMount, false, fileFactory));
 				}
 			}
 			

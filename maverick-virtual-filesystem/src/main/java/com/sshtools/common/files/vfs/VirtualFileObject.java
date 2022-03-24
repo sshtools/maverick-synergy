@@ -89,14 +89,30 @@ public class VirtualFileObject extends AbstractFileAdapter implements VirtualFil
 			VirtualMountManager mgr = fileFactory.getMountManager();
 			
 			for(VirtualMount m : mgr.getMounts()) {
-				String mpath = FileUtils.checkEndsWithSlash(m.getMount());
-				if(mpath.startsWith(currentPath)) {
-					if(!mpath.equals(currentPath)) {
-						String child = m.getMount().substring(currentPath.length());
-						if(child.indexOf('/') > -1) {
-							child = child.substring(0,child.indexOf('/'));
+				
+				String mountPath = FileUtils.checkEndsWithSlash(m.getMount());
+				
+				if(mountPath.startsWith(currentPath)) {
+					String childPath = m.getMount().substring(currentPath.length());
+					
+					if(childPath.indexOf('/') > -1) {
+						childPath = FileUtils.checkEndsWithSlash(
+										FileUtils.checkStartsWithSlash(
+												childPath.substring(0,childPath.indexOf('/'))));
+					} else {
+						childPath = mountPath;
+					}
+					
+					if(mountPath.startsWith(currentPath) && !mountPath.equals(currentPath)) {
+						if(mountPath.equals(childPath)) {
+							files.put(childPath, new VirtualMountFile(
+									FileUtils.checkEndsWithNoSlash(childPath),
+									m, true, fileFactory));
+						} else {
+							files.put(childPath, new VirtualMountFile(
+									FileUtils.checkEndsWithNoSlash(childPath),
+										parentMount, true, fileFactory));
 						}
-						files.put(currentPath + child, new VirtualMountFile(currentPath + child, m, fileFactory));
 					}
 				}
 			}

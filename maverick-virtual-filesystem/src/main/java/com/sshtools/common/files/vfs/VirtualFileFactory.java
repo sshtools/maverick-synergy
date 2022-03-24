@@ -117,18 +117,17 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 					String thisMountPath = FileUtils.addTrailingSlash(m
 							.getMount());
 					if (thisMountPath.startsWith(mountPath) 
-							&& !thisMountPath.contentEquals(mountPath)) {
+							&& !thisMountPath.equals(mountPath)) {
 						return new VirtualMountFile(
 								FileUtils.removeTrailingSlash(virtualPath),
-								mgr.getMount(virtualPath), this);
+								mgr.getMount(virtualPath), true,  this);
 					}
 				}
 			} else {
 				VirtualMount rootMount = mgr.getMount("/");
 				if (!rootMount.isFilesystemRoot()
-						|| (rootMount.isFilesystemRoot() && !rootMount
-								.isDefault())) {
-					return new VirtualMountFile(virtualPath, rootMount, this);
+						|| (rootMount.isFilesystemRoot() && !rootMount.isDefault())) {
+					return new VirtualMountFile(virtualPath, rootMount, false, this);
 				}
 			}
 			// If we reached here we are file system root and default so we

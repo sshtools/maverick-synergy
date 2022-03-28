@@ -38,6 +38,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -154,11 +155,14 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	@Override
 	public synchronized void enableFile(Level level, File logFile) {
 		try {
-			for(LoggerContext ctx : contexts) {
+			Iterator<LoggerContext> it = contexts.iterator();
+			while(it.hasNext()) {
+				LoggerContext ctx = it.next();
 				if(ctx instanceof FileLoggingContext) {
 					FileLoggingContext context = (FileLoggingContext) ctx;
 					if(context.getFile().equals(logFile)) {
 						context.close();
+						it.remove();
 					}
 				}
 			}

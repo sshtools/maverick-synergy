@@ -39,4 +39,6 @@ public interface RootLoggerContext extends LoggerContext {
 
 	void enableFile(Level level, File logFile, int maxFiles, long maxSize);
 
+	void reset();
+
 }

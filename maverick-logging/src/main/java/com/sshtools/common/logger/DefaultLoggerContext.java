@@ -67,6 +67,7 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	}
 	
 	public void shutdown() {
+		reset();
 		if(watcher!=null) {
 			watcher.stopThread();
 		}
@@ -168,6 +169,14 @@ public class DefaultLoggerContext implements RootLoggerContext {
 			System.err.println("Error logging to file");
 			e.printStackTrace();
 		}
+	}
+	
+	public synchronized void reset() {
+		for(LoggerContext ctx : contexts) {
+			ctx.close();
+		}
+		
+		contexts.clear();
 	}
 	
 	@Override

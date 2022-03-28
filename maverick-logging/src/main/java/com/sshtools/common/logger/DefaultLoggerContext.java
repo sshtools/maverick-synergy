@@ -154,6 +154,14 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	@Override
 	public synchronized void enableFile(Level level, File logFile) {
 		try {
+			for(LoggerContext ctx : contexts) {
+				if(ctx instanceof FileLoggingContext) {
+					FileLoggingContext context = (FileLoggingContext) ctx;
+					if(context.getFile().equals(logFile)) {
+						context.close();
+					}
+				}
+			}
 			contexts.add(new FileLoggingContext(level, logFile));
 		} catch (IOException e) {
 			System.err.println("Error logging to file");

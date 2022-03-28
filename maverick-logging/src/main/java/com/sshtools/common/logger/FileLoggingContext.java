@@ -128,4 +128,8 @@ public class FileLoggingContext extends AbstractLoggingContext {
 	public void newline() {
 		logToFile(System.lineSeparator(), true);
 	}
+
+	public File getFile() {
+		return logFile;
+	}
 }

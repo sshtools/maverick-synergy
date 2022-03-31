@@ -21,6 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
@@ -33,7 +34,7 @@ public class VirtualMappedFile extends VirtualFileObject {
 	private String absolutePath;
 	private String name;
 	
-	List<AbstractFile> cachedChildren = null;
+	Map<String,VirtualFile> cachedChildren = null;
 	
 	public VirtualMappedFile(String path,
 			VirtualMount parentMount, VirtualFileFactory fileFactory)
@@ -69,12 +70,15 @@ public class VirtualMappedFile extends VirtualFileObject {
 		int idx = absolutePath.lastIndexOf("/");
 		name = absolutePath.substring(idx + 1);
 	}
-
 	
 	@Override
 	public synchronized void refresh() {
 		cachedChildren = null;
 		super.refresh();
+	}
+	
+	public AbstractFile resolveFile() {
+		return file;
 	}
 
 	@Override
@@ -82,31 +86,10 @@ public class VirtualMappedFile extends VirtualFileObject {
 			PermissionDeniedException {
 
 		if(Objects.isNull(cachedChildren)) {
-			List<AbstractFile> files = new ArrayList<AbstractFile>();
-
-			VirtualMountManager mgr = fileFactory.getMountManager();
-			
-			if (absolutePath.equals("/")) {
-				files.addAll(getVirtualMounts().values());
-	
-				for (AbstractFile f : super.getChildren()) {
-					VirtualFile f2 = new VirtualMappedFile(f, parentMount, fileFactory);
-					if (!mgr.isMounted(f2.getAbsolutePath())) {
-						files.add(f2);
-					}
-				}
-	
-			} else {
-				for (AbstractFile f : super.getChildren()) {
-					files.add(new VirtualMappedFile(f, parentMount,
-							fileFactory));
-				}
-			}
-	
-			cachedChildren = files;
+			cachedChildren = fileFactory.resolveChildren(this);
 		}
 		
-		return cachedChildren;
+		return new ArrayList<>(cachedChildren.values());
 	}
 
 	
@@ -320,6 +303,11 @@ public class VirtualMappedFile extends VirtualFileObject {
 	
 	public VirtualMount getParentMount() {
 		return parentMount;
+	}
+
+	@Override
+	public boolean isMount() {
+		return false;
 	}
 	
 }

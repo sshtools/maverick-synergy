@@ -18,17 +18,12 @@
  */
 package com.sshtools.common.files.vfs;
 
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileAdapter;
-import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.util.FileUtils;
 
-public class VirtualFileObject extends AbstractFileAdapter implements VirtualFile {
+public abstract class VirtualFileObject extends AbstractFileAdapter implements VirtualFile {
 
 	VirtualMount parentMount;
 	Map<String,AbstractFile> mounts;
@@ -59,30 +54,4 @@ public class VirtualFileObject extends AbstractFileAdapter implements VirtualFil
 		return parentMount;
 	}
 
-	protected synchronized Map<String,AbstractFile> getVirtualMounts() throws IOException, PermissionDeniedException {
-		
-		if(Objects.isNull(mounts)) {
-			Map<String,AbstractFile> files = new HashMap<String,AbstractFile>();
-			
-			String currentPath = FileUtils.checkEndsWithSlash(getAbsolutePath());
-	
-			VirtualMountManager mgr = fileFactory.getMountManager();
-			
-			for(VirtualMount m : mgr.getMounts()) {
-				String mpath = FileUtils.checkEndsWithSlash(m.getMount());
-				if(mpath.startsWith(currentPath)) {
-					if(!mpath.equals(currentPath)) {
-						String child = m.getMount().substring(currentPath.length());
-						if(child.indexOf('/') > -1) {
-							child = child.substring(0,child.indexOf('/'));
-						}
-						files.put(currentPath + child, new VirtualMountFile(currentPath + child, m, fileFactory));
-					}
-				}
-			}
-			
-			mounts =  files;
-		}
-		return mounts;
-	}
 }

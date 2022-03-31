@@ -91,8 +91,8 @@ public class DirectFileJava7 extends DirectFile {
 			try {
 				PosixFileAttributes posix =  Files.readAttributes(file, PosixFileAttributes.class);
 				
-				attrs.setGID(posix.group().getName());
-				attrs.setUID(posix.owner().getName());
+				attrs.setGroup(posix.group().getName());
+				attrs.setUsername(posix.owner().getName());
 				
 				attrs.setPermissions(PosixFilePermissions.toString(posix.permissions()));
 				

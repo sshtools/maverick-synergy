@@ -82,10 +82,12 @@ public class VirtualMount extends AbstractMount {
 	}
 
 	public String getResolvePath(String path) {
-		if (path.length() > FileUtils.addTrailingSlash(mount).length()) {
+		
+		String thisMount = FileUtils.addTrailingSlash(mount);
+		String thisPath = FileUtils.addTrailingSlash(path);
+		if (thisPath.length() >= thisMount.length()) {
 			return FileUtils.addTrailingSlash(this.path)
-					+ path.substring(FileUtils.addTrailingSlash(mount)
-							.length());
+					+ thisPath.substring(thisMount.length());
 		} else {
 			return this.path;
 		}

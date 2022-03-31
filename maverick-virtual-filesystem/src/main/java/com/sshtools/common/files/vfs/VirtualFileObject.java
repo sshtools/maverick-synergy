@@ -38,17 +38,12 @@
  */
 package com.sshtools.common.files.vfs;
 
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileAdapter;
-import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.util.FileUtils;
 
-public class VirtualFileObject extends AbstractFileAdapter implements VirtualFile {
+public abstract class VirtualFileObject extends AbstractFileAdapter implements VirtualFile {
 
 	VirtualMount parentMount;
 	Map<String,AbstractFile> mounts;
@@ -79,46 +74,4 @@ public class VirtualFileObject extends AbstractFileAdapter implements VirtualFil
 		return parentMount;
 	}
 
-	protected synchronized Map<String,AbstractFile> getVirtualMounts() throws IOException, PermissionDeniedException {
-		
-		if(Objects.isNull(mounts)) {
-			Map<String,AbstractFile> files = new HashMap<String,AbstractFile>();
-			
-			String currentPath = FileUtils.checkEndsWithSlash(getAbsolutePath());
-	
-			VirtualMountManager mgr = fileFactory.getMountManager();
-			
-			for(VirtualMount m : mgr.getMounts()) {
-				
-				String mountPath = FileUtils.checkEndsWithSlash(m.getMount());
-				
-				if(mountPath.startsWith(currentPath)) {
-					String childPath = m.getMount().substring(currentPath.length());
-					
-					if(childPath.indexOf('/') > -1) {
-						childPath = FileUtils.checkEndsWithSlash(
-										FileUtils.checkStartsWithSlash(
-												childPath.substring(0,childPath.indexOf('/'))));
-					} else {
-						childPath = mountPath;
-					}
-					
-					if(mountPath.startsWith(currentPath) && !mountPath.equals(currentPath)) {
-						if(mountPath.equals(childPath)) {
-							files.put(childPath, new VirtualMountFile(
-									FileUtils.checkEndsWithNoSlash(childPath),
-									m, true, fileFactory));
-						} else {
-							files.put(childPath, new VirtualMountFile(
-									FileUtils.checkEndsWithNoSlash(childPath),
-										parentMount, true, fileFactory));
-						}
-					}
-				}
-			}
-			
-			mounts =  files;
-		}
-		return mounts;
-	}
 }

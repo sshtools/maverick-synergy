@@ -4,6 +4,8 @@ Bug Fixes
     o Refactor of VirtualFileFactory to provide consistent resolution of children.
     o Intermediate non-existent paths along a virtual mount path should be read only.
     o Calling enableFile twice on the same logging path should not create an additional log context but should instead reconfigure the existing context.
+    o Added isMount method to VirtualFile to make it easier to determine if the file object is a mount or not.
+    o VirtualMounts are now processed and cached in the VirtualFileFactory constructor.
     o There is no method to reset the logging contexts.
     o DirectFileJava7 attempts to set name of group/user using the SftpFileAttributes method that only accepts a numerical GID/UID.
     

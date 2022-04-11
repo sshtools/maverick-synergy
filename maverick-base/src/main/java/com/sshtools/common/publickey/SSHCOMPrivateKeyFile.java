@@ -22,6 +22,7 @@ package com.sshtools.common.publickey;
 import java.io.IOException;
 import java.math.BigInteger;
 
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.ssh.components.ComponentManager;
@@ -144,12 +145,20 @@ class SSHCOMPrivateKeyFile extends Base64EncodedFileFormat implements
 					BigInteger e = data.readMPINT32();
 					BigInteger d = data.readMPINT32();
 					BigInteger n = data.readMPINT32();
-					@SuppressWarnings("unused")
-					BigInteger u = data.readMPINT32();
-					@SuppressWarnings("unused")
-					BigInteger p = data.readMPINT32();
-					@SuppressWarnings("unused")
-					BigInteger q = data.readMPINT32();
+					
+					/**
+					 * Removing collection of unused parameters
+					 * as we have encountered issues where we 
+					 * could not read final parameter due to incorrect
+					 * encoding. This blindly fixes the issue as we 
+					 * don't use these parameters.
+					 */
+//					@SuppressWarnings("unused")
+//					BigInteger u = data.readMPINT32();
+//					@SuppressWarnings("unused")
+//					BigInteger p = data.readMPINT32();
+//					@SuppressWarnings("unused")
+//					BigInteger q = data.readMPINT32();
 
 					SshKeyPair pair = new SshKeyPair();
 
@@ -184,9 +193,9 @@ class SSHCOMPrivateKeyFile extends Base64EncodedFileFormat implements
 
 					return pair;
 				} else
-					throw new IOException("Unsupported ssh.com key type "
-							+ type);
+					throw new IOException("Unsupported ssh.com key type " + type);
 			} catch (Throwable t) {
+				Log.error("Parsing of ssh.com key failed", t);
 				if (wasEncrypted)
 					throw new InvalidPassphraseException();
 				throw new IOException("Bad SSH.com private key format!");

@@ -16,21 +16,12 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.callback.commands;
+package com.sshtools.common.net;
 
-import com.sshtools.server.callback.CallbackRegistrationService;
-import com.sshtools.server.vsession.ShellCommand;
+public enum ProxyType {
 
-public abstract class CallbackCommand extends ShellCommand {
-
-	protected CallbackRegistrationService service;
-	
-	public CallbackCommand(String name, String subsystem, String signature, String description) {
-		super(name, subsystem, signature, description);
-	}
-	
-	public void setRegistrationService(CallbackRegistrationService service) {
-		this.service = service;
-	}
-
+	NONE,
+	SOCKS4,
+	SOCKS5,
+	HTTP
 }

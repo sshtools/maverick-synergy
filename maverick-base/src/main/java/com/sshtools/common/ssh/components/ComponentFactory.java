@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-/* HEADER */
 package com.sshtools.common.ssh.components;
 
 import java.util.ArrayList;
@@ -34,6 +33,7 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SecureComponent;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.util.Utils;
 
 /**
  * <p>
@@ -345,10 +345,12 @@ public class ComponentFactory<T> implements Cloneable {
 		List<SecureComponent> list = new ArrayList<>();
 		for (String name : supported.keySet()) {
 			SecureComponent o = (SecureComponent) getInstance(name);
-			if(o.getSecurityLevel().ordinal() < securityLevel.ordinal()) {
-				remove(name);
-			} else {
-				list.add(o);
+			if(Objects.nonNull(o)) {
+				if(o.getSecurityLevel().ordinal() < securityLevel.ordinal()) {
+					remove(name);
+				} else {
+					list.add(o);
+				}
 			}
 		}
 		
@@ -415,5 +417,22 @@ public class ComponentFactory<T> implements Cloneable {
 
 	public String list() {
 		return list("");
+	}
+	
+	public String filter(String list, String... ignores) {
+		if(list==null) {
+			return list;
+		}
+		
+		Vector<String> newOrder = new Vector<String>();
+		
+		for(String alg : list.split(",")) {
+			if(supported.containsKey(alg)) {
+				newOrder.add(alg);
+			}
+		}
+		
+		return Utils.csv(newOrder);
+		
 	}
 }

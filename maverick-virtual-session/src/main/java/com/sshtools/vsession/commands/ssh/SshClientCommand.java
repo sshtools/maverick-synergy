@@ -28,6 +28,7 @@ import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.shell.ShellTimeoutException;
 import com.sshtools.client.tasks.AbstractCommandTask;
+import com.sshtools.client.tasks.AbstractSessionTask;
 import com.sshtools.client.tasks.ShellTask;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.ConnectionAwareTask;
@@ -46,74 +47,75 @@ public class SshClientCommand extends AbstractSshClientCommand {
 		}
 	}
 	
+
 	@Override
-	protected void runCommand(SshClient sshClient, SshClientArguments arguments, VirtualConsole console) {
+	public void runCommand(SshClient sshClient, SshClientArguments arguments, VirtualConsole console) {
 
-		if (CommandUtil.isNotEmpty(arguments.getCommand())) {
-			String command = arguments.getCommand();
-			Connection<SshClientContext> connection = sshClient.getConnection();
-			AbstractCommandTask task = new AbstractCommandTask(connection, command) {
-				
-				@Override
-				protected void beforeExecuteCommand(SessionChannelNG session) {
-					session.allocatePseudoTerminal(console.getTerminal().getType(), console.getTerminal().getWidth(),
-							console.getTerminal().getHeight());
-				}
-				
-				@Override
-				protected void onOpenSession(SessionChannelNG session) throws IOException {
-					
-					console.getSessionChannel().enableRawMode();
-
-					con.addTask(new ConnectionAwareTask(con) {
-						@Override
-						protected void doTask() throws Throwable {
-							IOUtils.copy(console.getSessionChannel().getInputStream(), session.getOutputStream());
-						}
-					});
-					IOUtils.copy(session.getInputStream(), console.getSessionChannel().getOutputStream());
-				}
-			};
+		console.getSessionChannel().enableRawMode();
+		
+		try {
+			Connection<SshClientContext> connection = sshClient.getConnection();		
+			AbstractSessionTask<?> task;
 			
+			if (CommandUtil.isNotEmpty(arguments.getCommand())) {
+				
+				String command = arguments.getCommand();
+				task = new AbstractCommandTask(connection, command) {
+					
+					@Override
+					protected void beforeExecuteCommand(SessionChannelNG session) {
+						session.allocatePseudoTerminal(console.getTerminal().getType(), 
+								console.getTerminal().getWidth(),
+								console.getTerminal().getHeight());
+					}
+					
+					@Override
+					protected void onOpenSession(SessionChannelNG session) throws IOException {
+	
+						con.addTask(new ConnectionAwareTask(con) {
+							@Override
+							protected void doTask() throws Throwable {
+								IOUtils.copy(console.getSessionChannel().getInputStream(), session.getOutputStream());
+							}
+						});
+						IOUtils.copy(session.getInputStream(), console.getSessionChannel().getOutputStream());
+					}
+				};
+				
+			} else {
+	
+				task = new ShellTask(connection) {
+	
+					protected void beforeStartShell(SessionChannelNG session) {
+		
+						session.allocatePseudoTerminal(console.getTerminal().getType(), console.getTerminal().getWidth(),
+								console.getTerminal().getHeight());
+					}
+		
+					@Override
+					protected void onOpenSession(final SessionChannelNG session)
+							throws IOException, SshException, ShellTimeoutException {
+		
+		
+						con.addTask(new ConnectionAwareTask(con) {
+							@Override
+							protected void doTask() throws Throwable {
+								IOUtils.copy(console.getSessionChannel().getInputStream(), session.getOutputStream());
+							}
+						});
+						IOUtils.copy(session.getInputStream(), console.getSessionChannel().getOutputStream());
+					}
+		
+				};
+			}
+	
 			connection.addTask(task);
 			task.waitForever();
+
+		} finally {
 			console.getSessionChannel().disableRawMode();
-
-			return;
+			console.println();
 		}
-
-		Connection<SshClientContext> connection = sshClient.getConnection();
-
-		ShellTask shell = new ShellTask(connection) {
-
-			protected void beforeStartShell(SessionChannelNG session) {
-
-				session.allocatePseudoTerminal(console.getTerminal().getType(), console.getTerminal().getWidth(),
-						console.getTerminal().getHeight());
-			}
-
-			@Override
-			protected void onOpenSession(final SessionChannelNG session)
-					throws IOException, SshException, ShellTimeoutException {
-
-				console.getSessionChannel().enableRawMode();
-
-				con.addTask(new ConnectionAwareTask(con) {
-					@Override
-					protected void doTask() throws Throwable {
-						IOUtils.copy(console.getSessionChannel().getInputStream(), session.getOutputStream());
-					}
-				});
-				IOUtils.copy(session.getInputStream(), console.getSessionChannel().getOutputStream());
-			}
-
-		};
-
-		connection.addTask(shell);
-		shell.waitForever();
-
-		console.getSessionChannel().disableRawMode();
-		console.println();
 
 	}
 

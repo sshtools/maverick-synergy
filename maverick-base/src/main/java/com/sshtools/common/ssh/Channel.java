@@ -50,4 +50,6 @@ public interface Channel {
 	boolean isRemoteEOF();
 
 	boolean isLocalEOF();
+
+	String getChannelType();
 }

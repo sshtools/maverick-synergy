@@ -30,12 +30,13 @@ import com.sshtools.common.util.FileUtils;
 
 public class VirtualFileObject extends AbstractFileAdapter implements VirtualFile {
 
-	
+	VirtualMount parentMount;
 	Map<String,AbstractFile> mounts;
 	protected VirtualFileFactory fileFactory;
 	
-	protected VirtualFileObject(VirtualFileFactory factory) {
+	protected VirtualFileObject(VirtualFileFactory factory, VirtualMount parentMount) {
 		this.fileFactory = factory;
+		this.parentMount = parentMount;
 	}
 	
 	
@@ -45,6 +46,9 @@ public class VirtualFileObject extends AbstractFileAdapter implements VirtualFil
 		super.refresh();
 	}
 
+	public VirtualMount getParentMount() {
+		return parentMount;
+	}
 
 	protected synchronized Map<String,AbstractFile> getVirtualMounts() throws IOException, PermissionDeniedException {
 		

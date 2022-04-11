@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
-import java.util.concurrent.TimeUnit;
 
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.tasks.AbstractSubsystem;

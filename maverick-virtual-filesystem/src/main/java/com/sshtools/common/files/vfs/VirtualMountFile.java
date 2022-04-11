@@ -39,7 +39,6 @@ import com.sshtools.common.util.UnsignedInteger64;
 
 public class VirtualMountFile extends VirtualFileObject {
 
-	private VirtualMount mount;
 	private String name;
 	private String path;
 	private AbstractFile file;
@@ -47,10 +46,7 @@ public class VirtualMountFile extends VirtualFileObject {
 	Map<String,AbstractFile> cachedChildren;
 	
 	public VirtualMountFile(String path, VirtualMount mount, VirtualFileFactory fileFactory) throws PermissionDeniedException, IOException {
-		super(fileFactory);
-		
-		this.mount = mount;
-
+		super(fileFactory, mount);
 		int idx = path.lastIndexOf('/');
 		if(idx > -1) {
 			name = path.substring(idx+1);
@@ -61,14 +57,14 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 	
 	public boolean isMount() {
-		return FileUtils.addTrailingSlash(mount.getMount()).equals(FileUtils.addTrailingSlash(path));
+		return FileUtils.addTrailingSlash(parentMount.getMount()).equals(FileUtils.addTrailingSlash(path));
 	}
 	
 	private AbstractFile resolveFile() throws PermissionDeniedException, IOException {
 		if(Objects.nonNull(file)) {
 			return file;
 		}
-		return file = mount.getActualFileFactory().getFile(mount.getResolvePath(path));
+		return file = parentMount.getActualFileFactory().getFile(parentMount.getResolvePath(path));
 	}
 	
 	public boolean exists() throws IOException, PermissionDeniedException {
@@ -84,7 +80,7 @@ public class VirtualMountFile extends VirtualFileObject {
 
 	public long lastModified() throws IOException, PermissionDeniedException {
 		if(isMount()) {
-			return mount.lastModified();
+			return parentMount.lastModified();
 		}
 		return resolveFile().lastModified();
 	}
@@ -104,13 +100,14 @@ public class VirtualMountFile extends VirtualFileObject {
 			IOException, PermissionDeniedException {
 		if(isMount()) {
 			SftpFileAttributes attrs = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY, "UTF-8");
+			attrs.setPermissions(parentMount.defaultPermissions());
 			try {
-				attrs.setReadOnly(mount.isReadOnly());
+				attrs.setReadOnly(parentMount.isReadOnly());
 			} catch (SftpStatusException e) {
 			}
-			attrs.setTimes(new UnsignedInteger64(mount.lastModified()),
-					new UnsignedInteger64(mount.lastModified()),
-					new UnsignedInteger64(mount.lastModified()));
+			attrs.setTimes(new UnsignedInteger64(parentMount.lastModified()),
+					new UnsignedInteger64(parentMount.lastModified()),
+					new UnsignedInteger64(parentMount.lastModified()));
 			return attrs;
 		}
 		return resolveFile().getAttributes();
@@ -211,7 +208,7 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 
 	public boolean isWritable() throws IOException, PermissionDeniedException {
-		return !mount.isReadOnly() || resolveFile().isWritable();
+		return !parentMount.isReadOnly() || resolveFile().isWritable();
 	}
 
 	public boolean createNewFile() throws PermissionDeniedException,
@@ -263,12 +260,12 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 
 	public AbstractFileFactory<VirtualFile> getFileFactory() {
-		return mount.getVirtualFileFactory();
+		return parentMount.getVirtualFileFactory();
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(mount, path);
+		return Objects.hash(parentMount, path);
 	}
 
 	@Override
@@ -285,7 +282,7 @@ public class VirtualMountFile extends VirtualFileObject {
 		}
 		VirtualMountFile other = getClass().cast(obj);
 		return Objects.equals(other.path, this.path)
-				&& Objects.equals(other.mount, this.mount);
+				&& Objects.equals(other.parentMount, this.parentMount);
 	}
 
 	@Override

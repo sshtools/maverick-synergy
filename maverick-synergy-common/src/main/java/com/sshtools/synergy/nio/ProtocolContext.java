@@ -20,6 +20,9 @@
 package com.sshtools.synergy.nio;
 
 import java.io.IOException;
+import java.util.Map;
+
+import com.sshtools.common.net.ProxyType;
 
 /**
  * A protocol context defines the behavior for a listening interface.
@@ -31,9 +34,17 @@ public abstract class ProtocolContext {
     protected boolean reuseAddress = true;
     protected int receiveBufferSize = 0;
     protected int sendBufferSize = 0;
-    private SocketConnectionFactory socketConnectionFactory = new DefaultSocketConnectionFactory();
     
-
+	private String proxyHostname;
+	private int proxyPort;
+	private String proxyUsername;
+	private String proxyPassword;
+	private boolean resolveLocally;
+	private String userAgent;
+	private Map<String,String> optionalHeaders;
+	private ProxyType proxyType = ProxyType.NONE;
+	
+    private SocketConnectionFactory socketConnectionFactory = new DefaultSocketConnectionFactory();
 
     /**
      * Create a protocol engine.
@@ -141,5 +152,88 @@ public abstract class ProtocolContext {
 	}
 
 	public abstract void shutdown();
+	
+
+	public void enableSocks4Proxy(String proxyHostname, int proxyPort, String proxyUsername) {
+		this.proxyType = ProxyType.SOCKS4;
+		this.proxyHostname = proxyHostname;
+		this.proxyPort = proxyPort;
+		this.proxyUsername = proxyUsername;
+	}
+	
+	public void enableSocks5Proxy(String proxyHostname, int proxyPort, 
+			String proxyUsername, String proxyPassword, boolean localLookup) {
+
+		this.proxyType = ProxyType.SOCKS5;
+		this.proxyHostname = proxyHostname;
+		this.proxyPort = proxyPort;
+		this.proxyUsername = proxyUsername;
+		this.proxyPassword = proxyPassword;
+		this.resolveLocally = localLookup;
+	}
+	
+	public void enableHTTPProxy(String proxyHostname, int proxyPort) {
+		enableHTTPProxy(proxyHostname, proxyPort, null, null, null, null);
+	}
+	
+	public void enableHTTPProxy(String proxyHostname, int proxyPort,
+			String proxyUsername, String proxyPassword) {
+		enableHTTPProxy(proxyHostname, proxyPort, proxyUsername, proxyPassword, null, null);
+	}
+	
+	public void enableHTTPProxy(String proxyHostname, int proxyPort,
+			String proxyUsername, String proxyPassword, String userAgent) {
+		enableHTTPProxy(proxyHostname, proxyPort, proxyUsername, proxyPassword, userAgent, null);
+	}
+	
+	public void enableHTTPProxy(String proxyHostname, int proxyPort,
+	        String proxyUsername, String proxyPassword, 
+	        String userAgent, Map<String,String> optionalHeaders ) {
+			
+			this.proxyType = ProxyType.HTTP;
+			this.proxyHostname = proxyHostname;
+			this.proxyPort = proxyPort;
+			this.proxyUsername = proxyUsername;
+			this.proxyPassword = proxyPassword;
+			this.userAgent = userAgent;
+			this.optionalHeaders = optionalHeaders;
+			
+		}
+		
+		public boolean isProxyEnabled() {
+			return proxyType != ProxyType.NONE;
+		}
+
+		public String getProxyHostname() {
+			return proxyHostname;
+		}
+
+		public int getProxyPort() {
+			return proxyPort;
+		}
+
+		public String getProxyUsername() {
+			return proxyUsername;
+		}
+
+		public String getProxyPassword() {
+			return proxyPassword;
+		}
+
+		public boolean isResolveLocally() {
+			return resolveLocally;
+		}
+		
+		public String getUserAgent() {
+			return userAgent;
+		}
+
+		public Map<String, String> getOptionalHeaders() {
+			return optionalHeaders;
+		}
+
+		public ProxyType getProxyType() {
+			return proxyType;
+		}
 
 }

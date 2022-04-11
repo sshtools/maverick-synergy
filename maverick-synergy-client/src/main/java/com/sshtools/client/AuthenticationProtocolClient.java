@@ -56,6 +56,7 @@ public class AuthenticationProtocolClient implements Service {
 	ClientAuthenticator currentAuthenticator;
 	Set<String> supportedAuths = null;
 	boolean authenticated = false;
+	int attempts;
 	NoneAuthenticator noneAuthenticator = new NoneAuthenticator();
 	
 	public AuthenticationProtocolClient(TransportProtocolClient transport,
@@ -221,6 +222,7 @@ public class AuthenticationProtocolClient implements Service {
 			if(Log.isDebugEnabled()) {
 				Log.debug("Starting {} authentication", currentAuthenticator.getName());
 			}
+			attempts++;
 			currentAuthenticator.authenticate(transport, username);
 			return true;
 		} 
@@ -326,6 +328,11 @@ public class AuthenticationProtocolClient implements Service {
 
 	public Set<String> getSupportedAuthentications() {
 		return supportedAuths;
+	}
+
+	@Override
+	public String getIdleLog() {
+		return String.format("%d authentication attempts made", attempts);
 	}
 
 }

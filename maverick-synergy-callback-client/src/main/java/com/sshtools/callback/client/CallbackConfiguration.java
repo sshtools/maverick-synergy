@@ -34,6 +34,9 @@ public class CallbackConfiguration {
 	Long reconnectIntervalMs;
 	SshKeyPair privateKey;
 	SshPublicKey publicKey;
+	String memo;
+	String callbackIdentifier = "CallbackClient";
+	boolean reconnect = true;
 	
 	Map<String,Object> properties = new HashMap<>();
 	
@@ -42,13 +45,15 @@ public class CallbackConfiguration {
 			int serverPort, 
 			Long reconnectIntervalMs, 
 			SshKeyPair privateKey,
-			SshPublicKey publicKey) {
+			SshPublicKey publicKey, 
+			String memo) {
 		super();
 		this.agentName = agentName;
 		this.serverHost = serverHost;
 		this.serverPort = serverPort;
 		this.privateKey = privateKey;
 		this.publicKey = publicKey;
+		this.memo = memo;
 	}
 	
 	protected CallbackConfiguration() {
@@ -103,4 +108,30 @@ public class CallbackConfiguration {
 	public SshPublicKey getPublicKey() {
 		return publicKey;
 	}
+
+	public String getMemo() {
+		return memo;
+	}
+
+	public void setMemo(String memo) {
+		this.memo = memo;
+	}
+
+	public String getCallbackIdentifier() {
+		return callbackIdentifier;
+	}
+
+	public void setCallbackIdentifier(String callbackIdentifier) {
+		this.callbackIdentifier = callbackIdentifier;
+	}
+
+	public boolean isReconnect() {
+		return reconnect;
+	}
+
+	public void setReconnect(boolean reconnect) {
+		this.reconnect = reconnect;
+	}
+	
+	
 }

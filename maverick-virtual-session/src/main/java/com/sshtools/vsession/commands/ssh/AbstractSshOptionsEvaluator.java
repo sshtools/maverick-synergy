@@ -19,12 +19,14 @@
 package com.sshtools.vsession.commands.ssh;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
+import org.jline.reader.Candidate;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -39,10 +41,18 @@ import com.sshtools.vsession.commands.ssh.SshClientOptions.SecurityLevel;
 
 public class AbstractSshOptionsEvaluator {
 
-	static List<SshOptionsResolver> resolvers = new ArrayList<>();
+	static Set<SshOptionsResolver> resolvers = new HashSet<>();
 	
 	public static void addResolver(SshOptionsResolver resolver) {
 		resolvers.add(resolver);
+	}
+	
+	protected static void complete(String destination, List<Candidate> candidates) {
+		for(SshOptionsResolver resolver : resolvers) {
+			for(String candidate : resolver.matchDestinations(destination)) {
+				candidates.add(new Candidate(candidate));
+			}
+		}
 	}
 	
 	protected static void parseDestination(CommandLine commandLine, SshClientArguments arguments) throws IOException {
@@ -61,7 +71,7 @@ public class AbstractSshOptionsEvaluator {
 		
 		
 		for(SshOptionsResolver resolver : resolvers) {
-			if(resolver.resolveOptions(destination, arguments)) {
+			if(resolver.resolveOptions(destination, arguments, VirtualConsole.getCurrentConsole())) {
 				break;
 			}
 		}
@@ -142,4 +152,6 @@ public class AbstractSshOptionsEvaluator {
 	protected static Collection<SshOptionsResolver> getResolvers() {
 		return Collections.unmodifiableCollection(resolvers);
 	}
+	
+	
 }

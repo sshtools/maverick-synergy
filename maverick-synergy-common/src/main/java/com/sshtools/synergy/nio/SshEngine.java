@@ -19,9 +19,11 @@
 package com.sshtools.synergy.nio;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
@@ -40,6 +42,8 @@ import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
+import com.sshtools.common.net.HttpRequest;
+import com.sshtools.common.net.HttpResponse;
 import com.sshtools.common.ssh.AbstractRequestFuture;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.ConnectionAwareTask;
@@ -72,6 +76,24 @@ public class SshEngine {
 	List<SshEngineListener> listeners = Collections.synchronizedList(new ArrayList<SshEngineListener>());
 	final protected static char[] hexArray = "0123456789abcdef".toCharArray();
 	
+	private final static String[] SOCKSV5_ERROR = {
+	        "Success", "General SOCKS server failure",
+	        "Connection not allowed by ruleset", "Network unreachable",
+	        "Host unreachable", "Connection refused", "TTL expired",
+	        "Command not supported", "Address type not supported"
+	    };
+
+    private final static String[] SOCKSV4_ERROR = {
+        "Request rejected or failed",
+        "SOCKS server cannot connect to identd on the client",
+        "The client program and identd report different user-ids"
+    };
+
+    private static final int SOCKS4 = 0x04;
+    private static final int SOCKS5 = 0x05;
+    private static final int CONNECT = 0x01;
+    private static final int NULL_TERMINATION = 0x00;
+    
 	/**
 	 * Constructs the Daemon.
 	 */
@@ -493,28 +515,110 @@ public class SshEngine {
 	    socketChannel.configureBlocking(true);
 	    socketChannel.socket().setTcpNoDelay(true);
 
-	    final ConnectRequestFuture future = new ConnectRequestFuture(hostToConnect, portToConnect);
+	    final ConnectRequestFuture future;
+	    boolean connected;
 	    
-	    if(socketChannel.connect(new InetSocketAddress(hostToConnect, portToConnect))) {
-	    	
-	       processOpenSocket(socketChannel);
+	    switch(protocolContext.getProxyType()) {
+	    case NONE:
+	    	future = new ConnectRequestFuture(hostToConnect, portToConnect);
+	    	connected = socketChannel.connect(new InetSocketAddress(hostToConnect, portToConnect));
+	    	break;
+	    default:
+	    	future = new ConnectRequestFuture(protocolContext.getProxyHostname(), protocolContext.getProxyPort());
+	    	connected = socketChannel.connect(new InetSocketAddress(protocolContext.getProxyHostname(), protocolContext.getProxyPort()));
+	    }
+	     
+	    if(connected) {
+	       processOpenSocket(socketChannel, protocolContext, hostToConnect, portToConnect);
 	       socketChannel.configureBlocking(false);
-	       
 	       registerClientConnection(protocolContext, socketChannel, future);
 	       
 	    } else {
 		
 		    // Register the connector and we will confirm once we have connected
-			registerConnector(new DaemonClientConnector(protocolContext, socketChannel, future), socketChannel);
+			registerConnector(new DaemonClientConnector(protocolContext, socketChannel, future, hostToConnect, portToConnect), socketChannel);
 	    }
 
 	    return future;
     }
-    
-	protected SocketChannel processOpenSocket(SocketChannel socketChannel) {
+
+    private void sendHTTPProxyRequest(SocketChannel channel, ProtocolContext protocolContext, String hostToConnect, int portToConnect) throws UnsupportedEncodingException, IOException {
+		
+		if(Log.isDebugEnabled()) {
+			Log.debug("Connecting via HTTP proxy {}:{}", protocolContext.getProxyHostname(), protocolContext.getProxyPort());
+		}
+		
+		HttpRequest request = new HttpRequest();
+
+        request.setHeaderBegin("CONNECT " 
+        			+ hostToConnect 
+        			+ ":" 
+        			+ portToConnect
+        			+ " HTTP/1.0");
+        request.setHeaderField("User-Agent", Utils.defaultString(protocolContext.getUserAgent(), "MaverickSynergy/" + version));
+        request.setHeaderField("Pragma", "No-Cache");
+        request.setHeaderField("Host", protocolContext.getProxyHostname());
+        request.setHeaderField("Proxy-Connection", "Keep-Alive");
+        
+        if(Utils.isNotBlank(protocolContext.getProxyUsername()) && !Utils.isNotBlank(protocolContext.getProxyPassword())) {
+        	request.setBasicAuthentication(protocolContext.getProxyUsername(), protocolContext.getProxyPassword());
+        }
+        
+
+		channel.write(ByteBuffer.wrap(request.toString().getBytes("UTF-8")));
+		
+		
+		ByteBuffer buf = ByteBuffer.allocate(4096);
+		int count;
+		do {
+			count = channel.read(buf);
+		} while(count > -1 && !isHTTPResponseComplete(buf));
+		
+		HttpResponse resp = new HttpResponse();
+		buf.flip();
+		
+		resp.process(buf);
+
+		if(resp.getStatus()!=200) {
+			throw new IOException("Invalid HTTP proxy response! " + resp.getStartLine());
+		}
+
+	}
+
+	private boolean isHTTPResponseComplete(ByteBuffer buf) {
+		buf.flip();
+		boolean eol = false;
+		if(buf.remaining() > 4) {
+			eol = buf.get(buf.remaining()-4) == '\r'
+					&& buf.get(buf.remaining()-3) == '\n'
+					&& buf.get(buf.remaining()-2) == '\r'
+					&& buf.get(buf.remaining()-1) == '\n';
+		}
+		buf.compact();
+		return eol;
+	}
+
+	protected SocketChannel processOpenSocket(SocketChannel socketChannel, ProtocolContext protocolContext,
+			String hostToConnect, int portToConnect) throws UnsupportedEncodingException, IOException {
+		
+		switch(protocolContext.getProxyType()) {
+	    case HTTP:
+	    	sendHTTPProxyRequest(socketChannel, protocolContext, hostToConnect, portToConnect);
+	    	break;
+	    case SOCKS4:
+//	    	sendSOCKS4ProxyRequest(socketChannel, protocolContext, hostToConnect, portToConnect);
+	    	break;
+	    case SOCKS5:
+//	    	sendSOCKS5ProxyRequest(socketChannel, protocolContext, hostToConnect, portToConnect);
+	    	break;
+	    default:
+	    	break;
+	    }
 		return socketChannel;
 	}
 	
+	
+
 	public boolean isStartupRequiresListeningInterfaces() {
 		return startupRequiresListeningInterfaces;
 	}
@@ -725,10 +829,15 @@ public class SshEngine {
 		SocketChannel socketChannel;
 		ProtocolEngine engine;
 		ConnectRequestFuture connectFuture;
-		DaemonClientConnector(ProtocolContext protocolContext, SocketChannel socketChannel, ConnectRequestFuture connectFuture) {
+		String hostToConnect;
+		int portToConnect;
+		DaemonClientConnector(ProtocolContext protocolContext, SocketChannel socketChannel, ConnectRequestFuture connectFuture,
+				String hostToConnect, int portToConnect) {
 			this.protocolContext = protocolContext;
 			this.socketChannel = socketChannel;
 			this.connectFuture = connectFuture;
+			this.hostToConnect = hostToConnect;
+			this.portToConnect = portToConnect;
 		}
 		
 		public void registrationCompleted(SelectableChannel channel, 
@@ -742,8 +851,7 @@ public class SshEngine {
 				while (!socketChannel.finishConnect()) {
 				    // Wait for the connection to complete
 				}
-				processOpenSocket(socketChannel);
-				socketChannel.configureBlocking(false);
+				processOpenSocket(socketChannel, protocolContext, hostToConnect, portToConnect);
 				engine = registerClientConnection(protocolContext, socketChannel, connectFuture);
 				return true;
 			} catch (Exception e) {

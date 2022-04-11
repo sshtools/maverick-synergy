@@ -28,10 +28,24 @@ public class ExpiringConcurrentHashMap<K,V> extends ConcurrentHashMap<K,V> {
 
 	private Map<K, Long> entryTime = new ConcurrentHashMap<K, Long>();
 	
-    private long expiryInMillis;
+    private ExpiryConfiguration expiryConfig;
     
     public ExpiringConcurrentHashMap(long expiryInMillis) {
-    	this.expiryInMillis = expiryInMillis;
+    	this.expiryConfig = new ExpiryConfiguration() {
+			
+			@Override
+			public long expiresInMillis() {
+				return expiryInMillis;
+			}
+		};
+    }
+    
+    public long getExpiryTime() {
+    	return this.expiryConfig.expiresInMillis();
+    }
+    
+    public ExpiringConcurrentHashMap(ExpiryConfiguration expiryConfig) {
+    	this.expiryConfig = expiryConfig;
     }
 
     @Override
@@ -74,10 +88,14 @@ public class ExpiringConcurrentHashMap<K,V> extends ConcurrentHashMap<K,V> {
 	private void purgeEntries() {
         long currentTime = new Date().getTime();
         for (K key : entryTime.keySet()) {
-            if (currentTime > (entryTime.get(key) + expiryInMillis)) {
+            if (currentTime > (entryTime.get(key) + expiryConfig.expiresInMillis())) {
                 remove(key);
                 entryTime.remove(key);
             }
         }
     }
+	
+	public interface ExpiryConfiguration {
+		long expiresInMillis();
+	}
 }

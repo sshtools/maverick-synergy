@@ -28,6 +28,7 @@ import java.lang.management.ThreadMXBean;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -307,6 +308,10 @@ public class Utils {
 	}
 	
 	public static String csv(String... elements) {
+		return csv(Arrays.asList(elements));
+	}
+	
+	public static String csv(Collection<String> elements) {
 		StringBuffer b = new StringBuffer();
 		for(String element : elements) {
 			if(b.length() > 0) {

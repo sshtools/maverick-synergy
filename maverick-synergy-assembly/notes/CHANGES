@@ -1,3 +1,12 @@
+Maverick Synergy 3.0.7 - Apr 11, 2021
+
+
+    
+
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.6 - Dec 29, 2021
 
 Features
@@ -32,9 +41,7 @@ Bug Fixes
     o VirtualMountFile should not resolve child until absolutely necessary to prevent list of mounts becoming slow due to destination resolution.
     o Regular expression file matching exists but not used in matchRemoteFiles.
     
-=================
-=  HISTORY      =
-=================
+---------------
 
 Maverick Synergy 3.0.4 - 27 Sept, 2021
 

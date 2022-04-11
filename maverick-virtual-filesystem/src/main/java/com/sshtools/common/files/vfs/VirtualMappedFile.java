@@ -20,21 +20,16 @@ package com.sshtools.common.files.vfs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
-import com.sshtools.common.files.AbstractFileAdapter;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.util.FileUtils;
 
 public class VirtualMappedFile extends VirtualFileObject {
 
-	private VirtualMount parentMount;
 	private String absolutePath;
 	private String name;
 	
@@ -44,11 +39,8 @@ public class VirtualMappedFile extends VirtualFileObject {
 			VirtualMount parentMount, VirtualFileFactory fileFactory)
 			throws IOException, PermissionDeniedException {
 
-		super(fileFactory);
+		super(fileFactory, parentMount);
 		
-		this.parentMount = parentMount;
-		this.fileFactory = fileFactory;
-
 		toActualPath(path);
 
 		init(parentMount.getActualFileFactory()
@@ -67,10 +59,8 @@ public class VirtualMappedFile extends VirtualFileObject {
 			VirtualFileFactory fileFactory) throws IOException,
 			PermissionDeniedException {
 
-		super(fileFactory);
-		
-		this.parentMount = parentMount;
-		this.fileFactory = fileFactory;
+		super(fileFactory, parentMount);
+
 		init(actualFile);
 
 		absolutePath = toVirtualPath(super.getAbsolutePath());
@@ -328,5 +318,8 @@ public class VirtualMappedFile extends VirtualFileObject {
 		super.symlinkTo(toActualPath(target));
 	}
 	
+	public VirtualMount getParentMount() {
+		return parentMount;
+	}
 	
 }

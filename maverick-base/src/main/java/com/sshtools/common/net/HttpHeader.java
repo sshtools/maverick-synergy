@@ -142,8 +142,8 @@ public abstract class HttpHeader {
                 }
             }
         }
-
-        c = (int) in.get() & 0xFF;
+//        LDP: Not quite sure why this is here.
+//        c = (int) in.get() & 0xFF;
     }
 
     private String processNextLine(String line, String lastHeaderName)

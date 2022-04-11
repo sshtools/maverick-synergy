@@ -19,15 +19,13 @@
 package com.sshtools.client;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
-import com.sshtools.common.net.HttpRequest;
 import com.sshtools.common.publickey.SshPublicKeyFileFactory;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.sshd.SshMessage;
@@ -38,10 +36,6 @@ import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
 import com.sshtools.synergy.ssh.Service;
 import com.sshtools.synergy.ssh.TransportProtocol;
 import com.sshtools.synergy.ssh.components.SshKeyExchange;
-
-//#ifdef LICENSE
-//import com.sshtools.synergy.common.nio.LicenseManager;
-//#endif
 
 /**
  * The implementation of the client side of the SSH transport protocol.
@@ -58,71 +52,11 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 	//#endif
 	public TransportProtocolClient(SshClientContext sshContext, ConnectRequestFuture connectFuture) throws LicenseException {
 		super(sshContext,connectFuture);
-		//#ifdef LICENSE
-		//checkLicensing();
-		//#endif
 	}
-
-	//#ifdef LICENSE
-	/*
-	 	private final void checkLicensing() throws LicenseException {
-		
-		if(!license.isLicensed()) {
-			license.verifyLicense();
-			
-			if(license.isValid()) {
-				if(Log.isInfoEnabled()) {
-					Log.info("This Maverick NG API product is licensed to " + license.getLicensee());
-				}
-			}
-		}
-		
-		switch (license.getStatus() & LicenseVerification.LICENSE_VERIFICATION_MASK) {
-			case LicenseVerification.EXPIRED:
-				throw new LicenseException("Your license has expired! visit http://www.sshtools.com to obtain an update version of the software.");
-			case LicenseVerification.OK:
-				break;
-			case LicenseVerification.INVALID:
-				throw new LicenseException("Your license is invalid!");
-			case LicenseVerification.NOT_LICENSED:
-				throw new LicenseException("NOT_LICENSED_TEXT");
-			case LicenseVerification.EXPIRED_MAINTENANCE:
-				throw new LicenseException(
-						"Your support and maintenance has expired! visit http://www.sshtools.com to purchase a subscription");
-			default:
-				throw new LicenseException("An unexpected license status was received.");
-		}
-	}
-	*/
-	//#endif
 
 	@Override
 	protected boolean canConnect(SocketConnection connection) {
 		return true;
-	}
-	
-	@Override
-	public void onSocketConnect(SocketConnection connection) {
-		
-		this.socketConnection = connection;
-		
-		if(sshContext.isProxyEnabled()) {
-			switch(sshContext.getProxyType()) {
-			case HTTP:
-				sendHTTPProxyRequest();
-				break;
-			case SOCKS4:
-				
-				break;
-			case SOCKS5:
-				
-				break;
-			default:
-				throw new IllegalStateException("Proxy NONE should not mean that a isProxyEnabled returns true");
-			}
-		} else {
-			super.onSocketConnect(connection);
-		}
 	}
 
 	public boolean onSocketRead(ByteBuffer incomingData) {
@@ -131,45 +65,6 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 		} else {
 			return super.onSocketRead(incomingData);
 		}
-	}
-	
-	private void sendHTTPProxyRequest() {
-		
-		postMessage(new SshMessage() {
-			
-			HttpRequest request = new HttpRequest();
-			
-			public boolean writeMessageIntoBuffer(ByteBuffer buf) {
-
-		        request.setHeaderBegin("CONNECT " 
-		        			+ sshContext.getRemoteHostname() 
-		        			+ ":" 
-		        			+ sshContext.getRemotePort() 
-		        			+ " HTTP/1.0");
-		        request.setHeaderField("User-Agent", sshContext.getUserAgent());
-		        request.setHeaderField("Pragma", "No-Cache");
-		        request.setHeaderField("Host", sshContext.getProxyHostname());
-		        request.setHeaderField("Proxy-Connection", "Keep-Alive");
-		        
-		        if(sshContext.getProxyUsername()!=null && !"".equals(sshContext.getProxyUsername().trim())
-		        		&& sshContext.getProxyPassword()!=null && !"".equals(sshContext.getProxyPassword().trim())) {
-		        	request.setBasicAuthentication(sshContext.getProxyUsername(), sshContext.getProxyPassword());
-		        }
-		        
-		        try {
-					buf.put(request.toString().getBytes("UTF-8"));
-				} catch (UnsupportedEncodingException e) {
-					throw new IllegalStateException(e.getMessage(), e);
-				}
-				return true;
-			}
-
-			public void messageSent(Long sequenceNo) {
-				if(Log.isDebugEnabled())
-					Log.debug("Sent HTTP Proxy Request");
-					Log.debug(request.toString());
-				}
-		});
 	}
 
 	@Override
@@ -358,7 +253,9 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 
 	@Override
 	protected void onConnected() {
-		this.con = getContext().getConnectionManager().registerTransport(this, sshContext);
+		if(Objects.isNull(this.con)) {
+			this.con = getContext().getConnectionManager().registerTransport(this, sshContext);
+		}
 	}
 
 	@Override
@@ -370,8 +267,8 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 		return "transport-client";
 	}
 
-	@Override
-	protected SocketAddress getConnectionAddress() {
-		return getLocalAddress();
-	}
+//	@Override
+//	protected SocketAddress getConnectionAddress() {
+//		return getRemoteAddress();
+//	}
 }

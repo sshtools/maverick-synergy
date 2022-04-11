@@ -16,28 +16,45 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.callback.commands;
+package com.sshtools.common.util;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 
-import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.server.callback.Callback;
-import com.sshtools.server.vsession.UsageException;
-import com.sshtools.server.vsession.VirtualConsole;
+public class BinaryLogger {
 
-public class Callbacks extends CallbackCommand {
-
-	public Callbacks() {
-		super("callbacks", "Callback", "callbacks", "List the connected callback clients");
+	RandomAccessFile file;
+	FileChannel channel;
+	
+	public BinaryLogger(String name) throws FileNotFoundException {
+		file = new RandomAccessFile(new File(name), "rw");
+		channel = file.getChannel();
 	}
-
-	@Override
-	public void run(String[] args, VirtualConsole console)
-			throws IOException, PermissionDeniedException, UsageException {
-
-		for(Callback con : service.getCallbacks()) {
-			console.println(String.format("%-25s %-15s %s/%s", con.getUuid(), con.getRemoteAddress(), con.getUsername(), con.getMemo()));
+	
+	public void log(byte[] buf) throws IOException {
+		log(buf, 0, buf.length);
+	}
+	
+	public void log(byte[] buf, int off, int len) throws IOException {
+		channel.write(ByteBuffer.wrap(buf, off, len));
+	}
+	
+	public void log(ByteBuffer buf) throws IOException {
+		channel.write(buf);
+	}
+	
+	public void close() {
+		try {
+			channel.close();
+		} catch (IOException e) {
+		}
+		try {
+			file.close();
+		} catch (IOException e) {
 		}
 	}
-
 }

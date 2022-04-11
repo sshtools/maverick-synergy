@@ -156,8 +156,10 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
     
     public synchronized void unregisterTransport(TransportProtocol<T> transport) {
     	Connection<T> con = activeConnections.remove(transport.getUUID());
-    	con.close();
-    	ctx.close(con);
+    	if(Objects.nonNull(con)) {
+	    	con.close();
+	    	ctx.close(con);
+    	}
     }
     
     /**

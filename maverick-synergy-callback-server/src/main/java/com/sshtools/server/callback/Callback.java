@@ -16,21 +16,23 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.callback.commands;
+package com.sshtools.server.callback;
 
-import com.sshtools.server.callback.CallbackRegistrationService;
-import com.sshtools.server.vsession.ShellCommand;
+import com.sshtools.client.tasks.Task;
+import com.sshtools.common.ssh.SshConnection;
 
-public abstract class CallbackCommand extends ShellCommand {
+public interface Callback {
 
-	protected CallbackRegistrationService service;
-	
-	public CallbackCommand(String name, String subsystem, String signature, String description) {
-		super(name, subsystem, signature, description);
-	}
-	
-	public void setRegistrationService(CallbackRegistrationService service) {
-		this.service = service;
-	}
+	String getUuid();
+
+	String getUsername();
+
+	SshConnection getConnection();
+
+	String getRemoteAddress();
+
+	String getMemo();
+
+	void addTask(Task task);
 
 }

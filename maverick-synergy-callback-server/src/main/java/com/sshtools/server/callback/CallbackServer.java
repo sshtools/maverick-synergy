@@ -73,8 +73,9 @@ public class CallbackServer extends AbstractSshServer {
 		super(addressToBind, port);
 	}
 
-	public void setCallbackIdentifier(String callbackIdentifier) {
-		this.callbackIdentifier = callbackIdentifier;
+	@Override
+	public ProtocolContextFactory<?> getDefaultContextFactory() {
+		return defaultContextFactory;
 	}
 	
 	public void setMutualKeyAuthenticationStore(MutualKeyAuthenticatonStore authenticationStore) {
@@ -146,11 +147,5 @@ public class CallbackServer extends AbstractSshServer {
 			return serverContext;
 		}
 	}
-
-	@Override
-	protected ProtocolContextFactory<?> getDefaultContextFactory() {
-		return defaultContextFactory;
-	}
-
 
 }

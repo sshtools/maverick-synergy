@@ -19,7 +19,10 @@
 
 package com.sshtools.client.sftp;
 
+import java.io.IOException;
+
 import com.sshtools.common.files.AbstractFile;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
 
@@ -37,10 +40,14 @@ public class NoRegExpMatching implements RegularExpressionMatching {
      * opens and returns the requested filename string
      * 
      * @throws SftpStatusException
+     * @throws PermissionDeniedException 
+     * @throws IOException 
      */
-    public String[] matchFileNamesWithPattern(AbstractFile[] files, String fileNameRegExp) throws SshException, SftpStatusException {
+    public String[] matchFileNamesWithPattern(AbstractFile[] files, String fileNameRegExp) throws SshException, SftpStatusException, IOException, PermissionDeniedException {
         String[] thefile = new String[1];
-        thefile[0] = files[0].getName();
+        for(int i=0;i<files.length;i++) {
+        	thefile[i] = files[i].getAbsolutePath();
+        }
         return thefile;
     }
 

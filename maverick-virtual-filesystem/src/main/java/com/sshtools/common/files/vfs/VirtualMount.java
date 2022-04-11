@@ -25,6 +25,7 @@ import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.util.FileUtils;
+import com.sshtools.common.util.UnsignedInteger32;
 
 public class VirtualMount extends AbstractMount {
 
@@ -34,8 +35,9 @@ public class VirtualMount extends AbstractMount {
 	boolean createMountFolder;
 	boolean readOnly;
 	long lastModified = 0;
+	VirtualMountTemplate mountTemplate;
 	
-	VirtualMount(String mount, String path,
+	VirtualMount(VirtualMountTemplate mountTemplate, 
 			VirtualFileFactory virtualFileFactory,
 			AbstractFileFactory<?> actualFileFactory,
 			boolean isDefault,
@@ -43,7 +45,11 @@ public class VirtualMount extends AbstractMount {
 			boolean createMountFolder,
 			long lastModified)
 				throws IOException, PermissionDeniedException {
-		super(mount, path, isDefault, isImaginary);
+		super(mountTemplate.getMount(), 
+				mountTemplate.getRoot(),
+				isDefault, isImaginary);
+
+		this.mountTemplate = mountTemplate;
 		this.actualFileFactory = actualFileFactory;
 		this.virtualFileFactory = virtualFileFactory;
 		this.createMountFolder = createMountFolder;
@@ -55,15 +61,19 @@ public class VirtualMount extends AbstractMount {
 
 	}
 
-	public VirtualMount(String mount, String path,
+	public VirtualMount(VirtualMountTemplate mountTemplate, 
 			VirtualFileFactory virtualFileFactory,
 			AbstractFileFactory<?> actualFileFactory,
 			boolean createMountFolder, long lastModified) throws IOException,
 			PermissionDeniedException {
-		this(mount, path, virtualFileFactory, actualFileFactory, false,
+		this(mountTemplate, virtualFileFactory, actualFileFactory, false,
 				false, createMountFolder, lastModified);
 	}
 
+	public VirtualMountTemplate getTemplate() {
+		return mountTemplate;
+	}
+	
 	public AbstractFileFactory<? extends AbstractFile> getActualFileFactory() {
 		return actualFileFactory;
 	}
@@ -117,5 +127,9 @@ public class VirtualMount extends AbstractMount {
 	
 	public void setReadOnly(boolean readOnly) {
 		this.readOnly = readOnly;
+	}
+
+	public UnsignedInteger32 defaultPermissions() {
+		return isReadOnly() ? new UnsignedInteger32(0500) : new UnsignedInteger32(0700);
 	}
 }

@@ -31,7 +31,7 @@ import com.sshtools.common.files.vfs.VirtualFileFactory;
 import com.sshtools.common.files.vfs.VirtualMountTemplate;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
-import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.server.callback.Callback;
 import com.sshtools.server.vsession.UsageException;
 import com.sshtools.server.vsession.VirtualConsole;
 import com.sshtools.vfs.sftp.SftpFileProvider;
@@ -52,7 +52,7 @@ public class CallbackMount extends CallbackCommand {
 		}
 		
 		String clientName = args[1];
-		SshConnection remoteConnection = server.getCallbackClient(clientName);
+		Callback remoteConnection = service.getCallbackByUUID(clientName);
 		
 		if(Objects.isNull(remoteConnection)) {
 			console.println(String.format("%s is not currently connected", clientName));
@@ -68,8 +68,8 @@ public class CallbackMount extends CallbackCommand {
 		m.setFilesCache(new DefaultFilesCache());
 		
 		FileSystemOptions opts = new FileSystemOptions();
-		SftpFileSystemConfigBuilder.getInstance().setSshConnection(opts, remoteConnection);
-		String path = String.format("sftp://%s/", remoteConnection.getUUID());
+		SftpFileSystemConfigBuilder.getInstance().setSshConnection(opts, remoteConnection.getConnection());
+		String path = String.format("sftp://%s/", remoteConnection.getUuid());
 		vff.getMountManager().mount(new VirtualMountTemplate(
 				"/" + remoteConnection.getUsername(), path,
 					new VFSFileFactory(m, opts, path), false), false);

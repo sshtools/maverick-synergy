@@ -272,4 +272,11 @@ public class ByteArrayWriter
 	  super.buf = null;
   }
 
+  public static byte[] encodeString(String memo) throws IOException {
+	try(ByteArrayWriter w = new ByteArrayWriter()) {
+		w.writeString(memo);
+		return w.toByteArray();
+	}
+  }	
+
 }

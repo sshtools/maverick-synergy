@@ -26,16 +26,16 @@ import com.sshtools.client.shell.ShellTimeoutException;
 import com.sshtools.client.tasks.ShellTask;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.ConnectionAwareTask;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.IOUtils;
+import com.sshtools.server.callback.Callback;
 import com.sshtools.server.vsession.UsageException;
 import com.sshtools.server.vsession.VirtualConsole;
 
 public class CallbackShell extends CallbackCommand {
 
 	public CallbackShell() {
-		super("shell", "Callback", "shell <name>", "Open a shell to a named callback client");
+		super("shell", "Callback", "shell <uuid>", "Open a shell to the callback client identified by uuid");
 	}
 	
 	@Override
@@ -47,7 +47,7 @@ public class CallbackShell extends CallbackCommand {
 		}
 		
 		String clientName = args[1];
-		SshConnection con = server.getCallbackClient(clientName);
+		Callback con = service.getCallbackByUUID(clientName);
 		
 		if(Objects.isNull(con)) {
 			console.println(String.format("%s is not currently connected", clientName));
@@ -57,7 +57,7 @@ public class CallbackShell extends CallbackCommand {
 		console.println(String.format("---- Opening shell on %s", clientName));
 		console.println();
 		
-		ShellTask shell = new ShellTask(con) {
+		ShellTask shell = new ShellTask(con.getConnection()) {
 
 			protected void beforeStartShell(SessionChannelNG session) {
 				

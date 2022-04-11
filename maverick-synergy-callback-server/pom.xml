@@ -23,7 +23,7 @@
   <parent>
     <groupId>com.sshtools</groupId>
     <artifactId>maverick-synergy-group</artifactId>
-    <version>3.0.6</version>
+    <version>3.0.7</version>
   </parent>
   <artifactId>maverick-synergy-callback-server</artifactId>
   <name>Callback Server API</name>
@@ -53,7 +53,7 @@
   	<dependency>
   		<groupId>com.sshtools</groupId>
   		<artifactId>vfs-sftp</artifactId>
-  		<version>3.2.0-SNAPSHOT</version>
+  		<version>3.2.0</version>
   	</dependency>
   </dependencies>
   

@@ -16,21 +16,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.sshtools.server.callback.commands;
+package com.sshtools.synergy.ssh;
 
-import com.sshtools.server.callback.CallbackRegistrationService;
-import com.sshtools.server.vsession.ShellCommand;
+public interface ChannelFactoryListener<T extends SshContext> {
 
-public abstract class CallbackCommand extends ShellCommand {
-
-	protected CallbackRegistrationService service;
-	
-	public CallbackCommand(String name, String subsystem, String signature, String description) {
-		super(name, subsystem, signature, description);
-	}
-	
-	public void setRegistrationService(CallbackRegistrationService service) {
-		this.service = service;
-	}
-
+	default void onChannelCreated(ChannelNG<T> channel) {  }
 }

@@ -24,8 +24,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.nio.DisconnectRequestFuture;
@@ -39,7 +41,7 @@ import com.sshtools.synergy.ssh.TransportProtocol;
  */
 public class CallbackSession implements Runnable {
 
-	public static final String CALLBACK_IDENTIFIER = "CallbackClient-";
+	//public static final String CALLBACK_IDENTIFIER = "CallbackClient_";
 
 	CallbackConfiguration config;
 	CallbackClient app;
@@ -96,7 +98,16 @@ public class CallbackSession implements Runnable {
 					currentConnection.getAuthenticatedFuture().waitFor(30000L);
 					if(currentConnection.getAuthenticatedFuture().isDone() && currentConnection.getAuthenticatedFuture().isSuccess()) {
 						currentConnection.setProperty("callbackClient", this);
-						app.onClientConnected(this);
+					
+						if(Log.isInfoEnabled()) {
+							Log.info("Callback {} registering with memo {}", currentConnection.getUUID(), config.getMemo());
+						}
+
+  					    GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
+								currentConnection, ByteArrayWriter.encodeString(config.getMemo()));
+						currentConnection.sendGlobalRequest(req, false);
+						app.onClientConnected(this, currentConnection);
+
 						if(Log.isInfoEnabled()) {
 							Log.info("Client is connected to {}:{}", hostname, port);
 						}
@@ -110,6 +121,11 @@ public class CallbackSession implements Runnable {
 						numberOfAuthenticationErrors++;
 					}
 				}
+				
+				if(!config.isReconnect()) {
+					break;
+				}
+				
 				try {
 					long interval = config.getReconnectIntervalMs();
 					if(numberOfAuthenticationErrors >= 3) {

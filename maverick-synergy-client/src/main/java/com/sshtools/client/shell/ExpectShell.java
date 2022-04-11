@@ -179,6 +179,18 @@ public class ExpectShell {
 		this.childShell = true;
 		init(in, out, true, null);
 	}
+	
+	public ExpectShell(InputStream in, OutputStream out, ExpectShell parentShell)
+			throws SshIOException, SshException, IOException,
+			ShellTimeoutException {
+		this.EOL = parentShell.getNewline();
+		this.ECHO_COMMAND = parentShell.ECHO_COMMAND;
+		this.EXIT_CODE_VARIABLE = parentShell.EXIT_CODE_VARIABLE;
+		this.osType = parentShell.getOsType();
+		this.osDescription = parentShell.getOsDescription();
+		this.childShell = true;
+		init(in, out, true, null);
+	}
 
 	public String getCharacterEncoding() {
 		return characterEncoding;

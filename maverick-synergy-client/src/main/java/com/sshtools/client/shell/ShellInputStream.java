@@ -20,6 +20,7 @@
 package com.sshtools.client.shell;
 
 import java.io.BufferedInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -77,6 +78,10 @@ class ShellInputStream extends InputStream {
 		int ch;
 		
 		do {
+			if(!isActive()) {
+				throw new EOFException();
+			}
+			
 			ch = sessionIn.read();
 
 			if(ch > -1)
@@ -88,7 +93,7 @@ class ShellInputStream extends InputStream {
 			sessionIn.reset();
 		}
 		
-		if(ch==-1 && line.toString().trim().length()==0)
+		if((!isActive() || ch==-1) && line.toString().trim().length()==0)
 			return null;
 		else
 			return line.toString().trim();

@@ -79,7 +79,7 @@ public class ShellProcess {
 	}
 	
 	public ShellProcess drain() throws IOException {
-		while(in.read() > -1);
+		while(in.isActive() && in.read() > -1);
 		return this;
 	}
 

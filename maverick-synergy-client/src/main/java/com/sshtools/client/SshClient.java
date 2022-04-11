@@ -26,6 +26,8 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Set;
 
@@ -41,6 +43,8 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyUtils;
+import com.sshtools.common.ssh.Channel;
+import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
@@ -353,24 +357,55 @@ public class SshClient implements Closeable {
 	
 	public int executeCommandWithResult(String cmd, StringBuffer buffer, long timeout, String charset) throws IOException {
 		
+		InteractiveOutputListener listener = new InteractiveOutputListener(buffer);
 		AbstractCommandTask task = new AbstractCommandTask(getConnection(), cmd) {
 			
+			protected void beforeExecuteCommand(SessionChannelNG session) {
+				session.addEventListener(listener);
+			}
 			@Override
 			protected void onOpenSession(SessionChannelNG session) throws IOException {
-				
-				BufferedReader reader = new BufferedReader(new InputStreamReader(session.getInputStream(), charset));
-				String line;
-				while((line = reader.readLine()) != null) {
-					if(buffer.length() > 0) {
-						buffer.append(System.lineSeparator());
-					}
-					buffer.append(line);
+
+				try {
+					while(session.getInputStream().read() > -1);
+				} catch (IOException e) {
+					throw new IllegalStateException(e.getMessage(), e);				
 				}
 			}
 		};
 		
 		doTask(task, timeout);
 		return task.getExitCode();
+	}
+	
+	class InteractiveOutputListener implements ChannelEventListener {
+
+		StringBuffer output;
+		
+		InteractiveOutputListener(StringBuffer output) {
+			this.output = output;
+		}
+		
+		@Override
+		public void onChannelDataIn(Channel channel, ByteBuffer buffer) {
+			recordOutput(buffer);
+		}
+
+		@Override
+		public void onChannelExtendedData(Channel channel, ByteBuffer buffer, int type) {
+			recordOutput(buffer);
+		}
+		
+		private synchronized void recordOutput(ByteBuffer buffer) {
+			byte[] tmp = new byte[buffer.remaining()];
+			buffer.get(tmp);
+			try {
+				output.append(new String(tmp, "UTF-8"));
+			} catch (UnsupportedEncodingException e) {
+				throw new IllegalStateException(e.getMessage(), e);
+			}
+		}
+
 	}
 	
 	public Set<String> getAuthenticationMethods() {
@@ -446,5 +481,4 @@ public class SshClient implements Closeable {
 		}
 		throw new SshException(String.format("Session was not opened after %d ms timeout threshold", timeout), SshException.SOCKET_TIMEOUT);
 	}
-
 }

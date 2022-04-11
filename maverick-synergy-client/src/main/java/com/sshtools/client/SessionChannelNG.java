@@ -72,6 +72,9 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 
 	@Override
 	protected void onExtendedData(ByteBuffer data, int type) {
+		
+		super.onExtendedData(data, type);
+		
 		if(type==SSH_EXTENDED_DATA_STDERR) {
 			extendedData.put(data);
 		}

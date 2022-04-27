@@ -66,8 +66,9 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 		keypairs.addAll(Arrays.asList(keys));
 	}
 	
-	public void setKeyPair(SshKeyPair... pair) {
-		keypairs = Arrays.asList(pair);
+	public void setKeyPair(SshKeyPair... keys) {
+		keypairs = new ArrayList<SshKeyPair>();
+		keypairs.addAll(Arrays.asList(keys));
 	}
 
 	@Override

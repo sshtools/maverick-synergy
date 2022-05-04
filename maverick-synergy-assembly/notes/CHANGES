@@ -1,4 +1,4 @@
-Maverick Synergy 3.0.10 - TBC
+Maverick Synergy 3.0.10 - May 4, 2022  
 
 Bug Fixes
     o Refactor of VirtualFileFactory to provide consistent resolution of children.

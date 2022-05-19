@@ -404,6 +404,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 
 	protected void initializePublicKeyFactory(ComponentFactory<SshPublicKey> publickeys) {
 
+		testPublicKey("ssh-ed448", SshEd448PublicKeyJCE.class, publickeys);
 		testPublicKey("ssh-ed25519", SshEd25519PublicKeyJCE.class, publickeys);
 		
 		testPublicKey("rsa-sha2-256", Ssh2RsaPublicKeySHA256.class, publickeys);

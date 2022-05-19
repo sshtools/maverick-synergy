@@ -115,5 +115,6 @@ public interface JCEAlgorithms {
 	public static final String JCE_RSA_CIPHER = "RSA_Cipher";
 	public static final String EdDSA = "EdDSA";
 	public static final String ED25519 = "Ed25519";
+	public static final String ED448 = "Ed448";
 	
 }

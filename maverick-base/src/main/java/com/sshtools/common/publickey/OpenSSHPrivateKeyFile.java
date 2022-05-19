@@ -54,6 +54,8 @@ import com.sshtools.common.ssh.components.jce.Ssh2EcdsaSha2NistPublicKey;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPrivateCrtKey;
 import com.sshtools.common.ssh.components.jce.SshEd25519PrivateKeyJCE;
 import com.sshtools.common.ssh.components.jce.SshEd25519PublicKey;
+import com.sshtools.common.ssh.components.jce.SshEd448PrivateKeyJCE;
+import com.sshtools.common.ssh.components.jce.SshEd448PublicKey;
 import com.sshtools.common.ssh.components.jce.TripleDesCbc;
 import com.sshtools.common.util.BCryptKDF;
 import com.sshtools.common.util.ByteArrayReader;
@@ -203,7 +205,16 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 
 				String algorithm = pair.getPublicKey().getEncodingAlgorithm();
 				switch (algorithm) {
+				case "ssh-ed448":
+				{
+					byte[] a = ((SshEd448PublicKey) pair.getPublicKey()).getA();
+					privateKeyData.writeBinaryString(a);
+					byte[] sk = ((SshEd448PrivateKeyJCE) pair.getPrivateKey()).getSeed();
+					privateKeyData.writeBinaryString(sk);
+					break;
+				}
 				case "ssh-ed25519":
+				{
 					byte[] a = ((SshEd25519PublicKey) pair.getPublicKey()).getA();
 					privateKeyData.writeBinaryString(a);
 					byte[] sk = ((SshEd25519PrivateKeyJCE) pair.getPrivateKey()).getSeed();
@@ -212,6 +223,7 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 					privateKeyData.write(a);
 
 					break;
+				}
 				case "ssh-rsa": {
 					SshRsaPublicKey publickey = (SshRsaPublicKey) pair.getPublicKey();
 					SshRsaPrivateCrtKey privatekey = (SshRsaPrivateCrtKey) pair.getPrivateKey();
@@ -388,6 +400,12 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 						String algorithm = privateReader.readString();
 
 						switch (algorithm) {
+						case "ssh-ed448": {
+							byte[] publicKey = privateReader.readBinaryString();
+							byte[] privateKey = privateReader.readBinaryString();
+							pair.setPrivateKey(new SshEd448PrivateKeyJCE(privateKey));
+							break;
+						}
 						case "ssh-ed25519": {
 							byte[] publicKey = privateReader.readBinaryString();
 							byte[] privateKey = privateReader.readBinaryString();

@@ -1,5 +1,9 @@
 Maverick Synergy 3.0.11 - TBC  
 
+Features
+  o Support for PuTTY Version 3 Private Key format (requires Bouncycastle dependency for Argon key derivation support)
+  o Support for ed448 public and private keys
+    
 Bug Fixes
     o Fixed NPE when SCP is enabled on AbstractSshServer but no ChannelFactory has been set.
  

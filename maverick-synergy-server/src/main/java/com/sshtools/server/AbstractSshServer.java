@@ -267,7 +267,7 @@ public abstract class AbstractSshServer implements Closeable {
 	protected void configureFilesystem(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
 		sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(fileFactory);
 		if(enableScp) {
-			channelFactory.supportedCommands().add("scp", ScpCommand.class);
+			sshContext.getChannelFactory().supportedCommands().add("scp", ScpCommand.class);
 		}
 	}
 	

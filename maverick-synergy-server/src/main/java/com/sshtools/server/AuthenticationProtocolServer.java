@@ -216,6 +216,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 			}
 			
 			methodStarted = new Date();
+			currentMethod = bar.readString();
 			
 			EventServiceImplementation.getInstance().fireEvent(
 					new Event(
@@ -247,7 +248,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 						.getRequiredMechanisms(con);
 			}
 
-			currentMethod = bar.readString();
+			
 
 			if(Log.isDebugEnabled()) {
 				Log.debug("Client is attempting " + currentMethod
@@ -442,7 +443,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 		
 		String[] supported;
 		
-		supported = transport.getContext().getPolicy(AuthenticationMechanismFactory.class).getSupportedMechanisms();
+		supported = transport.getContext().getAuthenticationMechanismFactory().getSupportedMechanisms();
 
 		if(Boolean.getBoolean("maverick.oldMethodsToContinue")) {
 			

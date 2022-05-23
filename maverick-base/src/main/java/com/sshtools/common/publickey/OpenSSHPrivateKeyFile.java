@@ -402,6 +402,7 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 
 						switch (algorithm) {
 						case "ssh-ed448": {
+							@SuppressWarnings("unused")
 							byte[] publicKey = privateReader.readBinaryString();
 							byte[] privateKey = privateReader.readBinaryString();
 							pair.setPrivateKey(new SshEd448PrivateKeyJCE(privateKey));

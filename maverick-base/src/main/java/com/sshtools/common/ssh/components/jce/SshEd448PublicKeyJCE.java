@@ -42,7 +42,7 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 
 
-public class SshEd448PublicKeyJCE implements SshEd25519PublicKey {
+public class SshEd448PublicKeyJCE implements SshEd448PublicKey {
 
 	public final static byte[] ASN_HEADER = { 0x30, 0x43, 0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x71, 0x03, 0x3A, 0x00 };
 	

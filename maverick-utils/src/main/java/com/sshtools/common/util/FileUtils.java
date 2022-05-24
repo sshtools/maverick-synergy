@@ -235,4 +235,8 @@ public class FileUtils {
 		return checkEndsWithNoSlash(path1).equals(checkEndsWithNoSlash(path2));
 	}
 
+	public static boolean isRoot(String parentPath) {
+		return parentPath.equals("/");
+	}
+
 }

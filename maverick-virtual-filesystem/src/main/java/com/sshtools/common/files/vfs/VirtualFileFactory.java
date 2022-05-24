@@ -60,13 +60,17 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 				 */
 				if(!mountCache.containsKey(parentPath)) {
 					mountCache.put(parentPath, new VirtualMountFile(
-							FileUtils.checkEndsWithNoSlash(parentPath), 
+							isRoot(parentPath) ? parentPath : FileUtils.checkEndsWithNoSlash(parentPath), 
 								mgr.getMount(parentPath), this, true));
 				}
 			}
 		}
 	}
 
+	private boolean isRoot(String path) {
+		return path.equals("/");
+	}
+	
 	public boolean isCached() {
 		return cached;
 	}

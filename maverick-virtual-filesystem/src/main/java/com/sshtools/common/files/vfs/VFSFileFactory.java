@@ -125,11 +125,12 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 		return evt;
 	}
 
+	@Deprecated
+	public void setDefaultPath(String path) throws FileNotFoundException {
+
+	}
+
 	public VFSFile getDefaultPath() throws PermissionDeniedException, IOException {
 		return getFile("");
-	}
-	
-	public static void main(String[] args) throws IOException, PermissionDeniedException {
-		new VFSFileFactory().getFile("/Users/lee").getAbsolutePath();
 	}
 }

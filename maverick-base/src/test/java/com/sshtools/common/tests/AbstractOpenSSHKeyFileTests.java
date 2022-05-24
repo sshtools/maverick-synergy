@@ -40,14 +40,14 @@ import junit.framework.TestCase;
 public class AbstractOpenSSHKeyFileTests extends TestCase {
 
 
-	protected void performPrivateKeyTests(String privateFilename, String publicFilename, String fingerprintFilename, String bbFilename, String encryptedFilename) throws IOException, InvalidPassphraseException, SshException {
+	protected void performPrivateKeyTests(String folder, String privateFilename, String publicFilename, String fingerprintFilename, String bbFilename, String encryptedFilename) throws IOException, InvalidPassphraseException, SshException {
 		
 
 		/**
 		 * Load the public key file
 		 */
 		SshPublicKeyFile pubkeyFile = SshPublicKeyFileFactory.parse(
-				getClass().getResourceAsStream(String.format("/testdata/%s", publicFilename)));
+				getClass().getResourceAsStream(String.format("/testdata/%s/%s", folder, publicFilename)));
 		
 		SshPublicKey pub = pubkeyFile.toPublicKey();
 		
@@ -55,7 +55,7 @@ public class AbstractOpenSSHKeyFileTests extends TestCase {
 		 * Load the unencrypted private key
 		 */
 		SshPrivateKeyFile unencryptedFile = SshPrivateKeyFileFactory.parse(
-				getClass().getResourceAsStream(String.format("/testdata/%s", privateFilename)));
+				getClass().getResourceAsStream(String.format("/testdata/%s/%s", folder, privateFilename)));
 		SshKeyPair unencryptedKey = unencryptedFile.toKeyPair(null);
 		
 		/**
@@ -67,7 +67,7 @@ public class AbstractOpenSSHKeyFileTests extends TestCase {
 		/**
 		 * Load the expected SHA256 fingerprint
 		 */
-		String expectedFingerprint = IOUtils.toString(getClass().getResourceAsStream(String.format("/testdata/%s", fingerprintFilename)), "UTF-8").trim();
+		String expectedFingerprint = IOUtils.toString(getClass().getResourceAsStream(String.format("/testdata/%s/%s", folder, fingerprintFilename)), "UTF-8").trim();
 		
 		/**
 		 * Generate the public key's SHA256 fingerprint
@@ -83,7 +83,7 @@ public class AbstractOpenSSHKeyFileTests extends TestCase {
 		/**
 		 * Load the expected BubbleBabble for the public key
 		 */
-		String expectedBubbleBabble = IOUtils.toString(getClass().getResourceAsStream(String.format("/testdata/%s", bbFilename)), "UTF-8").trim();
+		String expectedBubbleBabble = IOUtils.toString(getClass().getResourceAsStream(String.format("/testdata/%s/%s", folder, bbFilename)), "UTF-8").trim();
 		
 		/**
 		 * Generate the public keys BubbleBabble
@@ -99,13 +99,13 @@ public class AbstractOpenSSHKeyFileTests extends TestCase {
 		/**
 		 * Load the passphrase for the encrypted private key
 		 */
-		String passphrase = IOUtils.toString(getClass().getResourceAsStream(String.format("/testdata/pw")), "UTF-8").trim();
+		String passphrase = IOUtils.toString(getClass().getResourceAsStream(String.format("/testdata/%s/pw", folder)), "UTF-8").trim();
 		
 		/**
 		 * Load the encrypted private key
 		 */
 		SshPrivateKeyFile encryptedFile = SshPrivateKeyFileFactory.parse(
-				getClass().getResourceAsStream(String.format("/testdata/%s", encryptedFilename)));
+				getClass().getResourceAsStream(String.format("/testdata/%s/%s", folder, encryptedFilename)));
 		
 		SshKeyPair encryptedKey = encryptedFile.toKeyPair(passphrase);
 		

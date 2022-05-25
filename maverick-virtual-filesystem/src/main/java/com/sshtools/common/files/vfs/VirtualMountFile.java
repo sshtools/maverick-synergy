@@ -176,7 +176,7 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 
 	public boolean isWritable() throws IOException, PermissionDeniedException {
-		return !intermediate && (!parentMount.isReadOnly() || resolveFile().isWritable());
+		return !intermediate && (!parentMount.isReadOnly() && resolveFile().isWritable());
 	}
 
 	public boolean createNewFile() throws PermissionDeniedException,

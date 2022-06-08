@@ -6,6 +6,8 @@ Features
     
 Bug Fixes
     o Fixed NPE when SCP is enabled on AbstractSshServer but no ChannelFactory has been set.
+    o VFSFileFactory fails to resolve file with no default path is set and local file scheme is not supported. Added maverick.vfsDefaultPath system property that allows override of the default path.
+    o Ensure mounts in VirtualFileFactory are initialized with VFSFileFactory with a default path of the mount path.
  
 =================
 =  HISTORY      =

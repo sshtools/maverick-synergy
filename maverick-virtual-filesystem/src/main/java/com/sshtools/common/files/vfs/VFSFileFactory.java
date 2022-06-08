@@ -21,6 +21,7 @@
 
 package com.sshtools.common.files.vfs;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
@@ -32,21 +33,21 @@ import org.apache.commons.vfs2.VFS;
 
 import com.sshtools.common.events.Event;
 import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 
 public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 	
 	private FileSystemOptions opts;
-//	private FileObject defaultPath;
+	private FileObject defaultPath;
 	private boolean useURI = true;
 	private FileSystemManager manager;
-//	private String homeDirectory;
+	private String homeDirectory;
 
 	public VFSFileFactory() throws FileNotFoundException {
 		this((FileSystemManager) null);
 	}
 	
-	@Deprecated
 	public VFSFileFactory(String homeDirectory) throws FileNotFoundException {
 		this((FileSystemManager) null, homeDirectory);
 	}
@@ -55,7 +56,6 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 		this((FileSystemManager) null, opts, null);
 	}
 
-	@Deprecated
 	public VFSFileFactory(FileSystemOptions opts, String homeDirectory) throws FileNotFoundException {
 		this((FileSystemManager) null, opts, homeDirectory);
 	}
@@ -64,7 +64,6 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 		this(manager, new FileSystemOptions(), null);
 	}
 
-	@Deprecated
 	public VFSFileFactory(FileSystemManager manager, String homeDirectory) throws FileNotFoundException {
 		this(manager, new FileSystemOptions(), homeDirectory);
 	}
@@ -73,11 +72,10 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 		this(manager, opts, null);
 	}
 
-	@Deprecated
 	public VFSFileFactory(FileSystemManager manager, FileSystemOptions opts, String homeDirectory)
 			throws FileNotFoundException {
 		this.opts = opts;
-
+		this.homeDirectory = homeDirectory;
 		try {
 			if (manager == null) {
 				manager = VFS.getManager();
@@ -86,6 +84,17 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 			throw new FileNotFoundException("Could not obtain VFS manager.");
 		}
 		this.manager = manager;
+		if (homeDirectory == null) {
+			try {
+				defaultPath = manager.resolveFile(new File(".").getAbsolutePath());
+			} catch (FileSystemException e) {
+				if(Log.isDebugEnabled()) {
+					Log.debug("Unable to determine default path", e);
+				}
+				throw new FileNotFoundException(
+						"Unable to determine a default path. Pass a AbstractFileHomeFactory instance into this constructor of VFSFileFactory");
+			}
+		}
 	}
 
 	public FileSystemManager getFileSystemManager() {
@@ -107,7 +116,21 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 			obj = obj.resolveFile(path);
 			return new VFSFile(obj, this);
 		} catch (FileSystemException e) {
-			throw new FileNotFoundException("Path " + path + " was not found");
+			try {
+				FileObject alt;
+				if (homeDirectory == null) {
+					alt = manager.resolveFile(defaultPath, parent);
+				} else {
+					alt = manager.resolveFile(manager.resolveFile(homeDirectory), parent);
+				}
+				alt = alt.resolveFile(path);
+				return new VFSFile(alt, this);
+			} catch (Exception e1) {
+				if(Log.isDebugEnabled()) {
+					Log.debug("Unable to resolve file " + path, e1);
+				}
+				throw new FileNotFoundException("Path " + path + " was not found");
+			}
 		}
 	}
 
@@ -116,7 +139,18 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 		try {
 			obj = manager.resolveFile(path, opts);
 		} catch (FileSystemException e) {
-			throw new FileNotFoundException("Path " + path + " was not found");
+			try {
+				if (homeDirectory == null) {
+					obj = manager.resolveFile(defaultPath, path);
+				} else {
+					obj = manager.resolveFile(manager.resolveFile(homeDirectory), path);
+				}
+			} catch (Exception e1) {
+				if(Log.isDebugEnabled()) {
+					Log.debug("Unable to resolve file " + path, e1);
+				}
+				throw new FileNotFoundException("Path " + path + " was not found");
+			}
 		}
 		return new VFSFile(obj, this);
 	}
@@ -125,9 +159,16 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 		return evt;
 	}
 
-	@Deprecated
 	public void setDefaultPath(String path) throws FileNotFoundException {
-
+		try {
+			defaultPath = manager.resolveFile(path, opts);
+		} catch (FileSystemException e) {
+			if(Log.isDebugEnabled()) {
+				Log.debug("Unable to set default path", e);
+			}
+			throw new FileNotFoundException(
+					"Unable to determine a default path. Set AbstractFileHomeFactory instance on VFSFileFactory");
+		}
 	}
 
 	public VFSFile getDefaultPath() throws PermissionDeniedException, IOException {

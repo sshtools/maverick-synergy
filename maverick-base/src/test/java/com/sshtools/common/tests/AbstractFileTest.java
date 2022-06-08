@@ -33,6 +33,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.sshtools.common.files.AbstractFile;
@@ -63,6 +65,20 @@ public abstract class AbstractFileTest {
 	protected abstract byte[] createContent(String path, long size) throws IOException, NoSuchAlgorithmException;
 	
 	protected abstract byte[] hashContent(String path, long size) throws IOException, NoSuchAlgorithmException;
+	
+	protected abstract void clean() throws IOException;
+	
+	protected abstract void setup() throws IOException;
+	
+	@Before
+	public void pre() throws IOException {
+		setup();
+	}
+	
+	@After
+	public void post() throws IOException {
+		clean();
+	}
 	
 	@Test
 	public void testFileExists() throws IOException, PermissionDeniedException {

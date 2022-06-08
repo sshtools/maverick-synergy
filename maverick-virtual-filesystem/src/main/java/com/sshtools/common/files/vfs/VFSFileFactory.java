@@ -42,40 +42,40 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 	private FileObject defaultPath;
 	private boolean useURI = true;
 	private FileSystemManager manager;
-	private String homeDirectory;
+	private String defaultDirectory;
 
 	public VFSFileFactory() throws FileNotFoundException {
 		this((FileSystemManager) null);
 	}
 	
-	public VFSFileFactory(String homeDirectory) throws FileNotFoundException {
-		this((FileSystemManager) null, homeDirectory);
+	public VFSFileFactory(String defaultDirectory) throws FileNotFoundException {
+		this((FileSystemManager) null, defaultDirectory);
 	}
 
 	public VFSFileFactory(FileSystemOptions opts) throws FileNotFoundException {
 		this((FileSystemManager) null, opts, null);
 	}
 
-	public VFSFileFactory(FileSystemOptions opts, String homeDirectory) throws FileNotFoundException {
-		this((FileSystemManager) null, opts, homeDirectory);
+	public VFSFileFactory(FileSystemOptions opts, String defaultDirectory) throws FileNotFoundException {
+		this((FileSystemManager) null, opts, defaultDirectory);
 	}
 
 	public VFSFileFactory(FileSystemManager manager) throws FileNotFoundException {
 		this(manager, new FileSystemOptions(), null);
 	}
 
-	public VFSFileFactory(FileSystemManager manager, String homeDirectory) throws FileNotFoundException {
-		this(manager, new FileSystemOptions(), homeDirectory);
+	public VFSFileFactory(FileSystemManager manager, String defaultDirectory) throws FileNotFoundException {
+		this(manager, new FileSystemOptions(), defaultDirectory);
 	}
 
 	public VFSFileFactory(FileSystemManager manager, FileSystemOptions opts) throws FileNotFoundException {
 		this(manager, opts, null);
 	}
 
-	public VFSFileFactory(FileSystemManager manager, FileSystemOptions opts, String homeDirectory)
+	public VFSFileFactory(FileSystemManager manager, FileSystemOptions opts, String defaultDirectory)
 			throws FileNotFoundException {
 		this.opts = opts;
-		this.homeDirectory = homeDirectory;
+		this.defaultDirectory = defaultDirectory;
 		try {
 			if (manager == null) {
 				manager = VFS.getManager();
@@ -84,10 +84,10 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 			throw new FileNotFoundException("Could not obtain VFS manager.");
 		}
 		this.manager = manager;
-		if (homeDirectory == null) {
+		if (defaultDirectory == null) {
 			try {
-				defaultPath = manager.resolveFile(new File(".").getAbsolutePath());
-			} catch (FileSystemException e) {
+				defaultPath = manager.resolveFile(System.getProperty("maverick.vfsDefaultPath", "."));
+		 	} catch (FileSystemException e) {
 				if(Log.isDebugEnabled()) {
 					Log.debug("Unable to determine default path", e);
 				}
@@ -118,10 +118,10 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 		} catch (FileSystemException e) {
 			try {
 				FileObject alt;
-				if (homeDirectory == null) {
+				if (defaultDirectory == null) {
 					alt = manager.resolveFile(defaultPath, parent);
 				} else {
-					alt = manager.resolveFile(manager.resolveFile(homeDirectory), parent);
+					alt = manager.resolveFile(manager.resolveFile(defaultDirectory), parent);
 				}
 				alt = alt.resolveFile(path);
 				return new VFSFile(alt, this);
@@ -140,10 +140,10 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 			obj = manager.resolveFile(path, opts);
 		} catch (FileSystemException e) {
 			try {
-				if (homeDirectory == null) {
+				if (defaultDirectory == null) {
 					obj = manager.resolveFile(defaultPath, path);
 				} else {
-					obj = manager.resolveFile(manager.resolveFile(homeDirectory), path);
+					obj = manager.resolveFile(manager.resolveFile(defaultDirectory), path);
 				}
 			} catch (Exception e1) {
 				if(Log.isDebugEnabled()) {

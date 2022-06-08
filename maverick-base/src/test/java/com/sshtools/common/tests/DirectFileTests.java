@@ -35,6 +35,7 @@ import java.util.Objects;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.direct.DirectFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.IOUtils;
 
 public class DirectFileTests extends AbstractFileTest {
@@ -50,6 +51,13 @@ public class DirectFileTests extends AbstractFileTest {
 		return baseFolder;
  	}
 	
+	protected void setup() throws IOException {
+		baseFolder = Files.createTempDirectory("direct-file").toFile();
+	}
+	
+	protected void clean() throws IOException {
+		FileUtils.deleteFolder(baseFolder);
+	}
 
 	@Override
 	protected String getBasePath() throws IOException {

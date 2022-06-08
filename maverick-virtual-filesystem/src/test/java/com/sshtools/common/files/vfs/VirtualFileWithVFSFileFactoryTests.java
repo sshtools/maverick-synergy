@@ -42,23 +42,18 @@ public class VirtualFileWithVFSFileFactoryTests extends VFSFileTests {
 		return baseFolder;
  	}
 	
-	
 	@Override
 	protected AbstractFile getFile(String path) throws PermissionDeniedException, IOException {
 		return factory.getFile(path);
 	}
-
-
 
 	@Override
 	protected String getBasePath() throws IOException {
 		return "/";
 	}
 
-
 	@Override
 	protected String getCanonicalPath() throws IOException {
 		return "/";
 	}
-	
 }

@@ -114,7 +114,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		Map<String,VirtualFile> files = new HashMap<>();
 		
 		AbstractFile file = parent.resolveFile();
-	
+
 		for(AbstractFile child : file.getChildren()) {
 			files.put(child.getName(), new VirtualMappedFile(child, parent.getMount(), this));
 		}

@@ -146,7 +146,9 @@ public class AbstractFileAdapter implements AbstractFile {
 	}
 
 	public void refresh() {
-		file.refresh();
+		if(file!=null) {
+			file.refresh();
+		}
 	}
 
 	public OutputStream getOutputStream(boolean append) throws IOException, PermissionDeniedException {

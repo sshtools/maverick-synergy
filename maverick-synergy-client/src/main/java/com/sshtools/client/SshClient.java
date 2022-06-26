@@ -483,4 +483,14 @@ public class SshClient implements Closeable {
 		}
 		throw new SshException(String.format("Session was not opened after %d ms timeout threshold", timeout), SshException.SOCKET_TIMEOUT);
 	}
+	
+	public SshClient openRemoteClient(String hostname, int port, String username) throws SshException, IOException, UnauthorizedException {
+		
+		int localPort = startLocalForwarding("127.0.0.1", 0, hostname, port);
+		try {
+			return new SshClient("127.0.0.1", localPort, username);
+		} finally {
+			stopLocalForwarding("127.0.0.1", localPort);
+		}
+	}
 }

@@ -476,28 +476,29 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				nfs.setFileAttributes(path, attrs);
 
 				try {
-					fireStatEvent(path, old, attrs, started, null);
+					fireSetStatEvent(path, old, attrs, started, null);
 					sendStatusMessage(id, STATUS_FX_OK,
 							"The attributes were set");
 				} catch (SftpStatusEventException ex) {
+					fireSetStatEvent(path, old, attrs, started, ex);
 					sendStatusMessage(id, ex.getStatus(), ex.getMessage());
 				}
 
 			} catch (FileNotFoundException fnfe) {
-				fireStatEvent(path, old, attrs, started, fnfe);
+				fireSetStatEvent(path, old, attrs, started, fnfe);
 				sendStatusMessage(id, STATUS_FX_NO_SUCH_FILE, fnfe.getMessage());
 			} catch (PermissionDeniedException pde) {
-				fireStatEvent(path, old, attrs, started, pde);
+				fireSetStatEvent(path, old, attrs, started, pde);
 				sendStatusMessage(id, STATUS_FX_PERMISSION_DENIED,
 						pde.getMessage());
 			} catch (IOException ioe) {
-				fireStatEvent(path, old, attrs, started, ioe);
+				fireSetStatEvent(path, old, attrs, started, ioe);
 				sendStatusMessage(id, STATUS_FX_FAILURE, ioe.getMessage());
 			}
 		}
 	}
 
-	protected void fireStatEvent(String path, SftpFileAttributes old,
+	protected void fireSetStatEvent(String path, SftpFileAttributes old,
 			SftpFileAttributes attrs, Date started, Exception error) {
 
 		fireEvent(
@@ -514,6 +515,29 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										old)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_NEW_ATRTIBUTES,
+										attrs)
+								.addAttribute(
+										EventCodes.ATTRIBUTE_OPERATION_STARTED,
+										started)
+								.addAttribute(
+										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+										new Date()));
+	}
+	
+	protected void fireStatEvent(String path,
+			SftpFileAttributes attrs, Date started, Exception error) {
+
+		fireEvent(
+						new Event(SftpSubsystem.this,
+								EventCodes.EVENT_SFTP_GET_ATTRIBUTES, error)
+								.addAttribute(
+										EventCodes.ATTRIBUTE_CONNECTION,
+										con)
+								.addAttribute(
+										EventCodes.ATTRIBUTE_FILE_NAME,
+										path)
+								.addAttribute(
+										EventCodes.ATTRIBUTE_ATRTIBUTES,
 										attrs)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_OPERATION_STARTED,
@@ -559,7 +583,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				nfs.setFileAttributes(handle, attrs);
 
 				try {
-					fireStatEvent(path, old, attrs, started, null);
+					fireSetStatEvent(path, old, attrs, started, null);
 					sendStatusMessage(id, STATUS_FX_OK,
 							"The attributes were set");
 				} catch (SftpStatusEventException ex) {
@@ -567,14 +591,14 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				}
 
 			} catch (InvalidHandleException ihe) {
-				fireStatEvent(path, old, attrs, started, ihe);
+				fireSetStatEvent(path, old, attrs, started, ihe);
 				sendStatusMessage(id, STATUS_FX_FAILURE, ihe.getMessage());
 			} catch (PermissionDeniedException pde) {
-				fireStatEvent(path, old, attrs, started, pde);
+				fireSetStatEvent(path, old, attrs, started, pde);
 				sendStatusMessage(id, STATUS_FX_PERMISSION_DENIED,
 						pde.getMessage());
 			} catch (IOException ioe) {
-				fireStatEvent(path, old, attrs, started, ioe);
+				fireSetStatEvent(path, old, attrs, started, ioe);
 				sendStatusMessage(id, STATUS_FX_FAILURE, ioe.getMessage());
 			}
 		}
@@ -1849,25 +1873,31 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			ByteArrayReader bar = new ByteArrayReader(msg);
 			// skip the messagetype byte
 			bar.skip(1);
-
+			Date started = new Date();
 			int id = -1;
-
+			String path = null;
 			try {
 				id = (int) bar.readInt();
-				String path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
+				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
 
 				if (nfs.fileExists(path)) {
-					sendAttributesMessage(id, nfs.getFileAttributes(path));
+					SftpFileAttributes attrs = nfs.getFileAttributes(path);
+					sendAttributesMessage(id, attrs);
+					fireStatEvent(path, attrs, started, null);
 				} else {
+					fireStatEvent(path, null, started, new FileNotFoundException());
 					sendStatusMessage(id, STATUS_FX_NO_SUCH_FILE, path
 							+ " is not a valid file path");
 				}
 			} catch (FileNotFoundException ioe) {
+				fireStatEvent(path, null, started, ioe);
 				sendStatusMessage(id, STATUS_FX_NO_SUCH_FILE, ioe.getMessage());
 			} catch (PermissionDeniedException ioe) {
+				fireStatEvent(path, null, started, ioe);
 				sendStatusMessage(id, STATUS_FX_PERMISSION_DENIED,
 						ioe.getMessage());
 			} catch (IOException ioe2) {
+				fireStatEvent(path, null, started, ioe2);
 				sendStatusMessage(id, STATUS_FX_FAILURE, ioe2.getMessage());
 			} finally {
 				bar.close();
@@ -1891,24 +1921,34 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			ByteArrayReader bar = new ByteArrayReader(msg);
 			// skip the messagetype byte
 			bar.skip(1);
-
+			Date started = new Date();
 			int id = -1;
+			String path = null;
+			
 			try {
 				id = (int) bar.readInt();
-				String path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
+				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
 
 				if (nfs.fileExists(path)) {
-					sendAttributesMessage(id, nfs.getFileAttributes(path));
+					SftpFileAttributes attrs = nfs.getFileAttributes(path);
+					sendAttributesMessage(id, attrs);
+					fireStatEvent(path, attrs, started, null);
 				} else {
+					fireStatEvent(path, null, started, new FileNotFoundException());
 					sendStatusMessage(id, STATUS_FX_NO_SUCH_FILE, path
 							+ " is not a valid file path");
 				}
+				
+				
 			} catch (FileNotFoundException ioe) {
+				fireStatEvent(path, null, started, ioe);
 				sendStatusMessage(id, STATUS_FX_NO_SUCH_FILE, ioe.getMessage());
 			} catch (PermissionDeniedException ioe) {
+				fireStatEvent(path, null, started, ioe);
 				sendStatusMessage(id, STATUS_FX_PERMISSION_DENIED,
 						ioe.getMessage());
 			} catch (IOException ioe2) {
+				fireStatEvent(path, null, started, ioe2);
 				sendStatusMessage(id, STATUS_FX_FAILURE, ioe2.getMessage());
 			} finally {
 				bar.close();
@@ -1946,12 +1986,14 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			bar.skip(1);
 
 			int id = -1;
-
+			byte[] handle = null;
 			try {
 				id = (int) bar.readInt();
-				sendFilenameMessage(id,
-						nfs.readDirectory(bar.readBinaryString()), false, false);
-
+				handle = bar.readBinaryString();
+				
+				TransferEvent evt = (TransferEvent) openFolderHandles.get(nfs.getHandle(handle));
+				evt.bytesWritten += sendFilenameMessage(id, nfs.readDirectory(handle), false, false);
+				
 			} catch (FileNotFoundException ioe) {
 				sendStatusMessage(id, STATUS_FX_NO_SUCH_FILE, ioe.getMessage());
 			} catch (InvalidHandleException ihe) {
@@ -2029,7 +2071,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 
 	protected void fireOpenDirectoryEvent(String path, Date started, byte[] handle,
 			Exception error) {
-		fireEvent(new Event(SftpSubsystem.this, EventCodes.EVENT_SFTP_DIR,
+		fireEvent(new Event(SftpSubsystem.this, EventCodes.EVENT_SFTP_DIRECTORY_OPENED,
 								error)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_CONNECTION,
@@ -2202,10 +2244,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 		return str;
 	}
 
-	public void sendFilenameMessage(int id, SftpFile[] files, boolean isRealPath,
+	public int sendFilenameMessage(int id, SftpFile[] files, boolean isRealPath,
 			boolean isAbsolute) throws IOException {
 
-		Packet baw = new Packet(4096);
+		Packet baw = new Packet(16384);
 		baw.write(SSH_FXP_NAME);
 		baw.writeInt(id);
 		baw.writeInt(files.length);
@@ -2224,6 +2266,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 
 		sendMessage(baw);
 
+		return baw.size();
 	}
 
 	class MakeDirectoryOperation extends FileSystemOperation {

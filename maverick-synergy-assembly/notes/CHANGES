@@ -3,7 +3,7 @@ Maverick Synergy 3.0.11 - TBC
 Features
   o Support for PuTTY Version 3 Private Key format (requires Bouncycastle dependency for Argon key derivation support)
   o Support for ed448 public and private keys
-  o Added missing events for SFPT operations; EVENT_SFTP_GET_ATTRIBUTES for stat and EVENT_SFTP_DIRECTORY_OPENED for opening of a directory.
+  o Added missing events for SFTP operations; EVENT_SFTP_GET_ATTRIBUTES for stat and EVENT_SFTP_DIRECTORY_OPENED for opening of a directory.
   o Added openRemoteClient method for using the existing connection as a jump host.
 
 Bug Fixes

@@ -1,3 +1,19 @@
+Maverick Synergy 3.0.8 - Jun 30, 2022
+
+Features
+    o Removed hard dependency on BouncyCastle JCE for ed25519 keys. This now supports any JCE provider that supports ed25519 algorithm.
+    o Refactored support for incomplete and non-functional feature in client to use HTTP, SOCKS4 and SOCKS5 proxies.
+
+Bug Fixes
+    o SftpFileAttributes setGroup and setUsername never set flag SSH_FILEXFER_ATTR_OWNERGROUP.
+    o SftpFileAttributes does not use values set by setGroup/setUsername in v4 binary blob.
+    o SftpFileAttributes does not validate UID/GID are numeric values.
+    o Added getMount to VirtualFile interface for consistent mount returning function across virtual file types. Deprecated getParentMount on VirtualFileObject for same reasons.  
+
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.7 - Apr 11, 2021
 
 Features
@@ -28,11 +44,7 @@ Bug Fixes
     o Use ConcurrentHashMap in ExecutorOperationSupprot listener collection.
     o A callback server should be identifiable by its identification string e.g. SSH-2.0-CallbackServer
     
-    
-
-=================
-=  HISTORY      =
-=================
+-----------------
 
 Maverick Synergy 3.0.6 - Dec 29, 2021
 

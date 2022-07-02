@@ -38,7 +38,7 @@ public class Permissions {
 	}
 
 	public void remove(int permission) {
-		permissions ^= permission;
+		permissions &= ~permission;
 	}
 
 	public boolean check(int permission) {

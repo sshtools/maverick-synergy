@@ -818,8 +818,8 @@ public final class AbstractFileSystem {
 		evt.addAttribute(EventCodes.ATTRIBUTE_CONNECTION, con);
 		byte[] handle = (byte[]) evt.getAttribute(EventCodes.ATTRIBUTE_HANDLE);
 		if(handle!=null) {
-			
-			OpenFile openFile = openFiles.get(getHandle(handle));
+			String h = getHandle(handle);
+			OpenFile openFile = openFiles.get(h);
 			if(openFile!=null) {
 				if(openFile.f!=null) {
 					evt.addAttribute(EventCodes.ATTRIBUTE_ABSTRACT_FILE, openFile.f);
@@ -832,6 +832,13 @@ public final class AbstractFileSystem {
 				}
 				if(openFile.raf!=null) {
 					evt.addAttribute(EventCodes.ATTRIBUTE_ABSTRACT_FILE_RANDOM_ACCESS, openFile.raf);
+				}
+			}
+			
+			OpenDirectory openDirectory = openDirectories.get(h);
+			if(openDirectory!=null) {
+				if(openDirectory.f!=null) {
+					evt.addAttribute(EventCodes.ATTRIBUTE_ABSTRACT_FILE, openFile.f);
 				}
 			}
 		}

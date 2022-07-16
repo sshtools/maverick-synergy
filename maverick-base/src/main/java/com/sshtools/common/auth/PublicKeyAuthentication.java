@@ -209,9 +209,9 @@ public class PublicKeyAuthentication<C extends Context> implements Authenticatio
 					Integer count = (Integer) con.getProperty("publickey.max.verify");
 
 					if (count == null)
-						count = new Integer(1);
+						count = Integer.valueOf(1);
 					else
-						count = new Integer(count.intValue() + 1);
+						count = Integer.valueOf(count.intValue() + 1);
 
 					con.setProperty("publickey.max.verify", count);
 

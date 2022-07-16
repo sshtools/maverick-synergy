@@ -62,10 +62,10 @@ public abstract class IPUtils {
         int[] mask = new int[4];
         int rem = (bit + 1) / 8;
         int mod = (bit + 1) % 8;
-        Integer Int = new Integer(2);
-        Integer modInt = new Integer(8 - mod);
+        Integer Int = Integer.valueOf(2);
+        Integer modInt = Integer.valueOf(8 - mod);
         double d = Math.pow(Int.doubleValue(), modInt.doubleValue());
-        Double dd = new Double(d);
+        Double dd = Double.valueOf(d);
         int i;
         for (i = 0; i < rem; i++)
             mask[i] = 255;
@@ -98,21 +98,21 @@ public abstract class IPUtils {
      */
     public static int[] calcBroadcastAddress(int in[], int m) {
         int ret[] = new int[4];
-        Integer totalBits = new Integer(32);
-        Integer bits = new Integer(totalBits.intValue() - m - 1);
+        Integer totalBits = Integer.valueOf(32);
+        Integer bits = Integer.valueOf(totalBits.intValue() - m - 1);
         int mask[] = createMaskArray(m);
         double two = 2D;
-        Double hosts = new Double(Math.pow(two, bits.doubleValue()));
+        Double hosts = Double.valueOf(Math.pow(two, bits.doubleValue()));
         hosts.intValue();
         int ffOctets = bits.intValue() / 8;
-        Integer modBits = new Integer(bits.intValue() % 8);
+        Integer modBits = Integer.valueOf(bits.intValue() % 8);
         for (int i = 0; i < 4; i++) {
             ret[i] = in[i];
             if (i > 4 - ffOctets - 1)
                 ret[i] = 255;
         }
 
-        hosts = new Double(Math.pow(two, modBits.doubleValue()));
+        hosts = Double.valueOf(Math.pow(two, modBits.doubleValue()));
         if (ffOctets > 0)
             ret[4 - ffOctets - 1] = (in[4 - ffOctets - 1] + hosts.intValue()) - 1;
         else
@@ -126,10 +126,10 @@ public abstract class IPUtils {
      * @return int
      */
     public static int getNumberOfHosts(int ip[], int m) {
-        Integer totalBits = new Integer(32);
-        Integer bits = new Integer(totalBits.intValue() - m - 1);
+        Integer totalBits = Integer.valueOf(32);
+        Integer bits = Integer.valueOf(totalBits.intValue() - m - 1);
         double two = 2D;
-        Double hosts = new Double(Math.pow(two, bits.doubleValue()));
+        Double hosts = Double.valueOf(Math.pow(two, bits.doubleValue()));
         return hosts.intValue() - 2;
     }
 

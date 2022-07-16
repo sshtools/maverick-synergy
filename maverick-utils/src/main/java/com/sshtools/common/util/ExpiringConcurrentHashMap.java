@@ -58,7 +58,7 @@ public class ExpiringConcurrentHashMap<K,V> extends ConcurrentHashMap<K,V> {
     }
 
     private V doPut(K key, V value) {
-    	Long date = entryTime.getOrDefault(key, new Long(System.currentTimeMillis()));
+    	Long date = entryTime.getOrDefault(key, Long.valueOf(System.currentTimeMillis()));
         entryTime.put(key, date);
         V returnVal = super.put(key, value);
         return returnVal;

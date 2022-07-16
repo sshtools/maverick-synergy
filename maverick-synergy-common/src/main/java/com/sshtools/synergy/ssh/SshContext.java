@@ -22,6 +22,7 @@
 package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -338,11 +339,11 @@ public abstract class SshContext extends ProtocolContext implements
 	public <P> P getPolicy(Class<P> clz) {
 		try {
 			if(!policies.containsKey(clz)) {
-				policies.put(clz, clz.newInstance());
+				policies.put(clz, clz.getConstructor().newInstance());
 			}
 			
 			return (P) policies.get(clz);
-		} catch (InstantiationException | IllegalAccessException e) {
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}

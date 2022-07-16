@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ServiceLoader;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.components.SshKeyPair;
@@ -91,11 +92,14 @@ public class SshPrivateKeyFileFactory {
 				return new SshtoolsPrivateKeyFile(formattedkey);
 			} else if (Ssh1RsaPrivateKeyFile.isFormatted(formattedkey)) {
 				return new Ssh1RsaPrivateKeyFile(formattedkey);
-			} else if (PuTTYPrivateKeyFile.isFormatted(formattedkey)) {
-				return new PuTTYPrivateKeyFile(formattedkey);
 			} else if (SSHCOMPrivateKeyFile.isFormatted(formattedkey)) {
 				return new SSHCOMPrivateKeyFile(formattedkey);
 			} else {
+				for(var provider : ServiceLoader.load(SshPrivateKeyProvider.class)) {
+					if(provider.isFormatted(formattedkey)) {
+						return provider.create(formattedkey);
+					}
+				}
 				throw new IOException(
 						"A suitable key format could not be found!");
 			}

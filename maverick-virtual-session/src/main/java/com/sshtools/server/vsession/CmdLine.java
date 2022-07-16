@@ -26,7 +26,7 @@ import java.util.List;
 
 public class CmdLine {
 
-	enum Condition { Background, ExecNextCommandOnSuccess, ExecNextCommandOnFailure, ExecNextCommand };
+	public enum Condition { Background, ExecNextCommandOnSuccess, ExecNextCommandOnFailure, ExecNextCommand };
 	//enum Redirection { NoRedirection, PipeToNextCommand, PipeToFile };
 	
 	String line;

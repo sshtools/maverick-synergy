@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sshtools.hotfixes</groupId>
 	<artifactId>maverick-synergy-group</artifactId>
-	<version>3.0.11</version>
+	<version>3.1.0-SNAPSHOT</version>
 	<name>Maverick Synergy</name>
 	<description>Open source Java SSH API</description>
 	<url>http://www.jadaptive.com</url>
@@ -68,16 +68,16 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
+				<version>3.10.1</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>11</source>
+					<target>11</target>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.2.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -92,7 +92,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.4.0</version>
 				<executions>
 					<execution>
 						<id>javadoc-jar</id>
@@ -179,19 +179,27 @@
 		<module>maverick-utils</module>
 		<module>maverick-logging</module>
 		<module>maverick-base</module>
+		<module>maverick-base-tests</module>
 
 		<module>maverick-synergy-common</module>
+		<module>maverick-synergy-common-tests</module>
 		<module>maverick-synergy-client</module>
+		<module>maverick-synergy-client-tests</module>
 		<module>maverick-synergy-fuse-drive</module>
 		<module>maverick-synergy-server</module>
 		<module>maverick-synergy-callback-client</module>
 		<module>maverick-synergy-callback-server</module>
 
 		<module>maverick-virtual-filesystem</module>
+		<module>maverick-virtual-filesystem-tests</module>
 		<module>maverick-virtual-session</module>
+		<module>maverick-virtual-session-tests</module>
 		<module>maverick-x509</module>
+		<module>maverick-putty</module>
 		<module>maverick-bc</module>
+		<module>maverick-bc-tests</module>
 		<module>maverick-bc-fips</module>
+		<module>maverick-bc-fips-tests</module>
 		<module>maverick-zip</module>
 		<module>maverick-sshagent</module>
 

@@ -241,7 +241,7 @@ public class ComponentFactory<T> implements Cloneable {
 	 */
 	protected T createInstance(String name, Class<? extends T> cls)
 			throws Throwable {
-		return cls.newInstance();
+		return cls.getConstructor().newInstance();
 	}
 
 	/**
@@ -359,7 +359,7 @@ public class ComponentFactory<T> implements Cloneable {
 		list.sort(new Comparator<SecureComponent>() {
 			@Override
 			public int compare(SecureComponent o1, SecureComponent o2) {
-				return new Integer(o2.getPriority()).compareTo(o1.getPriority());
+				return Integer.valueOf(o2.getPriority()).compareTo(o1.getPriority());
 			}
 		});
 		
@@ -392,7 +392,7 @@ public class ComponentFactory<T> implements Cloneable {
 				if(Objects.isNull(strongest)) {
 					strongest = component;
 				} else {
-					if(new Integer(component.getPriority()).compareTo(strongest.getPriority()) > 0) {
+					if(Integer.valueOf(component.getPriority()).compareTo(strongest.getPriority()) > 0) {
 						strongest = component;
 					}
 				}

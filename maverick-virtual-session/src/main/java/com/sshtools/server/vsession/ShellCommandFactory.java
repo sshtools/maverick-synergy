@@ -22,6 +22,7 @@
 package com.sshtools.server.vsession;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -99,7 +100,7 @@ public class ShellCommandFactory extends CommandFactory<ShellCommand> {
 	
 	@Override
 	protected ShellCommand newInstance(String command, SshConnection con) throws UnsupportedCommandException,
-			IllegalAccessException, InstantiationException, IOException, PermissionDeniedException {
+			IllegalAccessException, InstantiationException, IOException, PermissionDeniedException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		
 		for(CommandFactory<? extends ShellCommand> factory : factories) {
 			if(factory.supportsCommand(command)) {

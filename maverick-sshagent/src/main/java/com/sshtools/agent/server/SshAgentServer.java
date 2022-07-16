@@ -58,7 +58,7 @@ public class SshAgentServer {
 		
 		File socketFile = new File(location);
 		AFUNIXServerSocket server = AFUNIXServerSocket.newInstance(); 
-		server.bind(new AFUNIXSocketAddress(socketFile));
+		server.bind(AFUNIXSocketAddress.of(socketFile));
 		
 		ServerThread t = new ServerThread(acceptor = new UnixSocketAdapter(server));
 		t.start();

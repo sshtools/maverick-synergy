@@ -50,7 +50,7 @@ public class ReadOnlyFileFactoryAdapter implements AbstractFileFactory<ReadOnlyA
 		return new ReadOnlyAbstractFile(fileFactory.getDefaultPath());
 	}
 	
-	static class ReadOnlyAbstractFile extends AbstractFileAdapter {
+	public static class ReadOnlyAbstractFile extends AbstractFileAdapter {
 
 		@Override
 		public boolean isWritable() throws IOException {

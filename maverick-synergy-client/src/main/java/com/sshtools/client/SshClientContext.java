@@ -267,7 +267,7 @@ public class SshClientContext extends SshContext {
 		SshKeyExchange<? extends SshContext> c = null;
 		try {
 
-			c = cls.newInstance();
+			c = cls.getConstructor().newInstance();
 
 			if (!JCEComponentManager.getDefaultInstance().supportedDigests().contains(c.getHashAlgorithm()))
 				throw new Exception("Hash algorithm " + c.getHashAlgorithm() + " is not supported");

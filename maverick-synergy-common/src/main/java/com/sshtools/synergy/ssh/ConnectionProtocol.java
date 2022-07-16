@@ -94,7 +94,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 		this.con = transport.getConnection();
 		
 		for(int i=0;i<transport.getSshContext().getChannelLimit();i++) {
-			channeIdPool.add(new Integer(i));
+			channeIdPool.add(Integer.valueOf(i));
 		}
 
 		if(Log.isDebugEnabled())

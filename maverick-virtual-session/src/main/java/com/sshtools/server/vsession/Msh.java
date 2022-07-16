@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -341,7 +342,7 @@ public class Msh extends ShellCommand {
 			boolean background)
 			throws UnsupportedCommandException, IllegalAccessException,
 			InstantiationException, ParseException, IOException,
-			PermissionDeniedException, UsageException {
+			PermissionDeniedException, UsageException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 
 		final Command cmd;
 

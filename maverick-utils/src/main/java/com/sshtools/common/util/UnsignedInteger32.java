@@ -48,7 +48,7 @@ public class UnsignedInteger32 {
       throw new NumberFormatException();
     }
 
-    value = new Long(a);
+    value = Long.valueOf(a);
   }
 
   /**
@@ -66,7 +66,7 @@ public class UnsignedInteger32 {
       throw new NumberFormatException();
     }
 
-    value = new Long(longValue);
+    value = Long.valueOf(longValue);
   }
 
   /**

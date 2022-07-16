@@ -438,7 +438,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 		}
 		
 		try {
-			SshPublicKey key = pub.newInstance();
+			SshPublicKey key = pub.getConstructor().newInstance();
 			String provider = key.test();
 			if(Log.isDebugEnabled())
 				Log.debug("   " + name + " will be supported using JCE Provider " + provider);
@@ -496,7 +496,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 		
 		SshCipher c = null;
 		try {
-			c = (SshCipher) cls.newInstance();
+			c = (SshCipher) cls.getConstructor().newInstance();
 			byte[] tmp = new byte[1024];
 			getSecureRandom().nextBytes(tmp);
 			c.init(SshCipher.ENCRYPT_MODE, tmp, tmp);
@@ -526,7 +526,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 		
 		Digest c = null;
 		try {
-			c = (Digest) cls.newInstance();
+			c = (Digest) cls.getConstructor().newInstance();
 
 			if (c instanceof AbstractDigest)
 				if(Log.isDebugEnabled())
@@ -557,7 +557,7 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 		
 		SshHmac c = null;
 		try {
-			c = (SshHmac) cls.newInstance();
+			c = (SshHmac) cls.getConstructor().newInstance();
 			byte[] tmp = new byte[1024];
 			c.init(tmp);
 

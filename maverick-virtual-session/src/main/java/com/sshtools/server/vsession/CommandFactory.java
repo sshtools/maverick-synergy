@@ -22,6 +22,7 @@
 package com.sshtools.server.vsession;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,11 +52,19 @@ public abstract class CommandFactory<T extends Command> {
 
 	public CommandFactory<T> installCommand(Class<? extends T> cls) {
 		try {
-			T c = cls.newInstance();
+			T c = cls.getConstructor().newInstance();
 			commands.put(c.getCommandName(), cls);
 		} catch (InstantiationException e) {
 			throw new IllegalStateException(e.getMessage(), e);
 		} catch (IllegalAccessException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		} catch (IllegalArgumentException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		} catch (InvocationTargetException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		} catch (NoSuchMethodException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		} catch (SecurityException e) {
 			throw new IllegalStateException(e.getMessage(), e);
 		}
 		return this;
@@ -74,18 +83,18 @@ public abstract class CommandFactory<T extends Command> {
 		return commands.containsKey(command);
 	}
 	
-	public T createCommand(String command, SshConnection con) throws UnsupportedCommandException, IllegalAccessException, InstantiationException, IOException, PermissionDeniedException {
+	public T createCommand(String command, SshConnection con) throws UnsupportedCommandException, IllegalAccessException, InstantiationException, IOException, PermissionDeniedException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		return newInstance(command, con);
 	}
 	
 	protected T newInstance(String command, SshConnection con) throws UnsupportedCommandException, IllegalAccessException,
-			InstantiationException, IOException, PermissionDeniedException {
+			InstantiationException, IOException, PermissionDeniedException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		if (!commands.containsKey(command)) {
 			throw new UnsupportedCommandException(command + " is not a supported command");
 		}
 
 		Class<? extends T> cls = commands.get(command);
-		T c = cls.newInstance();
+		T c = cls.getConstructor().newInstance();
 		
 		configureCommand(c, con);
 		

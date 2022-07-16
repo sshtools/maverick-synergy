@@ -44,7 +44,7 @@ public class PathFileFactory implements AbstractFileFactory<PathFile> {
 		Path p;
 		if(path.toString().startsWith(base.toString()))
 			path = path.substring(base.toString().length());
-		else 
+		else  if(!path.equals(""))
 			throw new IllegalStateException(String.format("Path '%s' requested is not a child of '%s'", path, base));
 		if(path.startsWith("/")) {
 			path = path.substring(1);

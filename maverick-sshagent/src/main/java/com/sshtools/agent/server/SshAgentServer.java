@@ -21,14 +21,13 @@
 
 package com.sshtools.agent.server;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.ServiceLoader;
 
-import org.newsclub.net.unix.AFUNIXServerSocket;
-import org.newsclub.net.unix.AFUNIXSocketAddress;
-
+import com.sshtools.agent.AgentProvider;
 import com.sshtools.agent.InMemoryKeyStore;
 import com.sshtools.agent.KeyStore;
+import com.sshtools.agent.client.AgentSocketType;
 import com.sshtools.agent.openssh.OpenSSHConnectionFactory;
 import com.sshtools.common.logger.Log;
 
@@ -54,14 +53,24 @@ public class SshAgentServer {
 		t.start();
 	}
 	
-	public void startUnixSocketListener(String location) throws IOException{
+	public void startListener(String location, AgentSocketType type) throws IOException {
 		
-		File socketFile = new File(location);
-		AFUNIXServerSocket server = AFUNIXServerSocket.newInstance(); 
-		server.bind(AFUNIXSocketAddress.of(socketFile));
+		SshAgentAcceptor serverAcceptor = null;
+		for(AgentProvider l : ServiceLoader.load(AgentProvider.class)) {
+			serverAcceptor = l.server(location, type);
+			if(serverAcceptor != null)
+				break;
+		}
+		if(serverAcceptor == null) {
+			throw new IOException("No provider available. Do you have maverick-sshagent-jnr-sockets or maverick-sshagent-jdk16-sockets on the classpath?");
+		}
 		
-		ServerThread t = new ServerThread(acceptor = new UnixSocketAdapter(server));
+		ServerThread t = new ServerThread(serverAcceptor);
 		t.start();
+	}
+	
+	public void startUnixSocketListener(String location) throws IOException {
+		startListener(location, AgentSocketType.UNIX_DOMAIN);
 	}
 	
 	public void close() throws IOException {

@@ -21,7 +21,6 @@
 package com.sshtools.agent.client;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,12 +30,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.newsclub.net.unix.AFUNIXSocket;
-import org.newsclub.net.unix.AFUNIXSocketAddress;
+import java.util.ServiceLoader;
 
 import com.sshtools.agent.AgentMessage;
 import com.sshtools.agent.KeyConstraints;
+import com.sshtools.agent.AgentProvider;
 import com.sshtools.agent.exceptions.AgentNotAvailableException;
 import com.sshtools.agent.exceptions.InvalidMessageException;
 import com.sshtools.agent.openssh.OpenSSHAgentMessages;
@@ -58,7 +56,6 @@ import com.sshtools.agent.rfc.SshAgentRequestVersion;
 import com.sshtools.agent.rfc.SshAgentSuccess;
 import com.sshtools.agent.rfc.SshAgentUnlock;
 import com.sshtools.agent.rfc.SshAgentVersionResponse;
-import com.sshtools.agent.win32.NamedPipeClient;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.SignatureGenerator;
 import com.sshtools.common.ssh.SshException;
@@ -162,63 +159,18 @@ public class SshAgentClient implements SignatureGenerator {
 	public static SshAgentClient connectLocalAgent(String application,
 			String location, AgentSocketType type, boolean RFCAgent) throws AgentNotAvailableException, IOException {
 		try {
-
-			switch(type) {
-			case WINDOWS_NAMED_PIPE:
-				NamedPipeClient namedPipe = new NamedPipeClient(location);
-				return new SshAgentClient(false, application, namedPipe, namedPipe.getInputStream(), namedPipe.getOutputStream(), false);
-			default:
-				Socket socket = connectAgentSocket(location, type);
-				return new SshAgentClient(false, application, socket, socket.getInputStream(), socket.getOutputStream(), false);
-			}
-		} catch (IOException ex) {
-			Log.error("Agent socket error :",ex);
-			throw new AgentNotAvailableException();
-		}
-	}
-
-	/**
-	 * Connect a socket to the agent at the location specified.
-	 * 
-	 * @param location
-	 *            the location of the agent, in the form "localhost:port"
-	 * 
-	 * @return the connected socket
-	 * 
-	 * @throws AgentNotAvailableException
-	 *             if an agent is not available at the location specified
-	 * @throws IOException
-	 *             if an IO error occurs
-	 */
-	public static Socket connectAgentSocket(String location, AgentSocketType type)
-			throws AgentNotAvailableException, IOException {
-		try {
 			if (location == null) {
 				throw new AgentNotAvailableException();
 			}
-			Socket socket = null;
-			switch(type) {
-			case TCPIP:
-				int idx = location.indexOf(":");
-
-				if (idx == -1) {
-					throw new AgentNotAvailableException();
-				}
-
-				String host = location.substring(0, idx);
-				int port = Integer.parseInt(location.substring(idx + 1));
-			    socket = new Socket(host, port);
-				break;
-			case UNIX_DOMAIN:
-				File socketFile = new File(location);
-				socket = AFUNIXSocket.newInstance();
-				socket.connect(AFUNIXSocketAddress.of(socketFile));
-				break;
-			default:
-				throw new AgentNotAvailableException("Invalid socket type!");
+			SshAgentClient socket = null;
+			for(AgentProvider l : ServiceLoader.load(AgentProvider.class)) {
+				socket = l.client(application, location, type, RFCAgent);
+				if(socket != null)
+					break;
 			}
-			
-
+			if(socket == null) {
+				throw new IOException("No unix domain socket provider available. Check that you have a provider, such as maverick-sshagent-jnr-sockets, maverick-sshagent-jdk16-sockets or maverick-sshagent-namedpipes on the classpath and is the address in the correct format.");
+			}
 			return socket;
 		} catch (IOException ex) {
 			Log.error("Agent socket error :",ex);

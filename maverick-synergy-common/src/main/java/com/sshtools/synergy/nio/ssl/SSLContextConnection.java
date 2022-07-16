@@ -439,6 +439,7 @@ public class SSLContextConnection extends SocketConnection {
                 break;
 
             case NEED_UNWRAP:
+            case NEED_UNWRAP_AGAIN:
 
                 /**
                  * SSL engine wants more data to make sure we're reading from

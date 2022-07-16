@@ -202,6 +202,9 @@
 		<module>maverick-bc-fips-tests</module>
 		<module>maverick-zip</module>
 		<module>maverick-sshagent</module>
+		<module>maverick-sshagent-jni-sockets</module>
+		<module>maverick-sshagent-jdk16-sockets</module>
+		<module>maverick-sshagent-named-pipes</module>
 
 		<module>maverick-synergy</module>
 		<module>maverick-synergy-assembly</module>

@@ -19,43 +19,31 @@
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
 
-package com.sshtools.agent.win32;
+package com.sshtools.agent.server;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.WinNT;
-import com.sun.jna.platform.win32.WinNT.HANDLE;
+public class ServerSocketTransportAdapter implements SshAgentAcceptor {
 
-public class NamedPipeClient extends AbstractNamedPipe {
-
-	NamedPipeSession session;
+	private ServerSocket socket;
 	
-	public NamedPipeClient(String pipeName) throws IOException {
-		super(pipeName);
-		
-		HANDLE hPipe = assertValidHandle("CreateFile", Kernel32.INSTANCE.CreateFile(getPath(),
-                WinNT.GENERIC_READ | WinNT.GENERIC_WRITE,
-                0,
-                null,
-                WinNT.OPEN_EXISTING,
-                0,
-                null));
-		
-		this.session = new NamedPipeSession(hPipe);
+	public ServerSocketTransportAdapter(ServerSocket socket) {
+		this.socket = socket;
 	}
 	
-	public InputStream getInputStream() {
-		return session.getInputStream();
+	@Override
+	public SshAgentTransport accept() throws IOException {
+		Socket sock = socket.accept();
+		if(sock==null) {
+			return null;
+		}
+		return new SocketTransportAdapter(sock);
 	}
-	
-	public OutputStream getOutputStream() {
-		return session.getOutputStream();
-	}
-	
+
+	@Override
 	public void close() throws IOException {
-		session.close();
+		socket.close();
 	}
 }

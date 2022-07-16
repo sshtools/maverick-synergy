@@ -9,34 +9,11 @@
   <artifactId>maverick-sshagent</artifactId>
   <name>Key Agent</name>
   <description>Client and server implementations of the SSH agent protocol</description>
-  
   <dependencies>
-  			<!-- https://mvnrepository.com/artifact/net.java.dev.jna/jna -->
-		<dependency>
-			<groupId>net.java.dev.jna</groupId>
-			<artifactId>jna</artifactId>
-			<version>5.12.0</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/net.java.dev.jna/jna-platform -->
-		<dependency>
-			<groupId>net.java.dev.jna</groupId>
-			<artifactId>jna-platform</artifactId>
-			<version>5.12.0</version>
-		</dependency>
 		<dependency>
 			<groupId>com.sshtools.hotfixes</groupId>
 			<artifactId>maverick-base</artifactId>
 			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.kohlschutter.junixsocket</groupId>
-			<artifactId>junixsocket-common</artifactId>
-			<version>2.5.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.kohlschutter.junixsocket</groupId>
-			<artifactId>junixsocket-native-common</artifactId>
-			<version>2.5.0</version>
 		</dependency>
   </dependencies>
 </project>

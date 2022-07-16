@@ -35,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.pty4j.PtyProcess;
+import com.pty4j.PtyProcessBuilder;
 import com.pty4j.WinSize;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -99,7 +100,12 @@ public class Shell extends ShellCommand {
 		env = env == null ? new HashMap<String, String>() : new HashMap<String, String>(env);
 		env.put("TERM", console.getTerminal().getType());
 
-		pty = PtyProcess.exec(args.toArray(new String[0]), env, directory == null ? null : directory.getAbsolutePath(), false);
+		var builder = new PtyProcessBuilder(args.toArray(new String[0]));
+		if(directory != null)
+			builder.setDirectory(directory.getAbsolutePath());
+		builder.setConsole(false);
+		builder.setEnvironment(env);
+		pty = builder.start();
 
 		final InputStream in = pty.getInputStream();
 		final OutputStream out = pty.getOutputStream();

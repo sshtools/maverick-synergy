@@ -57,22 +57,25 @@
 	
 	<pluginRepositories>
 		<pluginRepository>
-			<id>artifactory-jadaptive-snapshots</id>
+			<id>public-snapshots</id>
 			<url>https://artifactory.jadaptive.com/public-snapshots</url>
+			<snapshots/>
 			<releases>
 				<enabled>false</enabled>
 			</releases>
 		</pluginRepository>
 		<pluginRepository>
-			<id>artifactory-ext-snapshots</id>
+			<id>ext-snapshots-local</id>
 			<url>https://artifactory.jadaptive.com/ext-snapshots-local</url>
+			<snapshots/>
 			<releases>
 				<enabled>false</enabled>
 			</releases>
 		</pluginRepository>
 		<pluginRepository>
-			<id>artifactory-oss-snapshots</id>
+			<id>opensource-snapshots</id>
 			<url>https://artifactory.jadaptive.com/opensource-snapshots</url>
+			<snapshots/>
 			<releases>
 				<enabled>false</enabled>
 			</releases>

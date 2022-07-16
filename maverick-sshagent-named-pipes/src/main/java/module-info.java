@@ -18,14 +18,12 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
-open module com.sshtools.agent {
-	requires transitive com.sshtools.maverick.base;
-	requires com.sshtools.common.util;
-	requires com.sshtools.common.logger;
-	exports com.sshtools.agent;
-	exports com.sshtools.agent.client;
-	exports com.sshtools.agent.exceptions;
-	exports com.sshtools.agent.rfc;
-	exports com.sshtools.agent.server;
-	exports com.sshtools.agent.openssh;
+import com.sshtools.agent.AgentProvider;
+import com.sshtools.agent.provider.namedpipes.NamedPipesAgentProvider;
+
+open module com.sshtools.agent.namedpipes {
+	requires transitive com.sshtools.agent;
+	requires transitive com.sun.jna.platform;
+	requires transitive com.sun.jna;
+	provides AgentProvider with NamedPipesAgentProvider;
 }

@@ -19,7 +19,7 @@
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
 
-package com.sshtools.agent.win32;
+package com.sshtools.agent.provider.namedpipes;
 
 import java.io.Closeable;
 import java.io.IOException;

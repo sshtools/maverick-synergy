@@ -445,6 +445,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 							try {
 								nfs.closeFile(handle);
 							} catch (InvalidHandleException e) {
+							} finally {
+								nfs.freeHandle(handle);
 							}
 						}
 						
@@ -564,6 +566,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 				} catch (Exception e) {
 					if(Log.isDebugEnabled())
 						Log.debug("", e);
+				} finally {
+					nfs.freeHandle(handle);
 				}
 			}
 		}
@@ -770,6 +774,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					} catch (Exception e) {
 						if(Log.isDebugEnabled())
 							Log.debug("", e);
+					} finally {
+						nfs.freeHandle(handle);
 					}
 				}
 			
@@ -1179,6 +1185,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 								Log.debug("Closing handle");
 							nfs.closeFile(handle);
 						} catch (Exception e) {
+						} finally {
+							nfs.freeHandle(handle);
 						}
 					}
 				}

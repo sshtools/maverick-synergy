@@ -52,6 +52,7 @@ public abstract class AbstractMD5Extension extends AbstractSftpExtension {
 			return doMD5Hash(handle, startOffset, length, quickCheckHash, sftp);
 		} finally {
 			fs.closeFile(handle);
+			fs.freeHandle(handle);
 		}
 	}
 	

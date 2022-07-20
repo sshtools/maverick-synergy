@@ -139,7 +139,7 @@ public final class AbstractFileSystem {
 		for (Iterator<String> it = openFiles.keySet().iterator(); it.hasNext();) {
 			obj = it.next();
 			try {
-				closeFile(obj, false);
+				closeFile(obj);
 			} catch (Exception ex) {
 				if(Log.isErrorEnabled()) {
 					Log.error("Error closing file", ex);
@@ -150,7 +150,7 @@ public final class AbstractFileSystem {
 		for (Iterator<String> it = openDirectories.keySet().iterator(); it.hasNext();) {
 			obj = it.next();
 			try {
-				closeFile(obj, false);
+				closeFile(obj);
 			} catch (Exception ex) {
 				if(Log.isErrorEnabled()) {
 					Log.error("Error closing directory", ex);
@@ -426,32 +426,42 @@ public final class AbstractFileSystem {
 	}
 
 	public void closeFile(byte[] handle) throws InvalidHandleException, IOException {
-		closeFile(handle, true);
+		closeFile(getHandle(handle));
 	}
+//
+//	public boolean closeFile(byte[] handle, boolean remove) throws InvalidHandleException, IOException {
+//		return closeFile(getHandle(handle), remove);
+//	}
 
-	public boolean closeFile(byte[] handle, boolean remove) throws InvalidHandleException, IOException {
-		return closeFile(getHandle(handle), remove);
+	public void freeHandle(byte[] handle) {
+		if(handle==null) {
+			return;
+		}
+		String h = getHandle(handle);
+		OpenDirectory dir = openDirectories.get(h);
+		if(dir!=null) {
+			openDirectories.remove(h);
+		} else {
+			openFiles.remove(h);
+
+		}
 	}
-
-	protected boolean closeFile(String handle, boolean remove) throws InvalidHandleException, IOException {
+	
+	public void closeFile(String handle) throws InvalidHandleException, IOException {
 		
 		OpenDirectory dir = openDirectories.get(handle);
-		if(dir!=null) {
-			openDirectories.remove(handle);
-		} else {
-			OpenFile file = openFiles.get(handle);
-			if(file==null) {
-				throw new InvalidHandleException(handle + " is an invalid handle");
-			}
-			
-			file.close();
-			if(remove) {
-				openFiles.remove(handle);
-			} else {
-				return true;
-			}	
+		if(dir!=null)  {
+			// We don't close a directory as there is no resource attached to it
+			return;
 		}
-		return false;
+		
+		OpenFile file = openFiles.get(handle);
+		if(file==null) {
+			throw new InvalidHandleException(handle + " is an invalid handle");
+		}
+		
+		file.close();
+		
 	}
 
 	public void removeFile(String path) throws PermissionDeniedException, IOException, FileNotFoundException {
@@ -838,7 +848,7 @@ public final class AbstractFileSystem {
 			OpenDirectory openDirectory = openDirectories.get(h);
 			if(openDirectory!=null) {
 				if(openDirectory.f!=null) {
-					evt.addAttribute(EventCodes.ATTRIBUTE_ABSTRACT_FILE, openFile.f);
+					evt.addAttribute(EventCodes.ATTRIBUTE_ABSTRACT_FILE, openDirectory.f);
 				}
 			}
 		}

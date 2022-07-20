@@ -222,7 +222,8 @@ public class FileSystemPolicy extends Permissions {
 
 	class CachingFileFactory implements FileFactory {
 
-		AbstractFileFactory<?> ff = null;
+		private static final String CACHED_FILE_FACTORY = "cachedFileFactory";
+		
 		FileFactory fileFactory;
 		
 		CachingFileFactory(FileFactory fileFactory) {
@@ -232,10 +233,12 @@ public class FileSystemPolicy extends Permissions {
 		@Override
 		public AbstractFileFactory<?> getFileFactory(SshConnection con) 
 				throws IOException, PermissionDeniedException {
-			if(Objects.nonNull(ff)) {
-				return ff;
+			AbstractFileFactory<?> ff = (AbstractFileFactory<?>) con.getProperty(CACHED_FILE_FACTORY);
+			if(Objects.isNull(ff)) {
+				ff = fileFactory.getFileFactory(con);
+				con.setProperty(CACHED_FILE_FACTORY, ff);
 			}
-			return ff = fileFactory.getFileFactory(con);
+			return ff;
 		}
 		
 	}

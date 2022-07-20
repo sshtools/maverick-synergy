@@ -28,6 +28,7 @@ import java.util.Map;
 
 import com.sshtools.agent.AgentMessage;
 import com.sshtools.agent.exceptions.InvalidMessageException;
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.SshPublicKeyFileFactory;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
@@ -133,10 +134,15 @@ public class SshAgentKeyList extends AgentMessage {
             byte[] buf;
 
             for (int i = 0; i < num; i++) {
-                buf = bar.readBinaryString();
-                key =SshPublicKeyFileFactory.decodeSSH2PublicKey(buf);
-                description = bar.readString();
-                keys.put(key, description);
+            	
+            	try {
+	                buf = bar.readBinaryString();
+	                key =SshPublicKeyFileFactory.decodeSSH2PublicKey(buf);
+	                description = bar.readString();
+	                keys.put(key, description);                
+            	} catch(IOException e) {
+            		Log.warn("Failed to read key from agent key list");
+            	}
             }
         } catch (IOException ex) {
             throw new InvalidMessageException("Failed to read message data",SshException.AGENT_ERROR);

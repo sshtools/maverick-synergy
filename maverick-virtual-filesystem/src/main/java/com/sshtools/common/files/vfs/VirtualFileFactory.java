@@ -153,13 +153,6 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		} else {
 			virtualPath = canonicalisePath(path);
 		}
-
-		if(Log.isDebugEnabled()) {
-			Log.debug("Resolved the following mounts for the path {}", path);
-			for(VirtualMountFile m : mountCache.values()) {
-				Log.debug("Mount {}", m.getAbsolutePath());
-			}
-		}
 		
 		if (!virtualPath.equals("") && mountCache.size() > 0) {
 			String mountPath = FileUtils.addTrailingSlash(virtualPath);

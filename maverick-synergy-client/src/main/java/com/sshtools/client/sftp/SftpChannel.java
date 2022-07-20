@@ -37,6 +37,7 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 
 import com.sshtools.client.SessionChannelNG;
+import com.sshtools.client.SshClientContext;
 import com.sshtools.client.tasks.AbstractSubsystem;
 import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.client.tasks.Message;
@@ -1819,14 +1820,30 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.writeInt(requestId.longValue());
 			msg.writeBinaryString(file.getHandle());
 
-			sendMessage(msg);;
+			sendMessage(msg);
+			
+			if(file.getAbsolutePath().equals("/Users/lee")) {
+				System.out.println("");
+			}
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending list children request");
+			}
 			SftpMessage bar = getResponse(requestId);
 			
 			try {
 				if (bar.getType() == SSH_FXP_NAME) {
+			
+					if(Log.isDebugEnabled()) {
+						Log.debug("Received results");
+					}
+					
 					SftpFile[] files = extractFiles(bar, file.getAbsolutePath());
 	
+					if(Log.isDebugEnabled()) {
+						Log.debug("THere are {} results in this packet", files.length);
+					}
+					
 					for (int i = 0; i < files.length; i++) {
 						children.add(files[i]);
 					}
@@ -1834,6 +1851,9 @@ public class SftpChannel extends AbstractSubsystem {
 				} else if (bar.getType() == SSH_FXP_STATUS) {
 					int status = (int) bar.readInt();
 	
+					if(Log.isDebugEnabled()) {
+						Log.debug("Received status {}", status);
+					}
 					if (status == SftpStatusException.SSH_FX_EOF) {
 						return -1;
 					}
@@ -2662,5 +2682,9 @@ public class SftpChannel extends AbstractSubsystem {
 
 	public int getMaximumRemotePacketLength() {
 		return session.getMaxiumRemotePacketSize();
+	}
+
+	public SshClientContext getContext() {
+		return (SshClientContext) con.getContext();
 	}
 }

@@ -1017,6 +1017,8 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 					try {
 						nfs.closeFile(handle);
 					} catch (InvalidHandleException e) {
+					} finally {
+						nfs.freeHandle(handle);
 					}
 				}
 
@@ -1569,7 +1571,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 							"The operation completed");
 				} catch (SftpStatusEventException ex) {
 					sendStatusMessage(id, ex.getStatus(), ex.getMessage());
-				}
+				} 
 			} catch (InvalidHandleException ihe) {
 				fireCloseFileEvent(handle, ihe);
 				sendStatusMessage(id, STATUS_FX_FAILURE, ihe.getMessage());
@@ -1577,6 +1579,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				fireCloseFileEvent(handle, ioe2);
 				sendStatusMessage(id, STATUS_FX_FAILURE, ioe2.getMessage());
 			} finally {
+				nfs.freeHandle(handle);
 				bar.close();
 			}
 		}
@@ -1616,6 +1619,8 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 					nfs.closeFile(evt.handle);
 				} catch (InvalidHandleException e) {
 				} catch (IOException e) {
+				} finally {
+					nfs.freeHandle(evt.handle);
 				}
 			}
 			
@@ -2047,7 +2052,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				evt.path = path;
 
 				byte[] handle = nfs.openDirectory(path);
-
+				evt.handle = handle;
 				try {
 					fireOpenDirectoryEvent(path, started, handle, null);
 					openFolderHandles.put(new String(handle), evt);

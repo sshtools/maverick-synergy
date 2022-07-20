@@ -18,9 +18,19 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>com.sshtools.hotfixes</groupId>
+			<artifactId>maverick-sshagent</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sshtools.hotfixes</groupId>
+			<artifactId>maverick-bc</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>com.github.serceman</groupId>
 			<artifactId>jnr-fuse</artifactId>
-			<version>0.5.3</version>
+			<version>0.5.5</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>

@@ -23,6 +23,7 @@ package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -46,7 +47,7 @@ import com.sshtools.synergy.nio.SshEngine;
  */
 public class RemoteForwardingChannel<T extends SshContext> extends SocketForwardingChannel<T> implements ClientConnector {
 
-	boolean hasConnected = false;
+	protected boolean hasConnected = false;
 	
 	/**
 	 * Constructs a forwarding channel of the type "forwarded-tcpip"
@@ -197,12 +198,9 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 
 			
 			// Create a non-blocking socket channel
-			socketChannel = SocketChannel.open();
-			socketChannel.configureBlocking(false);
-			socketChannel.socket().setTcpNoDelay(true);
+			createSocketChannel();
 
-			if (socketChannel.connect(new InetSocketAddress(hostToConnect,
-					portToConnect))) {
+			if (socketChannel.connect(createSocketAddress())) {
 				if(Log.isInfoEnabled()) {
 					if(Log.isInfoEnabled()) {
 						Log.info("Remote forwarding socket to {}:{} has connected [synchronously] channel={} remote={}",
@@ -233,6 +231,17 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 		// channel open confirmation or failure when the socket has
 		// connected
 		throw new WriteOperationRequest();
+	}
+
+	protected SocketAddress createSocketAddress() {
+		return new InetSocketAddress(hostToConnect,
+				portToConnect);
+	}
+
+	protected void createSocketChannel() throws IOException {
+		socketChannel = SocketChannel.open();
+		socketChannel.configureBlocking(false);
+		socketChannel.socket().setTcpNoDelay(true);
 	}
 
 	/**

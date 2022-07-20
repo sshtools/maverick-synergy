@@ -126,7 +126,7 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 			}
 			
 			@Override
-			public boolean processGlobalRequest(GlobalRequest request, ConnectionProtocol<SshClientContext> connection) {
+			public byte[] processGlobalRequest(GlobalRequest request, ConnectionProtocol<SshClientContext> connection, boolean wantreply) throws GlobalRequestHandlerException {
 				if("memo@jadaptive.com".equals(request.getName())) {
 					try {
 						String memo = ByteArrayReader.decodeString(request.getData());
@@ -136,9 +136,9 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 						connection.getConnection().setProperty(CALLBACK_MEMO, memo);
 					} catch (IOException e) {
 					}
-					return true;
+					return null;
 				}
-				return false;
+				throw new GlobalRequestHandler.GlobalRequestHandlerException();
 			}
 		});
 		configureCallbackContext(clientContext);

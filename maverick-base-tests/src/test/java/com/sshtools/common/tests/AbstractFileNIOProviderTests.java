@@ -47,7 +47,6 @@ import org.junit.Test;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.direct.DirectFileFactory;
 import com.sshtools.common.files.nio.AbstractFileURI;
-import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.Arrays;
@@ -66,13 +65,7 @@ public class AbstractFileNIOProviderTests {
 				new InetSocketAddress(InetAddress.getLocalHost(), 22),
 				new MockContext());
 		
-		con.getContext().getPolicy(FileSystemPolicy.class).setFileFactory(new FileFactory() {
-
-			@Override
-			public AbstractFileFactory<?> getFileFactory(SshConnection con) throws IOException {
-				return createTestFileSystem();
-			}
-		});
+		con.getContext().getPolicy(FileSystemPolicy.class).setFileFactory((c) -> createTestFileSystem());
 		env.put("connection", con);
 		fs = FileSystems.newFileSystem(AbstractFileURI.create(con, "/"), env);
 	}

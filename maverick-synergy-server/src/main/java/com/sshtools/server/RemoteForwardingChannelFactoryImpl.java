@@ -28,12 +28,12 @@ import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.synergy.ssh.ForwardingChannel;
 import com.sshtools.synergy.ssh.LocalForwardingChannel;
 import com.sshtools.synergy.ssh.RemoteForwardingChannel;
-import com.sshtools.synergy.ssh.SocketListeningForwardingFactoryImpl;
+import com.sshtools.synergy.ssh.SocketListeningForwardingChannelFactoryImpl;
 
-public class RemoteForwardingFactoryImpl extends
-		SocketListeningForwardingFactoryImpl<SshServerContext> {
+public class RemoteForwardingChannelFactoryImpl extends
+		SocketListeningForwardingChannelFactoryImpl<SshServerContext> {
 
-	public static final RemoteForwardingFactoryImpl INSTANCE = new RemoteForwardingFactoryImpl();
+	public static final RemoteForwardingChannelFactoryImpl INSTANCE = new RemoteForwardingChannelFactoryImpl();
 	
 	
 	@Override

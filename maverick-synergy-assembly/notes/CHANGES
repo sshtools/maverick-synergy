@@ -1,3 +1,21 @@
+Maverick Synergy 3.1.0 - TBC
+
+Features
+  o Now requires Java 11, some components requires at least Java 16.
+  o Now JPMS compliant. You can use Synergy in modularised Java applications. Note, `maverick-synergy-fuse-drive` and
+    `maverick-synergy-virtual-session` are not modularised, due to 3rd party dependencies that are not modularised.
+  o Tests split into separate Maven projects. This is to allow development in Eclipse, which does not yet allow
+    main source and tests that are modular to exist in the same project.
+  o PuTTY support moved to it's own module, removing the Bouncycastle requirement in the core classes.
+  o Jzlib dependency removed and replaced with standard Java compression API.
+  o Extendable SSH Agent transports. In order to allow optional native unix domain socket support, and to reduce
+    3rd party dependencies, you must now choose one or more of the `AgentProvider` implementations. So add at least one
+    of `maverick-sshagent-jdk16-sockets`, `maverick-sshagent-named-pipes` or `maverick-ssh-agent-jni-sockets`.
+  o Unix Domain Socket tunnels. This requires Java 16 or above, and you must include either `maverick-synergy-jdk16-server`
+    or `maverick-synergy-jdk16-client`. See documentation for usage.
+  
+Bug Fixes
+
 Maverick Synergy 3.0.11 - TBC  
 
 Features

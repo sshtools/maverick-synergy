@@ -107,7 +107,7 @@ public class ConnectionProtocolServer extends ConnectionProtocol<SshServerContex
 
 				try {
 					portToBind = getContext().getForwardingManager().startListening(
-							addressToBind, portToBind, con, RemoteForwardingFactoryImpl.INSTANCE);
+							addressToBind, portToBind, con, null, 0);
 					success = true;
 				} catch (SshException e) {
 					success = false;

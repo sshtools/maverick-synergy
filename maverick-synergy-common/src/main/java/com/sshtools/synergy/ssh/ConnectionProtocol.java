@@ -45,6 +45,7 @@ import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.synergy.ssh.GlobalRequestHandler.GlobalRequestHandlerException;
 
 /**
  * This class implements the SSH Connection Protocol as an SSH Transport
@@ -428,7 +429,18 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					byte[] requestdata = new byte[bar.available()];
 					bar.read(requestdata);
 					GlobalRequest request = new GlobalRequest(name, con, requestdata);
-					success = handler.processGlobalRequest(request, this);
+					try {
+						response = handler.processGlobalRequest(request, this, wantreply);
+						if(wantreply && response == null) {
+							if(Log.isDebugEnabled()) {
+								Log.debug("Global request handler for " 
+										+ name + " wantReply=" + wantreply + ", but there was no response data."); 
+							}
+							throw new GlobalRequestHandlerException();
+						}
+						success = true;
+					} catch (GlobalRequestHandlerException e) {
+					}
 				}
 			}
 

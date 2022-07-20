@@ -23,14 +23,14 @@ package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
 
-import com.sshtools.synergy.ssh.SocketListeningForwardingFactoryImpl.ActiveTunnelManager;
+import com.sshtools.synergy.ssh.SocketListeningForwardingChannelFactoryImpl.ActiveTunnelManager;
 
 /**
  * This interface defines the behaviour for remote forwarding requests. When an SSH client requests
  * a remote forwarding we typically open a server socket, accept connections and
  * open remote forwarding channels on the client.
  */
-public interface ForwardingFactory<T extends SshContext> {
+public interface ForwardingChannelFactory<T extends SshContext> {
 
     /**
      * A client has requested that the server start listening and forward

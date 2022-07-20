@@ -23,6 +23,7 @@ package com.sshtools.common.forwarding;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +35,7 @@ public class ForwardingPolicy extends Permissions {
 	
 	public static final int ALLOW_FORWARDING         = 0x00000001;
 	public static final int GATEWAY_FORWARDING       = 0x00000002;
+	public static final int UNIX_DOMAIN_SOCKET_FORWARDING       = 0x00000004;
 	
 	List<String> permit = new ArrayList<String>();
 	
@@ -93,14 +95,20 @@ public class ForwardingPolicy extends Permissions {
 		boolean allow = check(ALLOW_FORWARDING);
 		
 		if(allow) {
-			try {
-				InetAddress addr = InetAddress.getByName(originHost);
-				
-				allow = addr.isLoopbackAddress() | check(GATEWAY_FORWARDING);
-			} catch (UnknownHostException e) {
-				if(Log.isErrorEnabled())
-					Log.error("Failed to determine local forwarding originators interface {}", e, originHost);
-				return false;
+			var path = Paths.get(originHost);
+			if(path.isAbsolute() && originPort == 0) {					
+				allow = check(UNIX_DOMAIN_SOCKET_FORWARDING);
+			}
+			else {			
+				try {
+					InetAddress addr = InetAddress.getByName(originHost);
+					
+					allow = addr.isLoopbackAddress() | check(GATEWAY_FORWARDING);
+				} catch (UnknownHostException e) {
+					if(Log.isErrorEnabled())
+						Log.error("Failed to determine local forwarding originators interface {}", e, originHost);
+					return false;
+				}
 			}
 		}
 		

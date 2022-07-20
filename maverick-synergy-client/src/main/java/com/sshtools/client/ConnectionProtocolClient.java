@@ -22,15 +22,12 @@
 package com.sshtools.client;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
-import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.util.ByteArrayReader;
@@ -40,7 +37,6 @@ import com.sshtools.synergy.ssh.Connection;
 import com.sshtools.synergy.ssh.ConnectionProtocol;
 import com.sshtools.synergy.ssh.ConnectionStateListener;
 import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
-import com.sshtools.synergy.ssh.RemoteForward;
 import com.sshtools.synergy.ssh.TransportProtocol;
 
 /**
@@ -48,9 +44,6 @@ import com.sshtools.synergy.ssh.TransportProtocol;
  */
 public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContext> {
 
-	
-	
-	Map<String,RemoteForward> remoteForwards = new HashMap<String,RemoteForward>();
 	
 	public ConnectionProtocolClient(TransportProtocol<SshClientContext> transport, String username) {
 		super(transport, username);
@@ -106,8 +99,7 @@ public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContex
 			throw new UnauthorizedException();
 		}
 
-		int port = getContext().getForwardingManager().startListening(addressToBind, portToBind, con,
-				new LocalForwardingFactoryImpl(destinationHost, destinationPort));
+		int port = getContext().getForwardingManager().startListening(addressToBind, portToBind, con, destinationHost, destinationPort);
 		
 		if(Log.isInfoEnabled()) {
 			Log.info("Local forwarding is now active on local interface " + addressToBind + ":" + portToBind 
@@ -131,47 +123,11 @@ public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContex
 	}
 	
 	public void stopRemoteForwarding(String addressToBind, int portToBind) throws SshException {
-		
-		if(Log.isInfoEnabled()) {
-			Log.info("Canceling remote forwarding from " + addressToBind + ":" + portToBind);
-		}
-		ByteArrayWriter msg = new ByteArrayWriter();
-		try {
-			msg.writeString(addressToBind);
-			msg.writeInt(portToBind);
-
-			
-			GlobalRequest request = new GlobalRequest("cancel-tcpip-forward", con, msg.toByteArray());
-
-			sendGlobalRequest(request, true);
-			request.waitForever();
-			
-			if(request.isSuccess()) {
-				
-				if(Log.isInfoEnabled()) {
-					Log.info("Remote forwarding cancelled on remote interface " + addressToBind + ":" + portToBind);
-				}
-				
-				remoteForwards.remove(addressToBind + ":" + portToBind);
-				getConnection().setProperty("remoteForwards", remoteForwards);
-
-			} else {
-				throw new SshException("Cancel remote forwarding on interface " 
-							+ addressToBind + ":" + portToBind + " failed", SshException.FORWARDING_ERROR);
-			}
-		} catch (IOException e) {
-			throw new SshException(SshException.INTERNAL_ERROR, e);
-		} finally {
-			try {
-				msg.close();
-			} catch (IOException e) {
-			}
-		}
+		getContext().getForwardingManager().stopRemoteForwarding(addressToBind, portToBind, this);
 	}
 
-	public void stopRemoteForwarding() {
-		// TODO Auto-generated method stub
-		
+	public void stopRemoteForwarding() throws SshException {
+		getContext().getForwardingManager().stopRemoteForwarding(this);
 	}
 	
 	/**
@@ -181,56 +137,12 @@ public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContex
 	 * @param portToBind
 	 * @param destinationHost
 	 * @param destinationPort
-	 * @return
+	 * @return actual destination port
 	 * @throws SshException
 	 */
 	public int startRemoteForwarding(String addressToBind,
 			int portToBind, String destinationHost, int destinationPort) throws SshException {
-
-		if(Log.isInfoEnabled()) {
-			Log.info("Requesting remote forwarding from " + addressToBind + ":" + portToBind + " to " + destinationHost
-					+ ":" + destinationPort);
-		}
-		ByteArrayWriter msg = new ByteArrayWriter();
-		try {
-			msg.writeString(addressToBind);
-			msg.writeInt(portToBind);
-
-			
-			GlobalRequest request = new GlobalRequest("tcpip-forward", con, msg.toByteArray());
-
-			sendGlobalRequest(request, true);
-			request.waitForever();
-			
-			if(request.isSuccess()) {
-				
-				if(request.getData().length > 0) {
-					try (ByteArrayReader r = new ByteArrayReader(request.getData())) {
-						portToBind = (int) r.readInt();
-					}
-				}
-				
-				if(Log.isInfoEnabled()) {
-					Log.info("Remote forwarding is now active on remote interface " + addressToBind + ":" + portToBind 
-							+ " forwarding to " + destinationHost + ":" + destinationPort);
-				}
-				
-				remoteForwards.put(addressToBind + ":" + portToBind, new RemoteForward(destinationHost, destinationPort));
-				getConnection().setProperty("remoteForwards", remoteForwards);
-				
-				return portToBind;
-			} else {
-				throw new SshException("Remote forwarding on interface " 
-							+ addressToBind + ":" + portToBind + " failed", SshException.FORWARDING_ERROR);
-			}
-		} catch (IOException e) {
-			throw new SshException(SshException.INTERNAL_ERROR, e);
-		} finally {
-			try {
-				msg.close();
-			} catch (IOException e) {
-			}
-		}
+		return getContext().getForwardingManager().startRemoteForwarding(addressToBind, portToBind, destinationHost, destinationPort, this);
 	}
 
 	@Override

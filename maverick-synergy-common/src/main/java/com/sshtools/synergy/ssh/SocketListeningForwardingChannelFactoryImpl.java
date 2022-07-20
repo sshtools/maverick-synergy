@@ -25,6 +25,7 @@ package com.sshtools.synergy.ssh;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.SocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
@@ -45,18 +46,18 @@ import com.sshtools.synergy.nio.ListeningInterface;
 /**
  * This class implements the standard socket based forwarding for the SSHD.
  */
-public abstract class SocketListeningForwardingFactoryImpl<T extends SshContext>
-      extends ClientAcceptor implements ForwardingFactory<T> {
+public abstract class SocketListeningForwardingChannelFactoryImpl<T extends SshContext>
+      extends ClientAcceptor implements ForwardingChannelFactory<T> {
 
-    String addressToBind;
-    int portToBind;
-    ServerSocketChannel socketChannel;
-    ConnectionProtocol<T> connection;
-    InetSocketAddress addr;
-    String channelType;
-    ActiveTunnelManager<T> activeRemoteForwardings = new ActiveTunnelManager<T>();
+    protected String addressToBind;
+    protected int portToBind;
+    protected ServerSocketChannel socketChannel;
+    protected ConnectionProtocol<T> connection;
+    protected SocketAddress addr;
+    protected String channelType;
+    protected ActiveTunnelManager<T> activeRemoteForwardings = new ActiveTunnelManager<T>();
 
-    public SocketListeningForwardingFactoryImpl() {
+    public SocketListeningForwardingChannelFactoryImpl() {
       super(null);
     }
     

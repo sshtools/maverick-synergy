@@ -19,33 +19,30 @@
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
 
-package com.sshtools.client;
+package com.sshtools.client.jdk16;
 
 import java.nio.channels.SocketChannel;
 
+import com.sshtools.client.SshClientContext;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.synergy.jdk16.UnixDomainSocketForwardingChannelFactory;
+import com.sshtools.synergy.jdk16.UnixDomainSocketLocalForwardingChannel;
+import com.sshtools.synergy.jdk16.UnixDomainSockets;
 import com.sshtools.synergy.ssh.ForwardingChannel;
-import com.sshtools.synergy.ssh.LocalForwardingChannel;
-import com.sshtools.synergy.ssh.SocketListeningForwardingChannelFactoryImpl;
 
-/**
- *  Implements the configuration of a local forwarding listening socket.
- */
-public class LocalForwardingChannelFactoryImpl extends
-		SocketListeningForwardingChannelFactoryImpl<SshClientContext> {
+public class UnixDomainSocketClientLocalForwardingChannelFactoryImpl
+		extends UnixDomainSocketForwardingChannelFactory<SshClientContext> {
 
 	String hostToConnect;
-	int portToConnect;
 
-	public LocalForwardingChannelFactoryImpl(String hostToConnect, int portToConnect) {
+	public UnixDomainSocketClientLocalForwardingChannelFactoryImpl(String hostToConnect) {
 		this.hostToConnect = hostToConnect;
-		this.portToConnect = portToConnect;
 	}
-	
+
 	@Override
 	public String getChannelType() {
-		return LocalForwardingChannel.LOCAL_FORWARDING_CHANNEL_TYPE;
+		return UnixDomainSockets.DIRECT_STREAM_LOCAL_CHANNEL;
 	}
 
 	@Override
@@ -59,10 +56,8 @@ public class LocalForwardingChannelFactoryImpl extends
 	}
 
 	@Override
-	protected ForwardingChannel<SshClientContext> createChannel(String channelType,
-			SshConnection con, 
+	protected ForwardingChannel<SshClientContext> createChannel(String channelType, SshConnection con,
 			String addressToBind, int portToBind, SocketChannel sc, SshClientContext context) {
-		return new LocalForwardingChannel<SshClientContext>(getChannelType(), con, hostToConnect, portToConnect, sc);
+		return new UnixDomainSocketLocalForwardingChannel<SshClientContext>(getChannelType(), con, hostToConnect, sc);
 	}
-
 }

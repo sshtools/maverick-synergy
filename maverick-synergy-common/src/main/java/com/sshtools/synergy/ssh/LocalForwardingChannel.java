@@ -23,6 +23,7 @@ package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -111,10 +112,7 @@ public class LocalForwardingChannel<T extends SshContext>
 		ByteArrayReader bar = new ByteArrayReader(requestdata);
 		try {
 
-			hostToConnect = bar.readString();
-			portToConnect = (int) bar.readInt();
-			originatingHost = bar.readString();
-			originatingPort = (int) bar.readInt();
+			readForwarding(bar);
 
 			boolean success = checkPermissions();
 
@@ -132,13 +130,9 @@ public class LocalForwardingChannel<T extends SshContext>
 						ChannelOpenException.ADMINISTRATIVIVELY_PROHIBITED);
 			}
 
-			// Create a non-blocking socket channel
-			socketChannel = SocketChannel.open();
-			socketChannel.configureBlocking(false);
-			socketChannel.socket().setTcpNoDelay(true);
-
-			if (socketChannel.connect(new InetSocketAddress(hostToConnect,
-					portToConnect))) {
+			// Create and connect non-blocking socket channel
+			socketChannel = createSocketChannel();
+			if (socketChannel.connect(createSocketAddress())) {
 				if(Log.isInfoEnabled()) {
 					Log.info("Local forwarding socket to {}:{} has connected channel={}", hostToConnect, 
 							portToConnect, getLocalId());
@@ -157,6 +151,7 @@ public class LocalForwardingChannel<T extends SshContext>
 
 
 		} catch (Throwable ex) {
+			ex.printStackTrace();
 			IOUtils.closeStream(socketChannel);
 			throw new ChannelOpenException(
 					ex.getMessage(),
@@ -169,6 +164,25 @@ public class LocalForwardingChannel<T extends SshContext>
 		// channel open confirmation or failure when the socket has
 		// connected
 		throw new WriteOperationRequest();
+	}
+
+	protected void readForwarding(ByteArrayReader bar) throws IOException {
+		hostToConnect = bar.readString();
+		portToConnect = (int) bar.readInt();
+		originatingHost = bar.readString();
+		originatingPort = (int) bar.readInt();
+	}
+
+	protected SocketAddress createSocketAddress() {
+		return new InetSocketAddress(hostToConnect,
+				portToConnect);
+	}
+	
+	protected SocketChannel createSocketChannel() throws IOException {
+		var socketChannel = SocketChannel.open();
+		socketChannel.configureBlocking(false);
+		socketChannel.socket().setTcpNoDelay(true);
+		return socketChannel;
 	}
 
 	protected boolean checkPermissions() {

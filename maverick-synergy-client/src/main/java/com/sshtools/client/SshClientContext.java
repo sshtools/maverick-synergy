@@ -101,7 +101,10 @@ public class SshClientContext extends SshContext {
 	static ConnectionManager<SshClientContext> defaultConnectionManager 
 				= new ConnectionManager<SshClientContext>("client");
 	
-	
+	static {
+		defaultForwardingManager.setForwardingFactory((h, p) -> new LocalForwardingChannelFactoryImpl(h, p));
+		defaultForwardingManager.addRemoteForwardRequestHandler(new DefaultRemoteForwardRequestHandler());
+	}
 
 	private boolean preferKeyboardInteractiveOverPassword = true;
 	

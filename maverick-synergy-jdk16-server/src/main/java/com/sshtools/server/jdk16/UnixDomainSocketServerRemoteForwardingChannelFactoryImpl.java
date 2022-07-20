@@ -19,50 +19,44 @@
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
 
-package com.sshtools.client;
+package com.sshtools.server.jdk16;
 
 import java.nio.channels.SocketChannel;
 
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.server.SshServerContext;
+import com.sshtools.synergy.jdk16.UnixDomainSocketForwardingChannelFactory;
+import com.sshtools.synergy.jdk16.UnixDomainSocketRemoteForwardingChannel;
+import com.sshtools.synergy.jdk16.UnixDomainSockets;
 import com.sshtools.synergy.ssh.ForwardingChannel;
-import com.sshtools.synergy.ssh.LocalForwardingChannel;
-import com.sshtools.synergy.ssh.SocketListeningForwardingChannelFactoryImpl;
 
-/**
- *  Implements the configuration of a local forwarding listening socket.
- */
-public class LocalForwardingChannelFactoryImpl extends
-		SocketListeningForwardingChannelFactoryImpl<SshClientContext> {
+public class UnixDomainSocketServerRemoteForwardingChannelFactoryImpl extends
+	UnixDomainSocketForwardingChannelFactory<SshServerContext> {
 
-	String hostToConnect;
-	int portToConnect;
-
-	public LocalForwardingChannelFactoryImpl(String hostToConnect, int portToConnect) {
-		this.hostToConnect = hostToConnect;
-		this.portToConnect = portToConnect;
-	}
+	public static final UnixDomainSocketServerRemoteForwardingChannelFactoryImpl INSTANCE = new UnixDomainSocketServerRemoteForwardingChannelFactoryImpl();
+	
 	
 	@Override
 	public String getChannelType() {
-		return LocalForwardingChannel.LOCAL_FORWARDING_CHANNEL_TYPE;
+		return UnixDomainSockets.FORWARDED_STREAM_LOCAL_CHANNEL;
 	}
 
 	@Override
 	public int getStartedEventCode() {
-		return EventCodes.EVENT_FORWARDING_LOCAL_STARTED;
+		return EventCodes.EVENT_FORWARDING_REMOTE_STARTED;
 	}
 
 	@Override
 	public int getStoppedEventCode() {
-		return EventCodes.EVENT_FORWARDING_LOCAL_STOPPED;
+		return EventCodes.EVENT_FORWARDING_REMOTE_STOPPED;
 	}
 
 	@Override
-	protected ForwardingChannel<SshClientContext> createChannel(String channelType,
+	protected ForwardingChannel<SshServerContext> createChannel(String channelType,
 			SshConnection con, 
-			String addressToBind, int portToBind, SocketChannel sc, SshClientContext context) {
-		return new LocalForwardingChannel<SshClientContext>(getChannelType(), con, hostToConnect, portToConnect, sc);
+			String addressToBind, int portToBind, SocketChannel sc, SshServerContext context) {
+		return new UnixDomainSocketRemoteForwardingChannel<SshServerContext>(channelType, con, addressToBind, portToBind, sc, context);
 	}
 
 }

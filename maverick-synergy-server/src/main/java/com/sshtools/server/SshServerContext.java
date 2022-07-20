@@ -100,6 +100,10 @@ public class SshServerContext extends SshContext {
 	
 	private static ComponentFactory<SshKeyExchange<SshServerContext>> verifiedKeyExchanges;
 	
+	static {
+		globalForwardingManager.setForwardingFactory((h, p) -> RemoteForwardingChannelFactoryImpl.INSTANCE);
+	}
+	
 	public SshServerContext(SshEngine engine) throws IOException, SshException {
 		this(engine, SecurityLevel.STRONG);
 	}

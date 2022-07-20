@@ -69,6 +69,10 @@ public class SshClient implements Closeable {
 		this(hostname, port, username, new SshClientContext(), 30000L, password);
 	}
 	
+	public SshClient(String hostname, int port, String username, char[] password, SshClientContext context) throws IOException, SshException {
+		this(hostname, port, username, context, 30000L, password);
+	}
+	
 	public SshClient(String hostname, int port, String username, long connectTimeout, File key) throws IOException, SshException, InvalidPassphraseException {
 		this(hostname, port, username, connectTimeout, key, null);
 	}
@@ -233,6 +237,10 @@ public class SshClient implements Closeable {
 		return con.getContext().getForwardingPolicy();
 	}
 	
+	public int startLocalForwarding(String addressToBind, String destinationHost) throws UnauthorizedException, SshException {
+		return startLocalForwarding(addressToBind, 0, destinationHost, 0);
+	}
+	
 	public int startLocalForwarding(String addressToBind, int portToBind, String destinationHost, int destinationPort) throws UnauthorizedException, SshException {
 		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
 		return client.startLocalForwarding(addressToBind, portToBind, destinationHost, destinationPort);
@@ -252,13 +260,17 @@ public class SshClient implements Closeable {
 		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
 		return client.startRemoteForwarding(addressToBind, portToBind, destinationHost, destinationPort);
 	}
+
+	public int startRemoteForwarding(String addressToBind, String destinationHost) throws SshException {
+		return startRemoteForwarding(addressToBind, 0, destinationHost, 0);
+	}
 	
 	public void stopRemoteForwarding(String addressToBind, int portToBind) throws SshException {
 		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
 		client.stopRemoteForwarding(addressToBind, portToBind);
 	}
 	
-	public void stopRemoteForwarding() {
+	public void stopRemoteForwarding() throws SshException {
 		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
 		client.stopRemoteForwarding();
 	}

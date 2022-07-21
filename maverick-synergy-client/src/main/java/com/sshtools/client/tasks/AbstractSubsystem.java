@@ -89,7 +89,7 @@ public abstract class AbstractSubsystem {
 		return (SessionChannelNG) con.getProperty(taskUUID.toString());
 	}
 	
-	public byte[] nextMessage() throws SshException {
+	public synchronized byte[] nextMessage() throws SshException {
 		
 		int len = -1; 
 		  try {

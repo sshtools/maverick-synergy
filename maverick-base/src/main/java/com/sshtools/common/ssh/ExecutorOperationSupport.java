@@ -25,6 +25,7 @@ import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 
 import com.sshtools.common.logger.Log;
 
@@ -153,29 +154,36 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 					Log.trace("{}: Submitting clean up operation to executor service", queueName);
 				}
 
-				getContext().getExecutorService().submit(new Runnable() {
-					public void run() {
-						if (operationFuture != null) {
-				
-							if(Log.isTraceEnabled()) {
-								Log.trace("{}: Cleaning up operations", queueName);
-							}
-							
-							try {
+				try {
+					getContext().getExecutorService().submit(new Runnable() {
+						public void run() {
+							if (operationFuture != null) {
+					
 								if(Log.isTraceEnabled()) {
-									Log.trace("{}: Waiting for operations to complete", queueName);
+									Log.trace("{}: Cleaning up operations", queueName);
 								}
-								operationFuture.get();
-								if(Log.isTraceEnabled()) {
-									Log.trace("{}: All operations have completed", queueName);
+								
+								try {
+									if(Log.isTraceEnabled()) {
+										Log.trace("{}: Waiting for operations to complete", queueName);
+									}
+									operationFuture.get();
+									if(Log.isTraceEnabled()) {
+										Log.trace("{}: All operations have completed", queueName);
+									}
+	
+								} catch (InterruptedException e) {
+								} catch (ExecutionException e) {
 								}
-
-							} catch (InterruptedException e) {
-							} catch (ExecutionException e) {
 							}
 						}
+					});
+				}
+				catch(RejectedExecutionException ree) {
+					if(Log.isTraceEnabled()) {
+						Log.trace("{}: Cleanup task rejected", queueName);
 					}
-				});
+				}
 
 				shutdown = true;
 			}

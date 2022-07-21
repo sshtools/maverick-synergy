@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClientContext;
@@ -166,7 +167,7 @@ public class SftpChannel extends AbstractSubsystem {
 	int version = MAX_VERSION;
 	int serverVersion = -1;
 	UnsignedInteger32 requestId = new UnsignedInteger32(0);
-	Map<UnsignedInteger32, SftpMessage> responses = new HashMap<UnsignedInteger32, SftpMessage>();
+	Map<UnsignedInteger32, SftpMessage> responses = new ConcurrentHashMap<UnsignedInteger32, SftpMessage>();
 	SftpThreadSynchronizer sync = new SftpThreadSynchronizer();
 	Map<String, byte[]> extensions = new HashMap<String, byte[]>();
 
@@ -534,6 +535,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 		SftpMessage msg;
 		MessageHolder holder = new MessageHolder();
+		holder.msg = responses.get(requestId);
 		while (holder.msg == null) {
 			try {
 				// Read the next response message

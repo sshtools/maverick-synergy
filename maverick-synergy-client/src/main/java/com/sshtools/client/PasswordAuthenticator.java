@@ -23,6 +23,7 @@ package com.sshtools.client;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.synergy.util.EncodingUtils;
@@ -32,21 +33,25 @@ import com.sshtools.synergy.util.EncodingUtils;
  */
 public class PasswordAuthenticator extends SimpleClientAuthenticator {
 
-	String password;
+	private Supplier<String> password;
 	
 	public PasswordAuthenticator() {
-		
 	}
-	public PasswordAuthenticator(String password) {
+	
+	public PasswordAuthenticator(Supplier<String> password) {
 		this.password = password;
 	}
 	
+	public PasswordAuthenticator(String password) {
+		this.password = () -> password;
+	}
+	
 	public PasswordAuthenticator(char[] password) {
-		this.password = new String(password);
+		this.password = () -> new String(password);
 	}
 	
 	public String getPassword() {
-		return password;
+		return password.get();
 	}
 	
 	private byte[] getPasswordBytes() {

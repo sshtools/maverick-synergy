@@ -23,6 +23,7 @@ package com.sshtools.client;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.function.Supplier;
 
 import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
@@ -33,10 +34,15 @@ import com.sshtools.common.ssh.components.SshKeyPair;
  */
 public class PrivateKeyFileAuthenticator extends PublicKeyAuthenticator {
 
-	File keyfile;
-	String passphrase;
+	private File keyfile;
+	private Supplier<String> passphrase;
 	
 	public PrivateKeyFileAuthenticator(File keyfile, String passphrase) {
+		this.keyfile = keyfile;
+		this.passphrase = () -> passphrase;
+	}
+	
+	public PrivateKeyFileAuthenticator(File keyfile, Supplier<String> passphrase) {
 		this.keyfile = keyfile;
 		this.passphrase = passphrase;
 	}
@@ -46,7 +52,7 @@ public class PrivateKeyFileAuthenticator extends PublicKeyAuthenticator {
 	}
 	
 	public String getPassphrase() {
-		return passphrase;
+		return passphrase.get();
 	}
 	
 	@Override

@@ -118,20 +118,24 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			CHARSET_ENCODING = "ISO-8859-1";
 		}
 
-		AbstractFileFactory<?> ff = filePolicy.getFileFactory().getFileFactory(session.getConnection());
-		
-		if(filePolicy.getFileFactory() instanceof SftpOperationWrapper) {
-			addWrapper((SftpOperationWrapper)ff);
-		}
-		
-		executeOperation(SUBSYSTEM_INCOMING, new InitOperation());
-
-		// Add event listener
-		session.addEventListener(new ChannelEventListener() {
-			public void onChannelClosing(Channel channel) {
-				SessionChannelHelper.sendExitStatus(channel, 0);
+		try {
+			AbstractFileFactory<?> ff = filePolicy.getFileFactory().getFileFactory(session.getConnection());
+			
+			if(filePolicy.getFileFactory() instanceof SftpOperationWrapper) {
+				addWrapper((SftpOperationWrapper)ff);
 			}
-		});
+			
+			executeOperation(SUBSYSTEM_INCOMING, new InitOperation());
+	
+			// Add event listener
+			session.addEventListener(new ChannelEventListener() {
+				public void onChannelClosing(Channel channel) {
+					SessionChannelHelper.sendExitStatus(channel, 0);
+				}
+			});
+		} catch(Throwable t) { 
+			throw new PermissionDeniedException(t.getMessage(), t);
+		}
 	}
 	
 	protected void cleanupSubsystem() {

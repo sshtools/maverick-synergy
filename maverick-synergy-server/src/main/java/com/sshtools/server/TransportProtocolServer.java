@@ -91,7 +91,10 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 			String targetAddress = elements[3].trim();
 			int sourcePort = Integer.parseInt(elements[4].trim());
 			int targetPort = Integer.parseInt(elements[5].trim());
-			
+		
+			if(Log.isInfoEnabled()) {
+				Log.info("Changing remote address to proxy supplied {}:{}", sourceAddress, sourcePort);
+			}
 			con.setRemoteAddress(InetSocketAddress.createUnresolved(sourceAddress, sourcePort));
 			con.setLocalAddress(InetSocketAddress.createUnresolved(targetAddress, targetPort));
 		}

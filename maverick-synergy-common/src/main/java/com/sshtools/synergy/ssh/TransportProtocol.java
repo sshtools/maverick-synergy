@@ -467,7 +467,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
 				Log.info("Read error from {} {}", 
-						getRemoteAddress().toString(),
+						con.getRemoteIPAddress(),
 						ex.getMessage());
 			}
 			if(Log.isDebugEnabled())
@@ -545,8 +545,8 @@ public abstract class TransportProtocol<T extends SshContext>
 	protected boolean startBinaryProtocol() {
 		
 		if(Log.isInfoEnabled()) {
-			Log.info("Connnection {} identifies itself as {}", 
-					getRemoteAddress().toString(),
+			Log.info("Connnection {}:{} identifies itself as {}", 
+					con.getRemoteIPAddress(), con.getRemotePort(),
 					remoteIdentification.toString().trim());
 		}
 
@@ -676,7 +676,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
 				Log.info("Transport error {} {}", 
-						getRemoteAddress().toString(),
+						con.getRemoteIPAddress(),
 						ex.getMessage());
 			}
 			if(Log.isDebugEnabled())
@@ -1218,7 +1218,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
 				Log.info("Write error from {} {}", 
-						getRemoteAddress().toString(),
+						con.getRemoteIPAddress(),
 						ex.getMessage());
 			}
 			if(Log.isDebugEnabled()) {
@@ -1509,7 +1509,7 @@ public abstract class TransportProtocol<T extends SshContext>
 		disconnectStarted = new Date();
 		if(Log.isInfoEnabled()) {
 			Log.info("Disconnect {} {}", 
-					getRemoteAddress().toString(),
+					con.getRemoteIPAddress(),
 					description);
 		}
 		postMessage(new DisconnectMessage(reason, description, true));
@@ -1528,7 +1528,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	
 				if(Log.isInfoEnabled()) {
 					Log.info("Connection closed {}", 
-							getRemoteAddress().toString());
+							con.getRemoteIPAddress());
 				}
 				
 				if (disconnectStarted == null)

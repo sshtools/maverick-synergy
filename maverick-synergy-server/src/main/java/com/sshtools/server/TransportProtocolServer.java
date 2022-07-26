@@ -108,7 +108,8 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	@Override
 	protected boolean canConnect(SocketConnection connection) {
 
-		boolean canConnect = sshContext.getPolicy(IPPolicy.class).checkConnection(connection.getRemoteAddress(),
+		boolean canConnect = sshContext.getPolicy(IPPolicy.class).checkConnection(
+				connection.getRemoteAddress(),
 				connection.getLocalAddress());
 
 		if(Log.isDebugEnabled()) {

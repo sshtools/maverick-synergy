@@ -291,21 +291,23 @@ public class AuthenticationProtocolClient implements Service {
 						Log.debug("We prefer keyboard-interactive over password so injecting keyboard-interactive authenticator");
 					}
 
-					authenticators.addLast(new KeyboardInteractiveAuthenticator(
-							new PasswordOverKeyboardInteractiveCallback(
-									((PasswordAuthenticator) authenticator))) {
-						@Override
-						public synchronized void done(boolean success) {
-							if(success || (!success && !supportedAuths.contains("password"))) {
-								((PasswordAuthenticator)authenticator).done(success);
+					ClientAuthenticator kbi = new KeyboardInteractiveAuthenticator(
+						new PasswordOverKeyboardInteractiveCallback(
+								((PasswordAuthenticator) authenticator))) {
+							@Override
+							public synchronized void done(boolean success) {
+								if(success || (!success && !supportedAuths.contains("password"))) {
+									((PasswordAuthenticator)authenticator).done(success);
+								} else {
+									if(supportedAuths.contains("password")) {
+										authenticators.addLast(authenticator);
+									}
+								}
+								super.done(success);
 							}
-							super.done(success);
-						}
-					}); 
+					};
 					
-					if(supportedAuths.contains("password")) {
-						authenticators.addLast(authenticator);
-					}
+					authenticators.addLast(kbi); 
 				}
 				else {
 					authenticators.addLast(authenticator);

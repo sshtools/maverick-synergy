@@ -43,17 +43,39 @@ import com.sshtools.common.util.UnsignedInteger64;
  */
 public class SftpFileAttributes {
 
+	
 	public static final long SSH_FILEXFER_ATTR_SIZE 			= 0x00000001;
-	public static final long SSH_FILEXFER_ATTR_PERMISSIONS 	= 0x00000004;
+	public static final long SSH_FILEXFER_ATTR_UIDGID 			= 0x00000002;
+	public static final long SSH_FILEXFER_ATTR_PERMISSIONS 		= 0x00000004;
 	public static final long SSH_FILEXFER_ATTR_ACCESSTIME 		= 0x00000008;
+	public static final long SSH_FILEXFER_ATTR_EXTENDED 		= 0x80000000;
+	
+	public static final long VERSION_3_FLAGS = SSH_FILEXFER_ATTR_SIZE 
+			| SSH_FILEXFER_ATTR_UIDGID
+			| SSH_FILEXFER_ATTR_PERMISSIONS
+			| SSH_FILEXFER_ATTR_ACCESSTIME
+			| SSH_FILEXFER_ATTR_EXTENDED;
+	
+	// Version 4 flags
 	public static final long SSH_FILEXFER_ATTR_CREATETIME 		= 0x00000010;
 	public static final long SSH_FILEXFER_ATTR_MODIFYTIME 		= 0x00000020;
 	public static final long SSH_FILEXFER_ATTR_ACL 			= 0x00000040;
 	public static final long SSH_FILEXFER_ATTR_OWNERGROUP 		= 0x00000080;
 	public static final long SSH_FILEXFER_ATTR_SUBSECOND_TIMES = 0x00000100;
 	
+	public static final long VERSION_4_FLAGS = (VERSION_3_FLAGS ^ SSH_FILEXFER_ATTR_UIDGID)
+			| SSH_FILEXFER_ATTR_CREATETIME
+			| SSH_FILEXFER_ATTR_MODIFYTIME
+			| SSH_FILEXFER_ATTR_ACL
+			| SSH_FILEXFER_ATTR_OWNERGROUP
+			| SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
+	
 	// This is only used for version >= 5
 	public static final long SSH_FILEXFER_ATTR_BITS			= 0x00000200;
+	
+	
+	public static final long VERSION_5_FLAGS = VERSION_4_FLAGS 
+			| SSH_FILEXFER_ATTR_BITS;
 	
 	// These are version >= 6
 	public static final long SSH_FILEXFER_ATTR_ALLOCATION_SIZE = 0x00000400;
@@ -63,11 +85,15 @@ public class SftpFileAttributes {
 	public static final long SSH_FILEXFER_ATTR_UNTRANSLATED	= 0x00004000;
 	public static final long SSH_FILEXFER_ATTR_CTIME	 		= 0x00008000;
 	
-	public static final long SSH_FILEXFER_ATTR_EXTENDED 		= 0x80000000;
+	public static final long VERSION_6_FLAGS = VERSION_5_FLAGS 
+			| SSH_FILEXFER_ATTR_ALLOCATION_SIZE
+			| SSH_FILEXFER_ATTR_TEXT_HINT
+			| SSH_FILEXFER_ATTR_MIME_TYPE
+			| SSH_FILEXFER_ATTR_LINK_COUNT
+			| SSH_FILEXFER_ATTR_UNTRANSLATED
+			| SSH_FILEXFER_ATTR_CTIME;
 	
-	// This is only used for version <= 3
-	public static final long SSH_FILEXFER_ATTR_UIDGID 			= 0x00000002;
-	
+	// Types
 	public static final int SSH_FILEXFER_TYPE_REGULAR 		= 1;
 	public static final int SSH_FILEXFER_TYPE_DIRECTORY 	= 2;
 	public static final int SSH_FILEXFER_TYPE_SYMLINK 		= 3;
@@ -965,7 +991,20 @@ public class SftpFileAttributes {
 		ByteArrayWriter baw = new ByteArrayWriter();
 
 		try {
-			baw.writeInt(flags);
+			switch(version) {
+			case 6:
+				baw.writeInt(flags & VERSION_6_FLAGS);
+				break;
+			case 5:
+				baw.writeInt(flags & VERSION_5_FLAGS);
+				break;
+			case 4:
+				baw.writeInt(flags & VERSION_4_FLAGS);
+				break;
+			default:
+				baw.writeInt(flags & VERSION_3_FLAGS);
+				break;
+			}
 
 			if (version > 3)
 				baw.write(type);
@@ -1461,4 +1500,13 @@ public class SftpFileAttributes {
 		}
 		return null;
 	}	
+	
+	public static void main(String[] args) {
+		
+		
+		System.out.println(Long.toBinaryString(VERSION_3_FLAGS));
+		System.out.println(Long.toBinaryString(VERSION_4_FLAGS));
+		System.out.println(Long.toBinaryString(VERSION_5_FLAGS));
+		System.out.println(Long.toBinaryString(VERSION_6_FLAGS));
+	}
 }

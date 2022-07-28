@@ -105,7 +105,7 @@ public abstract class SshContext extends ProtocolContext implements
 	/** MD5 96 bit message authentication **/
 	public static final String HMAC_MD5_96 = "hmac-md5-96";
 
-	public static final String HMAC_SHA256 = "hmac-sha256";
+	public static final String HMAC_SHA256 = "hmac-sha2-256";
 	public static final String HMAC_SHA256_ETM = "hmac-sha2-256-etm@openssh.com";
 	
 	public static final String HMAC_SHA256_96 = "hmac-sha2-256-96";

@@ -367,10 +367,8 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 
 	protected void initializeHmacFactory(ComponentFactory<SshHmac> hmacs) {
 
-		if (testHMac("hmac-sha256", HmacSha256.class)) {
-			hmacs.add("hmac-sha256", HmacSha256.class);
+		if (testHMac("hmac-sha2-256", HmacSha256.class)) {
 			hmacs.add("hmac-sha2-256", HmacSha256.class);
-			hmacs.add("hmac-sha256@ssh.com", HmacSha256_at_ssh_dot_com.class);
 			hmacs.add("hmac-sha2-256-etm@openssh.com", HmacSha256ETM.class);
 		}
 
@@ -378,10 +376,8 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 			hmacs.add("hmac-sha2-256-96", HmacSha256_96.class);
 		}
 
-		if (testHMac("hmac-sha512", HmacSha512.class)) {
-			hmacs.add("hmac-sha512", HmacSha512.class);
+		if (testHMac("hmac-sha2-512", HmacSha512.class)) {
 			hmacs.add("hmac-sha2-512", HmacSha512.class);
-			hmacs.add("hmac-sha512@ssh.com", HmacSha512.class);
 			hmacs.add("hmac-sha2-512-etm@openssh.com", HmacSha512ETM.class);
 		}
 

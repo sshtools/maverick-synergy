@@ -354,6 +354,11 @@ public class MockConnection implements SshConnection {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+
+	@Override
+	public String getRemoteIPAddress() {
+		return "";
+	}
 	
 
 }

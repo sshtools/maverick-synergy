@@ -104,7 +104,7 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 		try {
 			baw.writeString(hostToConnect);
 			baw.writeInt(portToConnect);
-			baw.writeString(originatingHost = con.getRemoteAddress().getHostAddress());
+			baw.writeString(originatingHost = con.getRemoteIPAddress());
 			baw.writeInt(originatingPort = con.getRemotePort());
 
 			return baw.toByteArray();

@@ -101,9 +101,9 @@ public class RootShell extends Msh {
 			
 			if(welcomeText.contains("${remote")) {
 				welcomeText = welcomeText.replace("${remoteAddress}",
-						console.getConnection().getRemoteAddress().getHostAddress());
+						console.getConnection().getRemoteIPAddress());
 				welcomeText = welcomeText.replace("${remoteHost}",
-						console.getConnection().getRemoteAddress().getHostName());
+						console.getConnection().getRemoteIPAddress());
 				welcomeText = welcomeText.replace("${remotePort}", String
 						.valueOf(console.getConnection().getRemotePort()));
 			}

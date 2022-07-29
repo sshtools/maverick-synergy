@@ -146,7 +146,7 @@ public class SshClient implements Closeable {
 		this.con = (Connection<SshClientContext>) con;
 		this.closeConnection = closeConnection;
 		this.sshContext = (SshClientContext) con.getContext();
-		this.hostname = con.getRemoteAddress().getHostAddress();
+		this.hostname = con.getRemoteIPAddress();
 		this.remotePublicKeys = Utils.csv(con.getRemotePublicKeys());
 	}
 	

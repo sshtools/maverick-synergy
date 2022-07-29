@@ -76,7 +76,7 @@ public class ConnectionLoggingContext implements LoggerContext, EventListener {
 	}
 
 	private boolean isLoggingRemoteAddress(SshConnection con) {
-		return lookup(".remoteAddr", con.getRemoteAddress().getHostAddress(), con);
+		return lookup(".remoteAddr", con.getRemoteIPAddress(), con);
 	}
 	
 	private boolean isLoggingLocalAddress(SshConnection con) {
@@ -130,7 +130,7 @@ public class ConnectionLoggingContext implements LoggerContext, EventListener {
 										defaultTimestamp))))
 				.replace("${uuid}", con.getUUID())
 				.replace("${remotePort}", String.valueOf(con.getRemotePort()))
-				.replace("${remoteAddr}", con.getRemoteAddress().getHostAddress())
+				.replace("${remoteAddr}", con.getRemoteIPAddress())
 				.replace("${localPort}", String.valueOf(con.getLocalPort()))
 				.replace("${localAddr}", con.getLocalAddress().getHostAddress())
 				.replace("${ident}", Utils.defaultString(con.getRemoteIdentification().trim(), ""))

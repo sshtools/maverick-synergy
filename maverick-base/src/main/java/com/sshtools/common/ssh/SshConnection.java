@@ -50,6 +50,11 @@ public interface SshConnection {
 	
 	void disconnect(int reason, String message);
 	
+	/**
+	 * @deprectated use getRemoteIPAddress instead
+	 * @return
+	 */
+	@Deprecated
 	InetAddress getRemoteAddress();
 
 	InetAddress getLocalAddress();
@@ -137,5 +142,7 @@ public interface SshConnection {
 	long getTotalBytesIn();
 	
 	long getTotalBytesOut();
+
+	String getRemoteIPAddress();
 
 }

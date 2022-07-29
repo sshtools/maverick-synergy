@@ -39,7 +39,7 @@ public class Connections extends ShellCommand {
 
 		process.println(String.format("%s %16s %s", "UUID", "IP Address", "Username"));
 		for(SshConnection c : process.getConnection().getConnectionManager().getAllConnections()) {
-			process.println(String.format("%s %16s %s", c.getUUID(), c.getRemoteAddress().getAddress(), c.getUsername()));
+			process.println(String.format("%s %16s %s", c.getUUID(), c.getRemoteIPAddress(), c.getUsername()));
 		}
 	}
 

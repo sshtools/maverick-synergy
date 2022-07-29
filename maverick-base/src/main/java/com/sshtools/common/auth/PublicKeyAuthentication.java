@@ -79,7 +79,7 @@ public class PublicKeyAuthentication<C extends Context> implements Authenticatio
 	}
 
 	private SshPublicKey lookupAuthorizedKey(String algorithm, byte[] keyblob,
-			SshConnection con, InetAddress remoteAddress, boolean verify) {
+			SshConnection con, String remoteAddress, boolean verify) {
 
 		try {
 			SshPublicKey key = SshPublicKeyFileFactory.decodeSSH2PublicKey(
@@ -163,7 +163,7 @@ public class PublicKeyAuthentication<C extends Context> implements Authenticatio
 					signature = bar.readBinaryString();
 
 					SshPublicKey key = lookupAuthorizedKey(algorithm, keyblob,
-							con, con.getRemoteAddress(), verify);
+							con, con.getRemoteIPAddress(), verify);
 					if (key != null) {
 
 						// string session identifier
@@ -228,7 +228,7 @@ public class PublicKeyAuthentication<C extends Context> implements Authenticatio
 					 * Simply look for a match in the users authorized keys file
 					 */
 					if (lookupAuthorizedKey(algorithm, keyblob, con,
-							con.getRemoteAddress(), verify) != null) {
+							con.getRemoteIPAddress(), verify) != null) {
 
 						authentication.discardAuthentication();
 						

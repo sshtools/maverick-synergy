@@ -52,6 +52,8 @@ import com.sshtools.server.vsession.VirtualShellNG.WindowSizeChangeListener;
 public class Shell extends ShellCommand {
 
 	private PtyProcess pty;
+	private Map<String, String> env;
+	private File directory;
 
 	public Shell() {
 		super("osshell", ShellCommand.SUBSYSTEM_SYSTEM, "osshell", "Run a native shell");
@@ -59,13 +61,29 @@ public class Shell extends ShellCommand {
 		setBuiltIn(false);
 	}
 
+	public Map<String, String> getEnv() {
+		return env;
+	}
+
+	public void setEnv(Map<String, String> env) {
+		this.env = env;
+	}
+
+	public File getDirectory() {
+		return directory;
+	}
+
+	public void setDirectory(File directory) {
+		this.directory = directory;
+	}
+
 	@Override
 	public void run(String[] args, VirtualConsole console)
 			throws IOException, PermissionDeniedException, UsageException {
-		runCommand(null, null, null, null, console);
+		runCommand(null, null, console);
 	}
 
-	private void runCommand(String cmd, List<String> cmdArgs, File directory, Map<String, String> env,
+	private void runCommand(String cmd, List<String> cmdArgs,
 			VirtualConsole console) throws IOException {
 		List<String> args = new ArrayList<String>();
 		if (cmd == null) {
@@ -97,8 +115,8 @@ public class Shell extends ShellCommand {
 			args.addAll(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellArguments());
 		}
 
-		env = env == null ? new HashMap<String, String>() : new HashMap<String, String>(env);
-		env.put("TERM", console.getTerminal().getType());
+		Map<String, String> penv = this.env == null ? new HashMap<String, String>() : new HashMap<String, String>(this.env);
+		penv.put("TERM", console.getTerminal().getType());
 
 		var builder = new PtyProcessBuilder(args.toArray(new String[0]));
 		if(directory != null)

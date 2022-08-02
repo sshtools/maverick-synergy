@@ -34,6 +34,8 @@ import com.sshtools.common.util.IOUtils;
 import com.sshtools.server.callback.Callback;
 import com.sshtools.server.vsession.UsageException;
 import com.sshtools.server.vsession.VirtualConsole;
+import com.sshtools.server.vsession.VirtualShellNG;
+import com.sshtools.server.vsession.VirtualShellNG.WindowSizeChangeListener;
 
 public class CallbackShell extends CallbackCommand {
 
@@ -62,6 +64,8 @@ public class CallbackShell extends CallbackCommand {
 		
 		ShellTask shell = new ShellTask(con.getConnection()) {
 
+			private WindowSizeChangeListener listener;
+
 			protected void beforeStartShell(SessionChannelNG session) {
 				
 				session.allocatePseudoTerminal(console.getTerminal().getType(), 
@@ -75,6 +79,14 @@ public class CallbackShell extends CallbackCommand {
 				
 				console.getSessionChannel().enableRawMode();
 				
+				listener = new WindowSizeChangeListener() {
+					@Override
+					public void newSize(int rows, int cols) {
+						session.changeTerminalDimensions(cols, rows, 0, 0);
+					}
+				};
+				((VirtualShellNG)console.getSessionChannel()).addWindowSizeChangeListener(listener);
+				
 				con.addTask(new ConnectionAwareTask(con) {
 					@Override
 					protected void doTask() throws Throwable {
@@ -82,6 +94,11 @@ public class CallbackShell extends CallbackCommand {
 					}
 				});
 				IOUtils.copy(session.getInputStream(), console.getSessionChannel().getOutputStream());
+			}
+
+			@Override
+			protected void onCloseSession(SessionChannelNG session) {
+				((VirtualShellNG)console.getSessionChannel()).removeWindowSizeChangeListener(listener);
 			}
 			
 		};

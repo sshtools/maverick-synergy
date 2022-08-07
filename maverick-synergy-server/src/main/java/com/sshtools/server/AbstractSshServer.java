@@ -71,7 +71,7 @@ public abstract class AbstractSshServer implements Closeable {
 			Collections.unmodifiableCollection(
 					Arrays.asList(new NoOpPasswordAuthenticator(),
 							new NoOpPublicKeyAuthenticator()));
-	FileFactory fileFactory;
+	protected FileFactory fileFactory;
 	ForwardingPolicy forwardingPolicy = new ForwardingPolicy();
 	
 	ChannelFactory<SshServerContext> channelFactory; 

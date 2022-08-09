@@ -21,28 +21,43 @@
 
 package com.sshtools.client;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import com.sshtools.common.ssh.components.SshKeyPair;
+import com.sshtools.common.ssh.components.SshPublicKey;
 
 /**
  * Implements public key authentication, taking a com.sshtools.publickey.SshKeyPair object as the source private key.
  */
 public class KeyPairAuthenticator extends PublicKeyAuthenticator {
 
-	SshKeyPair pair;
-
+	List<SshKeyPair> pairs;
+	SshKeyPair authenticatingPair;
+	
 	public KeyPairAuthenticator(SshKeyPair pair) {
-		this.pair = pair;
+		this.pairs = new ArrayList<>(Arrays.asList(pair));
+	}
+
+	public KeyPairAuthenticator(SshKeyPair... identities) {
+		this.pairs = new ArrayList<>(Arrays.asList(identities));
 	}
 
 	@Override
-	public void authenticate(TransportProtocolClient transport, String username) {
-		
-		try {
-			setKeyPair(pair);
-			super.authenticate(transport, username);
-		} catch (Exception e) {
-			throw new IllegalStateException(e.getMessage(), e);
-		}
+	protected SshPublicKey getPublicKey() {
+		authenticatingPair = pairs.remove(0);
+		return authenticatingPair.getPublicKey();
+	}
+
+	@Override
+	protected SshKeyPair getAuthenticatingKey() {
+		return authenticatingPair;
+	}
+
+	@Override
+	protected boolean hasCredentialsRemaining() {
+		return !pairs.isEmpty();
 	}
 
 }

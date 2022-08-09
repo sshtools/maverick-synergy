@@ -22,200 +22,53 @@
 package com.sshtools.client;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.List;
 
-import com.sshtools.common.logger.Log;
+import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SignatureGenerator;
-import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.util.ByteArrayReader;
-import com.sshtools.common.util.ByteArrayWriter;
-import com.sshtools.synergy.ssh.Connection;
 
 /**
  * Implements public key authentication taking a separately loaded SshKeyPair as the private key for authentication.
  */
-public class ExternalKeyAuthenticator extends SimpleClientAuthenticator implements ClientAuthenticator, SignatureGenerator {
+public class ExternalKeyAuthenticator extends PublicKeyAuthenticator {
 
-	public final static int SSH_MSG_USERAUTH_PK_OK = 60;
-	
-	boolean isAuthenticating = false;
-	TransportProtocolClient transport;
-	String username;
-	Collection<SshPublicKey> publicKeys;
-	
 	SignatureGenerator signatureGenerator;
+	List<SshPublicKey> publickeys;
 	SshPublicKey authenticatingKey = null;
 
-	
-	public ExternalKeyAuthenticator(SignatureGenerator signatureGenerator) {
+	public ExternalKeyAuthenticator(SignatureGenerator signatureGenerator) throws IOException {
 		this.signatureGenerator = signatureGenerator;
-	}
-	
-	public ExternalKeyAuthenticator() {
-		
+		this.publickeys = new ArrayList<>(signatureGenerator.getPublicKeys());
 	}
 
 	@Override
-	public void authenticate(TransportProtocolClient transport, String username) throws SshException, IOException {
-		
-		onStartAuthentication(transport.getConnection());
-		
-		this.transport = transport;
-		this.username = username;
-
-		this.publicKeys = new ArrayList<SshPublicKey>(getSignatureGenerator(transport.getConnection()).getPublicKeys());
-		
-		doPublicKeyAuth();
-
-	}
-
-	protected void onStartAuthentication(Connection<SshClientContext> con) {
-		
+	protected SignatureGenerator getSignatureGenerator() throws IOException, InvalidPassphraseException {
+		return signatureGenerator;
 	}
 	
-	void doPublicKeyAuth() throws SshException, IOException {
-		
-		try {
-
-			byte[] msg = generateAuthenticationRequest(generateSignatureData());
-			
-			transport.postMessage(new AuthenticationMessage(username, "ssh-connection", "publickey") {
-
-				@Override
-				public boolean writeMessageIntoBuffer(ByteBuffer buf) {
-
-					super.writeMessageIntoBuffer(buf);
-					buf.put(msg);
-					return true;
-				}
-				
-			});
-		} catch(IOException e) {
-			Log.error("Public key operation failed",e);
-		 	failure();
-		} catch(SshException e) {
-			Log.error("Public key operation failed",e);
-			failure();
-		} 
-	}
-
-	
-	byte[] generateSignatureData() throws IOException,
-			SshException {
-		
-		if(Objects.isNull(authenticatingKey) && !publicKeys.isEmpty()) {
-			authenticatingKey = publicKeys.iterator().next();
-		}
-	
-		if(Objects.isNull(authenticatingKey)) {
-			throw new IOException("No suitable key found");
-		}
-		
-		try(ByteArrayWriter baw = new ByteArrayWriter()) {
-			baw.writeBinaryString(transport.getSessionKey());
-			baw.write(AuthenticationProtocolClient.SSH_MSG_USERAUTH_REQUEST);
-			baw.writeString(username);
-			baw.writeString("ssh-connection");
-			baw.writeString("publickey");
-			baw.writeBoolean(isAuthenticating);
-			writePublicKey(baw, authenticatingKey);
-
-			return baw.toByteArray();
-
-		} 
-	}
-
-	private void writePublicKey(ByteArrayWriter baw, SshPublicKey key) throws IOException, SshException {
-
-		baw.writeString(key.getAlgorithm());
-		baw.writeBinaryString(key.getEncoded());
-		
-	}
-
-	byte[] generateAuthenticationRequest(byte[] data) throws IOException, SshException {
-
-		ByteArrayWriter baw = new ByteArrayWriter();
-	
-		try {
-			
-			baw.writeBoolean(isAuthenticating);
-			writePublicKey(baw, authenticatingKey);
-	
-			if (isAuthenticating) {
-					
-					byte[] signature = signatureGenerator.sign(
-							authenticatingKey, 
-							authenticatingKey.getSigningAlgorithm(), 
-							data);
-					
-					baw.writeBinaryString(signature);
-
-			}
-			
-			return baw.toByteArray();
-		
-		} finally {
-			baw.close();
-		}
-
+	@Override
+	protected SshPublicKey getPublicKey() throws IOException, InvalidPassphraseException {
+		return authenticatingKey;
 	}
 
 	@Override
-	public boolean processMessage(ByteArrayReader msg) throws IOException {
-		
-		switch(msg.read()) {
-		case SSH_MSG_USERAUTH_PK_OK:
-		{
-			isAuthenticating = true;
-			try {
-				doPublicKeyAuth();
-			} catch (SshException | IOException e) {
-				Log.error("Public key operation failed",e);
-				failure();
-			}
+	protected SshKeyPair getAuthenticatingKey() throws IOException, InvalidPassphraseException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	protected boolean hasCredentialsRemaining() {
+		if(!publickeys.isEmpty()) {
+			authenticatingKey = publickeys.remove(0);
 			return true;
 		}
-		case AuthenticationProtocolClient.SSH_MSG_USERAUTH_FAILURE:
-		{
-			if(!isAuthenticating) {
-				publicKeys.remove(authenticatingKey);
-				authenticatingKey = null;
-				if(!publicKeys.isEmpty()) {
-					try {
-						doPublicKeyAuth();
-					} catch (SshException | IOException e) {
-						failure();
-					}
-					return true;
-				}
-			}
-		}
-		}
-
 		return false;
 	}
+
+
 	
-	public SignatureGenerator getSignatureGenerator(Connection<SshClientContext> con) {
-		return Objects.isNull(signatureGenerator)? this : signatureGenerator;
-	}
 
-	@Override
-	public byte[] sign(SshPublicKey key, String signingAlgorithm, byte[] data) throws SshException {
-		return getSignatureGenerator(transport.getConnection()).sign(key, signingAlgorithm, data);
-	}
-
-	@Override
-	public String getName() {
-		return "publickey";
-	}
-
-	@Override
-	public Collection<SshPublicKey> getPublicKeys() throws IOException {
-		return Collections.emptyList();
-	}
 }

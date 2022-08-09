@@ -159,7 +159,7 @@ public class SshClient implements Closeable {
 
 		if(!isAuthenticated() && identities.length > 0) {
 			attempted = true;
-			authenticate(new PublicKeyAuthenticator(identities), 30000);
+			authenticate(new KeyPairAuthenticator(identities), 30000);
 		}
 		
 		if(!isAuthenticated() && Objects.nonNull(password) && password.length > 0) {

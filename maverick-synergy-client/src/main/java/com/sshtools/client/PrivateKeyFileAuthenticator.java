@@ -22,55 +22,72 @@
 package com.sshtools.client;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.util.function.Supplier;
+import java.io.IOException;
+import java.nio.file.Path;
 
+import com.sshtools.common.publickey.InvalidPassphraseException;
+import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.common.ssh.components.SshKeyPair;
+import com.sshtools.common.ssh.components.SshPublicKey;
 
 /**
  * Implements public key authentication, taking a java.io.File object as the source private key.
  */
 public class PrivateKeyFileAuthenticator extends PublicKeyAuthenticator {
 
-	private File keyfile;
-	private Supplier<String> passphrase;
+	private SshPrivateKeyFile keyfile;
+	private PassphrasePrompt passphrase;
+	private SshKeyPair pair;
 	
-	public PrivateKeyFileAuthenticator(File keyfile, String passphrase) {
-		this.keyfile = keyfile;
-		this.passphrase = () -> passphrase;
+	public PrivateKeyFileAuthenticator(File keyfile, String passphrase) throws IOException {
+		this.keyfile = SshPrivateKeyFileFactory.parse(keyfile.toPath());
+		this.passphrase = (keyinfo) -> passphrase;
 	}
 	
-	public PrivateKeyFileAuthenticator(File keyfile, Supplier<String> passphrase) {
-		this.keyfile = keyfile;
+	public PrivateKeyFileAuthenticator(File keyfile, PassphrasePrompt passphrase) throws IOException {
+		this.keyfile = SshPrivateKeyFileFactory.parse(keyfile.toPath());
 		this.passphrase = passphrase;
 	}
 	
-	public PrivateKeyFileAuthenticator(File keyfile) {
-		this.keyfile = keyfile;
+	public PrivateKeyFileAuthenticator(Path keyfile, String passphrase) throws IOException {
+		this.keyfile = SshPrivateKeyFileFactory.parse(keyfile);
+		this.passphrase = (keyinfo) -> passphrase;
+	}
+	
+	public PrivateKeyFileAuthenticator(Path keyfile, PassphrasePrompt passphrase) throws IOException {
+		this.keyfile = SshPrivateKeyFileFactory.parse(keyfile);
+		this.passphrase = passphrase;
+	}
+	
+	public PrivateKeyFileAuthenticator(File keyfile) throws IOException {
+		this.keyfile = SshPrivateKeyFileFactory.parse(keyfile.toPath());
+	}
+
+	public PrivateKeyFileAuthenticator(Path keyfile) throws IOException {
+		this.keyfile = SshPrivateKeyFileFactory.parse(keyfile);
 	}
 	
 	public String getPassphrase() {
-		return passphrase.get();
+		return passphrase.getPasshrase(SshKeyUtils.getFingerprint(pair.getPublicKey()));
 	}
-	
+
 	@Override
-	public void authenticate(TransportProtocolClient transport, String username) {
-		
-		try {
-			SshPrivateKeyFile privateKeyFile = SshPrivateKeyFileFactory.parse(new FileInputStream(keyfile));
-			SshKeyPair pair;
-			if(privateKeyFile.isPassphraseProtected()) {
-				pair = privateKeyFile.toKeyPair(getPassphrase());
-			} else {
-				pair = privateKeyFile.toKeyPair(null);
-			}
-			setKeyPair(pair);
-			super.authenticate(transport, username);
-		} catch (Exception e) {
-			throw new IllegalStateException(e.getMessage(), e);
-		}
+	protected SshPublicKey getPublicKey() throws IOException, InvalidPassphraseException {
+		pair = keyfile.toKeyPair(getPassphrase());
+		return pair.getPublicKey();
 	}
+
+	@Override
+	protected SshKeyPair getAuthenticatingKey() throws IOException, InvalidPassphraseException {
+		return pair;
+	}
+
+	@Override
+	protected boolean hasCredentialsRemaining() {
+		return false;
+	}
+
 
 }

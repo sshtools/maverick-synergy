@@ -31,6 +31,8 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ServiceLoader;
 
 import com.sshtools.common.logger.Log;
@@ -275,5 +277,9 @@ public class SshPrivateKeyFileFactory {
 		} finally {
 			out.close();
 		}
+	}
+
+	public static SshPrivateKeyFile parse(Path path) throws IOException {
+		return parse(Files.newInputStream(path));
 	}
 }

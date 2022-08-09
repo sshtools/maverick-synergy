@@ -22,11 +22,18 @@
 
 package com.sshtools.common.ssh.components;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+
+import com.sshtools.common.publickey.SignatureGenerator;
+import com.sshtools.common.ssh.SshException;
+
 /**
  * Storage class for a public/private key pair.
  * @author Lee David Painter
  */
-public class SshKeyPair {
+public class SshKeyPair implements SignatureGenerator {
   SshPrivateKey privatekey;
   SshPublicKey publickey;
 
@@ -96,6 +103,16 @@ public class SshKeyPair {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public byte[] sign(SshPublicKey key, String signingAlgorithm, byte[] data) throws SshException, IOException {
+		return getPrivateKey().sign(data, signingAlgorithm);
+	}
+
+	@Override
+	public Collection<SshPublicKey> getPublicKeys() throws IOException {
+		return Arrays.asList(getPublicKey());
 	}
 
   

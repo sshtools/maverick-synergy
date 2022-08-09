@@ -26,6 +26,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import com.sshtools.common.ssh.SshKeyFingerprint;
 import com.sshtools.common.ssh.components.SshCertificate;
@@ -71,6 +73,11 @@ public class SshKeyUtils {
 	
 	public static SshPublicKey getPublicKey(String formattedKey) throws IOException {
 		SshPublicKeyFile file = SshPublicKeyFileFactory.parse(formattedKey.getBytes("UTF-8"));
+		return file.toPublicKey();
+	}
+	
+	public static SshPublicKey getPublicKey(Path path) throws IOException {
+		SshPublicKeyFile file = SshPublicKeyFileFactory.parse(Files.newInputStream(path));
 		return file.toPublicKey();
 	}
 	
@@ -241,7 +248,5 @@ public class SshKeyUtils {
 		
 		IOUtils.writeBytesToFile(publicFile.getFormattedKey(), publicKeyFile);
 	}
-	
-	
 
 }

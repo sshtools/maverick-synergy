@@ -43,7 +43,7 @@ public interface SignatureGenerator {
    * @return byte[]
    * @throws IOException
    */
-  public byte[] sign(SshPublicKey key, String signingAlgorithm, byte[] data) throws SshException;
+  public byte[] sign(SshPublicKey key, String signingAlgorithm, byte[] data) throws SshException, IOException;
   
   /**
    * List the public keys supported by this signature generator.

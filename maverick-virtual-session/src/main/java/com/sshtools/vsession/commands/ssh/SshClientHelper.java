@@ -26,8 +26,8 @@ import java.util.Objects;
 
 import com.sshtools.client.ClientAuthenticator;
 import com.sshtools.client.ClientStateListener;
+import com.sshtools.client.KeyPairAuthenticator;
 import com.sshtools.client.PasswordAuthenticator;
-import com.sshtools.client.PublicKeyAuthenticator;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.common.files.AbstractFile;
@@ -131,7 +131,7 @@ public class SshClientHelper {
 						continue;
 					}
 					
-					auth = new PublicKeyAuthenticator(pair);
+					auth = new KeyPairAuthenticator(pair);
 
 					if(!sshClient.authenticate(auth, 30000)) {
 						console.println("Public key authentication failed");
@@ -143,7 +143,7 @@ public class SshClientHelper {
 		} 
 		
 		if(!sshClient.isAuthenticated() && Objects.nonNull(arguments.getIdentity())) {
-			auth = new PublicKeyAuthenticator(arguments.getIdentity());
+			auth = new KeyPairAuthenticator(arguments.getIdentity());
 
 			if(!sshClient.authenticate(auth, 30000)) {
 				console.println("Public key authentication failed");

@@ -68,7 +68,7 @@ import com.sshtools.common.util.ByteArrayWriter;
  * @author Aruna Abesekara
  * @date  21/07/2014
  */
-public class SshAgentClient implements SignatureGenerator {
+public class SshAgentClient implements SignatureGenerator, Closeable {
 
 	public static final String HASH_AND_SIGN = "hash-and-sign";
 	InputStream in;
@@ -622,6 +622,16 @@ public class SshAgentClient implements SignatureGenerator {
 	@Override
 	public Collection<SshPublicKey> getPublicKeys() throws IOException {
 		return listKeys().keySet();
+	}
+
+	public static String getEnvironmentSocket() throws AgentNotAvailableException {
+		String location = System.getenv("SSH_AUTH_SOCK");
+		if(location==null && System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+			location = SshAgentClient.WINDOWS_SSH_AGENT_SERVICE;
+		} else if(location==null) {
+			throw new AgentNotAvailableException("SSH_AUTH_SOCK is undefined");
+		}
+		return location;
 	}
 
 }

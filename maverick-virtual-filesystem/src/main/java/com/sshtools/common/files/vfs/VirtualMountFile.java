@@ -165,7 +165,7 @@ public class VirtualMountFile extends VirtualFileObject {
 
 	public boolean delete(boolean recursive) throws IOException,
 			PermissionDeniedException {
-		throw new PermissionDeniedException("You cannot delete a mounted folder object");
+		return resolveFile().delete(recursive);
 	}
 
 	public synchronized void refresh() {

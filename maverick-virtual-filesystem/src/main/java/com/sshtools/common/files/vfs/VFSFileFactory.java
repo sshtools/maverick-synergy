@@ -21,6 +21,7 @@
 
 package com.sshtools.common.files.vfs;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
@@ -85,7 +86,7 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 		this.manager = manager;
 		if (defaultDirectory == null) {
 			try {
-				defaultPath = manager.resolveFile(System.getProperty("maverick.vfsDefaultPath", "."));
+				defaultPath = manager.resolveFile(System.getProperty("maverick.vfsDefaultPath", new File(".").getAbsolutePath()));
 		 	} catch (FileSystemException e) {
 				if(Log.isDebugEnabled()) {
 					Log.debug("Unable to determine default path", e);

@@ -103,12 +103,20 @@ public class Shell extends ShellCommand {
 				args.addAll(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellArguments());
 			}
 		}
-		else { 
-			// The shell, should be in /bin but just in case
-			if(StringUtils.isBlank(shellCommand)) {
-				shellCommand = findCommand("bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh");
-				if(shellCommand == null)
-					throw new IOException("Cannot find shell.");
+		else {
+			
+			if(SystemUtils.IS_OS_MAC_OSX) {
+				if(StringUtils.isBlank(shellCommand)) {
+					shellCommand = findCommand("zsh", "/bin/zsh", "bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh");
+					if(shellCommand == null)
+						throw new IOException("Cannot find OSX shell.");
+				}
+			} else {
+				if(StringUtils.isBlank(shellCommand)) {
+					shellCommand = findCommand("bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh");
+					if(shellCommand == null)
+						throw new IOException("Cannot find shell.");
+				}
 			}
 		
 			args.add(shellCommand);

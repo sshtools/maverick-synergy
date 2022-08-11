@@ -1,24 +1,3 @@
-/*
- *    _           _             _   _
- *   (_) __ _  __| | __ _ _ __ | |_(_)_   _____
- *   | |/ _` |/ _` |/ _` | '_ \| __| \ \ / / _ \
- *   | | (_| | (_| | (_| | |_) | |_| |\ V /  __/
- *  _/ |\__,_|\__,_|\__,_| .__/ \__|_| \_/ \___|
- * |__/                  |_|
- *
- * This file is part of the Maverick Synergy Hotfixes Java SSH API
- *
- * Unauthorized copying of this file, via any medium is strictly prohibited.
- *
- * Copyright (C) 2002-2021 JADAPTIVE Limited - All Rights Reserved
- *
- * Use of this software may also be covered by third-party licenses depending on the choices you make about what features to use.
- *
- * Please visit the link below to see additional third-party licenses and copyrights
- *
- * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
- */
-
 package com.sshtools.common.sftp.extensions;
 
 import java.io.EOFException;
@@ -26,58 +5,27 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.sftp.AbstractFileSystem;
 import com.sshtools.common.sftp.InvalidHandleException;
-import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpSubsystem;
 import com.sshtools.common.ssh.Packet;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.jce.JCEComponentManager;
-import com.sshtools.common.ssh.components.jce.MD5Digest;
-import com.sshtools.common.util.ByteArrayReader;
-import com.sshtools.common.util.UnsignedInteger32;
-import com.sshtools.common.util.UnsignedInteger64;
 
-public abstract class AbstractMD5Extension extends AbstractSftpExtension {
+public abstract class AbstractMD5Extension extends AbstractDigestExtension {
 
 	AbstractMD5Extension(String extensionName) {
-		super(extensionName, false);
+		super(extensionName);
 	}
-
+	
 	protected byte[] doMD5Hash(String filename, long startOffset, long length, byte[] quickCheckHash, SftpSubsystem sftp) throws FileNotFoundException, PermissionDeniedException, IOException, SshException, InvalidHandleException {
 		
-		AbstractFileSystem fs = sftp.getFileSystem();
-		byte[] handle = fs.openFile(filename, new UnsignedInteger32(AbstractFileSystem.OPEN_READ), null);
-		try {
-			return doMD5Hash(handle, startOffset, length, quickCheckHash, sftp);
-		} finally {
-			fs.closeFile(handle);
-			fs.freeHandle(handle);
-		}
+		// What to do with quick check hash?
+		return doHash("md5", filename, startOffset, length, sftp);
 	}
 	
 	protected byte[] doMD5Hash(byte[] handle, long startOffset, long length, byte[] quickCheckHash, SftpSubsystem sftp) throws SshException, EOFException, InvalidHandleException, IOException, PermissionDeniedException {
 		
-		byte[] tmp = new byte[32768];
-		AbstractFileSystem fs = sftp.getFileSystem();
-		
-		SftpFileAttributes attrs = fs.getFileAttributes(handle);
-		
-		if(length==0) {
-			length = attrs.getSize().longValue();
-		}
-		
-		MD5Digest digest = (MD5Digest) JCEComponentManager.getInstance().supportedDigests().getInstance("MD5");
-
-		while(length > 0) {
-			int read = fs.readFile(handle, new UnsignedInteger64(startOffset), tmp, 0, tmp.length);
-			if(read > 0) {
-				digest.putBytes(tmp, 0, read);
-				length -= read;
-				startOffset += read;
-			}
-		}
-		return digest.doFinal();
+		// What to do with quick check hash?
+		return doHash("md5", handle, startOffset, length, sftp);
 	}
 	
 	protected void sendReply(int requestId, byte[] hashValue, SftpSubsystem sftp) throws IOException {
@@ -96,15 +44,6 @@ public abstract class AbstractMD5Extension extends AbstractSftpExtension {
         	reply.close();
         }
 		
-	}
-	
-	@Override
-	public boolean supportsExtendedMessage(int messageId) {
-		return false;
-	}
-
-	@Override
-	public void processExtendedMessage(ByteArrayReader msg, SftpSubsystem sftp) {
 	}
 
 }

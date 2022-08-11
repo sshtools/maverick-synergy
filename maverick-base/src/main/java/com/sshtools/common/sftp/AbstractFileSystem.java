@@ -49,6 +49,7 @@ import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.FileUtils;
+import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
 
@@ -873,6 +874,36 @@ public final class AbstractFileSystem {
 			Log.error("Permission denied in getPathForHandle!", e);
 		}
 		throw new InvalidHandleException("Invalid handle");
+	}
+
+	
+	public void copyData(byte[] handle, UnsignedInteger64 offset, UnsignedInteger64 length, byte[] toHandle,
+			UnsignedInteger64 toOffset) throws IOException, PermissionDeniedException {
+		
+		String sourceHandle = getHandle(handle);
+		String destinationHandle = getHandle(toHandle);
+		
+		OpenFile sourceFile = openFiles.get(sourceHandle);
+		if(Objects.isNull(sourceFile)) {
+			throw new IOException("Invalid source file handle");
+		}
+		
+		OpenFile destinationFile = openFiles.get(destinationHandle);
+		if(Objects.isNull(destinationFile)) {
+			throw new IOException("Invalid destination file handle");
+		}
+		
+		sourceFile.seek(offset.longValue());
+		destinationFile.seek(toOffset.longValue());
+		
+		InputStream in = sourceFile.getInputStream();
+		OutputStream out = destinationFile.getOutputStream();
+		
+		if(length.longValue() > 0) {
+			IOUtils.copy(in, out, length.longValue());
+		} else {
+			IOUtils.copy(in, out);
+		}
 	}
 
 }

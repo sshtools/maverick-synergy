@@ -57,6 +57,15 @@ public class DefaultSftpExtensionFactory implements SftpExtensionFactory {
 		if(supported.contains(SupportedSftpExtensions.OPEN_DIRECTORY_WITH_FILTER)) {
 			extensions.put(OpenDirectoryWithFilterExtension.EXTENSION_NAME, new OpenDirectoryWithFilterExtension());
 		}
+		if(supported.contains(SupportedSftpExtensions.COPY_DATA)) {
+			extensions.put(CopyDataSftpExtension.EXTENSION_NAME, new CopyDataSftpExtension());
+		}
+		if(supported.contains(SupportedSftpExtensions.CHECK_FILE_NAME)) {
+			extensions.put(FilenameHashingExtension.EXTENSION_NAME, new FilenameHashingExtension());
+		}
+		if(supported.contains(SupportedSftpExtensions.CHECK_FILE_HANDLE)) {
+			extensions.put(FileHandleHashingExtension.EXTENSION_NAME, new FileHandleHashingExtension());
+		}
 	}
 	
 	@Override

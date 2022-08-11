@@ -897,12 +897,21 @@ public final class AbstractFileSystem {
 		destinationFile.seek(toOffset.longValue());
 		
 		InputStream in = sourceFile.getInputStream();
-		OutputStream out = destinationFile.getOutputStream();
+
+		try {
+			OutputStream out = destinationFile.getOutputStream();
 		
-		if(length.longValue() > 0) {
-			IOUtils.copy(in, out, length.longValue());
-		} else {
-			IOUtils.copy(in, out);
+			try {
+				if(length.longValue() > 0) {
+					IOUtils.copy(in, out, length.longValue());
+				} else {
+					IOUtils.copy(in, out);
+				}
+			} finally {
+				IOUtils.closeStream(out);
+			}
+		} finally {
+			IOUtils.closeStream(in);
 		}
 	}
 

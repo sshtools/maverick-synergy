@@ -54,7 +54,7 @@ public abstract class AbstractDigestExtension extends AbstractSftpExtension {
 	}
     
 	AbstractDigestExtension(String extensionName) {
-		super(extensionName, false);
+		super(extensionName, true);
 	}
 
 	protected byte[] doHash(String algorithm, String filename, long startOffset, long length,SftpSubsystem sftp) throws FileNotFoundException, PermissionDeniedException, IOException, SshException, InvalidHandleException {

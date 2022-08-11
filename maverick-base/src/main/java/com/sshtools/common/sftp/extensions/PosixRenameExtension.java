@@ -34,7 +34,7 @@ public class PosixRenameExtension extends AbstractSftpExtension {
 	public static final String EXTENSION_NAME = "posix-rename@openssh.com";
 
 	public PosixRenameExtension() {
-		super(EXTENSION_NAME, false);
+		super(EXTENSION_NAME, true);
 	}
 	
 	@Override

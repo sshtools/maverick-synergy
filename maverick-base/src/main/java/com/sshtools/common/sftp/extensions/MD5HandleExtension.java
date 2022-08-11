@@ -43,6 +43,7 @@ public class MD5HandleExtension extends AbstractMD5Extension {
 	        byte[] quickCheckHash = msg.readBinaryString();
 	        byte[] hashValue;
 	        
+	        
             hashValue = doMD5Hash(handle, startOffset, length, quickCheckHash, sftp);
             
             sendReply(requestId, hashValue, sftp);

@@ -60,7 +60,7 @@ public class FileSystemPolicy extends Permissions {
 	private int sftpMinWindowSize = 131072;
 	
 	public FileSystemPolicy() {
-		sftpExtensionFactories.add(new DefaultSftpExtensionFactory());
+	
 	}
 	
 	public long getConnectionUploadQuota() {

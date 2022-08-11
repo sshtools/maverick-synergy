@@ -54,11 +54,14 @@ import com.sshtools.common.sftp.SftpFileFilter;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.EOLProcessor;
 import com.sshtools.common.util.FileUtils;
+import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
+import com.sshtools.common.util.Utils;
 
 /**
  * An abstract task that implements an SFTP client.
@@ -2506,6 +2509,10 @@ public class SftpClient {
 		return verifyFiles(localFile, remoteFile, 0, 0);
 	}
 	
+	public boolean verifyFiles(String localFile, String remoteFile, RemoteHash algorithm) throws SftpStatusException, SshException, IOException, PermissionDeniedException {
+		return verifyFiles(localFile, remoteFile, 0, 0, algorithm);
+	}
+	
 	/**
 	 * Verify a local and remote file. Requires a minimum SFTP version of 5 and/or support of the "md5-hash" extension.
 	 * 
@@ -2520,6 +2527,10 @@ public class SftpClient {
 	 * @throws PermissionDeniedException 
 	 */
 	public boolean verifyFiles(String localFile, String remoteFile, long offset, long length) throws SftpStatusException, SshException, IOException, PermissionDeniedException {
+		return verifyFiles(localFile, remoteFile, offset, length, RemoteHash.md5);
+	}
+	
+	public boolean verifyFiles(String localFile, String remoteFile, long offset, long length, RemoteHash algorithm) throws SftpStatusException, SshException, IOException, PermissionDeniedException {
 		
 		AbstractFile local = resolveLocalPath(localFile);
 		if(!local.exists()) {
@@ -2527,30 +2538,50 @@ public class SftpClient {
 		}
 		
 		DigestInputStream dis = null;
-		ByteArrayWriter msg = new ByteArrayWriter();
+		
 		try {
-			MessageDigest md = MessageDigest.getInstance("MD5");
-			dis = new DigestInputStream(local.getInputStream(), md);
-			if(offset > 0) {
-				dis.skip(offset);
+			MessageDigest md = null;
+			switch(algorithm) {
+			case md5:
+				md = MessageDigest.getInstance(JCEAlgorithms.JCE_MD5);
+				break;
+			case sha1:
+				md = MessageDigest.getInstance(JCEAlgorithms.JCE_SHA1);
+				break;
+			case sha256:
+				md = MessageDigest.getInstance(JCEAlgorithms.JCE_SHA256);
+				break;
+			case sha512:
+				md = MessageDigest.getInstance(JCEAlgorithms.JCE_SHA512);
+				break;
 			}
-			byte[] buf = new byte[Math.min(2048, (int)length)];
-			dis.read(buf);
-			byte[] digest = md.digest();
-			dis.close();
 			
-			msg.writeString(resolveRemotePath(remoteFile));
-			msg.writeUINT64(offset);
-			msg.writeUINT64(length);
-			msg.writeBinaryString(digest);
-
-
-			byte[] remoteHash = getRemoteHash(remoteFile, offset, length, digest);
-			md.reset();
-			dis = new DigestInputStream(local.getInputStream(), md);
-			while(dis.read(buf) > -1);
-			
+			try {
+				dis = new DigestInputStream(local.getInputStream(), md);
+				if(offset > 0) {
+					dis.skip(offset);
+				}
+				
+				if(length > 0) {
+					IOUtils.copy(dis, new NullOutputStream(), length);
+				} else {
+					IOUtils.copy(dis, new NullOutputStream());
+				}
+			} finally {
+				IOUtils.closeStream(dis);
+			}
+	
 			byte[] localHash = md.digest();
+			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Local hash for {} is {}", localFile, Utils.bytesToHex(localHash));
+			}
+			
+			byte[] remoteHash = getRemoteHash(remoteFile, offset, length, algorithm);
+			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Remote hash for {} is {}", remoteFile, Utils.bytesToHex(remoteHash));
+			}
 			
 			return Arrays.equals(remoteHash, localHash);
 			
@@ -2558,25 +2589,15 @@ public class SftpClient {
 			throw new SshException(SshException.INTERNAL_ERROR, e1);
 		} catch (IOException e1) {
 			throw new SshException(SshException.INTERNAL_ERROR, e1);
-		} finally {
-			try {
-				msg.close();
-			} catch (IOException e) {
-			}
-			if(dis!=null) {
-				try {
-					dis.close();
-				} catch (IOException e) {
-				}
-			}
-		}
-
+		} 
 	}
 
+	@Deprecated
 	public byte[] getRemoteHash(String remoteFile) throws IOException, SftpStatusException, SshException {
 		return getRemoteHash(remoteFile, 0, 0, new byte[0]);
 	}
 	
+	@Deprecated
 	public byte[] getRemoteHash(String remoteFile, long offset, long length, byte[] quickCheck) throws IOException, SftpStatusException, SshException {
 		ByteArrayWriter msg = new ByteArrayWriter();
 		
@@ -2596,11 +2617,117 @@ public class SftpClient {
 
 	}
 	
+	@Deprecated
 	public byte[] getRemoteHash(byte[] handle) throws IOException, SftpStatusException, SshException {
 		return getRemoteHash(handle, 0, 0, new byte[0]);
 	}
 	
+	@Deprecated
 	public byte[] getRemoteHash(byte[] handle, long offset, long length, byte[] quickCheck) throws IOException, SftpStatusException, SshException {
+		
+		return doMD5HashHandle(handle, offset, length, quickCheck);
+	}
+	
+	public byte[] getRemoteHash(byte[] handle, RemoteHash algorithm) throws IOException, SftpStatusException, SshException {
+		return getRemoteHash(handle, 0, 0, algorithm);
+	}
+	
+	public byte[] getRemoteHash(byte[] handle, long offset, long length, RemoteHash algorithm) throws IOException, SftpStatusException, SshException {
+		
+		return doCheckHashHandle(handle, offset, length, algorithm);
+	}
+	
+	public byte[] getRemoteHash(String path, RemoteHash algorithm) throws IOException, SftpStatusException, SshException {
+		return getRemoteHash(path, 0, 0, algorithm);
+	}
+	
+	public byte[] getRemoteHash(String path, long offset, long length, RemoteHash algorithm) throws IOException, SftpStatusException, SshException {
+		
+		String actual = resolveRemotePath(path);
+		return doCheckFileHandle(actual, offset, length, algorithm);
+		
+	}
+	
+	protected byte[] doCheckHashHandle(byte[] handle, long offset, long length, RemoteHash algorithm) throws IOException, SftpStatusException, SshException {
+		
+		ByteArrayWriter msg = new ByteArrayWriter();
+		
+		try {
+			msg.writeBinaryString(handle);
+			msg.writeString(algorithm.name());
+			msg.writeUINT64(offset);
+			msg.writeUINT64(length);
+			msg.writeInt(0L);
+	
+			return processCheckFileResponse(
+					sftp.getExtensionResponse(
+							sftp.sendExtensionMessage("check-file-handle", msg.toByteArray())), 
+								algorithm);
+	
+			
+		} finally {
+			msg.close();
+		}
+	}
+	
+	protected byte[] doCheckFileHandle(String filename, long offset, long length, RemoteHash algorithm) throws IOException, SftpStatusException, SshException {
+		
+		ByteArrayWriter msg = new ByteArrayWriter();
+		
+		try {
+			msg.writeString(filename);
+			msg.writeString(algorithm.name());
+			msg.writeUINT64(offset);
+			msg.writeUINT64(length);
+			msg.writeInt(0L);
+	
+			return processCheckFileResponse(
+					sftp.getExtensionResponse(
+							sftp.sendExtensionMessage("check-file-name", msg.toByteArray())), 
+								algorithm);
+	
+			
+		} finally {
+			msg.close();
+		}
+	}
+	
+	protected byte[] processCheckFileResponse(SftpMessage resp, RemoteHash algorithm) throws IOException {
+
+		String processedAlgorithm = resp.readString();
+		if(!processedAlgorithm.equals(algorithm.name())) {
+			throw new IOException("Remote server returned a hash in an unsupported algorithm");
+		}
+		
+		int hashLength;
+		switch(algorithm) {
+		case md5:
+			hashLength = 16;
+			break;
+		case sha1:
+			hashLength = 20;
+			break;
+		case sha256:
+			hashLength = 32;
+			break;
+		case sha512:
+			hashLength = 64;
+			break;
+		default:
+			throw new IOException("Unsupported hash algorihm " + processedAlgorithm);
+		}
+		byte[] hash = new byte[hashLength];
+		if(resp.available() < hash.length) {
+			throw new IOException("Unexpected hash length returned by remote server");
+		}
+		
+		resp.readFully(hash);
+		return hash;
+		
+	}
+
+	protected byte[] doMD5HashHandle(byte[] handle, long offset, long length, byte[] quickCheck)throws IOException, SftpStatusException, SshException {
+		
 		ByteArrayWriter msg = new ByteArrayWriter();
 		
 		try {

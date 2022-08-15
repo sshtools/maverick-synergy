@@ -25,6 +25,7 @@ import java.io.IOException;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.AbstractFileSystem;
+import com.sshtools.common.sftp.InvalidHandleException;
 import com.sshtools.common.sftp.SftpSubsystem;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.UnsignedInteger64;
@@ -58,6 +59,8 @@ public class CopyDataSftpExtension extends AbstractSftpExtension {
 			sftp.sendStatusMessage(requestId, SftpSubsystem.STATUS_FX_FAILURE, e.getMessage());
 		} catch (PermissionDeniedException e) {
 			sftp.sendStatusMessage(requestId, SftpSubsystem.STATUS_FX_PERMISSION_DENIED, e.getMessage());
+		} catch (InvalidHandleException e) {
+			sftp.sendStatusMessage(requestId, SftpSubsystem.STATUS_FX_NO_SUCH_FILE, e.getMessage());
 		}
 	}
 

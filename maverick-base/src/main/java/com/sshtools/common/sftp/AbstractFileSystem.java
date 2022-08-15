@@ -878,41 +878,48 @@ public final class AbstractFileSystem {
 
 	
 	public void copyData(byte[] handle, UnsignedInteger64 offset, UnsignedInteger64 length, byte[] toHandle,
-			UnsignedInteger64 toOffset) throws IOException, PermissionDeniedException {
+			UnsignedInteger64 toOffset) throws IOException, PermissionDeniedException, InvalidHandleException {
 		
-		String sourceHandle = getHandle(handle);
-		String destinationHandle = getHandle(toHandle);
+		if(length.longValue() > 0) {
+			copyLength(handle, offset, length, toHandle, toOffset);
+		} else {
+			copyUntilEOF(handle, offset, toHandle, toOffset);
+		}			
+	}
+	
+	private void copyUntilEOF(byte[] handle, UnsignedInteger64 offset, byte[] toHandle, UnsignedInteger64 toOffset) throws InvalidHandleException, IOException, PermissionDeniedException {
 		
-		OpenFile sourceFile = openFiles.get(sourceHandle);
-		if(Objects.isNull(sourceFile)) {
-			throw new IOException("Invalid source file handle");
-		}
-		
-		OpenFile destinationFile = openFiles.get(destinationHandle);
-		if(Objects.isNull(destinationFile)) {
-			throw new IOException("Invalid destination file handle");
-		}
-		
-		sourceFile.seek(offset.longValue());
-		destinationFile.seek(toOffset.longValue());
-		
-		InputStream in = sourceFile.getInputStream();
-
-		try {
-			OutputStream out = destinationFile.getOutputStream();
-		
-			try {
-				if(length.longValue() > 0) {
-					IOUtils.copy(in, out, length.longValue());
-				} else {
-					IOUtils.copy(in, out);
-				}
-			} finally {
-				IOUtils.closeStream(out);
+		byte[] buffer = new byte[65525];
+		int r;
+		long read = 0L;
+		do {
+			r = readFile(handle, UnsignedInteger64.add(new UnsignedInteger64(read), offset), buffer, 0, buffer.length);
+			if(r > -1) {
+				writeFile(toHandle, UnsignedInteger64.add(new UnsignedInteger64(read), toOffset), buffer, 0, r);
+				read+=r;
 			}
-		} finally {
-			IOUtils.closeStream(in);
+		} while(r > -1);
+		
+		System.out.println("Copied " + read + " bytes of data");
+	}
+
+	private void copyLength(byte[] handle, UnsignedInteger64 offset, UnsignedInteger64 length, byte[] toHandle, UnsignedInteger64 toOffset) throws EOFException, InvalidHandleException, IOException, PermissionDeniedException {
+		
+		if(length.longValue() <= 0) {
+			throw new IllegalArgumentException("copyLength requires a positive length value");
 		}
+		byte[] buffer = new byte[65525];
+		long read = 0;
+		int r;
+		do {
+			r = readFile(handle, UnsignedInteger64.add(new UnsignedInteger64(read), offset), buffer, 0, (int) Math.min(buffer.length, length.longValue() - read));
+			if(r > -1) {
+				writeFile(toHandle, UnsignedInteger64.add(new UnsignedInteger64(read), toOffset), buffer, 0, r);
+				read += r;
+			}
+		} while(r > -1 && read < length.longValue());
+		
+		System.out.println("Copied " + read + " bytes of data");
 	}
 
 }

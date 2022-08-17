@@ -246,7 +246,17 @@ class ShellInputStream extends InputStream {
 		
 		
 		try {
-			exitCode = Integer.parseInt(tmp.toString().trim());
+			String code = tmp.toString().trim();
+			/**
+			 * Powershell returns True or False for $?
+			 */
+			if("True".equals(code)) {
+				exitCode = 0;
+			} else if("False".equals(code)) {
+				exitCode = 1;
+			} else {
+				exitCode = Integer.parseInt(tmp.toString().trim());
+			}
 			if(Log.isDebugEnabled())
 				Log.debug(cmd + ": Exit code is " + exitCode);
 		} catch (NumberFormatException e) {

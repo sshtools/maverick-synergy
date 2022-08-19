@@ -117,8 +117,16 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		
 		AbstractFile file = parent.resolveFile();
 
-		for(AbstractFile child : file.getChildren()) {
-			files.put(child.getName(), new VirtualMappedFile(child, parent.getMount(), this));
+		/**
+		 * This check is important because in some circumstances the mount might be a path
+		 * within a mount that has no hard backing. For example when / and /public/foo are
+		 * mounted, /public is not a real path and we don't want to generate errors because
+		 * we have to list foo as a directory under /public.
+		 */
+		if(file.isDirectory()) {
+			for(AbstractFile child : file.getChildren()) {
+				files.put(child.getName(), new VirtualMappedFile(child, parent.getMount(), this));
+			}
 		}
 		
 		String currentPath = FileUtils.checkEndsWithSlash(parent.getAbsolutePath());

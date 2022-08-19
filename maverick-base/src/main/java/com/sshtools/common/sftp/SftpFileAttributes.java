@@ -59,9 +59,9 @@ public class SftpFileAttributes {
 	// Version 4 flags
 	public static final long SSH_FILEXFER_ATTR_CREATETIME 		= 0x00000010;
 	public static final long SSH_FILEXFER_ATTR_MODIFYTIME 		= 0x00000020;
-	public static final long SSH_FILEXFER_ATTR_ACL 			= 0x00000040;
+	public static final long SSH_FILEXFER_ATTR_ACL 			    = 0x00000040;
 	public static final long SSH_FILEXFER_ATTR_OWNERGROUP 		= 0x00000080;
-	public static final long SSH_FILEXFER_ATTR_SUBSECOND_TIMES = 0x00000100;
+	public static final long SSH_FILEXFER_ATTR_SUBSECOND_TIMES  = 0x00000100;
 	
 	public static final long VERSION_4_FLAGS = (VERSION_3_FLAGS ^ SSH_FILEXFER_ATTR_UIDGID)
 			| SSH_FILEXFER_ATTR_CREATETIME
@@ -71,7 +71,7 @@ public class SftpFileAttributes {
 			| SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
 	
 	// This is only used for version >= 5
-	public static final long SSH_FILEXFER_ATTR_BITS			= 0x00000200;
+	public static final long SSH_FILEXFER_ATTR_BITS			    = 0x00000200;
 	
 	
 	public static final long VERSION_5_FLAGS = VERSION_4_FLAGS 
@@ -84,6 +84,11 @@ public class SftpFileAttributes {
 	public static final long SSH_FILEXFER_ATTR_LINK_COUNT		= 0x00002000;
 	public static final long SSH_FILEXFER_ATTR_UNTRANSLATED	= 0x00004000;
 	public static final long SSH_FILEXFER_ATTR_CTIME	 		= 0x00008000;
+
+	public static final long SSH_FILEXFER_ATTR_EXTENDED 		= 0x80000000;
+	
+	// This is only used for version <= 3
+	public static final long SSH_FILEXFER_ATTR_UIDGID 			= 0x00000002;
 	
 	public static final long VERSION_6_FLAGS = VERSION_5_FLAGS 
 			| SSH_FILEXFER_ATTR_ALLOCATION_SIZE
@@ -965,7 +970,7 @@ public class SftpFileAttributes {
 	 * @return boolean
 	 */
 	private boolean isFlagSet(long flag, int version) {
-		if(version >= 5 && supportedAttributeMask != null) {
+		if(version >= 5 && supportedAttributeMask != null && supportedAttributeMask.longValue()!=0) {
 			boolean set = ((flags & (flag & 0xFFFFFFFFL)) == (flag & 0xFFFFFFFFL));
 			if(set) {
 				set =  ((supportedAttributeMask & (flag & 0xFFFFFFFFL)) == (flag & 0xFFFFFFFFL));

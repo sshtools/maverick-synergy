@@ -141,7 +141,7 @@ public class SshAgentKeyList extends AgentMessage {
 	                description = bar.readString();
 	                keys.put(key, description);                
             	} catch(IOException e) {
-            		Log.warn("Failed to read key from agent key list");
+            		Log.warn("Failed to read key from agent key list", e);
             	}
             }
         } catch (IOException ex) {

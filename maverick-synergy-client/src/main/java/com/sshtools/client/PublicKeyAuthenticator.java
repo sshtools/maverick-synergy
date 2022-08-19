@@ -63,6 +63,11 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 
 		if(hasCredentialsRemaining()) {
 			doPublicKeyAuth();
+		} else {
+			if(Log.isDebugEnabled()) {
+				Log.debug("No more credentials", getName());
+			}
+			done(false);
 		}
 
 	}
@@ -183,6 +188,11 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 				isAuthenticating = false;
 				doPublicKeyAuth();
 				return true;
+			} else {
+				if(Log.isDebugEnabled()) {
+					Log.debug("No more credentials", getName());
+				}
+				done(false);
 			}
 		}
 		}

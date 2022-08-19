@@ -11,3 +11,4 @@ com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKey$Ssh2RsaPublicKeyFactory
 com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA256$Ssh2RsaPublicKeySHA256Factory
 com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA512$Ssh2RsaPublicKeySHA512Factory
 com.sshtools.common.ssh.components.jce.SshEd448PublicKeyJCE$SshEd448PublicKeyJCEFactory
+com.sshtools.common.ssh.components.jce.SshEd25519PublicKeyJCE$SshEd25519PublicKeyJCEFactory

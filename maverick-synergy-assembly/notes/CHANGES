@@ -1,3 +1,20 @@
+Maverick Synergy 3.0.9 - TBC
+
+Bug Fixes
+  o When supported SFTP attributes is not null, only process flags when there is actually a value set. 
+  o Refactor of VirtualFileFactory to provide consistent resolution of children.
+  o Intermediate non-existent paths along a virtual mount path should be read only.
+  o Calling enableFile twice on the same logging path should not create an additional log context but should instead reconfigure the existing context.
+  o Added isMount method to VirtualFile to make it easier to determine if the file object is a mount or not.
+  o VirtualMounts are now processed and cached in the VirtualFileFactory constructor.
+  o There is no method to reset the logging contexts.
+  o DirectFileJava7 attempts to set name of group/user using the SftpFileAttributes method that only accepts a numerical GID/UID.
+  o PublicKeyAuthenticator setKeyPair method incorrectly stores unmodifiable collection causing UnsupportedOperationException when keys are removed during authentication.
+
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.8 - Jun 30, 2022
 
 Features
@@ -10,9 +27,7 @@ Bug Fixes
     o SftpFileAttributes does not validate UID/GID are numeric values.
     o Added getMount to VirtualFile interface for consistent mount returning function across virtual file types. Deprecated getParentMount on VirtualFileObject for same reasons.  
 
-=================
-=  HISTORY      =
-=================
+-----------------
 
 Maverick Synergy 3.0.7 - Apr 11, 2021
 

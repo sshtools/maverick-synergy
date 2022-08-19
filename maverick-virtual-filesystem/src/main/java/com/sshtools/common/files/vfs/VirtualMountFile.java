@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -44,7 +43,7 @@ public class VirtualMountFile extends VirtualFileObject {
 	private AbstractFile file;
 	private boolean intermediate;
 	
-	Map<String,AbstractFile> cachedChildren;
+	Map<String,VirtualFile> cachedChildren;
 	
 	public VirtualMountFile(String path, VirtualMount mount, VirtualFileFactory fileFactory, boolean intermediate) throws PermissionDeniedException, IOException {
 		super(fileFactory, mount);

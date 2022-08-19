@@ -2556,6 +2556,12 @@ public class SftpClient {
 				break;
 			}
 			
+			byte[] remoteHash = getRemoteHash(remoteFile, offset, length, algorithm);
+			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Remote hash for {} is {}", remoteFile, Utils.bytesToHex(remoteHash));
+			}
+			
 			try {
 				dis = new DigestInputStream(local.getInputStream(), md);
 				if(offset > 0) {
@@ -2575,12 +2581,6 @@ public class SftpClient {
 			
 			if(Log.isDebugEnabled()) {
 				Log.debug("Local hash for {} is {}", localFile, Utils.bytesToHex(localHash));
-			}
-			
-			byte[] remoteHash = getRemoteHash(remoteFile, offset, length, algorithm);
-			
-			if(Log.isDebugEnabled()) {
-				Log.debug("Remote hash for {} is {}", remoteFile, Utils.bytesToHex(remoteHash));
 			}
 			
 			return Arrays.equals(remoteHash, localHash);

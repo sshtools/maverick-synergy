@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SignatureGenerator;
+import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPrivateKey;
@@ -116,7 +117,7 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 		} 
 	}
 	
-	protected abstract SshPublicKey getPublicKey() throws IOException, InvalidPassphraseException;
+	protected abstract SshPublicKey getPublicKey() throws IOException;
 
 	protected abstract SshKeyPair getAuthenticatingKey() throws IOException, InvalidPassphraseException;
 	
@@ -140,19 +141,8 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 	
 			if (isAuthenticating) {
 	
-					byte[] signature = getSignatureGenerator().sign(getPublicKey(), username, data);
-					
-					// Format the signature correctly
-					ByteArrayWriter sig = new ByteArrayWriter();
-		
-					try {
-						sig.writeString(getPublicKey().getSigningAlgorithm());
-						sig.writeBinaryString(signature);
-						baw.writeBinaryString(sig.toByteArray());
-					} finally {
-						sig.close();
-					}
-
+					byte[] signature = getSignatureGenerator().sign(getPublicKey(), getPublicKey().getSigningAlgorithm(), data);
+					baw.writeBinaryString(signature);
 			}
 			
 			return baw.toByteArray();
@@ -175,7 +165,9 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 		{
  			if(Log.isDebugEnabled()) {
  				Log.debug("Received SSH_MSG_USERAUTH_PK_OK");
+ 				Log.debug("Server accepts {} {}", getPublicKey().getAlgorithm(), SshKeyUtils.getFingerprint(getPublicKey()));
  			}
+ 			
 			isAuthenticating = true;
 			try {
 				doPublicKeyAuth();

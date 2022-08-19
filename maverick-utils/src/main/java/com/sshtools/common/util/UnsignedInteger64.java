@@ -31,6 +31,9 @@ import java.math.BigInteger;
  */
 public class UnsignedInteger64 {
 
+  public final static UnsignedInteger64 ZERO = new UnsignedInteger64(0L);
+  public final static UnsignedInteger64 ONE = new UnsignedInteger64(1L);
+  
   /**  */
   public final static BigInteger MAX_VALUE = new BigInteger(
       "18446744073709551615");

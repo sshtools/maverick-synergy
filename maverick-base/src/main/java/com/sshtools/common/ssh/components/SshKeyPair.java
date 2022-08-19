@@ -28,6 +28,7 @@ import java.util.Collection;
 
 import com.sshtools.common.publickey.SignatureGenerator;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.util.ByteArrayWriter;
 
 /**
  * Storage class for a public/private key pair.
@@ -107,7 +108,17 @@ public class SshKeyPair implements SignatureGenerator {
 
 	@Override
 	public byte[] sign(SshPublicKey key, String signingAlgorithm, byte[] data) throws SshException, IOException {
-		return getPrivateKey().sign(data, signingAlgorithm);
+		
+		ByteArrayWriter sig = new ByteArrayWriter();
+
+		try {
+			byte[] s = getPrivateKey().sign(data, signingAlgorithm);
+			sig.writeString(signingAlgorithm);
+			sig.writeBinaryString(s);
+			return sig.toByteArray();
+		} finally {
+			sig.close();
+		}
 	}
 
 	@Override

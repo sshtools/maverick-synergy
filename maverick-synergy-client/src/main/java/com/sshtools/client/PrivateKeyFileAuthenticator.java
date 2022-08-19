@@ -74,8 +74,12 @@ public class PrivateKeyFileAuthenticator extends PublicKeyAuthenticator {
 	}
 
 	@Override
-	protected SshPublicKey getPublicKey() throws IOException, InvalidPassphraseException {
-		pair = keyfile.toKeyPair(getPassphrase());
+	protected SshPublicKey getPublicKey() throws IOException {
+		try {
+			pair = keyfile.toKeyPair(getPassphrase());
+		} catch (IOException | InvalidPassphraseException e) {
+			throw new IOException(e.getMessage(), e);
+		}
 		return pair.getPublicKey();
 	}
 

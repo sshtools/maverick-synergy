@@ -25,8 +25,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SignatureGenerator;
+import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
 
@@ -50,7 +52,7 @@ public class ExternalKeyAuthenticator extends PublicKeyAuthenticator {
 	}
 	
 	@Override
-	protected SshPublicKey getPublicKey() throws IOException, InvalidPassphraseException {
+	protected SshPublicKey getPublicKey() throws IOException {
 		return authenticatingKey;
 	}
 
@@ -63,6 +65,9 @@ public class ExternalKeyAuthenticator extends PublicKeyAuthenticator {
 	protected boolean hasCredentialsRemaining() {
 		if(!publickeys.isEmpty()) {
 			authenticatingKey = publickeys.remove(0);
+			if(Log.isDebugEnabled()) {
+				Log.debug("Using key {} {}", authenticatingKey.getAlgorithm(), SshKeyUtils.getFingerprint(authenticatingKey));
+			}
 			return true;
 		}
 		return false;

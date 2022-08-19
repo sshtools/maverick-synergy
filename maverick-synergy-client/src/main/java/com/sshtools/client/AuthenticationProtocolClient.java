@@ -137,7 +137,7 @@ public class AuthenticationProtocolClient implements Service {
 	
 				authenticated = true;
 				if(Log.isDebugEnabled()) {
-					Log.debug("SSH_MSG_USERAUTH_SUCCESS received");
+					Log.debug("Received SSH_MSG_USERAUTH_SUCCESS");
 				}
 	
 				ConnectionProtocol<SshClientContext> con = new ConnectionProtocolClient(
@@ -155,7 +155,7 @@ public class AuthenticationProtocolClient implements Service {
 				final boolean partial = bar.readBoolean();
 				
 				if(Log.isDebugEnabled()) {
-					Log.debug("SSH_MSG_USERAUTH_FAILURE received auths=" + auths);
+					Log.debug("Received SSH_MSG_USERAUTH_FAILURE auths=" + auths);
 				}
 	
 				StringTokenizer t = new StringTokenizer(auths, ",");

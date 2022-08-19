@@ -75,7 +75,7 @@ public class IdentityFileAuthenticator extends PublicKeyAuthenticator {
 	}
 
 	@Override
-	protected SshPublicKey getPublicKey() throws IOException, InvalidPassphraseException {
+	protected SshPublicKey getPublicKey() throws IOException {
 		return currentKey;
 	}
 

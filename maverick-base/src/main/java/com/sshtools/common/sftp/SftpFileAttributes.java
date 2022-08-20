@@ -48,6 +48,7 @@ public class SftpFileAttributes {
 	public static final long SSH_FILEXFER_ATTR_UIDGID 			= 0x00000002;
 	public static final long SSH_FILEXFER_ATTR_PERMISSIONS 		= 0x00000004;
 	public static final long SSH_FILEXFER_ATTR_ACCESSTIME 		= 0x00000008;
+
 	public static final long SSH_FILEXFER_ATTR_EXTENDED 		= 0x80000000;
 	
 	public static final long VERSION_3_FLAGS = SSH_FILEXFER_ATTR_SIZE 
@@ -85,11 +86,6 @@ public class SftpFileAttributes {
 	public static final long SSH_FILEXFER_ATTR_UNTRANSLATED	= 0x00004000;
 	public static final long SSH_FILEXFER_ATTR_CTIME	 		= 0x00008000;
 
-	public static final long SSH_FILEXFER_ATTR_EXTENDED 		= 0x80000000;
-	
-	// This is only used for version <= 3
-	public static final long SSH_FILEXFER_ATTR_UIDGID 			= 0x00000002;
-	
 	public static final long VERSION_6_FLAGS = VERSION_5_FLAGS 
 			| SSH_FILEXFER_ATTR_ALLOCATION_SIZE
 			| SSH_FILEXFER_ATTR_TEXT_HINT

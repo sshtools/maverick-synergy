@@ -2,21 +2,53 @@ Maverick Synergy 3.1.0 - TBC
 
 Features
   o Now requires Java 11, some components requires at least Java 16.
-  o Now JPMS compliant. You can use Synergy in modularised Java applications. Note, `maverick-synergy-fuse-drive` and
-    `maverick-synergy-virtual-session` are not modularised, due to 3rd party dependencies that are not modularised.
-  o Tests split into separate Maven projects. This is to allow development in Eclipse, which does not yet allow
-    main source and tests that are modular to exist in the same project.
+  o Now JPMS compliant. You can use in modularised Java applications. Note, maverick-synergy-virtual-session is not modularised, due to 3rd party dependencies that are not modularised.
+  o Tests split into separate Maven projects. This is to allow development in Eclipse, which does not yet allow main source and tests that are modular to exist in the same project.
   o PuTTY support moved to it's own module, removing the Bouncycastle requirement in the core classes.
   o Jzlib dependency removed and replaced with standard Java compression API.
-  o Extendable SSH Agent transports. In order to allow optional native unix domain socket support, and to reduce
-    3rd party dependencies, you must now choose one or more of the `AgentProvider` implementations. So add at least one
-    of `maverick-sshagent-jdk16-sockets`, `maverick-sshagent-named-pipes` or `maverick-ssh-agent-jni-sockets`.
-  o Unix Domain Socket tunnels. This requires Java 16 or above, and you must include either `maverick-synergy-jdk16-server`
-    or `maverick-synergy-jdk16-client`. See documentation for usage.
+  o Extendable SSH Agent transports. In order to allow optional native unix domain socket support, and to reduce 3rd party dependencies, you must now choose one or more of the `AgentProvider` implementations. So add at least one of maverick-sshagent-jdk16-sockets, maverick-sshagent-named-pipes or maverick-ssh-agent-jni-sockets.
+  o Unix Domain Socket tunnels. This requires Java 16 or above, and you must include either maverick-synergy-jdk16-server or maverick-synergy-jdk16-client. See documentation for usage.
+  o FileTransferProgress interface now provides default methods
+ 
+=================
+=  HISTORY      =
+=================
+
+Maverick Synergy 3.0.13 - TBC
+
+Bug Fixes
+  o VirtualFileFactory much check the parent is actually a directory when listing children because it is possible that the parent folder does not actually exist, for example, if the current path is the parent element of a mount (/public does not actually exist when /public/foo is mounted).
+  o When supported SFTP attributes is not null, only process flags when there is actually a value set. 
+  
+-----------------
+
+Maverick Synergy 3.0.12 - Aug 17, 2022 
+
+Features
+  o Allow a command to be passed to VirtualChannelFactory which will be executed as an alternative shell. For example when combined with OSShellFactory "osshell" command it can create a native shell experience for the user.
+  o Support for zsh in "osshell" command.
+  o Abstract out command execution from Shell into AbstractOSCommand so it can be reused to create native commands.
+  o Implemented draft "copy-data" extension that allows files to be combined remotely on the server using their open file handle.
+  o Implemented draft "check-file-name" and "check-file-handle" extensions for returning hash values for entire files, or parts of.
+  o Improved verifyFiles method in SftpClient to use more recent draft extensions and now provides a choice of hash algorithm.
   
 Bug Fixes
+  o Incorrect use of bitwise operators means removing permission twice will actually enable it.
+  o File system events don't have directory AbstractFile instance in attributes.
+  o FileSystemPolicy uses a CachedFileFactory implementation that should cache per-connection, not per-instance.
+  o Capture exception generated during SftpSubsystem initialization and throw an appropriate error so the channel gets cleaned up.
+  o Made Subsystem nextMessage a synchronized method to prevent multiple threads attempting to read at the same time.
+  o Premature change of authentication mechanism causes SSH_MSG_UNIMPLEMENTED.
+  o SFTP attributes encodes flags that are defined in later protocol versions causing WinScp to error when listing a directory.
+  o Removed non-compliant hmac-sha256 and hmac-sha512 algorithm types and changed HMAC preference to hmac-sha2-256.
+  o Introduced getRemoteIPAddress to SshConnection which should now be used instead of getRemoteAddress (which has been deprecated). If you are using the server behind a load balancer with the proxy protocol this will ensure you get the correct address string and not NullPointerExceptions when you attempt to access fields on the unresolved InetAddress that represents the real IP of the client.
+  o Allow configuration of environment and working directory in Shell command.
+  o Pass on window resize events in CallbackShell.
+  o Expand current working directory . to absolute path in default VFSFileFactory to avoid relative URI errors.
 
-Maverick Synergy 3.0.11 - TBC  
+------------------
+
+Maverick Synergy 3.0.11 - Jun 29, 2022  
 
 Features
   o Support for PuTTY Version 3 Private Key format (requires Bouncycastle dependency for Argon key derivation support)
@@ -30,10 +62,7 @@ Bug Fixes
   o Ensure mounts in VirtualFileFactory are initialized with VFSFileFactory with a default path of the mount path.
   o getTotalBytesIn / getTotalBytesOut methods on Connection<T extends SshContext> were present but not on implemented interface SshConnection. 
   
-=================
-=  HISTORY      =
-=================
-
+-----------------
 Maverick Synergy 3.0.10 - May 4, 2022  
 
 Bug Fixes

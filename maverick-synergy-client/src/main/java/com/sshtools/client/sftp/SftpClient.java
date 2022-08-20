@@ -21,6 +21,7 @@
 
 package com.sshtools.client.sftp;
 
+import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,6 +55,7 @@ import com.sshtools.common.sftp.SftpFileFilter;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.EOLProcessor;
@@ -66,7 +68,7 @@ import com.sshtools.common.util.Utils;
 /**
  * An abstract task that implements an SFTP client.
  */
-public class SftpClient {
+public class SftpClient implements Closeable {
 
 	SftpChannel sftp;
 
@@ -3888,6 +3890,15 @@ public class SftpClient {
 
 	public String getHome() throws SftpStatusException, SshException {
 		return getAbsolutePath("");
+	}
+
+	@Override
+	public void close() throws IOException {
+		try {
+			this.quit();
+		} catch (SshException e) {
+			throw new SshIOException(e);
+		}
 	}
 
 }

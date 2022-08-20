@@ -21,7 +21,6 @@
 package com.sshtools.common.auth;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.nio.ByteBuffer;
 
 import com.sshtools.common.logger.Log;

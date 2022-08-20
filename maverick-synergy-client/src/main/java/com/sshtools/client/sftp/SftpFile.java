@@ -28,7 +28,6 @@ import java.util.Map;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.util.ExpiringConcurrentHashMap;
 import com.sshtools.common.util.UnsignedInteger64;
 
 /**

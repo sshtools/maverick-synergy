@@ -8,6 +8,7 @@
 		<artifactId>maverick-synergy-group</artifactId>
 		<version>3.1.0-SNAPSHOT</version>
 	</parent>
+	<packaging>jar</packaging>
 	<artifactId>maverick-base-tests</artifactId>
 	<name>Base API Tests</name>
 	<description>The core test components shared between the Maverick Synergy and Maverick Legacy SSH APIs</description>
@@ -42,6 +43,13 @@
 	<build>
 
 		<plugins>
+			<plugin>
+			    <groupId>org.apache.maven.plugins</groupId>
+			    <artifactId>maven-surefire-plugin</artifactId>
+			    <configuration>
+			        <useModulePath>false</useModulePath>
+			    </configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>

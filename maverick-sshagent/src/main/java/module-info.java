@@ -1,3 +1,6 @@
+import com.sshtools.agent.AgentProvider;
+import com.sshtools.agent.provider.tcp.TCPAgentProvider;
+
 /*
  *    _           _             _   _
  *   (_) __ _  __| | __ _ _ __ | |_(_)_   _____
@@ -28,4 +31,6 @@ open module com.sshtools.agent {
 	exports com.sshtools.agent.rfc;
 	exports com.sshtools.agent.server;
 	exports com.sshtools.agent.openssh;
+	uses AgentProvider;
+	provides AgentProvider with TCPAgentProvider;
 }

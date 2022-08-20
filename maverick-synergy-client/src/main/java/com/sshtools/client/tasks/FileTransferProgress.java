@@ -40,7 +40,7 @@ public interface FileTransferProgress {
    * @param bytesTotal
    * @param remoteFile
    */
-  public void started(long bytesTotal, String remoteFile);
+  public default void started(long bytesTotal, String remoteFile) { } ;
 
   /**
    * The transfer is cancelled. Implementations should return true if the
@@ -49,17 +49,17 @@ public interface FileTransferProgress {
    *
    * @return boolean
    */
-  public boolean isCancelled();
+  public default boolean isCancelled() { return false; };
 
   /**
    * The transfer has progressed
    *
    * @param bytesSoFar
    */
-  public void progressed(long bytesSoFar);
+  public default void progressed(long bytesSoFar) { };
 
   /**
    * The transfer has completed.
    */
-  public void completed();
+  public default void completed() { };
 }

@@ -1,6 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sshtools.hotfixes</groupId>
 	<artifactId>maverick-synergy-group</artifactId>
@@ -89,6 +87,24 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.2.2</version>
+				<configuration>
+					<archive>
+						<index>true</index>
+						<manifest>
+							<addClasspath>true</addClasspath>
+						</manifest>
+						<manifestEntries>
+							<mode>development</mode>
+							<url>${project.url}</url>
+							<key>value</key>
+						</manifestEntries>
+					</archive>
+				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
@@ -182,14 +198,14 @@
 		<module>maverick-base-tests</module>
 		<module>maverick-synergy-common</module>
 		<module>maverick-synergy-common-tests</module>
-        <module>maverick-synergy-jdk16-common</module>
+		<module>maverick-synergy-jdk16-common</module>
 		<module>maverick-synergy-client</module>
-       	<module>maverick-synergy-jdk16-client</module>
+		<module>maverick-synergy-jdk16-client</module>
 		<module>maverick-synergy-client-tests</module>
 		<module>maverick-synergy-server</module>
 		<module>maverick-synergy-callback-client</module>
 		<module>maverick-synergy-callback-server</module>
-       	<module>maverick-synergy-jdk16-server</module>
+		<module>maverick-synergy-jdk16-server</module>
 		<module>maverick-virtual-filesystem</module>
 		<module>maverick-virtual-filesystem-tests</module>
 		<module>maverick-virtual-session</module>

@@ -33,7 +33,6 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.permissions.Permissions;
 import com.sshtools.common.sftp.SftpExtension;
 import com.sshtools.common.sftp.SftpExtensionFactory;
-import com.sshtools.common.sftp.extensions.DefaultSftpExtensionFactory;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.IOUtils;
 

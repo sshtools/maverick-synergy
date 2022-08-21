@@ -1,4 +1,4 @@
-Maverick Synergy 3.0.9 - TBC
+Maverick Synergy 3.0.9 - Aug 21, 2022
 
 Bug Fixes
   o When supported SFTP attributes is not null, only process flags when there is actually a value set. 
@@ -10,6 +10,7 @@ Bug Fixes
   o There is no method to reset the logging contexts.
   o DirectFileJava7 attempts to set name of group/user using the SftpFileAttributes method that only accepts a numerical GID/UID.
   o PublicKeyAuthenticator setKeyPair method incorrectly stores unmodifiable collection causing UnsupportedOperationException when keys are removed during authentication.
+  o Removed non-compliant HMAC algorithms hmac-sha256 and hmac-sha512.
 
 =================
 =  HISTORY      =

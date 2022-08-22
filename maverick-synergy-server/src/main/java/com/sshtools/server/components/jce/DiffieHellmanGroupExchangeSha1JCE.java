@@ -55,12 +55,25 @@ import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.components.SshKeyExchangeServer;
+import com.sshtools.server.components.SshKeyExchangeServerFactory;
 import com.sshtools.synergy.ssh.SshTransport;
 import com.sshtools.synergy.ssh.TransportProtocol;
 import com.sshtools.synergy.ssh.components.jce.AbstractKeyExchange;
 
 public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 		implements AbstractKeyExchange {
+	
+	public static class DiffieHellmanGroupExchangeSha1JCEFactory implements SshKeyExchangeServerFactory<DiffieHellmanGroupExchangeSha1JCE> {
+		@Override
+		public DiffieHellmanGroupExchangeSha1JCE create() throws NoSuchAlgorithmException, IOException {
+			return new DiffieHellmanGroupExchangeSha1JCE();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA1 };
+		}
+	}
 
 	final static int SSH_MSG_KEY_DH_GEX_REQUEST_OLD = 30;
 	final static int SSH_MSG_KEY_DH_GEX_GROUP = 31;

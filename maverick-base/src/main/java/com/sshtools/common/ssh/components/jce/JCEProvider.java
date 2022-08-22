@@ -87,7 +87,11 @@ public class JCEProvider implements JCEAlgorithms {
 	 * @param provider
 	 */
 	public static void initializeProviderForAlgorithm(String jceAlgorithm, Provider provider) {
-		specficProviders.put(jceAlgorithm, provider);
+		if("executable".equals(System.getProperty("org.graalvm.nativeimage.kind", ""))) {
+			Log.warn("Leaving provider configuration as running a native build.");
+		}
+		else
+			specficProviders.put(jceAlgorithm, provider);
 	}
 	
 	/**
@@ -185,6 +189,10 @@ public class JCEProvider implements JCEAlgorithms {
 	}
 	
 	public static void enableBouncyCastle(boolean makeDefault) {
+		if("executable".equals(System.getProperty("org.graalvm.nativeimage.kind", ""))) {
+			Log.warn("Leaving provider configuration as running a native build.");
+			return;
+		}
 		
 		BC_FLAVOR bcFlavor = configureBC();
 		

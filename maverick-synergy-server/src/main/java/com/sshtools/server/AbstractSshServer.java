@@ -33,9 +33,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.ServiceLoader;
 
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.Authenticator;
+import com.sshtools.common.command.ExecutableCommand.ExecutableCommandFactory;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.IPPolicy;
@@ -267,7 +269,10 @@ public abstract class AbstractSshServer implements Closeable {
 	protected void configureFilesystem(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
 		sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(fileFactory);
 		if(enableScp) {
-			sshContext.getChannelFactory().supportedCommands().add("scp", ScpCommand.class);
+			sshContext.getChannelFactory().supportedCommands().add(new ScpCommand.ScpCommandFactory());
+		}
+		for(var cf : ServiceLoader.load(ExecutableCommandFactory.class)) {
+			sshContext.getChannelFactory().supportedCommands().add(cf);
 		}
 	}
 	

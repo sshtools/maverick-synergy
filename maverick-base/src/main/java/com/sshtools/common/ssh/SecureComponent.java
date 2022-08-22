@@ -21,7 +21,9 @@
 
 package com.sshtools.common.ssh;
 
-public interface SecureComponent {
+import com.sshtools.common.ssh.components.Component;
+
+public interface SecureComponent extends Component {
 
 	SecurityLevel getSecurityLevel();
 	

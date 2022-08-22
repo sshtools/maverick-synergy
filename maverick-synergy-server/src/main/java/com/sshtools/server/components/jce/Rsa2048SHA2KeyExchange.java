@@ -45,6 +45,7 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.components.SshKeyExchangeServer;
+import com.sshtools.server.components.SshKeyExchangeServerFactory;
 import com.sshtools.synergy.ssh.SshTransport;
 import com.sshtools.synergy.ssh.TransportProtocol;
 import com.sshtools.synergy.ssh.components.jce.AbstractKeyExchange;
@@ -63,6 +64,18 @@ public class Rsa2048SHA2KeyExchange extends SshKeyExchangeServer implements Abst
 	 * Constant for the algorithm name "rsa2048-sha256".
 	 */
 	public static final String RSA_2048_SHA2 = "rsa2048-sha256";
+	
+	public static class Rsa2048SHA2KeyExchangeFactory implements SshKeyExchangeServerFactory<Rsa2048SHA2KeyExchange> {
+		@Override
+		public Rsa2048SHA2KeyExchange create() throws NoSuchAlgorithmException, IOException {
+			return new Rsa2048SHA2KeyExchange();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { RSA_2048_SHA2 };
+		}
+	}
 
 	final static int SSH_MSG_KEXRSA_PUBKEY = 30;
 	final static int SSH_MSG_KEXRSA_SECRET = 31;

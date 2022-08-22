@@ -54,7 +54,7 @@ import com.sshtools.synergy.ssh.SshTransport;
 import com.sshtools.synergy.ssh.TransportProtocol;
 import com.sshtools.synergy.ssh.components.SshKeyExchange;
 
-public class DiffieHellmanEcdh extends SshKeyExchangeServer implements
+public abstract class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 		SshKeyExchange<SshServerContext> {
 
 	public static final int SSH_MSG_KEX_ECDH_INIT = 30;

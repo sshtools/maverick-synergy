@@ -1,0 +1,16 @@
+com.sshtools.common.ssh.components.NoneCipher$NoneCipherFactory
+com.sshtools.common.ssh.components.jce.AES128Cbc$AES128CbcFactory
+com.sshtools.common.ssh.components.jce.AES128Ctr$AES128CtrFactory
+com.sshtools.common.ssh.components.jce.AES128Gcm$AES128GcmFactory
+com.sshtools.common.ssh.components.jce.AES192Cbc$AES192CbcFactory
+com.sshtools.common.ssh.components.jce.AES192Ctr$AES192CtrFactory
+com.sshtools.common.ssh.components.jce.AES256Cbc$AES256CbcFactory
+com.sshtools.common.ssh.components.jce.AES256Ctr$AES256CtrFactory
+com.sshtools.common.ssh.components.jce.AES256Gcm$AES256GcmFactory
+com.sshtools.common.ssh.components.jce.ArcFour$ArcFourFactory
+com.sshtools.common.ssh.components.jce.ArcFour128$ArcFour128Factory
+com.sshtools.common.ssh.components.jce.ArcFour256$ArcFour256Factory
+com.sshtools.common.ssh.components.jce.BlowfishCbc$BlowfishCbcFactory
+com.sshtools.common.ssh.components.jce.TripleDesCbc$TripleDesCbcFactory
+com.sshtools.common.ssh.components.jce.TripleDesCtr$TripleDesCtrFactory
+com.sshtools.common.ssh.components.jce.ChaCha20Poly1305$ChaCha20Poly1305Factory

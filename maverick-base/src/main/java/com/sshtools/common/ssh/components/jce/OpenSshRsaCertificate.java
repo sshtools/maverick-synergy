@@ -37,6 +37,7 @@ import com.sshtools.common.publickey.OpenSshCertificate;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
 
@@ -51,6 +52,18 @@ public class OpenSshRsaCertificate extends OpenSshCertificate implements SshRsaP
 	
 //	RSAPublicKey pubKey;
 	byte[] nonce;
+	
+	public static class OpenSshRsaCertificateFactory implements SshPublicKeyFactory<OpenSshRsaCertificate> {
+		@Override
+		public OpenSshRsaCertificate create() throws NoSuchAlgorithmException, IOException {
+			return new OpenSshRsaCertificate();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] {  SSH_RSA_CERT_V01 };
+		}
+	}
 	
 	/**
 	 * Default constructor for initializing the key from a byte array using the

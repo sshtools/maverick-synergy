@@ -21,15 +21,32 @@
 
 package com.sshtools.common.ssh.components.jce;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 
 import com.sshtools.common.ssh.SecurityLevel;
+import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
 
 public class Ssh2RsaPublicKeySHA512 extends Ssh2RsaPublicKey {
+	
+	private static final String ALGORITHM = "rsa-sha2-256";
+	
+	public static class Ssh2RsaPublicKeySHA512Factory implements SshPublicKeyFactory<Ssh2RsaPublicKeySHA512> {
+
+		@Override
+		public Ssh2RsaPublicKeySHA512 create() throws NoSuchAlgorithmException, IOException {
+			return new Ssh2RsaPublicKeySHA512();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { ALGORITHM };
+		}
+	}
 
 	public Ssh2RsaPublicKeySHA512() {
 		super();
@@ -64,7 +81,7 @@ public class Ssh2RsaPublicKeySHA512 extends Ssh2RsaPublicKey {
 
 	@Override
 	public String getAlgorithm() {
-		return "rsa-sha2-512";
+		return ALGORITHM;
 	}
 	
 	public String getEncodingAlgorithm() {

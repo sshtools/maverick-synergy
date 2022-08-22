@@ -29,7 +29,7 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.util.IOStreamConnector;
 
 /**
- * A further extension of the {@link ExecutableCommand} that provides the
+ * A further extension of the {@link AbstractExecutableCommand} that provides the
  * ability to execute a native process. Caution should be taken with this
  * current implementation as no processing of EOL is provided and results may
  * vary on different platforms. It is recommended that only automated clients
@@ -38,7 +38,7 @@ import com.sshtools.common.util.IOStreamConnector;
  *
  * 
  */
-public class NativeExecutableCommand extends ExecutableCommand {
+public class NativeExecutableCommand extends AbstractExecutableCommand {
 
 	
 	Process process;

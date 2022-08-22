@@ -156,8 +156,6 @@ public class SshPublicKeyFileFactory {
 				return new SECSHPublicKeyFile(formattedkey);
 			} else if(OpenSSHPublicKeyFile.isFormatted(formattedkey)) {
 				return new OpenSSHPublicKeyFile(formattedkey);
-			} else if(Ssh1RsaPublicKeyFile.isFormatted(formattedkey)) {
-				return new Ssh1RsaPublicKeyFile(formattedkey);
 			} else {
 				throw new IOException("Unable to parse key, format could not be identified");
 			}

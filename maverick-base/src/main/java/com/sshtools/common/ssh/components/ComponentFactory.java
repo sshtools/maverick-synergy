@@ -45,14 +45,14 @@ import com.sshtools.common.util.Utils;
  * 
  * @author Lee David Painter
  */
-public class ComponentFactory<T> implements Cloneable {
+public class ComponentFactory<T extends Component> implements Cloneable {
 
 	/**
 	 * The supported components stored in a Hashtable with a String key as the
 	 * component name such as "3des-cbc" and a Class value storing the
 	 * implementation class.
 	 */
-	protected Map<String, Class<? extends T>> supported = new HashMap<>();
+	protected Map<String, ComponentInstanceFactory<? extends T>> supported = new HashMap<>();
 	protected List<String> order = new ArrayList<>();
 
 	private boolean locked = false;
@@ -194,21 +194,24 @@ public class ComponentFactory<T> implements Cloneable {
 	 * if the class cannot be resolved. The name of the component IS NOT
 	 * verified to allow component implementations to be overridden.
 	 * 
-	 * @param name
-	 * @param cls
+	 * @param name name
+	 * @param factory factory
 	 * @throws ClassNotFoundException
 	 */
-	public synchronized void add(String name, Class<? extends T> cls) {
+	@SuppressWarnings("unchecked")
+	public synchronized void add(ComponentInstanceFactory<?> factory) {
 
 		if (locked) {
 			throw new IllegalStateException(
 					"Component factory is locked. Components cannot be added");
 		}
 
-		supported.put(name, cls);
-		// add name to end of order vector
-		if (!order.contains(name))
-			order.add(name);
+		for(var name : factory.getKeys()) {
+			supported.put(name, (ComponentInstanceFactory<? extends T>) factory);
+			// add name to end of order vector
+			if (!order.contains(name))
+				order.add(name);
+		}
 	}
 
 	/**
@@ -222,7 +225,7 @@ public class ComponentFactory<T> implements Cloneable {
 	public T getInstance(String name) throws SshException {
 		if (supported.containsKey(name)) {
 			try {
-				return createInstance(name, supported.get(name));
+				return supported.get(name).create();
 			} catch (Throwable t) {
 				throw new SshException(t.getMessage(),
 						SshException.INTERNAL_ERROR, t);
@@ -312,7 +315,7 @@ public class ComponentFactory<T> implements Cloneable {
 	}
 
 	public Object clone() {
-		ComponentFactory<T> clone = new ComponentFactory<T>(componentManager);
+		var clone = new ComponentFactory<T>(componentManager);
 		clone.order = new ArrayList<>(order);
 		clone.supported = new HashMap<>(supported);
 		return clone;

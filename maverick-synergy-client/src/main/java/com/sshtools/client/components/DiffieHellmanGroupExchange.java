@@ -63,7 +63,7 @@ import com.sshtools.synergy.ssh.components.jce.AbstractKeyExchange;
  * Implementation of the required SSH Transport Protocol key exchange method
  * "diffie-hellman-group-exchange-sha1".
  */
-public class DiffieHellmanGroupExchange extends SshKeyExchangeClient
+public abstract class DiffieHellmanGroupExchange extends SshKeyExchangeClient
 		implements AbstractKeyExchange {
 
 	final static int SSH_MSG_KEY_DH_GEX_REQUEST_OLD = 30;

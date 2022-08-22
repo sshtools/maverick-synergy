@@ -37,6 +37,7 @@ import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshKeyFingerprint;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.util.Arrays;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
@@ -50,6 +51,20 @@ public class SshEd448PublicKeyJCE implements SshEd448PublicKey {
 	
 	PublicKey publicKey;
 	byte[] pk;
+	
+
+	public static class SshEd448PublicKeyJCEFactory implements SshPublicKeyFactory<SshEd448PublicKeyJCE> {
+
+		@Override
+		public SshEd448PublicKeyJCE create() throws NoSuchAlgorithmException, IOException {
+			return new SshEd448PublicKeyJCE();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] {  ALGORITHM_NAME };
+		}
+	}
 	
 	public SshEd448PublicKeyJCE() {
 	}

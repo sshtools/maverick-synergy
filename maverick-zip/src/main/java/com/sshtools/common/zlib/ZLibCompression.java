@@ -23,13 +23,30 @@ package com.sshtools.common.zlib;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.security.NoSuchAlgorithmException;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
+import com.sshtools.common.ssh.compression.SshCompressionFactory;
 import com.sshtools.common.ssh.compression.SshCompression;
 
 public class ZLibCompression implements SshCompression {
+	
+	private static final String ALGORITHM = "zlib";
+
+	public static class ZLibCompressionFactory implements SshCompressionFactory<ZLibCompression> {
+
+		@Override
+		public ZLibCompression create() throws NoSuchAlgorithmException, IOException {
+			return new ZLibCompression();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { ALGORITHM };
+		}
+	}
 
 	private Inflater inflater;
 	private Deflater deflater;
@@ -38,7 +55,7 @@ public class ZLibCompression implements SshCompression {
 	}
 
 	public String getAlgorithm() {
-		return "zlib";
+		return ALGORITHM;
 	}
 
 	static private final int BUF_SIZE = 65535;

@@ -59,7 +59,7 @@ import com.sshtools.synergy.ssh.components.jce.AbstractKeyExchange;
  * </p>
  * 
  */
-public class DiffieHellmanGroup extends SshKeyExchangeServer implements AbstractKeyExchange {
+public abstract class DiffieHellmanGroup extends SshKeyExchangeServer implements AbstractKeyExchange {
 
 	/**
 	 * Constant for the algorithm name "diffie-hellman-group14-sha1".

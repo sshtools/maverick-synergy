@@ -23,6 +23,7 @@
 package com.sshtools.common.publickey;
 
 import java.io.IOException;
+import java.util.ServiceLoader;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.ComponentFactory;
@@ -119,11 +120,12 @@ public class SshKeyPairGenerator {
 		case "RSA":
 			return ComponentManager.getDefaultInstance().generateRsaKeyPair(bits, 2);
 		default:
-			ComponentFactory<KeyGenerator> generators = new ComponentFactory<>(JCEComponentManager.getDefaultInstance());
-			JCEComponentManager.getDefaultInstance().loadExternalComponents("generator.properties",generators);
-			
-			KeyGenerator gen = generators.getInstance(algorithm);
-			return gen.generateKey(bits);
+			var generators = new ComponentFactory<KeyGenerator>(JCEComponentManager.getDefaultInstance());
+			for(var s : ServiceLoader.load(KeyGeneratorFactory.class)) {
+				if(ComponentManager.isDefaultEnabled(KeyGenerator.class, s.getKeys()[0]).orElse(false))
+					generators.add(s);
+			}
+			return generators.getInstance(algorithm).generateKey(bits);
 		}
 	}
 

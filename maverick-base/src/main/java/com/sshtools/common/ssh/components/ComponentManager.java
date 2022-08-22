@@ -21,23 +21,19 @@
 
 package com.sshtools.common.ssh.components;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigInteger;
-import java.net.URL;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
-import com.sshtools.common.util.IOUtils;
 
 /**
  * <p>
@@ -53,12 +49,9 @@ import com.sshtools.common.util.IOUtils;
  */
 public abstract class ComponentManager {
 
-	private static boolean enableNoneCipher = false;
-	private static boolean enableNoneMac = false;
-	protected static boolean enableCbc = false;
+	private static Map<Class<? extends Component>, Map<String, Boolean>> defaultEnabled = new HashMap<>();
 	
-	Set<String> disabledAlgorithms = new HashSet<String>();
-	Map<String,Map<String,Class<?>>> cachedExternalComponents = new HashMap<>();
+	private Set<String> disabledAlgorithms = new HashSet<String>();
 	
 	protected ComponentManager() {
 		disabledAlgorithms.add("ssh-dss");
@@ -77,34 +70,41 @@ public abstract class ComponentManager {
 	}
 	
 	public static boolean isEnableNoneCipher() {
-		return enableNoneCipher;
+		return isDefaultEnabled(SshCipher.class, "none").orElse(false);
 	}
 
 	public static void setEnableNoneCipher(boolean enableNoneCipher) {
-		ComponentManager.enableNoneCipher = enableNoneCipher;
+		setDefaultEnabled(SshCipher.class, "none", enableNoneCipher);
 	}
 
 	public static boolean isEnableNoneMac() {
-		return enableNoneMac;
+		return isDefaultEnabled(SshHmac.class, "none").orElse(false);
 	}
 
 	public static void setEnableNoneMac(boolean enableNoneCipher) {
-		ComponentManager.enableNoneMac = enableNoneCipher;
+		setDefaultEnabled(SshHmac.class, "none", enableNoneCipher);
 	}
 	
-	public static void enableCBCCiphers() {
-		enableCbc = true;
+	public static <C extends Component> Optional<Boolean> isDefaultEnabled(Class<C> factoryType, String key) {
+		var m = ComponentManager.defaultEnabled.get(factoryType);
+		if(m == null) {
+			return Optional.empty();
+		}
+		return Optional.ofNullable(m.get(key));
 	}
-	
-	public static void disableCBCCiphers() {
-		enableCbc = false;
+
+	public static <C extends Component> void setDefaultEnabled(Class<C> componentType, String key, boolean enabled) {
+		var m = ComponentManager.defaultEnabled.get(componentType);
+		if(m == null) {
+			m = new HashMap<>();
+			ComponentManager.defaultEnabled.put(componentType, m);
+		}
+		m.put(key, enabled);
 	}
 
 	protected static ComponentManager instance;
 
-	ComponentFactory<SshCipher> ssh1ciphersSC;
 	ComponentFactory<SshCipher> ssh2ciphersSC;
-	ComponentFactory<SshCipher> ssh1ciphersCS;
 	ComponentFactory<SshCipher> ssh2ciphersCS;
 	ComponentFactory<SshHmac> hmacsCS;
 	ComponentFactory<SshHmac> hmacsSC;
@@ -148,31 +148,46 @@ public abstract class ComponentManager {
 		}
 	}
 	
+	public <C extends Component, F extends ComponentInstanceFactory<C>> Iterable<F> loadComponents(Class<C> componentType, Class<F> factoryClass) {
+		return ServiceLoader.load(factoryClass).stream().map(f -> f.get()).filter(f-> isEnabled(f, componentType, f.getKeys()[0])).collect(Collectors.toList());
+	}
+
+	public <C extends Component> boolean isEnabled(ComponentInstanceFactory<C> cls, Class<C> type, String name) {
+		if(System.getProperties().containsKey(String.format("disable.%s",  name))) {
+			if(Log.isDebugEnabled()) {
+				Log.debug("   {} WILL NOT be supported because it has been explicitly disabled by a system property", name);
+			}
+			return false;
+		}
+		var enabled = isDefaultEnabled(type, name);
+		if(enabled.isEmpty() && !cls.isEnabledByDefault()) {
+			if(Log.isDebugEnabled()) {
+				Log.debug("   {} WILL NOT be supported because it has been disabled by default by the vendor. It may be re-enabled programatically.", name);
+			}
+			return false;
+		}
+		if(enabled.isPresent() && !enabled.get()) {
+			if(Log.isDebugEnabled()) {
+				Log.debug("   {} WILL NOT be supported because it has been disabled programatically.", name);
+			}
+			return false;
+		}
+		return true;
+	}
+	
 	protected void init() throws SshException {
 
 		if(Log.isInfoEnabled())
 			Log.info("Initializing SSH2 server->client ciphers");
 
-		ssh2ciphersSC = new ComponentFactory<SshCipher>(this);
+		ssh2ciphersSC = new ComponentFactory<>(this);
 		initializeSsh2CipherFactory(ssh2ciphersSC);
-
-		if (enableNoneCipher) {
-			ssh2ciphersSC.add("none", NoneCipher.class);
-			if(Log.isInfoEnabled())
-				Log.info("   none will be a supported cipher");
-		}
 
 		if(Log.isInfoEnabled())
 			Log.info("Initializing SSH2 client->server ciphers");
 
-		ssh2ciphersCS = new ComponentFactory<SshCipher>(this);
+		ssh2ciphersCS = new ComponentFactory<>(this);
 		initializeSsh2CipherFactory(ssh2ciphersCS);
-
-		if (enableNoneCipher) {
-			ssh2ciphersCS.add("none", NoneCipher.class);
-			if(Log.isInfoEnabled())
-				Log.info("   none will be a supported cipher");
-		}
 
 		if(Log.isInfoEnabled())
 			Log.info("Initializing SSH2 server->client HMACs");
@@ -180,24 +195,12 @@ public abstract class ComponentManager {
 		hmacsSC = new ComponentFactory<SshHmac>(this);
 		initializeHmacFactory(hmacsSC);
 
-		if (enableNoneMac) {
-			hmacsSC.add("none", NoneHmac.class);
-			if(Log.isInfoEnabled())
-				Log.info("   none will be a supported hmac");
-		}
-		
 		if(Log.isInfoEnabled())
 			Log.info("Initializing SSH2 client->server HMACs");
 
 		hmacsCS = new ComponentFactory<SshHmac>(this);
 		initializeHmacFactory(hmacsCS);
 
-		if (enableNoneMac) {
-			hmacsCS.add("none", NoneHmac.class);
-			if(Log.isInfoEnabled())
-				Log.info("   none will be a supported hmac");
-		}
-		
 		if(Log.isInfoEnabled())
 			Log.info("Initializing public keys");
 
@@ -255,26 +258,6 @@ public abstract class ComponentManager {
 		synchronized (lock) {
 			ComponentManager.instance = instance;
 		}
-	}
-
-	/**
-	 * The supported SSH1 ciphers.
-	 * 
-	 * @return AbstractComponentFactory
-	 */
-	@SuppressWarnings("unchecked")
-	public ComponentFactory<SshCipher> supportedSsh1CiphersSC() {
-		return (ComponentFactory<SshCipher>) ssh1ciphersSC.clone();
-	}
-
-	/**
-	 * The supported SSH1 ciphers.
-	 * 
-	 * @return AbstractComponentFactory
-	 */
-	@SuppressWarnings("unchecked")
-	public ComponentFactory<SshCipher> supportedSsh1CiphersCS() {
-		return (ComponentFactory<SshCipher>) ssh1ciphersCS.clone();
 	}
 
 	/**
@@ -487,60 +470,6 @@ public abstract class ComponentManager {
 		return digests.getInstance(name);
 	}
 
-	@SuppressWarnings("unchecked")
-	public <T> void loadExternalComponents(String componentFile, ComponentFactory<T> componentFactory) {
-	
-		Map<String,Class<?>> cachedComponents = cachedExternalComponents.get(componentFile);
-		
-		if(Objects.isNull(cachedComponents)) {
-			
-			cachedComponents = new HashMap<>();
-			
-			try {
-				Enumeration<URL> e = getClass().getClassLoader().getResources(componentFile);
-				
-				while(e.hasMoreElements()) {
-					InputStream in = null;
-					
-					try {
-						in = e.nextElement().openStream();
-								
-						if(Objects.isNull(in)) {
-							Log.info("No further components to add");
-							return;
-						}
-						
-						Properties properties = new Properties();
-						properties.load(in);
-						
-						for(Object alg : properties.keySet()) {
-							String clz = properties.getProperty(alg.toString());
-							try {
-								Class<T> componenetClz = (Class<T>) Class.forName(clz);
-								cachedComponents.put(alg.toString(), componenetClz);
-							} catch (ClassNotFoundException ex) {
-								Log.error("Cannot find class {} for algorithm {}", clz, alg);
-							}
-						}
-						
-						cachedExternalComponents.put(componentFile, cachedComponents);
-					} catch(IOException ex) {
-						Log.error("Error processing {}", ex, componentFile);
-					} finally {
-						IOUtils.closeStream(in);
-					}
-				}
-				
-			} catch(Throwable ex) {
-				Log.error("Error processing {}", ex, componentFile);
-			}
-		}
-		
-		for(Map.Entry<String,Class<?>> e : cachedComponents.entrySet()) {
-			componentFactory.add(e.getKey(), (Class<? extends T>) e.getValue());
-		}
-	}
-	
 	public void setMinimumSecurityLevel(SecurityLevel securityLevel) throws SshException {
 
 		if(Log.isInfoEnabled()) {

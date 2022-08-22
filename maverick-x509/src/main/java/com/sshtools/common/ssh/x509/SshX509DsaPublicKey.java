@@ -22,11 +22,14 @@
 package com.sshtools.common.ssh.x509;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.interfaces.DSAPublicKey;
 
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.ssh.components.SshX509PublicKey;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
@@ -41,6 +44,19 @@ public class SshX509DsaPublicKey extends Ssh2DsaPublicKey implements SshX509Publ
 
     public static final String X509V3_SIGN_DSA = "x509v3-sign-dss";
     Certificate cert;
+	
+	public static class SshX509DsaPublicKeyFactory implements SshPublicKeyFactory<SshX509DsaPublicKey> {
+
+		@Override
+		public SshX509DsaPublicKey create() throws NoSuchAlgorithmException, IOException {
+			return new SshX509DsaPublicKey();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] {  X509V3_SIGN_DSA };
+		}
+	}
 
     public SshX509DsaPublicKey() {
     }

@@ -30,8 +30,8 @@ import java.math.BigInteger;
  * @author Lee David Painter
  *
  */
-public interface Digest {
-
+public interface Digest extends Component {
+	
 	/**
 	 * Update the digest with a BigInteger value. This puts both the integer
 	 * length of the BigInteger data and the binary data.

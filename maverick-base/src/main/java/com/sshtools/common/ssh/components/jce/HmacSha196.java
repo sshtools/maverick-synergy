@@ -21,11 +21,15 @@
 
 package com.sshtools.common.ssh.components.jce;
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshHmacFactory;
 
 
 /**
@@ -34,6 +38,18 @@ import com.sshtools.common.ssh.SshException;
  *
  */
 public class HmacSha196 extends AbstractHmac {
+	
+	public static class HmacSha196Factory implements SshHmacFactory<HmacSha196> {
+		@Override
+		public HmacSha196 create() throws NoSuchAlgorithmException, IOException {
+			return new HmacSha196();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { "hmac-sha1-96" };
+		}
+	}
 
 	public HmacSha196() {
 		super(JCEAlgorithms.JCE_HMACSHA1, 20, 12, SecurityLevel.WEAK, 5);

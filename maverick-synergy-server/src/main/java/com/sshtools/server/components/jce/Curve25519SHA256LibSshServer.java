@@ -44,6 +44,7 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.components.SshKeyExchangeServer;
+import com.sshtools.server.components.SshKeyExchangeServerFactory;
 import com.sshtools.synergy.ssh.SshTransport;
 import com.sshtools.synergy.ssh.TransportProtocol;
 
@@ -54,6 +55,19 @@ public class Curve25519SHA256LibSshServer extends SshKeyExchangeServer implement
 	public static final int SSH_MSG_KEX_ECDH_REPLY = 31;
 
 	public static final String CURVE25519_SHA2_AT_LIBSSH_ORG = "curve25519-sha256@libssh.org";
+	
+	public static class Curve25519SHA256LibSshServerFactory implements SshKeyExchangeServerFactory<Curve25519SHA256LibSshServer> {
+		@Override
+		public Curve25519SHA256LibSshServer create() throws NoSuchAlgorithmException, IOException {
+			return new Curve25519SHA256LibSshServer();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { CURVE25519_SHA2_AT_LIBSSH_ORG };
+		}
+	}
+	
 	public final String name;
 	
 	byte[] f;

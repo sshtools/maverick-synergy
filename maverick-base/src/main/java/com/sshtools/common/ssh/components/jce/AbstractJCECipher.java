@@ -34,7 +34,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.sshtools.common.ssh.SecurityLevel;
-import com.sshtools.common.ssh.components.SshCipher;
+import com.sshtools.common.ssh.components.AbstractSshCipher;
 
 /**
  * <p>An abstract base class for defining SSH ciphers which use a JCE
@@ -42,7 +42,7 @@ import com.sshtools.common.ssh.components.SshCipher;
  *
  * @author Lee David Painter
  */
-public class AbstractJCECipher extends SshCipher {
+public class AbstractJCECipher extends AbstractSshCipher {
 
   Cipher cipher;
   String spec;

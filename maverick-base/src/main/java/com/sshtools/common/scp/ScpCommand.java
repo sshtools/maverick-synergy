@@ -28,10 +28,12 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 
+import com.sshtools.common.command.AbstractExecutableCommand;
 import com.sshtools.common.command.ExecutableCommand;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
@@ -64,7 +66,20 @@ import com.sshtools.common.util.Utils;
  * </blockquote>
  * 
  */
-public class ScpCommand extends ExecutableCommand implements Runnable {
+public class ScpCommand extends AbstractExecutableCommand implements Runnable {
+	
+	public static class ScpCommandFactory implements ExecutableCommandFactory<ScpCommand> {
+
+		@Override
+		public ScpCommand create() throws NoSuchAlgorithmException, IOException {
+			return new ScpCommand();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { "scp" };
+		}
+	}
 	
 	private static int BUFFER_SIZE = 16384;
 

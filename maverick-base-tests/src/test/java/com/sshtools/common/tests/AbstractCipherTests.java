@@ -26,7 +26,7 @@ import java.security.NoSuchAlgorithmException;
 
 import org.junit.Ignore;
 
-import com.sshtools.common.ssh.components.SshCipher;
+import com.sshtools.common.ssh.components.AbstractSshCipher;
 import com.sshtools.common.ssh.components.jce.AES128Cbc;
 import com.sshtools.common.ssh.components.jce.AES128Ctr;
 import com.sshtools.common.ssh.components.jce.AES192Cbc;
@@ -48,7 +48,7 @@ public abstract class AbstractCipherTests extends TestCase {
 
 	protected abstract String getTestingJCE();
 	
-	protected void testCipher(SshCipher encrypt, SshCipher decrypt) throws IOException, NoSuchAlgorithmException {
+	protected void testCipher(AbstractSshCipher encrypt, AbstractSshCipher decrypt) throws IOException, NoSuchAlgorithmException {
 		
 		assertEquals("Cipher not using correct JCE", getTestingJCE(), encrypt.getProviderName());
 		assertEquals("Cipher not using correct JCE", getTestingJCE(), decrypt.getProviderName());
@@ -63,8 +63,8 @@ public abstract class AbstractCipherTests extends TestCase {
 		JCEComponentManager.getSecureRandom().nextBytes(iv);
 		JCEComponentManager.getSecureRandom().nextBytes(data);
 		
-		encrypt.init(SshCipher.ENCRYPT_MODE, iv, key);
-		decrypt.init(SshCipher.DECRYPT_MODE, iv, key);
+		encrypt.init(AbstractSshCipher.ENCRYPT_MODE, iv, key);
+		decrypt.init(AbstractSshCipher.DECRYPT_MODE, iv, key);
 		
 		for(int i=0;i<100000;i++) {
 			encrypt.transform(data, 0, cipherText, 0, msglen);

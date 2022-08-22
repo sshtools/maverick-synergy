@@ -1,0 +1,16 @@
+ com.sshtools.common.ssh.components.NoneHmac$NoneHmacFactory
+com.sshtools.common.ssh.components.jce.HmacMD5$HmacMD5Factory
+com.sshtools.common.ssh.components.jce.HmacMD596$HmacMD596Factory
+com.sshtools.common.ssh.components.jce.HmacMD5ETM$HmacMD5ETMFactory
+com.sshtools.common.ssh.components.jce.HmacRipeMd160$HmacRipeMd160Factory
+com.sshtools.common.ssh.components.jce.HmacRipeMd160ETM$HmacRipeMd160ETMFactory
+com.sshtools.common.ssh.components.jce.HmacSha1$HmacSha1Factory
+com.sshtools.common.ssh.components.jce.HmacSha196$HmacSha196Factory
+com.sshtools.common.ssh.components.jce.HmacSha1ETM$HmacSha1ETMFactory
+com.sshtools.common.ssh.components.jce.HmacSha256$HmacSha256Factory
+com.sshtools.common.ssh.components.jce.HmacSha256_96$HmacSha256_96Factory
+com.sshtools.common.ssh.components.jce.HmacSha256_at_ssh_dot_com$HmacSha256_at_ssh_dot_comFactory
+com.sshtools.common.ssh.components.jce.HmacSha256ETM$HmacSha256ETMFactory
+com.sshtools.common.ssh.components.jce.HmacSha512$HmacSha512Factory
+com.sshtools.common.ssh.components.jce.HmacSha512_96$HmacSha512_96Factory
+com.sshtools.common.ssh.components.jce.HmacSha512ETM$HmacSha512ETMFactory

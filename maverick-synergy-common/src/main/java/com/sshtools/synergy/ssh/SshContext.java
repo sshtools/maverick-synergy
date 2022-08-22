@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,9 +48,8 @@ import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.ssh.components.SshCipher;
 import com.sshtools.common.ssh.components.SshHmac;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.ssh.components.jce.JCEComponentManager;
-import com.sshtools.common.ssh.compression.NoneCompression;
 import com.sshtools.common.ssh.compression.SshCompression;
+import com.sshtools.common.ssh.compression.SshCompressionFactory;
 import com.sshtools.common.util.ByteBufferPool;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.nio.DefaultSocketConnectionFactory;
@@ -287,14 +287,12 @@ public abstract class SshContext extends ProtocolContext implements
 		try {
 
 			compressionsCS = new ComponentFactory<SshCompression>(componentManager);
-			compressionsCS.add(COMPRESSION_NONE, NoneCompression.class);
-
-			JCEComponentManager.getDefaultInstance().loadExternalComponents("zip.properties", compressionsCS);
-			
 			compressionsSC = new ComponentFactory<SshCompression>(componentManager);
-			compressionsSC.add(COMPRESSION_NONE, NoneCompression.class);
-			
-			JCEComponentManager.getDefaultInstance().loadExternalComponents("zip.properties", compressionsSC);
+
+			for(var compress : ServiceLoader.load(SshCompressionFactory.class)) {
+				compressionsCS.add(compress);
+				compressionsSC.add(compress);
+			}
 
 		} catch (Throwable t) {
 			throw new IOException(t.getMessage() != null ? t.getMessage() : t

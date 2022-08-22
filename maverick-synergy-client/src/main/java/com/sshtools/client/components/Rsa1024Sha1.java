@@ -34,6 +34,7 @@ import javax.crypto.NoSuchPaddingException;
 
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.SshKeyExchangeClient;
+import com.sshtools.client.SshKeyExchangeClientFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.SshPublicKeyFileFactory;
 import com.sshtools.common.ssh.SecurityLevel;
@@ -66,6 +67,18 @@ public class Rsa1024Sha1 extends SshKeyExchangeClient implements AbstractKeyExch
 	 * Constant for the algorithm name "rsa1024-sha1".
 	 */
 	public static final String RSA_1024_SHA1 = "rsa1024-sha1";
+	
+	public static class Rsa1024Sha1Factory implements SshKeyExchangeClientFactory<Rsa1024Sha1> {
+		@Override
+		public Rsa1024Sha1 create() throws NoSuchAlgorithmException, IOException {
+			return new Rsa1024Sha1();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { RSA_1024_SHA1 };
+		}
+	}
 
 	final static int SSH_MSG_KEXRSA_PUBKEY = 30;
 	final static int SSH_MSG_KEXRSA_SECRET = 31;

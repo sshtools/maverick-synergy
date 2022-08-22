@@ -92,8 +92,6 @@ public class SshPrivateKeyFileFactory {
 			} else if (Base64EncodedFileFormat.isFormatted(formattedkey,
 					SshtoolsPrivateKeyFile.BEGIN, SshtoolsPrivateKeyFile.END)) {
 				return new SshtoolsPrivateKeyFile(formattedkey);
-			} else if (Ssh1RsaPrivateKeyFile.isFormatted(formattedkey)) {
-				return new Ssh1RsaPrivateKeyFile(formattedkey);
 			} else if (SSHCOMPrivateKeyFile.isFormatted(formattedkey)) {
 				return new SSHCOMPrivateKeyFile(formattedkey);
 			} else {

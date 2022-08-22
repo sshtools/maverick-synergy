@@ -21,10 +21,28 @@
 
 package com.sshtools.common.ssh.components;
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 
 public class NoneHmac implements SshHmac {
+
+	private static final String NONE = "none";
+
+	public static class NoneHmacFactory implements SshHmacFactory<NoneHmac> {
+
+		@Override
+		public NoneHmac create() throws NoSuchAlgorithmException, IOException {
+			return new NoneHmac();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { NONE };
+		}
+	}
 
 	public int getMacSize() {
 		return 0;
@@ -55,7 +73,7 @@ public class NoneHmac implements SshHmac {
 	}
 
 	public String getAlgorithm() {
-		return "none";
+		return NONE;
 	}
 
 	public boolean isETM() {

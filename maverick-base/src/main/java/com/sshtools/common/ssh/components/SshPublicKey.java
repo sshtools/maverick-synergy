@@ -33,8 +33,8 @@ import com.sshtools.common.ssh.SshException;
  * @author Lee David Painter
  */
 public interface SshPublicKey extends SecureComponent {
-
-  /**
+	
+   /**
    * Initialize the public key from a blob of binary data.
    * @param blob
    * @param start

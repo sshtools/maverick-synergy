@@ -29,20 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceLoader;
 
-import com.sshtools.client.components.Curve25519SHA256Client;
-import com.sshtools.client.components.Curve25519SHA256LibSshClient;
-import com.sshtools.client.components.DiffieHellmanEcdhNistp256;
-import com.sshtools.client.components.DiffieHellmanEcdhNistp384;
-import com.sshtools.client.components.DiffieHellmanEcdhNistp521;
-import com.sshtools.client.components.DiffieHellmanGroup14Sha1JCE;
-import com.sshtools.client.components.DiffieHellmanGroup14Sha256JCE;
-import com.sshtools.client.components.DiffieHellmanGroup15Sha512JCE;
-import com.sshtools.client.components.DiffieHellmanGroup16Sha512JCE;
-import com.sshtools.client.components.DiffieHellmanGroup17Sha512JCE;
-import com.sshtools.client.components.DiffieHellmanGroup18Sha512JCE;
-import com.sshtools.client.components.DiffieHellmanGroupExchangeSha256JCE;
-import com.sshtools.client.components.Rsa2048Sha256;
 import com.sshtools.common.knownhosts.HostKeyVerification;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SecurityLevel;
@@ -201,76 +189,22 @@ public class SshClientContext extends SshContext {
 		}
 		
 		verifiedKeyExchanges = new ComponentFactory<SshKeyExchange<SshClientContext>>(componentManager);
-		
-		JCEComponentManager.getDefaultInstance().loadExternalComponents("kex-client.properties", verifiedKeyExchanges);
-		
-		if(testClientKeyExchangeAlgorithm(
-				Curve25519SHA256Client.CURVE25519_SHA2, Curve25519SHA256Client.class)) {
-			verifiedKeyExchanges.add(Curve25519SHA256Client.CURVE25519_SHA2, Curve25519SHA256Client.class);
+		for(var kex : ServiceLoader.load(SshKeyExchangeClientFactory.class)) {
+			if(testClientKeyExchangeAlgorithm(kex))
+				verifiedKeyExchanges.add(kex);
 		}
-		
-		if(testClientKeyExchangeAlgorithm(
-				Curve25519SHA256LibSshClient.CURVE25519_SHA2_AT_LIBSSH_ORG, Curve25519SHA256LibSshClient.class)) {
-			verifiedKeyExchanges.add(Curve25519SHA256LibSshClient.CURVE25519_SHA2_AT_LIBSSH_ORG, Curve25519SHA256LibSshClient.class);
-		}
-		
-		if (testClientKeyExchangeAlgorithm("diffie-hellman-group-exchange-sha256",
-				DiffieHellmanGroupExchangeSha256JCE.class)) {
-			verifiedKeyExchanges.add("diffie-hellman-group-exchange-sha256", DiffieHellmanGroupExchangeSha256JCE.class);
-		}
-		
-		if (testClientKeyExchangeAlgorithm("diffie-hellman-group14-sha256", DiffieHellmanGroup14Sha256JCE.class)) {
-			verifiedKeyExchanges.add("diffie-hellman-group14-sha256", DiffieHellmanGroup14Sha256JCE.class);
-		}
-		
-		if (testClientKeyExchangeAlgorithm("diffie-hellman-group15-sha512", DiffieHellmanGroup15Sha512JCE.class)) {
-			verifiedKeyExchanges.add("diffie-hellman-group15-sha512", DiffieHellmanGroup15Sha512JCE.class);
-		}
-		
-		if (testClientKeyExchangeAlgorithm("diffie-hellman-group16-sha512", DiffieHellmanGroup16Sha512JCE.class)) {
-			verifiedKeyExchanges.add("diffie-hellman-group16-sha512", DiffieHellmanGroup16Sha512JCE.class);
-		}
-		
-		if (testClientKeyExchangeAlgorithm("diffie-hellman-group17-sha512", DiffieHellmanGroup17Sha512JCE.class)) {
-			verifiedKeyExchanges.add("diffie-hellman-group17-sha512", DiffieHellmanGroup17Sha512JCE.class);
-		}
-		
-		if (testClientKeyExchangeAlgorithm("diffie-hellman-group18-sha512", DiffieHellmanGroup18Sha512JCE.class)) {
-			verifiedKeyExchanges.add("diffie-hellman-group18-sha512", DiffieHellmanGroup18Sha512JCE.class);
-		}
-		
-		if (testClientKeyExchangeAlgorithm("diffie-hellman-group14-sha1", DiffieHellmanGroup14Sha1JCE.class)) {
-			verifiedKeyExchanges.add("diffie-hellman-group14-sha1", DiffieHellmanGroup14Sha1JCE.class);
-		}
-		
-		if (testClientKeyExchangeAlgorithm("ecdh-sha2-nistp256", DiffieHellmanEcdhNistp256.class)) {
-			verifiedKeyExchanges.add("ecdh-sha2-nistp256", DiffieHellmanEcdhNistp256.class);
-		}
-		
-		if (testClientKeyExchangeAlgorithm("ecdh-sha2-nistp384", DiffieHellmanEcdhNistp384.class)) {
-			verifiedKeyExchanges.add("ecdh-sha2-nistp384", DiffieHellmanEcdhNistp384.class);
-		}
-
-		if (testClientKeyExchangeAlgorithm("ecdh-sha2-nistp521", DiffieHellmanEcdhNistp521.class)) {
-			verifiedKeyExchanges.add("ecdh-sha2-nistp521", DiffieHellmanEcdhNistp521.class);
-		}
-
-		if (testClientKeyExchangeAlgorithm(Rsa2048Sha256.RSA_2048_SHA256, Rsa2048Sha256.class)) {
-			verifiedKeyExchanges.add(Rsa2048Sha256.RSA_2048_SHA256, Rsa2048Sha256.class);
-		}
-		
 		
 		keyExchanges = (ComponentFactory<SshKeyExchange<? extends SshContext>>)verifiedKeyExchanges.clone();
 		
-
 	}
 
-	public boolean testClientKeyExchangeAlgorithm(String name, Class<? extends SshKeyExchange<? extends SshContext>> cls) {
+	public boolean testClientKeyExchangeAlgorithm(SshKeyExchangeClientFactory<? extends SshKeyExchangeClient> cls) {
+		var name  = cls.getKeys() [0];
 		
 		SshKeyExchange<? extends SshContext> c = null;
 		try {
 
-			c = cls.getConstructor().newInstance();
+			c = cls.create();
 
 			if (!JCEComponentManager.getDefaultInstance().supportedDigests().contains(c.getHashAlgorithm()))
 				throw new Exception("Hash algorithm " + c.getHashAlgorithm() + " is not supported");

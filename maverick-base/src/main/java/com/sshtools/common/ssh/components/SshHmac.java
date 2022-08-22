@@ -31,7 +31,7 @@ import com.sshtools.common.ssh.SshException;
  *
  */
 public interface SshHmac extends SshComponent, SecureComponent {
-
+	
    /**
     * The size of the message digest output by the hmac algorithm
     * @return

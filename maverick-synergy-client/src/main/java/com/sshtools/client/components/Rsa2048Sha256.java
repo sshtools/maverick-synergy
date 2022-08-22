@@ -34,6 +34,7 @@ import javax.crypto.NoSuchPaddingException;
 
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.SshKeyExchangeClient;
+import com.sshtools.client.SshKeyExchangeClientFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.SshPublicKeyFileFactory;
 import com.sshtools.common.ssh.SecurityLevel;
@@ -66,6 +67,18 @@ public class Rsa2048Sha256 extends SshKeyExchangeClient implements AbstractKeyEx
 	 * Constant for the algorithm name "rsa2048-sha256".
 	 */
 	public static final String RSA_2048_SHA256 = "rsa2048-sha256";
+	
+	public static class Rsa2048Sha256Factory implements SshKeyExchangeClientFactory<Rsa2048Sha256> {
+		@Override
+		public Rsa2048Sha256 create() throws NoSuchAlgorithmException, IOException {
+			return new Rsa2048Sha256();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { RSA_2048_SHA256 };
+		}
+	}
 
 	final static int SSH_MSG_KEXRSA_PUBKEY = 30;
 	final static int SSH_MSG_KEXRSA_SECRET = 31;

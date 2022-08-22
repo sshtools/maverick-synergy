@@ -30,11 +30,32 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.sshtools.common.ssh.SecurityLevel;
+import com.sshtools.common.ssh.components.SshCipherFactory;
 
 public class ArcFour extends AbstractJCECipher {
+
+	private static final String CIPHER = "arcfour";
+
+	public static class ArcFourFactory implements SshCipherFactory<ArcFour> {
+
+		@Override
+		public ArcFour create() throws NoSuchAlgorithmException, IOException {
+			return new ArcFour();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { CIPHER };
+		}
+
+		@Override
+		public boolean isEnabledByDefault() {
+			return false;
+		}
+	}
 	
 	public ArcFour() throws IOException {
-		super(JCEAlgorithms.JCE_ARCFOUR, "ARCFOUR", 16, "arcfour", SecurityLevel.WEAK, 0);	
+		super(JCEAlgorithms.JCE_ARCFOUR, "ARCFOUR", 16, CIPHER, SecurityLevel.WEAK, 0);	
 	}
 
 	public void init(int mode, byte[] iv, byte[] keydata) throws IOException {

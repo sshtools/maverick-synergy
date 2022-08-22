@@ -32,11 +32,24 @@ import com.sshtools.common.publickey.OpenSshCertificate;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.util.ByteArrayReader;
 
 public class OpenSshEd25519Certificate extends OpenSshCertificate implements SshPublicKey {
 
 	public static final String CERT_TYPE = "ssh-ed25519-cert-v01@openssh.com";
+	
+	public static class OpenSshEd25519CertificateFactory implements SshPublicKeyFactory<OpenSshEd25519Certificate> {
+		@Override
+		public OpenSshEd25519Certificate create() throws NoSuchAlgorithmException, IOException {
+			return new OpenSshEd25519Certificate();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] {  CERT_TYPE };
+		}
+	}
 	
 	byte[] nonce;
 

@@ -42,6 +42,7 @@ import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshKeyFingerprint;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
@@ -53,6 +54,21 @@ import com.sshtools.common.util.ByteArrayWriter;
  */
 public class Ssh2RsaPublicKey implements SshRsaPublicKey {
 
+	private static final String ALGORITHM = "ssh-rsa";
+	
+	public static class Ssh2RsaPublicKeyFactory implements SshPublicKeyFactory<Ssh2RsaPublicKey> {
+
+		@Override
+		public Ssh2RsaPublicKey create() throws NoSuchAlgorithmException, IOException {
+			return new Ssh2RsaPublicKey();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { ALGORITHM };
+		}
+	}
+	
 	protected RSAPublicKey pubKey;
 
 	/**
@@ -176,7 +192,7 @@ public class Ssh2RsaPublicKey implements SshRsaPublicKey {
 	}
 
 	public String getAlgorithm() {
-		return "ssh-rsa";
+		return ALGORITHM;
 	}
 
 	public boolean verifySignature(byte[] signature, byte[] data)
@@ -184,7 +200,7 @@ public class Ssh2RsaPublicKey implements SshRsaPublicKey {
 		try {
 
 			ByteArrayReader bar = new ByteArrayReader(signature);
-			String signatureAlgorithm = "ssh-rsa";
+			String signatureAlgorithm = ALGORITHM;
 			try {
 
 				long count = bar.readInt();
@@ -382,6 +398,6 @@ public class Ssh2RsaPublicKey implements SshRsaPublicKey {
 	}
 	
 	public String getSigningAlgorithm() {
-		return "ssh-rsa";
+		return ALGORITHM;
 	}
 }

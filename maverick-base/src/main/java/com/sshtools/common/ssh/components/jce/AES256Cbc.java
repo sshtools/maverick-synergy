@@ -19,12 +19,13 @@
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
 
-
 package com.sshtools.common.ssh.components.jce;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 import com.sshtools.common.ssh.SecurityLevel;
+import com.sshtools.common.ssh.components.SshCipherFactory;
 
 /**
  * An implementation of the AES 128 bit cipher using a JCE provider.
@@ -33,8 +34,28 @@ import com.sshtools.common.ssh.SecurityLevel;
  */
 public class AES256Cbc extends AbstractJCECipher {
 
-  public AES256Cbc() throws IOException {
-    super(JCEAlgorithms.JCE_AESCBCNOPADDING, "AES", 32, "aes256-cbc", SecurityLevel.WEAK, 3);
-  }
+	private static final String CIPHER = "aes256-cbc";
+
+	public static class AES256CbcFactory implements SshCipherFactory<AES256Cbc> {
+
+		@Override
+		public AES256Cbc create() throws NoSuchAlgorithmException, IOException {
+			return new AES256Cbc();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { CIPHER };
+		}
+
+		@Override
+		public boolean isEnabledByDefault() {
+			return false;
+		}
+	}
+
+	public AES256Cbc() throws IOException {
+		super(JCEAlgorithms.JCE_AESCBCNOPADDING, "AES", 32, CIPHER, SecurityLevel.WEAK, 3);
+	}
 
 }

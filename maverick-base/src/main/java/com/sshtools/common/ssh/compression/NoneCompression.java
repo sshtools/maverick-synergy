@@ -22,10 +22,26 @@
 package com.sshtools.common.ssh.compression;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 
 public class NoneCompression implements SshCompression {
 
+	private static final String NONE = "none";
+
+	public static class NoneCompressionFactory implements SshCompressionFactory<NoneCompression> {
+
+		@Override
+		public NoneCompression create() throws NoSuchAlgorithmException, IOException {
+			return new NoneCompression();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { NONE };
+		}
+	}
+	
 	public void init(int type, int level) {
 	}
 
@@ -45,7 +61,7 @@ public class NoneCompression implements SshCompression {
 	}
 
 	public String getAlgorithm() {
-		return "none";
+		return NONE;
 	}
 
 }

@@ -22,6 +22,7 @@
 package com.sshtools.common.ssh.components;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 import com.sshtools.common.ssh.SecurityLevel;
 
@@ -43,9 +44,25 @@ import com.sshtools.common.ssh.SecurityLevel;
  * @author Lee David Painter
  *
  */
-public class NoneCipher extends SshCipher {
+public class NoneCipher extends AbstractSshCipher {
+
+	private static final String NONE = "none";
+
+	public static class NoneCipherFactory implements SshCipherFactory<NoneCipher> {
+
+		@Override
+		public NoneCipher create() throws NoSuchAlgorithmException, IOException {
+			return new NoneCipher();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { NONE };
+		}
+	}
+	
     public NoneCipher() {
-        super("none", SecurityLevel.WEAK, 0);
+        super(NONE, SecurityLevel.WEAK, 0);
     }
 
     /**

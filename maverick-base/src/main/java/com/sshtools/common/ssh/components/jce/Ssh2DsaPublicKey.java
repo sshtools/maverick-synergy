@@ -38,6 +38,7 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshKeyFingerprint;
 import com.sshtools.common.ssh.components.SshDsaPublicKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.SimpleASNWriter;
@@ -50,6 +51,20 @@ import com.sshtools.common.util.Utils;
  */
 public class Ssh2DsaPublicKey implements SshDsaPublicKey {
 
+	private static final String ALGORITHM = "ssh-dss";
+	
+	public static class Ssh2DsaPublicKeyFactory implements SshPublicKeyFactory<Ssh2DsaPublicKey> {
+
+		@Override
+		public Ssh2DsaPublicKey create() throws NoSuchAlgorithmException, IOException {
+			return new Ssh2DsaPublicKey();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] {  ALGORITHM };
+		}
+	}
 
 	protected DSAPublicKey pubkey;
 
@@ -93,7 +108,7 @@ public class Ssh2DsaPublicKey implements SshDsaPublicKey {
 	 * @todo Implement this com.maverick.ssh.SshPublicKey method
 	 */
 	public String getAlgorithm() {
-		return "ssh-dss";
+		return ALGORITHM;
 	}
 
 	public String getEncodingAlgorithm() {

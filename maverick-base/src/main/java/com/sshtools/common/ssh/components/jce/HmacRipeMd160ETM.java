@@ -21,11 +21,15 @@
 
 package com.sshtools.common.ssh.components.jce;
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshHmacFactory;
 
 
 /**
@@ -34,6 +38,20 @@ import com.sshtools.common.ssh.SshException;
  *
  */
 public class HmacRipeMd160ETM extends AbstractHmac {
+	
+	private static final String ALGORITHM = "hmac-ripemd160-etm@openssh.com";
+
+	public static class HmacRipeMd160ETMFactory implements SshHmacFactory<HmacRipeMd160ETM> {
+		@Override
+		public HmacRipeMd160ETM create() throws NoSuchAlgorithmException, IOException {
+			return new HmacRipeMd160ETM();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { ALGORITHM };
+		}
+	}
 
 	public HmacRipeMd160ETM() {
 		super(JCEAlgorithms.JCE_HMACRIPEMD160, 20, SecurityLevel.WEAK, 2);
@@ -44,7 +62,7 @@ public class HmacRipeMd160ETM extends AbstractHmac {
 	}
 
 	public String getAlgorithm() {
-		return "hmac-ripemd160-etm@openssh.com";
+		return ALGORITHM;
 	}
 	
 	public boolean isETM() {

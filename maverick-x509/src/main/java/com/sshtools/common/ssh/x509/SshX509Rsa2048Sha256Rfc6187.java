@@ -23,6 +23,7 @@ package com.sshtools.common.ssh.x509;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -32,6 +33,7 @@ import java.security.interfaces.RSAPublicKey;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.ssh.components.SshX509PublicKey;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
@@ -40,6 +42,19 @@ import com.sshtools.common.util.ByteArrayWriter;
 public class SshX509Rsa2048Sha256Rfc6187 extends Ssh2RsaPublicKey implements SshX509PublicKey {
 
 	 public static final String X509V3_SSH_RSA = "x509v3-rsa2048-sha256";
+	 
+	public static class SshX509Rsa2048Sha256Rfc6187Factory implements SshPublicKeyFactory<SshX509Rsa2048Sha256Rfc6187> {
+
+		@Override
+		public SshX509Rsa2048Sha256Rfc6187 create() throws NoSuchAlgorithmException, IOException {
+			return new SshX509Rsa2048Sha256Rfc6187();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { X509V3_SSH_RSA };
+		}
+	}
 	
 	Certificate[] certs;
 

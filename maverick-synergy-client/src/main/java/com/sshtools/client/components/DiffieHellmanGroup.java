@@ -57,7 +57,7 @@ import com.sshtools.synergy.ssh.SshTransport;
  * Implementation of the required SSH Transport Protocol key exchange method
  * "diffie-hellman-group14-sha1".
  */
-public class DiffieHellmanGroup extends SshKeyExchangeClient {
+public abstract class DiffieHellmanGroup extends SshKeyExchangeClient {
 
   final static int SSH_MSG_KEXDH_INIT = 30;
   final static int SSH_MSG_KEXDH_REPLY = 31;

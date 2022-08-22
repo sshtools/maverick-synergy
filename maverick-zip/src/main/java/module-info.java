@@ -1,3 +1,7 @@
+import com.sshtools.common.ssh.compression.SshCompressionFactory;
+import com.sshtools.common.zlib.OpenSSHZLibCompression;
+import com.sshtools.common.zlib.ZLibCompression;
+
 /*
  *    _           _             _   _
  *   (_) __ _  __| | __ _ _ __ | |_(_)_   _____
@@ -18,6 +22,10 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+@SuppressWarnings("rawtypes")
 open module com.sshtools.common.zlib {
 	requires com.sshtools.maverick.base;
+	provides SshCompressionFactory with 
+		ZLibCompression.ZLibCompressionFactory, 
+		OpenSSHZLibCompression.OpenSSHZLibCompressionFactory;
 }

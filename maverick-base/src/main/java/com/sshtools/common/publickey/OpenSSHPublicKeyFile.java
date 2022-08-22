@@ -186,6 +186,7 @@ public class OpenSSHPublicKeyFile implements SshPublicKeyFile {
 			
 			return false;
 		} catch (Throwable e) {
+			e.printStackTrace();
 			return false;
 		}
 	}

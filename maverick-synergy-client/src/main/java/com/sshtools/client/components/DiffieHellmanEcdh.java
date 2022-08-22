@@ -52,7 +52,7 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.synergy.ssh.SshTransport;
 import com.sshtools.synergy.ssh.components.SshKeyExchange;
 
-public class DiffieHellmanEcdh extends SshKeyExchangeClient implements
+public abstract class DiffieHellmanEcdh extends SshKeyExchangeClient implements
 		SshKeyExchange<SshClientContext> {
 
 	public static final int SSH_MSG_KEX_ECDH_INIT = 30;

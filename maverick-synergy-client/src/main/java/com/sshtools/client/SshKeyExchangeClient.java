@@ -35,6 +35,7 @@ import com.sshtools.synergy.ssh.components.SshKeyExchange;
  *  An abstract base class for all key exchange implementations.
  */
 public abstract class SshKeyExchangeClient implements SshKeyExchange<SshClientContext> {
+
 	/**
      * The secret value produced during key exchange.
      */

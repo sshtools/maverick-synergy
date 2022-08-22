@@ -42,8 +42,8 @@ import com.sshtools.synergy.ssh.components.SshKeyExchange;
  * 
  */
 public abstract class SshKeyExchangeServer implements SshKeyExchange<SshServerContext>  {
-
-    /**
+	
+	/**
      * The secret value produced during key exchange.
      */
     protected BigInteger secret;

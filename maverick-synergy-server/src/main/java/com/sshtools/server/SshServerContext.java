@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
@@ -53,19 +54,8 @@ import com.sshtools.common.ssh.components.SshCertificate;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKey;
-import com.sshtools.server.components.jce.Curve25519SHA256LibSshServer;
-import com.sshtools.server.components.jce.Curve25519SHA256Server;
-import com.sshtools.server.components.jce.DiffieHellmanEcdhNistp256;
-import com.sshtools.server.components.jce.DiffieHellmanEcdhNistp384;
-import com.sshtools.server.components.jce.DiffieHellmanEcdhNistp521;
-import com.sshtools.server.components.jce.DiffieHellmanGroup14Sha1JCE;
-import com.sshtools.server.components.jce.DiffieHellmanGroup14Sha256JCE;
-import com.sshtools.server.components.jce.DiffieHellmanGroup15Sha512JCE;
-import com.sshtools.server.components.jce.DiffieHellmanGroup16Sha512JCE;
-import com.sshtools.server.components.jce.DiffieHellmanGroup17Sha512JCE;
-import com.sshtools.server.components.jce.DiffieHellmanGroup18Sha512JCE;
-import com.sshtools.server.components.jce.DiffieHellmanGroupExchangeSha256JCE;
-import com.sshtools.server.components.jce.Rsa2048SHA2KeyExchange;
+import com.sshtools.server.components.SshKeyExchangeServer;
+import com.sshtools.server.components.SshKeyExchangeServerFactory;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.nio.ProtocolEngine;
 import com.sshtools.synergy.nio.SshEngine;
@@ -594,80 +584,23 @@ public class SshServerContext extends SshContext {
 		}
 		
 		verifiedKeyExchanges = new ComponentFactory<SshKeyExchange<SshServerContext>>(componentManager);
-		
-		JCEComponentManager.getDefaultInstance().loadExternalComponents("/kex-server.properties", keyExchanges);
-		
-		if(testServerKeyExchangeAlgorithm(
-				Curve25519SHA256Server.CURVE25519_SHA2, Curve25519SHA256Server.class)) {
-			verifiedKeyExchanges.add(Curve25519SHA256Server.CURVE25519_SHA2, Curve25519SHA256Server.class);
-		}
-		
-		if(testServerKeyExchangeAlgorithm(
-				Curve25519SHA256LibSshServer.CURVE25519_SHA2_AT_LIBSSH_ORG, Curve25519SHA256LibSshServer.class)) {
-			verifiedKeyExchanges.add(Curve25519SHA256LibSshServer.CURVE25519_SHA2_AT_LIBSSH_ORG, Curve25519SHA256LibSshServer.class);
-		}
-
-		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanGroupExchangeSha256JCE.DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA256, DiffieHellmanGroupExchangeSha256JCE.class)) {
-			verifiedKeyExchanges.add(DiffieHellmanGroupExchangeSha256JCE.DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA256, DiffieHellmanGroupExchangeSha256JCE.class);
-		}
-
-		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanGroup14Sha256JCE.DIFFIE_HELLMAN_GROUP14_SHA256, DiffieHellmanGroup14Sha256JCE.class)) {
-			verifiedKeyExchanges.add(DiffieHellmanGroup14Sha256JCE.DIFFIE_HELLMAN_GROUP14_SHA256, DiffieHellmanGroup14Sha256JCE.class);
-		}
-		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanGroup15Sha512JCE.DIFFIE_HELLMAN_GROUP15_SHA512, DiffieHellmanGroup15Sha512JCE.class)) {
-			verifiedKeyExchanges.add(DiffieHellmanGroup15Sha512JCE.DIFFIE_HELLMAN_GROUP15_SHA512, DiffieHellmanGroup15Sha512JCE.class);
-		}
-		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanGroup16Sha512JCE.DIFFIE_HELLMAN_GROUP16_SHA512, DiffieHellmanGroup16Sha512JCE.class)) {
-			verifiedKeyExchanges.add(DiffieHellmanGroup16Sha512JCE.DIFFIE_HELLMAN_GROUP16_SHA512, DiffieHellmanGroup16Sha512JCE.class);
-		}
-		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanGroup17Sha512JCE.DIFFIE_HELLMAN_GROUP17_SHA512, DiffieHellmanGroup17Sha512JCE.class)) {
-			verifiedKeyExchanges.add(DiffieHellmanGroup17Sha512JCE.DIFFIE_HELLMAN_GROUP17_SHA512, DiffieHellmanGroup17Sha512JCE.class);
-		}
-		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanGroup18Sha512JCE.DIFFIE_HELLMAN_GROUP18_SHA512, DiffieHellmanGroup18Sha512JCE.class)) {
-			verifiedKeyExchanges.add(DiffieHellmanGroup18Sha512JCE.DIFFIE_HELLMAN_GROUP18_SHA512, DiffieHellmanGroup18Sha512JCE.class);
-		}
-
-		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanGroup14Sha1JCE.DIFFIE_HELLMAN_GROUP14_SHA1, DiffieHellmanGroup14Sha1JCE.class)) {
-			verifiedKeyExchanges.add(DiffieHellmanGroup14Sha1JCE.DIFFIE_HELLMAN_GROUP14_SHA1, DiffieHellmanGroup14Sha1JCE.class);
-		}
-
-		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanEcdhNistp521.DIFFIE_HELLMAN_ECDH_NISTP_521, DiffieHellmanEcdhNistp521.class)) {
-			verifiedKeyExchanges.add(DiffieHellmanEcdhNistp521.DIFFIE_HELLMAN_ECDH_NISTP_521, DiffieHellmanEcdhNistp521.class);
-		}
-		
-		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanEcdhNistp384.DIFFIE_HELLMAN_ECDH_NISTP_384, DiffieHellmanEcdhNistp384.class)) {
-			verifiedKeyExchanges.add(DiffieHellmanEcdhNistp384.DIFFIE_HELLMAN_ECDH_NISTP_384, DiffieHellmanEcdhNistp384.class);
-		}
-		
-		if(testServerKeyExchangeAlgorithm(
-				DiffieHellmanEcdhNistp256.DIFFIE_HELLMAN_ECDH_NISTP_256, DiffieHellmanEcdhNistp256.class)) {
-			verifiedKeyExchanges.add(DiffieHellmanEcdhNistp256.DIFFIE_HELLMAN_ECDH_NISTP_256, DiffieHellmanEcdhNistp256.class);
-		}
-		
-		if(testServerKeyExchangeAlgorithm(
-				Rsa2048SHA2KeyExchange.RSA_2048_SHA2, Rsa2048SHA2KeyExchange.class)) {
-			verifiedKeyExchanges.add(Rsa2048SHA2KeyExchange.RSA_2048_SHA2, Rsa2048SHA2KeyExchange.class);
+		for(var kex : ServiceLoader.load(SshKeyExchangeServerFactory.class)) {
+			if(testServerKeyExchangeAlgorithm(kex))
+				verifiedKeyExchanges.add(kex);
 		}
 		
 		keyExchanges = (ComponentFactory<SshKeyExchange<? extends SshContext>>)verifiedKeyExchanges.clone();
 		
 	}
-	
-	private boolean testServerKeyExchangeAlgorithm(String name, Class<? extends SshKeyExchange<? extends SshContext>> cls) {
+
+	private boolean testServerKeyExchangeAlgorithm(SshKeyExchangeServerFactory<? extends SshKeyExchangeServer> cls) {
+
+		var name  = cls.getKeys() [0];
 		
 		SshKeyExchange<? extends SshContext> c = null;
 		try {
 
-			c = cls.getConstructor().newInstance();
+			c = cls.create();
 
 			if (!JCEComponentManager.getDefaultInstance().supportedDigests().contains(c.getHashAlgorithm()))
 				throw new Exception("Hash algorithm " + c.getHashAlgorithm() + " is not supported");

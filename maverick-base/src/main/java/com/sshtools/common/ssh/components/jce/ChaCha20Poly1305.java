@@ -22,9 +22,15 @@
 package com.sshtools.common.ssh.components.jce;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
+import org.bouncycastle.crypto.generators.Poly1305KeyGenerator;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.ParametersWithIV;
 
 import com.sshtools.common.ssh.SecurityLevel;
-import com.sshtools.common.ssh.components.SshCipher;
+import com.sshtools.common.ssh.components.AbstractSshCipher;
+import com.sshtools.common.ssh.components.SshCipherFactory;
 import com.sshtools.common.ssh.components.jce.ChaCha20Poly1305.ChaCha20.WrongKeySizeException;
 import com.sshtools.common.ssh.components.jce.ChaCha20Poly1305.ChaCha20.WrongNonceSizeException;
 import com.sshtools.common.util.Arrays;
@@ -32,7 +38,22 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.UnsignedInteger64;
 
-public class ChaCha20Poly1305 extends SshCipher {
+public class ChaCha20Poly1305 extends AbstractSshCipher {
+	
+	private static final String CIPHER = "chacha20-poly1305@openssh.com";
+
+	public static class ChaCha20Poly1305Factory implements SshCipherFactory<ChaCha20Poly1305> {
+
+		@Override
+		public ChaCha20Poly1305 create() throws NoSuchAlgorithmException, IOException {
+			return new ChaCha20Poly1305();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { CIPHER };
+		}
+	}
 	
 	byte[] k1 = new byte[32];
 	byte[] k2 = new byte[32];
@@ -41,7 +62,7 @@ public class ChaCha20Poly1305 extends SshCipher {
 	
 	public ChaCha20Poly1305()
 			throws IOException {
-		super("chacha20-poly1305@openssh.com", SecurityLevel.PARANOID, 4000);
+		super(CIPHER, SecurityLevel.PARANOID, 4000);
 	}
 
 	public void init(int mode, byte[] iv, byte[] keydata) throws java.io.IOException {

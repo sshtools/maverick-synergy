@@ -30,6 +30,7 @@ import java.security.NoSuchAlgorithmException;
 
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.SshKeyExchangeClient;
+import com.sshtools.client.SshKeyExchangeClientFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
@@ -45,6 +46,18 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.synergy.ssh.SshTransport;
 
 public class Curve25519SHA256Client extends SshKeyExchangeClient {
+	
+	public static class Curve25519SHA256ClientFactory implements SshKeyExchangeClientFactory<Curve25519SHA256Client> {
+		@Override
+		public Curve25519SHA256Client create() throws NoSuchAlgorithmException, IOException {
+			return new Curve25519SHA256Client();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { CURVE25519_SHA2 };
+		}
+	}
 
 	public static final int SSH_MSG_KEX_ECDH_INIT = 30;
 	public static final int SSH_MSG_KEX_ECDH_REPLY = 31;

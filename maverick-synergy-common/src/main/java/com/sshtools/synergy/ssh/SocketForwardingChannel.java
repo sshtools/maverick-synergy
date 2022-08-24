@@ -352,6 +352,9 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 					}
 					getConnectionProtocol().addOutgoingTask(new ConnectionAwareTask(con) {
 						protected void doTask() {
+							if(Log.isDebugEnabled()) {
+								log("The socket has returned EOF");
+							}
 							sendEOF();
 							evaluateClosure();
 						}
@@ -504,7 +507,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 				
 			} catch (IOException e) {
 				log("Channel I/O error", e);
-				close(true);
+				close(e);
 			} 
 		}
 	}

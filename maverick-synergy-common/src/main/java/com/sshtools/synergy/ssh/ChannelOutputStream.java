@@ -24,6 +24,8 @@ package com.sshtools.synergy.ssh;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import com.sshtools.common.logger.Log;
+
 public class ChannelOutputStream extends OutputStream {
 
 		int type = -1;
@@ -61,6 +63,9 @@ public class ChannelOutputStream extends OutputStream {
 		public void close() {
 			synchronized(channel) {
 				if(!sentEOF && !channel.isClosed() && !channel.isClosing()) {
+					if(Log.isDebugEnabled()) {
+						channel.log("The channel's OutputStream has been closed");
+					}
 					channel.sendEOF();
 					sentEOF = true;
 				}

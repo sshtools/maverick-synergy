@@ -42,6 +42,7 @@ import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.sshd.SshMessage;
+import com.sshtools.common.util.IOUtils;
 
 /**
  * This abstract class provides the basic functions of an SSH2 channel. All
@@ -69,6 +70,8 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	String channeltype;
 	int channelid;
 	int remoteid;
+	boolean forcedClose = false;
+	Throwable closingError = null;
 	
 	protected ChannelDataWindow localWindow;
 	protected ChannelDataWindow remoteWindow;
@@ -743,13 +746,18 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	public void close() {
 		close(false);
 	}
+	
+	public void close(Throwable closingError) {
+		this.closingError = closingError;
+		close(true);
+	}
 
 	/**
 	 * This method closes the channel and free's its resources.
 	 */
 	protected void close(boolean forceClose) {
 
-		if(Log.isTraceEnabled()) {
+		if(Log.isDebugEnabled()) {
 				log("Checking", "close state force="
 						+ forceClose + " channelType=" + getChannelType());
 		}
@@ -792,11 +800,14 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 			
 			if(forceClose) {
 				
+				this.forcedClose = true;
 				for (ChannelEventListener listener : eventListeners) {
-					listener.onChannelError(this, new IOException("Channel has been forced to close"));
+					listener.onChannelError(this, closingError != null ? closingError : 
+						new IOException("Channel has been forced to close"));
 				}
 				
-				onChannelError(new IOException("Channel has been forced to close"));
+				onChannelError(closingError != null ? closingError : 
+					new IOException("Channel has been forced to close"));
 			}
 			
 			completeClose();
@@ -867,6 +878,16 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		if (eventListeners != null) {
 			eventListeners.clear();
 		}
+		
+		IOUtils.closeStream(channelIn);
+		this.channelIn = null;
+		this.channelOut = null;
+		
+		if(Objects.nonNull(cache)) {
+			cache.close();
+		}
+		
+		this.cache = null;
 
 		onChannelFree();
 	}

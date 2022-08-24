@@ -52,6 +52,7 @@ public class CachingDataWindow {
 
 	public void close() {
 		this.open = false;
+		this.cache = null;
 	}
 	
 	public synchronized void put(ByteBuffer data) {

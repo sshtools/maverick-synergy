@@ -23,6 +23,7 @@ package com.sshtools.synergy.ssh;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 import com.sshtools.common.logger.Log;
 
@@ -47,7 +48,7 @@ public class CachingDataWindow {
 	}
 	
 	public synchronized boolean hasRemaining() {
-		return cache.hasRemaining();
+		return Objects.nonNull(cache) && cache.hasRemaining();
 	}
 
 	public void close() {
@@ -62,6 +63,7 @@ public class CachingDataWindow {
 		if(!open) {
 			throw new IllegalStateException("CachingDataWindow has been closed!");
 		}
+		
 		cache.compact();
 		
 		if(blocking) {
@@ -163,11 +165,11 @@ public class CachingDataWindow {
 	}
 	
 	public synchronized int remaining() {
-		return cache.remaining();
+		return Objects.nonNull(cache) ? cache.remaining() : 0;
 	}
 
 	public synchronized boolean isOpen() {
-		return open || cache.hasRemaining();
+		return open || (Objects.nonNull(cache) && cache.hasRemaining());
 	}
 
 	public synchronized void waitFor(long i) throws InterruptedException {

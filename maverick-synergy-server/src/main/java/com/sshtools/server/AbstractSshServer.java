@@ -187,6 +187,10 @@ public abstract class AbstractSshServer implements Closeable {
 		this.fileFactory = fileFactory;
 	}
 	
+	public FileFactory getFileFactory() {
+		return fileFactory;
+	}
+	
 	public void setChannelFactory(ChannelFactory<SshServerContext> channelFactory) {
 		this.channelFactory = channelFactory;
 	}
@@ -251,6 +255,10 @@ public abstract class AbstractSshServer implements Closeable {
 		}
 	}
 	
+	public Collection<SshKeyPair> getHostKeys() {
+		return hostKeys;
+	}
+	
 	private void loadOrGenerateHostKey(SshServerContext context, File file, String type, int bitlength) {
 		try {
 			hostKeys.add(context.loadOrGenerateHostKey(file, type, bitlength));
@@ -267,7 +275,7 @@ public abstract class AbstractSshServer implements Closeable {
 	}
 	
 	protected void configureFilesystem(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
-		sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(fileFactory);
+		sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(getFileFactory());
 		if(enableScp) {
 			sshContext.getChannelFactory().supportedCommands().add(new ScpCommand.ScpCommandFactory());
 		}
@@ -285,29 +293,37 @@ public abstract class AbstractSshServer implements Closeable {
 		}
 	}
 	
+	protected ChannelFactory<SshServerContext> getChannelFactory() {
+		return channelFactory;
+	}
+	
 	protected void configureChannels(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
 		
-		if(Objects.nonNull(channelFactory)) {
-			sshContext.setChannelFactory(channelFactory);
+		if(Objects.nonNull(getChannelFactory())) {
+			sshContext.setChannelFactory(getChannelFactory());
 		}
 	}
 	
 	protected void configureForwarding(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
 		sshContext.setPolicy(ForwardingPolicy.class, forwardingPolicy);
 	}
+
+	public SshServerContext createServerContext(SshEngineContext daemonContext, SocketChannel sc)
+			throws IOException, SshException {
+		
+		SshServerContext sshContext = new SshServerContext(daemonContext.getEngine(), securityLevel);
+		configure(sshContext, sc);
+		return sshContext;
+		
+	}
 	
-	protected void configure(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
+	public void configure(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
+		
 		sshContext.setPolicy(IPPolicy.class, ipPolicy);
 		
 		for(GlobalRequestHandler<SshServerContext> globalRequestHandler : globalRequestHandlers) {
 			sshContext.addGlobalRequestHandler(globalRequestHandler);
 		}
-	}
-	
-	public SshServerContext createServerContext(SshEngineContext daemonContext, SocketChannel sc)
-			throws IOException, SshException {
-		
-		SshServerContext sshContext = new SshServerContext(daemonContext.getEngine(), securityLevel);
 		
 		configureHostKeys(sshContext, sc);
 
@@ -318,9 +334,7 @@ public abstract class AbstractSshServer implements Closeable {
 		configureFilesystem(sshContext, sc);
 
 		configureForwarding(sshContext, sc);
-		
-		configure(sshContext, sc);
-		return sshContext;
+
 	}
 
 	public SshEngine getEngine() {

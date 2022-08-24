@@ -21,13 +21,27 @@
 
 package com.sshtools.server.callback;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collection;
 
+import com.sshtools.common.auth.InMemoryMutualKeyAuthenticationStore;
+import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.files.vfs.VFSFileFactory;
+import com.sshtools.common.files.vfs.VirtualFileFactory;
+import com.sshtools.common.files.vfs.VirtualMountTemplate;
+import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.ssh.components.SshKeyPair;
+import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.server.AbstractSshServer;
+import com.sshtools.server.SshServerContext;
+import com.sshtools.server.callback.commands.CallbackCommandFactory;
+import com.sshtools.server.vsession.VirtualChannelFactory;
 import com.sshtools.synergy.nio.ProtocolContextFactory;
+import com.sshtools.synergy.ssh.ChannelFactory;
+import com.sshtools.vsession.commands.ssh.SshClientsCommandFactory;
 
 /**
  * An abstract server that provides a callback facility, listening on a port and acting as a client to 
@@ -40,38 +54,51 @@ import com.sshtools.synergy.nio.ProtocolContextFactory;
 public class CallbackServer extends AbstractSshServer {
 
 	
-	CallbackContextFactory defaultContextFactory;
-	
-	public CallbackServer(CallbackContextFactory callbackContextFactory) {
-		this.defaultContextFactory = callbackContextFactory;
-	}
-	
-	public CallbackServer(CallbackContextFactory callbackContextFactory, InetAddress addressToBind, int port) {
-		super(addressToBind, port);
-		this.defaultContextFactory = callbackContextFactory;
-	}
-	
-	public CallbackServer(CallbackContextFactory callbackContextFactory, int port) throws UnknownHostException {
-		super(port);
-		this.defaultContextFactory = callbackContextFactory;
+	InMemoryMutualKeyAuthenticationStore store = new InMemoryMutualKeyAuthenticationStore();
+	InMemoryCallbackRegistrationService callbacks = new InMemoryCallbackRegistrationService();
+
+	public CallbackServer() {
+		super();
 	}
 
-	public CallbackServer(CallbackContextFactory callbackContextFactory, String addressToBind, int port) throws UnknownHostException {
+	public CallbackServer(InetAddress addressToBind, int port) {
 		super(addressToBind, port);
-		this.defaultContextFactory = callbackContextFactory;
+	}
+
+	public CallbackServer(int port) throws UnknownHostException {
+		super(port);
+	}
+
+	public CallbackServer(String addressToBind, int port) throws UnknownHostException {
+		super(addressToBind, port);
 	}
 
 	@Override
 	public ProtocolContextFactory<?> getDefaultContextFactory() {
-		return defaultContextFactory;
+		return new CallbackContextFactory(store, callbacks, this);
 	}
+	
+	public FileFactory getFileFactory() {
+		return new FileFactory() {
 
-	public SshConnection getCallbackClient(String hostToConnect) {
-		return defaultContextFactory.getCallbackClient(hostToConnect);
+			@Override
+			public AbstractFileFactory<?> getFileFactory(SshConnection con)
+					throws IOException, PermissionDeniedException {
+				return new VirtualFileFactory(new VirtualMountTemplate("/", 
+						"ram://" + con.getUsername(),
+						new VFSFileFactory(), true));
+			}	
+		};
 	}
-
-	public Collection<SshConnection> getCallbackClients() {
-		return defaultContextFactory.getCallbackClients();
+	
+	@Override
+	public ChannelFactory<SshServerContext> getChannelFactory() {
+		return new VirtualChannelFactory(new CallbackCommandFactory(callbacks),
+				new SshClientsCommandFactory());
+	}
+	
+	public void addAgentKey(String username, SshKeyPair privateKey, SshPublicKey publicKey) {
+		store.addKey(username, privateKey, publicKey);
 	}
 
 }

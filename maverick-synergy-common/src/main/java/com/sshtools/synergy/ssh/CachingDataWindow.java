@@ -57,48 +57,56 @@ public class CachingDataWindow {
 	
 	public synchronized void put(ByteBuffer data) {
 		
-				
-			cache.compact();
-			
-			if(blocking) {
-				long start = System.currentTimeMillis();
-				while(cache.remaining() < data.remaining()) {
-					cache.flip();
-					try {
-						wait(1000);
-					} catch (InterruptedException e) {
-						throw new IllegalStateException("Interrupted during cache put wait");
-					}
-					cache.compact();
-					if(System.currentTimeMillis() - start > timeout) {
-						throw new IllegalStateException(String.format("Timeout trying to put %d bytes into cache with %d remaining", 
-								data.remaining(),
-								cache.remaining()));
-						
-					}
+		// Do not use isOpen as it checks for remaining too. If its closed, its closed
+		// and should not accept any more data at all.
+		if(!open) {
+			throw new IllegalStateException("CachingDataWindow has been closed!");
+		}
+		cache.compact();
+		
+		if(blocking) {
+			long start = System.currentTimeMillis();
+			while(cache.remaining() < data.remaining()) {
+				cache.flip();
+				try {
+					wait(1000);
+				} catch (InterruptedException e) {
+					throw new IllegalStateException("Interrupted during cache put wait");
+				}
+				cache.compact();
+				if(System.currentTimeMillis() - start > timeout) {
+					throw new IllegalStateException(String.format("Timeout trying to put %d bytes into cache with %d remaining", 
+							data.remaining(),
+							cache.remaining()));
+					
 				}
 			}
-			
-			int remaining = data.remaining();
-			
-			if(remaining > cache.remaining()) {
-				throw new BufferOverflowException();
-			}
-			
-			cache.put(data);
-			cache.flip();
-			
-			int count = remaining - data.remaining();
-			if(Log.isTraceEnabled()) {
-				Log.trace("Written {} bytes from cached data window position={} remaining={} limit={}", 
-						count, cache.position(), cache.remaining(), cache.limit());
-			}
-			
-			notifyAll();
+		}
+		
+		int remaining = data.remaining();
+		
+		if(remaining > cache.remaining()) {
+			throw new BufferOverflowException();
+		}
+		
+		cache.put(data);
+		cache.flip();
+		
+		int count = remaining - data.remaining();
+		if(Log.isTraceEnabled()) {
+			Log.trace("Written {} bytes from cached data window position={} remaining={} limit={}", 
+					count, cache.position(), cache.remaining(), cache.limit());
+		}
+		
+		notifyAll();
 
 	}
 
 	public synchronized int get(byte[] tmp, int offset, int length) {
+		
+		if(!isOpen()) {
+			throw new IllegalStateException("CachingDataWindow has been closed!");
+		}
 		
 		if(blocking) {
 			while(!cache.hasRemaining() && open) {
@@ -126,6 +134,9 @@ public class CachingDataWindow {
 	
 	public synchronized int get(ByteBuffer buffer) {
 		
+		if(!isOpen()) {
+			throw new IllegalStateException("CachingDataWindow has been closed!");
+		}
 			
 		if(blocking) {
 			while(!cache.hasRemaining() && open) {

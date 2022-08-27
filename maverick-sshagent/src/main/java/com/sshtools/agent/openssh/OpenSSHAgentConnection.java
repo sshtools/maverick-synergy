@@ -334,7 +334,7 @@ public class OpenSSHAgentConnection implements Runnable, SshAgentConnection {
                 }
             }
         } catch (IOException ex) {
-            Log.info("The agent connection terminated");
+            Log.info("The agent connection terminated", ex);
         } finally {
             try {
             	if(closeable!=null) {
@@ -435,10 +435,10 @@ public class OpenSSHAgentConnection implements Runnable, SshAgentConnection {
         }
 
 
-        default:
-            throw new IOException("Unrecognized message type " +
-                String.valueOf(msgdata[0]) + " received");
+        default: {
+           Log.info("Unrecognized message type " + String.valueOf(msgdata[0]) + " received");
         }
+    	}
        } catch (InvalidMessageException e) {
 			e.printStackTrace();
 	   }

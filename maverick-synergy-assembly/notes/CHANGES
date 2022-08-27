@@ -1,3 +1,12 @@
+Maverick Synergy 3.0.10 - TBC
+
+Bug Fixes
+  o Do not throw exception when unsupported agent message is received. Log and continue. This should fix support for latest OpenSSH agents that now implement some extension messages.
+  
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.9 - Aug 21, 2022
 
 Bug Fixes
@@ -11,10 +20,8 @@ Bug Fixes
   o DirectFileJava7 attempts to set name of group/user using the SftpFileAttributes method that only accepts a numerical GID/UID.
   o PublicKeyAuthenticator setKeyPair method incorrectly stores unmodifiable collection causing UnsupportedOperationException when keys are removed during authentication.
   o Removed non-compliant HMAC algorithms hmac-sha256 and hmac-sha512.
-
-=================
-=  HISTORY      =
-=================
+  
+------------------
 
 Maverick Synergy 3.0.8 - Jun 30, 2022
 

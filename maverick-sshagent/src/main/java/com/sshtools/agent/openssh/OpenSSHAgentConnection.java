@@ -434,6 +434,7 @@ public class OpenSSHAgentConnection implements Runnable, SshAgentConnection {
 
         default: {
            Log.info("Unrecognized message type " + String.valueOf(msgdata[0]) + " received");
+           sendAgentFailure();
         }
     	}
        } catch (InvalidMessageException e) {

@@ -47,6 +47,7 @@ public class InMemoryCallbackRegistrationService implements CallbackRegistration
 		AbstractSshOptionsEvaluator.addResolver(this);
 	}
 	
+	@SuppressWarnings("resource")
 	@Override
 	public boolean resolveOptions(String destination, SshClientArguments arguments, VirtualConsole console)
 			throws IOException {

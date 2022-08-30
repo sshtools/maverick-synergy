@@ -102,9 +102,8 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	public synchronized void stop() {
 		if (transport != null) {
 			if(Log.isDebugEnabled()) {
-				Log.debug("Cleaning up authentication protocol references");
+				Log.debug("Stopping authentication protocol");
 			}
-			transport.getConnection().getAuthenticatedFuture().authenticated(authenticated);
 		}
 	}
 

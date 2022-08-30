@@ -284,6 +284,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	Date started = new Date();
 	ConnectRequestFuture connectFuture;
 	DisconnectRequestFuture disconnectFuture = new DisconnectRequestFuture();
+	AuthenticatedFuture authenticatedFuture = new AuthenticatedFuture(this);
 	
 	/**
 	 * Create a default transport protocol instance in CLIENT_MODE.
@@ -2701,5 +2702,9 @@ public abstract class TransportProtocol<T extends SshContext>
 
 	public String getLocalIdentification() {
 		return localIdentification.trim();
+	}
+
+	public AuthenticatedFuture getAuthenticatedFuture() {
+		return authenticatedFuture;
 	}
 }

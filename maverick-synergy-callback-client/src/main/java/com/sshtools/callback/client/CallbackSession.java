@@ -98,28 +98,34 @@ public class CallbackSession implements Runnable {
 				future.waitFor(30000L);
 				if(future.isDone() && future.isSuccess()) {
 					SshConnection currentConnection = future.getConnection();
-					currentConnection.getAuthenticatedFuture().waitFor(30000L);
-					if(currentConnection.getAuthenticatedFuture().isDone() && currentConnection.getAuthenticatedFuture().isSuccess()) {
-						currentConnection.setProperty("callbackClient", this);
 					
-						if(Log.isInfoEnabled()) {
-							Log.info("Callback {} registering with memo {}", currentConnection.getUUID(), config.getMemo());
+					try {
+						currentConnection.getAuthenticatedFuture().waitFor(30000L);
+						
+						if(currentConnection.getAuthenticatedFuture().isDone() && currentConnection.getAuthenticatedFuture().isSuccess()) {
+							currentConnection.setProperty("callbackClient", this);
+						
+							if(Log.isInfoEnabled()) {
+								Log.info("Callback {} registering with memo {}", currentConnection.getUUID(), config.getMemo());
+							}
+							GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
+									currentConnection, ByteArrayWriter.encodeString(config.getMemo()));
+							currentConnection.sendGlobalRequest(req, false);
+							app.onClientConnected(this, currentConnection);
+							if(Log.isInfoEnabled()) {
+								Log.info("Client is connected to {}:{}", hostname, port);
+							}
+							numberOfAuthenticationErrors = 0;
+							break;
+						} else {
+							if(Log.isInfoEnabled()) {
+								Log.info("Could not authenticate to {}:{}", hostname, port);
+							}
+							currentConnection.disconnect();
+							numberOfAuthenticationErrors++;
 						}
-						GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
-								currentConnection, ByteArrayWriter.encodeString(config.getMemo()));
-						currentConnection.sendGlobalRequest(req, false);
-						app.onClientConnected(this, currentConnection);
-						if(Log.isInfoEnabled()) {
-							Log.info("Client is connected to {}:{}", hostname, port);
-						}
-						numberOfAuthenticationErrors = 0;
-						break;
-					} else {
-						if(Log.isInfoEnabled()) {
-							Log.info("Could not authenticate to {}:{}", hostname, port);
-						}
+					} catch(Throwable e) {
 						currentConnection.disconnect();
-						numberOfAuthenticationErrors++;
 					}
 				}
 				

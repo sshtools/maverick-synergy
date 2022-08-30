@@ -117,7 +117,7 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
     }
     
 	public AuthenticatedFuture getAuthenticatedFuture() {
-		return context.getAuthenticatedFuture();
+		return transport.getAuthenticatedFuture();
 	}
 	
 	public String getSessionId() {

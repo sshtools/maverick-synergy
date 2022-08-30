@@ -260,8 +260,6 @@ public abstract class SshContext extends ProtocolContext implements
 	
 	Map<Class<?>,Object> policies = new HashMap<>();
 	
-	AuthenticatedFuture authenticatedFuture = new AuthenticatedFuture();
-	
 	/** Constructs a default context but does not set the daemon 
 	 * @param componentManager 
 	 * @throws SshException */
@@ -1395,9 +1393,5 @@ public abstract class SshContext extends ProtocolContext implements
 	
 	public ForwardingPolicy getForwardingPolicy() {
 		return getPolicy(ForwardingPolicy.class);
-	}
-
-	protected AuthenticatedFuture getAuthenticatedFuture() {
-		return authenticatedFuture;
 	}
 }

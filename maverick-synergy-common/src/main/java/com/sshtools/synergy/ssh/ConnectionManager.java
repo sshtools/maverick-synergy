@@ -112,12 +112,20 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
     }
     
     public synchronized Connection<T> registerConnection(ConnectionProtocol<T> connection) {
-    	Connection<T> con = activeConnections.get(connection.getSessionIdentifier());
-    	if(con!=null) {
-    		con.connection = connection;
+    	
+    	if(Log.isDebugEnabled()) {
+    		Log.debug("Connection {} is now authenticated", connection.getSessionIdentifier());
     	}
-    	else {
+    	
+    	Connection<T> con = activeConnections.get(connection.getSessionIdentifier());
+    	if(Objects.isNull(con)) {
     		throw new IllegalArgumentException("Cannot set connection instance on non-existent transport!");
+    	}
+
+    	con.connection = connection;
+    	
+    	if(Log.isDebugEnabled()) {
+    		Log.debug("Notifying future that authentication is complete");
     	}
     	con.getAuthenticatedFuture().done(true);
     	return con;

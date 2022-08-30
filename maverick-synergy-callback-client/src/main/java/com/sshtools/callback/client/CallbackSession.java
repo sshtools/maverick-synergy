@@ -24,6 +24,7 @@ package com.sshtools.callback.client;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import com.sshtools.common.logger.Log;
@@ -90,6 +91,7 @@ public class CallbackSession implements Runnable {
 		}
 		int count = 1;
 		while(app.getSshEngine().isStarted()) {
+			SshConnection currentConnection = null;
 			try {
 				future = app.getSshEngine().connect(
 						hostname, 
@@ -97,36 +99,33 @@ public class CallbackSession implements Runnable {
 						createContext(config));
 				future.waitFor(30000L);
 				if(future.isDone() && future.isSuccess()) {
-					SshConnection currentConnection = future.getConnection();
+					currentConnection = future.getConnection();
+					currentConnection.getAuthenticatedFuture().waitFor(30000L);
 					
-					try {
-						currentConnection.getAuthenticatedFuture().waitFor(30000L);
-						
-						if(currentConnection.getAuthenticatedFuture().isDone() && currentConnection.getAuthenticatedFuture().isSuccess()) {
-							currentConnection.setProperty("callbackClient", this);
-						
-							if(Log.isInfoEnabled()) {
-								Log.info("Callback {} registering with memo {}", currentConnection.getUUID(), config.getMemo());
-							}
-							GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
-									currentConnection, ByteArrayWriter.encodeString(config.getMemo()));
-							currentConnection.sendGlobalRequest(req, false);
-							app.onClientConnected(this, currentConnection);
-							if(Log.isInfoEnabled()) {
-								Log.info("Client is connected to {}:{}", hostname, port);
-							}
-							numberOfAuthenticationErrors = 0;
-							break;
-						} else {
-							if(Log.isInfoEnabled()) {
-								Log.info("Could not authenticate to {}:{}", hostname, port);
-							}
-							currentConnection.disconnect();
-							numberOfAuthenticationErrors++;
+					if(currentConnection.getAuthenticatedFuture().isDone()
+							&& currentConnection.getAuthenticatedFuture().isSuccess()) {
+						currentConnection.setProperty("callbackClient", this);
+					
+						if(Log.isInfoEnabled()) {
+							Log.info("Callback {} registering with memo {}", currentConnection.getUUID(), config.getMemo());
 						}
-					} catch(Throwable e) {
+						GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
+								currentConnection, ByteArrayWriter.encodeString(config.getMemo()));
+						currentConnection.sendGlobalRequest(req, false);
+						app.onClientConnected(this, currentConnection);
+						if(Log.isInfoEnabled()) {
+							Log.info("Client is connected to {}:{}", hostname, port);
+						}
+						numberOfAuthenticationErrors = 0;
+						break;
+					} else {
+						if(Log.isInfoEnabled()) {
+							Log.info("Could not authenticate to {}:{}", hostname, port);
+						}
 						currentConnection.disconnect();
+						numberOfAuthenticationErrors++;
 					}
+					
 				}
 				
 				if(!config.isReconnect()) {
@@ -153,6 +152,11 @@ public class CallbackSession implements Runnable {
 						e.getMessage(),
 						config.getServerHost(), 
 						config.getServerPort());
+				
+				if(Objects.nonNull(currentConnection)) {
+					currentConnection.disconnect();
+				}
+				
 				long interval = config.getReconnectIntervalMs() * Math.min(count, 12 * 60);
 				if(Log.isInfoEnabled()) {
 					Log.info("Reconnecting to {}:{} in {} seconds", hostname, port, interval / 1000);

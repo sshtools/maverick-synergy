@@ -74,9 +74,20 @@ class TransportProtocolSwitchingClient extends TransportProtocolClient {
 			if(idx > -1) {
 				if(remoteIdentification.trim().length() > idx+1) {
 					String username = remoteIdentification.substring(idx+1).trim();
+					if(Log.isDebugEnabled()) {
+						Log.debug("Callback client username is {}", username);
+					}
 					getContext().setUsername(username);
 					return;
 				}
+			} else {
+				int length = "SSH-2.0-".length() + callbackIdentifier.length();
+				String username = remoteIdentification.substring(length+1).trim();
+				if(Log.isDebugEnabled()) {
+					Log.debug("Callback client username is {}", username);
+				}
+				getContext().setUsername(username);
+				return;
 			}
 			
 			throw new IllegalStateException(String.format("Callback identifier missing _ or username token [%s]", remoteIdentification.trim()));

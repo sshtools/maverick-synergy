@@ -384,9 +384,7 @@ public abstract class TransportProtocol<T extends SshContext>
 									EventCodes.ATTRIBUTE_OPERATION_FINISHED,
 									new Date()));
 			
-			this.localIdentification += sshContext.getSoftwareVersionComments()
-												.replace(' ', '_')
-												.replace('-', '_')	+ "\r\n";
+			this.localIdentification += sshContext.getSoftwareVersionComments()	+ "\r\n";
 			// Send our identification String
 			
 			if(!sshContext.isHttpRedirect()) {

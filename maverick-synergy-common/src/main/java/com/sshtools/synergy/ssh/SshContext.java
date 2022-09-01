@@ -233,7 +233,7 @@ public abstract class SshContext extends ProtocolContext implements
 	protected SshEngine daemon;
 
 	protected String softwareVersionComments = "MaverickSynergy";
-
+	protected boolean extendedIdentificationSanitization = true;
 	protected boolean killTunnelsOnRemoteForwardingCancel = false;
 	
 	protected boolean sendIgnorePacketOnIdle = false;
@@ -530,7 +530,11 @@ public abstract class SshContext extends ProtocolContext implements
 	 * @return String
 	 */
 	public String getSoftwareVersionComments() {
-		return softwareVersionComments;
+		if(extendedIdentificationSanitization) {
+			return softwareVersionComments.replace(' ', '_').replace('-', '_');
+		} else {
+			return softwareVersionComments;
+		}
 	}
 
 	/**
@@ -670,7 +674,13 @@ public abstract class SshContext extends ProtocolContext implements
 		return killTunnelsOnRemoteForwardingCancel;
 	}
 
+	public boolean isExtendedIdentificationSanitization() {
+		return extendedIdentificationSanitization;
+	}
 
+	public void setExtendedIdentificationSanitization(boolean extendedIdentificationSanitization) {
+		this.extendedIdentificationSanitization = extendedIdentificationSanitization;
+	}
 
 	/**
 	 * <p>

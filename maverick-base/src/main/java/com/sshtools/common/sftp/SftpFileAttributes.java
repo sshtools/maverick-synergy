@@ -1501,13 +1501,4 @@ public class SftpFileAttributes {
 		}
 		return null;
 	}	
-	
-	public static void main(String[] args) {
-		
-		
-		System.out.println(Long.toBinaryString(VERSION_3_FLAGS));
-		System.out.println(Long.toBinaryString(VERSION_4_FLAGS));
-		System.out.println(Long.toBinaryString(VERSION_5_FLAGS));
-		System.out.println(Long.toBinaryString(VERSION_6_FLAGS));
-	}
 }

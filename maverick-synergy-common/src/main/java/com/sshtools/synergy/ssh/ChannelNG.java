@@ -840,6 +840,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 						for (ChannelEventListener listener : eventListeners) {
 							listener.onChannelClose(ChannelNG.this);
 						}
+						eventListeners.clear();
 						try {
 							if(Objects.nonNull(channelIn)) {
 								channelIn.close();

@@ -40,9 +40,10 @@ import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.UnsignedInteger64;
 
-public class DirectFile extends AbstractDirectFile<DirectFile> {
+public class DirectFile extends AbstractDirectFile<DirectFile> implements AbstractFileV2 {
 	
 	public DirectFile(String path, AbstractFileFactory<DirectFile> fileFactory, File homeDir) throws IOException {
 		super(path, fileFactory, homeDir);
@@ -73,6 +74,10 @@ public class DirectFile extends AbstractDirectFile<DirectFile> {
 	}
 
 	@Override
+	public AbstractFile getParentFile() throws IOException {
+		return new DirectFile(f.getParent(), fileFactory, homeDir);
+	}
+	
 	public SftpFileAttributes getAttributes() throws IOException {
 		
 		if(!f.exists())

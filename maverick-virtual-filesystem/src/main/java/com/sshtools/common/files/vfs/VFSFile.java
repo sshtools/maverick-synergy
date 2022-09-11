@@ -40,14 +40,13 @@ import org.apache.commons.vfs2.util.RandomAccessMode;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileImpl;
 import com.sshtools.common.files.AbstractFileRandomAccess;
+import com.sshtools.common.files.direct.AbstractFileV2;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.util.UnsignedInteger64;
 
-public class VFSFile extends AbstractFileImpl<VFSFile> {
-
-	
+public class VFSFile extends AbstractFileImpl<VFSFile> implements AbstractFileV2 {
 
 	FileObject file;
 	FileSystemOptions opts;
@@ -56,11 +55,7 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 		super(fileFactory);
 		this.file = file;
 	}
-
-	public FileObject getFileObject() {
-		return file;
-	}
-
+	
 	public VFSFile(String path, VFSFileFactory fileFactory) throws IOException {
 		super(fileFactory);
 		this.file = fileFactory.getFileSystemManager().resolveFile(path);
@@ -73,6 +68,14 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 		this.opts = opts;
 	}
 
+	public FileObject getFileObject() {
+		return file;
+	}
+
+	public AbstractFile getParentFile() throws IOException {
+		return new VFSFile(file.getParent(), (VFSFileFactory) fileFactory);
+	}
+	
 	public boolean exists() throws IOException {
 		return file.exists();
 	}

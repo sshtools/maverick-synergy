@@ -22,7 +22,6 @@
 package com.sshtools.common.files.vfs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,12 +29,13 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
+import com.sshtools.common.files.direct.AbstractFileV2;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.util.FileUtils;
 
-public class VirtualMappedFile extends VirtualFileObject {
+public class VirtualMappedFile extends VirtualFileObject implements AbstractFileV2 {
 
 	private String absolutePath;
 	private String name;
@@ -77,9 +77,19 @@ public class VirtualMappedFile extends VirtualFileObject {
 		name = absolutePath.substring(idx + 1);
 	}
 	
+	public AbstractFile getParentFile() throws IOException, PermissionDeniedException {
+		return fileFactory.getFile(FileUtils.stripLastPathElement(getAbsolutePath()));
+	}
+	
 	@Override
 	public synchronized void refresh() {
 		cachedChildren = null;
+		
+		try {
+			getParentFile().refresh();
+		} catch (IOException | PermissionDeniedException e) {
+		}
+	
 		super.refresh();
 	}
 	

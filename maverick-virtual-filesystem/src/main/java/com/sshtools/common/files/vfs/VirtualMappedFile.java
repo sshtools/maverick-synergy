@@ -22,6 +22,8 @@
 package com.sshtools.common.files.vfs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ import java.util.Objects;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.util.FileUtils;
 
 public class VirtualMappedFile extends VirtualFileObject {
@@ -169,6 +172,8 @@ public class VirtualMappedFile extends VirtualFileObject {
 		} else {
 			super.copyFrom(src);
 		}
+		
+		refresh();
 	}
 
 	@Override
@@ -180,6 +185,8 @@ public class VirtualMappedFile extends VirtualFileObject {
 		} else {
 			super.moveTo(target);
 		}
+		
+		target.refresh();
 	}
 
 	private String toActualPath(String virtualPath) throws IOException,
@@ -312,5 +319,77 @@ public class VirtualMappedFile extends VirtualFileObject {
 	public boolean isMount() {
 		return false;
 	}
+
+	@Override
+	public boolean createFolder() throws IOException, PermissionDeniedException {
+		try {
+			return super.createFolder();
+		} finally {
+			refresh();
+		}
+	}
+
+	@Override
+	public boolean createNewFile() throws PermissionDeniedException, IOException {
+		try {
+			return super.createNewFile();
+		} finally {
+			refresh();
+		}
+	}
+
+	@Override
+	public void setAttributes(SftpFileAttributes attrs) throws IOException {
+		try {
+			super.setAttributes(attrs);
+		} finally {
+			refresh();
+		}
+	}
+
+	@Override
+	public OutputStream getOutputStream() throws IOException, PermissionDeniedException {
+		return new RefreshOutputStream(super.getOutputStream());
+	}
+
+	@Override
+	public boolean delete(boolean recursive) throws IOException, PermissionDeniedException {
+		try {
+			return super.delete(recursive);
+		} finally {
+			refresh();
+		}
+	}
+
+	@Override
+	public OutputStream getOutputStream(boolean append) throws IOException, PermissionDeniedException {
+		return new RefreshOutputStream(super.getOutputStream(append));
+	}
 	
+	class RefreshOutputStream extends OutputStream {
+		
+		OutputStream out;
+		RefreshOutputStream(OutputStream out) {
+			this.out = out;
+		}
+		
+		@Override
+		public void close() throws IOException {
+			try {
+				out.close();
+			} finally {
+				refresh();
+			}
+		}
+
+		@Override
+		public void write(byte[] buf, int off, int len) throws IOException {
+			out.write(buf, off, len);
+		}
+
+		@Override
+		public void write(int b) throws IOException {
+			out.write(b);
+		}
+	}
 }

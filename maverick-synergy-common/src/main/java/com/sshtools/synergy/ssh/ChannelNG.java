@@ -124,6 +124,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		return new CachingDataWindow(maximumWindowSpace, true);
 	}
 	
+	protected void disposeCache(CachingDataWindow cachingWindow) {
+		cachingWindow.close();
+	}
+	
 	public InputStream getInputStream() {
 		if(Objects.nonNull(channelIn)) {
 			return channelIn;
@@ -885,7 +889,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		this.channelOut = null;
 		
 		if(Objects.nonNull(cache)) {
-			cache.close();
+			disposeCache(cache);
 		}
 		
 		this.cache = null;

@@ -540,10 +540,14 @@ public class SftpChannel extends AbstractSubsystem {
 			try {
 				// Read the next response message
 				if (sync.requestBlock(requestId, holder)) {
-					msg = new SftpMessage(nextMessage());
-					responses.put(new UnsignedInteger32(msg.getMessageId()),msg);
-					if(Log.isTraceEnabled()) {
-						Log.trace("There are " + responses.size() + " SFTP responses waiting to be processed");
+					try {
+						msg = new SftpMessage(nextMessage());
+						responses.put(new UnsignedInteger32(msg.getMessageId()),msg);
+						if(Log.isTraceEnabled()) {
+							Log.trace("There are " + responses.size() + " SFTP responses waiting to be processed");
+						}
+					} finally {
+						sync.releaseBlock();
 					}
 				}
 			} catch (InterruptedException e) {
@@ -552,9 +556,7 @@ public class SftpChannel extends AbstractSubsystem {
 						SshException.CHANNEL_FAILURE);
 			} catch (IOException ex) {
 				throw new SshException(SshException.INTERNAL_ERROR, ex);
-			} finally {
-				sync.releaseBlock();
-			}
+			} 
 		}
 
 		return (SftpMessage) responses.remove(requestId);

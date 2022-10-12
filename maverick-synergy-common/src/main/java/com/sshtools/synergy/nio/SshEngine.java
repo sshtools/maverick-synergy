@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
@@ -78,8 +79,9 @@ public class SshEngine {
 	ConcurrentLinkedQueue<Runnable> shutdownHooks = new ConcurrentLinkedQueue<Runnable>();
 	Throwable lastError = null;
 	AbstractRequestFuture shutdownFuture = new ChannelRequestFuture();
-	
-	List<SshEngineListener> listeners = Collections.synchronizedList(new ArrayList<SshEngineListener>());
+	Object lock = new Object();
+
+	List<SshEngineListener> listeners = new CopyOnWriteArrayList<SshEngineListener>();
 	final protected static char[] hexArray = "0123456789abcdef".toCharArray();
 
 	private static final String SYNERGY_PUBLIC_KEY = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC/nnUXFJF0Izzc2NFnay0s2eAA40e0FKI70PkwHBMwgtYklVdRsWBtR0V3ZJzkoNZxvzmHg4wacQrySFR57BnZuCgWbHlCQCAgTVwRadWCUE50T/XlWACSmTEugkEHUdrKpG0aJVCZhq7DmUtET2TsvIzYo3bsOLAxB43bTYAj6r1kGpyGvY9Sd5pI78svQi2hmSOdF05IdMzA/bLK5TKgIYEqbNJy/xmUQ3kTb7JreUAV2RjjSakAMt92gl0j2xqcaARn7QebpwMbRk6kAiH0iOK8kx8KaCRcGocZoB+kJuZ8an5EgsFtYdTde9caVjeNFmm2jnn76OP7eSRshvlf";
@@ -200,140 +202,145 @@ public class SshEngine {
 	 * @return <tt>true</tt> if at least one interface started, otherwise
 	 *         <tt>false</tt>.
 	 */
-	public synchronized boolean startup() throws IOException {
-		return startup(System.getProperties());
+	public boolean startup() throws IOException {
+		synchronized(lock) {
+			return startup(System.getProperties());
+		}
 	}
 	
-	public synchronized boolean startup(Properties properties) throws IOException {
-		isStarting = true;
-		lastError = null;
-		try {
+	public boolean startup(Properties properties) throws IOException {
 
-			Log.info("Validating license key for release date {}", new SimpleDateFormat("dd MMM yyyy HH:mm").format(getReleaseDate()));
-			int status = v.verifyLicense(SYNERGY_PUBLIC_KEY, "JADAPTIVE Limited", getReleaseDate().getTime());
-			
-			switch(status & LicenseVerification.LICENSE_VERIFICATION_MASK) {
-			case LicenseVerification.EXPIRED:
-				throw new LicenseException("Your license has expired! visit http://www.jadaptive.com to obtain an update version of the software.");
-			case LicenseVerification.OK:
-				break;
-			case LicenseVerification.INVALID:
-				throw new LicenseException("Your license is invalid!");
-			case LicenseVerification.NOT_LICENSED:
-				throw new LicenseException("The Maverick Synergy Hotfixes API requires a valid license key!");
-			case LicenseVerification.EXPIRED_MAINTENANCE:
-				throw new LicenseException(
-						"Your support and maintenance has expired! You should either downgrade to a version your license supports, or purchase a new maintenance package.");
-			default:
-				throw new LicenseException("An unexpected license status was received " + Integer.toHexString(status));
-			}
-
-			if(Log.isInfoEnabled()) {
-			  Log.info("This Maverick Synergy product is licensed to " + v.getLicensee());
-			}
-			
-			for(SshEngineListener listener : listeners) {
-				listener.starting(this);
-			}
-			
-			shutdownHook = new Thread() {
-				public void run() {
-					if(Log.isInfoEnabled())
-						Log.info("The system is shutting down");
-					shutdownNow(true, getLongValue(properties, 
-							"maverick.config.shutdown.defaultGracePeriod", 5000L));
+		synchronized(lock) {
+			isStarting = true;
+			lastError = null;
+			try {
+	
+				Log.info("Validating license key for release date {}", new SimpleDateFormat("dd MMM yyyy HH:mm").format(getReleaseDate()));
+				int status = v.verifyLicense(SYNERGY_PUBLIC_KEY, "JADAPTIVE Limited", getReleaseDate().getTime());
+				
+				switch(status & LicenseVerification.LICENSE_VERIFICATION_MASK) {
+				case LicenseVerification.EXPIRED:
+					throw new LicenseException("Your license has expired! visit http://www.jadaptive.com to obtain an update version of the software.");
+				case LicenseVerification.OK:
+					break;
+				case LicenseVerification.INVALID:
+					throw new LicenseException("Your license is invalid!");
+				case LicenseVerification.NOT_LICENSED:
+					throw new LicenseException("The Maverick Synergy Hotfixes API requires a valid license key!");
+				case LicenseVerification.EXPIRED_MAINTENANCE:
+					throw new LicenseException(
+							"Your support and maintenance has expired! You should either downgrade to a version your license supports, or purchase a new maintenance package.");
+				default:
+					throw new LicenseException("An unexpected license status was received " + Integer.toHexString(status));
 				}
-			};
-
-			if(Log.isInfoEnabled()) {
-
-				Log.info("Product version: " + version);
-				Log.info("Java version: "
-						+ System.getProperty("java.version"));
-
-				Log.info("OS: " + System.getProperty("os.name") + " " + System.getProperty("os.arch"));
-
-
-				Log.info("Configuring SSH engine");
-			}
-
-			if(Log.isInfoEnabled())
-				Log.info("Configuration complete");
-
-			if (Runtime.getRuntime() != null)
-				Runtime.getRuntime().addShutdownHook(shutdownHook);
-
-			connectThreads = new SelectorThreadPool(
-					new ConnectSelectorThread(),
-					getIntValue(properties, "maverick.config.connect.threads", context.getPermanentConnectThreads()),
-					getIntValue(properties, "maverick.config.channelsPerThread", context.getMaximumChannelsPerThread()),
-					getIntValue(properties, "maverick.config.idlePeriod", context.getIdleServiceRunPeriod()),
-					getIntValue(properties, "maverick.config.idleEvents", context.getInactiveServiceRunsPerIdleEvent()),
-					context.getSelectorProvider());
-
-			transferThreads = new SelectorThreadPool(
-					new TransferSelectorThread(),
-					getIntValue(properties, "maverick.config.transfer.threads", context.getPermanentTransferThreads()),
-					getIntValue(properties, "maverick.config.channelsPerThread", context.getMaximumChannelsPerThread()),
-					getIntValue(properties, "maverick.config.idlePeriod", context.getIdleServiceRunPeriod()),
-					getIntValue(properties, "maverick.config.idleEvents", context.getInactiveServiceRunsPerIdleEvent()),
-					context.getSelectorProvider());
-
-			acceptThreads = new SelectorThreadPool(new AcceptSelectorThread(),
-					getIntValue(properties, "maverick.config.accept.threads", context.getPermanentAcceptThreads()),
-					getIntValue(properties, "maverick.config.channelsPerThread", context.getMaximumChannelsPerThread()),
-					getIntValue(properties, "maverick.config.idlePeriod", context.getIdleServiceRunPeriod()),
-					getIntValue(properties, "maverick.config.idleEvents", context.getInactiveServiceRunsPerIdleEvent()),
-					context.getSelectorProvider());
-
-			ListeningInterface[] interfaces = context.getListeningInterfaces();
-
-			int listening = 0;
-			for (int i = 0; i < interfaces.length; i++) {
-				if (startListeningInterface(interfaces[i]))
-					listening++;
-			}
-
-			if (listening == 0 && startupRequiresListeningInterfaces) {
-				if(Log.isInfoEnabled())
-					Log.info("No listening interfaces were bound!");
-				shutdownNow(false, 0);
-				return false;
-			}
-
-			started = true;
-			
-			for(SshEngineListener listener : listeners) {
-				listener.started(this);
-			}
-			
-			if(getBooleanValue(properties, "maverick.threadDump", false)) {
-				new Thread("ThreadMonitor") {
+	
+				if(Log.isInfoEnabled()) {
+				  Log.info("This Maverick Synergy product is licensed to " + v.getLicensee());
+				}
+				
+				for(SshEngineListener listener : listeners) {
+					listener.starting(this);
+				}
+				
+				shutdownHook = new Thread() {
 					public void run() {
-						while(isStarted()) {
-							
-							try {
-								Thread.sleep(getLongValue(properties, "maverick.threadDumpInterval", 300000L));
-							} catch (InterruptedException e) {
-							}
-							
-							Log.raw(Level.INFO, Utils.generateThreadDump(), true);
-						}
+						if(Log.isInfoEnabled())
+							Log.info("The system is shutting down");
+						shutdownNow(true, getLongValue(properties, 
+								"maverick.config.shutdown.defaultGracePeriod", 5000L));
 					}
-				}.start();
+				};
+	
+				if(Log.isInfoEnabled()) {
+	
+					Log.info("Product version: " + version);
+					Log.info("Java version: "
+							+ System.getProperty("java.version"));
+	
+					Log.info("OS: " + System.getProperty("os.name") + " " + System.getProperty("os.arch"));
+	
+	
+					Log.info("Configuring SSH engine");
+				}
+	
+				if(Log.isInfoEnabled())
+					Log.info("Configuration complete");
+	
+				if (Runtime.getRuntime() != null)
+					Runtime.getRuntime().addShutdownHook(shutdownHook);
+	
+				connectThreads = new SelectorThreadPool(
+						new ConnectSelectorThread(),
+						getIntValue(properties, "maverick.config.connect.threads", context.getPermanentConnectThreads()),
+						getIntValue(properties, "maverick.config.channelsPerThread", context.getMaximumChannelsPerThread()),
+						getIntValue(properties, "maverick.config.idlePeriod", context.getIdleServiceRunPeriod()),
+						getIntValue(properties, "maverick.config.idleEvents", context.getInactiveServiceRunsPerIdleEvent()),
+						context.getSelectorProvider());
+	
+				transferThreads = new SelectorThreadPool(
+						new TransferSelectorThread(),
+						getIntValue(properties, "maverick.config.transfer.threads", context.getPermanentTransferThreads()),
+						getIntValue(properties, "maverick.config.channelsPerThread", context.getMaximumChannelsPerThread()),
+						getIntValue(properties, "maverick.config.idlePeriod", context.getIdleServiceRunPeriod()),
+						getIntValue(properties, "maverick.config.idleEvents", context.getInactiveServiceRunsPerIdleEvent()),
+						context.getSelectorProvider());
+	
+				acceptThreads = new SelectorThreadPool(new AcceptSelectorThread(),
+						getIntValue(properties, "maverick.config.accept.threads", context.getPermanentAcceptThreads()),
+						getIntValue(properties, "maverick.config.channelsPerThread", context.getMaximumChannelsPerThread()),
+						getIntValue(properties, "maverick.config.idlePeriod", context.getIdleServiceRunPeriod()),
+						getIntValue(properties, "maverick.config.idleEvents", context.getInactiveServiceRunsPerIdleEvent()),
+						context.getSelectorProvider());
+	
+				ListeningInterface[] interfaces = context.getListeningInterfaces();
+	
+				int listening = 0;
+				for (int i = 0; i < interfaces.length; i++) {
+					if (startListeningInterface(interfaces[i]))
+						listening++;
+				}
+	
+				if (listening == 0 && startupRequiresListeningInterfaces) {
+					if(Log.isInfoEnabled())
+						Log.info("No listening interfaces were bound!");
+					shutdownNow(false, 0);
+					return false;
+				}
+	
+				started = true;
+				
+				for(SshEngineListener listener : listeners) {
+					listener.started(this);
+				}
+				
+				if(getBooleanValue(properties, "maverick.threadDump", false)) {
+					new Thread("ThreadMonitor") {
+						public void run() {
+							while(isStarted()) {
+								
+								try {
+									Thread.sleep(getLongValue(properties, "maverick.threadDumpInterval", 300000L));
+								} catch (InterruptedException e) {
+								}
+								
+								Log.raw(Level.INFO, Utils.generateThreadDump(), true);
+							}
+						}
+					}.start();
+				}
+				return true;
+	
+			} catch (Throwable ex) {
+				if(Log.isInfoEnabled())
+					Log.info("The engine failed to start", ex);
+				lastError = ex;
+				shutdownNow(false, 0);
+				if (ex instanceof LicenseException)
+					throw (IOException) ex;
+				return false;
+			} finally {
+				isStarting = false;
 			}
-			return true;
-
-		} catch (Throwable ex) {
-			if(Log.isInfoEnabled())
-				Log.info("The engine failed to start", ex);
-			lastError = ex;
-			shutdownNow(false, 0);
-			if (ex instanceof LicenseException)
-				throw (IOException) ex;
-			return false;
-		} finally {
-			isStarting = false;
 		}
 
 	}

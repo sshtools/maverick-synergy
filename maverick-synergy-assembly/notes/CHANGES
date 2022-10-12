@@ -1,29 +1,33 @@
-Maverick Synergy 3.1.0 - TBC
+Maverick Synergy 3.0.14 - TBC
 
-Features
-  o Now requires Java 11, some components requires at least Java 16.
-  o Now JPMS compliant. You can use in modularised Java applications. Note, maverick-synergy-virtual-session is not modularised, due to 3rd party dependencies that are not modularised.
-  o Tests split into separate Maven projects. This is to allow development in Eclipse, which does not yet allow main source and tests that are modular to exist in the same project.
-  o PuTTY support moved to it's own module, removing the Bouncycastle requirement in the core classes.
-  o Jzlib dependency removed and replaced with standard Java compression API.
-  o Extendable SSH Agent transports. In order to allow optional native unix domain socket support, and to reduce 3rd party dependencies, you must now choose one or more of the `AgentProvider` implementations. So add at least one of maverick-sshagent-jdk16-sockets, maverick-sshagent-named-pipes or maverick-ssh-agent-jni-sockets.
-  o Unix Domain Socket tunnels. This requires Java 16 or above, and you must include either maverick-synergy-jdk16-server or maverick-synergy-jdk16-client. See documentation for usage.
-  o FileTransferProgress interface now provides default methods
-  o ServiceLoader is now the basis of the loading of components (i.e. ciphers, kex, public keys, hmac, compress). To achieve this, each component now has an associated factory class responsible for creating the implementation. To add custom ciphers etc, simple implement the cipher, it's factory, and add the service using the standard mechanism using module-info.java or a META-INF/services files.
-  o Components may be enabled and disabled using ComponentManager.setDefaultEnabled().
-  o DirectFileJava7 has been deprecated and it's features moved to DirectFile. 
- 
+Bug Fixes
+  o Release all event listeners from channel collection when all events are exhausted.
+  o Improvements to the way VirtualMappedFile caches children so that cache is cleared when events occur that could change contents of the directory.
+  o SFTP thread synchronizer releases lock on access to reading thread even when the thread had not taken the lock itself.
+  o Changed synchronization strategy in SshEngine to prevent slow shutdown. Also prevents the often seen RejectedExecutionException on shutdown.
+  
 =================
 =  HISTORY      =
 =================
 
-Maverick Synergy 3.0.13 - TBC
+Maverick Synergy 3.0.13 - Sep 2, 2022
 
+Features
+  o A number of improvements to CallbackServer to make it easier to spin up a reverse SSH service.
+  
 Bug Fixes
+  o SshAgentClient will not connect to OpenSSH 8.9 agent because new extensions implemented by OpenSSH are fatal. The SshAgentClient now sends a failure message instead.
   o VirtualFileFactory much check the parent is actually a directory when listing children because it is possible that the parent folder does not actually exist, for example, if the current path is the parent element of a mount (/public does not actually exist when /public/foo is mounted).
   o When supported SFTP attributes is not null, only process flags when there is actually a value set. 
-  
------------------
+  o Added additional cleanup code after experiencing OOM in production use of the callback server using port forwarding.
+  o SshClientCommand would not pass on terminal resize events. 
+  o Added debug for authenticated future to track apparent race condition in callback session.
+  o Moved AuthenticatedFuture instance from SshContext to TransportProtocol so that it can reference its transport in debug output.
+  o Option to disable the sanitization of the identification strings software/version/comments.
+  o Both the ConnectionProtocol and AuthenticationProtocol were notifying the authenticated future that it is complete. This has now been changed to just the ConnectionProtocol. 
+  o CallbackSession would not cleanup a connected session if an error occurred during setup.
+ 
+------------------
 
 Maverick Synergy 3.0.12 - Aug 17, 2022 
 
@@ -48,8 +52,8 @@ Bug Fixes
   o Allow configuration of environment and working directory in Shell command.
   o Pass on window resize events in CallbackShell.
   o Expand current working directory . to absolute path in default VFSFileFactory to avoid relative URI errors.
-
-------------------
+  
+-------------------
 
 Maverick Synergy 3.0.11 - Jun 29, 2022  
 
@@ -66,6 +70,7 @@ Bug Fixes
   o getTotalBytesIn / getTotalBytesOut methods on Connection<T extends SshContext> were present but not on implemented interface SshConnection. 
   
 -----------------
+
 Maverick Synergy 3.0.10 - May 4, 2022  
 
 Bug Fixes

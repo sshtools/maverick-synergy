@@ -24,6 +24,7 @@ package com.sshtools.common.ssh;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -150,12 +151,15 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 
 			if (!shutdown) {
 
+				shutdown = true;
+
 				if(Log.isTraceEnabled()) {
 					Log.trace("{}: Submitting clean up operation to executor service", queueName);
 				}
 
-				try {
-					getContext().getExecutorService().submit(new Runnable() {
+				ExecutorService executorService = getContext().getExecutorService();
+				if(!executorService.isShutdown()) {
+					executorService.submit(new Runnable() {
 						public void run() {
 							if (operationFuture != null) {
 					
@@ -179,13 +183,6 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 						}
 					});
 				}
-				catch(RejectedExecutionException ree) {
-					if(Log.isTraceEnabled()) {
-						Log.trace("{}: Cleanup task rejected", queueName);
-					}
-				}
-
-				shutdown = true;
 			}
 		}
 	}

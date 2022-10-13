@@ -38,9 +38,13 @@ import java.util.ServiceLoader;
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.Authenticator;
 import com.sshtools.common.command.ExecutableCommand.ExecutableCommandFactory;
+import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.files.direct.DirectFileFactory;
+import com.sshtools.common.files.direct.DirectFileHomeFactory;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.IPPolicy;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.publickey.InvalidPassphraseException;
@@ -49,6 +53,7 @@ import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.scp.ScpCommand;
 import com.sshtools.common.ssh.AbstractRequestFuture;
 import com.sshtools.common.ssh.SecurityLevel;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
@@ -73,7 +78,13 @@ public abstract class AbstractSshServer implements Closeable {
 			Collections.unmodifiableCollection(
 					Arrays.asList(new NoOpPasswordAuthenticator(),
 							new NoOpPublicKeyAuthenticator()));
-	protected FileFactory fileFactory;
+	protected FileFactory fileFactory = new FileFactory() {
+		@Override
+		public AbstractFileFactory<?> getFileFactory(SshConnection con) throws IOException, PermissionDeniedException {
+			return new DirectFileFactory(new File(new DirectFileHomeFactory().getHomeDirectory(con)), true);
+		}	
+	};
+	
 	ForwardingPolicy forwardingPolicy = new ForwardingPolicy();
 	
 	ChannelFactory<SshServerContext> channelFactory; 
@@ -111,6 +122,10 @@ public abstract class AbstractSshServer implements Closeable {
 	
 	public void setSecurityLevel(SecurityLevel securityLevel) {
 		this.securityLevel = securityLevel;
+	}
+	
+	public SecurityLevel getSecurityLevel() {
+		return securityLevel;
 	}
 	
 	public void addInterface(String addressToBind, int portToBind) throws IOException {

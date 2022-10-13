@@ -27,17 +27,31 @@ import java.io.IOException;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.permissions.PermissionDeniedException;
 
-public class DirectFileFactory extends AbstractDirectFileFactory<DirectFile> {
+ublic class DirectFileFactory extends AbstractDirectFileFactory<DirectFile> {
 
+	File defaultPath = new File(".");
+	boolean sandbox = false;
+	
 	public DirectFileFactory(File homeDirectory) {
 		super(homeDirectory);
 	}
 	
+	public DirectFileFactory(File homeDirectory, boolean sandbox) {
+		super(homeDirectory);
+		this.sandbox = sandbox;
+	}
+	
 	public DirectFile getFile(String path)
 			throws PermissionDeniedException, IOException {
+
+		DirectFile file =  new DirectFile(path, this, homeDirectory);
 		
-		return new DirectFile(path, this, homeDirectory);
-		
+		if(sandbox) {
+			if(!file.getCanonicalPath().startsWith(homeDirectory.getCanonicalPath())) {
+				throw new PermissionDeniedException("You cannot access paths other than your home directory");
+			}
+		}
+		return file;
 	}
 
 	public Event populateEvent(Event evt) {

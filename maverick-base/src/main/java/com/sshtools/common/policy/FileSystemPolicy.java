@@ -59,7 +59,6 @@ public class FileSystemPolicy extends Permissions {
 	private int sftpMinWindowSize = 131072;
 	
 	public FileSystemPolicy() {
-	
 	}
 	
 	public long getConnectionUploadQuota() {
@@ -234,6 +233,9 @@ public class FileSystemPolicy extends Permissions {
 				throws IOException, PermissionDeniedException {
 			AbstractFileFactory<?> ff = (AbstractFileFactory<?>) con.getProperty(CACHED_FILE_FACTORY);
 			if(Objects.isNull(ff)) {
+				if(Objects.isNull(fileFactory)) {
+					throw new PermissionDeniedException("Invalid file system configuration");
+				}
 				ff = fileFactory.getFileFactory(con);
 				con.setProperty(CACHED_FILE_FACTORY, ff);
 			}

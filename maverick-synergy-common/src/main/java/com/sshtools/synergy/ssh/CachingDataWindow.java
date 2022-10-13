@@ -51,7 +51,7 @@ public class CachingDataWindow {
 		return Objects.nonNull(cache) && cache.hasRemaining();
 	}
 
-	public void close() {
+	public synchronized void close() {
 		this.open = false;
 		this.cache = null;
 	}

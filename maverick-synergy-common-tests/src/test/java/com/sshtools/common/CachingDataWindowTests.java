@@ -20,6 +20,7 @@
  */
 
 package com.sshtools.common;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -69,6 +70,37 @@ public class CachingDataWindowTests extends TestCase {
 		
 	}
 	
+	public void testClosedCacheOutput() {
+		
+		final CachingDataWindow window = new CachingDataWindow(1024000, true);
+
+		byte[] buffer = new byte[256];
+		final Random r = new Random();
+		ByteBuffer b = ByteBuffer.allocate(256);
+		
+		r.nextBytes(buffer);
+		try {
+			window.put(ByteBuffer.wrap(buffer));
+		} catch (EOFException e1) {
+			fail();
+		}
+		
+		window.close();
+		
+		try {
+			assertEquals(256, window.get(b));
+		} catch (EOFException e) {
+			fail();
+		}
+		
+		try {
+			window.get(buffer, 0, buffer.length);
+			fail();
+		} catch(EOFException e) {
+		}
+		
+		
+	}
 	/**
 	 * Write data to the cache but read it in uneven chunks
 	 */
@@ -108,10 +140,9 @@ public class CachingDataWindowTests extends TestCase {
 	
 		byte[] b2 = new byte[100];
 		while(window.isOpen()) {
-			
-			int count = window.get(ByteBuffer.wrap(b2));
 
 			try {
+			int count = window.get(ByteBuffer.wrap(b2));
 				System.out.write(b2, 0, count);
 				output.write(b2, 0, count);
 			} catch (IOException e) {

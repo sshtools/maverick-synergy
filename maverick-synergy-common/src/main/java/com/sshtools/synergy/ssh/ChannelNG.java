@@ -420,7 +420,12 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 			listener.onChannelDataIn(this, data);
 		}
 		if(Objects.nonNull(cache)) {
-			cache.put(data);
+			try {
+				cache.put(data);
+			} catch (EOFException e) {
+				Log.error("Attempt to write data to channel cache failed because the cache is closed");
+				close();
+			}
 		} else {
 			evaluateWindowSpace();
 		}
@@ -1408,7 +1413,11 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 					throw new InterruptedIOException("No data received within the timeout threshold");
 				}
 
-				r = streamCache.get(ByteBuffer.wrap(b, off, len));
+				try {
+					r = streamCache.get(ByteBuffer.wrap(b, off, len));
+				} catch (EOFException e) {
+					return -1;
+				}
 
 			}
 			

@@ -23,6 +23,7 @@
 package com.sshtools.server;
 
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -601,7 +602,12 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 
 	protected void onSessionData(ByteBuffer data) {
 		synchronized (localWindow) {
-			cache.put(data);
+			try {
+				cache.put(data);
+			} catch (EOFException e) {
+				Log.error("Attempt to write session data to channel cache failed because the cache is closed");
+				close();
+			}
 		}		
 	}
 	/**

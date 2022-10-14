@@ -21,6 +21,7 @@
 
 package com.sshtools.synergy.ssh;
 
+import java.io.EOFException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -52,16 +53,21 @@ public class CachingDataWindow {
 	}
 
 	public synchronized void close() {
-		this.open = false;
-		this.cache = null;
+		
+		if(this.open) {
+			this.open = false;
+			if(!cache.hasRemaining()) {
+				this.cache = null;
+			}
+		}
 	}
 	
-	public synchronized void put(ByteBuffer data) {
+	public synchronized void put(ByteBuffer data) throws EOFException {
 		
 		// Do not use isOpen as it checks for remaining too. If its closed, its closed
 		// and should not accept any more data at all.
 		if(!open) {
-			throw new IllegalStateException("CachingDataWindow has been closed!");
+			throw new EOFException();
 		}
 		
 		cache.compact();
@@ -104,11 +110,9 @@ public class CachingDataWindow {
 
 	}
 
-	public synchronized int get(byte[] tmp, int offset, int length) {
+	public synchronized int get(byte[] tmp, int offset, int length) throws EOFException {
 		
-		if(!isOpen()) {
-			throw new IllegalStateException("CachingDataWindow has been closed!");
-		}
+		verifyOpen();
 		
 		if(blocking) {
 			while(!cache.hasRemaining() && open) {
@@ -134,11 +138,16 @@ public class CachingDataWindow {
 		
 	}
 	
-	public synchronized int get(ByteBuffer buffer) {
-		
+	private void verifyOpen() throws EOFException {
 		if(!isOpen()) {
-			throw new IllegalStateException("CachingDataWindow has been closed!");
+			this.cache = null;
+			throw new EOFException();
 		}
+	}
+
+	public synchronized int get(ByteBuffer buffer) throws EOFException {
+		
+		verifyOpen();
 			
 		if(blocking) {
 			while(!cache.hasRemaining() && open) {

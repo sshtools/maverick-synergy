@@ -21,6 +21,7 @@
 
 package com.sshtools.client;
 
+import java.io.EOFException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -76,7 +77,12 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 		super.onExtendedData(data, type);
 		
 		if(type==SSH_EXTENDED_DATA_STDERR) {
-			extendedData.put(data);
+			try {
+				extendedData.put(data);
+			} catch (EOFException e) {
+				Log.error("Attempt to write extended data to channel cache failed because the cache is closed");
+				close();
+			}
 		}
 	}
 	

@@ -2556,7 +2556,7 @@ public class SftpChannel extends AbstractSubsystem {
 			} else {
 				close();
 				throw new SshException(
-						"The server responded with an unexpected message!",
+						String.format("The server responded with an unexpected message! id=%d", bar.getType()),
 						SshException.CHANNEL_FAILURE);
 			}
 		} catch (SshIOException ex) {

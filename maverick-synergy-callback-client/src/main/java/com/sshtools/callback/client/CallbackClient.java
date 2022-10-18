@@ -156,7 +156,13 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		}
 	}
 	
-	public void stop() {
+	public void stop() {	
+		for(CallbackSession client : new ArrayList<CallbackSession>(clients)) {
+			stop(client);
+		}
+	}
+	
+	public void shutdown() {
 		
 		for(CallbackSession client : new ArrayList<CallbackSession>(clients)) {
 			stop(client);

@@ -315,6 +315,10 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 					if (!kdfName.equals("bcrypt")) {
 						throw new IOException(String.format("Unsupported KDF type %s", kdfName));
 					}
+					
+					if(passphrase==null) {
+						throw new InvalidPassphraseException();
+					}
 
 					switch(cipherName) {
 					case "aes128-cbc":

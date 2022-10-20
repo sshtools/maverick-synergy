@@ -1,0 +1,15 @@
+Maverick Synergy 3.1.0 - TBC
+
+Features
+  o Now requires Java 11, some components requires at least Java 16.
+  o Now JPMS compliant. You can use in modularised Java applications. Note, maverick-synergy-virtual-session is not modularised, due to 3rd party dependencies that are not modularised.
+  o Tests split into separate Maven projects. This is to allow development in Eclipse, which does not yet allow main source and tests that are modular to exist in the same project.
+  o PuTTY support moved to it's own module, removing the Bouncycastle requirement in the core classes.
+  o Jzlib dependency removed and replaced with standard Java compression API.
+  o Extendable SSH Agent transports. In order to allow optional native unix domain socket support, and to reduce 3rd party dependencies, you must now choose one or more of the `AgentProvider` implementations. So add at least one of maverick-sshagent-jdk16-sockets, maverick-sshagent-named-pipes or maverick-ssh-agent-jni-sockets.
+  o Unix Domain Socket tunnels. This requires Java 16 or above, and you must include either maverick-synergy-jdk16-server or maverick-synergy-jdk16-client. See documentation for usage.
+  o FileTransferProgress interface now provides default methods
+  o ServiceLoader is now the basis of the loading of components (i.e. ciphers, kex, public keys, hmac, compress). To achieve this, each component now has an associated factory class responsible for creating the implementation. To add custom ciphers etc, simple implement the cipher, it's factory, and add the service using the standard mechanism using module-info.java or a META-INF/services files.
+  o Components may be enabled and disabled using ComponentManager.setDefaultEnabled().
+  o DirectFileJava7 has been deprecated and it's features moved to DirectFile. 
+  

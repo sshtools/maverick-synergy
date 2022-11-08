@@ -22,6 +22,7 @@
 package com.sshtools.common.files.vfs;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -137,6 +138,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 			if(mountPath.startsWith(currentPath) && !mountPath.equals(currentPath)) {
 				String childPath = FileUtils.checkEndsWithNoSlash(mountPath.substring(currentPath.length()));
 				List<String> childPaths = FileUtils.getParentPaths(childPath);
+				Collections.reverse(childPaths);
 				boolean intermediate = false;
 				if(intermediate = !childPaths.isEmpty()) {
 					childPath = FileUtils.checkEndsWithNoSlash(childPaths.get(0));

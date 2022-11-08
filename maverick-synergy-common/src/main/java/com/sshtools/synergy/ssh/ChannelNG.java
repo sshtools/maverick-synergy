@@ -517,6 +517,8 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 					throw new IOException("Channel has been closed");
 				}
 				
+				int window = remoteWindow.getWindowSpace();
+				
 				int count = Math.min(remoteWindow.getMaximumPacketSize(), 
 						Math.min(remoteWindow.getWindowSpace(), buf.remaining()));
 				
@@ -547,7 +549,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 					for (ChannelEventListener listener : eventListeners) {
 						listener.onChannelDataOut(this, processedBuffer);
 					}
-					connection.sendMessage(new ChannelData(processedBuffer, type, remoteWindow.getWindowSpace()));
+					connection.sendMessage(new ChannelData(processedBuffer, type, window));
 				} else {
 					
 					if(Log.isTraceEnabled()) {	
@@ -557,7 +559,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 					for (ChannelEventListener listener : eventListeners) {
 						listener.onChannelDataOut(this, buf);
 					}
-					connection.sendMessage(lastMessage = new ChannelData(buf, type, remoteWindow.getWindowSpace()));
+					connection.sendMessage(lastMessage = new ChannelData(buf, type, window));
 				}
 			
 				

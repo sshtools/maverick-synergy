@@ -280,4 +280,8 @@ public class SshPrivateKeyFileFactory {
 	public static SshPrivateKeyFile parse(Path path) throws IOException {
 		return parse(Files.newInputStream(path));
 	}
+
+	public static SshPrivateKeyFile parse(File identityFile) throws IOException {
+		return parse(identityFile.toPath());
+	}
 }

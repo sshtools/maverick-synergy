@@ -26,11 +26,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-import com.sshtools.common.files.direct.AbstractFileV2;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 
-public class AbstractFileAdapter implements AbstractFile, AbstractFileV2 {
+public class AbstractFileAdapter implements AbstractFile {
 
 	protected AbstractFile file;
 	
@@ -42,10 +41,7 @@ public class AbstractFileAdapter implements AbstractFile, AbstractFileV2 {
 	}
 	
 	public AbstractFile getParentFile() throws IOException, PermissionDeniedException {
-		if(file instanceof AbstractFileV2) {
-			return ((AbstractFileV2)file).getParentFile();
-		}
-		return null;
+		return file.getParentFile();
 	}
 	
 	protected void init(AbstractFile file) {

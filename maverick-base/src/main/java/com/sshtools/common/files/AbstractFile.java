@@ -32,41 +32,43 @@ import com.sshtools.common.sftp.SftpFileAttributes;
 
 public interface AbstractFile {
 
-	public abstract String getName();
+	public String getName();
 
-	public abstract InputStream getInputStream() throws IOException, PermissionDeniedException;
+	public InputStream getInputStream() throws IOException, PermissionDeniedException;
 
-	public abstract boolean exists() throws IOException, PermissionDeniedException;
+	public boolean exists() throws IOException, PermissionDeniedException;
 
-	public abstract List<AbstractFile> getChildren() throws IOException,
+	public List<AbstractFile> getChildren() throws IOException,
 			PermissionDeniedException;
 
-	public abstract String getAbsolutePath() throws IOException, PermissionDeniedException;
+	public String getAbsolutePath() throws IOException, PermissionDeniedException;
 
-	public abstract boolean isDirectory() throws IOException, PermissionDeniedException;
+	public AbstractFile getParentFile() throws IOException, PermissionDeniedException;
+	
+	public boolean isDirectory() throws IOException, PermissionDeniedException;
 
-	public abstract boolean isFile() throws IOException, PermissionDeniedException;
+	public boolean isFile() throws IOException, PermissionDeniedException;
 
-	public abstract OutputStream getOutputStream() throws IOException, PermissionDeniedException;
+	public OutputStream getOutputStream() throws IOException, PermissionDeniedException;
 
-	public abstract boolean isHidden() throws IOException, PermissionDeniedException;
+	public boolean isHidden() throws IOException, PermissionDeniedException;
 
-	public abstract boolean createFolder() throws PermissionDeniedException, IOException;
+	public boolean createFolder() throws PermissionDeniedException, IOException;
 
-	public abstract boolean isReadable() throws IOException, PermissionDeniedException;
+	public boolean isReadable() throws IOException, PermissionDeniedException;
 
-	public abstract void copyFrom(AbstractFile src) throws IOException,
+	public void copyFrom(AbstractFile src) throws IOException,
 			PermissionDeniedException;
 
-	public abstract void moveTo(AbstractFile target) throws IOException,
+	public void moveTo(AbstractFile target) throws IOException,
 			PermissionDeniedException;
 
-	public abstract boolean delete(boolean recursive) throws IOException,
+	public boolean delete(boolean recursive) throws IOException,
 			PermissionDeniedException;
 
-	public abstract SftpFileAttributes getAttributes() throws FileNotFoundException, IOException, PermissionDeniedException;
+	public SftpFileAttributes getAttributes() throws FileNotFoundException, IOException, PermissionDeniedException;
 
-	public abstract void refresh();
+	public void refresh();
 	
 	long lastModified() throws IOException, PermissionDeniedException;
 

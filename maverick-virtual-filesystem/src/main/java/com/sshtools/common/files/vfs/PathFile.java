@@ -79,6 +79,8 @@ public class PathFile implements AbstractFile {
 	public boolean exists() throws IOException {
 		return Files.exists(path, LinkOption.NOFOLLOW_LINKS);
 	}
+	
+	
 
 	@Override
 	public String getAbsolutePath() throws IOException, PermissionDeniedException {
@@ -327,5 +329,10 @@ public class PathFile implements AbstractFile {
 	@Override
 	public String readSymbolicLink() throws IOException, PermissionDeniedException {
 		return Files.readSymbolicLink(path).toString();
+	}
+
+	@Override
+	public AbstractFile getParentFile() throws IOException, PermissionDeniedException {
+		return new PathFile(path.getParent(), factory);
 	}
 }

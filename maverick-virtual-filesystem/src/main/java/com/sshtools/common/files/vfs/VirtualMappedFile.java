@@ -29,13 +29,12 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
-import com.sshtools.common.files.direct.AbstractFileV2;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.util.FileUtils;
 
-public class VirtualMappedFile extends VirtualFileObject implements AbstractFileV2 {
+public class VirtualMappedFile extends VirtualFileObject {
 
 	private String absolutePath;
 	private String name;

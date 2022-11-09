@@ -27,7 +27,7 @@ import java.io.IOException;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.permissions.PermissionDeniedException;
 
-ublic class DirectFileFactory extends AbstractDirectFileFactory<DirectFile> {
+public class DirectFileFactory extends AbstractDirectFileFactory<DirectFile> {
 
 	File defaultPath = new File(".");
 	boolean sandbox = false;

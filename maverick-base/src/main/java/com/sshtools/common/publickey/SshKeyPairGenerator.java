@@ -74,6 +74,7 @@ public class SshKeyPairGenerator {
 	public static final String SSH2_RSA = "ssh-rsa";
 	public static final String ECDSA = "ecdsa";
 	public static final String ED25519 = "ed25519";
+	public static final String ED448 = "ed448";
 
 	/**
 	 * Generate a new key pair using the default bit size.
@@ -89,6 +90,8 @@ public class SshKeyPairGenerator {
 		case ECDSA:
 			return generateKeyPair(algorithm, 256);
 		case ED25519:
+			return generateKeyPair(algorithm, 0);
+		case ED448:
 			return generateKeyPair(algorithm, 0);
 		case SSH2_RSA:
 		case "rsa":
@@ -113,6 +116,9 @@ public class SshKeyPairGenerator {
 		case ED25519:
 		case "ssh-ed25519":
 			return ComponentManager.getDefaultInstance().generateEd25519KeyPair();
+		case ED448:
+		case "ssh-ed448":
+			return ComponentManager.getDefaultInstance().generateEd448KeyPair();
 		case ECDSA:
 			return ComponentManager.getDefaultInstance().generateEcdsaKeyPair(bits);
 		case SSH2_RSA:

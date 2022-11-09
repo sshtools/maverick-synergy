@@ -342,6 +342,9 @@ public abstract class ComponentManager {
 			throws SshException;
 
 	
+
+	public abstract SshKeyPair generateEd448KeyPair() throws SshException;
+	
 	
 	public abstract SshKeyPair generateEd25519KeyPair() throws SshException;
 	
@@ -501,4 +504,5 @@ public abstract class ComponentManager {
 			Log.info(componentFactory.list(""));
 		}
 	}
+
 }

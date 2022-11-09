@@ -299,6 +299,22 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 			throw new SshException(e);
 		}
 	}
+	
+	public SshKeyPair generateEd448KeyPair() throws SshException {
+		
+		try {
+			KeyPairGenerator keyGen = KeyPairGenerator.getInstance(JCEAlgorithms.ED448);
+			KeyPair kp = keyGen.generateKeyPair();
+
+			SshKeyPair pair = new SshKeyPair();
+			pair.setPrivateKey(new SshEd448PrivateKeyJCE(kp.getPrivate()));
+			pair.setPublicKey(new SshEd448PublicKeyJCE(kp.getPublic()));
+			
+			return pair;
+		} catch (NoSuchAlgorithmException e) {
+			throw new SshException(e);
+		}
+	}
 
 	public SshKeyPair generateEcdsaKeyPair(int bits) throws SshException {
 

@@ -173,6 +173,18 @@ public class SshKeyUtils {
 		return makeRSAWithSHA512Signature(getPrivateKey(key, passphrase));
 	}
 	
+	public static String getFingerprint(File key) throws IOException {
+		return SshKeyFingerprint.getFingerprint(getPublicKey(key));
+	}
+	
+	public static String getFingerprint(String key) throws IOException {
+		return SshKeyFingerprint.getFingerprint(getPublicKey(key));
+	}
+	
+	public static String getFingerprint(InputStream key) throws IOException {
+		return SshKeyFingerprint.getFingerprint(getPublicKey(key));
+	}
+	
 	public static String getFingerprint(SshPublicKey key) {
 		return SshKeyFingerprint.getFingerprint(key);
 	}

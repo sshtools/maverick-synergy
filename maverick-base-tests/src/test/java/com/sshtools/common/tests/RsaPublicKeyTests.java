@@ -39,6 +39,8 @@ public abstract class RsaPublicKeyTests extends AbstractPublicKeyTests {
 	
 	public void testRsaKeyGeneration1024bitsNoPassphrase() throws IOException, SshException, InvalidPassphraseException {
 		testKeyGeneration(SshKeyPairGenerator.SSH2_RSA, 1024, null, "RSA public key tests", SshPrivateKeyFileFactory.OPENSSH_FORMAT);
+	
+		
 	}
 	
 	public void testRsaKeyNonStandard2016bitsNoPassphrase() throws IOException, SshException, InvalidPassphraseException {

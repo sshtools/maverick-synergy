@@ -237,20 +237,22 @@ public class AdaptiveConfiguration {
 	
 	public static String getPatternConfig(String key, String... values) {
 		for(String value : values) {
-			for(String pattern : patternConfigs.keySet()) {
-				if(value.matches(pattern)) {
-					String result = patternConfigs.get(pattern).get(key);
-					if(result!=null) {
-						if(Log.isDebugEnabled()) {
-							Log.debug("Matched {} from pattern configuration {} [{}] with value {}", key, value, pattern, result);
+			if(Utils.isNotBlank(value)) {
+				for(String pattern : patternConfigs.keySet()) {
+					if(value.matches(pattern)) {
+						String result = patternConfigs.get(pattern).get(key);
+						if(result!=null) {
+							if(Log.isDebugEnabled()) {
+								Log.debug("Matched {} from pattern configuration {} [{}] with value {}", key, value, pattern, result);
+							}
+							return result;
 						}
-						return result;
 					}
 				}
-			}
-			String result = getSystemProperty(formatKey(value, key));
-			if(result!=null) {
-				return result;
+				String result = getSystemProperty(formatKey(value, key));
+				if(result!=null) {
+					return result;
+				}
 			}
 		}
 		

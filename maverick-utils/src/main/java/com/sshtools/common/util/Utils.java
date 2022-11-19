@@ -325,6 +325,21 @@ public class Utils {
 		return b.toString();
 	}
 
+	public static String csv(String separator, String... elements) {
+		return csv(separator, Arrays.asList(elements));
+	}
+	
+	public static String csv(String separator, Collection<String> elements) {
+		StringBuffer b = new StringBuffer();
+		for(String element : elements) {
+			if(b.length() > 0) {
+				b.append(separator);
+			}
+			b.append(element);
+		}
+		return b.toString();
+	}
+	
 	public static String randomAlphaNumericString(int length) {
 		 return new BigInteger(length * 8, new Random()).toString(32).substring(0,  length);
 	}

@@ -35,12 +35,19 @@ public class SshdConfigFileWriter {
 					//we add new line before not after we write line, else we will end up with
 					//new line at the end of file, which may lead to extra line at the end of the file, compared to original file,
 					//hence better check before.
-					for(SshdConfigFileEntry keyEntry : sshdConfigFile.getGlobalEntry().getKeyEntries().values()) {
-						if (start) {
-							bw.newLine();
+					for(SshdConfigFileEntry keyEntry : sshdConfigFile.getGlobalConfiguration().getKeyEntries().values()) {
+						while(true) {
+							if (start) {
+								bw.newLine();
+							}
+							start = true;
+							bw.write(keyEntry.getFormattedLine());
+							if(keyEntry.hasNext()) {
+								keyEntry = keyEntry.getNext();
+								continue;
+							}
+							break;
 						}
-						bw.write(keyEntry.getFormattedLine());
-						start = true;
 					}
 					
 					Iterator<MatchEntry> matchEntriesIterator = sshdConfigFile.getMatchEntriesIterator();
@@ -73,10 +80,18 @@ public class SshdConfigFileWriter {
 						
 						//The entries
 						for(SshdConfigFileEntry keyEntry : matchEntry.getKeyEntries().values()) {
-							if (start) {
-								bw.newLine();
+							
+							while(true) {
+								if (start) {
+									bw.newLine();
+								}
+								bw.write(keyEntry.getFormattedLine());
+								if(keyEntry.hasNext()) {
+									keyEntry = keyEntry.getNext();
+									continue;
+								}
+								break;
 							}
-							bw.write(keyEntry.getFormattedLine());
 						}
 					}
 					

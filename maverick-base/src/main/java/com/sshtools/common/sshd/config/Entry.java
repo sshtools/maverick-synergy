@@ -40,7 +40,7 @@ public class Entry {
 		}); 
 	}
 	
-	public SshdConfigFileEntry findEntry(final String key) {
+	public SshdConfigFileEntry find(final String key) {
 		return executeRead(new Callable<SshdConfigFileEntry>() {
 
 			@Override
@@ -50,8 +50,8 @@ public class Entry {
 		});
 	}
 	
-	public void enableEntry(String key, String value) {
-		SshdConfigFileEntry e = findEntry(key);
+	public void enable(String key, String value) {
+		SshdConfigFileEntry e = find(key);
 		if(Objects.nonNull(e)) {
     		e.setValue(value);
     		e.setCommentedOut(false);
@@ -60,8 +60,8 @@ public class Entry {
     	}
 	}
 	
-	public void disableEntry(String key) {
-		SshdConfigFileEntry e = findEntry(key);
+	public void disable(String key) {
+		SshdConfigFileEntry e = find(key);
 		if(Objects.nonNull(e)) {
     		e.setCommentedOut(true);
     	} 
@@ -241,7 +241,15 @@ public class Entry {
 			@Override
 			public Void call() throws Exception {
 				String key = resolveKey(sshdConfigFileEntry);
-				Entry.this.keyEntries.put(key, sshdConfigFileEntry);
+				if(Entry.this.keyEntries.containsKey(key)) {
+					SshdConfigFileEntry entry = Entry.this.keyEntries.get(key);
+					while(entry.hasNext()) {
+						entry = entry.getNext();
+					}
+					entry.setNext(sshdConfigFileEntry);
+				} else {
+					Entry.this.keyEntries.put(key, sshdConfigFileEntry);
+				}
 				return null;
 			}
 		});

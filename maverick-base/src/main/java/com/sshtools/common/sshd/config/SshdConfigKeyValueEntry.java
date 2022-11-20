@@ -1,10 +1,15 @@
 package com.sshtools.common.sshd.config;
+
+import java.util.NoSuchElementException;
+import java.util.Objects;
+
 public class SshdConfigKeyValueEntry extends SshdConfigFileEntry {
 		
 		private String key;
 		private String value;
 		private boolean commentedOut;
 		private boolean indented;
+		private SshdConfigKeyValueEntry next;
 		
 		public SshdConfigKeyValueEntry(String key, String value) {
 			this(key, value, false, false);
@@ -29,6 +34,24 @@ public class SshdConfigKeyValueEntry extends SshdConfigFileEntry {
 				return String.format("#%s %s", this.key, this.value);
 			}
 			return String.format("%s %s", this.key, this.value);
+		}
+
+		public boolean hasNext() {
+			return Objects.nonNull(next);
+		}
+		
+		public SshdConfigKeyValueEntry getNext() {
+			if(!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			return next;
+		}
+		
+		public void setNext(SshdConfigFileEntry next) {
+			if(!((SshdConfigKeyValueEntry)next).getKey().equals(getKey())) {
+				throw new IllegalArgumentException("Next value and this entry must have the same key " + getKey());
+			}
+			this.next = (SshdConfigKeyValueEntry) next;
 		}
 		
 		@Override

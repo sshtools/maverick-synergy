@@ -19,5 +19,6 @@ public class BlankEntry extends NonValidatingFileEntry {
 		@Override
 		public boolean isCommentedOut() {
 			return false;
-		}		
+		}
+	
 	}

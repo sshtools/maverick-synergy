@@ -29,15 +29,92 @@ import com.sshtools.common.sshd.config.MatchEntry.MatchEntryBuilder;
 public class SshdConfigFile {
 	
 	private static final int TIME_OUT_SECONDS = 20;
-	private GlobalEntry globalEntry;
+	private GlobalConfiguration globalConfiguration;
 	private List<MatchEntry> matchEntries = new LinkedList<>();
 	private ReadWriteLock lock = new ReentrantReadWriteLock();
 	private ReadLock readLock = (ReadLock) lock.readLock();
 	private WriteLock writeLock = (WriteLock) lock.writeLock();
 	
+	public static final String AcceptEnv = "AcceptEnv";
+	public static final String AddressFamily = "AddresssFamily";
+	public static final String AllowAgentForwarding = "AllowAgentForwarding";
+	public static final String AllowGroups = "AllowGroups";
+	public static final String AllowTcpForwarding = "AllowTcpForwarding";
+	public static final String AllowUsers = "AllowUsers";
+	public static final String AuthorizedKeysFile = "AuthorizedKeysFile";
+	public static final String Banner = "Banner";
+	public static final String ChallengeResponseAuthentication = "ChallengeResponseAuthentication";
+	public static final String ChrootDirectory = "ChrootDirectory";
+	public static final String Ciphers = "Ciphers";
+	public static final String ClientAliveCountMax = "ClientAliveCountMax";
+	public static final String ClientAliveInterval = "ClientAliveInterval";
+	public static final String Compression = "Compression";
+	public static final String DenyGroups = "DenyGroups";
+	public static final String DenyUsers = "DenyUsers";
+	public static final String ForceCommand = "ForceCommand";
+	public static final String GatewayPorts = "GatewayPorts";
+	public static final String GSSAPIAuthentication = "GSSAPIAuthentication";
+	public static final String GSSAPIKeyExchange = "GSSAPIKeyExchange";
+	public static final String GSSAPICleanupCredentials = "GSSAPICleanupCredentials";
+	public static final String GSSAPIStrictAcceptorCheck = "GSSAPIStrictAcceptorCheck";
+	public static final String GSSAPIStoreCredentialsOnRekey = "GSSAPIStoreCredentialsOnRekey";
+	public static final String HostbasedAuthentication = "HostbasedAuthentication";
+	public static final String HostbasedUsesNameFromPacketOnly = "HostbasedUsesNameFromPacketOnly";
+	public static final String HostKey = "HostKey";
+	public static final String IgnoreRhosts = "IgnoreRhosts";
+	public static final String IgnoreUserKnownHosts = "IgnoreUserKnownHosts";
+	public static final String KerberosAuthentication = "KerberosAuthentication";
+	public static final String KerberosGetAFSToken = "KerberosGetAFSToken";
+	public static final String KerberosOrLocalPasswd = "KerberosOrLocalPasswd";
+	public static final String KerberosTicketCleanup = "KerberosTicketCleanup";
+	public static final String KerberosUseKuserok = "KerberosUseKuserok";
+	public static final String KeyRegenerationInterval = "KeyRegenerationInterval";
+	public static final String ListenAddress = "ListenAddress";
+	public static final String LoginGraceTime = "LoginGraceTime";
+	public static final String LogLevel = "LogLevel";
+	public static final String MACs = "MACs";
+	public static final String Match = "Match";
+	public static final String MaxAuthTries = "MaxAuthTries";
+	public static final String MaxSessions = "MaxSessions";
+	public static final String MaxStartups = "MaxStartups";
+	public static final String PasswordAuthentication = "PasswordAuthentication";
+	public static final String PermitEmptyPasswords = "PermitEmptyPasswords";
+	public static final String PermitOpen = "PermitOpen";
+	public static final String PermitRootLogin = "PermitRootLogin";
+	public static final String PermitTTY = "PermitTTY";
+	public static final String PermitTunnel = "PermitTunnel";
+	public static final String PermitUserEnvironment = "PermitUserEnvironment";
+	public static final String PidFile = "PidFile";
+	public static final String Port = "Port";
+	public static final String PrintLastLog = "PrintLastLog";
+	public static final String PrintMotd = "PrintMotd";
+	public static final String Protocol = "Protocol";
+	public static final String PubkeyAuthentication = "PubkeyAuthentication";
+	public static final String AuthorizedKeysCommand = "AuthorizedKeysCommand";
+	public static final String AuthorizedKeysCommandUser = "AuthorizedKeysCommandUser";
+	public static final String AuthorizedKeysCommandRunAs = "AuthorizedKeysCommandRunAs";
+	public static final String RequiredAuthentications1 = "RequiredAuthentications1";
+	public static final String RequiredAuthentications2 = "RequiredAuthentications2";
+	public static final String RhostsRSAAuthentication = "RhostsRSAAuthentication";
+	public static final String RSAAuthentication = "RSAAuthentication";
+	public static final String ServerKeyBits = "ServerKeyBits";
+	public static final String ShowPatchLevel = "ShowPatchLevel";
+	public static final String StrictModes = "StrictModes";
+	public static final String Subsystem = "Subsystem";
+	public static final String SyslogFacility = "SyslogFacility";
+	public static final String TCPKeepAlive = "TCPKeepAlive";
+	public static final String UseDNS = "UseDNS";
+	public static final String UseLogin = "UseLogin";
+	public static final String UsePAM = "UsePAM";
+	public static final String UsePrivilegeSeparation = "UsePrivilegeSeparation";
+	public static final String VersionAddendum = "VersionAddendum";
+	public static final String X11DisplayOffset = "X11DisplayOffset";
+	public static final String X11Forwarding = "X11Forwarding";
+	public static final String X11UseLocalhost = "X11UseLocalhost";
+	public static final String XAuthLocation = "XAuthLocation";
 	
 	private SshdConfigFile() {
-		this.globalEntry = new GlobalEntry(this);
+		this.globalConfiguration = new GlobalConfiguration(this);
 	}
 	
 	public MatchEntry findMatchEntry(final Map<String, String> params) {
@@ -88,8 +165,8 @@ public class SshdConfigFile {
 		});
 	}
 	
-	public GlobalEntry getGlobalEntry() {
-		return this.globalEntry;
+	public GlobalConfiguration getGlobalConfiguration() {
+		return this.globalConfiguration;
 	}
 	
 	public Iterator<MatchEntry> getMatchEntriesIterator() {
@@ -149,11 +226,11 @@ public class SshdConfigFile {
 	}
 	
 	public static class SshdConfigFileBuilder extends AbstractEntryBuilder<SshdConfigFileBuilder> implements EntryBuilder<SshdConfigFileBuilder, SshdConfigFileBuilder> {
-		private GlobalEntry managedInstance;
+		private GlobalConfiguration managedInstance;
 		
 		public SshdConfigFileBuilder() {
 			this.file = new SshdConfigFile();
-			this.managedInstance = this.file.globalEntry;
+			this.managedInstance = this.file.globalConfiguration;
 			this.cursor.set(this.managedInstance);
 		} 
 		

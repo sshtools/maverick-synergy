@@ -1,4 +1,7 @@
 package com.sshtools.common.sshd.config;
+
+import java.util.NoSuchElementException;
+
 public abstract class SshdConfigFileEntry {
 		
 		public abstract String getFormattedLine();
@@ -9,4 +12,15 @@ public abstract class SshdConfigFileEntry {
 
 		public abstract boolean isCommentedOut();
 
+		public boolean hasNext() {
+			return false;
+		}
+
+		public SshdConfigFileEntry getNext() {
+			throw new NoSuchElementException();
+		}
+		
+		public void setNext(SshdConfigFileEntry entry) {
+			throw new NoSuchElementException();
+		}
 	}

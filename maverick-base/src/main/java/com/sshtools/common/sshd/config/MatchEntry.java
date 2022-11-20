@@ -19,7 +19,7 @@ import com.sshtools.common.util.Utils;
 /**
  * User, Group, Host, LocalAddress, LocalPort, and Address
  */
-public class MatchEntry extends GlobalEntry {
+public class MatchEntry extends GlobalConfiguration {
 	
 	private static final String MATCH_STRING_TEMPLATE = "%s %s";
 	public static final String MATCH_ENTRY_CRITERIA_USER = "User";

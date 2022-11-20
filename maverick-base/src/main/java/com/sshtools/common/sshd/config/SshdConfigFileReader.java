@@ -10,96 +10,108 @@ import java.util.TreeSet;
 import java.util.concurrent.Callable;
 
 import com.sshtools.common.sshd.config.SshdConfigFile.SshdConfigFileBuilder;
+import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.Utils;
 
 
 public class SshdConfigFileReader {
 	
+	public static final String ACCEPT_ENV = "AcceptEnv";	
+	public static final String ALLOW_AGENT_FORWARDING = "AllowAgentForwarding";
+	public static final String ADDRESS_FAMILY = "AddressFamily";
+
+	public static final String PASSWORD_AUTHENTICATION = "PasswordAuthentication";
+	
+
 	private InputStream stream;
 	
 	static Set<String> DIRECTIVES = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 	
 	static {
-		DIRECTIVES.add("AcceptEnv");
-		DIRECTIVES.add("AddressFamily");
-		DIRECTIVES.add("AllowAgentForwarding");
-		DIRECTIVES.add("AllowGroups");
-		DIRECTIVES.add("AllowTcpForwarding");
-		DIRECTIVES.add("AllowUsers");
-		DIRECTIVES.add("AuthorizedKeysFile");
-		DIRECTIVES.add("Banner");
-		DIRECTIVES.add("ChallengeResponseAuthentication");
-		DIRECTIVES.add("ChrootDirectory");
-		DIRECTIVES.add("Ciphers");
-		DIRECTIVES.add("ClientAliveCountMax");
-		DIRECTIVES.add("ClientAliveInterval");
-		DIRECTIVES.add("Compression");
-		DIRECTIVES.add("DenyGroups");
-		DIRECTIVES.add("DenyUsers");
-		DIRECTIVES.add("ForceCommand");
-		DIRECTIVES.add("GatewayPorts");
-		DIRECTIVES.add("GSSAPIAuthentication");
-		DIRECTIVES.add("GSSAPIKeyExchange");
-		DIRECTIVES.add("GSSAPICleanupCredentials");
-		DIRECTIVES.add("GSSAPIStrictAcceptorCheck");
-		DIRECTIVES.add("GSSAPIStoreCredentialsOnRekey");
-		DIRECTIVES.add("HostbasedAuthentication");
-		DIRECTIVES.add("HostbasedUsesNameFromPacketOnly");
-		DIRECTIVES.add("HostKey");
-		DIRECTIVES.add("IgnoreRhosts");
-		DIRECTIVES.add("IgnoreUserKnownHosts");
-		DIRECTIVES.add("KerberosAuthentication");
-		DIRECTIVES.add("KerberosGetAFSToken");
-		DIRECTIVES.add("KerberosOrLocalPasswd");
-		DIRECTIVES.add("KerberosTicketCleanup");
-		DIRECTIVES.add("KerberosUseKuserok");
-		DIRECTIVES.add("KeyRegenerationInterval");
-		DIRECTIVES.add("ListenAddress");
-		DIRECTIVES.add("LoginGraceTime");
-		DIRECTIVES.add("LogLevel");
-		DIRECTIVES.add("MACs");
-		DIRECTIVES.add("Match");
-		DIRECTIVES.add("MaxAuthTries");
-		DIRECTIVES.add("MaxSessions");
-		DIRECTIVES.add("MaxStartups");
-		DIRECTIVES.add("PasswordAuthentication");
-		DIRECTIVES.add("PermitEmptyPasswords");
-		DIRECTIVES.add("PermitOpen");
-		DIRECTIVES.add("PermitRootLogin");
-		DIRECTIVES.add("PermitTTY");
-		DIRECTIVES.add("PermitTunnel");
-		DIRECTIVES.add("PermitUserEnvironment");
-		DIRECTIVES.add("PidFile");
-		DIRECTIVES.add("Port");
-		DIRECTIVES.add("PrintLastLog");
-		DIRECTIVES.add("PrintMotd");
-		DIRECTIVES.add("Protocol");
-		DIRECTIVES.add("PubkeyAuthentication");
-		DIRECTIVES.add("AuthorizedKeysCommand");
-		DIRECTIVES.add("AuthorizedKeysCommandRunAs");
-		DIRECTIVES.add("RequiredAuthentications1");
-		DIRECTIVES.add("RequiredAuthentications2");
-		DIRECTIVES.add("RhostsRSAAuthentication");
-		DIRECTIVES.add("RSAAuthentication");
-		DIRECTIVES.add("ServerKeyBits");
-		DIRECTIVES.add("ShowPatchLevel");
-		DIRECTIVES.add("StrictModes");
-		DIRECTIVES.add("Subsystem");
-		DIRECTIVES.add("SyslogFacility");
-		DIRECTIVES.add("TCPKeepAlive");
-		DIRECTIVES.add("UseDNS");
-		DIRECTIVES.add("UseLogin");
-		DIRECTIVES.add("UsePAM");
-		DIRECTIVES.add("UsePrivilegeSeparation");
-		DIRECTIVES.add("VersionAddendum");
-		DIRECTIVES.add("X11DisplayOffset");
-		DIRECTIVES.add("X11Forwarding");
-		DIRECTIVES.add("X11UseLocalhost");
-		DIRECTIVES.add("XAuthLocation");
+		DIRECTIVES.add(SshdConfigFile.AcceptEnv);
+		DIRECTIVES.add(SshdConfigFile.AddressFamily);
+		DIRECTIVES.add(SshdConfigFile.AllowAgentForwarding);
+		DIRECTIVES.add(SshdConfigFile.AllowGroups);
+		DIRECTIVES.add(SshdConfigFile.AllowTcpForwarding);
+		DIRECTIVES.add(SshdConfigFile.AllowUsers);
+		DIRECTIVES.add(SshdConfigFile.AuthorizedKeysFile);
+		DIRECTIVES.add(SshdConfigFile.Banner);
+		DIRECTIVES.add(SshdConfigFile.ChallengeResponseAuthentication);
+		DIRECTIVES.add(SshdConfigFile.ChrootDirectory);
+		DIRECTIVES.add(SshdConfigFile.Ciphers);
+		DIRECTIVES.add(SshdConfigFile.ClientAliveCountMax);
+		DIRECTIVES.add(SshdConfigFile.ClientAliveInterval);
+		DIRECTIVES.add(SshdConfigFile.Compression);
+		DIRECTIVES.add(SshdConfigFile.DenyGroups);
+		DIRECTIVES.add(SshdConfigFile.DenyUsers);
+		DIRECTIVES.add(SshdConfigFile.ForceCommand);
+		DIRECTIVES.add(SshdConfigFile.GatewayPorts);
+		DIRECTIVES.add(SshdConfigFile.GSSAPIAuthentication);
+		DIRECTIVES.add(SshdConfigFile.GSSAPIKeyExchange);
+		DIRECTIVES.add(SshdConfigFile.GSSAPICleanupCredentials);
+		DIRECTIVES.add(SshdConfigFile.GSSAPIStrictAcceptorCheck);
+		DIRECTIVES.add(SshdConfigFile.GSSAPIStoreCredentialsOnRekey);
+		DIRECTIVES.add(SshdConfigFile.HostbasedAuthentication);
+		DIRECTIVES.add(SshdConfigFile.HostbasedUsesNameFromPacketOnly);
+		DIRECTIVES.add(SshdConfigFile.HostKey);
+		DIRECTIVES.add(SshdConfigFile.IgnoreRhosts);
+		DIRECTIVES.add(SshdConfigFile.IgnoreUserKnownHosts);
+		DIRECTIVES.add(SshdConfigFile.KerberosAuthentication);
+		DIRECTIVES.add(SshdConfigFile.KerberosGetAFSToken);
+		DIRECTIVES.add(SshdConfigFile.KerberosOrLocalPasswd);
+		DIRECTIVES.add(SshdConfigFile.KerberosTicketCleanup);
+		DIRECTIVES.add(SshdConfigFile.KerberosUseKuserok);
+		DIRECTIVES.add(SshdConfigFile.KeyRegenerationInterval);
+		DIRECTIVES.add(SshdConfigFile.ListenAddress);
+		DIRECTIVES.add(SshdConfigFile.LoginGraceTime);
+		DIRECTIVES.add(SshdConfigFile.LogLevel);
+		DIRECTIVES.add(SshdConfigFile.MACs);
+		DIRECTIVES.add(SshdConfigFile.Match);
+		DIRECTIVES.add(SshdConfigFile.MaxAuthTries);
+		DIRECTIVES.add(SshdConfigFile.MaxSessions);
+		DIRECTIVES.add(SshdConfigFile.MaxStartups);
+		DIRECTIVES.add(PASSWORD_AUTHENTICATION);
+		DIRECTIVES.add(SshdConfigFile.PermitEmptyPasswords);
+		DIRECTIVES.add(SshdConfigFile.PermitOpen);
+		DIRECTIVES.add(SshdConfigFile.PermitRootLogin);
+		DIRECTIVES.add(SshdConfigFile.PermitTTY);
+		DIRECTIVES.add(SshdConfigFile.PermitTunnel);
+		DIRECTIVES.add(SshdConfigFile.PermitUserEnvironment);
+		DIRECTIVES.add(SshdConfigFile.PidFile);
+		DIRECTIVES.add(SshdConfigFile.Port);
+		DIRECTIVES.add(SshdConfigFile.PrintLastLog);
+		DIRECTIVES.add(SshdConfigFile.PrintMotd);
+		DIRECTIVES.add(SshdConfigFile.Protocol);
+		DIRECTIVES.add(SshdConfigFile.PubkeyAuthentication);
+		DIRECTIVES.add(SshdConfigFile.AuthorizedKeysCommand);
+		DIRECTIVES.add(SshdConfigFile.AuthorizedKeysCommandRunAs);
+		DIRECTIVES.add(SshdConfigFile.RequiredAuthentications1);
+		DIRECTIVES.add(SshdConfigFile.RequiredAuthentications2);
+		DIRECTIVES.add(SshdConfigFile.RhostsRSAAuthentication);
+		DIRECTIVES.add(SshdConfigFile.RSAAuthentication);
+		DIRECTIVES.add(SshdConfigFile.ServerKeyBits);
+		DIRECTIVES.add(SshdConfigFile.ShowPatchLevel);
+		DIRECTIVES.add(SshdConfigFile.StrictModes);
+		DIRECTIVES.add(SshdConfigFile.Subsystem);
+		DIRECTIVES.add(SshdConfigFile.SyslogFacility);
+		DIRECTIVES.add(SshdConfigFile.TCPKeepAlive);
+		DIRECTIVES.add(SshdConfigFile.UseDNS);
+		DIRECTIVES.add(SshdConfigFile.UseLogin);
+		DIRECTIVES.add(SshdConfigFile.UsePAM);
+		DIRECTIVES.add(SshdConfigFile.UsePrivilegeSeparation);
+		DIRECTIVES.add(SshdConfigFile.VersionAddendum);
+		DIRECTIVES.add(SshdConfigFile.X11DisplayOffset);
+		DIRECTIVES.add(SshdConfigFile.X11Forwarding);
+		DIRECTIVES.add(SshdConfigFile.X11UseLocalhost);
+		DIRECTIVES.add(SshdConfigFile.XAuthLocation);
 	}
 	
 	public SshdConfigFileReader(InputStream stream) {
 		this.stream = stream;
+	}
+	
+	public SshdConfigFileReader(String config) throws IOException {
+		this.stream = IOUtils.toInputStream(config, "UTF-8");
 	}
 
 	public SshdConfigFile read() throws IOException {

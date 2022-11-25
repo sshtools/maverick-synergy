@@ -36,4 +36,10 @@ public class CommentEntry extends NonValidatingFileEntry {
 		public boolean isCommentedOut() {
 			return false;
 		}
+		
+		@Override
+		public String getValue() {
+			return comment;
+		}
+	
 	}

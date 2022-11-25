@@ -36,7 +36,7 @@ public class ShellController implements ShellReader, ShellWriter {
 	protected ShellMatcher matcher = null;
 	protected int readlimit = 32768;
 	protected InputStream in;
-	
+	private boolean eof = false;
 	
 	ShellController(ExpectShell shell, ShellMatcher matcher, InputStream in) {
 		this.shell = shell;
@@ -195,6 +195,10 @@ public class ShellController implements ShellReader, ShellWriter {
 			try {
 				int ch = in.read();
 				if(ch == -1) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Expect encountered EOF {}", line.toString());
+					}
+					eof = true;
 					return false;
 				}
 				if(ch != '\n' && ch!='\r') {
@@ -203,13 +207,13 @@ public class ShellController implements ShellReader, ShellWriter {
 				
 				switch(matcher.matches(line.toString(), pattern)) {
 				case CONTENT_DOES_NOT_MATCH:
-					return false;
+					break;
 				case CONTENT_MATCHES:
 					if(Log.isDebugEnabled())
 						Log.debug("Matched: [" + pattern + "] " + line.toString());
 					if(consumeRemainingLine && ch!='\n' && ch != -1) {
 						do {
-							
+							ch = in.read();
 						} while(ch!='\n' && ch != -1);
 					}
 					if(Log.isDebugEnabled()) {
@@ -239,6 +243,10 @@ public class ShellController implements ShellReader, ShellWriter {
 		}
 
 		throw new ShellTimeoutException();
+	}
+	
+	public boolean isEOF() {
+		return eof;
 	}
 	
 	public boolean isActive() {

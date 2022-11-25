@@ -267,4 +267,8 @@ class ShellInputStream extends InputStream {
 		return exitCode;
 		
 	}
+
+	public void clearOutput() {
+		commandOutput.setLength(0);
+	}
 }

@@ -76,7 +76,11 @@ public class PrivateKeyFileAuthenticator extends PublicKeyAuthenticator {
 	@Override
 	protected SshPublicKey getPublicKey() throws IOException {
 		try {
-			pair = keyfile.toKeyPair(getPassphrase());
+			if(keyfile.isPassphraseProtected()) {
+				pair = keyfile.toKeyPair(getPassphrase());
+			} else {
+				pair = keyfile.toKeyPair(null);
+			}
 		} catch (IOException | InvalidPassphraseException e) {
 			throw new IOException(e.getMessage(), e);
 		}
@@ -90,7 +94,7 @@ public class PrivateKeyFileAuthenticator extends PublicKeyAuthenticator {
 
 	@Override
 	protected boolean hasCredentialsRemaining() {
-		return false;
+		return pair==null;
 	}
 
 

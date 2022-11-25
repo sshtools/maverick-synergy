@@ -70,7 +70,7 @@ public class SshdConfigFileReader {
 		DIRECTIVES.add(SshdConfigFile.MaxAuthTries);
 		DIRECTIVES.add(SshdConfigFile.MaxSessions);
 		DIRECTIVES.add(SshdConfigFile.MaxStartups);
-		DIRECTIVES.add(PASSWORD_AUTHENTICATION);
+		DIRECTIVES.add(SshdConfigFile.PasswordAuthentication);
 		DIRECTIVES.add(SshdConfigFile.PermitEmptyPasswords);
 		DIRECTIVES.add(SshdConfigFile.PermitOpen);
 		DIRECTIVES.add(SshdConfigFile.PermitRootLogin);
@@ -84,6 +84,7 @@ public class SshdConfigFileReader {
 		DIRECTIVES.add(SshdConfigFile.Protocol);
 		DIRECTIVES.add(SshdConfigFile.PubkeyAuthentication);
 		DIRECTIVES.add(SshdConfigFile.AuthorizedKeysCommand);
+		DIRECTIVES.add(SshdConfigFile.AuthorizedKeysCommandUser);
 		DIRECTIVES.add(SshdConfigFile.AuthorizedKeysCommandRunAs);
 		DIRECTIVES.add(SshdConfigFile.RequiredAuthentications1);
 		DIRECTIVES.add(SshdConfigFile.RequiredAuthentications2);

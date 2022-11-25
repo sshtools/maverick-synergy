@@ -72,6 +72,10 @@ public class ShellProcess {
 	public boolean isActive() {
 		return in.isActive();
 	}
+	
+	public void clearOutput() {
+		in.clearOutput();
+	}
 
 	public String getCommandOutput() {
 		return in.getCommandOutput();
@@ -82,7 +86,7 @@ public class ShellProcess {
 	}
 	
 	public ShellProcess drain() throws IOException {
-		while(in.isActive() && in.read() > -1);
+		while(in.isActive() && bin.read() > -1);
 		return this;
 	}
 

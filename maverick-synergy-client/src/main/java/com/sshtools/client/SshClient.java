@@ -297,9 +297,9 @@ public class SshClient implements Closeable {
 		}
 		if(!task.isSuccess()) {
 			if(!Objects.isNull(task.getLastError())) {
-				throw new IOException("Task did not succeed", task.getLastError());
+				throw new IOException(task.getLastError().getMessage(), task.getLastError());
 			} else {
-				throw new IOException("Task did not succeed and did not report an error");
+				throw new IOException("Task did not succeed but did not report an error");
 			}
 			
 		}

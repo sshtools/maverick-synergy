@@ -113,7 +113,7 @@ public class SshdConfigFile {
 	public static final String X11UseLocalhost = "X11UseLocalhost";
 	public static final String XAuthLocation = "XAuthLocation";
 	
-	private SshdConfigFile() {
+	public SshdConfigFile() {
 		this.globalConfiguration = new GlobalConfiguration(this);
 	}
 	

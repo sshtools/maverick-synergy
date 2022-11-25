@@ -2,6 +2,7 @@ package com.sshtools.common.sshd.config;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,6 +24,14 @@ public class Entry {
 	
 	protected ListOrderedMap<String, SshdConfigFileEntry> getKeyEntriesOrderedMap() {
 		return (ListOrderedMap<String, SshdConfigFileEntry>) this.keyEntries;
+	}
+	
+	public String getValue(String key) {
+		SshdConfigFileEntry e = getEntry(key);
+		if(Objects.isNull(e)) {
+			throw new NoSuchElementException(String.format("No value exists for key %s", key));
+		}
+		return e.getValue();
 	}
 	
 	public SshdConfigFileEntry getEntry(String key) {

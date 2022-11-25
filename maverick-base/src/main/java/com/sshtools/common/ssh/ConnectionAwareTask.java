@@ -46,7 +46,7 @@ public abstract class ConnectionAwareTask extends AbstractRequestFuture implemen
 		
 		try {
 			doTask();
-			done(true);
+			done(getLastError()==null);
 		} catch(Throwable t) { 
 			this.lastError = t;
 			Log.error("Connection task failed with an error", t);

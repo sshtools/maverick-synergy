@@ -547,4 +547,10 @@ public class IOUtils {
 		}
 		
 	}
+
+	public static void copy(File file, OutputStream out) throws IOException {
+		try(FileInputStream in = new FileInputStream(file)) {
+			in.transferTo(out);
+		}
+	}
 }

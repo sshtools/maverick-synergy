@@ -337,16 +337,21 @@ public class ExpectShell {
 		ShellProcess process = executeCommand(cmd, false, false);
 		ShellProcessController contr = new ShellProcessController(process,
 				matcher);
-		process.mark(1024);
-		if (contr.expectNextLine(promptExpression)) {
+		process.mark(4096);
+		int lines = 0;
+		boolean found;
+		do {
+			found = contr.expectNextLine(promptExpression);
+		} while(!found && ++lines < 10 && !contr.isEOF());
+		
+		if(found) {
 			if(Log.isDebugEnabled())
 				Log.debug("sudo password expression matched");
 			contr.typeAndReturn(password);
-			process.mark(1024);
 			if(contr.expectNextLine(passwordErrorText)) {
 				throw new IOException("Incorrect password!");
 			}
-			process.reset();
+			process.clearOutput();
 		} else {
 			if(Log.isDebugEnabled())
 				Log.debug("sudo password expression not matched");

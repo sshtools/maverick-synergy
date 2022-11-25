@@ -27,7 +27,7 @@ public class ShellDefaultMatcher implements ShellMatcher {
 	public Continue matches(String line, String pattern) {
 		
 		boolean match = false;
-		for(int i=0;i<line.length();i++) {
+		for(int i=0;i< Math.min(line.length(), pattern.length());i++) {
 			match = line.charAt(i) == pattern.charAt(i);
 		}
 		

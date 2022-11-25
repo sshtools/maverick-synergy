@@ -20,5 +20,10 @@ public class BlankEntry extends NonValidatingFileEntry {
 		public boolean isCommentedOut() {
 			return false;
 		}
+
+		@Override
+		public String getValue() {
+			throw new UnsupportedOperationException();
+		}
 	
 	}

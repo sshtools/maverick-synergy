@@ -37,6 +37,10 @@ public class MatchEntry extends GlobalConfiguration {
 	public MatchEntry(SshdConfigFile sshdConfigFile) {
 		super(sshdConfigFile);
 	}
+	
+	public void addComment(String comment) {
+		matchCriteriaCommentEntries.add(new CommentEntry(comment));
+	}
 
 	public void addMatchCriteriaComment(final CommentEntry commentEntry) {
 		executeWrite(new Callable<Void>() {
@@ -48,6 +52,17 @@ public class MatchEntry extends GlobalConfiguration {
 			}
 		});
 		
+	}
+	
+	public void disable() {
+		commentedOut = true;
+		for(String key : getKeyEntries().keySet()) {
+			disable(key);
+		}
+	}
+	
+	public boolean isCommentedOut() {
+		return commentedOut;
 	}
 	
 	public void remove() {

@@ -23,4 +23,6 @@ public abstract class SshdConfigFileEntry {
 		public void setNext(SshdConfigFileEntry entry) {
 			throw new NoSuchElementException();
 		}
+
+		public abstract String getValue();
 	}

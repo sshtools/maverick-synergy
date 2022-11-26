@@ -49,7 +49,7 @@ public class CommentEntry extends NonValidatingFileEntry {
 
 		@Override
 		public void setCommentedOut(boolean b) {
-			throw new UnsupportedOperationException();
+			
 		}
 
 		@Override

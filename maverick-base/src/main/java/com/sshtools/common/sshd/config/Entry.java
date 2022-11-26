@@ -256,6 +256,11 @@ public class Entry {
 		
 	}
 	
+
+	public void append(String key, String value) {
+		appendEntry(new SshdConfigKeyValueEntry(key, value));
+	}
+	
 	/**
 	 * This will simply keep adding entries in a section, will not make any decision to check to 
 	 * add new entry after a valid entry.
@@ -284,7 +289,7 @@ public class Entry {
 		});
 		
 	}
-	
+
 	
 	public Boolean entryMatches(final String key, final Collection<String> patterns) {
 		return executeRead(new Callable<Boolean>() {

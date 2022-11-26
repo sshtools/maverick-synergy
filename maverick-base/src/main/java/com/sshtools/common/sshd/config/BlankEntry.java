@@ -33,7 +33,7 @@ public class BlankEntry extends NonValidatingFileEntry {
 
 		@Override
 		public void setCommentedOut(boolean b) {
-			throw new UnsupportedOperationException();
+			
 		}
 
 		@Override

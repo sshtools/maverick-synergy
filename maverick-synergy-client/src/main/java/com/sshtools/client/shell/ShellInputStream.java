@@ -87,8 +87,9 @@ class ShellInputStream extends InputStream {
 			
 			ch = sessionIn.read();
 
-			if(ch > -1)
+			if(ch > -1) {
 				line.append((char)ch);
+			}
 		} while(ch != '\n' && ch != '\r' && ch != -1);
 		
 		sessionIn.mark(1);
@@ -98,8 +99,12 @@ class ShellInputStream extends InputStream {
 		
 		if((!isActive() || ch==-1) && line.toString().trim().length()==0)
 			return null;
-		else
+		else {
+			if(Log.isDebugEnabled()) {
+				Log.debug(line.toString());
+			}
 			return line.toString().trim();
+		}
 	}
 	
 	public int read(byte[] buf, int off, int len) throws IOException {
@@ -121,14 +126,14 @@ class ShellInputStream extends InputStream {
 			String tmp;
 			
 			if(Log.isDebugEnabled())
-				Log.debug(cmd + ": Expecting begin marker");
+				Log.debug("Expecting begin marker");
 			do {
 				tmp = readLine();
 			} while(tmp!=null && !tmp.endsWith(beginCommandMarker));
 			
 			if(tmp==null) {
 				if(Log.isDebugEnabled())
-					Log.debug(cmd + ": Failed to read from shell whilst waiting for begin marker");
+					Log.debug("Failed to read from shell whilst waiting for begin marker");
 				shell.internalClose();
 				return -1;
 			}
@@ -137,7 +142,7 @@ class ShellInputStream extends InputStream {
 			expectingEcho = false;
 			
 			if(Log.isDebugEnabled())
-				Log.debug(cmd + ": Found begin marker");
+				Log.debug("Found begin marker");
 		} 
 
 		int readLength = Math.max(endCommandMarker.length, promptMarker.length);
@@ -182,9 +187,16 @@ class ShellInputStream extends InputStream {
 							
 		if(selectedMarker!=null && markerPos == selectedMarker.length) {
 			// We matched the marker!!!
+
 			if(Log.isDebugEnabled())
-				Log.debug(cmd + ": " + tmp.toString());
+				Log.debug(tmp.toString());
 			cleanup(collectExitCode, collectExitCode ? "end" : "prompt");
+			
+			if(Boolean.getBoolean("maverick.discardShellInputBeforeEOF")) {
+				byte[] tmp2 = new byte[255];
+				sessionIn.read(tmp2);
+				Log.debug("Discarded " + new String(tmp2, "UTF-8"));
+			}
 			return -1;
 		} 
 		
@@ -192,6 +204,9 @@ class ShellInputStream extends InputStream {
 		ch = sessionIn.read();
 		
 		if(ch==-1) {
+			if(Log.isDebugEnabled()) {
+				Log.debug("Stream ended before we could read an exit code");
+			}
 			// Cannot collect exit code since the stream is EOF
 			cleanup(false, "EOF");
 			return -1;
@@ -203,11 +218,11 @@ class ShellInputStream extends InputStream {
 		
 		if(ch == '\n') {
 			// End of a line
+			if(Log.isDebugEnabled()) {
+				Log.debug(currentLine.toString());
+			}
 			currentLine = new StringBuffer();
 		} 
-		
-		if(verboseDebug && Log.isDebugEnabled())
-			Log.debug(cmd + ": Current Line [" + currentLine.toString() + "]");
 		
 		sessionIn.mark(-1);
 		return ch;
@@ -216,7 +231,7 @@ class ShellInputStream extends InputStream {
 	void cleanup(boolean collectExitCode, String markerType) throws IOException {
 		
 		if(Log.isDebugEnabled())
-			Log.debug(cmd + ": Found " + markerType + " marker");
+			Log.debug("Found " + markerType + " marker");
 		
 		if(collectExitCode)
 			exitCode = collectExitCode();
@@ -233,7 +248,7 @@ class ShellInputStream extends InputStream {
 	
 	int collectExitCode() throws IOException {
 		if(Log.isDebugEnabled())
-			Log.debug(cmd + ": Looking for exit code");
+			Log.debug("Looking for exit code");
 		
 		// Next bytes should be the exit code of the process, followed by a \n;
 		StringBuffer tmp = new StringBuffer();
@@ -258,10 +273,10 @@ class ShellInputStream extends InputStream {
 				exitCode = Integer.parseInt(tmp.toString().trim());
 			}
 			if(Log.isDebugEnabled())
-				Log.debug(cmd + ": Exit code is " + exitCode);
+				Log.debug("Exit code is " + exitCode);
 		} catch (NumberFormatException e) {
 			if(Log.isDebugEnabled())
-				Log.debug(cmd + ": Failed to get exit code: " + tmp.toString().trim());
+				Log.debug("Failed to get exit code: " + tmp.toString().trim());
 			exitCode = ExpectShell.EXIT_CODE_UNKNOWN;
 		}
 		return exitCode;

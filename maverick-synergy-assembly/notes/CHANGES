@@ -1,4 +1,4 @@
-Maverick Synergy 3.0.10 - TBC
+Maverick Synergy 3.0.10 - Dec 1, 2022
 
 Features
   o Support for PuTTY Version 3 Private Key format (requires Bouncycastle dependency for Argon key derivation support)

@@ -36,6 +36,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -552,5 +553,11 @@ public class IOUtils {
 		try(FileInputStream in = new FileInputStream(file)) {
 			in.transferTo(out);
 		}
+	}
+
+	public static boolean isOlderThan(File file, Duration duration) {
+		
+		long now = System.currentTimeMillis();
+		return file.lastModified() < (now - duration.toMillis()) ; 
 	}
 }

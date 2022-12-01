@@ -57,13 +57,17 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 				 */
 				if(!mountCache.containsKey(parentPath)) {
 					mountCache.put(parentPath, new VirtualMountFile(
-							FileUtils.checkEndsWithNoSlash(parentPath), 
+							isRoot(parentPath) ? parentPath : FileUtils.checkEndsWithNoSlash(parentPath), 
 								mgr.getMount(parentPath), this, true));
 				}
 			}
 		}
 	}
 
+	private boolean isRoot(String path) {
+		return path.equals("/");
+	}
+	
 	public boolean isCached() {
 		return cached;
 	}
@@ -110,12 +114,11 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		Map<String,VirtualFile> files = new HashMap<>();
 		
 		AbstractFile file = parent.resolveFile();
-		if(file.exists()) {
-			for(AbstractFile child : file.getChildren()) {
-				files.put(child.getName(), new VirtualMappedFile(child, parent.getMount(), this));
-			}
-		}
 
+		for(AbstractFile child : file.getChildren()) {
+			files.put(child.getName(), new VirtualMappedFile(child, parent.getMount(), this));
+		}
+		
 		String currentPath = FileUtils.checkEndsWithSlash(parent.getAbsolutePath());
 		for(VirtualMount m : mgr.getMounts(currentPath)) {
 			

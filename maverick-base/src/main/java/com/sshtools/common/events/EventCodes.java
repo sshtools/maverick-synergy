@@ -133,7 +133,8 @@ public class EventCodes {
 		
 		public static final String ATTRIBUTE_OLD_ATTRIBUTES = "OLD_ATTR";
 		public static final String ATTRIBUTE_NEW_ATRTIBUTES = "NEW_ATTR";
-
+		public static final String ATTRIBUTE_ATRTIBUTES = "ATTR";
+		
 		public static final String ATTRIBUTE_ABSTRACT_FILE = "ABSTRACT_FILE";
 		public static final String ATTRIBUTE_ABSTRACT_FILE_INPUTSTREAM = "ABSTRACT_FILE_IN";
 		public static final String ATTRIBUTE_ABSTRACT_FILE_OUTPUTSTREAM = "ABSTRACT_FILE_OUT";
@@ -208,6 +209,9 @@ public class EventCodes {
 		public static final int EVENT_SFTP_FILE_UPLOAD_INIT   =  	0xFF000064;
 		public static final int EVENT_SFTP_FILE_ACCESS_INIT	  =  	0xFF000065;
 		
+		public static final int EVENT_SFTP_GET_ATTRIBUTES = 		0xFF000066;
+		public static final int EVENT_SFTP_DIRECTORY_OPENED =		0xFF000067;
+		
 		// System Events
 		public static final int EVENT_REACHED_CONNECTION_LIMIT = 	0xFF0000A0;
 		
@@ -230,6 +234,12 @@ public class EventCodes {
 		public static final int EVENT_SUBSYSTEM_STARTED = 			0x00FF1001;
 		public static final int EVENT_SFTP_FILE_CLOSED = 			0x00FF0025;
 		public static final int EVENT_SFTP_FILE_OPENED = 			0x00FF0026;
+
+		
+
+		
+
+		
 
 		
 

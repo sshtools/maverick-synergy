@@ -130,4 +130,8 @@ public interface SshConnection {
 
 	int getSessionCount();
 
+	long getTotalBytesIn();
+	
+	long getTotalBytesOut();
+
 }

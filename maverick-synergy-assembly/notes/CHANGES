@@ -1,3 +1,22 @@
+Maverick Synergy 3.0.10 - Dec 1, 2022
+
+Features
+  o Support for PuTTY Version 3 Private Key format (requires Bouncycastle dependency for Argon key derivation support)
+  o Support for ed448 public and private keys
+  o Added missing events for SFTP operations; EVENT_SFTP_GET_ATTRIBUTES for stat and EVENT_SFTP_DIRECTORY_OPENED for opening of a directory.
+  o Added openRemoteClient method for using the existing connection as a jump host.
+
+Bug Fixes
+  o Fixed NPE when SCP is enabled on AbstractSshServer but no ChannelFactory has been set.
+  o VFSFileFactory fails to resolve file with no default path is set and local file scheme is not supported. Added maverick.vfsDefaultPath system property that allows override of the default path.
+  o Ensure mounts in VirtualFileFactory are initialized with VFSFileFactory with a default path of the mount path.
+  o getTotalBytesIn / getTotalBytesOut methods on Connection<T extends SshContext> were present but not on implemented interface SshConnection. 
+  o Do not throw exception when unsupported agent message is received. Log and continue. This should fix support for latest OpenSSH agents that now implement some extension messages.
+  
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.9 - Aug 21, 2022
 
 Bug Fixes
@@ -11,10 +30,8 @@ Bug Fixes
   o DirectFileJava7 attempts to set name of group/user using the SftpFileAttributes method that only accepts a numerical GID/UID.
   o PublicKeyAuthenticator setKeyPair method incorrectly stores unmodifiable collection causing UnsupportedOperationException when keys are removed during authentication.
   o Removed non-compliant HMAC algorithms hmac-sha256 and hmac-sha512.
-
-=================
-=  HISTORY      =
-=================
+  
+------------------
 
 Maverick Synergy 3.0.8 - Jun 30, 2022
 

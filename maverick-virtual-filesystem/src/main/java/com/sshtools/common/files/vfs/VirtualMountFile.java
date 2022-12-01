@@ -47,12 +47,16 @@ public class VirtualMountFile extends VirtualFileObject {
 	
 	public VirtualMountFile(String path, VirtualMount mount, VirtualFileFactory fileFactory, boolean intermediate) throws PermissionDeniedException, IOException {
 		super(fileFactory, mount);
-		path = FileUtils.checkEndsWithNoSlash(path);
-		int idx = path.lastIndexOf('/');
-		if(idx > -1) {
-			name = path.substring(idx+1);
+		if(FileUtils.isRoot(path)) {
+			this.name = "";
 		} else {
-			name = path;
+			path = FileUtils.checkEndsWithNoSlash(path);
+			int idx = path.lastIndexOf('/');
+			if(idx > -1) {
+				name = path.substring(idx+1);
+			} else {
+				name = path;
+			}
 		}
 		this.path = path;
 		this.intermediate = intermediate;
@@ -172,7 +176,7 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 
 	public boolean isWritable() throws IOException, PermissionDeniedException {
-		return !intermediate && (!parentMount.isReadOnly() || resolveFile().isWritable());
+		return !intermediate && (!parentMount.isReadOnly() && resolveFile().isWritable());
 	}
 
 	public boolean createNewFile() throws PermissionDeniedException,

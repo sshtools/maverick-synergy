@@ -18,11 +18,9 @@
  */
 package com.sshtools.client;
 
-import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -482,5 +480,15 @@ public class SshClient implements Closeable {
 			return session;
 		}
 		throw new SshException(String.format("Session was not opened after %d ms timeout threshold", timeout), SshException.SOCKET_TIMEOUT);
+	}
+	
+	public SshClient openRemoteClient(String hostname, int port, String username) throws SshException, IOException, UnauthorizedException {
+		
+		int localPort = startLocalForwarding("127.0.0.1", 0, hostname, port);
+		try {
+			return new SshClient("127.0.0.1", localPort, username);
+		} finally {
+			stopLocalForwarding("127.0.0.1", localPort);
+		}
 	}
 }

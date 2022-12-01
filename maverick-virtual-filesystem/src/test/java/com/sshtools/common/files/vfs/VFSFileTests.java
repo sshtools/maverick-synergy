@@ -17,28 +17,26 @@
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
 package com.sshtools.common.files.vfs;
-import java.io.File;
 import java.io.IOException;
-import java.util.Objects;
 
 import org.apache.commons.vfs2.VFS;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.tests.DirectFileTests;
+import com.sshtools.common.util.FileUtils;
 
 public class VFSFileTests extends DirectFileTests {
 
 	VFSFileFactory factory; 
+		
+	protected void setup() throws IOException {
+		factory = new VFSFileFactory(getBaseFolder().getAbsoluteFile().toURI().toASCIIString());
+	}
 	
-	protected File getBaseFolder() throws IOException {
-		File baseFolder = super.getBaseFolder();
-		if(Objects.isNull(factory)) {
-			factory = new VFSFileFactory(VFS.getManager().resolveFile(
-					baseFolder.getAbsolutePath()).getName().getURI());
-		}
-		return baseFolder;
- 	}
+	protected void clean() throws IOException {
+		FileUtils.deleteFolder(getBaseFolder());
+	}
 	
 	
 	@Override

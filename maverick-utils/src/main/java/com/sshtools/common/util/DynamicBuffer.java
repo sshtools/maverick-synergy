@@ -133,7 +133,7 @@ public class DynamicBuffer {
   protected synchronized int available() {
     return writepos - readpos > 0
         ? writepos - readpos
-        : (closed ? -1 : 0);
+        : 0;
   }
 
   private synchronized void block() throws InterruptedException, IOException {

@@ -581,7 +581,7 @@ public class ScpClientIO {
 		public int available() throws IOException {
 
 			if (count == length)
-				return -1;
+				return 0;
 			return (int) (length - count);
 		}
 

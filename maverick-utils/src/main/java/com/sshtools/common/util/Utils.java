@@ -431,4 +431,15 @@ public class Utils {
         return data;
     }
 
+    public static String pad(int num) {
+		String str = "";
+
+		if (num > 0) {
+			for (int i = 0; i < num; i++) {
+				str += " ";
+			}
+		}
+
+		return str;
+	}
 }

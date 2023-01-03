@@ -1826,10 +1826,6 @@ public class SftpChannel extends AbstractSubsystem {
 
 			sendMessage(msg);
 			
-			if(file.getAbsolutePath().equals("/Users/lee")) {
-				System.out.println("");
-			}
-
 			if(Log.isDebugEnabled()) {
 				Log.debug("Sending list children request");
 			}

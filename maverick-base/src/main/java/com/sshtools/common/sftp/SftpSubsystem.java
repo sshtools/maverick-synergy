@@ -60,6 +60,7 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
+import com.sshtools.common.util.Utils;
 import com.sshtools.common.util.Version;
 
 /**
@@ -2192,7 +2193,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 		// filename
 
 		StringBuffer str = new StringBuffer();
-		str.append(pad(10 - attrs.getPermissionsString().length())
+		str.append(Utils.pad(10 - attrs.getPermissionsString().length())
 				+ attrs.getPermissionsString());
 		if(attrs.isDirectory()) {
 			str.append(" 1 ");
@@ -2200,25 +2201,25 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			str.append(" 1 ");
 		}
 		if(attrs.hasUID()) {
-			str.append(attrs.getUID() + pad(8 - attrs.getUID().length()));
+			str.append(attrs.getUID() + Utils.pad(8 - attrs.getUID().length()));
 		} else {
-			str.append(String.valueOf(attrs.getUID()) + pad(8 - String.valueOf(attrs.getUID()).length()));
+			str.append(String.valueOf(attrs.getUID()) + Utils.pad(8 - String.valueOf(attrs.getUID()).length()));
 		}
 		str.append(" ");
 		if(attrs.hasGID()) {
 			str.append(attrs.getGID()
-					+ pad(8 - attrs.getGID().length()));
+					+ Utils.pad(8 - attrs.getGID().length()));
 		} else {
-			str.append(String.valueOf(attrs.getGID()) + pad(8 - String.valueOf(attrs.getGID()).length()));
+			str.append(String.valueOf(attrs.getGID()) + Utils.pad(8 - String.valueOf(attrs.getGID()).length()));
 		}
 		str.append(" ");
 
-		str.append(pad(11 - attrs.getSize().toString().length())
+		str.append(Utils.pad(11 - attrs.getSize().toString().length())
 				+ attrs.getSize().toString());
 		str.append(" ");
 		
 		String modTime = getModTimeStringInContext(attrs.getModifiedTime(), locale);
-		str.append(pad(12 - modTime.length()) + modTime);
+		str.append(Utils.pad(12 - modTime.length()) + modTime);
 		str.append(" ");
 		str.append(filename);
 
@@ -2244,17 +2245,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 		return df.format(new Date(mt));
 	}
 
-	private static String pad(int num) {
-		String str = "";
-
-		if (num > 0) {
-			for (int i = 0; i < num; i++) {
-				str += " ";
-			}
-		}
-
-		return str;
-	}
+	
 
 	public int sendFilenameMessage(int id, SftpFile[] files, boolean isRealPath,
 			boolean isAbsolute) throws IOException {

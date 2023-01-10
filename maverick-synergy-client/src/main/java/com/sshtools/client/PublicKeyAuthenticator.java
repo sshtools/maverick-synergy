@@ -34,6 +34,7 @@ import com.sshtools.common.ssh.components.SshPrivateKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.ssh.Connection;
 
 /**
@@ -48,7 +49,8 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 	String username;
 	
 	SignatureGenerator signatureGenerator;
-
+	SshPublicKey currentKey;
+	
 	public PublicKeyAuthenticator() {
 
 	}
@@ -62,6 +64,7 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 		this.username = username;
 
 		if(hasCredentialsRemaining()) {
+			currentKey = getNextKey();
 			doPublicKeyAuth();
 		} else {
 			if(Log.isDebugEnabled()) {
@@ -79,6 +82,7 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 	void doPublicKeyAuth() throws SshException, IOException {
 		
 		try {
+
 
 			final byte[] msg = generateAuthenticationRequest(generateSignatureData());
 			
@@ -115,15 +119,15 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 			baw.writeString("ssh-connection");
 			baw.writeString("publickey");
 			baw.writeBoolean(isAuthenticating);
-			writePublicKey(baw, getPublicKey());
+			writePublicKey(baw, currentKey);
 			
 			return baw.toByteArray();
 
 		} 
 	}
 	
-	protected abstract SshPublicKey getPublicKey() throws IOException;
-
+	protected abstract SshPublicKey getNextKey() throws IOException;
+	
 	protected abstract SshKeyPair getAuthenticatingKey() throws IOException, InvalidPassphraseException;
 	
 	protected abstract boolean hasCredentialsRemaining();
@@ -142,11 +146,21 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 
 		try {
 			baw.writeBoolean(isAuthenticating);
-			writePublicKey(baw, getPublicKey());
+
+			if(!isAuthenticating) {
+				if(Log.isDebugEnabled()) {
+					Log.debug("Verifying key {}", currentKey.getAlgorithm());
+					Log.debug("Encoded key{}{}", System.lineSeparator(), Utils.bytesToHex(currentKey.getEncoded(), 32, true, true));
+				}
+			}
+			
+			writePublicKey(baw, currentKey);
 	
 			if (isAuthenticating) {
 	
-					byte[] signature = getSignatureGenerator().sign(getPublicKey(), getPublicKey().getSigningAlgorithm(), data);
+					byte[] signature = getSignatureGenerator().sign(currentKey, 
+							currentKey.getSigningAlgorithm(), 
+							data);
 					baw.writeBinaryString(signature);
 			}
 			
@@ -170,7 +184,7 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 		{
  			if(Log.isDebugEnabled()) {
  				Log.debug("Received SSH_MSG_USERAUTH_PK_OK");
- 				Log.debug("Server accepts {} {}", getPublicKey().getAlgorithm(), SshKeyUtils.getFingerprint(getPublicKey()));
+ 				Log.debug("Server accepts {} {}", currentKey.getAlgorithm(), SshKeyUtils.getFingerprint(currentKey));
  			}
  			
 			isAuthenticating = true;
@@ -185,6 +199,7 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 		case AuthenticationProtocolClient.SSH_MSG_USERAUTH_FAILURE:
 		{
 			if(hasCredentialsRemaining()) {
+				currentKey = getNextKey();
 				isAuthenticating = false;
 				doPublicKeyAuth();
 				return true;

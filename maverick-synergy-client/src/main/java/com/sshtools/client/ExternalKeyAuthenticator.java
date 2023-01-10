@@ -52,7 +52,7 @@ public class ExternalKeyAuthenticator extends PublicKeyAuthenticator {
 	}
 	
 	@Override
-	protected SshPublicKey getPublicKey() throws IOException {
+	protected SshPublicKey getNextKey() throws IOException {
 		return authenticatingKey;
 	}
 

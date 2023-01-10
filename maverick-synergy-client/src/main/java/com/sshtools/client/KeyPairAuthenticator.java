@@ -45,8 +45,7 @@ public class KeyPairAuthenticator extends PublicKeyAuthenticator {
 	}
 
 	@Override
-	protected SshPublicKey getPublicKey() {
-		authenticatingPair = pairs.remove(0);
+	protected SshPublicKey getNextKey() {
 		return authenticatingPair.getPublicKey();
 	}
 
@@ -57,7 +56,11 @@ public class KeyPairAuthenticator extends PublicKeyAuthenticator {
 
 	@Override
 	protected boolean hasCredentialsRemaining() {
-		return !pairs.isEmpty();
+		if(!pairs.isEmpty()) {
+			this.authenticatingPair = pairs.remove(0);
+			return true;
+		}
+		return false;
 	}
 
 }

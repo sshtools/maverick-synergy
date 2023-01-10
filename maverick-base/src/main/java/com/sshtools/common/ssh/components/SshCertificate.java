@@ -33,7 +33,7 @@ public class SshCertificate extends SshKeyPair {
 	public SshCertificate(SshKeyPair pair, OpenSshCertificate certificate) {
 		this.certificate = certificate;
 		setPrivateKey(pair.getPrivateKey());
-		setPublicKey(pair.getPublicKey());
+		setPublicKey(certificate);
 	}
 	
 	public boolean isUserCertificate() {

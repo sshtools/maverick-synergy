@@ -190,6 +190,8 @@ public abstract class AbstractCertificateAuthorityTests extends AbstractPublicKe
 		SshPublicKey ca = testPublicKeyFile(getClass().getResourceAsStream(signedBy), signedByFingerprint);
 		assertTrue(cert.getSignedBy().equals(ca));
 
+		cert.verify();
+		
 		try {
 			SshPublicKeyFileFactory.decodeSSH2PublicKey(key.getEncoded());
 		} catch (IOException | SshException e) {

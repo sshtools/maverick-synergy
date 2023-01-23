@@ -24,6 +24,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.sshtools.common.permissions.IPPolicy;
+
 public class LoadBalancerPolicy {
 
 	boolean proxyProtocolEnabled = false;
@@ -31,6 +33,8 @@ public class LoadBalancerPolicy {
 	boolean restrictedAccess = true;
 	
 	Set<String> supportedIPAddresses = new HashSet<>();
+	
+	IPPolicy ipPolicy = new IPPolicy();
 	
 	public boolean isProxyProtocolEnabled() {
 		return proxyProtocolEnabled;
@@ -55,7 +59,12 @@ public class LoadBalancerPolicy {
 	public void setRestrictedAccess(boolean restrictedAccess) {
 		this.restrictedAccess = restrictedAccess;
 	}
-	
-	
 
+	public IPPolicy getIPPolicy() {
+		return ipPolicy;
+	}
+
+	public void setIPPolicy(IPPolicy iPPolicy) {
+		this.ipPolicy = iPPolicy;
+	}
 }

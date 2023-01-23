@@ -57,15 +57,17 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 		return sshContext;
 	}
 	
-	private void processProxyProtocol(String tmp) throws IOException {
+private void processProxyProtocol(String tmp) throws IOException {
 		
-		if(!getContext().getPolicy(LoadBalancerPolicy.class).isProxyProtocolEnabled()) {
+		LoadBalancerPolicy policy = getContext().getPolicy(LoadBalancerPolicy.class);
+		
+		if(!policy.isProxyProtocolEnabled()) {
 			throw new IOException("Received PROXY protocol directive but the current policy does not support it");
 		}
 		
-		if(getContext().getPolicy(LoadBalancerPolicy.class).isRestrictedAccess()) {
+		if(policy.isRestrictedAccess()) {
 			String remoteAddress = ((InetSocketAddress)socketConnection.getRemoteAddress()).getAddress().getHostAddress();
-			if(!getContext().getPolicy(LoadBalancerPolicy.class).isSupportedIPAddress(remoteAddress)) {
+			if(!policy.isSupportedIPAddress(remoteAddress)) {
 				throw new IOException(String.format("Received PROXY protocol string from unsupported IP address %s", remoteAddress));
 			}
 			if(Log.isDebugEnabled()) {
@@ -73,32 +75,44 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 			}
 		}
 		
-		if(Log.isInfoEnabled()) {
-			Log.info(String.format("Parsing PROXY protocol string [%s]", tmp));
-		}
-		
-		String[] elements = tmp.split(" ");
-		if(elements.length < 4) {
-		
+		try {
+			if(Log.isInfoEnabled()) {
+				Log.info(String.format("Parsing PROXY protocol string [%s]", tmp));
+			}
+			
+			String[] elements = tmp.split(" ");
+			if(elements.length < 6) {
+					if(Log.isInfoEnabled()) {
+						Log.info("Not enough parameters in PROXY statement");
+					}
+					return;
+			}
+			
+			if(!"TCP4".equals(elements[1]) && !"TCP6".equals(elements[1])) {
 				if(Log.isInfoEnabled()) {
-					Log.info("Not enough parameters in PROXY statement");
+					Log.info("Unsupported TCP element {} in PROXY statement", elements[1]);
 				}
-				return;
-		}
-		
-		if("TCP4".equals(elements[1]) || "TCP6".equals(elements[1])) {
+				return;	
+			}
+	
 			String sourceAddress = elements[2].trim();
 			String targetAddress = elements[3].trim();
 			int sourcePort = Integer.parseInt(elements[4].trim());
 			int targetPort = Integer.parseInt(elements[5].trim());
-		
-			if(Log.isInfoEnabled()) {
-				Log.info("Changing remote address to proxy supplied {}:{}", sourceAddress, sourcePort);
-			}
+			
 			con.setRemoteAddress(InetSocketAddress.createUnresolved(sourceAddress, sourcePort));
 			con.setLocalAddress(InetSocketAddress.createUnresolved(targetAddress, targetPort));
+
+		} catch (Throwable e) {
+			Log.error("Failed to parse proxy protocol", e);
+			return;
 		}
-		
+
+		if(!policy.getIPPolicy().checkConnection(con.getRemoteIPAddress(), con.getLocalIPAddress())) {
+			throw new IOException(String.format("IP addresss is not allowed by Load Balancer IP Policy remoteAddress=%s localAddress=%s", 
+					con.getRemoteIPAddress(),
+					con.getLocalIPAddress()));
+		}
 	}
 
 	@Override
@@ -112,8 +126,8 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	protected boolean canConnect(SocketConnection connection) {
 
 		boolean canConnect = sshContext.getPolicy(IPPolicy.class).checkConnection(
-				connection.getRemoteAddress(),
-				connection.getLocalAddress());
+				((InetSocketAddress)connection.getRemoteAddress()).getAddress(),
+				((InetSocketAddress)connection.getLocalAddress()).getAddress());
 
 		if(Log.isDebugEnabled()) {
 			Log.debug("IP policy has " + (canConnect ? "authorized" : "denied") + " access to "

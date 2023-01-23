@@ -22,8 +22,6 @@
 package com.sshtools.common.permissions;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
@@ -77,7 +75,7 @@ public class IPPolicy extends Permissions {
 		return temporaryBans.getExpiryTime();
 	}
 	
-	protected boolean assertConnection(SocketAddress remoteAddress, SocketAddress localAddress) {
+	protected boolean assertConnection(InetAddress remoteAddress, InetAddress localAddress) {
 		
 		if(check(ALLOW_CONNECT)) {
 			if(check(DISABLE_BAN)) {
@@ -88,20 +86,19 @@ public class IPPolicy extends Permissions {
 		return false;
 	}
 	
-	protected boolean assertAllowed(SocketAddress remoteAddress, SocketAddress localAddress) {
+	protected boolean assertAllowed(InetAddress remoteAddress, InetAddress localAddress) {
 
 		try {
 			boolean allowed = true;
 			
 			String addr;
-			InetAddress resolved = ((InetSocketAddress)remoteAddress).getAddress();
 			
-			Boolean temporarilyBanned = temporaryBans.getOrDefault(resolved, false);
+			Boolean temporarilyBanned = temporaryBans.getOrDefault(remoteAddress, false);
 			if(temporarilyBanned) {
-				Log.info("Rejecting IP {} because of temporary ban", resolved.getHostAddress());
+				Log.info("Rejecting IP {} because of temporary ban", remoteAddress.getHostAddress());
 				return false;
 			}
-			addr = resolved.getHostAddress();
+			addr = remoteAddress.getHostAddress();
 			
 			if(!whitelist.isEmpty()) {
 				allowed = isListed(addr, whitelist);
@@ -152,10 +149,28 @@ public class IPPolicy extends Permissions {
 		flaggedAddressCounts.put(addr, count);
 	}
 	
-	public final boolean checkConnection(SocketAddress remoteAddress, SocketAddress localAddress) {
+	public final boolean checkConnection(InetAddress remoteAddress, InetAddress localAddress) {
 		return assertConnection(remoteAddress, localAddress);
 	}
 	
+	public final boolean checkConnection(String remoteAddress, String localAddress) {
+		try {
+			return assertConnection(InetAddress.getByAddress(convertAddress(remoteAddress)),
+					InetAddress.getByAddress(convertAddress(remoteAddress)));
+		} catch (UnknownHostException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		}
+	}
+	
+	private byte[] convertAddress(String str) {
+		byte[] ret = new byte[4];
+		String[] s = str.split("\\.");
+		for (int i = 0; i < ret.length; i++) {
+		    ret[i] = (byte) Integer.parseInt(s[i], 10);
+		}
+		return ret;
+	}
+
 	public void stopAcceptingConnections() {
 		if(Log.isInfoEnabled()) {
 			Log.info("Stop accepting connections on IP Policy");

@@ -116,6 +116,7 @@ open module com.sshtools.maverick.base {
 	exports com.sshtools.common.ssh.compression;
 	exports com.sshtools.common.ssh2;
 	exports com.sshtools.common.sshd;
+	exports com.sshtools.common.sshd.config;
 	
 	uses SshPrivateKeyProvider; 
 	provides FileSystemProvider with AbstractFileNIOProvider;

@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,6 +61,8 @@ import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.Utils;
 
 public class AdaptiveConfiguration {
+	
+	public final static AdaptiveConfiguration DEFAULT;
 
 	public static final String KEY_EXCHANGE = "Kex";
 	public static final String PUBLIC_KEYS = "Publickeys";
@@ -67,20 +70,39 @@ public class AdaptiveConfiguration {
 	public static final String MACS = "Macs";
 	public static final String COMPRESSION = "Compressions";
 
-	private static Map<String,String> globalConfig = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-	private static Map<String,Map<String,String>> patternConfigs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-	private static File configFile = new File(System.getProperty("maverick.configFile", "maverick.cfg"));
-	private static File configDir = new File(System.getProperty("maverick.configDir", "conf.d"));
+	private Map<String,String> globalConfig = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+	private Map<String,Map<String,String>> patternConfigs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+	private final File configFile;
+	private final File configDir;
 	
 	static {
+		DEFAULT = new AdaptiveConfiguration(new File(System.getProperty("maverick.configFile", "maverick.cfg")),
+				new File(System.getProperty("maverick.configDir", "conf.d")), false);
 		try {
-			resetConfiguration();
+			DEFAULT.resetConfiguration();
 		} catch (IOException e) {
 			Log.error("Failed to initialize AdaptiveConfiguration", e);
 		}
 	}
+
+	public AdaptiveConfiguration(File configFile, File configDir) {
+		this(configFile, configDir, true);
+	}
 	
-	public static void resetConfiguration() throws IOException {
+	private AdaptiveConfiguration(File configFile, File configDir, boolean load) {
+		this.configFile = configFile;
+		this.configDir = configDir;
+		if(load) {
+			try {
+				resetConfiguration();
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
+		}
+	}
+	
+	
+	public void resetConfiguration() throws IOException {
 		globalConfig = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		patternConfigs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
@@ -102,13 +124,13 @@ public class AdaptiveConfiguration {
 		}
 	}
 	
-	private static void loadConfigurationFile(File file) throws IOException {
+	private void loadConfigurationFile(File file) throws IOException {
 		try(InputStream in = new FileInputStream(file)) {
 			loadConfiguration(in);
 		} 
 	}
 	
-	public static void saveMatchingConfiguration(String match, String keyexchange, String publickey, String cipher, String mac, String compression) throws IOException {
+	public void saveMatchingConfiguration(String match, String keyexchange, String publickey, String cipher, String mac, String compression) throws IOException {
 		
 		if(getBoolean("LastKnownGoodConfiguration", false, match)) {
 			setPatternConfig(match, KEY_EXCHANGE, keyexchange);
@@ -122,7 +144,7 @@ public class AdaptiveConfiguration {
 		}
 	}
 
-	public static void saveConfig() throws IOException {
+	public void saveConfig() throws IOException {
 		
 		StringWriter writer = new StringWriter();
 		
@@ -155,7 +177,7 @@ public class AdaptiveConfiguration {
 		IOUtils.writeStringToFile(configFile, writer.toString(), "UTF-8");
 	}
 	
-	public static void loadConfiguration(InputStream in) throws IOException {
+	public void loadConfiguration(InputStream in) throws IOException {
 		
 		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 		try {
@@ -196,7 +218,7 @@ public class AdaptiveConfiguration {
 		}
 	}
 	
-	private static String before(String str) {
+	private String before(String str) {
 		
 		String[] vals = str.trim().split("\\s+");
 		if(vals.length > 0) {
@@ -205,7 +227,7 @@ public class AdaptiveConfiguration {
 		throw new IllegalArgumentException(str + " does not contain elements separated by whitespace");
 	}
 	
-	private static String after(String str) {
+	private String after(String str) {
 		String key = before(str);
 		int idx = str.indexOf(key);
 		
@@ -215,7 +237,7 @@ public class AdaptiveConfiguration {
 		throw new IllegalArgumentException(str + " does not contain elements separated by whitespace");
 	}
 	
-	public static String createAlgorithmList(String supportedList, String key,
+	public String createAlgorithmList(String supportedList, String key,
 			 String ident, String hostname, String...ignores) {
 		
 		List<String> supported = Arrays.asList(supportedList.split("."));
@@ -240,7 +262,7 @@ public class AdaptiveConfiguration {
 		return Utils.csv(results);
 	}
 	
-	public static String createAlgorithmList(ComponentFactory<?> factory, String key, String contextPreference, String ident, String hostname, String...ignores) {
+	public String createAlgorithmList(ComponentFactory<?> factory, String key, String contextPreference, String ident, String hostname, String...ignores) {
 		
 		String locallist = factory.filter(getPatternConfig(key, hostname, ident));
 		
@@ -255,7 +277,7 @@ public class AdaptiveConfiguration {
 		return locallist;
 	}
 	
-	public static String getPatternConfig(String key, String... values) {
+	public String getPatternConfig(String key, String... values) {
 		for(String value : values) {
 			if(Utils.isNotBlank(value)) {
 				for(String pattern : patternConfigs.keySet()) {
@@ -279,7 +301,7 @@ public class AdaptiveConfiguration {
 		return getGlobalConfig(key);
 	}
 	
-	private static String formatKey(String key1, String key2) {
+	private String formatKey(String key1, String key2) {
 		StringBuilder str = new StringBuilder();
 		str.append(key1);
 		str.append(".");
@@ -287,7 +309,7 @@ public class AdaptiveConfiguration {
 		return str.toString();
 	}
 	
-	private static String getSystemProperty(String key) {
+	private String getSystemProperty(String key) {
 		String result = System.getProperty(key);
 		if(result!=null) {
 			if(Log.isDebugEnabled()) {
@@ -297,26 +319,26 @@ public class AdaptiveConfiguration {
 		return result;
 	}
 	
-	public static void setPatternConfig(String pattern, String key, String val) {
+	public void setPatternConfig(String pattern, String key, String val) {
 		if(!patternConfigs.containsKey(pattern)) {
 			patternConfigs.put(pattern, new TreeMap<String,String>(String.CASE_INSENSITIVE_ORDER));
 		}
 		patternConfigs.get(pattern).put(key,  val);
 	}
 	
-	public static void setPatternConfig(String pattern, String key, boolean val) {
+	public void setPatternConfig(String pattern, String key, boolean val) {
 		setPatternConfig(pattern, key, String.valueOf(val));
 	}
 	
-	public static void setPatternConfig(String pattern, String key, int val) {
+	public void setPatternConfig(String pattern, String key, int val) {
 		setPatternConfig(pattern, key, String.valueOf(val));
 	}
 	
-	public static void setPatternConfig(String pattern, String key, long val) {
+	public void setPatternConfig(String pattern, String key, long val) {
 		setPatternConfig(pattern, key, String.valueOf(val));
 	}
 	
-	public static String getGlobalConfig(String key) {
+	public String getGlobalConfig(String key) {
 		String result = globalConfig.get(key);
 		if(result!=null) {
 			if(Log.isDebugEnabled()) {
@@ -327,23 +349,23 @@ public class AdaptiveConfiguration {
 		return getSystemProperty(formatKey("maverick", key));
 	}
 	
-	public static void setGlobalConfig(String key, String val) {
+	public void setGlobalConfig(String key, String val) {
 		globalConfig.put(key,  val);
 	}
 	
-	public static void setGlobalConfig(String key, int val) {
+	public void setGlobalConfig(String key, int val) {
 		globalConfig.put(key,  String.valueOf(val));
 	}
 	
-	public static void setGlobalConfig(String key, long val) {
+	public void setGlobalConfig(String key, long val) {
 		globalConfig.put(key,  String.valueOf(val));
 	}
 	
-	public static void setGlobalConfig(String key, boolean value) {
+	public void setGlobalConfig(String key, boolean value) {
 		setGlobalConfig(key, String.valueOf(value));
 	}
 	
-	public static String getIdent(String remoteIdentification) {
+	public String getIdent(String remoteIdentification) {
 		if(remoteIdentification.startsWith("SSH")) {
 			String[] elements = remoteIdentification.split("-");
 			if(elements.length == 3) {
@@ -364,7 +386,7 @@ public class AdaptiveConfiguration {
 
 	}
 
-	public static boolean getBoolean(String key, boolean defaultValue, String... match) {
+	public boolean getBoolean(String key, boolean defaultValue, String... match) {
 		
 		String result = getPatternConfig(key, match);
 		if(result==null) {
@@ -373,7 +395,7 @@ public class AdaptiveConfiguration {
 		return parseBoolean(result);
 	}
 
-	private static boolean parseBoolean(String val) {
+	private boolean parseBoolean(String val) {
 		switch(val.toUpperCase()) {
 		case "YES":
 		case "Y":
@@ -384,15 +406,15 @@ public class AdaptiveConfiguration {
 		}
 	}
 
-	public static void setBoolean(String key, String pattern) {
+	public void setBoolean(String key, String pattern) {
 		setPatternConfig(pattern, key, Boolean.TRUE.toString());
 	}
 	
-	public static void setBoolean(String key, String pattern, Boolean val) {
+	public void setBoolean(String key, String pattern, Boolean val) {
 		setPatternConfig(pattern, key, val.toString());
 	}
 
-	public static boolean getBooleanOrDefault(String key, boolean defaultValue) {
+	public boolean getBooleanOrDefault(String key, boolean defaultValue) {
 		String result = getGlobalConfig(key);
 		if(result!=null) {
 			return parseBoolean(result);
@@ -400,7 +422,7 @@ public class AdaptiveConfiguration {
 		return defaultValue;
 	}
 	
-	public static long getLong(String key, Long defaultValue, String... match) {
+	public long getLong(String key, Long defaultValue, String... match) {
 		String result = getPatternConfig(key, match);
 		if(result==null) {
 			return getLongOrDefault(key, defaultValue);
@@ -408,7 +430,7 @@ public class AdaptiveConfiguration {
 		return Long.parseLong(result);
 	}
 
-	private static long getLongOrDefault(String key, long defaultValue) {
+	private long getLongOrDefault(String key, long defaultValue) {
 		String result = getGlobalConfig(key);
 		if(result!=null) {
 			return Long.parseLong(result);
@@ -416,7 +438,7 @@ public class AdaptiveConfiguration {
 		return defaultValue;
 	}
 	
-	public static int getInt(String key, int defaultValue, String... match) {
+	public int getInt(String key, int defaultValue, String... match) {
 		String result = getPatternConfig(key, match);
 		if(result==null) {
 			return getIntOrDefault(key, defaultValue);
@@ -424,7 +446,7 @@ public class AdaptiveConfiguration {
 		return Integer.parseInt(result);
 	}
 	
-	private static int getIntOrDefault(String key, int defaultValue) {
+	private int getIntOrDefault(String key, int defaultValue) {
 		String result = getGlobalConfig(key);
 		if(result!=null) {
 			return Integer.parseInt(result);
@@ -432,7 +454,7 @@ public class AdaptiveConfiguration {
 		return defaultValue;
 	}
 	
-	public static long getByteSize(String key, String defaultValue, String... match) {
+	public long getByteSize(String key, String defaultValue, String... match) {
 		
 		String result = getPatternConfig(key, match);
 		if(result!=null) {
@@ -441,7 +463,7 @@ public class AdaptiveConfiguration {
 		return getByteSizeOrDefault(key, defaultValue);
 	}
 	
-	private static long getByteSizeOrDefault(String key, String defaultValue) {
+	private long getByteSizeOrDefault(String key, String defaultValue) {
 		String result = getGlobalConfig(key);
 		if(result!=null) {
 			return IOUtils.fromByteSize(result);
@@ -449,7 +471,7 @@ public class AdaptiveConfiguration {
 		return IOUtils.fromByteSize(defaultValue);
 	}
 
-	public static String getProperty(String key, String defaultValue, String... match) {
+	public String getProperty(String key, String defaultValue, String... match) {
 		String result = getPatternConfig(key, match);
 		if(result!=null) {
 			return result;

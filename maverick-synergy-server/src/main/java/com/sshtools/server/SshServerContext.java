@@ -38,6 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.DefaultAuthenticationMechanismFactory;
+import com.sshtools.common.auth.DefaultPublicKeyAuthenticationVerifier;
+import com.sshtools.common.auth.PublicKeyAuthenticationVerifier;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyPairGenerator;
@@ -105,6 +107,7 @@ public class SshServerContext extends SshContext {
 	public SshServerContext(SshEngine engine, ComponentManager componentManager, SecurityLevel securityLevel) throws IOException, SshException {
 		super(engine, componentManager, securityLevel);
 		setAuthenicationMechanismFactory(new DefaultAuthenticationMechanismFactory<>());
+		setPolicy(PublicKeyAuthenticationVerifier.class, new DefaultPublicKeyAuthenticationVerifier());
 	}
 
 	public SshServerContext(SshEngine engine, SecurityLevel securityLevel) throws IOException, SshException {

@@ -188,7 +188,9 @@ public class PublicKeyAuthentication<C extends Context> implements Authenticatio
 
 							byte[] data = baw.toByteArray();
 
-							if (key.verifySignature(signature, data)) {
+							PublicKeyAuthenticationVerifier verifier = transport.getContext().getPolicy(PublicKeyAuthenticationVerifier.class);
+
+							if (verifier.verifySignature(key, signature, data)) {
 								authentication.completedAuthentication();
 							} else {
 								authentication.failedAuthentication();

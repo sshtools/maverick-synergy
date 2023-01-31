@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import com.sshtools.common.logger.Log;
@@ -84,6 +85,14 @@ public class AdaptiveConfiguration {
 			Log.error("Failed to initialize AdaptiveConfiguration", e);
 		}
 	}
+	
+	public AdaptiveConfiguration() {
+		this(null, null, false);
+	}
+	
+	public AdaptiveConfiguration(File configFile) {
+		this(configFile, null, true);
+	}
 
 	public AdaptiveConfiguration(File configFile, File configDir) {
 		this(configFile, configDir, true);
@@ -106,20 +115,24 @@ public class AdaptiveConfiguration {
 		globalConfig = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		patternConfigs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-		if(configFile.exists()) {
-			loadConfigurationFile(configFile);
+		if(Objects.nonNull(configFile)) {
+			if(configFile.exists()) {
+				loadConfigurationFile(configFile);
+			}
 		}
 		
-		if(configDir.exists()) {
-			for(File file : configDir.listFiles(new FileFilter() {
-
-				@Override
-				public boolean accept(File path) {
-					return path.getName().endsWith(".cfg");
+		if(Objects.nonNull(configDir)) {
+			if(configDir.exists()) {
+				for(File file : configDir.listFiles(new FileFilter() {
+	
+					@Override
+					public boolean accept(File path) {
+						return path.getName().endsWith(".cfg");
+					}
+					
+				})) {
+					loadConfigurationFile(file);
 				}
-				
-			})) {
-				loadConfigurationFile(file);
 			}
 		}
 	}
@@ -144,8 +157,9 @@ public class AdaptiveConfiguration {
 		}
 	}
 
-	public void saveConfig() throws IOException {
-		
+	@Override
+	public String toString() {
+
 		StringWriter writer = new StringWriter();
 		
 		for(String key : globalConfig.keySet()) {
@@ -173,8 +187,16 @@ public class AdaptiveConfiguration {
 			
 			writer.write(System.lineSeparator());
 		}
+		return writer.toString();
+	}
+	
+	public void saveConfig() throws IOException {
 		
-		IOUtils.writeStringToFile(configFile, writer.toString(), "UTF-8");
+		if(Objects.isNull(configFile)) {
+			throw new IOException("Cannot save configuration because there is no file set");
+		}
+		
+		IOUtils.writeStringToFile(configFile, toString(), "UTF-8");
 	}
 	
 	public void loadConfiguration(InputStream in) throws IOException {
@@ -481,5 +503,9 @@ public class AdaptiveConfiguration {
 			return defaultValue;
 		}
 		return result;
+	}
+
+	public void loadConfiguration(String cfg) throws IOException {
+		loadConfiguration(IOUtils.toInputStream(cfg, "UTF-8"));
 	}
 }

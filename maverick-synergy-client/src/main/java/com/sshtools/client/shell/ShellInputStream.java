@@ -45,8 +45,6 @@ class ShellInputStream extends InputStream {
 	private boolean active = true;
 	private boolean matchPromptMarker;
 
-	private static boolean verboseDebug = Boolean.getBoolean("maverick.shell.verbose");
-	
 	ShellInputStream(ExpectShell shell, String beginCommandMarker, String endCommandMarker, String cmd, boolean matchPromptMarker, String promptMarker) {
 		this.beginCommandMarker = beginCommandMarker;
 		this.endCommandMarker = endCommandMarker.getBytes();
@@ -55,6 +53,10 @@ class ShellInputStream extends InputStream {
 		this.shell = shell;
 		this.cmd = cmd;
 		this.sessionIn = shell.sessionIn;
+	}
+	
+	public String getCommand() {
+		return cmd;
 	}
 	
 	public int getExitCode() throws IllegalStateException {

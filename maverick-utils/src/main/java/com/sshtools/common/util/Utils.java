@@ -65,6 +65,22 @@ public class Utils {
 		}
 	}
 	
+	public static String after(String value, String token) {
+		int idx = value.indexOf(token);
+		if(idx < 0) {
+			throw new IndexOutOfBoundsException();
+		}
+		return value.substring(idx+token.length());
+	}
+	
+	public static String before(String value, String token) {
+		int idx = value.indexOf(token);
+		if(idx < 0) {
+			throw new IndexOutOfBoundsException();
+		}
+		return value.substring(0, idx);
+	}
+	
 	public static String bytesToHex(byte[] bytes) {
 		return bytesToHex(bytes, 0, bytes.length);
 	}

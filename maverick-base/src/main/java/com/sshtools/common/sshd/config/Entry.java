@@ -213,6 +213,49 @@ public class Entry {
 	}
 	
 	/**
+	 * Will delete the entry for the given key and value (when multiple values exist).
+	 * 
+	 * @param key
+	 */
+	public void deleteEntry(final String key, final String value) {
+		executeWrite(new Callable<Void>() {
+
+			@Override
+			public Void call() throws Exception {
+				int index = findEntryIndex(key);
+				if (index == -1) {
+					throw new IllegalArgumentException(String.format("Entry with key `%s` not found.", key));
+				}
+				
+				SshdConfigFileEntry e = Entry.this.getKeyEntriesOrderedMap().getValue(index);
+				if(e.getValue().equals(value)) {
+					Entry.this.getKeyEntriesOrderedMap().removeIndex(index);
+					
+					if(e.hasNext()) {
+						Entry.this.getKeyEntriesOrderedMap().put(index, key, e.getNext());
+					}
+				} else {
+					SshdConfigKeyValueEntry kv = (SshdConfigKeyValueEntry) e;
+					while(e.hasNext()) {
+						e = e.getNext();
+						if(e.getValue().equals(value)) {
+							if(e.hasNext()) {
+								kv.setNext(e.getNext());
+							} else {
+								kv.setNext(null);
+							}
+							break;
+						}
+						kv = (SshdConfigKeyValueEntry) e;
+					}
+				}
+				return null;
+			}
+		});
+		
+	}
+	
+	/**
 	 * This method would add entry after the past valid entry.
 	 * If the section ends with a series of blank and comment lines.
 	 * It will walk backwards from the end of the section, find the valid entry index
@@ -253,9 +296,7 @@ public class Entry {
 			}
 			
 		});
-		
 	}
-	
 
 	public void append(String key, String value) {
 		appendEntry(new SshdConfigKeyValueEntry(key, value));

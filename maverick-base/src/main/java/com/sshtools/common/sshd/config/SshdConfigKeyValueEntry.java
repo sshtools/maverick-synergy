@@ -62,7 +62,7 @@ public class SshdConfigKeyValueEntry extends SshdConfigFileEntry {
 		
 		public SshdConfigKeyValueEntry getNext() {
 			if(!hasNext()) {
-				throw new NoSuchElementException();
+				return null;
 			}
 			return next;
 		}

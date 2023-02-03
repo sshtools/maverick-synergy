@@ -92,17 +92,32 @@ public class FileUtils {
 			return str;
 		}
 	}
-
+	
+	public static String checkEndsWithBackslash(String str) {
+		return checkEndsWith(str, "\\");
+	}
+	
+	public static String checkEndsWithoutBackslash(String str) {
+		return checkEndsWithNo(str, "\\");
+	}
+	
 	public static String checkEndsWithSlash(String str) {
-		if (str.endsWith("/")) {
+		return checkEndsWith(str, "/");
+	}
+	
+	public static String checkEndsWith(String str, String slash) {
+		if (str.endsWith(slash)) {
 			return str;
 		} else {
-			return str + "/";
+			return str + slash;
 		}
 	}
-
 	public static String checkEndsWithNoSlash(String str) {
-		if (str.endsWith("/")) {
+		return checkEndsWithNo(str, "/");
+	}
+	
+	public static String checkEndsWithNo(String str, String slash) {
+		if (str.endsWith(slash)) {
 			return str.substring(0, str.length() - 1);
 		} else {
 			return str;

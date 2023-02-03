@@ -20,7 +20,6 @@
  */
 package com.sshtools.common.sshd.config;
 
-import java.util.NoSuchElementException;
 import java.util.Objects;
 
 public class SshdConfigKeyValueEntry extends SshdConfigFileEntry {

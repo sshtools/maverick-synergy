@@ -70,7 +70,7 @@ public class PrivateKeyFileAuthenticator extends PublicKeyAuthenticator {
 	}
 	
 	public String getPassphrase() {
-		return passphrase.getPasshrase(path.getFileName().toString());
+		return passphrase.getPasshrase(String.format("Passphrase for %s: ", path.getFileName().toString()));
 	}
 
 	@Override

@@ -40,37 +40,37 @@ public class PrivateKeyFileAuthenticator extends PublicKeyAuthenticator {
 	private SshPrivateKeyFile keyfile;
 	private PassphrasePrompt passphrase;
 	private SshKeyPair pair;
+	private Path path;
 	
-	public PrivateKeyFileAuthenticator(File keyfile, String passphrase) throws IOException {
-		this.keyfile = SshPrivateKeyFileFactory.parse(keyfile.toPath());
+	public PrivateKeyFileAuthenticator(File path, String passphrase) throws IOException {
+		this(path.toPath(), passphrase);
+	}
+	
+	public PrivateKeyFileAuthenticator(File path, PassphrasePrompt passphrase) throws IOException {
+		this(path.toPath(), passphrase);
+	}
+	
+	public PrivateKeyFileAuthenticator(Path path, String passphrase) throws IOException {
+		this(path);
 		this.passphrase = (keyinfo) -> passphrase;
 	}
 	
-	public PrivateKeyFileAuthenticator(File keyfile, PassphrasePrompt passphrase) throws IOException {
-		this.keyfile = SshPrivateKeyFileFactory.parse(keyfile.toPath());
+	public PrivateKeyFileAuthenticator(Path path, PassphrasePrompt passphrase) throws IOException {
+		this(path);
 		this.passphrase = passphrase;
 	}
 	
-	public PrivateKeyFileAuthenticator(Path keyfile, String passphrase) throws IOException {
-		this.keyfile = SshPrivateKeyFileFactory.parse(keyfile);
-		this.passphrase = (keyinfo) -> passphrase;
-	}
-	
-	public PrivateKeyFileAuthenticator(Path keyfile, PassphrasePrompt passphrase) throws IOException {
-		this.keyfile = SshPrivateKeyFileFactory.parse(keyfile);
-		this.passphrase = passphrase;
-	}
-	
-	public PrivateKeyFileAuthenticator(File keyfile) throws IOException {
-		this.keyfile = SshPrivateKeyFileFactory.parse(keyfile.toPath());
+	public PrivateKeyFileAuthenticator(File path) throws IOException {
+		this(path.toPath());
 	}
 
-	public PrivateKeyFileAuthenticator(Path keyfile) throws IOException {
-		this.keyfile = SshPrivateKeyFileFactory.parse(keyfile);
+	public PrivateKeyFileAuthenticator(Path path) throws IOException {
+		this.keyfile = SshPrivateKeyFileFactory.parse(path);
+		this.path = path;
 	}
 	
 	public String getPassphrase() {
-		return passphrase.getPasshrase(SshKeyUtils.getFingerprint(pair.getPublicKey()));
+		return passphrase.getPasshrase(path.getFileName().toString());
 	}
 
 	@Override

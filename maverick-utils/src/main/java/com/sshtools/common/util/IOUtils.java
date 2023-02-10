@@ -397,18 +397,28 @@ public class IOUtils {
 	  case "P":
 	  case "PB":
 		  return v * 1000 * 1000 * 1000 * 1000 * 1000;
+	  case "PIB":
+		  	return v * 1024 * 1024 * 1024 * 1024 * 1024;
 	  case "T":
 	  case "TB":
 		  return v * 1000 * 1000 * 1000 * 1000;
+	  case "TIB":
+		  return v * 1024 * 1024 * 1024 * 1024;
 	  case "G":
 	  case "GB":
 		  return v * 1000 * 1000 * 1000;
+	  case "GIB":
+		  return v * 1024 * 1024 * 1024;
 	  case "M":
 	  case "MB":
 		  return v * 1000 * 1000;
+	  case "MIB":
+		  return v * 1024 * 1024;
 	  case "K":
 	  case "KB":
 		  return v * 1000;
+	  case "KIB":
+		  return v * 1024;
 	  default:
 		  throw new IllegalArgumentException(String.format("Invalid input %s", val));
 	  }

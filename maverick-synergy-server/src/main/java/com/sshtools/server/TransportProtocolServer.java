@@ -57,7 +57,7 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 		return sshContext;
 	}
 	
-private void processProxyProtocol(String tmp) throws IOException {
+	private void processProxyProtocol(String tmp) throws IOException {
 		
 		LoadBalancerPolicy policy = getContext().getPolicy(LoadBalancerPolicy.class);
 		
@@ -337,5 +337,15 @@ private void processProxyProtocol(String tmp) throws IOException {
 	@Override
 	public void startService(com.sshtools.common.sshd.Service<SshServerContext> service) {
 		
+	}
+
+	@Override
+	protected String getExtensionNegotiationString() {
+		return "ext-info-s";
+	}
+
+	@Override
+	protected boolean isExtensionNegotiationSupported() {
+		return false;
 	}
 }

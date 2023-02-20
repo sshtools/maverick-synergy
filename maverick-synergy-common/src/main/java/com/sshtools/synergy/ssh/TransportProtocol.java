@@ -28,6 +28,7 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -43,6 +44,7 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.nio.IdleStateListener;
 import com.sshtools.common.nio.WriteOperationRequest;
+import com.sshtools.common.policy.SignaturePolicy;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.ExecutorOperationQueues;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
@@ -108,6 +110,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	static final int SSH_MSG_DEBUG = 4;
 	protected static final int SSH_MSG_SERVICE_REQUEST = 5;
 	public static final int SSH_MSG_SERVICE_ACCEPT = 6;
+	static final int SSH_MSG_EXT_INFO = 7;
 
 	static final int SSH_MSG_KEX_INIT = 20;
 	static final int SSH_MSG_NEWKEYS = 21;
@@ -1687,6 +1690,8 @@ public abstract class TransportProtocol<T extends SshContext>
 			String localKeyExchanges = sshContext.supportedKeyExchanges().list(
 								sshContext.getPreferredKeyExchange());
 			
+
+			
 			String localCiphersCS = sshContext
 					.supportedCiphersCS()
 					.list(sshContext
@@ -1874,6 +1879,10 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 	}
 
+	protected abstract String getExtensionNegotiationString();
+
+	protected abstract boolean isExtensionNegotiationSupported();
+
 	protected abstract void onKeyExchangeInit() throws SshException;
 
 	private void checkAlgorithms() {
@@ -1958,6 +1967,13 @@ public abstract class TransportProtocol<T extends SshContext>
 
 			if(Log.isDebugEnabled())
 				Log.debug("Received SSH_MSG_DEBUG");
+			break;
+		case SSH_MSG_EXT_INFO:
+
+			if(Log.isDebugEnabled())
+				Log.debug("Received SSH_MSG_EXT_INFO");
+			
+			processExtensionInfo(msg);
 			break;
 		case SSH_MSG_NEWKEYS:
 
@@ -2375,7 +2391,9 @@ public abstract class TransportProtocol<T extends SshContext>
 				if (localkex == null) {
 
 					try {
-						localkex = TransportProtocolHelper.generateKexInit(getContext());
+						localkex = TransportProtocolHelper.generateKexInit(getContext(), 
+								isExtensionNegotiationSupported(),
+								getExtensionNegotiationString());
 
 						kexQueue.clear();
 						if(Log.isDebugEnabled())
@@ -2403,6 +2421,66 @@ public abstract class TransportProtocol<T extends SshContext>
 					"Failed to create SSH_MSG_KEX_INIT");
 		}
 
+	}
+	
+	private void processExtensionInfo(byte[] msg) throws IOException {
+		 ByteArrayReader reader = new ByteArrayReader(msg);
+		 
+		 try {
+			 reader.skip(1);
+			 int count = (int) reader.readInt();
+			 
+			 if(Log.isDebugEnabled()) {
+				 Log.debug("Server supports {} extensions", count);
+			 }
+			 
+			 for(int i=0; i<count; i++) {
+				 
+				 String name = reader.readString();
+				 String value = reader.readString();
+				 
+				 switch(name) {
+				 case "server-sig-algs":
+					 getContext().setPolicy(SignaturePolicy.class, new SignaturePolicy(Arrays.asList(value.split(","))));
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side supports the signature algorithms {}", value);
+					 }
+					 break;
+				 case "no-flow-control":
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side requested no flow control");
+					 }
+					 break;
+				 case "accept-channels":
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side accepts the following channels {}", value);
+					 }
+					 break;
+				 case "elevation":
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side requested elevation value of {}", value);
+					 }
+					 break;
+				 case "delay-compression":
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side supports compression re-negotiation");
+					 }
+					 break;
+				 default:
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side reported unsupported element {} in ext-info with a value of {}", 
+								 name, 
+								 value);
+					 }
+					 break;
+				 }
+				 
+				
+			 }
+		
+		 } finally {
+			 reader.close();
+		 }
 	}
 
  	public String getCipherCS() {

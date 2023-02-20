@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import com.sshtools.common.publickey.InvalidPassphraseException;
-import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.common.ssh.components.SshKeyPair;

@@ -33,7 +33,7 @@ import com.sshtools.common.ssh.components.SshRsaPublicKey;
 
 public class Ssh2RsaPublicKeySHA512 extends Ssh2RsaPublicKey {
 	
-	private static final String ALGORITHM = "rsa-sha2-256";
+	private static final String ALGORITHM = "rsa-sha2-512";
 	
 	public static class Ssh2RsaPublicKeySHA512Factory implements SshPublicKeyFactory<Ssh2RsaPublicKeySHA512> {
 

@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.policy.SignaturePolicy;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SignatureGenerator;
 import com.sshtools.common.publickey.SshKeyUtils;
@@ -32,10 +33,14 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPrivateKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.SshRsaPublicKey;
+import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA256;
+import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA512;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.ssh.Connection;
+import com.sshtools.synergy.ssh.SshContext;
 
 /**
  * Implements public key authentication taking a separately loaded SshKeyPair as the private key for authentication.
@@ -50,11 +55,57 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 	
 	SignatureGenerator signatureGenerator;
 	SshPublicKey currentKey;
+	String signingAlgorithm;
 	
 	public PublicKeyAuthenticator() {
 
 	}
 
+	private boolean setupNextKey() throws IOException {
+		
+		while(hasCredentialsRemaining()) {
+			currentKey = getNextKey();
+			signingAlgorithm = currentKey.getSigningAlgorithm();
+
+			SignaturePolicy policy = transport.getContext().getPolicy(SignaturePolicy.class);
+			
+			if(!policy.getSupportedSignatures().isEmpty()) {
+				if(currentKey instanceof SshRsaPublicKey && currentKey.getBitLength() >= 1024) {
+					if(policy.getSupportedSignatures().contains(SshContext.PUBLIC_KEY_RSA_SHA512)) {
+						signingAlgorithm = SshContext.PUBLIC_KEY_RSA_SHA512;
+						currentKey = new Ssh2RsaPublicKeySHA512((SshRsaPublicKey)currentKey);
+					} else if(policy.getSupportedSignatures().contains(SshContext.PUBLIC_KEY_RSA_SHA256)) {
+						signingAlgorithm = SshContext.PUBLIC_KEY_RSA_SHA256;
+						currentKey = new Ssh2RsaPublicKeySHA256((SshRsaPublicKey)currentKey);
+					} else {
+						Log.debug("Server does not support {} signature for key {}",
+								currentKey.getSigningAlgorithm(),
+								SshKeyUtils.getFingerprint(currentKey));
+						continue;
+					}
+					if(Log.isDebugEnabled()) {
+						Log.debug("Upgrading key {} to use {} signature", SshKeyUtils.getFingerprint(currentKey), signingAlgorithm);
+					}
+				} else {
+					Log.debug("Server does not support {} signature for key {}",
+							currentKey.getSigningAlgorithm(),
+							SshKeyUtils.getFingerprint(currentKey));
+					continue;
+				}
+			}
+			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Authenticating with {} fingerprint {}", currentKey.getAlgorithm(), SshKeyUtils.getFingerprint(currentKey));
+			}
+			
+			
+			return true;
+		
+		}
+		
+		return false;
+	}
+	
 	@Override
 	public void authenticate(TransportProtocolClient transport, String username) throws IOException, SshException {
 		
@@ -64,7 +115,7 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 		this.username = username;
 
 		if(hasCredentialsRemaining()) {
-			currentKey = getNextKey();
+			setupNextKey();
 			doPublicKeyAuth();
 		} else {
 			if(Log.isDebugEnabled()) {
@@ -157,9 +208,13 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 			writePublicKey(baw, currentKey);
 	
 			if (isAuthenticating) {
-	
+
+					if(Log.isDebugEnabled()) {
+						Log.debug("Signing authentication request with {}", signingAlgorithm);
+					}
+					
 					byte[] signature = getSignatureGenerator().sign(currentKey, 
-							currentKey.getSigningAlgorithm(), 
+							signingAlgorithm, 
 							data);
 					baw.writeBinaryString(signature);
 			}
@@ -199,7 +254,7 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 		case AuthenticationProtocolClient.SSH_MSG_USERAUTH_FAILURE:
 		{
 			if(hasCredentialsRemaining()) {
-				currentKey = getNextKey();
+				setupNextKey();
 				isAuthenticating = false;
 				doPublicKeyAuth();
 				return true;

@@ -269,6 +269,16 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 		return "transport-client";
 	}
 
+	@Override
+	protected String getExtensionNegotiationString() {
+		return "ext-info-c";
+	}
+
+	@Override
+	protected boolean isExtensionNegotiationSupported() {
+		return true;
+	}
+
 //	@Override
 //	protected SocketAddress getConnectionAddress() {
 //		return getRemoteAddress();

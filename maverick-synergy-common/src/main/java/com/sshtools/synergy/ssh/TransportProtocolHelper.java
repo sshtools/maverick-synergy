@@ -29,7 +29,7 @@ import com.sshtools.common.util.ByteArrayWriter;
 
 public class TransportProtocolHelper {
 
-	public static byte[] generateKexInit(SshContext sshContext) throws SshException, IOException {
+	public static byte[] generateKexInit(SshContext sshContext, boolean supportsExtInfo, String extInfo) throws SshException, IOException {
 		
 		try(ByteArrayWriter baw = new ByteArrayWriter()) {
 			
@@ -43,6 +43,9 @@ public class TransportProtocolHelper {
 			String list = sshContext.supportedKeyExchanges().list(
 					sshContext.getPreferredKeyExchange());
 
+			if(supportsExtInfo) {
+				list += "," + extInfo;
+			}
 			baw.writeString(list);
 
 			list = sshContext.getSupportedPublicKeys();

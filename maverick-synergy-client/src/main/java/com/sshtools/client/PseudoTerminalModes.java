@@ -211,6 +211,12 @@ public class PseudoTerminalModes {
      */
     public static final int IMAXBEL = 41;
 
+    
+    /**
+     * Output is assumed to be UTF-8
+     */
+    public static final int IUTF8 = 42;
+    
     /**
      * Enable signals INTR, QUIT, [D]SUSP.
      */

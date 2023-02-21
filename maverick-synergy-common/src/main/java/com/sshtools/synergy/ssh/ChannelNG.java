@@ -43,6 +43,7 @@ import com.sshtools.common.ssh.ExecutorOperationSupport;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.IOUtils;
+import com.sshtools.common.util.Utils;
 
 /**
  * This abstract class provides the basic functions of an SSH2 channel. All
@@ -443,6 +444,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	
 		if(Log.isDebugEnabled()) {
 			log("Received", String.format("SSH_MSG_CHANNEL_DATA len=%d", data.remaining()));
+			if(Log.isTraceEnabled()) {
+				Log.trace("Channel data:" + System.lineSeparator()
+					+ Utils.bytesToHex(data.array(), data.position(), data.remaining(), 64, true, true));
+			}
 		}
 		
 		// Process the data

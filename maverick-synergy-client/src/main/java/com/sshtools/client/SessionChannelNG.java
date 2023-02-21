@@ -31,7 +31,6 @@ import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.ssh.CachingDataWindow;
 
 /**

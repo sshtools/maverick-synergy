@@ -444,10 +444,6 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	
 		if(Log.isDebugEnabled()) {
 			log("Received", String.format("SSH_MSG_CHANNEL_DATA len=%d", data.remaining()));
-			if(Log.isTraceEnabled()) {
-				Log.trace("Channel data:" + System.lineSeparator()
-					+ Utils.bytesToHex(data.array(), data.position(), data.remaining(), 64, true, true));
-			}
 		}
 		
 		// Process the data

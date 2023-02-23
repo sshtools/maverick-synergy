@@ -25,13 +25,10 @@ import java.io.IOException;
 import java.util.Objects;
 
 import com.sshtools.client.SessionChannelNG;
-import com.sshtools.client.shell.ShellTimeoutException;
-import com.sshtools.client.tasks.ShellTask;
+import com.sshtools.client.tasks.ShellTask.ShellTaskBuilder;
+import com.sshtools.client.tasks.Task;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.ssh.ConnectionAwareTask;
-import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.IOUtils;
-import com.sshtools.server.callback.Callback;
 import com.sshtools.server.vsession.UsageException;
 import com.sshtools.server.vsession.VirtualConsole;
 import com.sshtools.server.vsession.VirtualShellNG;
@@ -51,8 +48,8 @@ public class CallbackShell extends CallbackCommand {
 			throw new UsageException("Invalid number of arguments");
 		}
 		
-		String clientName = args[1];
-		Callback con = service.getCallbackByUUID(clientName);
+		var clientName = args[1];
+		var con = service.getCallbackByUUID(clientName);
 		
 		if(Objects.isNull(con)) {
 			console.println(String.format("%s is not currently connected", clientName));
@@ -62,53 +59,37 @@ public class CallbackShell extends CallbackCommand {
 		console.println(String.format("---- Opening shell on %s", clientName));
 		console.println();
 		
-		ShellTask shell = new ShellTask(con.getConnection()) {
-
-			private WindowSizeChangeListener listener;
-
-			protected void beforeStartShell(SessionChannelNG session) {
-				
-				session.allocatePseudoTerminal(console.getTerminal().getType(), 
-						console.getTerminal().getWidth(), 
-						console.getTerminal().getHeight());
-			}
-			
-			@Override
-			protected void onOpenSession(SessionChannelNG session)
-					throws IOException, SshException, ShellTimeoutException {
-				
-				console.getSessionChannel().enableRawMode();
-				
-				listener = new WindowSizeChangeListener() {
-					@Override
-					public void newSize(int rows, int cols) {
-						session.changeTerminalDimensions(cols, rows, 0, 0);
-					}
-				};
-				((VirtualShellNG)console.getSessionChannel()).addWindowSizeChangeListener(listener);
-				
-				con.addTask(new ConnectionAwareTask(con) {
-					@Override
-					protected void doTask() throws Throwable {
-						IOUtils.copy(console.getSessionChannel().getInputStream(), session.getOutputStream());
-					}
-				});
-				IOUtils.copy(session.getInputStream(), console.getSessionChannel().getOutputStream());
-			}
-
-			@Override
-			protected void onCloseSession(SessionChannelNG session) {
-				((VirtualShellNG)console.getSessionChannel()).removeWindowSizeChangeListener(listener);
-			}
-			
-		};
+		var listener = new WindowSizeChange();
 		
-		con.addTask(shell);
-		shell.waitForever();
+		con.addTask(ShellTaskBuilder.create().
+				withTermType(console.getTerminal().getType()).
+				withColumns(console.getTerminal().getWidth()).
+				withRows(console.getTerminal().getHeight()).
+				onOpen((task, session) -> {
+					console.getSessionChannel().enableRawMode();
+					listener.session = session;
+					((VirtualShellNG)console.getSessionChannel()).addWindowSizeChangeListener(listener);
+					con.addTask(Task.ofRunnable(con.getConnection(), (c) -> IOUtils.copy(console.getSessionChannel().getInputStream(), session.getOutputStream())));
+					IOUtils.copy(session.getInputStream(), console.getSessionChannel().getOutputStream());
+				}).
+				onClose((task, session) -> ((VirtualShellNG)console.getSessionChannel()).removeWindowSizeChangeListener(listener)).
+				build()).waitForever();
 		
 		console.getSessionChannel().disableRawMode();
 		console.println();
 		console.println(String.format("---- Exited shell on %s", clientName));
+	}
+	
+	class WindowSizeChange implements WindowSizeChangeListener {
+		
+		SessionChannelNG session;
+
+		@Override
+		public void newSize(int rows, int cols) {
+			if(session != null)
+				session.changeTerminalDimensions(cols, rows, 0, 0);
+		}
+		
 	}
 
 }

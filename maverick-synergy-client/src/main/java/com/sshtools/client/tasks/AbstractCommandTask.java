@@ -44,6 +44,7 @@ public abstract class AbstractCommandTask extends AbstractSessionTask<SessionCha
 		this.charset = charset;
 	}
 	
+	@SuppressWarnings("deprecation")
 	public AbstractCommandTask(SshConnection con, String command,
 			String charset, ChannelRequestFuture future) {
 		super(con, future);

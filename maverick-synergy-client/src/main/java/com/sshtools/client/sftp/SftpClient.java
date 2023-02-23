@@ -1640,12 +1640,18 @@ public class SftpClient implements Closeable {
 
 	public void append(InputStream in, String remote)
 			throws SftpStatusException, SshException, TransferCancelledException {
-		put(in, remote, null, -1);
+		put(in, remote, null, -1, -1);
 	}
 
+	@Deprecated
 	public void append(InputStream in, String remote, FileTransferProgress progress)
 			throws SftpStatusException, SshException, TransferCancelledException {
-		put(in, remote, progress, -1);
+		append(in, remote, progress, -1);
+	}
+
+	public void append(InputStream in, String remote, FileTransferProgress progress, long length)
+			throws SftpStatusException, SshException, TransferCancelledException {
+		put(in, remote, progress, -1, length);
 	}
 
 	/**
@@ -1673,6 +1679,7 @@ public class SftpClient implements Closeable {
 		InputStream in = localPath.getInputStream();
 		// File f = new File(local);
 		long position = 0;
+		long length = localPath.length();
 
 		SftpFileAttributes attrs = null;
 
@@ -1711,7 +1718,7 @@ public class SftpClient implements Closeable {
 		}
 
 		try {
-			put(in, remote, progress, position);
+			put(in, remote, progress, position, length);
 
 		} finally {
 			try {
@@ -1727,7 +1734,13 @@ public class SftpClient implements Closeable {
 		append(local, remote, null);
 	}
 
+	@Deprecated
 	public void append(String local, String remote, FileTransferProgress progress) throws SftpStatusException,
+			SshException, TransferCancelledException, IOException, PermissionDeniedException {
+		append(local, remote, progress, - 1);
+	}
+
+	public void append(String local, String remote, FileTransferProgress progress, long length) throws SftpStatusException,
 			SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		AbstractFile localPath = resolveLocalPath(local);
 
@@ -1737,7 +1750,7 @@ public class SftpClient implements Closeable {
 		InputStream in = localPath.getInputStream();
 
 		try {
-			append(in, remotePath, progress);
+			append(in, remotePath, progress, length);
 
 		} finally {
 			try {
@@ -1786,6 +1799,10 @@ public class SftpClient implements Closeable {
 	 * <p>
 	 * Upload a file to the remote computer reading from the specified <code>
 	 * InputStream</code>. The InputStream is closed, even if the operation fails.
+	 * The {@link FileTransferProgress} will be indeterminate, i.e {@link FileTransferProgress#started(long, String)} will
+	 * be called with a <code>length</code> of <code>-1</code>, as it is not possible to generically determine the length of
+	 * an {@link InputStream}. It is recommended you use {@link #put(InputStream, String, FileTransferProgress, long, long)} instead
+	 * to provide the size when known. 
 	 * </p>
 	 * 
 	 * @param in       the InputStream being read
@@ -1798,10 +1815,34 @@ public class SftpClient implements Closeable {
 	 */
 	public void put(InputStream in, String remote, FileTransferProgress progress)
 			throws SftpStatusException, SshException, TransferCancelledException {
-		put(in, remote, progress, 0);
+		put(in, remote, progress, 0, -1);
 	}
 
+	@Deprecated
 	public void put(InputStream in, String remote, FileTransferProgress progress, long position)
+			throws SftpStatusException, SshException, TransferCancelledException {
+		put(in, remote, progress, position, -1);
+	}
+
+	/**
+	 * <p>
+	 * Upload a file to the remote computer reading from the specified <code>
+	 * InputStream</code>. The InputStream is closed, even if the operation fails.
+	 * The {@link FileTransferProgress} will be indeterminate if you pass a <code>length</code> of <code>-1</code>.
+	 * to provide the size when known. 
+	 * </p>
+	 * 
+	 * @param in       the InputStream being read
+	 * @param remote   the path/name of the destination file
+	 * @param progress progress
+	 * @param position position to start at
+	 * @param length   the number of bytes that will be transferred or -1 if unknown.
+	 * 
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 * @throws TransferCancelledException
+	 */
+	public void put(InputStream in, String remote, FileTransferProgress progress, long position, long length)
 			throws SftpStatusException, SshException, TransferCancelledException {
 		String remotePath = resolveRemotePath(remote);
 
@@ -1846,15 +1887,15 @@ public class SftpClient implements Closeable {
 						"Resume on text mode files is not supported");
 			}
 
-			internalPut(in, remotePath, progress, position, SftpChannel.OPEN_WRITE, attrs);
+			internalPut(length, in, remotePath, progress, position, SftpChannel.OPEN_WRITE, attrs);
 		} else {
 
 			if (position == 0) {
 				if (transferMode == MODE_TEXT && sftp.getVersion() > 3) {
-					internalPut(in, remotePath, progress, position, SftpChannel.OPEN_CREATE | SftpChannel.OPEN_TRUNCATE
+					internalPut(length, in, remotePath, progress, position, SftpChannel.OPEN_CREATE | SftpChannel.OPEN_TRUNCATE
 							| SftpChannel.OPEN_WRITE | SftpChannel.OPEN_TEXT, attrs);
 				} else {
-					internalPut(in, remotePath, progress, position,
+					internalPut(length, in, remotePath, progress, position,
 							SftpChannel.OPEN_CREATE | SftpChannel.OPEN_TRUNCATE | SftpChannel.OPEN_WRITE, attrs);
 				}
 			} else {
@@ -1862,26 +1903,22 @@ public class SftpClient implements Closeable {
 				 * Negative position means append
 				 */
 				if (transferMode == MODE_TEXT && sftp.getVersion() > 3) {
-					internalPut(in, remotePath, progress, position,
+					internalPut(length, in, remotePath, progress, position,
 							SftpChannel.OPEN_WRITE | SftpChannel.OPEN_TEXT | SftpChannel.OPEN_APPEND, attrs);
 				} else {
-					internalPut(in, remotePath, progress, position, SftpChannel.OPEN_WRITE | SftpChannel.OPEN_APPEND,
+					internalPut(length, in, remotePath, progress, position, SftpChannel.OPEN_WRITE | SftpChannel.OPEN_APPEND,
 							attrs);
 				}
 			}
 		}
 	}
 
-	private void internalPut(InputStream in, String remotePath, FileTransferProgress progress, long position, int flags,
+	private void internalPut(long length, InputStream in, String remotePath, FileTransferProgress progress, long position, int flags,
 			SftpFileAttributes attrs) throws SftpStatusException, SshException, TransferCancelledException {
 
 		SftpFile file = sftp.openFile(remotePath, flags, attrs);
 		if (progress != null) {
-			try {
-				progress.started(in.available(), remotePath);
-			} catch (IOException ex1) {
-				throw new SshException("Failed to determine local file size", SshException.INTERNAL_ERROR);
-			}
+			progress.started(length, remotePath);
 		}
 
 		try {
@@ -1941,7 +1978,7 @@ public class SftpClient implements Closeable {
 	 */
 	public void put(InputStream in, String remote, long position)
 			throws SftpStatusException, SshException, TransferCancelledException {
-		put(in, remote, null, position);
+		put(in, remote, null, position, -1);
 	}
 
 	/**
@@ -1956,7 +1993,7 @@ public class SftpClient implements Closeable {
 	 */
 	public void put(InputStream in, String remote)
 			throws SftpStatusException, SshException, TransferCancelledException {
-		put(in, remote, null, 0);
+		put(in, remote, null, 0, -1);
 	}
 
 	/**

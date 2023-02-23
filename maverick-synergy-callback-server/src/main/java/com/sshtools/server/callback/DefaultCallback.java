@@ -57,8 +57,9 @@ public class DefaultCallback implements Callback {
 	}
 
 	@Override
-	public void addTask(Task task) {
+	public Task addTask(Task task) {
 		con.addTask(task);
+		return task;
 	}
 
 	@Override

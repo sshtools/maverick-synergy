@@ -129,12 +129,15 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	}
 	
 	@Override
-	public void addTask(ConnectionAwareTask r) {
+	public ConnectionAwareTask addTask(ConnectionAwareTask r) {
 		context.getExecutorService().execute(r);
+		return r;
 	}
 	
-	public void addTask(Runnable r) {
-		context.getExecutorService().execute(new ConnectionTaskWrapper(this, r));
+	public ConnectionAwareTask addTask(Runnable r) {
+		var t = new ConnectionTaskWrapper(this, r);
+		context.getExecutorService().execute(t);
+		return t;
 	}
 	
 	public <R> Future<R> executeTask(Callable<R> task) {

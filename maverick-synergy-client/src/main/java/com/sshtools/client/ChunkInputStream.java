@@ -18,45 +18,45 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+package com.sshtools.client;
 
-package com.sshtools.common.ssh;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
 
-import java.util.Objects;
+public class ChunkInputStream extends InputStream {
 
-import com.sshtools.common.logger.Log;
-
-public abstract class ConnectionAwareTask extends AbstractRequestFuture implements Runnable {
-
-	protected final SshConnection con;
-	protected Throwable lastError;
+	RandomAccessFile file;
+	long length;
 	
-	public ConnectionAwareTask(SshConnection con) {
-		if(Objects.isNull(con)) {
-			throw new IllegalArgumentException();
+	public ChunkInputStream(RandomAccessFile file, long length) {
+		this.file = file;
+		this.length = length;
+	}
+	
+	@Override
+	public int available() throws IOException {
+		return length > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)length;
+	}
+
+	@Override
+	public int read() throws IOException {
+		if(length > 0) {
+			length--;
+			return file.read();
 		}
-		this.con = con;
+		return -1;
 	}
 	
-	protected abstract void doTask() throws Throwable;
-	
-	
-	public final void run() {
-		
-		con.getConnectionManager().setupConnection(con);
-		
-		try {
-			doTask();
-			done(getLastError()==null);
-		} catch(Throwable t) { 
-			this.lastError = t;
-			Log.error("Connection task failed with an error", t);
-			done(false);
-		} finally {
-			con.getConnectionManager().clearConnection();
+	@Override
+	public int read(byte[] b, int off, int len) throws IOException {	
+		if(length > 0) {
+			int max = (int) Math.min(len, length);
+			length-=max;
+			
+			return file.read(b, off, max);
 		}
+		return -1;
 	}
 
-	public Throwable getLastError() {
-		return lastError;
-	}
 }

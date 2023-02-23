@@ -22,51 +22,112 @@
 package com.sshtools.client.tasks;
 
 import java.io.OutputStream;
+import java.util.Optional;
 
+import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
-import com.sshtools.client.sftp.TransferCancelledException;
-import com.sshtools.common.sftp.SftpStatusException;
-import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.common.ssh.SshException;
+import com.sshtools.client.tasks.DownloadFileTask.DownloadFileTaskBuilder;
 import com.sshtools.common.util.IOUtils;
-import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
+import com.sshtools.synergy.ssh.Connection;
 
-public class DownloadOutputStreamTask extends Task {
+ /**
+ * An SFTP {@link Task} that downloads complete files to an {@link OutputStream}.
+ * You cannot directly create a {@link DownloadOutputStreamTask}, instead use {@link DownloadOutputStreamTas}.
+ * <pre>
+ * client.addTask(DownloadFileTaskBuilder.create().
+ * 		withLocalFile(new File("local.txt")).
+ *      withRemotePath("/path/to/remote.txt").
+ *      build());
+ * </pre>
+ */
+public class DownloadOutputStreamTask extends AbstractFileTask {
 
-	String path;
-	OutputStream localFile = null;
-	
-	public DownloadOutputStreamTask(SshConnection con, String path, OutputStream localFile) {
-		super(con);
-		this.path = path;
-		this.localFile = localFile;
+	/**
+	 * Builder for {@link DownloadOutputStreamTask}.
+	 */
+	public final static class DownloadOutputStreamTaskBuilder extends AbstractFileTaskBuilder<DownloadOutputStreamTaskBuilder, DownloadOutputStreamTask> {
+		private Optional<String> path = Optional.empty();
+		private Optional<OutputStream> outputStream = Optional.empty();
+		
+		private DownloadOutputStreamTaskBuilder() {
+		}
+
+		/**
+		 * Create a new {@link DownloadOutputStreamTaskBuilder}
+
+		 * @return builder
+		 */
+		public static DownloadOutputStreamTaskBuilder create() {
+			return new DownloadOutputStreamTaskBuilder();
+		}
+		
+		/**
+		 * Set the output stream to download to. If empty, will be download
+		 * the current local working directory, with the same name as the remote file.
+		 * 
+		 * @param file file
+		 * @return builder for chaining
+		 */
+		public DownloadOutputStreamTaskBuilder withOutputStream(Optional<OutputStream> outputStream) {
+			this.outputStream = outputStream;
+			return this;
+		}
+		
+		/**
+		 * Set the output stream to download to.
+		 * 
+		 * @param file file
+		 * @return builder for chaining
+		 */
+		public DownloadOutputStreamTaskBuilder withOutputStream(OutputStream outputStream) {
+			return withOutputStream(Optional.of(outputStream));
+		}
+		
+		/**
+		 * Set the remote path of the file to download.
+		 * 
+		 * @param path path
+		 * @return builder for chaining
+		 */
+		public DownloadOutputStreamTaskBuilder withPath(String path) {
+			this.path = Optional.of(path);
+			return this;
+		}
+
+		@Override
+		public DownloadOutputStreamTask build() {
+			return new DownloadOutputStreamTask(this);
+		}
 	}
-	
-	public DownloadOutputStreamTask(SshConnection con, String path) {
-		this(con, path, null);
+
+	final String path;
+	final OutputStream output;
+
+	private DownloadOutputStreamTask(DownloadOutputStreamTaskBuilder builder) {
+		super(builder);
+		output = builder.outputStream.orElseThrow(() -> new IllegalStateException("OutputStream must be supplied."));
+		path  = builder.path.orElseThrow(() -> new IllegalStateException("Path must be supplied."));
+	}
+
+	/**
+	 * Construct a new download file task. Deprecated since 3.1.0. Use a {@link DownloadOutputStreamTaskBuilder} instead. 
+	 * 
+	 * @param con connection
+	 * @param path path
+	 * @param output output
+	 * @deprecated 
+	 * @see DownloadFileTaskBuilder
+	 */
+	public DownloadOutputStreamTask(Connection<SshClientContext> con, String path, OutputStream output) {
+		this(DownloadOutputStreamTaskBuilder.create().withConnection(con).withPath(path).withOutputStream(output));
 	}
 
 	@Override
 	protected void doTask() {
-		
-		SftpClientTask task = new SftpClientTask(con) {
-			
-			@Override
-			protected void doSftp() {
-				try {
-					get(path, localFile);
-				} catch (SftpStatusException | SshException | TransferCancelledException e) {
-					throw new IllegalStateException(e.getMessage(), e);
-				}
-			}
-		};
-		
 		try {
-			con.addTask(new ConnectionTaskWrapper(con, task));
-			task.waitForever();
+			doTaskUntilDone(new SftpClientTask(con, (self) -> self.get(path, output, progress.orElse(null))));
 		} finally {
-			IOUtils.closeStream(localFile);
-			done(task.isDone() && task.isSuccess());
+			IOUtils.closeStream(output);
 		}
 	}
 }

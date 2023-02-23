@@ -32,13 +32,21 @@ import com.sshtools.synergy.util.EncodingUtils;
  * Implements the password authentication method.
  */
 public class PasswordAuthenticator extends SimpleClientAuthenticator {
+	
+	@FunctionalInterface
+	public interface PasswordPrompt extends Supplier<String>, NotifiedPrompt {
+		@Override
+		default void completed(boolean success, String value, ClientAuthenticator authenticator) {
+		}
+	}
 
-	private Supplier<String> password;
+	private PasswordPrompt password;
+	private String lastPassword;
 	
 	public PasswordAuthenticator() {
 	}
 	
-	public PasswordAuthenticator(Supplier<String> password) {
+	public PasswordAuthenticator(PasswordPrompt password) {
 		this.password = password;
 	}
 	
@@ -54,14 +62,21 @@ public class PasswordAuthenticator extends SimpleClientAuthenticator {
 		return password.get();
 	}
 	
-	private byte[] getPasswordBytes() {
-		return EncodingUtils.getUTF8Bytes(getPassword());
+	@Override
+	public synchronized void done(boolean success) {
+		try {
+			super.done(success);
+		}
+		finally {
+			password.completed(success, lastPassword, this);
+		}
 	}
-	
+
 	@Override
 	public void authenticate(TransportProtocolClient transport, String username) throws SshException {
 		
-		byte[] tmp = getPasswordBytes();
+		lastPassword = getPassword();
+		byte[] tmp = EncodingUtils.getUTF8Bytes(lastPassword);
 		if(Objects.isNull(tmp)) {
 			cancel();
 			return;

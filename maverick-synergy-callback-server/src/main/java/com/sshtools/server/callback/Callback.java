@@ -35,7 +35,7 @@ public interface Callback {
 
 	String getMemo();
 
-	void addTask(Task task);
+	Task addTask(Task task);
 
 	void setMemo(String memo);
 

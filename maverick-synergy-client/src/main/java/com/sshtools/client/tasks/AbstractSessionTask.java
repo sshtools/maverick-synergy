@@ -35,18 +35,24 @@ import com.sshtools.common.ssh.SshException;
 /**
  * An abstract task for using the SSH session
  */
-public abstract class AbstractSessionTask<T extends AbstractSessionChannel> extends Task {
+public abstract class AbstractSessionTask<T extends AbstractSessionChannel> extends AbstractConnectionTask {
 
 	long timeout = 10000;
 	T session;
 	ChannelRequestFuture future;
 	Throwable lastError;
 	
+	public AbstractSessionTask(AbstractConnectionTaskBuilder<?, ?> builder) {
+		super(builder);
+	}
+
+	@Deprecated
 	public AbstractSessionTask(SshClient ssh, ChannelRequestFuture future) {
 		super(ssh);
 		this.future = future;
 	}
-	
+
+	@Deprecated
 	public AbstractSessionTask(SshConnection con, ChannelRequestFuture future) {
 		super(con);
 		this.future = future;

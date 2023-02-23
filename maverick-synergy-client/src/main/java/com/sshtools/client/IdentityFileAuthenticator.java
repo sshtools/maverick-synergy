@@ -50,6 +50,7 @@ public class IdentityFileAuthenticator extends PublicKeyAuthenticator {
 	
 	private Path currentPath;
 	private SshPublicKey currentKey;
+	private String lastPassphrase;
 	
 	public IdentityFileAuthenticator(Collection<Path> identities, PassphrasePrompt passphrase) {
 		this.identities = new ArrayList<>(identities);
@@ -75,6 +76,16 @@ public class IdentityFileAuthenticator extends PublicKeyAuthenticator {
 	}
 
 	@Override
+	public synchronized void done(boolean success) {
+		try {
+			super.done(success);
+		}
+		finally {
+			passphrase.completed(success, lastPassphrase, this);
+		}
+	}
+
+	@Override
 	protected SshPublicKey getNextKey() throws IOException {
 		return currentKey;
 	}
@@ -90,9 +101,9 @@ public class IdentityFileAuthenticator extends PublicKeyAuthenticator {
 		SshPrivateKeyFile file = SshPrivateKeyFileFactory.parse(Paths.get(privatePath));
 		
 		if(file.isPassphraseProtected()) {
-			return file.toKeyPair(getPassphrase(keyinfo));
+			return file.toKeyPair(lastPassphrase = getPassphrase(keyinfo));
 		} else {
-			return file.toKeyPair(null);
+			return file.toKeyPair(lastPassphrase = null);
 		}
 	}
 

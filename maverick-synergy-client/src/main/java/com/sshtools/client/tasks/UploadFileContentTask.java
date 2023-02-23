@@ -22,55 +22,160 @@
 package com.sshtools.client.tasks;
 
 import java.io.ByteArrayInputStream;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.util.Optional;
 
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
-import com.sshtools.client.sftp.TransferCancelledException;
-import com.sshtools.common.sftp.SftpStatusException;
-import com.sshtools.common.ssh.SshException;
+import com.sshtools.client.tasks.UploadInputStreamTask.UploadInputStreamTaskBuilder;
 import com.sshtools.synergy.ssh.Connection;
-import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
 
-public class UploadFileContentTask extends Task {
+/**
+ * An SFTP {@link Task} that uploads string content to a remote file.
+ * You cannot directly create a {@link UploadFileContentTask}, instead use {@link UploadInputStreamTaskBuilder}.
+ * <pre>
+ * client.addTask(UploadFileContentTask.create().
+ * 		withContent("Hello World!").
+ *      withPath("/path/on/remote/remote.txt").
+ *      build());
+ * </pre>
+ *
+ */
+public class UploadFileContentTask extends AbstractFileTask {
 
-	Connection<SshClientContext> con;
-	String path;
-	String content;
-	String encoding;
-	
+	/**
+	 * Builder for {@link UploadFileContentTask}.
+	 */
+	public final static class UploadFileContentTaskBuilder extends AbstractFileTaskBuilder<UploadFileContentTaskBuilder, UploadFileContentTask> {
+		private Optional<String> path = Optional.empty();
+		private Optional<Object> content = Optional.empty();
+		private Optional<Charset> encoding = Optional.empty();
+		
+		private UploadFileContentTaskBuilder() {
+		}
+
+		/**
+		 * Create a new {@link UploadFileContentTaskBuilder}
+
+		 * @return builder
+		 */
+		public static UploadFileContentTaskBuilder create() {
+			return new UploadFileContentTaskBuilder();
+		}
+		
+		/** 
+		 * Set the character encoding to use for transferring the string content.
+		 * 
+		 * @param encoding encoding 
+		 * @return builder for chaining
+		 */
+		public UploadFileContentTaskBuilder withEncoding(String encoding) {
+			if(encoding == null) {
+				this.encoding = Optional.empty();
+				return this;
+			}
+			return withEncoding(Charset.forName(encoding));
+		}
+		
+		/** 
+		 * Set the character encoding to use for transferring the string content.
+		 * 
+		 * @param encoding encoding 
+		 * @return builder for chaining
+		 */
+		public UploadFileContentTaskBuilder withEncoding(Charset encoding) {
+			this.encoding = Optional.of(encoding);
+			return this;
+		}
+		
+		/**
+		 * Set the remote path to upload the file to. If empty, will be uploaded
+		 * the current remote working directory
+		 * 
+		 * @param path path
+		 * @return builder for chaining
+		 */
+		public UploadFileContentTaskBuilder withPath(Optional<String> path) {
+			this.path = path;
+			return this;
+		}
+		
+		/**
+		 * Set the remote path to upload the file to. If empty, will be uploaded
+		 * the current remote working directory
+		 * 
+		 * @param path path
+		 * @return builder for chaining
+		 */
+		public UploadFileContentTaskBuilder withPath(String path) {
+			return withPath(Optional.of(path));
+		}
+		
+		/**
+		 * Set the {@link Object} to upload. The object will simple be deserialized using
+		 * {@link Object#toString()}. This is required. 
+		 * 
+		 * @param content content
+		 * @return builder for chaining
+		 */
+		public UploadFileContentTaskBuilder withContent(Object content) {
+			this.content = Optional.of(content);
+			return this;
+		}
+
+		@Override
+		public UploadFileContentTask build() {
+			return new UploadFileContentTask(this);
+		}
+	}
+
+	final String path;
+	final String content;
+	final Charset encoding;
+
+	private UploadFileContentTask(UploadFileContentTaskBuilder builder) {
+		super(builder);
+		path = builder.path.orElseThrow(() -> new IllegalStateException("Remote path must be supplied."));
+		content = String.valueOf(builder.content.orElseThrow(() -> new IllegalStateException("Content must be supplied.")));
+		encoding = builder.encoding.orElse(Charset.defaultCharset());
+	}
+
+	/**
+	 * Construct a new upload content task. Deprecated since 3.1.0. Use a {@link UploadFileContentTaskBuilder} instead. 
+	 * 
+	 * @param con connection
+	 * @param localFile local file
+	 * @param path path
+	 * @deprecated 
+	 * @see UploadFileContentTaskBuilder
+	 */
+	@Deprecated(forRemoval = true, since = "3.1.0")
 	public UploadFileContentTask(SshClient ssh, String content, String encoding, String path) {
 		this(ssh.getConnection(), content, encoding, path);
 	}
-	
+
+
+	/**
+	 * Construct a new upload content task. Deprecated since 3.1.0. Use a {@link UploadFileContentTaskBuilder} instead. 
+	 * 
+	 * @param con connection
+	 * @param content content
+	 * @param encoding encoding
+	 * @param path path
+	 * @deprecated 
+	 * @see UploadFileContentTaskBuilder
+	 */
+	@Deprecated(forRemoval = true, since = "3.1.0")
 	public UploadFileContentTask(Connection<SshClientContext> con, String content, String encoding, String path) {
-		super(con);
-		this.con = con;
-		this.path = path;
-		this.encoding = encoding;
-		this.content = content;
+		this(UploadFileContentTaskBuilder.create().withConnection(con).withContent(content).withEncoding(encoding).withPath(path));
 	}
-	
+
+	@Override
 	public void doTask() {
-		
-		SftpClientTask task = new SftpClientTask(con) {
-			
-			@Override
-			protected void doSftp() {
-				try {
-					put(new ByteArrayInputStream(content.getBytes(encoding)), path);
-				} catch (SftpStatusException | SshException | TransferCancelledException | UnsupportedEncodingException e) {
-					throw new IllegalStateException(e.getMessage(), e);
-				}
-			}
-		};
-		
-		try {
-			con.addTask(new ConnectionTaskWrapper(con, task));
-			task.waitForever();
-		} finally {
-			done(task.isDone() && task.isSuccess());
-		}
+		doTaskUntilDone(new SftpClientTask(con, (self) -> {
+			var bytes = content.getBytes(encoding);
+			self.put(new ByteArrayInputStream(bytes), path, progress.orElse(null), 0, bytes.length);
+		}));
 	}
 }

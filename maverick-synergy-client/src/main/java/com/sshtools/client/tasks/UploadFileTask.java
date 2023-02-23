@@ -22,57 +22,128 @@
 package com.sshtools.client.tasks;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.Optional;
 
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
-import com.sshtools.client.sftp.TransferCancelledException;
-import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.sftp.SftpStatusException;
-import com.sshtools.common.ssh.SshException;
 import com.sshtools.synergy.ssh.Connection;
-import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
 
-public class UploadFileTask extends Task {
+/**
+ * An SFTP {@link Task} that uploads complete files.
+ * You cannot directly create a {@link UploadFileTask}, instead use {@link UploadFileTaskBuilder}.
+ * <pre>
+ * client.addTask(StatTaskBuilder.create().
+ * 		withLocalFile(new File("local.txt")).
+ *      withPath("/path/on/remote/remote.txt").
+ *      build());
+ * </pre>
+ *
+ */
+public class UploadFileTask extends AbstractFileTask {
 
-	Connection<SshClientContext> con;
-	String path;
-	File localFile = null;
-	
-	public UploadFileTask(Connection<SshClientContext> con, File localFile, String path) {
-		super(con);
-		this.con = con;
-		this.path = path;
-		this.localFile = localFile;
+	/**
+	 * Builder for {@link UploadFileTask}.
+	 */
+	public final static class UploadFileTaskBuilder extends AbstractFileTaskBuilder<UploadFileTaskBuilder, UploadFileTask> {
+		private Optional<String> path = Optional.empty();
+		private Optional<File> file = Optional.empty();
+		
+		private UploadFileTaskBuilder() {
+		}
+
+		/**
+		 * Create a new {@link UploadFileTaskBuilder}
+
+		 * @return builder
+		 */
+		public static UploadFileTaskBuilder create() {
+			return new UploadFileTaskBuilder();
+		}
+		
+		/**
+		 * Set the remote path to upload the file to. If empty, will be uploaded
+		 * the current remote working directory
+		 * 
+		 * @param path path
+		 * @return builder for chaining
+		 */
+		public UploadFileTaskBuilder withPath(Optional<String> path) {
+			this.path = path;
+			return this;
+		}
+		
+		/**
+		 * Set the remote path to upload the file to. If empty, will be uploaded
+		 * the current remote working directory
+		 * 
+		 * @param path path
+		 * @return builder for chaining
+		 */
+		public UploadFileTaskBuilder withPath(String path) {
+			return withPath(Optional.of(path));
+		}
+		
+		/**
+		 * Set the local file to upload. This is required.
+		 * 
+		 * @param path path
+		 * @return builder for chaining
+		 */
+		public UploadFileTaskBuilder withLocalFile(File file) {
+			this.file = Optional.of(file);
+			return this;
+		}
+
+		@Override
+		public UploadFileTask build() {
+			return new UploadFileTask(this);
+		}
 	}
-	
+
+	final Optional<String> path;
+	final File localFile;
+
+	private UploadFileTask(UploadFileTaskBuilder builder) {
+		super(builder);
+		path = builder.path;
+		localFile = builder.file.orElseThrow(() -> new IllegalStateException("Local file must be supplied."));
+	}
+
+	/**
+	 * Construct a new upload file task. Deprecated since 3.1.0. Use a {@link UploadFileTaskBuilder} instead. 
+	 * 
+	 * @param con connection
+	 * @param localFile local file
+	 * @param path path
+	 * @deprecated 
+	 * @see UploadFileTaskBuilder
+	 */
+	@Deprecated(forRemoval = true, since = "3.1.0")
+	public UploadFileTask(Connection<SshClientContext> con, File localFile, String path) {
+		this(UploadFileTaskBuilder.create().withConnection(con).withPath(path).withLocalFile(localFile));
+	}
+
+	/**
+	 * Construct a new upload file task. Deprecated since 3.1.0. Use a {@link UploadFileTaskBuilder} instead. 
+	 * 
+	 * @param con
+	 * @param localFile
+	 * @deprecated 
+	 * @see UploadFileTaskBuilder
+	 */
+	@Deprecated(forRemoval = true, since = "3.1.0")
 	public UploadFileTask(Connection<SshClientContext> con, File localFile) {
 		this(con, localFile, null);
 	}
 
+	@Override
 	public void doTask() {
-		
-		SftpClientTask task = new SftpClientTask(con) {
-			
-			@Override
-			protected void doSftp() {
-				try {
-					if(path==null) {
-						put(localFile.getAbsolutePath());
-					} else {
-						put(localFile.getAbsolutePath(), path);
-					}
-				} catch (SftpStatusException | SshException | TransferCancelledException | IOException | PermissionDeniedException e) {
-					throw new IllegalStateException(e.getMessage(), e);
-				}
+		doTaskUntilDone(new SftpClientTask(con, (self) -> {
+			if(path.isEmpty()) {
+				self.put(localFile.getAbsolutePath(), progress.orElse(null));
+			} else {
+				self.put(localFile.getAbsolutePath(), path.get(), progress.orElse(null));
 			}
-		};
-		
-		try {
-			con.addTask(new ConnectionTaskWrapper(con, task));
-			task.waitForever();
-		} finally {
-			done(task.isDone() && task.isSuccess());
-		}
+		}));
 	}
 }

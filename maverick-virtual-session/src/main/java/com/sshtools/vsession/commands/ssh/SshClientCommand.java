@@ -29,13 +29,12 @@ import org.apache.commons.cli.Option;
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
-import com.sshtools.client.shell.ShellTimeoutException;
 import com.sshtools.client.tasks.AbstractCommandTask;
 import com.sshtools.client.tasks.AbstractSessionTask;
-import com.sshtools.client.tasks.ShellTask;
+import com.sshtools.client.tasks.ShellTask.ShellTaskBuilder;
+import com.sshtools.client.tasks.Task;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.ConnectionAwareTask;
-import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.IOUtils;
 import com.sshtools.server.vsession.VirtualConsole;
 import com.sshtools.server.vsession.VirtualShellNG;
@@ -104,43 +103,19 @@ public class SshClientCommand extends AbstractSshClientCommand {
 				};
 				
 			} else {
-	
-				task = new ShellTask(connection) {
-	
-					private WindowSizeChangeListener listener;
-
-					protected void beforeStartShell(SessionChannelNG session) {
-		
-						session.allocatePseudoTerminal(console.getTerminal().getType(), console.getTerminal().getWidth(),
-								console.getTerminal().getHeight());
-					}
-		
-					@Override
-					protected void onOpenSession(final SessionChannelNG session)
-							throws IOException, SshException, ShellTimeoutException {
-
-						listener = new WindowSizeChangeListener() {
-							@Override
-							public void newSize(int rows, int cols) {
-								session.changeTerminalDimensions(cols, rows, 0, 0);
-							}
-						};
-						((VirtualShellNG)console.getSessionChannel()).addWindowSizeChangeListener(listener);
-		
-						con.addTask(new ConnectionAwareTask(con) {
-							@Override
-							protected void doTask() throws Throwable {
-								IOUtils.copy(console.getSessionChannel().getInputStream(), session.getOutputStream());
-							}
-						});
-						IOUtils.copy(session.getInputStream(), console.getSessionChannel().getOutputStream());
-					}
-
-					@Override
-					protected void onCloseSession(SessionChannelNG session) {
-						((VirtualShellNG)console.getSessionChannel()).removeWindowSizeChangeListener(listener);
-					}
-				};
+				var listener = new WindowSizeChange();
+				task = ShellTaskBuilder.create().
+						withTermType(console.getTerminal().getType()).
+						withColumns(console.getTerminal().getWidth()).
+						withRows(console.getTerminal().getHeight()).
+						onOpen((t, session) -> {
+							listener.session = session;
+							((VirtualShellNG)console.getSessionChannel()).addWindowSizeChangeListener(listener);
+							connection.addTask(Task.ofRunnable(connection, (c) -> IOUtils.copy(console.getSessionChannel().getInputStream(), session.getOutputStream())));
+							IOUtils.copy(session.getInputStream(), console.getSessionChannel().getOutputStream());
+						}).
+						onClose((t, session) -> ((VirtualShellNG)console.getSessionChannel()).removeWindowSizeChangeListener(listener)).
+						build();
 			}
 	
 			connection.addTask(task);
@@ -159,4 +134,16 @@ public class SshClientCommand extends AbstractSshClientCommand {
 		return SshClientOptionsEvaluator.evaluate(cli, args, console);
 	}
 
+	
+	class WindowSizeChange implements WindowSizeChangeListener {
+		
+		SessionChannelNG session;
+
+		@Override
+		public void newSize(int rows, int cols) {
+			if(session != null)
+				session.changeTerminalDimensions(cols, rows, 0, 0);
+		}
+		
+	}
 }

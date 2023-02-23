@@ -11,5 +11,12 @@ Features
   o FileTransferProgress interface now provides default methods
   o ServiceLoader is now the basis of the loading of components (i.e. ciphers, kex, public keys, hmac, compress). To achieve this, each component now has an associated factory class responsible for creating the implementation. To add custom ciphers etc, simple implement the cipher, it's factory, and add the service using the standard mechanism using module-info.java or a META-INF/services files.
   o Components may be enabled and disabled using ComponentManager.setDefaultEnabled().
-  o DirectFileJava7 has been deprecated and it's features moved to DirectFile. 
+  o DirectFileJava7 has been deprecated and it's features moved to DirectFile.
+  o The various "Tasks" such as DownloadFileTask, UploadFileTask etc should now be created using their associated builder. See class JavaDoc for examples.
+  o New "PushTask" that can be used to maximize throughput of file upload operations.
+  o SshConnection.addTask() (and other convenience methods) now returns the task for chaining.
+  o Various SFTP methods now prefer receiving a length parameter (or -1). This is sent to the FileTransferProgress if set.
   
+Bugs
+  o File progress would not work correctly for files over 2GB.
+  o Synchronization bug in ExecutorOperationSupport meant task processing loop could crash under some circumstances. 

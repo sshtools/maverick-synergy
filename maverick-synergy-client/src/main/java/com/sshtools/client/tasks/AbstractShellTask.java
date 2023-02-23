@@ -30,6 +30,10 @@ import com.sshtools.common.ssh.SshConnection;
  */
 public abstract class AbstractShellTask<T extends AbstractSessionChannel> extends AbstractSessionTask<T> {
 
+	public AbstractShellTask(AbstractConnectionTaskBuilder<?, ?> builder) {
+		super(builder);
+	}
+
 	public AbstractShellTask(SshConnection con) {
 		super(con);
 	}

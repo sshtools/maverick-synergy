@@ -119,18 +119,19 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 		}
 
 		private void executeAllTasks() {
-			while (!subsystemOperations.isEmpty()) {
+			while (true) {
 				try {
 					Runnable r = null;
 
 					synchronized (this) {
+						if(subsystemOperations.isEmpty())
+							return;
 						r = subsystemOperations.removeFirst();
 					}
 					if (r != null) {
 						try {
 							r.run();
 						} catch (Throwable t) {
-							t.printStackTrace();
 							Log.error("{}: Caught exception in operation remainingTasks={}", queueName, subsystemOperations.size(), t);
 						} 
 					} else {
@@ -139,7 +140,6 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 						}
 					}
 				} catch (Throwable t) {
-					t.printStackTrace();
 					Log.error("{}: Caught exception in operation remainingTasks={}", queueName, subsystemOperations.size(), t);
 				}
 			}

@@ -21,46 +21,96 @@
 
 package com.sshtools.client.tasks;
 
+import java.util.Optional;
+
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.sftp.SftpStatusException;
-import com.sshtools.common.ssh.SshException;
 import com.sshtools.synergy.ssh.Connection;
 
-public class StatTask extends Task {
+/**
+ * An SFTP {@link Task} that uploads complete files.
+ * You cannot directly create a {@link StatTask}, instead use {@link StatTaskBuilder}.
+ * <pre>
+ * client.addTask(StatTaskBuilder.create().
+ *      withPath("/path/on/remote/remote.txt").
+ *      build());
+ * </pre>
+ *
+ */
+public class StatTask extends AbstractFileTask {
 
-	Connection<SshClientContext> con;
-	String path;
-	SftpFileAttributes attrs = null;
-	
-	public StatTask(Connection<SshClientContext> con, String path) {
-		super(con);
-		this.con = con;
-		this.path = path;
+	/**
+	 * Builder for {@link StatTask}.
+	 */
+	public final static class StatTaskBuilder extends AbstractFileTaskBuilder<StatTaskBuilder, StatTask> {
+		private Optional<String> path = Optional.empty();
+		
+		private StatTaskBuilder() {
+		}
+
+		/**
+		 * Create a new {@link StatTaskBuilder}
+
+		 * @return builder
+		 */
+		public static StatTaskBuilder create() {
+			return new StatTaskBuilder();
+		}
+		
+		/**
+		 * Set the remote path to upload the file to. If empty, will be uploaded
+		 * the current remote working directory
+		 * 
+		 * @param path path
+		 * @return builder for chaining
+		 */
+		public StatTaskBuilder withPath(Optional<String> path) {
+			this.path = path;
+			return this;
+		}
+		
+		/**
+		 * Set the remote path to upload the file to. If empty, will be uploaded
+		 * the current remote working directory
+		 * 
+		 * @param path path
+		 * @return builder for chaining
+		 */
+		public StatTaskBuilder withPath(String path) {
+			return withPath(Optional.of(path));
+		}
+		
+		@Override
+		public StatTask build() {
+			return new StatTask(this);
+		}
 	}
 
-	public void doTask() {
-		
-		SftpClientTask task = new SftpClientTask(con) {
-			
-			@Override
-			protected void doSftp() {
-				try {
+	private final String path;
+	private SftpFileAttributes attrs = null;
 
-					attrs = stat(path);
-				} catch (SftpStatusException | SshException e) {
-					throw new IllegalStateException(e.getMessage(), e);
-				}
-			}
-		};
-		
-		try {
-			con.addTask(task);
-			task.waitForever();
-		} finally {
-			done(task.isDone() && task.isSuccess());
-		}
+	private StatTask(StatTaskBuilder builder) {
+		super(builder);
+		path = builder.path.orElseThrow(() -> new IllegalStateException("Remote path must be supplied."));
+	}
+
+	/**
+	 * Construct a stat task. Deprecated since 3.1.0. Use a {@link StatTaskBuilder} instead. 
+	 * 
+	 * @param con connection
+	 * @param path path
+	 * @deprecated 
+	 * @see StatTaskBuilder
+	 */
+	@Deprecated(forRemoval = true, since = "3.1.0")
+	public StatTask(Connection<SshClientContext> con, String path) {
+		this(StatTaskBuilder.create().withConnection(con).withPath(path));
+	}
+
+	@Override
+	public void doTask() {
+		doTaskUntilDone(new SftpClientTask(con, (self) -> attrs = self.stat(path)));
 	}
 
 	public SftpFileAttributes getAttributes() {

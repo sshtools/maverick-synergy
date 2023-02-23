@@ -30,9 +30,9 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.sshtools.client.tasks.AbstractCommandTask;
-import com.sshtools.client.tasks.DownloadFileTask;
+import com.sshtools.client.tasks.DownloadFileTask.DownloadFileTaskBuilder;
 import com.sshtools.client.tasks.Task;
-import com.sshtools.client.tasks.UploadFileTask;
+import com.sshtools.client.tasks.UploadFileTask.UploadFileTaskBuilder;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
@@ -211,11 +211,12 @@ public class SshClient implements Closeable {
 		
 	}
 
-	public synchronized void addTask(Task task) throws IOException {
+	public synchronized Task addTask(Task task) throws IOException {
 		if(con==null) {
 			throw new IOException("Client is no longer connected!");
 		}
 		con.addTask(task);
+		return task;
 	}
 
 	@Override
@@ -297,7 +298,12 @@ public class SshClient implements Closeable {
 		}
 		if(!task.isSuccess()) {
 			if(!Objects.isNull(task.getLastError())) {
-				throw new IOException(task.getLastError().getMessage(), task.getLastError());
+				if(task.getLastError() instanceof IOException) {
+					throw (IOException)task.getLastError();
+				}
+				else {
+					throw new IOException(task.getLastError().getMessage(), task.getLastError());
+				}
 			} else {
 				throw new IOException("Task did not succeed but did not report an error");
 			}
@@ -311,7 +317,7 @@ public class SshClient implements Closeable {
 	}
 	
 	public File getFile(String path, long timeout) throws IOException {
-		return doTask(new DownloadFileTask(getConnection(), path), timeout).getDownloadedFile();
+		return doTask(DownloadFileTaskBuilder.create().withConnection(getConnection()).withPath(path).build(), timeout).getDownloadedFile();
 	}
 	
 	public void getFile(String path, File destination) throws IOException {
@@ -319,7 +325,7 @@ public class SshClient implements Closeable {
 	}
 	
 	public void getFile(String path, File destination, long timeout) throws IOException {
-		doTask(new DownloadFileTask(getConnection(), path, destination), timeout);
+		doTask(DownloadFileTaskBuilder.create().withConnection(getConnection()).withPath(path).withLocalFile(destination).build(), timeout);
 	}
 
 	public void putFile(File file) throws IOException {
@@ -331,7 +337,7 @@ public class SshClient implements Closeable {
 	}
 	
 	public void putFile(File file, String path, long timeout) throws IOException {
-		doTask(new UploadFileTask(getConnection(), file, path), timeout);
+		doTask(UploadFileTaskBuilder.create().withConnection(getConnection()).withLocalFile(file).withPath(path).build(), timeout);
 	}
 
 	public String executeCommand(String cmd) throws IOException {

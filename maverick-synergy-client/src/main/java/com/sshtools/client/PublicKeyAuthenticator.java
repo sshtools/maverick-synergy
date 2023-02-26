@@ -63,7 +63,7 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 
 	private boolean setupNextKey() throws IOException {
 		
-		while(hasCredentialsRemaining()) {
+		do {
 			currentKey = getNextKey();
 			signingAlgorithm = currentKey.getSigningAlgorithm();
 
@@ -102,6 +102,7 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 			return true;
 		
 		}
+		while(hasCredentialsRemaining());
 		
 		return false;
 	}

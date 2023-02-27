@@ -6,9 +6,9 @@
  *  _/ |\__,_|\__,_|\__,_| .__/ \__|_| \_/ \___|
  * |__/                  |_|
  *
- * This local is part of the Maverick Synergy Hotfixes Java SSH API
+ * This file is part of the Maverick Synergy Hotfixes Java SSH API
  *
- * Unauthorized copying of this local, via any medium is strictly prohibited.
+ * Unauthorized copying of this file, via any medium is strictly prohibited.
  *
  * Copyright (C) 2002-2021 JADAPTIVE Limited - All Rights Reserved
  *
@@ -18,7 +18,6 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
-
 package com.sshtools.client.tasks;
 
 import java.io.File;

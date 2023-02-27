@@ -36,7 +36,7 @@ public class Ssh {
 		try (var client = new SshClient(host, port, username, password)) {
 			var task = client.addTask(DownloadFileTaskBuilder.create().
 					withConnection(client.getConnection()). 
-					withPath(fromPath).
+					withRemotePath(fromPath).
 					withLocalFile(toFile).build()).waitForever();
 			return task.isDone() && task.isSuccess();
 		} catch (Throwable e) {
@@ -51,7 +51,7 @@ public class Ssh {
 			var task = client.addTask(UploadFileTaskBuilder.create().
 				withConnection(client.getConnection()).
 				withLocalFile(fromFile).
-				withPath(toPath).build()).waitForever();
+				withRemotePath(toPath).build()).waitForever();
 			return task.isDone() && task.isSuccess();
 		} catch (Throwable e) {
 			Log.error("putFile failed", e);

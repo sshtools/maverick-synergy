@@ -22,6 +22,7 @@
 package com.sshtools.client.tasks;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import com.sshtools.client.SshClientContext;
@@ -45,8 +46,8 @@ public class UploadFileTask extends AbstractFileTask {
 	 * Builder for {@link UploadFileTask}.
 	 */
 	public final static class UploadFileTaskBuilder extends AbstractFileTaskBuilder<UploadFileTaskBuilder, UploadFileTask> {
-		private Optional<String> path = Optional.empty();
-		private Optional<File> file = Optional.empty();
+		private Optional<Path> path = Optional.empty();
+		private Optional<Path> local = Optional.empty();
 		
 		private UploadFileTaskBuilder() {
 		}
@@ -64,11 +65,33 @@ public class UploadFileTask extends AbstractFileTask {
 		 * Set the remote path to upload the file to. If empty, will be uploaded
 		 * the current remote working directory
 		 * 
-		 * @param path path
+		 * @param remote path
 		 * @return builder for chaining
 		 */
-		public UploadFileTaskBuilder withPath(Optional<String> path) {
-			this.path = path;
+		public UploadFileTaskBuilder withRemotePath(Optional<String> remote) {
+			return withRemote(remote.map(Path::of).orElse(null));
+		}
+		
+		/**
+		 * Set the remote path to upload the file to. If empty, will be uploaded
+		 * the current remote working directory
+		 * 
+		 * @param remote remote path
+		 * @return builder for chaining
+		 */
+		public UploadFileTaskBuilder withRemote(Path remote) {
+			return withRemote(Optional.of(remote));
+		}
+		
+		/**
+		 * Set the remote path to upload the file to. If empty, will be uploaded
+		 * the current remote working directory
+		 * 
+		 * @param remmote remote path
+		 * @return builder for chaining
+		 */
+		public UploadFileTaskBuilder withRemote(Optional<Path> remmote) {
+			this.path = remmote;
 			return this;
 		}
 		
@@ -76,11 +99,11 @@ public class UploadFileTask extends AbstractFileTask {
 		 * Set the remote path to upload the file to. If empty, will be uploaded
 		 * the current remote working directory
 		 * 
-		 * @param path path
+		 * @param remote remote path
 		 * @return builder for chaining
 		 */
-		public UploadFileTaskBuilder withPath(String path) {
-			return withPath(Optional.of(path));
+		public UploadFileTaskBuilder withRemotePath(String remote) {
+			return withRemotePath(Optional.of(remote));
 		}
 		
 		/**
@@ -90,7 +113,17 @@ public class UploadFileTask extends AbstractFileTask {
 		 * @return builder for chaining
 		 */
 		public UploadFileTaskBuilder withLocalFile(File file) {
-			this.file = Optional.of(file);
+			return withLocal(file.toPath());
+		}
+		
+		/**
+		 * Set the local file to upload. This is required.
+		 * 
+		 * @param path path
+		 * @return builder for chaining
+		 */
+		public UploadFileTaskBuilder withLocal(Path path) {
+			this.local = Optional.of(path);
 			return this;
 		}
 
@@ -100,13 +133,13 @@ public class UploadFileTask extends AbstractFileTask {
 		}
 	}
 
-	final Optional<String> path;
-	final File localFile;
+	final Optional<Path> remote;
+	final Path local;
 
 	private UploadFileTask(UploadFileTaskBuilder builder) {
 		super(builder);
-		path = builder.path;
-		localFile = builder.file.orElseThrow(() -> new IllegalStateException("Local file must be supplied."));
+		remote = builder.path;
+		local = builder.local.orElseThrow(() -> new IllegalStateException("Local file must be supplied."));
 	}
 
 	/**
@@ -120,7 +153,7 @@ public class UploadFileTask extends AbstractFileTask {
 	 */
 	@Deprecated(forRemoval = true, since = "3.1.0")
 	public UploadFileTask(Connection<SshClientContext> con, File localFile, String path) {
-		this(UploadFileTaskBuilder.create().withConnection(con).withPath(path).withLocalFile(localFile));
+		this(UploadFileTaskBuilder.create().withConnection(con).withRemotePath(path).withLocalFile(localFile));
 	}
 
 	/**
@@ -139,10 +172,10 @@ public class UploadFileTask extends AbstractFileTask {
 	@Override
 	public void doTask() {
 		doTaskUntilDone(new SftpClientTask(con, (self) -> {
-			if(path.isEmpty()) {
-				self.put(localFile.getAbsolutePath(), progress.orElse(null));
+			if(remote.isEmpty()) {
+				self.put(local.toAbsolutePath().toString(), progress.orElse(null));
 			} else {
-				self.put(localFile.getAbsolutePath(), path.get(), progress.orElse(null));
+				self.put(local.toAbsolutePath().toString(), remote.get().toString(), progress.orElse(null));
 			}
 		}));
 	}

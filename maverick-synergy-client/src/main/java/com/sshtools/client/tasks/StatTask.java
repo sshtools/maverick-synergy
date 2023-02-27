@@ -21,6 +21,7 @@
 
 package com.sshtools.client.tasks;
 
+import java.nio.file.Path;
 import java.util.Optional;
 
 import com.sshtools.client.SshClientContext;
@@ -44,7 +45,7 @@ public class StatTask extends AbstractFileTask {
 	 * Builder for {@link StatTask}.
 	 */
 	public final static class StatTaskBuilder extends AbstractFileTaskBuilder<StatTaskBuilder, StatTask> {
-		private Optional<String> path = Optional.empty();
+		private Optional<Path> remote = Optional.empty();
 		
 		private StatTaskBuilder() {
 		}
@@ -59,26 +60,44 @@ public class StatTask extends AbstractFileTask {
 		}
 		
 		/**
-		 * Set the remote path to upload the file to. If empty, will be uploaded
-		 * the current remote working directory
+		 * Set the remote path to stat
 		 * 
-		 * @param path path
+		 * @param remote path
 		 * @return builder for chaining
 		 */
-		public StatTaskBuilder withPath(Optional<String> path) {
-			this.path = path;
+		public StatTaskBuilder withRemotePath(Optional<String> remote) {
+			return withRemote(remote.map(Path::of).orElse(null));
+		}
+		
+		/**
+		 * Set the remote path to stat
+		 * 
+		 * @param remote remote path
+		 * @return builder for chaining
+		 */
+		public StatTaskBuilder withRemote(Path remote) {
+			return withRemote(Optional.of(remote));
+		}
+		
+		/**
+		 * Set the remote path to stat
+		 * 
+		 * @param remote remote path
+		 * @return builder for chaining
+		 */
+		public StatTaskBuilder withRemote(Optional<Path> remote) {
+			this.remote = remote;
 			return this;
 		}
 		
 		/**
-		 * Set the remote path to upload the file to. If empty, will be uploaded
-		 * the current remote working directory
+		 * Set the remote path to stat
 		 * 
-		 * @param path path
+		 * @param remote remote path
 		 * @return builder for chaining
 		 */
-		public StatTaskBuilder withPath(String path) {
-			return withPath(Optional.of(path));
+		public StatTaskBuilder withRemotePath(String remote) {
+			return withRemotePath(Optional.of(remote));
 		}
 		
 		@Override
@@ -87,12 +106,12 @@ public class StatTask extends AbstractFileTask {
 		}
 	}
 
-	private final String path;
+	private final Path remote;
 	private SftpFileAttributes attrs = null;
 
 	private StatTask(StatTaskBuilder builder) {
 		super(builder);
-		path = builder.path.orElseThrow(() -> new IllegalStateException("Remote path must be supplied."));
+		remote = builder.remote.orElseThrow(() -> new IllegalStateException("Remote path must be supplied."));
 	}
 
 	/**
@@ -105,12 +124,12 @@ public class StatTask extends AbstractFileTask {
 	 */
 	@Deprecated(forRemoval = true, since = "3.1.0")
 	public StatTask(Connection<SshClientContext> con, String path) {
-		this(StatTaskBuilder.create().withConnection(con).withPath(path));
+		this(StatTaskBuilder.create().withConnection(con).withRemotePath(path));
 	}
 
 	@Override
 	public void doTask() {
-		doTaskUntilDone(new SftpClientTask(con, (self) -> attrs = self.stat(path)));
+		doTaskUntilDone(new SftpClientTask(con, (self) -> attrs = self.stat(remote.toString())));
 	}
 
 	public SftpFileAttributes getAttributes() {

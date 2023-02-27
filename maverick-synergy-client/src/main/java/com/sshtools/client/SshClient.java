@@ -317,7 +317,7 @@ public class SshClient implements Closeable {
 	}
 	
 	public File getFile(String path, long timeout) throws IOException {
-		return doTask(DownloadFileTaskBuilder.create().withConnection(getConnection()).withPath(path).build(), timeout).getDownloadedFile();
+		return doTask(DownloadFileTaskBuilder.create().withConnection(getConnection()).withRemotePath(path).build(), timeout).getDownloadedFile();
 	}
 	
 	public void getFile(String path, File destination) throws IOException {
@@ -325,7 +325,7 @@ public class SshClient implements Closeable {
 	}
 	
 	public void getFile(String path, File destination, long timeout) throws IOException {
-		doTask(DownloadFileTaskBuilder.create().withConnection(getConnection()).withPath(path).withLocalFile(destination).build(), timeout);
+		doTask(DownloadFileTaskBuilder.create().withConnection(getConnection()).withRemotePath(path).withLocalFile(destination).build(), timeout);
 	}
 
 	public void putFile(File file) throws IOException {
@@ -337,7 +337,7 @@ public class SshClient implements Closeable {
 	}
 	
 	public void putFile(File file, String path, long timeout) throws IOException {
-		doTask(UploadFileTaskBuilder.create().withConnection(getConnection()).withLocalFile(file).withPath(path).build(), timeout);
+		doTask(UploadFileTaskBuilder.create().withConnection(getConnection()).withLocalFile(file).withRemotePath(path).build(), timeout);
 	}
 
 	public String executeCommand(String cmd) throws IOException {

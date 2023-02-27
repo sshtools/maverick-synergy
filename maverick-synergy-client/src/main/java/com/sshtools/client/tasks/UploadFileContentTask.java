@@ -23,6 +23,7 @@ package com.sshtools.client.tasks;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import com.sshtools.client.SshClient;
@@ -37,7 +38,7 @@ import com.sshtools.synergy.ssh.Connection;
  * <pre>
  * client.addTask(UploadFileContentTask.create().
  * 		withContent("Hello World!").
- *      withPath("/path/on/remote/remote.txt").
+ *      withPath("/remote/on/remote/remote.txt").
  *      build());
  * </pre>
  *
@@ -48,7 +49,7 @@ public class UploadFileContentTask extends AbstractFileTask {
 	 * Builder for {@link UploadFileContentTask}.
 	 */
 	public final static class UploadFileContentTaskBuilder extends AbstractFileTaskBuilder<UploadFileContentTaskBuilder, UploadFileContentTask> {
-		private Optional<String> path = Optional.empty();
+		private Optional<Path> remote = Optional.empty();
 		private Optional<Object> content = Optional.empty();
 		private Optional<Charset> encoding = Optional.empty();
 		
@@ -93,11 +94,33 @@ public class UploadFileContentTask extends AbstractFileTask {
 		 * Set the remote path to upload the file to. If empty, will be uploaded
 		 * the current remote working directory
 		 * 
-		 * @param path path
+		 * @param remote remote path
 		 * @return builder for chaining
 		 */
-		public UploadFileContentTaskBuilder withPath(Optional<String> path) {
-			this.path = path;
+		public UploadFileContentTaskBuilder withRemotePath(Optional<String> remote) {
+			return withRemote(remote.map(Path::of).orElse(null));
+		}
+		
+		/**
+		 * Set the remote path to upload the file to. If empty, will be uploaded
+		 * the current remote working directory
+		 * 
+		 * @param remote remote path
+		 * @return builder for chaining
+		 */
+		public UploadFileContentTaskBuilder withRemote(Path remote) {
+			return withRemote(Optional.of(remote));
+		}
+		
+		/**
+		 * Set the remote path to upload the file to. If empty, will be uploaded
+		 * the current remote working directory
+		 * 
+		 * @param remote remote  path
+		 * @return builder for chaining
+		 */
+		public UploadFileContentTaskBuilder withRemote(Optional<Path> remote) {
+			this.remote = remote;
 			return this;
 		}
 		
@@ -105,11 +128,11 @@ public class UploadFileContentTask extends AbstractFileTask {
 		 * Set the remote path to upload the file to. If empty, will be uploaded
 		 * the current remote working directory
 		 * 
-		 * @param path path
+		 * @param remote remote  path
 		 * @return builder for chaining
 		 */
-		public UploadFileContentTaskBuilder withPath(String path) {
-			return withPath(Optional.of(path));
+		public UploadFileContentTaskBuilder withRemotePath(String remote) {
+			return withRemotePath(Optional.of(remote));
 		}
 		
 		/**
@@ -130,13 +153,13 @@ public class UploadFileContentTask extends AbstractFileTask {
 		}
 	}
 
-	final String path;
+	final Path remote;
 	final String content;
 	final Charset encoding;
 
 	private UploadFileContentTask(UploadFileContentTaskBuilder builder) {
 		super(builder);
-		path = builder.path.orElseThrow(() -> new IllegalStateException("Remote path must be supplied."));
+		remote = builder.remote.orElseThrow(() -> new IllegalStateException("Remote remote must be supplied."));
 		content = String.valueOf(builder.content.orElseThrow(() -> new IllegalStateException("Content must be supplied.")));
 		encoding = builder.encoding.orElse(Charset.defaultCharset());
 	}
@@ -146,7 +169,7 @@ public class UploadFileContentTask extends AbstractFileTask {
 	 * 
 	 * @param con connection
 	 * @param localFile local file
-	 * @param path path
+	 * @param remote remote
 	 * @deprecated 
 	 * @see UploadFileContentTaskBuilder
 	 */
@@ -162,20 +185,20 @@ public class UploadFileContentTask extends AbstractFileTask {
 	 * @param con connection
 	 * @param content content
 	 * @param encoding encoding
-	 * @param path path
+	 * @param remote remote
 	 * @deprecated 
 	 * @see UploadFileContentTaskBuilder
 	 */
 	@Deprecated(forRemoval = true, since = "3.1.0")
 	public UploadFileContentTask(Connection<SshClientContext> con, String content, String encoding, String path) {
-		this(UploadFileContentTaskBuilder.create().withConnection(con).withContent(content).withEncoding(encoding).withPath(path));
+		this(UploadFileContentTaskBuilder.create().withConnection(con).withContent(content).withEncoding(encoding).withRemotePath(path));
 	}
 
 	@Override
 	public void doTask() {
 		doTaskUntilDone(new SftpClientTask(con, (self) -> {
 			var bytes = content.getBytes(encoding);
-			self.put(new ByteArrayInputStream(bytes), path, progress.orElse(null), 0, bytes.length);
+			self.put(new ByteArrayInputStream(bytes), remote.toString(), progress.orElse(null), 0, bytes.length);
 		}));
 	}
 }

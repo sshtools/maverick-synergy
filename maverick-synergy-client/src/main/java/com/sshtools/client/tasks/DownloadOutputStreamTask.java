@@ -22,6 +22,7 @@
 package com.sshtools.client.tasks;
 
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import com.sshtools.client.SshClientContext;
@@ -36,7 +37,7 @@ import com.sshtools.synergy.ssh.Connection;
  * <pre>
  * client.addTask(DownloadFileTaskBuilder.create().
  * 		withLocalFile(new File("local.txt")).
- *      withRemotePath("/path/to/remote.txt").
+ *      withRemotePath("/remote/to/remote.txt").
  *      build());
  * </pre>
  */
@@ -46,7 +47,7 @@ public class DownloadOutputStreamTask extends AbstractFileTask {
 	 * Builder for {@link DownloadOutputStreamTask}.
 	 */
 	public final static class DownloadOutputStreamTaskBuilder extends AbstractFileTaskBuilder<DownloadOutputStreamTaskBuilder, DownloadOutputStreamTask> {
-		private Optional<String> path = Optional.empty();
+		private Optional<Path> remote = Optional.empty();
 		private Optional<OutputStream> outputStream = Optional.empty();
 		
 		private DownloadOutputStreamTaskBuilder() {
@@ -84,14 +85,44 @@ public class DownloadOutputStreamTask extends AbstractFileTask {
 		}
 		
 		/**
-		 * Set the remote path of the file to download.
+		 * Set the remote remote of the local to download.
 		 * 
-		 * @param path path
+		 * @param remote remote remote
 		 * @return builder for chaining
 		 */
-		public DownloadOutputStreamTaskBuilder withPath(String path) {
-			this.path = Optional.of(path);
+		public DownloadOutputStreamTaskBuilder withRemotePath(Optional<String> remote) {
+			return withRemote(remote.map(Path::of).orElse(null));
+		}
+		
+		/**
+		 * Set the remote remote of the local to download.
+		 * 
+		 * @param remote remote remote
+		 * @return builder for chaining
+		 */
+		public DownloadOutputStreamTaskBuilder withRemote(Path remote) {
+			return withRemote(Optional.of(remote));
+		}
+		
+		/**
+		 * Set the remote remote of the local to download.
+		 * 
+		 * @param remote remote  remote
+		 * @return builder for chaining
+		 */
+		public DownloadOutputStreamTaskBuilder withRemote(Optional<Path> remote) {
+			this.remote = remote;
 			return this;
+		}
+		
+		/**
+		 * Set the remote remote of the local to download.
+		 * 
+		 * @param remote remote  remote
+		 * @return builder for chaining
+		 */
+		public DownloadOutputStreamTaskBuilder withRemotePath(String remote) {
+			return withRemotePath(Optional.of(remote));
 		}
 
 		@Override
@@ -100,32 +131,32 @@ public class DownloadOutputStreamTask extends AbstractFileTask {
 		}
 	}
 
-	final String path;
+	final Path path;
 	final OutputStream output;
 
 	private DownloadOutputStreamTask(DownloadOutputStreamTaskBuilder builder) {
 		super(builder);
 		output = builder.outputStream.orElseThrow(() -> new IllegalStateException("OutputStream must be supplied."));
-		path  = builder.path.orElseThrow(() -> new IllegalStateException("Path must be supplied."));
+		path  = builder.remote.orElseThrow(() -> new IllegalStateException("Path must be supplied."));
 	}
 
 	/**
 	 * Construct a new download file task. Deprecated since 3.1.0. Use a {@link DownloadOutputStreamTaskBuilder} instead. 
 	 * 
 	 * @param con connection
-	 * @param path path
+	 * @param remote remote
 	 * @param output output
 	 * @deprecated 
 	 * @see DownloadFileTaskBuilder
 	 */
 	public DownloadOutputStreamTask(Connection<SshClientContext> con, String path, OutputStream output) {
-		this(DownloadOutputStreamTaskBuilder.create().withConnection(con).withPath(path).withOutputStream(output));
+		this(DownloadOutputStreamTaskBuilder.create().withConnection(con).withRemotePath(path).withOutputStream(output));
 	}
 
 	@Override
 	protected void doTask() {
 		try {
-			doTaskUntilDone(new SftpClientTask(con, (self) -> self.get(path, output, progress.orElse(null))));
+			doTaskUntilDone(new SftpClientTask(con, (self) -> self.get(path.toString(), output, progress.orElse(null))));
 		} finally {
 			IOUtils.closeStream(output);
 		}

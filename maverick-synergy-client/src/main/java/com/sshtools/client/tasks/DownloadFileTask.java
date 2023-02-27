@@ -6,9 +6,9 @@
  *  _/ |\__,_|\__,_|\__,_| .__/ \__|_| \_/ \___|
  * |__/                  |_|
  *
- * This file is part of the Maverick Synergy Hotfixes Java SSH API
+ * This local is part of the Maverick Synergy Hotfixes Java SSH API
  *
- * Unauthorized copying of this file, via any medium is strictly prohibited.
+ * Unauthorized copying of this local, via any medium is strictly prohibited.
  *
  * Copyright (C) 2002-2021 JADAPTIVE Limited - All Rights Reserved
  *
@@ -22,11 +22,11 @@
 package com.sshtools.client.tasks;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
-import com.sshtools.common.util.FileUtils;
 import com.sshtools.synergy.ssh.Connection;
 
 /**
@@ -45,8 +45,8 @@ public class DownloadFileTask extends AbstractFileTask {
 	 * Builder for {@link DownloadFileTask}.
 	 */
 	public final static class DownloadFileTaskBuilder extends AbstractFileTaskBuilder<DownloadFileTaskBuilder, DownloadFileTask> {
-		private Optional<String> path = Optional.empty();
-		private Optional<File> file = Optional.empty();
+		private Optional<Path> remote = Optional.empty();
+		private Optional<Path> local = Optional.empty();
 		
 		private DownloadFileTaskBuilder() {
 		}
@@ -61,36 +61,88 @@ public class DownloadFileTask extends AbstractFileTask {
 		}
 		
 		/**
-		 * Set the local file to download to. If empty, will be download
-		 * the current local working directory, with the same name as the remote file.
+		 * Set the local local to download to. If empty, will be download
+		 * the current local working directory, with the same name as the remote local.
 		 * 
-		 * @param file file
+		 * @param local local
 		 * @return builder for chaining
 		 */
 		public DownloadFileTaskBuilder withLocalFile(Optional<File> file) {
-			this.file = file;
+			return withLocal(file.map(File::toPath));
+		}
+		
+		/**
+		 * Set the local local to download to. If empty, will be download
+		 * the current local working directory, with the same name as the remote local.
+		 * 
+		 * @param local local
+		 * @return builder for chaining
+		 */
+		public DownloadFileTaskBuilder withLocal(Optional<Path> file) {
+			this.local = file;
 			return this;
 		}
 		
 		/**
-		 * Set the local file to download to.
+		 * Set the local local to download to.
 		 * 
-		 * @param file file
+		 * @param local local
 		 * @return builder for chaining
 		 */
 		public DownloadFileTaskBuilder withLocalFile(File file) {
-			return withLocalFile(Optional.of(file));
+			return withLocal(file.toPath());
 		}
 		
 		/**
-		 * Set the remote path of the file to download.
+		 * Set the local local to download to. If empty, will be download
+		 * the current local working directory, with the same name as the remote local.
 		 * 
-		 * @param path path
+		 * @param local local
 		 * @return builder for chaining
 		 */
-		public DownloadFileTaskBuilder withPath(String path) {
-			this.path = Optional.of(path);
+		public DownloadFileTaskBuilder withLocal(Path file) {
+			return withLocal(Optional.of(file));
+		}
+		
+		/**
+		 * Set the remote path of the local to download.
+		 * 
+		 * @param remote remote path
+		 * @return builder for chaining
+		 */
+		public DownloadFileTaskBuilder withRemotePath(Optional<String> remote) {
+			return withRemote(remote.map(Path::of).orElse(null));
+		}
+		
+		/**
+		 * Set the remote path of the local to download.
+		 * 
+		 * @param remote remote path
+		 * @return builder for chaining
+		 */
+		public DownloadFileTaskBuilder withRemote(Path remote) {
+			return withRemote(Optional.of(remote));
+		}
+		
+		/**
+		 * Set the remote path of the local to download.
+		 * 
+		 * @param remote remote  path
+		 * @return builder for chaining
+		 */
+		public DownloadFileTaskBuilder withRemote(Optional<Path> remote) {
+			this.remote = remote;
 			return this;
+		}
+		
+		/**
+		 * Set the remote path of the local to download.
+		 * 
+		 * @param remote remote  path
+		 * @return builder for chaining
+		 */
+		public DownloadFileTaskBuilder withRemotePath(String remote) {
+			return withRemotePath(Optional.of(remote));
 		}
 
 		@Override
@@ -99,31 +151,31 @@ public class DownloadFileTask extends AbstractFileTask {
 		}
 	}
 
-	final String path;
-	final Optional<File> localFile;
+	final Path remote;
+	final Optional<Path> local;
 
 	private DownloadFileTask(DownloadFileTaskBuilder builder) {
 		super(builder);
-		path = builder.path.orElseThrow(() -> new IllegalStateException("Remote path must be supplied."));
-		localFile = builder.file;
+		remote = builder.remote.orElseThrow(() -> new IllegalStateException("Remote path must be supplied."));
+		local = builder.local;
 	}
 
 	/**
-	 * Construct a new download file task. Deprecated since 3.1.0. Use a {@link DownloadFileTaskBuilder} instead. 
+	 * Construct a new download local task. Deprecated since 3.1.0. Use a {@link DownloadFileTaskBuilder} instead. 
 	 * 
 	 * @param con connection
 	 * @param path path
-	 * @param localFile local file
+	 * @param localFile local local
 	 * @deprecated 
 	 * @see DownloadFileTaskBuilder
 	 */
 	@Deprecated(forRemoval = true, since = "3.1.0")
 	public DownloadFileTask(Connection<SshClientContext> con, String path, File localFile) {
-		this(DownloadFileTaskBuilder.create().withConnection(con).withPath(path).withLocalFile(localFile));
+		this(DownloadFileTaskBuilder.create().withConnection(con).withRemotePath(path).withLocalFile(localFile));
 	}
 
 	/**
-	 * Construct a new download file task. Deprecated since 3.1.0. Use a {@link DownloadFileTaskBuilder} instead. 
+	 * Construct a new download local task. Deprecated since 3.1.0. Use a {@link DownloadFileTaskBuilder} instead. 
 	 * 
 	 * @param con connection
 	 * @param path path
@@ -138,12 +190,12 @@ public class DownloadFileTask extends AbstractFileTask {
 	@Override
 	public void doTask() {
 		doTaskUntilDone(new SftpClientTask(con, (self) -> {
-			self.get(path, localFile.orElse(new File(self.lpwd(), FileUtils.getFilename(path))).getAbsolutePath(), progress.orElse(null));
+			self.get(remote.toString(), local.orElse(Path.of(self.lpwd())).toAbsolutePath().toString(), progress.orElse(null));
 		}));
 	}
 
 	public File getDownloadedFile() {
-		return localFile.orElseThrow();
+		return local.orElseThrow().toFile();
 	}
 
 }

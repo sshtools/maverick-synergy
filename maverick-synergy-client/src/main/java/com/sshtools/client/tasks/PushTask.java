@@ -650,17 +650,24 @@ public final class PushTask extends AbstractFileTask {
 		var client = clientSupplier.orElseThrow(() -> new IllegalArgumentException("No connection or client supplied."))
 				.apply(0);
 		try {
-			client.runTask(ShellTaskBuilder.create().withClient(client).onOpen((task, session) -> {
-				progressMessages.ifPresent((p) -> p.message("Opening shell"));
-				var shell = new ExpectShell(task);
-				execute(String.format("cd '%s'", escapeSingleQuotes(remoteFolder)), shell);
-				progressMessages.ifPresent((p) -> p.message("Allocating space"));
-				execute(String.format("fallocate -l %d '%s'", localFile.length(),
-						escapeSingleQuotes(localFile.getName())), shell);
-				progressMessages.ifPresent((p) -> p.message("Allocated space"));
-			}).build());
+			client.runTask(ShellTaskBuilder.create().
+					withClient(client).
+					onOpen((task, session) -> {
+						Thread.sleep(1000);
+						progressMessages.ifPresent((p) -> p.message("Opening shell"));
+						
+						var shell = new ExpectShell(task);
+						execute(String.format("cd '%s'", escapeSingleQuotes(remoteFolder)), shell);
+						
+						progressMessages.ifPresent((p) -> p.message("Allocating space"));
+						
+						execute(String.format("fallocate -l %d '%s'", localFile.length(),
+								escapeSingleQuotes(localFile.getName())), shell);
+						
+						progressMessages.ifPresent((p) -> p.message("Allocated space"));
+					}).build());
 			return true;
-		} catch (UncheckedIOException ioe) {
+		} catch (Exception ioe) {
 			progressMessages.ifPresent(
 					(p) -> p.message("Unable to pre-allocate space, will recombine chunks at end of transfer"));
 			return false;

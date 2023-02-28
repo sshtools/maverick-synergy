@@ -31,9 +31,15 @@ import java.util.concurrent.Callable;
 public class SshdConfigFileWriter {
 	
 	private OutputStream stream;
+	private String newline = System.lineSeparator();
 	
 	public SshdConfigFileWriter(OutputStream stream) {
 		this.stream = stream;
+	}
+	
+	public SshdConfigFileWriter(OutputStream stream, String newline) {
+		this.stream = stream;
+		this.newline = newline;
 	}
 
 	public void write(final SshdConfigFile sshdConfigFile, final boolean indentMatchEntries) throws IOException {
@@ -51,14 +57,12 @@ public class SshdConfigFileWriter {
 			public Void call() throws Exception {
 				try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(SshdConfigFileWriter.this.stream))) {
 					
-					boolean start = false;//tracker to check we have to add new line before we write.
-					//we add new line before not after we write line, else we will end up with
-					//new line at the end of file, which may lead to extra line at the end of the file, compared to original file,
-					//hence better check before.
+					boolean start = false;
+					
 					for(SshdConfigFileEntry keyEntry : sshdConfigFile.getGlobalConfiguration().getKeyEntries().values()) {
 						while(true) {
 							if (start) {
-								bw.newLine();
+								bw.write(newline);
 							}
 							start = true;
 							bw.write(keyEntry.getFormattedLine());
@@ -85,7 +89,7 @@ public class SshdConfigFileWriter {
 						while (commentEntryIterator.hasNext()) {
 							CommentEntry commentEntry = commentEntryIterator.next();
 							if (start) {
-								bw.newLine();
+								bw.write(newline);
 							}
 							bw.write(commentEntry.getFormattedLine());
 							start = true;
@@ -93,7 +97,7 @@ public class SshdConfigFileWriter {
 						
 						//The match criteria
 						if (start) {
-							bw.newLine();
+							bw.write(newline);
 						}
 						bw.write(matchEntry.getFormattedLine());
 						start = true;
@@ -103,7 +107,7 @@ public class SshdConfigFileWriter {
 							
 							while(true) {
 								if (start) {
-									bw.newLine();
+									bw.write(newline);
 								}
 								bw.write(keyEntry.getFormattedLine());
 								if(keyEntry.hasNext()) {
@@ -115,7 +119,7 @@ public class SshdConfigFileWriter {
 						}
 					}
 					
-					bw.newLine();
+					bw.write(newline);
 				}
 				return null;
 			}

@@ -40,14 +40,26 @@ public class PasswordAuthenticator extends SimpleClientAuthenticator {
 		}
 	}
 
+	public static PasswordAuthenticator of(PasswordPrompt password) {
+		var pa = new PasswordAuthenticator();
+		pa.password = password;
+		return pa;
+	}
+
 	private PasswordPrompt password;
 	private String lastPassword;
 	
 	public PasswordAuthenticator() {
 	}
-	
-	public PasswordAuthenticator(PasswordPrompt password) {
-		this.password = password;
+
+	@Deprecated(since="3.1.0")
+	public PasswordAuthenticator(Supplier<String> supplier) {
+		this.password = new PasswordPrompt() {
+			@Override
+			public String get() {
+				return supplier.get();
+			}
+		};
 	}
 	
 	public PasswordAuthenticator(String password) {

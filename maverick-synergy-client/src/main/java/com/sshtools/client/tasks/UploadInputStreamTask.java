@@ -34,7 +34,7 @@ import com.sshtools.client.sftp.SftpClientTask;
  * <pre>
  * client.addTask(UploadInputStreamTaskBuilder.create().
  * 		withLocalFile(new File("local.txt")).
- *      withPath("/remote/on/remote/remote.txt").
+ *      withRemotePath("/remote/on/remote/remote.txt").
  *      build());
  * </pre>
  *

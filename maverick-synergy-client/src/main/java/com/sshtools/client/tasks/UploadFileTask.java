@@ -35,7 +35,7 @@ import com.sshtools.synergy.ssh.Connection;
  * <pre>
  * client.addTask(StatTaskBuilder.create().
  * 		withLocalFile(new File("local.txt")).
- *      withPath("/path/on/remote/remote.txt").
+ *      withRemotePath("/path/on/remote/remote.txt").
  *      build());
  * </pre>
  *

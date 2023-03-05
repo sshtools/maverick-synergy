@@ -38,7 +38,7 @@ import com.sshtools.synergy.ssh.Connection;
  * <pre>
  * client.addTask(UploadFileContentTask.create().
  * 		withContent("Hello World!").
- *      withPath("/remote/on/remote/remote.txt").
+ *      withRemotePath("/remote/on/remote/remote.txt").
  *      build());
  * </pre>
  *

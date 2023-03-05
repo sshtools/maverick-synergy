@@ -105,6 +105,7 @@ public class SshClientCommand extends AbstractSshClientCommand {
 			} else {
 				var listener = new WindowSizeChange();
 				task = ShellTaskBuilder.create().
+						withConnection(connection).
 						withTermType(console.getTerminal().getType()).
 						withColumns(console.getTerminal().getWidth()).
 						withRows(console.getTerminal().getHeight()).

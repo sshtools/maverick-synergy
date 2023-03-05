@@ -62,6 +62,7 @@ public class CallbackShell extends CallbackCommand {
 		var listener = new WindowSizeChange();
 		
 		con.addTask(ShellTaskBuilder.create().
+				withConnection(con.getConnection()).
 				withTermType(console.getTerminal().getType()).
 				withColumns(console.getTerminal().getWidth()).
 				withRows(console.getTerminal().getHeight()).

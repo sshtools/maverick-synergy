@@ -66,7 +66,11 @@ public class ExternalKeyAuthenticator extends PublicKeyAuthenticator {
 		if(!publickeys.isEmpty()) {
 			authenticatingKey = publickeys.remove(0);
 			if(Log.isDebugEnabled()) {
-				Log.debug("Using key {} {}", authenticatingKey.getAlgorithm(), SshKeyUtils.getFingerprint(authenticatingKey));
+				try {
+					Log.debug("Using key {}", SshKeyUtils.getOpenSSHFormattedKey(authenticatingKey));
+				} catch (IOException e) {
+					throw new IllegalStateException(e.getMessage(), e);
+				}
 			}
 			return true;
 		}

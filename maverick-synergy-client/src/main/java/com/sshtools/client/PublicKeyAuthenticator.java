@@ -80,22 +80,22 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 					} else {
 						Log.debug("Server does not support {} signature for key {}",
 								currentKey.getSigningAlgorithm(),
-								SshKeyUtils.getFingerprint(currentKey));
+								SshKeyUtils.getOpenSSHFormattedKey(currentKey));
 						continue;
 					}
 					if(Log.isDebugEnabled()) {
-						Log.debug("Upgrading key {} to use {} signature", SshKeyUtils.getFingerprint(currentKey), signingAlgorithm);
+						Log.debug("Upgrading key {} to use {} signature", SshKeyUtils.getOpenSSHFormattedKey(currentKey), signingAlgorithm);
 					}
-				} else {
+				} else if(!policy.getSupportedSignatures().contains(signingAlgorithm)) {
 					Log.debug("Server does not support {} signature for key {}",
 							currentKey.getSigningAlgorithm(),
-							SshKeyUtils.getFingerprint(currentKey));
+							SshKeyUtils.getOpenSSHFormattedKey(currentKey));
 					continue;
 				}
 			}
 			
 			if(Log.isDebugEnabled()) {
-				Log.debug("Authenticating with {} fingerprint {}", currentKey.getAlgorithm(), SshKeyUtils.getFingerprint(currentKey));
+				Log.debug("Authenticating with {}", SshKeyUtils.getOpenSSHFormattedKey(currentKey));
 			}
 			
 			

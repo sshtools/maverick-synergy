@@ -414,6 +414,14 @@ public class ExpectShell {
 		}
 	}
 
+	public synchronized String executeWithOutput(String cmd) throws SshException {
+		return executeCommand(cmd, true).getCommandOutput();
+	}
+	
+	public synchronized int executeWithExitCode(String cmd) throws SshException {
+		return executeCommand(cmd, true).getExitCode();
+	}
+	
 	public synchronized void execute(String cmd) throws SshException {
 		executeCommand(cmd, true);
 	}

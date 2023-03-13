@@ -90,6 +90,15 @@ public class SshKeyUtils {
 		return getPrivateKey(IOUtils.readUTF8StringFromStream(new FileInputStream(key)), passphrase);
 	}
 	
+	public static SshKeyPair getPrivateKey(File key, PassphrasePrompt prompt) throws IOException, InvalidPassphraseException {
+		SshPrivateKeyFile file = SshPrivateKeyFileFactory.parse(key);
+		if(file.isPassphraseProtected()) {
+			return file.toKeyPair(prompt.getPasshrase(key.getName()));
+		} else {
+			return file.toKeyPair(null);
+		}
+	}
+	
 	public static SshKeyPair getPrivateKey(InputStream key, String passphrase) throws IOException, InvalidPassphraseException {
 		return getPrivateKey(IOUtils.readUTF8StringFromStream(key), passphrase);
 	}
@@ -97,6 +106,15 @@ public class SshKeyUtils {
 	public static SshKeyPair getPrivateKey(String formattedKey, String passphrase) throws IOException, InvalidPassphraseException {
 		SshPrivateKeyFile file = SshPrivateKeyFileFactory.parse(formattedKey.getBytes("UTF-8"));
 		return file.toKeyPair(passphrase);
+	}
+	
+	public static SshKeyPair getPrivateKey(String formattedKey, PassphrasePrompt prompt) throws IOException, InvalidPassphraseException {
+		SshPrivateKeyFile file = SshPrivateKeyFileFactory.parse(formattedKey.getBytes("UTF-8"));
+		if(file.isPassphraseProtected()) {
+			return file.toKeyPair(prompt.getPasshrase(file.getType()));
+		} else {
+			return file.toKeyPair(null);
+		}
 	}
 	
 	public static SshCertificate getCertificate(File privateKey, String passphrase) throws IOException, InvalidPassphraseException {

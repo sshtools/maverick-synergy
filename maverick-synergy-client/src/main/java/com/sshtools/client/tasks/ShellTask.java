@@ -75,6 +75,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		private Optional<Function<SshConnection, SessionChannelNG>> session = Optional.empty();
 		private int cols = 80;
 		private int rows = 24;
+		private boolean withoutPty = false;
 
 		private ShellTaskBuilder() {
 		}
@@ -185,6 +186,11 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		public ShellTask build() {
 			return new ShellTask(this);
 		}
+
+		public ShellTaskBuilder withoutPty() {
+			this.withoutPty = true;
+			return this;
+		}
 	}
 
 	private final Optional<ShellTaskEvent> onClose;
@@ -194,12 +200,14 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 	private final int rows;
 	private final int cols;
 	private final Optional<Function<SshConnection, SessionChannelNG>> session;
-
+	private final boolean withoutPty;
+	
 	private ShellTask(ShellTaskBuilder builder) {
 		super(builder);
 		this.onClose = builder.onClose;
 		this.onStartShell = builder.onStartShell;
 		this.onOpen = builder.onOpen;
+		this.withoutPty = builder.withoutPty;
 		this.termType = builder.termType.orElse("dumb");
 		this.rows = builder.rows;
 		this.cols = builder.cols;
@@ -253,7 +261,13 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 	@Deprecated(since = "3.1.0")
 	protected void beforeStartShell(SessionChannelNG session) {
 		try {
-			onStartShell.orElse((s, c) -> session.allocatePseudoTerminal(termType, cols, rows)).shellEvent(this, session);
+			if(withoutPty) {
+				if(onStartShell.isPresent()) {
+					onStartShell.get().shellEvent(this, session);
+				}
+			} else {
+				onStartShell.orElse((s, c) -> session.allocatePseudoTerminal(termType, cols, rows)).shellEvent(this, session);
+			}
 		} catch(RuntimeException re) {
 			throw re;
 		} catch (Exception e) {

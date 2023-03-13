@@ -211,7 +211,8 @@ public class EventCodes {
 		
 		// System Events
 		public static final int EVENT_REACHED_CONNECTION_LIMIT = 	0xFF0000A0;
-		
+
+		public static final int EVENT_REMOTE_DISCONNECTED = 		0xFF0000FE;
 		public static final int EVENT_DISCONNECTED =				0xFF0000FF;
 
 		// Shell events
@@ -231,5 +232,9 @@ public class EventCodes {
 		public static final int EVENT_SUBSYSTEM_STARTED = 			0x00FF1001;
 		public static final int EVENT_SFTP_FILE_CLOSED = 			0x00FF0025;
 		public static final int EVENT_SFTP_FILE_OPENED = 			0x00FF0026;
+
+		public static final String ATTRIBUTE_REASON = "REASON";
+
+		
 
 }

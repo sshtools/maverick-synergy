@@ -1949,9 +1949,34 @@ public abstract class TransportProtocol<T extends SshContext>
 			ByteArrayReader bar = new ByteArrayReader(msg);
 			try {
 				bar.skip(5);
+				String reason = bar.readString();
 				if(Log.isDebugEnabled()) {
-					Log.debug("Recieved SSH_MSG_DISCONNECT {}", bar.readString());
+					Log.debug("Recieved SSH_MSG_DISCONNECT {}", reason);
 				}
+				
+				addTask(EVENTS, new ConnectionTaskWrapper(con, new Runnable() {
+					public void run() {
+						
+						EventServiceImplementation
+						.getInstance()
+						.fireEvent(
+								new Event(
+										this,
+										EventCodes.EVENT_REMOTE_DISCONNECTED,
+										true)
+									.addAttribute(EventCodes.ATTRIBUTE_REASON, reason)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_CONNECTION,
+												con)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_OPERATION_STARTED,
+												disconnectStarted)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+												new Date()));
+					}
+				}));
+				
 				socketConnection.closeConnection();
 			} finally {
 				bar.close();

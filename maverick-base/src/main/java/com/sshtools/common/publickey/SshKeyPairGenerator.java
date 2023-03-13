@@ -127,7 +127,7 @@ public class SshKeyPairGenerator {
 			return ComponentManager.getDefaultInstance().generateRsaKeyPair(bits, 2);
 		default:
 			var generators = new ComponentFactory<KeyGenerator>(JCEComponentManager.getDefaultInstance());
-			for(var s : ServiceLoader.load(KeyGeneratorFactory.class)) {
+			for(var s : ServiceLoader.load(KeyGeneratorFactory.class, JCEComponentManager.getDefaultInstance().getClassLoader())) {
 				if(ComponentManager.isDefaultEnabled(KeyGenerator.class, s.getKeys()[0]).orElse(false))
 					generators.add(s);
 			}

@@ -148,8 +148,10 @@ public abstract class ComponentManager {
 		}
 	}
 	
+	public abstract ClassLoader getClassLoader();
+	
 	public <C extends Component, F extends ComponentInstanceFactory<C>> Iterable<F> loadComponents(Class<C> componentType, Class<F> factoryClass) {
-		return ServiceLoader.load(factoryClass).stream().map(f -> f.get()).filter(f-> isEnabled(f, componentType, f.getKeys()[0])).collect(Collectors.toList());
+		return ServiceLoader.load(factoryClass, getClassLoader()).stream().map(f -> f.get()).filter(f-> isEnabled(f, componentType, f.getKeys()[0])).collect(Collectors.toList());
 	}
 
 	public <C extends Component> boolean isEnabled(ComponentInstanceFactory<C> cls, Class<C> type, String name) {

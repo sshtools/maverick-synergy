@@ -24,6 +24,7 @@ package com.sshtools.synergy.ssh;
 import java.io.IOException;
 
 import com.sshtools.common.ssh.GlobalRequest;
+import com.sshtools.common.util.ByteArrayWriter;
 
 /**
  * The SSH protocol allows for the sending of requests independently of
@@ -45,27 +46,9 @@ public interface GlobalRequestHandler<T extends SshContext> {
      * @throws GlobalRequestHandlerException if there is an error handling this request 
      * @throws IOException 
      */
-	byte[] processGlobalRequest(GlobalRequest request, ConnectionProtocol<T> connection, boolean wantsReply) throws GlobalRequestHandlerException, IOException;
+	boolean processGlobalRequest(GlobalRequest request, ConnectionProtocol<T> connection, boolean wantsReply,
+			ByteArrayWriter response) throws GlobalRequestHandlerException, IOException;
 	
-	/**
-     * Process a global request.
-     *
-     * @param request GlobalRequest
-     * @param sessionid byte[]
-     * @return boolean
-     * @see #processGlobalRequest(GlobalRequest, ConnectionProtocol, boolean)
-     */
-	@Deprecated
-    default boolean processGlobalRequest(GlobalRequest request, ConnectionProtocol<T> connection) {
-    	try {
-    		processGlobalRequest(request, connection, false);
-    		return true;
-    	} catch(GlobalRequestHandlerException | IOException grhe) {
-    		return false;
-    	}
-    }
-
- 
 
     /**
      * Returns an array of strings containing the supported global requests.

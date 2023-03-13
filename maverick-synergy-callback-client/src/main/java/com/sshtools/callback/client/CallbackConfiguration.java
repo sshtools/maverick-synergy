@@ -29,6 +29,8 @@ import com.sshtools.common.ssh.components.SshPublicKey;
 
 public class CallbackConfiguration {
 
+	public static final String DEFAULT_CALLBACK_ID = "CallbackClient";
+	
 	String agentName;
 	String serverHost;
 	int serverPort = 22;
@@ -38,7 +40,7 @@ public class CallbackConfiguration {
 	SshKeyPair privateKey;
 	SshPublicKey publicKey;
 	String memo;
-	String callbackIdentifier = "CallbackClient";
+	String callbackIdentifier = DEFAULT_CALLBACK_ID;
 	boolean reconnect = true;
 	
 	Map<String,Object> properties = new HashMap<>();

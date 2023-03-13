@@ -90,15 +90,16 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 
 	
 	SecureRND rnd;
-
+	ClassLoader classLoader = JCEComponentManager.class.getClassLoader();
+	
 	public JCEComponentManager() {
 		if("executable".equals(System.getProperty("org.graalvm.nativeimage.kind", ""))) {
 			Log.info("Leaving provider configuration as running a native build.");
 		}
 		else {
 			if (System.getProperty("maverick.enableBCProvider", "true").equalsIgnoreCase("false") || JCEProvider.isBCDisabled()) {
-				if(Log.isDebugEnabled()) {
-					Log.debug("Automatic configuration of BouncyCastle is disabled");
+				if(Log.isInfoEnabled()) {
+					Log.info("Automatic configuration of BouncyCastle is disabled");
 				}
 				JCEProvider.disableBouncyCastle();
 				return;
@@ -365,7 +366,8 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 	@SuppressWarnings("unchecked")
 	protected void initializeDigestFactory(ComponentFactory<Digest> digests) {
 		
-		for(var digest : ServiceLoader.load(DigestFactory.class)) {
+		for(var digest : ServiceLoader.load(DigestFactory.class, 
+				JCEComponentManager.getDefaultInstance().getClassLoader())) {
 			if(testDigest(digest)) {
 				digests.add(digest);
 			}
@@ -374,7 +376,8 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 
 	@SuppressWarnings("unchecked")
 	protected void initializeHmacFactory(ComponentFactory<SshHmac> hmacs) {
-		for(var hmac : ServiceLoader.load(SshHmacFactory.class)) {
+		for(var hmac : ServiceLoader.load(SshHmacFactory.class, 
+				JCEComponentManager.getDefaultInstance().getClassLoader())) {
 			if(testHMac(hmac)) {
 				hmacs.add(hmac);
 			}
@@ -384,7 +387,8 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 	@SuppressWarnings("unchecked")
 	protected void initializePublicKeyFactory(ComponentFactory<SshPublicKey> publickeys) {
 		
-		for(var pubkey : ServiceLoader.load(SshPublicKeyFactory.class)) {
+		for(var pubkey : ServiceLoader.load(SshPublicKeyFactory.class, 
+				JCEComponentManager.getDefaultInstance().getClassLoader())) {
 			if(testPublicKey(pubkey)) {
 				publickeys.add(pubkey);
 			}
@@ -399,12 +403,12 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 				return false;
 			SshPublicKey key = cls.create();
 			String provider = key.test();
-			if(Log.isDebugEnabled())
-				Log.debug("   " + name + " will be supported using JCE Provider " + provider);
+			if(Log.isInfoEnabled())
+				Log.info("   " + name + " will be supported using JCE Provider " + provider);
 			return true;
 		} catch (Throwable e) {
-			if(Log.isDebugEnabled())
-				Log.debug("   " + name + " will not be supported: " + e.getMessage());
+			if(Log.isInfoEnabled())
+				Log.info("   " + name + " will not be supported: " + e.getMessage());
 			return false;
 		}
 	}
@@ -412,7 +416,8 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 	@SuppressWarnings("unchecked")
 	protected void initializeSsh2CipherFactory(ComponentFactory<SshCipher> ciphers) {
 		
-		for(var cipher : ServiceLoader.load(SshCipherFactory.class)) {
+		for(var cipher : ServiceLoader.load(SshCipherFactory.class, 
+				JCEComponentManager.getDefaultInstance().getClassLoader())) {
 			if(testJCECipher(cipher)) {
 				ciphers.add(cipher);
 			}
@@ -433,14 +438,14 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 			c.init(SshCipher.ENCRYPT_MODE, tmp, tmp);
 
 			if (c instanceof AbstractJCECipher)
-				if(Log.isDebugEnabled())
-					Log.debug("   " + name + " will be supported using JCE Provider "
+				if(Log.isInfoEnabled())
+					Log.info("   " + name + " will be supported using JCE Provider "
 							+ ((AbstractJCECipher) c).getProvider());
 
 			return true;
 		} catch (Throwable e) {
-			if(Log.isDebugEnabled()) {
-				Log.debug("   " + name + " WILL NOT be supported: " + e.getMessage());
+			if(Log.isInfoEnabled()) {
+				Log.info("   " + name + " WILL NOT be supported: " + e.getMessage());
 			}
 			return false;
 		}
@@ -457,17 +462,17 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 			c = cls.create();
 
 			if (c instanceof AbstractDigest)
-				if(Log.isDebugEnabled())
-					Log.debug("   " + name + " will be supported using JCE Provider "
+				if(Log.isInfoEnabled())
+					Log.info("   " + name + " will be supported using JCE Provider "
 							+ ((AbstractDigest) c).getProvider());
 
 			return true;
 		} catch (Throwable e) {
-			if(Log.isDebugEnabled()) {
+			if(Log.isInfoEnabled()) {
 				if(c!=null && ((AbstractDigest) c).getProvider()!=null) {
-					Log.debug("   " + name + " WILL NOT be supported from JCE Provider " + ((AbstractDigest) c).getProvider() + ": " + e.getMessage());
+					Log.info("   " + name + " WILL NOT be supported from JCE Provider " + ((AbstractDigest) c).getProvider() + ": " + e.getMessage());
 				} else {
-					Log.debug("   " + name + " WILL NOT be supported: " + e.getMessage());
+					Log.info("   " + name + " WILL NOT be supported: " + e.getMessage());
 				}
 			}
 			return false;
@@ -488,17 +493,25 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 			c.init(tmp);
 
 			if (c instanceof AbstractHmac)
-				if(Log.isDebugEnabled())
-					Log.debug(
+				if(Log.isInfoEnabled())
+					Log.info(
 							"   " + name + " will be supported using JCE Provider " + ((AbstractHmac) c).getProvider());
 
 			return true;
 		} catch (Throwable e) {
-			if(Log.isDebugEnabled()) {
-				Log.debug("   " + name + " WILL NOT be supported: " + e.getMessage());
+			if(Log.isInfoEnabled()) {
+				Log.info("   " + name + " WILL NOT be supported: " + e.getMessage());
 			}
 			return false;
 		}
+	}
+
+	public ClassLoader getClassLoader() {
+		return classLoader;
+	}
+
+	public void setClassLoader(ClassLoader classLoader) {
+		this.classLoader = classLoader;
 	}
 
 	public static ComponentManager getDefaultInstance() {

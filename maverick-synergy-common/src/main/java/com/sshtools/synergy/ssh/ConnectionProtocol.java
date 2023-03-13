@@ -389,7 +389,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			String name = bar.readString();
 			boolean wantreply = bar.read() != 0;
 			boolean success = false;
-			byte[] response = null;
+			ByteArrayWriter response = new ByteArrayWriter();
 
 			if(Log.isDebugEnabled()) {
 				Log.debug("Received SSH_MSG_GLOBAL_REQUEST request="
@@ -398,15 +398,13 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			
 			if (name.equals("tcpip-forward")) {
 				ByteArrayWriter resp = new ByteArrayWriter();
-				if(processTCPIPForward(bar, resp)) {
-					response = resp.toByteArray();
+				if(processTCPIPForward(bar, response)) {
 					success = true;
 				} 
 
 			} else if (name.equals("cancel-tcpip-forward")) {
 				ByteArrayWriter resp = new ByteArrayWriter();
-				if(processTCPIPCancel(bar, resp)) {
-					response = resp.toByteArray();
+				if(processTCPIPCancel(bar, response)) {
 					success = true;
 				} 
 			} else if (name.equals("ping@sshtools.com")) {
@@ -429,16 +427,9 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					byte[] requestdata = new byte[bar.available()];
 					bar.read(requestdata);
 					GlobalRequest request = new GlobalRequest(name, con, requestdata);
+					
 					try {
-						response = handler.processGlobalRequest(request, this, wantreply);
-						if(wantreply && response == null) {
-							if(Log.isDebugEnabled()) {
-								Log.debug("Global request handler for " 
-										+ name + " wantReply=" + wantreply + ", but there was no response data."); 
-							}
-							throw new GlobalRequestHandlerException();
-						}
-						success = true;
+						success = handler.processGlobalRequest(request, this, wantreply, response);
 					} catch (GlobalRequestHandlerException e) {
 					}
 				}
@@ -446,7 +437,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 
 			if (wantreply) {
 				if (success) {
-					sendGlobalRequestSuccess(name, response);
+					sendGlobalRequestSuccess(name, response.toByteArray());
 				} else {
 					sendGlobalRequestFailure(name);
 				}

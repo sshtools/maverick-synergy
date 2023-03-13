@@ -31,6 +31,7 @@ import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.server.AbstractSshServer;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.nio.ProtocolContextFactory;
@@ -103,7 +104,8 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 			}
 			
 			@Override
-			public byte[] processGlobalRequest(GlobalRequest request, ConnectionProtocol<SshClientContext> connection, boolean wantreply) throws GlobalRequestHandlerException {
+			public boolean processGlobalRequest(GlobalRequest request, ConnectionProtocol<SshClientContext> connection, 
+					boolean wantreply, ByteArrayWriter out) throws GlobalRequestHandlerException {
 				if("memo@jadaptive.com".equals(request.getName())) {
 					try {
 						String memo = ByteArrayReader.decodeString(request.getData());
@@ -115,9 +117,9 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 						c.setMemo(memo);
 					} catch (IOException e) {
 					}
-					return null;
+					return false;
 				}
-				throw new GlobalRequestHandler.GlobalRequestHandlerException();
+				return false;
 			}
 		});
 		configureCallbackContext(clientContext);
@@ -138,6 +140,6 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 	}
 
 	protected void configureServerContext(SshServerContext serverContext, SocketChannel sc) throws IOException, SshException {
-		server.configure(serverContext, null);
+		server.configure(serverContext, sc);
 	}
 }

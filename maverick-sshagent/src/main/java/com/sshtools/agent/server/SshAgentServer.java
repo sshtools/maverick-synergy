@@ -30,6 +30,7 @@ import com.sshtools.agent.KeyStore;
 import com.sshtools.agent.client.AgentSocketType;
 import com.sshtools.agent.openssh.OpenSSHConnectionFactory;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 
 public class SshAgentServer {
 
@@ -56,7 +57,8 @@ public class SshAgentServer {
 	public void startListener(String location, AgentSocketType type) throws IOException {
 		
 		SshAgentAcceptor serverAcceptor = null;
-		for(AgentProvider l : ServiceLoader.load(AgentProvider.class)) {
+		for(AgentProvider l : ServiceLoader.load(AgentProvider.class,
+				JCEComponentManager.getDefaultInstance().getClassLoader())) {
 			serverAcceptor = l.server(location, type);
 			if(serverAcceptor != null)
 				break;

@@ -26,6 +26,7 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.jdk16.UnixDomainSockets;
 import com.sshtools.synergy.ssh.ConnectionProtocol;
@@ -34,8 +35,8 @@ import com.sshtools.synergy.ssh.GlobalRequestHandler;
 public class UnixDomainSocketGlobalRequestHandler implements GlobalRequestHandler<SshServerContext> {
 
 	@Override
-	public byte[] processGlobalRequest(GlobalRequest request, ConnectionProtocol<SshServerContext> connection,
-			boolean wantreply) throws GlobalRequestHandlerException, IOException {
+	public boolean processGlobalRequest(GlobalRequest request, ConnectionProtocol<SshServerContext> connection,
+			boolean wantreply, ByteArrayWriter response) throws GlobalRequestHandlerException, IOException {
 		if (UnixDomainSockets.STREAM_LOCAL_FORWARD_CHANNEL.equals(request.getName())) {
 			boolean success = false;
 			var bar = new ByteArrayReader(request.getData());
@@ -55,20 +56,20 @@ public class UnixDomainSocketGlobalRequestHandler implements GlobalRequestHandle
 					try {
 						connection.getContext().getForwardingManager().startListening(path, 0,
 								connection.getConnection(), null, 0);
-						return new byte[0];
+						return true;
 					} catch (SshException e) {
 					}
 				}
 			}
-			return null;
+			return false;
 		} else if (UnixDomainSockets.CANCEL_STREAM_LOCAL_FORWARD_CHANNEL.equals(request.getName())) {
 			var bar = new ByteArrayReader(request.getData());
 			var path = bar.readString();
 			if (connection.getContext().getForwardingManager().stopListening(path, 0,
 					connection.getContext().getRemoteForwardingCancelKillsTunnels(), connection.getConnection())) {
-				return new byte[0];
+				return true;
 			}
-			return null;
+			return false;
 		}
 		throw new GlobalRequestHandlerException();
 	}

@@ -189,7 +189,8 @@ public class SshClientContext extends SshContext {
 		}
 		
 		verifiedKeyExchanges = new ComponentFactory<SshKeyExchange<SshClientContext>>(componentManager);
-		for(var kex : ServiceLoader.load(SshKeyExchangeClientFactory.class)) {
+		for(var kex : ServiceLoader.load(SshKeyExchangeClientFactory.class, 
+				JCEComponentManager.getDefaultInstance().getClassLoader())) {
 			if(testClientKeyExchangeAlgorithm(kex))
 				verifiedKeyExchanges.add(kex);
 		}
@@ -212,8 +213,8 @@ public class SshClientContext extends SshContext {
 			c.test();
 			
 		} catch (Exception e) {
-			if(Log.isDebugEnabled())
-				Log.debug("   " + name + " (client) will not be supported: " + e.getMessage());
+			if(Log.isInfoEnabled())
+				Log.info("   " + name + " (client) will not be supported: " + e.getMessage());
 			return false;
 		} catch (Throwable e) {
 			// a null pointer exception will be caught at the end of the keyex
@@ -222,8 +223,8 @@ public class SshClientContext extends SshContext {
 			// exception.
 		}
 
-		if(Log.isDebugEnabled())
-			Log.debug("   " + name + " (client) will be supported using JCE Provider "
+		if(Log.isInfoEnabled())
+			Log.info("   " + name + " (client) will be supported using JCE Provider "
 					+ c.getProvider());
 
 		return true;

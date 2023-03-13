@@ -48,6 +48,7 @@ import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.ssh.components.SshCipher;
 import com.sshtools.common.ssh.components.SshHmac;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.ssh.compression.SshCompression;
 import com.sshtools.common.ssh.compression.SshCompressionFactory;
 import com.sshtools.common.util.ByteBufferPool;
@@ -287,7 +288,8 @@ public abstract class SshContext extends ProtocolContext implements
 			compressionsCS = new ComponentFactory<SshCompression>(componentManager);
 			compressionsSC = new ComponentFactory<SshCompression>(componentManager);
 
-			for(var compress : ServiceLoader.load(SshCompressionFactory.class)) {
+			for(var compress : ServiceLoader.load(SshCompressionFactory.class, 
+					JCEComponentManager.getDefaultInstance().getClassLoader())) {
 				compressionsCS.add(compress);
 				compressionsSC.add(compress);
 			}

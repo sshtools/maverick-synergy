@@ -43,7 +43,6 @@ import com.sshtools.common.ssh.ExecutorOperationSupport;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.IOUtils;
-import com.sshtools.common.util.Utils;
 
 /**
  * This abstract class provides the basic functions of an SSH2 channel. All

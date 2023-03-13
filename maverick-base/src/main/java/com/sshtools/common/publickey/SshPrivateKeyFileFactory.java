@@ -37,6 +37,7 @@ import java.util.ServiceLoader;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.components.SshKeyPair;
+import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
 
 /**
@@ -95,7 +96,8 @@ public class SshPrivateKeyFileFactory {
 			} else if (SSHCOMPrivateKeyFile.isFormatted(formattedkey)) {
 				return new SSHCOMPrivateKeyFile(formattedkey);
 			} else {
-				for(var provider : ServiceLoader.load(SshPrivateKeyProvider.class)) {
+				for(var provider : ServiceLoader.load(SshPrivateKeyProvider.class,
+						JCEComponentManager.getDefaultInstance().getClassLoader())) {
 					if(provider.isFormatted(formattedkey)) {
 						return provider.create(formattedkey);
 					}

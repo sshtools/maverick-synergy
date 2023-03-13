@@ -61,6 +61,7 @@ import com.sshtools.common.publickey.SignatureGenerator;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPrivateKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 
@@ -163,7 +164,8 @@ public class SshAgentClient implements SignatureGenerator, Closeable {
 				throw new AgentNotAvailableException();
 			}
 			SshAgentClient socket = null;
-			for(AgentProvider l : ServiceLoader.load(AgentProvider.class)) {
+			for(AgentProvider l : ServiceLoader.load(AgentProvider.class,
+					JCEComponentManager.getDefaultInstance().getClassLoader())) {
 				socket = l.client(application, location, type, RFCAgent);
 				if(socket != null)
 					break;

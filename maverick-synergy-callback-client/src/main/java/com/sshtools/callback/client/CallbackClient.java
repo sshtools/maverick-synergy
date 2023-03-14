@@ -223,7 +223,7 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		SshServerContext sshContext = new SshServerContext(getSshEngine(), JCEComponentManager.getDefaultInstance());
 		
 		sshContext.setIdleConnectionTimeoutSeconds(0);
-		
+		sshContext.setExtendedIdentificationSanitization(false);
 		for(SshKeyPair key : hostKeys) {
 			sshContext.addHostKey(key);
 		}

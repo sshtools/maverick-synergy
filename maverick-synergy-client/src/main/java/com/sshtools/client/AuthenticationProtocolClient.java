@@ -22,9 +22,12 @@
 package com.sshtools.client;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -32,6 +35,7 @@ import java.util.StringTokenizer;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
+import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
 import com.sshtools.common.ssh.SshException;
@@ -59,9 +63,12 @@ public class AuthenticationProtocolClient implements Service {
 	LinkedList<ClientAuthenticator> authenticators = new LinkedList<>();
 	ClientAuthenticator currentAuthenticator;
 	Set<String> supportedAuths = null;
+	List<String> completedAuths = new ArrayList<>();
 	boolean authenticated = false;
 	int attempts;
 	NoneAuthenticator noneAuthenticator = new NoneAuthenticator();
+	Date methodStarted = new Date();
+	Date authenticationStarted = new Date();
 	
 	public AuthenticationProtocolClient(TransportProtocolClient transport,
 			SshClientContext context, String username) {
@@ -136,10 +143,55 @@ public class AuthenticationProtocolClient implements Service {
 			case SSH_MSG_USERAUTH_SUCCESS:
 	
 				authenticated = true;
+				completedAuths.add(currentAuthenticator.getName());
 				if(Log.isDebugEnabled()) {
 					Log.debug("Received SSH_MSG_USERAUTH_SUCCESS");
 				}
 	
+				EventServiceImplementation
+				.getInstance()
+				.fireEvent(
+						new Event(
+								this,
+								EventCodes.EVENT_USERAUTH_SUCCESS,
+								true)
+								.addAttribute(
+										EventCodes.ATTRIBUTE_CONNECTION,
+										transport.getConnection())
+								.addAttribute(
+										EventCodes.ATTRIBUTE_ATTEMPTED_USERNAME,
+										username)
+								.addAttribute(
+										EventCodes.ATTRIBUTE_AUTHENTICATION_METHOD,
+										currentAuthenticator.getName())
+								.addAttribute(
+										EventCodes.ATTRIBUTE_OPERATION_STARTED,
+										methodStarted)
+								.addAttribute(
+										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+										new Date()));
+
+				EventServiceImplementation
+						.getInstance()
+						.fireEvent(
+								new Event(
+										this,
+										EventCodes.EVENT_AUTHENTICATION_COMPLETE,
+										true)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_CONNECTION,
+												transport.getConnection())
+										.addAttribute(
+												EventCodes.ATTRIBUTE_AUTHENTICATION_METHODS,
+												completedAuths)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_OPERATION_STARTED,
+												authenticationStarted)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+												new Date()));
+
+				
 				ConnectionProtocol<SshClientContext> con = new ConnectionProtocolClient(
 						transport, username);
 				stop();
@@ -170,6 +222,7 @@ public class AuthenticationProtocolClient implements Service {
 				} 
 				
 				if(partial) {
+					completedAuths.add(currentAuthenticator.getName());
 					currentAuthenticator.success(true, auths.split(","));
 				} else {
 					currentAuthenticator.failure();
@@ -231,6 +284,7 @@ public class AuthenticationProtocolClient implements Service {
 
 		if(!authenticators.isEmpty()) {
 			
+			methodStarted = new Date();
 			currentAuthenticator = authenticators.removeFirst();
 			
 			if(Log.isDebugEnabled()) {

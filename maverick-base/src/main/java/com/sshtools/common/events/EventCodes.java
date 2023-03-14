@@ -145,6 +145,8 @@ public class EventCodes {
 		public static final int EVENT_CONNECTION_ATTEMPT = 			0xFF000000;
 		public static final int EVENT_CONNECTED = 					0xFF000001;
 		public static final int EVENT_NEGOTIATED_PROTOCOL = 		0xFF00000A;
+		public static final int EVENT_CALLBACK_CONNECTING = 		0xFF00000B;
+		
 		// Not very useful events
 		public static final int EVENT_HOSTKEY_RECEIVED	=			0xFF000002; 
 		public static final int EVENT_HOSTKEY_REJECTED 	=			0xFF000003;

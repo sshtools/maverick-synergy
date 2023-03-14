@@ -23,8 +23,13 @@ package com.sshtools.server.callback;
 
 
 
+import java.util.Date;
+
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.TransportProtocolClient;
+import com.sshtools.common.events.Event;
+import com.sshtools.common.events.EventCodes;
+import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.TransportProtocolServer;
@@ -78,6 +83,7 @@ class TransportProtocolSwitchingClient extends TransportProtocolClient {
 						Log.debug("Callback client username is {}", username);
 					}
 					getContext().setUsername(username);
+					generateCallbackEvent(username);
 					return;
 				}
 			} else {
@@ -87,11 +93,28 @@ class TransportProtocolSwitchingClient extends TransportProtocolClient {
 					Log.debug("Callback client username is {}", username);
 				}
 				getContext().setUsername(username);
+				generateCallbackEvent(username);
 				return;
 			}
 			
 			throw new IllegalStateException(String.format("Callback identifier missing _ or username token [%s]", remoteIdentification.trim()));
 		}
+		
+	}
+
+	private void generateCallbackEvent(String username) {
+		
+		EventServiceImplementation.getInstance().fireEvent(
+				(new Event(this, EventCodes.EVENT_CALLBACK_CONNECTING, true))
+						.addAttribute(
+								EventCodes.ATTRIBUTE_CONNECTION,
+								con)
+						.addAttribute(
+								EventCodes.ATTRIBUTE_OPERATION_STARTED,
+								new Date())
+						.addAttribute(
+								EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+								new Date()));
 		
 	}
 

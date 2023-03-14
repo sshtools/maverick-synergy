@@ -31,6 +31,7 @@ import com.sshtools.client.SimpleClientAuthenticator;
 import com.sshtools.client.TransportProtocolClient;
 import com.sshtools.common.auth.MutualKeyAuthenticatonStore;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
@@ -102,6 +103,9 @@ public class MutualCallbackAuthenticator extends SimpleClientAuthenticator {
 				
 				SshPublicKey remotePublicKey = authenticationStore.getPublicKey(con);
 
+				if(Log.isDebugEnabled()) {
+					Log.debug("Mutual authentication is using the remote key {}", SshKeyUtils.getOpenSSHFormattedKey(remotePublicKey));
+				}
 				if(Objects.isNull(remotePublicKey)) {
 					failure();
 					transport.disconnect(TransportProtocol.AUTH_CANCELLED_BY_USER, "There was no public key configured for the user");
@@ -121,6 +125,11 @@ public class MutualCallbackAuthenticator extends SimpleClientAuthenticator {
 				writer.writeBinaryString(transport.getSessionKey());
 				
 				SshKeyPair localPrivateKey = authenticationStore.getPrivateKey(con);
+				
+				if(Log.isDebugEnabled()) {
+					Log.debug("Mutual authentication is using the local key {}", SshKeyUtils.getOpenSSHFormattedKey(localPrivateKey.getPublicKey()));
+				}
+				
 				byte[] signature2 = localPrivateKey.getPrivateKey().sign(writer.toByteArray());
 				
 				transport.postMessage(new SshMessage() {

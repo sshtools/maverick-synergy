@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -70,7 +71,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	String currentMethod;
 	String username;
 	String service;
-	ArrayList<String> completedAuthentications = new ArrayList<String>();
+	List<String> completedAuthentications = new ArrayList<String>();
 	Map<String, Object> authenticationParameters = new ConcurrentHashMap<String, Object>(8, 0.9f, 1);
 	Date authenticationStarted = new Date();
 	Date methodStarted;

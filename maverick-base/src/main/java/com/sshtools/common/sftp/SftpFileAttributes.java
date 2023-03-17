@@ -40,8 +40,9 @@ import com.sshtools.common.util.UnsignedInteger64;
  * attribute information.
  * 
  * @author Lee David Painter
+ * @param <SSH_FILEXFER_TYPE_FIFO>
  */
-public class SftpFileAttributes {
+public class SftpFileAttributes<SSH_FILEXFER_TYPE_FIFO> {
 
 	
 	public static final long SSH_FILEXFER_ATTR_SIZE 			= 0x00000001;
@@ -243,8 +244,8 @@ public class SftpFileAttributes {
 	String username;
 	String group;
 	
-	char[] types = { 'p', 'c', 'd', 'b', '-', 'l', 's', };
-	
+	char[] types = { 'p', 'c', 'd', 'b', '-', 'l', 's' };
+
 	String  charsetEncoding;
 	Long supportedAttributeMask;
 	Long supportedAttributeBits;
@@ -328,24 +329,27 @@ public class SftpFileAttributes {
 		if (isFlagSet(SSH_FILEXFER_ATTR_PERMISSIONS, version) && bar.available() >= 4) {
 			permissions = new UnsignedInteger32(bar.readInt());
 			if(version <=3) {
-				if((permissions.longValue() & S_IFREG) == S_IFREG) {
-					type = SSH_FILEXFER_TYPE_REGULAR;
-				} else if((permissions.longValue() & S_IFLNK) == S_IFLNK) {
-					type = SSH_FILEXFER_TYPE_SYMLINK;
-				} else if((permissions.longValue() & S_IFCHR) == S_IFCHR) {
-					type = SSH_FILEXFER_TYPE_CHAR_DEVICE;
-				} else if((permissions.longValue() & S_IFBLK) == S_IFBLK) {
-					type = SSH_FILEXFER_TYPE_BLOCK_DEVICE;
-				} else if((permissions.longValue() & S_IFDIR) == S_IFDIR) {
-					type = SSH_FILEXFER_TYPE_DIRECTORY;
-				} else if((permissions.longValue() & S_IFIFO) == S_IFIFO) {
-					type = SSH_FILEXFER_TYPE_FIFO;
-				} else if((permissions.longValue() & S_IFSOCK) == S_IFSOCK) {
-					type = SSH_FILEXFER_TYPE_SOCKET;
-				} else if((permissions.longValue() & S_IFMT) == S_IFMT) {
-					type = SSH_FILEXFER_TYPE_SPECIAL;
-				} else  {
-					type = SSH_FILEXFER_TYPE_UNKNOWN;
+				int ifmt = (int) permissions.longValue() & S_IFMT;
+				if (ifmt > 0) {
+					if(ifmt == S_IFREG) {
+						type = SSH_FILEXFER_TYPE_REGULAR;
+					} else if(ifmt == S_IFLNK) {
+						type = SSH_FILEXFER_TYPE_SYMLINK;
+					} else if(ifmt == S_IFCHR) {
+						type = SSH_FILEXFER_TYPE_CHAR_DEVICE;
+					} else if(ifmt == S_IFBLK) {
+						type = SSH_FILEXFER_TYPE_BLOCK_DEVICE;
+					} else if(ifmt == S_IFDIR) {
+						type = SSH_FILEXFER_TYPE_DIRECTORY;
+					} else if(ifmt == S_IFIFO) {
+						type = SSH_FILEXFER_TYPE_FIFO;
+					} else if(ifmt == S_IFSOCK) {
+						type = SSH_FILEXFER_TYPE_SOCKET;
+					} else if(ifmt == S_IFMT) {
+						type = SSH_FILEXFER_TYPE_SPECIAL;
+					} else  {
+						type = SSH_FILEXFER_TYPE_UNKNOWN;
+					}
 				}
 			}
 		}

@@ -47,6 +47,7 @@ import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.Subsystem;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.ssh.ChannelNG;
 import com.sshtools.synergy.ssh.ChannelOutputStream;
@@ -116,8 +117,9 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		this(con, false);
 	}
 	public SessionChannelNG(SshConnection con, boolean autoConsume) {
-		super("session", con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
-				0,
+		super("session", 
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
+				UnsignedInteger32.ZERO,
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
 				null,
@@ -678,12 +680,12 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	}
 	
 	@Override
-	public int getMaximumWindowSpace() {
+	public UnsignedInteger32 getMaximumWindowSpace() {
 		return localWindow.getMaximumWindowSpace();
 	}
 
 	@Override
-	public int getMinimumWindowSpace() {
+	public UnsignedInteger32 getMinimumWindowSpace() {
 		return localWindow.getMinimumWindowSpace();
 	}
 

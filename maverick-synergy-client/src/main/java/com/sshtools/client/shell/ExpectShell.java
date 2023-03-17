@@ -407,10 +407,10 @@ public class ExpectShell {
 	}
 
 	public String getNewline() {
-		if (osType == OS_WINDOWS || osType == OS_POWERSHELL) {
+		if (osType == OS_WINDOWS) {
 			return "\r\n";
 		} else {
-			return "\n";
+			return "\r";
 		}
 	}
 
@@ -524,12 +524,16 @@ public class ExpectShell {
 				echoCmd = PIPE_CMD + ECHO_COMMAND + " \"" + BEGIN_COMMAND_MARKER + "\" && " + cmd
 		                		+ " && " + ECHO_COMMAND + " \"" + endCommand + "0\" || "
 		                		+ ECHO_COMMAND + "\"" + endCommand + "1\"" + EOL;
+			} else if(osType == OS_POWERSHELL) {
+			    // Assume it's a Unix system and 'echo' works.
+                echoCmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; " + cmd
+                        + "; echo \"" + endCommand + EXIT_CODE_VARIABLE + "\"" + EOL;
 			} else {
 			    // Assume it's a Unix system and 'echo' works.
                 echoCmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; " + cmd
                         + "; echo \"" + endCommand + EXIT_CODE_VARIABLE + "\"" + EOL;
 			}
-
+			
 			if(Log.isDebugEnabled()) {
 				Log.debug("Executing raw command: {}", echoCmd);
 			}

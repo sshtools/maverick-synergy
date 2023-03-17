@@ -22,6 +22,7 @@
 package com.sshtools.synergy.ssh;
 
 import com.sshtools.common.ssh.ChannelRequestFuture;
+import com.sshtools.common.util.UnsignedInteger32;
 
 /**
  * <p>An abstract forwarding channel implementation for use with both local
@@ -53,11 +54,11 @@ public abstract class ForwardingChannel<T extends SshContext>
      * @param windowSize int
      * @see com.sshtools.synergy.ssh.ChannelNG#Channel(String channelType, int maximumPacketSize, int initialWindowSize)
      */
-    public ForwardingChannel(String channelType, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace) {
+    public ForwardingChannel(String channelType, int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace, UnsignedInteger32 minimumWindowSpace) {
         super(channelType, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace);
     }
     
-    public ForwardingChannel(String channelType, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace, boolean autoConsume) {
+    public ForwardingChannel(String channelType, int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace, UnsignedInteger32 minimumWindowSpace, boolean autoConsume) {
         super(channelType, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, new ChannelRequestFuture(), autoConsume);
     }
 

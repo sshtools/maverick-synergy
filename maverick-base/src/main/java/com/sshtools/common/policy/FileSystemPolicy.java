@@ -35,6 +35,7 @@ import com.sshtools.common.sftp.SftpExtension;
 import com.sshtools.common.sftp.SftpExtensionFactory;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.IOUtils;
+import com.sshtools.common.util.UnsignedInteger32;
 
 public class FileSystemPolicy extends Permissions {
 
@@ -55,8 +56,8 @@ public class FileSystemPolicy extends Permissions {
 	boolean mkdirParentMustExist = true;
 	
 	private int sftpMaxPacketSize = 65536;
-	private int sftpMaxWindowSize = IOUtils.fromByteSize("16MB").intValue();
-	private int sftpMinWindowSize = 131072;
+	private UnsignedInteger32 sftpMaxWindowSize = new UnsignedInteger32(IOUtils.fromByteSize("16MB").longValue());
+	private UnsignedInteger32 sftpMinWindowSize = new UnsignedInteger32(131072);
 	
 	public FileSystemPolicy() {
 	}
@@ -205,16 +206,16 @@ public class FileSystemPolicy extends Permissions {
 	public void setSftpMaxPacketSize(int sftpMaxPacketSize) {
 		this.sftpMaxPacketSize = sftpMaxPacketSize;
 	}
-	public int getSftpMaxWindowSize() {
+	public UnsignedInteger32 getSftpMaxWindowSize() {
 		return sftpMaxWindowSize;
 	}
-	public void setSftpMaxWindowSize(int sftpMaxWindowSize) {
+	public void setSftpMaxWindowSize(UnsignedInteger32 sftpMaxWindowSize) {
 		this.sftpMaxWindowSize = sftpMaxWindowSize;
 	}
-	public int getSftpMinWindowSize() {
+	public UnsignedInteger32 getSftpMinWindowSize() {
 		return sftpMinWindowSize;
 	}
-	public void setSftpMinWindowSize(int sftpMinWindowSize) {
+	public void setSftpMinWindowSize(UnsignedInteger32 sftpMinWindowSize) {
 		this.sftpMinWindowSize = sftpMinWindowSize;
 	}
 

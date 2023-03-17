@@ -36,6 +36,7 @@ import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.IOUtils;
+import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.synergy.ssh.ByteArrays;
 import com.sshtools.synergy.ssh.PacketPool;
 
@@ -96,9 +97,9 @@ public abstract class AbstractSubsystemTask extends ConnectionAwareTask {
 		return session;
 	}
 
-	protected abstract int getMinimumWindowSize();
+	protected abstract UnsignedInteger32 getMinimumWindowSize();
 
-	protected abstract int getMaximumWindowSize();
+	protected abstract UnsignedInteger32 getMaximumWindowSize();
 
 	protected abstract int getMaximumPacketSize();
 

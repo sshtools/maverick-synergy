@@ -211,11 +211,11 @@ public class SftpChannel extends AbstractSubsystem {
 		return (Integer) con.getProperty("sftpVersion");
 	}
 
-	protected int getMinimumWindowSize() {
+	protected UnsignedInteger32 getMinimumWindowSize() {
 		return con.getContext().getPolicy(FileSystemPolicy.class).getSftpMinWindowSize();
 	}
 	
-	protected int getMaximumWindowSize() {
+	protected UnsignedInteger32 getMaximumWindowSize() {
 		return con.getContext().getPolicy(FileSystemPolicy.class).getSftpMaxWindowSize();
 	}
 	
@@ -1171,7 +1171,7 @@ public class SftpChannel extends AbstractSubsystem {
 				
 				while(requests.size() < osr) {
 					
-					if(i > 0 && session.getRemoteWindow() < 29) {
+					if(i > 0 && session.getRemoteWindow().longValue() < 29) {
 						if (Log.isDebugEnabled())
 							Log.debug("Deferring post requests due to lack of remote window");
 						break;
@@ -2668,7 +2668,7 @@ public class SftpChannel extends AbstractSubsystem {
 		return getSession().isClosed();
 	}
 
-	public int getMaximumLocalWindowSize() {
+	public UnsignedInteger32 getMaximumLocalWindowSize() {
 		return getMaximumWindowSize();
 	}
 
@@ -2676,7 +2676,7 @@ public class SftpChannel extends AbstractSubsystem {
 		return getMaximumPacketSize();
 	}
 
-	public int getMaximumRemoteWindowSize() {
+	public UnsignedInteger32 getMaximumRemoteWindowSize() {
 		return session.getMaxiumRemoteWindowSize();
 	}
 

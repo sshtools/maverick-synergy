@@ -80,7 +80,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(), 
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize());
-		toChannel = new ForwardingDataWindow(con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize());
+		toChannel = new ForwardingDataWindow(con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize().intValue());
 	}
 
 	protected CachingDataWindow createCache(int maximumWindowSpace) {

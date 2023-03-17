@@ -36,6 +36,7 @@ import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.SessionChannelServer;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.synergy.ssh.ChannelNG;
 import com.sshtools.synergy.ssh.ChannelOutputStream;
 
@@ -54,7 +55,7 @@ public class AgentForwardingChannel extends ChannelNG<SshServerContext> implemen
 	}
 	
 	public AgentForwardingChannel(String type, SessionChannelServer session, ChannelEventListener listener) throws IOException {
-		super(type, 32768, 1024000, 1024000, 65536);
+		super(type, 32768, new UnsignedInteger32(1024000), new UnsignedInteger32(1024000), new UnsignedInteger32(65536));
 		this.session = session;
 		if(listener!=null) {
 			addEventListener(listener);

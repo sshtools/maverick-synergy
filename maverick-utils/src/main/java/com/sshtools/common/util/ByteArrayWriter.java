@@ -177,6 +177,25 @@ public class ByteArrayWriter
     raw[3] = (byte) (i);
     return raw;
   }
+  
+  public static byte[] encodeInt(long i) {
+	    byte[] raw = new byte[4];
+	    raw[0] = (byte) (i >> 24);
+	    raw[1] = (byte) (i >> 16);
+	    raw[2] = (byte) (i >> 8);
+	    raw[3] = (byte) (i);
+	    return raw;
+  }
+  
+  public static byte[] encodeInt(UnsignedInteger32 val) {
+	    byte[] raw = new byte[4];
+	    long i = val.longValue();
+	    raw[0] = (byte) (i >> 24);
+	    raw[1] = (byte) (i >> 16);
+	    raw[2] = (byte) (i >> 8);
+	    raw[3] = (byte) (i);
+	    return raw;
+  }
 
   public static void encodeInt(byte[] buf, int off, int i) {
     buf[off++] = (byte) (i >> 24);

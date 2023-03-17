@@ -30,6 +30,7 @@ import java.util.List;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.Permissions;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.UnsignedInteger32;
 
 public class ForwardingPolicy extends Permissions {
 	
@@ -40,8 +41,8 @@ public class ForwardingPolicy extends Permissions {
 	List<String> permit = new ArrayList<String>();
 	
 	private int forwardingMaxPacketSize = 65536;
-	private int forwardingMaxWindowSize = 65536 * 5;
-	private int forwardingMinWindowSize = 32768;
+	private UnsignedInteger32 forwardingMaxWindowSize = new UnsignedInteger32(65536 * 5);
+	private UnsignedInteger32 forwardingMinWindowSize = new UnsignedInteger32(32768);
 	
 	public ForwardingPolicy() {
 	}
@@ -168,19 +169,19 @@ public class ForwardingPolicy extends Permissions {
 		this.forwardingMaxPacketSize = forwardingMaxPacketSize;
 	}
 
-	public int getForwardingMaxWindowSize() {
+	public UnsignedInteger32 getForwardingMaxWindowSize() {
 		return forwardingMaxWindowSize;
 	}
 
-	public void setForwardingMaxWindowSize(int forwardingMaxWindowSize) {
+	public void setForwardingMaxWindowSize(UnsignedInteger32 forwardingMaxWindowSize) {
 		this.forwardingMaxWindowSize = forwardingMaxWindowSize;
 	}
 
-	public int getForwardingMinWindowSize() {
+	public UnsignedInteger32 getForwardingMinWindowSize() {
 		return forwardingMinWindowSize;
 	}
 
-	public void setForwardingMinWindowSize(int forwardingMinWindowSize) {
+	public void setForwardingMinWindowSize(UnsignedInteger32 forwardingMinWindowSize) {
 		this.forwardingMinWindowSize = forwardingMinWindowSize;
 	}
 	

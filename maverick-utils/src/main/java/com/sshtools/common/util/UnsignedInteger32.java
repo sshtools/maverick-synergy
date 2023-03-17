@@ -34,6 +34,9 @@ public class UnsignedInteger32 {
 
   /** The minimum value of a 32bit unsigned integer */
   public final static long MIN_VALUE = 0;
+
+  public final static UnsignedInteger32 ZERO = new UnsignedInteger32(0);
+  
   private Long value;
 
   /**
@@ -143,5 +146,14 @@ public class UnsignedInteger32 {
    */
   public static UnsignedInteger32 add(UnsignedInteger32 x, int y) {
     return new UnsignedInteger32(x.longValue() + y);
+  }
+
+
+  public static UnsignedInteger32 deduct(UnsignedInteger32 x, UnsignedInteger32 y) {
+		return new UnsignedInteger32(x.longValue() - y.longValue());
+  }
+  
+  public static UnsignedInteger32 deduct(UnsignedInteger32 x, int y) {
+		return new UnsignedInteger32(x.longValue() - y);
   }
 }

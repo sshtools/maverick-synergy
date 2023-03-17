@@ -45,6 +45,7 @@ import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.synergy.ssh.GlobalRequestHandler.GlobalRequestHandlerException;
 
 /**
@@ -499,7 +500,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 		try {
 			// read message id and throw away. int messageid =
 			int channelid = (int) bar.readInt();
-			int count = (int) bar.readInt();
+			UnsignedInteger32 count = bar.readUINT32();
 
 			ChannelNG<T> channel = getChannel(channelid);
 
@@ -610,7 +611,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			} else {
 
 				int remoteid = (int) bar.readInt();
-				int remotewindow = (int) bar.readInt();
+				UnsignedInteger32 remotewindow = bar.readUINT32();
 				int remotepacket = (int) bar.readInt();
 				byte[] responsedata = null;
 				if (bar.available() > 0) {
@@ -680,7 +681,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 		
 			String channeltype = bar.readString();
 			int remoteid = (int) bar.readInt();
-			int remotewindow = (int) bar.readInt();
+			UnsignedInteger32 remotewindow = bar.readUINT32();
 			int remotepacket = (int) bar.readInt();
 			byte[] requestdata = null;
 			if (bar.available() > 0) {
@@ -953,7 +954,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			buf.putInt(channel.getChannelType().length());
 			buf.put(channel.getChannelType().getBytes());
 			buf.putInt(channel.getLocalId());
-			buf.putInt(channel.getLocalWindow());
+			buf.put(ByteArrayWriter.encodeInt(channel.getLocalWindow()));
 			buf.putInt(channel.getLocalPacket());
 
 			if (requestdata != null) {
@@ -985,7 +986,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			buf.put((byte) SSH_MSG_CHANNEL_OPEN_CONFIRMATION);
 			buf.putInt(channel.remoteid);
 			buf.putInt(channel.getLocalId());
-			buf.putInt(channel.getLocalWindow());
+			buf.put(ByteArrayWriter.encodeInt(channel.getLocalWindow()));
 			buf.putInt(channel.getLocalPacket());
 
 			if (responsedata != null) {

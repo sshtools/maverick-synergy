@@ -29,6 +29,7 @@ import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.RequestFuture;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.synergy.ssh.ChannelNG;
 
 /**
@@ -45,14 +46,14 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 	private boolean singleSession = false;
 	
 
-	public AbstractSessionChannel(int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
-			int minimumWindowSpace, boolean autoConsume) {
+	public AbstractSessionChannel(int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace,
+			UnsignedInteger32 minimumWindowSpace, boolean autoConsume) {
 		super("session", maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace,
 				new ChannelRequestFuture(), autoConsume);
 	}
 
-	public AbstractSessionChannel(int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
-			int minimumWindowSpace, ChannelRequestFuture closeFuture, boolean autoConsume) {
+	public AbstractSessionChannel(int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace,
+			UnsignedInteger32 minimumWindowSpace, ChannelRequestFuture closeFuture, boolean autoConsume) {
 		super("session", maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
 	}
 

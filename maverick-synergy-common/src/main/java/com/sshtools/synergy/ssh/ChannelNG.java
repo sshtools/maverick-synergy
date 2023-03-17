@@ -43,6 +43,7 @@ import com.sshtools.common.ssh.ExecutorOperationSupport;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.IOUtils;
+import com.sshtools.common.util.UnsignedInteger32;
 
 /**
  * This abstract class provides the basic functions of an SSH2 channel. All
@@ -110,13 +111,13 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	 *            the initial size of the local window.
 	 */
 	public ChannelNG(String channelType,  int maximumPacketSize,
-			int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace, 
+			UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace, UnsignedInteger32 minimumWindowSpace, 
 				ChannelRequestFuture closeFuture, boolean autoConsume) {
 		this.channeltype = channelType;
 		this.localWindow = new ChannelDataWindow(initialWindowSize, maximumWindowSpace, minimumWindowSpace, maximumPacketSize);
 		this.closeFuture = closeFuture != null ? closeFuture : new ChannelRequestFuture();
 		if(!autoConsume) {
-			cache = createCache(maximumWindowSpace);
+			cache = createCache(maximumWindowSpace.intValue());
 		}
 	}
 
@@ -144,7 +145,9 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	}
 	
 	public ChannelNG(String channelType, int maximumPacketSize,
-			int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace) {
+			UnsignedInteger32 initialWindowSize,
+			UnsignedInteger32 maximumWindowSpace, 
+			UnsignedInteger32 minimumWindowSpace) {
 		this(channelType, maximumPacketSize,
 				initialWindowSize, maximumWindowSpace, 
 				minimumWindowSpace, new ChannelRequestFuture(), false);
@@ -163,7 +166,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		return !isClosed();
 	}
 
-	public int getMaxiumRemoteWindowSize() {
+	public UnsignedInteger32 getMaxiumRemoteWindowSize() {
 		return remoteWindow.getMaximumWindowSpace();
 	}
 	
@@ -244,7 +247,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	 * 
 	 * @return int
 	 */
-	public int getRemoteWindow() {
+	public UnsignedInteger32 getRemoteWindow() {
 		return remoteWindow.getWindowSpace();
 	}
 
@@ -253,7 +256,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	 * 
 	 * @return int
 	 */
-	public int getLocalWindow() {
+	public UnsignedInteger32 getLocalWindow() {
 		return localWindow.getWindowSpace();
 	}
 
@@ -310,13 +313,13 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	 * @throws ChannelOpenException
 	 */
 	byte[] open(int channelid, int remoteid, int remotepacket,
-			int remotewindow, byte[] requestdata) throws WriteOperationRequest,
+			UnsignedInteger32 remotewindow, byte[] requestdata) throws WriteOperationRequest,
 			ChannelOpenException {
 
 		this.channelid = channelid;
 		this.remoteid = remoteid;
 
-		this.remoteWindow = new ChannelDataWindow(remotewindow, remotewindow, 0, remotepacket);
+		this.remoteWindow = new ChannelDataWindow(remotewindow, remotewindow, UnsignedInteger32.ZERO, remotepacket);
 
 		return openChannel(requestdata);
 	}
@@ -332,9 +335,9 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 
 	}
 
-	void confirmOpen(int remoteid, int remotewindow, int remotepacket) {
+	void confirmOpen(int remoteid, UnsignedInteger32 remotewindow, int remotepacket) {
 		this.remoteid = remoteid;
-		this.remoteWindow = new ChannelDataWindow(remotewindow, remotewindow, 0, remotepacket);
+		this.remoteWindow = new ChannelDataWindow(remotewindow, remotewindow, UnsignedInteger32.ZERO, remotepacket);
 		confirmOpen();
 	}
 
@@ -347,7 +350,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		return connection.getSessionIdentifier();
 	}
 
-	void adjustWindow(int count) {
+	void adjustWindow(UnsignedInteger32 count) {
 		
 		remoteWindow.adjust(count);
 		
@@ -358,7 +361,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		onWindowAdjust(count);
 
 		for (ChannelEventListener listener : eventListeners) {
-			listener.onWindowAdjust(this, remoteWindow.getWindowSpace());
+			listener.onWindowAdjust(this, remoteWindow.getWindowSpace().longValue());
 		}
 
 	}
@@ -366,7 +369,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	protected void registerExtendedDataType(Integer type) {
 	}
 
-	protected void onWindowAdjust(int count) {
+	protected void onWindowAdjust(UnsignedInteger32 count) {
 	}
 
 	public long getLastActivity() {
@@ -398,7 +401,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 
 		synchronized (localWindow) {
 
-			if (localWindow.getWindowSpace() < length) {
+			if (localWindow.getWindowSpace().longValue() < length) {
 				throw new IOException("Data length of "
 						+ String.valueOf(length)
 						+ " bytes exceeded available window space of "
@@ -408,7 +411,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 			if(Log.isTraceEnabled()) {
 				log("Consuming", length
 						+ " bytes local window space before=" + localWindow.getWindowSpace() + " after="
-						+ (localWindow.getWindowSpace() - length));
+						+ UnsignedInteger32.deduct(localWindow.getWindowSpace(), length));
 			}
 			
 			localWindow.consume(length);
@@ -517,12 +520,15 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 					throw new IOException("Channel has been closed");
 				}
 				
-				int window = remoteWindow.getWindowSpace();
-				
-				int count = Math.min(remoteWindow.getMaximumPacketSize(), 
-						Math.min(remoteWindow.getWindowSpace(), buf.remaining()));
-				
-				if(count == 0) {
+				long window = remoteWindow.getWindowSpace().longValue();
+				UnsignedInteger32 count;
+				if(remoteWindow.getMaximumPacketSize() > buf.remaining()) {
+					count = new UnsignedInteger32(Math.min(remoteWindow.getWindowSpace().longValue(), buf.remaining()));
+				} else {
+					count = new UnsignedInteger32(Math.min(remoteWindow.getWindowSpace().longValue(), remoteWindow.getMaximumPacketSize()));
+				}
+
+				if(count.equals(UnsignedInteger32.MIN_VALUE)) {
 					if(Log.isDebugEnabled()) {
 						log("Waiting", String.format("for %d bytes of remote window", buf.remaining()));
 					}
@@ -534,12 +540,12 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 					continue;
 				}	
 
-				remoteWindow.consume(count);
+				remoteWindow.consume(count.intValue());
 
-				if(buf.remaining() > count) {
+				if(buf.remaining() > count.intValue()) {
 					ByteBuffer processedBuffer = buf.slice();
-					processedBuffer.limit(count);
-					buf.position(buf.position() + count);
+					processedBuffer.limit(count.intValue());
+					buf.position(buf.position() + count.intValue());
 			
 					if(Log.isTraceEnabled()) {
 						Log.trace("Sliced Buffer rem={} pos={} limit={} capacity={}", 
@@ -1045,17 +1051,16 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	protected void sendWindowAdjust() {
 
 		synchronized (localWindow) {
-			int count = localWindow.getAdjustCount();
-			sendWindowAdjust(count);	
+			sendWindowAdjust(localWindow.getAdjustCount());	
 		}
 	}
 
-	public void sendWindowAdjust(int count) {
+	public void sendWindowAdjust(UnsignedInteger32 count) {
 		synchronized (localWindow) {
 			if(Log.isTraceEnabled()) {
 				log("Increasing", "window space by " + String.valueOf(count) + " bytes");
 			}
-			connection.sendMessage(new WindowAdjust(this, count, localWindow.getWindowSpace()));
+			connection.sendMessage(new WindowAdjust(this, count.longValue(), localWindow.getWindowSpace().longValue()));
 			localWindow.adjust(count);		
 		}
 	}
@@ -1165,10 +1170,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		ByteBuffer msg;
 		int type;
 		int count;
-		int remoteWindow;
+		long remoteWindow;
 		boolean sent;
 		
-		ChannelData(ByteBuffer msg, int type, int remoteWindow) {
+		ChannelData(ByteBuffer msg, int type, long remoteWindow) {
 			this.msg = msg;
 			this.type = type;
 			this.remoteWindow = remoteWindow;
@@ -1335,7 +1340,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 			Log.trace("Checking window space on channel=" + getLocalId() + " window=" + localWindow.getWindowSpace()
 						+ (Objects.nonNull(cache) ? " cached=" + cache.remaining() : ""));
 		}
-		return localWindow.getWindowSpace() + (Objects.nonNull(cache) ? cache.remaining() : 0) <= localWindow.getMinimumWindowSpace();
+		return localWindow.getWindowSpace().longValue() + (Objects.nonNull(cache) ? cache.remaining() : 0) <= localWindow.getMinimumWindowSpace().longValue();
 	}
 	
 	protected class ChannelInputStream extends InputStream {

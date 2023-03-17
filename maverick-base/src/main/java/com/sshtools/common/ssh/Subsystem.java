@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.util.ByteBufferPool;
+import com.sshtools.common.util.UnsignedInteger32;
 
 /**
  * Defines the abstract attributes of an SSH Subsystem.
@@ -48,7 +49,7 @@ public abstract class Subsystem {
 	ByteBufferPool bufferPool;
 	
 	boolean shutdown = false;
-	int bytesSinceLastWindowIssue = 0;
+	long bytesSinceLastWindowIssue = 0;
 	
 	public Subsystem(String name) {
 		this.name = name;
@@ -352,10 +353,10 @@ public abstract class Subsystem {
 		}
 		
 		bytesSinceLastWindowIssue += msg.length + 4;
-		int threshold = Math.min(session.getMaximumWindowSpace() - session.getMinimumWindowSpace(), 
-				session.getMaximumWindowSpace() - (Math.max(session.getLocalPacket(), maximumPacketSize) * 2));
+		long threshold = Math.min(session.getMaximumWindowSpace().longValue() - session.getMinimumWindowSpace().longValue(), 
+				session.getMaximumWindowSpace().longValue() - (Math.max(session.getLocalPacket(), maximumPacketSize) * 2));
 		if(bytesSinceLastWindowIssue >= threshold) {
-			session.sendWindowAdjust(bytesSinceLastWindowIssue);
+			session.sendWindowAdjust(new UnsignedInteger32(bytesSinceLastWindowIssue));
 			bytesSinceLastWindowIssue = 0;
 		}
 		

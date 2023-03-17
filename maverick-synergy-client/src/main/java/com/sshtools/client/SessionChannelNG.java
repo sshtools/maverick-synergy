@@ -31,6 +31,7 @@ import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.synergy.ssh.CachingDataWindow;
 
 /**
@@ -53,20 +54,20 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 				null, autoConsume);
 	}
 	
-	public SessionChannelNG(int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace,
+	public SessionChannelNG(int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace, UnsignedInteger32 minimumWindowSpace,
 			ChannelRequestFuture closeFuture, boolean autoConsume) {
 		super(maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
-		extendedData = new CachingDataWindow(maximumWindowSpace, true);
+		extendedData = new CachingDataWindow(maximumWindowSpace.intValue(), true);
 		stderrInputStream = new ChannelInputStream(extendedData);
 	}
 
-	public SessionChannelNG(int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
-			int minimumWindowSpace, boolean autoConsume) {
+	public SessionChannelNG(int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace,
+			UnsignedInteger32 minimumWindowSpace, boolean autoConsume) {
 		this(maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, null, autoConsume);
 	}
 
 	public SessionChannelNG(int maximumPacketSize,
-			int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace) {
+			UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace, UnsignedInteger32 minimumWindowSpace) {
 		this(maximumPacketSize, initialWindowSize,
 				maximumWindowSpace, minimumWindowSpace, null, false);
 	}
@@ -96,19 +97,19 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 						+ (Objects.nonNull(cache) ? " cached=" + cache.remaining() : "")
 						+ (Objects.nonNull(extendedData) ? " extended=" + extendedData.remaining() : ""));
 		}
-		return localWindow.getWindowSpace() 
+		return localWindow.getWindowSpace().longValue()
 				+ (Objects.nonNull(cache) ? cache.remaining() : 0) 
 				+ (Objects.nonNull(extendedData) ? extendedData.remaining() : 0) 
-				<= localWindow.getMinimumWindowSpace();
+				<= localWindow.getMinimumWindowSpace().longValue();
 	}
 	
 	@Override
-	public int getMaximumWindowSpace() {
+	public UnsignedInteger32 getMaximumWindowSpace() {
 		return localWindow.getMaximumWindowSpace();
 	}
 
 	@Override
-	public int getMinimumWindowSpace() {
+	public UnsignedInteger32 getMinimumWindowSpace() {
 		return localWindow.getMinimumWindowSpace();
 	}
 

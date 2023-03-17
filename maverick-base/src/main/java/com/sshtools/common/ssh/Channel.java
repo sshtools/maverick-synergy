@@ -23,11 +23,13 @@ package com.sshtools.common.ssh;
 
 import java.io.IOException;
 
+import com.sshtools.common.util.UnsignedInteger32;
+
 public interface Channel {
 
-	int getLocalWindow();
+	UnsignedInteger32 getLocalWindow();
 
-	int getRemoteWindow();
+	UnsignedInteger32 getRemoteWindow();
 
 	int getLocalPacket();
 
@@ -35,7 +37,7 @@ public interface Channel {
 
 	void sendData(byte[] array, int i, int size) throws IOException;
 
-	void sendWindowAdjust(int bytesSinceLastWindowIssue);
+	void sendWindowAdjust(UnsignedInteger32 count);
 
 	boolean isClosed();
 

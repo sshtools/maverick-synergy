@@ -42,7 +42,7 @@ import com.sshtools.common.util.UnsignedInteger64;
  * @author Lee David Painter
  * @param <SSH_FILEXFER_TYPE_FIFO>
  */
-public class SftpFileAttributes<SSH_FILEXFER_TYPE_FIFO> {
+public class SftpFileAttributes {
 
 	
 	public static final long SSH_FILEXFER_ATTR_SIZE 			= 0x00000001;

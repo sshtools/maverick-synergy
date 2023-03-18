@@ -451,79 +451,81 @@ public class SshEngine {
 	 * This method should be used to shutdown the server from your main thread. If you need to shutdown
 	 * the server from within a session that is running on a transfer thread use {@link shutdownAsync().}
 	 */
-	public synchronized void shutdownNow(boolean graceful, long forceAfterMs) {
+	public void shutdownNow(boolean graceful, long forceAfterMs) {
 	
-		try {
-
-			for(SshEngineListener listener : listeners) {
-				listener.shuttingDown(this);
-			}
-			
-			// Stop accepting new connections
-			if (acceptThreads != null)
-				acceptThreads.shutdown();
-			
-			for(ListeningInterface li : listeningInterfaces) {
-				for(SshEngineListener listener : listeners) {
-					listener.interfaceStopped(this, li);
-				}
-			}
-			
-			listeningInterfaces.clear();
-			
-			if(graceful) {
-			
-				long started = System.currentTimeMillis();
-
-				while (transferThreads.getCurrentLoad() > 0) {
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-					}
-
-					if (forceAfterMs > 0
-							&& System.currentTimeMillis() - started > forceAfterMs)
-						break;
-				}
-			}
-			
-			// First close the channels whilst maintaining I/O
-			if(transferThreads!=null) {
-				transferThreads.closeAllChannels();
-			}
-			
+		synchronized(lock) {
 			try {
-				if (Runtime.getRuntime() != null && shutdownHook!=null)
-					Runtime.getRuntime().removeShutdownHook(shutdownHook);
-			} catch (IllegalStateException ex) {
-			} finally {
-				shutdownHook = null;
-				
+	
 				for(SshEngineListener listener : listeners) {
-					listener.shutdown(this);
+					listener.shuttingDown(this);
 				}
-			}
-			
-			// Run any shutdown hooks
-			if(shutdownHooks!=null) {
-				for(Runnable r : shutdownHooks) {
-					try {
-						r.run();
-					} catch (Exception e) {
+				
+				// Stop accepting new connections
+				if (acceptThreads != null)
+					acceptThreads.shutdown();
+				
+				for(ListeningInterface li : listeningInterfaces) {
+					for(SshEngineListener listener : listeners) {
+						listener.interfaceStopped(this, li);
 					}
 				}
+				
+				listeningInterfaces.clear();
+				
+				if(graceful) {
+				
+					long started = System.currentTimeMillis();
+	
+					while (transferThreads.getCurrentLoad() > 0) {
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+						}
+	
+						if (forceAfterMs > 0
+								&& System.currentTimeMillis() - started > forceAfterMs)
+							break;
+					}
+				}
+				
+				// First close the channels whilst maintaining I/O
+				if(transferThreads!=null) {
+					transferThreads.closeAllChannels();
+				}
+				
+				try {
+					if (Runtime.getRuntime() != null && shutdownHook!=null)
+						Runtime.getRuntime().removeShutdownHook(shutdownHook);
+				} catch (IllegalStateException ex) {
+				} finally {
+					shutdownHook = null;
+					
+					for(SshEngineListener listener : listeners) {
+						listener.shutdown(this);
+					}
+				}
+				
+				// Run any shutdown hooks
+				if(shutdownHooks!=null) {
+					for(Runnable r : shutdownHooks) {
+						try {
+							r.run();
+						} catch (Exception e) {
+						}
+					}
+				}
+	
+				if (connectThreads != null)
+					connectThreads.shutdown();
+				
+				if (transferThreads != null)
+					transferThreads.shutdown();
+	
+				
+			} finally {
+				started = false;
+				shutdownFuture.done(true);
 			}
-
-			if (connectThreads != null)
-				connectThreads.shutdown();
-			
-			if (transferThreads != null)
-				transferThreads.shutdown();
-
-			
-		} finally {
-			started = false;
-			shutdownFuture.done(true);
 		}
 	}
 	

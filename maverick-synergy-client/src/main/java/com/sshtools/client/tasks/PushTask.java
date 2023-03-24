@@ -135,6 +135,8 @@ public final class PushTask extends AbstractFileTask {
 
 		private Optional<Path> remoteFolder = Optional.empty();
 		private int chunks = 3;
+		private int blocksize = 32768;
+		private int outstandingRequests = 64;
 		private boolean verifyIntegrity;
 		private RemoteHash digest = RemoteHash.md5;
 		private boolean ignoreIntegrity;
@@ -485,6 +487,16 @@ public final class PushTask extends AbstractFileTask {
 			this.digest = digest;
 			return this;
 		}
+		
+		public PushTaskBuilder withBlocksize(int blocksize) {
+			this.blocksize = blocksize;
+			return this;
+		}
+		
+		public PushTaskBuilder withAsyncRequests(int outstandingRequest) {
+			this.outstandingRequests = outstandingRequest;
+			return this;
+		}
 
 		/**
 		 * Build a new {@link PushTask} that may be scheduled for execution (e.g.
@@ -497,9 +509,13 @@ public final class PushTask extends AbstractFileTask {
 		public PushTask build() {
 			return new PushTask(this);
 		}
+
+
 	}
 
 	private final int chunks;
+	private final int blocksize;
+	private final int outstandingRequests;
 	private final boolean verifyIntegrity;
 	private final RemoteHash digest;
 	private final boolean ignoreIntegrity;
@@ -528,9 +544,13 @@ public final class PushTask extends AbstractFileTask {
 		this.ignoreCopyDataExtension = builder.ignoreCopyDataExtension;
 		this.files = Collections.unmodifiableList(new ArrayList<Path>(builder.paths));
 		this.progressMessages = builder.progressMessages;
-
+		this.blocksize = builder.blocksize;
+		this.outstandingRequests = builder.outstandingRequests;
+		
 		try {
 			primarySftpClient = builder.primarySftpClient.orElse(new SftpClient(con));
+			primarySftpClient.setBlockSize(blocksize);
+			primarySftpClient.setMaxAsyncRequests(outstandingRequests);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		} catch (SshException | PermissionDeniedException e) {
@@ -850,6 +870,8 @@ public final class PushTask extends AbstractFileTask {
 		var ssh = clients.removeFirst();
 		try (var sftp = new SftpClient(ssh)) {
 			sftp.cd(remoteFolder);
+			sftp.setBlockSize(blocksize);
+			sftp.setMaxAsyncRequests(outstandingRequests);
 			sftp.put(localFile.getAbsolutePath(), remotePath, progress.orElse(null));
 		} finally {
 			clients.addLast(ssh);

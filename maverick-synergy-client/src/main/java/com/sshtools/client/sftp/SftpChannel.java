@@ -873,7 +873,7 @@ public class SftpChannel extends AbstractSubsystem {
 			}
 			
 			if(outstandingRequests <= 0) {
-				outstandingRequests = (int) (getSession().getRemoteWindow().longValue() / blocksize);
+				outstandingRequests = (int) (getSession().getRemoteWindow().longValue() / blocksize) - 1;
 			}
 			
 			System.setProperty("maverick.write.optimizedBlock", String.valueOf(blocksize));
@@ -1057,7 +1057,7 @@ public class SftpChannel extends AbstractSubsystem {
 		}
 		
 		if(outstandingRequests <= 0) {
-			outstandingRequests = (int) (getSession().getMaximumWindowSpace().longValue() / blocksize);
+			outstandingRequests = (int) (getSession().getMaximumWindowSpace().longValue() / blocksize) - 1;
 		}
 
 		System.setProperty("maverick.read.optimizedBlock", String.valueOf(blocksize));

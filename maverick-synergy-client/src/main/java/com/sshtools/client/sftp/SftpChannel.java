@@ -861,12 +861,12 @@ public class SftpChannel extends AbstractSubsystem {
 		long transfered = position;
 		
 		try {
-			if (blocksize >= 0 && blocksize < 4096) {
+			if (blocksize > 0 && blocksize < 4096) {
 				throw new SshException("Block size cannot be less than 4096",
 						SshException.BAD_API_USAGE);
 			}
 
-			if (blocksize < 0 || blocksize > 65536) {
+			if (blocksize <= 0 || blocksize > 65536) {
 				blocksize = getSession().getMaximumRemotePacketLength() - 13;
 			} else if(blocksize + 13 > getSession().getMaxiumRemotePacketSize()) {
 				blocksize = getSession().getMaximumRemotePacketLength() - 13;

@@ -144,7 +144,7 @@ public class UnsignedInteger32 {
    *
    * @return UnsignedInteger32
    */
-  public static UnsignedInteger32 add(UnsignedInteger32 x, int y) {
+  public static UnsignedInteger32 add(UnsignedInteger32 x, long y) {
     return new UnsignedInteger32(x.longValue() + y);
   }
 
@@ -153,7 +153,7 @@ public class UnsignedInteger32 {
 		return new UnsignedInteger32(x.longValue() - y.longValue());
   }
   
-  public static UnsignedInteger32 deduct(UnsignedInteger32 x, int y) {
+  public static UnsignedInteger32 deduct(UnsignedInteger32 x, long y) {
 		return new UnsignedInteger32(x.longValue() - y);
   }
 }

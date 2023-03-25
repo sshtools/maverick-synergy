@@ -80,8 +80,8 @@ public class SftpClient implements Closeable {
 	AbstractFile lcwd;
 	AbstractFileFactory<?> fileFactory;
 
-	private int blocksize = 16384;
-	private int asyncRequests = 16;
+	private int blocksize = -1;
+	private int asyncRequests = -1;
 	private int buffersize = 1024000;
 
 	// Default permissions is determined by default_permissions ^ umask

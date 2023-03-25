@@ -37,7 +37,7 @@ public class ChannelDataWindow {
 		this.windowSpace =  initialWindowSpace;
 	}
 	
-	public synchronized void consume(int count) {
+	public synchronized void consume(long count) {
 		windowSpace = UnsignedInteger32.deduct(windowSpace, count);
 	}
 	

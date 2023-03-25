@@ -861,26 +861,19 @@ public class SftpChannel extends AbstractSubsystem {
 		long transfered = position;
 		
 		try {
-			if (blocksize < 4096) {
+			if (blocksize > -1 && blocksize < 4096) {
 				throw new SshException("Block size cannot be less than 4096",
 						SshException.BAD_API_USAGE);
 			}
 
-			/**
-			 * Optimization to ensure excessive blocksize does not exceed maximum packet
-			 * length declared by remote side, taking into account the overhead for 
-			 * this particular message. 
-			 */
-			int overhead = 4 + 		// Packet Length Field Length
-					1 + 			// Message Id Length
-					4 + 			// Request Id Length
-					4 + 			// Handle Field Length
-					handle.length + // Handle Length
-					8 + 			// Offset Field Length
-					4;				// Data Size Field Length
+			if (blocksize < 0 || blocksize > 65536) {
+				blocksize = getSession().getMaximumRemotePacketLength() - 13;
+			} else if(blocksize + 13 > getSession().getMaxiumRemotePacketSize()) {
+				blocksize = getSession().getMaximumRemotePacketLength() - 13;
+			}
 			
-			if(blocksize + overhead > getSession().getMaximumRemotePacketLength()) {
-				blocksize = getSession().getMaximumRemotePacketLength() - overhead;
+			if(outstandingRequests < 0) {
+				outstandingRequests = (int) (getSession().getMaxiumRemoteWindowSize().longValue() / blocksize);
 			}
 			
 			System.setProperty("maverick.write.optimizedBlock", String.valueOf(blocksize));
@@ -1052,27 +1045,21 @@ public class SftpChannel extends AbstractSubsystem {
 		boolean reachedEOF = false;
 		long started = System.currentTimeMillis();
 		
-		if (blocksize < 1 || blocksize > 65536) {
-			if(Log.isTraceEnabled()) {
-				Log.trace("Blocksize to large for some SFTP servers, reseting to 32K");
-			}
-			blocksize = 32768;
+		if (blocksize > -1 && blocksize < 4096) {
+			throw new SshException("Block size cannot be less than 4096",
+					SshException.BAD_API_USAGE);
 		}
 
-		/**
-		 * Optimization to ensure excessive blocksize does not exceed maximum packet
-		 * length declared by local side, taking into account the overhead for 
-		 * this particular message. 
-		 */
-		int overhead = 4 + 		// Packet Length Field Length
-				1 + 			// Message Id Length
-				4 + 			// Request Id Length
-				4;				// Data Size Field Length
-		
-		if(blocksize + overhead > getSession().getMaximumLocalPacketLength()) {
-			blocksize = getSession().getMaximumLocalPacketLength() - overhead;
+		if (blocksize < 0 || blocksize > 65536) {
+			blocksize = getSession().getMaximumLocalPacketLength() - 13;
+		} else if(blocksize + 13 > getSession().getMaximumLocalPacketLength()) {
+			blocksize = getSession().getMaximumLocalPacketLength() - 13;
 		}
 		
+		if(outstandingRequests < 0) {
+			outstandingRequests = (int) (getSession().getMaximumWindowSpace().longValue() / blocksize);
+		}
+
 		System.setProperty("maverick.read.optimizedBlock", String.valueOf(blocksize));
 		
 		if(Log.isTraceEnabled()) {
@@ -1329,12 +1316,14 @@ public class SftpChannel extends AbstractSubsystem {
 			Log.trace("Performing synchronous read postion=" + position
 					+ " blocksize=" + blocksize);
 
-		if (blocksize < 1 || blocksize > 32768) {
-
-			if(Log.isTraceEnabled())
-				Log.trace("Blocksize to large for some SFTP servers, reseting to 32K");
-
-			blocksize = 32768;
+		if (blocksize < 1 || blocksize > 65536) {
+			blocksize = getSession().getMaximumRemotePacketLength() - 13;
+		} else if(blocksize + 13 < getSession().getMaxiumRemotePacketSize()) {
+			blocksize = getSession().getMaximumLocalPacketLength() - 13;
+		}
+		
+		if(Log.isInfoEnabled()) {
+			Log.info("Optimised block size will be {}", blocksize);
 		}
 
 		if (position < 0) {

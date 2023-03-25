@@ -407,14 +407,14 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 						+ " bytes exceeded available window space of "
 						+ String.valueOf(localWindow.getWindowSpace()) + " bytes.");
 			}
-
-			if(Log.isTraceEnabled()) {
-				log("Consuming", length
-						+ " bytes local window space before=" + localWindow.getWindowSpace() + " after="
-						+ UnsignedInteger32.deduct(localWindow.getWindowSpace(), length));
-			}
 			
 			localWindow.consume(length);
+			
+			if(Log.isTraceEnabled()) {
+				log("Consumed", length
+						+ " bytes local window space before=" + localWindow.getWindowSpace() + " after="
+						+ localWindow.getWindowSpace());
+			}
 		}
 	}
 
@@ -1221,18 +1221,26 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		}
 	}
 
+	protected void logMessage(String message, long remoteWindow) {
+		log("Sent", message, remoteWindow);
+	}
+	
 	protected void logMessage(String message) {
-		log("Sent", message);
+		log("Sent", message, getRemoteWindow().longValue());
 	}
 	
 	protected void log(String action, String message) {
+		log(action, message, remoteWindow.getWindowSpace().longValue());
+	}
+	
+	protected void log(String action, String message, long remoteWindow) {
 		Log.debug("{} {} channel={} remote={} localWindow={} remoteWindow={}",
 				action,
 				message,
 				channelid, 
 				remoteid,
 				localWindow.getWindowSpace(),
-				remoteWindow == null ? "<null>" : remoteWindow.getWindowSpace());
+				remoteWindow);
 	}
 	
 	protected void log(String message) {

@@ -549,8 +549,6 @@ public final class PushTask extends AbstractFileTask {
 		
 		try {
 			primarySftpClient = builder.primarySftpClient.orElse(new SftpClient(con));
-			primarySftpClient.setBlockSize(blocksize);
-			primarySftpClient.setMaxAsyncRequests(outstandingRequests);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		} catch (SshException | PermissionDeniedException e) {
@@ -870,8 +868,12 @@ public final class PushTask extends AbstractFileTask {
 		var ssh = clients.removeFirst();
 		try (var sftp = new SftpClient(ssh)) {
 			sftp.cd(remoteFolder);
-			sftp.setBlockSize(blocksize);
-			sftp.setMaxAsyncRequests(outstandingRequests);
+			if(blocksize > 0) {
+				sftp.setBlockSize(blocksize);
+			}
+			if(outstandingRequests > 0) {
+				sftp.setMaxAsyncRequests(outstandingRequests);
+			}
 			sftp.put(localFile.getAbsolutePath(), remotePath, progress.orElse(null));
 		} finally {
 			clients.addLast(ssh);

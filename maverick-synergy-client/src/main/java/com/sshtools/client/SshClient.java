@@ -59,6 +59,7 @@ public class SshClient implements Closeable {
 	SshClientContext sshContext;
 	String remotePublicKeys = "";
 	String hostname;
+	int port;
 	boolean closeConnection = true;
 	
 	public SshClient(String hostname, int port, String username, long connectTimeout, char[] password) throws IOException, SshException {
@@ -147,12 +148,14 @@ public class SshClient implements Closeable {
 		this.closeConnection = closeConnection;
 		this.sshContext = (SshClientContext) con.getContext();
 		this.hostname = con.getRemoteIPAddress();
+		this.port = con.getRemotePort();
 		this.remotePublicKeys = Utils.csv(con.getRemotePublicKeys());
 	}
 	
 	public SshClient(String hostname, int port, String username, SshClientContext sshContext, long connectTimeout, char[] password, SshKeyPair... identities) throws IOException, SshException {
 		this.sshContext = sshContext;
 		this.hostname = hostname;
+		this.port = port;
 		sshContext.setUsername(username);
 		doConnect(hostname, port, username, sshContext, connectTimeout);
 		boolean attempted = false;
@@ -506,5 +509,9 @@ public class SshClient implements Closeable {
 		} finally {
 			stopLocalForwarding("127.0.0.1", localPort);
 		}
+	}
+
+	public int getPort() {
+		return port;
 	}
 }

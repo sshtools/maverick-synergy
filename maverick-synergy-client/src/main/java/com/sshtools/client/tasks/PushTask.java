@@ -618,7 +618,7 @@ public final class PushTask extends AbstractFileTask {
 
 	private void configureConnections() throws IOException, SshException {
 		
-		verboseMessage("Creating {0} connections to {1}@{2}:{3}", chunks,
+		displayMessage("Creating {0} connections to {1}@{2}:{3}", chunks,
 				con.getUsername(), con.getRemoteIPAddress(), con.getRemotePort());
 		
 		for (int i = 0; i < chunks; i++) {

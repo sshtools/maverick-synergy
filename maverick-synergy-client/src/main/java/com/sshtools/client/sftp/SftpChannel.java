@@ -817,10 +817,10 @@ public class SftpChannel extends AbstractSubsystem {
 	 * @throws SshException
 	 */
 	public void performOptimizedWrite(String filename, byte[] handle, int blocksize,
-			int outstandingRequests, java.io.InputStream in, int buffersize,
+			int minAsyncRequests, int maxAsyncRequests, java.io.InputStream in, int buffersize,
 			FileTransferProgress progress) throws SftpStatusException,
 			SshException, TransferCancelledException {
-		performOptimizedWrite(filename, handle, blocksize, outstandingRequests, in,
+		performOptimizedWrite(filename, handle, blocksize, minAsyncRequests, maxAsyncRequests, in,
 				buffersize, progress, 0);
 	}
 
@@ -852,7 +852,7 @@ public class SftpChannel extends AbstractSubsystem {
 	 * @throws SshException
 	 */
 	public void performOptimizedWrite(String filename, byte[] handle, int blocksize,
-			int outstandingRequests, java.io.InputStream in, int buffersize,
+			int minAsyncRequests, int maxAsyncRequests, java.io.InputStream in, int buffersize,
 			FileTransferProgress progress, long position)
 			throws SftpStatusException, SshException,
 			TransferCancelledException {
@@ -872,17 +872,30 @@ public class SftpChannel extends AbstractSubsystem {
 				blocksize = getSession().getMaximumRemotePacketLength() - 13;
 			}
 			
-			if(outstandingRequests <= 0) {
-				outstandingRequests = (int) ((getSession().getRemoteWindow().longValue()  * 0.9D) / blocksize);
+			int calculatedRequestsMax =  (int) ((getSession().getRemoteWindow().longValue()  * 0.9D) / blocksize);
+			int calculatedRequestsMin = calculatedRequestsMax / 2;
+			
+			if(maxAsyncRequests <= 0) {
+				maxAsyncRequests = calculatedRequestsMax;
+			}
+			
+			if(minAsyncRequests <= 0) {
+				minAsyncRequests = calculatedRequestsMin;
+			}
+			
+			if(minAsyncRequests >= maxAsyncRequests) {
+				minAsyncRequests = maxAsyncRequests / 2;
 			}
 			
 			System.setProperty("maverick.write.optimizedBlock", String.valueOf(blocksize));
-			System.setProperty("maverick.write.asyncRequests", String.valueOf(outstandingRequests));
+			System.setProperty("maverick.write.asyncRequestsMin", String.valueOf(minAsyncRequests));
+			System.setProperty("maverick.write.asyncRequestsMax", String.valueOf(maxAsyncRequests));
 			
 			if(Log.isTraceEnabled()) {
 				Log.trace("Performing optimized write length=" + in.available()
 						+ " postion=" + position + " blocksize=" + blocksize
-						+ " outstandingRequests=" + outstandingRequests);
+						+ " maxAsyncRequests=" + maxAsyncRequests
+						+ " minAsyncRequests=" + minAsyncRequests);
 			}
 			
 			if (position < 0)
@@ -946,10 +959,12 @@ public class SftpChannel extends AbstractSubsystem {
 						progress.progressed(transfered);
 					}
 					
-					if (requests.size() > outstandingRequests) {
-						requestId = (UnsignedInteger32) requests.elementAt(0);
-						requests.removeElementAt(0);
-						getOKRequestStatus(requestId);
+					if (requests.size() > maxAsyncRequests) {
+						while(requests.size() > minAsyncRequests) {
+							requestId = (UnsignedInteger32) requests.elementAt(0);
+							requests.removeElementAt(0);
+							getOKRequestStatus(requestId);
+						}
 					}
 	
 				}
@@ -1057,8 +1072,9 @@ public class SftpChannel extends AbstractSubsystem {
 			blocksize = getSession().getMaximumLocalPacketLength() - 13;
 		}
 		
-		if(outstandingRequests <= 0) {
-			outstandingRequests = (int) ((getSession().getMaximumWindowSpace().longValue() * 0.9D) / blocksize);
+		int calculatedRequests = (int) ((getSession().getMaximumWindowSpace().longValue() * 0.9D) / blocksize);
+		if(outstandingRequests <= 0 || calculatedRequests < outstandingRequests) {
+			outstandingRequests = calculatedRequests / 2;
 		}
 
 		System.setProperty("maverick.read.optimizedBlock", String.valueOf(blocksize));
@@ -1151,7 +1167,7 @@ public class SftpChannel extends AbstractSubsystem {
 			Vector<UnsignedInteger32> requests = new Vector<UnsignedInteger32>(
 					outstandingRequests);
 			
-			int osr = 1;
+			int osr = calculatedRequests;
 			
 			long offset = position;	
 			UnsignedInteger32 requestId;
@@ -1231,7 +1247,7 @@ public class SftpChannel extends AbstractSubsystem {
 					bar.release();
 				}
 				
-				if(osr < outstandingRequests) {
+				if(osr < calculatedRequests) {
 					osr++;
 				}
 			}

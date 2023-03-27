@@ -817,10 +817,10 @@ public class SftpChannel extends AbstractSubsystem {
 	 * @throws SshException
 	 */
 	public void performOptimizedWrite(String filename, byte[] handle, int blocksize,
-			int minAsyncRequests, int maxAsyncRequests, java.io.InputStream in, int buffersize,
+			int maxAsyncRequests, java.io.InputStream in, int buffersize,
 			FileTransferProgress progress) throws SftpStatusException,
 			SshException, TransferCancelledException {
-		performOptimizedWrite(filename, handle, blocksize, minAsyncRequests, maxAsyncRequests, in,
+		performOptimizedWrite(filename, handle, blocksize, maxAsyncRequests, in,
 				buffersize, progress, 0);
 	}
 
@@ -852,7 +852,7 @@ public class SftpChannel extends AbstractSubsystem {
 	 * @throws SshException
 	 */
 	public void performOptimizedWrite(String filename, byte[] handle, int blocksize,
-			int minAsyncRequests, int maxAsyncRequests, java.io.InputStream in, int buffersize,
+			int maxAsyncRequests, java.io.InputStream in, int buffersize,
 			FileTransferProgress progress, long position)
 			throws SftpStatusException, SshException,
 			TransferCancelledException {
@@ -873,29 +873,18 @@ public class SftpChannel extends AbstractSubsystem {
 			}
 			
 			int calculatedRequestsMax =  (int) ((getSession().getRemoteWindow().longValue()  * 0.9D) / blocksize);
-			int calculatedRequestsMin = calculatedRequestsMax / 2;
 			
 			if(maxAsyncRequests <= 0) {
 				maxAsyncRequests = calculatedRequestsMax;
 			}
 			
-			if(minAsyncRequests <= 0) {
-				minAsyncRequests = calculatedRequestsMin;
-			}
-			
-			if(minAsyncRequests >= maxAsyncRequests) {
-				minAsyncRequests = maxAsyncRequests / 2;
-			}
-			
 			System.setProperty("maverick.write.optimizedBlock", String.valueOf(blocksize));
-			System.setProperty("maverick.write.asyncRequestsMin", String.valueOf(minAsyncRequests));
 			System.setProperty("maverick.write.asyncRequestsMax", String.valueOf(maxAsyncRequests));
 			
 			if(Log.isTraceEnabled()) {
 				Log.trace("Performing optimized write length=" + in.available()
 						+ " postion=" + position + " blocksize=" + blocksize
-						+ " maxAsyncRequests=" + maxAsyncRequests
-						+ " minAsyncRequests=" + minAsyncRequests);
+						+ " maxAsyncRequests=" + maxAsyncRequests);
 			}
 			
 			if (position < 0)
@@ -960,11 +949,10 @@ public class SftpChannel extends AbstractSubsystem {
 					}
 					
 					if (requests.size() > maxAsyncRequests) {
-						while(requests.size() > minAsyncRequests) {
-							requestId = (UnsignedInteger32) requests.elementAt(0);
-							requests.removeElementAt(0);
-							getOKRequestStatus(requestId);
-						}
+						requestId = (UnsignedInteger32) requests.elementAt(0);
+						requests.removeElementAt(0);
+						getOKRequestStatus(requestId);
+						
 					}
 	
 				}

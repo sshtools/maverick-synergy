@@ -1922,7 +1922,7 @@ public class SftpClient implements Closeable {
 		}
 
 		try {
-			sftp.performOptimizedWrite(remotePath, file.getHandle(), blocksize, asyncRequests, asyncRequests, in, buffersize, progress,
+			sftp.performOptimizedWrite(remotePath, file.getHandle(), blocksize, asyncRequests, in, buffersize, progress,
 					position < 0 ? 0 : position);
 		} catch (SftpStatusException e) {
 			Log.error("SFTP status exception during transfer [" + e.getStatus() + "]", e);

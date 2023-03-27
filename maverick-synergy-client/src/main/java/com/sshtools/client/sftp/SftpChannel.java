@@ -873,10 +873,11 @@ public class SftpChannel extends AbstractSubsystem {
 			}
 			
 			if(outstandingRequests <= 0) {
-				outstandingRequests = (int) (getSession().getRemoteWindow().longValue() / blocksize) - 3;
+				outstandingRequests = (int) ((getSession().getRemoteWindow().longValue()  * 0.9D) / blocksize);
 			}
 			
 			System.setProperty("maverick.write.optimizedBlock", String.valueOf(blocksize));
+			System.setProperty("maverick.write.asyncRequests", String.valueOf(outstandingRequests));
 			
 			if(Log.isTraceEnabled()) {
 				Log.trace("Performing optimized write length=" + in.available()
@@ -1057,10 +1058,11 @@ public class SftpChannel extends AbstractSubsystem {
 		}
 		
 		if(outstandingRequests <= 0) {
-			outstandingRequests = (int) (getSession().getMaximumWindowSpace().longValue() / blocksize) - 3;
+			outstandingRequests = (int) ((getSession().getMaximumWindowSpace().longValue() * 0.9D) / blocksize);
 		}
 
 		System.setProperty("maverick.read.optimizedBlock", String.valueOf(blocksize));
+		System.setProperty("maverick.read.asyncRequests", String.valueOf(outstandingRequests));
 		
 		if(Log.isTraceEnabled()) {
 			Log.trace("Performing optimized read length=" + length
@@ -1143,6 +1145,7 @@ public class SftpChannel extends AbstractSubsystem {
 			// reconfigure the blocksize if necessary
 			if (i < blocksize && length > i) {
 				blocksize = i;
+				System.setProperty("maverick.read.optimizedBlock", String.valueOf(blocksize));
 			}
 	
 			Vector<UnsignedInteger32> requests = new Vector<UnsignedInteger32>(

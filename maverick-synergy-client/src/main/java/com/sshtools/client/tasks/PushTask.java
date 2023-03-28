@@ -922,6 +922,7 @@ public final class PushTask extends AbstractFileTask {
 			PermissionDeniedException, SftpStatusException, TransferCancelledException {
 		var ssh = clients.removeFirst();
 		try (var sftp = new SftpClient(ssh)) {
+			sftp.lcd(primarySftpClient.getCurrentWorkingDirectory().getAbsolutePath());
 			sftp.cd(remoteFolder);
 			if(blocksize > 0) {
 				sftp.setBlockSize(blocksize);

@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.sshtools.client.ChunkInputStream;
 import com.sshtools.client.SshClient;
@@ -500,7 +501,7 @@ public final class PushTask extends AbstractFileTask {
 		 * The minimum block size supported is 4096 bytes and the maximum
 		 * size supported is 65535 bytes.
 		 * @param blocksize
-		 * @return
+		 * @return builder for chaining
 		 */
 		public PushTaskBuilder withBlocksize(int blocksize) {
 			this.blocksize = blocksize;
@@ -514,7 +515,7 @@ public final class PushTask extends AbstractFileTask {
 		 * optimal setting based on remote window space and block size. Use
 		 * this to experiment with various settings on your own network.
 		 * @param outstandingRequest
-		 * @return
+		 * @return builder for chaining
 		 */
 		public PushTaskBuilder withAsyncRequests(int outstandingRequest) {
 			this.outstandingRequests = outstandingRequest;
@@ -523,10 +524,18 @@ public final class PushTask extends AbstractFileTask {
 		
 		/**
 		 * Output verbose information about the operation.
-		 * @return
+		 * @return builder for chaining
 		 */
 		public PushTaskBuilder withVerboseOutput() {
-			this.verboseOutput = true;
+			return withVerboseOutput(true);
+		}
+		
+		/**
+		 * Output verbose information about the operation.
+		 * @return builder for chaining
+		 */
+		public PushTaskBuilder withVerboseOutput(boolean verboseOutput) {
+			this.verboseOutput = verboseOutput;
 			return this;
 		}
 
@@ -624,6 +633,9 @@ public final class PushTask extends AbstractFileTask {
 		for (int i = 0; i < chunks; i++) {
 			clients.add(clientSupplier.get().apply(i + 1));
 		}
+
+		verboseMessage("Created {0} connections to {1}@{2}:{3}", chunks,
+				con.getUsername(), con.getRemoteIPAddress(), con.getRemotePort());
 	}
 
 	private void configureRemoteFolder()
@@ -870,6 +882,13 @@ public final class PushTask extends AbstractFileTask {
 		if (progress.isPresent()) {
 			progress.get().started(localFile.length(), localFile.getName());
 		}
+		
+		for(int i = 0 ; i < chunks; i++) {
+			var chunk = i + 1;
+			var pointer = i * chunkLength;
+			verboseMessage("Starting chunk {0} at position {1} with length of {2} bytes",
+					chunk, pointer, chunkLength);
+		}
 		for (int i = 0; i < chunks; i++) {
 			var chunk = i + 1;
 			var pointer = i * chunkLength;
@@ -961,9 +980,6 @@ public final class PushTask extends AbstractFileTask {
 			boolean lastChunk, FileTransferProgress progress, boolean preAllocated)
 			throws IOException, SftpStatusException, SshException, TransferCancelledException, ChannelOpenException,
 			PermissionDeniedException {
-
-		verboseMessage("Starting chunk {0} at position {1} with length of {2} bytes",
-				chunkNumber, pointer, chunkLength);
 
 		var ssh = clients.removeFirst();
 		try (var file = new RandomAccessFile(localFile.getAbsolutePath(), "r")) {

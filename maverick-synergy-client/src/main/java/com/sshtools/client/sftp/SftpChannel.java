@@ -262,8 +262,6 @@ public class SftpChannel extends AbstractSubsystem {
 					int requestedVersion = MAX_VERSION;
 					version = Math.min(serverVersion, requestedVersion);
 	
-					Map<String, byte[]> extensions = new HashMap<String, byte[]>();
-	
 					if(Log.isTraceEnabled()) {
 						Log.trace("Version is " + version + " [Server="
 								+ serverVersion + " Client=" + requestedVersion

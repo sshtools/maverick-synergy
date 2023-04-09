@@ -84,7 +84,7 @@ public class DirectFile extends AbstractDirectFile<DirectFile> {
 		
 		
 		Path file = FileSystems.getDefault().getPath(f.getAbsolutePath());
-		
+
 		BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
 		SftpFileAttributes attrs = new SftpFileAttributes(getFileType(attr), "UTF-8");
 		

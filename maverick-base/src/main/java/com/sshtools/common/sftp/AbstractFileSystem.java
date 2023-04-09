@@ -25,12 +25,12 @@ package com.sshtools.common.sftp;
 import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -42,10 +42,11 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
+import com.sshtools.common.sftp.files.PseduoRandomOpenFile;
+import com.sshtools.common.sftp.files.RandomAccessOpenFile;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.FileUtils;
@@ -105,6 +106,8 @@ public final class AbstractFileSystem {
 	final SshConnection con;
 	final String protocolInUse;
 
+	Map<String,MultipartTransfer> multipartUploads = new HashMap<>();
+	
 	public AbstractFileSystem(SshConnection con, String protocolInUse) throws IOException, PermissionDeniedException {
 		this.fileFactory = con.getContext().getPolicy(FileSystemPolicy.class).getFileFactory().getFileFactory(con);
 		this.con = con;
@@ -195,7 +198,7 @@ public final class AbstractFileSystem {
 
 	public SftpFileAttributes getFileAttributes(byte[] handle)
 			throws IOException, InvalidHandleException, PermissionDeniedException {
-		String shandle = getHandle(handle);
+		String shandle = handleToString(handle);
 
 		if (openFiles.containsKey(shandle)) {
 			OpenFile f = openFiles.get(shandle);
@@ -235,7 +238,7 @@ public final class AbstractFileSystem {
 		if (f.exists()) {
 			if (f.isDirectory()) {
 				byte[] handle = createHandle();
-				openDirectories.put(getHandle(handle), new OpenDirectory(f, filter));
+				openDirectories.put(handleToString(handle), new OpenDirectory(f, filter));
 				return handle;
 			}
 
@@ -249,7 +252,7 @@ public final class AbstractFileSystem {
 		return UUID.randomUUID().toString().getBytes("UTF-8");
 	}
 
-	protected byte[] getHandle(String handle) {
+	public byte[] stringToHandle(String handle) {
 		try {
 			return handle.getBytes("UTF-8");
 		} catch (UnsupportedEncodingException e) {
@@ -257,7 +260,7 @@ public final class AbstractFileSystem {
 		}
 	}
 	
-	protected String getHandle(byte[] b) {
+	public String handleToString(byte[] b) {
 		try {
 			return new String(b, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
@@ -269,7 +272,7 @@ public final class AbstractFileSystem {
 	public SftpFile[] readDirectory(byte[] handle)
 			throws InvalidHandleException, EOFException, IOException, PermissionDeniedException {
 
-		String shandle = getHandle(handle);
+		String shandle = handleToString(handle);
 
 		if (openDirectories.containsKey(shandle)) {
 			OpenDirectory dir = openDirectories.get(shandle);
@@ -365,15 +368,18 @@ public final class AbstractFileSystem {
 
 		// Record the open file
 		byte[] handle = createHandle();
-		openFiles.put(getHandle(handle), new OpenFile(f, flags));
-
+		if(f.supportsRandomAccess()) {
+			openFiles.put(handleToString(handle), new RandomAccessOpenFile(f, flags, handle));
+		} else {
+			openFiles.put(handleToString(handle), new PseduoRandomOpenFile(f, flags, handle));
+		}
 		// Return the handle
 		return handle;
 	}
 
 	public int readFile(byte[] handle, UnsignedInteger64 offset, byte[] buf, int start, int numBytesToRead)
 			throws InvalidHandleException, EOFException, IOException, PermissionDeniedException {
-		String shandle = getHandle(handle);
+		String shandle = handleToString(handle);
 
 		if (openFiles.containsKey(shandle)) {
 			OpenFile file = openFiles.get(shandle);
@@ -399,7 +405,7 @@ public final class AbstractFileSystem {
 
 	public void writeFile(byte[] handle, UnsignedInteger64 offset, byte[] data, int off, int len)
 			throws InvalidHandleException, IOException, PermissionDeniedException {
-		String shandle = getHandle(handle);
+		String shandle = handleToString(handle);
 
 		if (openFiles.containsKey(shandle)) {
 			OpenFile file = openFiles.get(shandle);
@@ -426,7 +432,7 @@ public final class AbstractFileSystem {
 	}
 
 	public void closeFile(byte[] handle) throws InvalidHandleException, IOException {
-		closeFile(getHandle(handle));
+		closeFile(handleToString(handle));
 	}
 //
 //	public boolean closeFile(byte[] handle, boolean remove) throws InvalidHandleException, IOException {
@@ -437,7 +443,7 @@ public final class AbstractFileSystem {
 		if(handle==null) {
 			return;
 		}
-		String h = getHandle(handle);
+		String h = handleToString(handle);
 		OpenDirectory dir = openDirectories.get(h);
 		if(dir!=null) {
 			openDirectories.remove(h);
@@ -586,7 +592,7 @@ public final class AbstractFileSystem {
 	public void setFileAttributes(byte[] handle, SftpFileAttributes attrs)
 			throws PermissionDeniedException, IOException, InvalidHandleException {
 
-		String shandle = getHandle(handle);
+		String shandle = handleToString(handle);
 		if (openFiles.containsKey(shandle)) {
 			OpenFile f = openFiles.get(shandle);
 			f.getFile().setAttributes(attrs);
@@ -639,152 +645,14 @@ public final class AbstractFileSystem {
 	
 	public AbstractFile getFileForHandle(byte[] handle) throws IOException, InvalidHandleException {
 		
-		if(!openFiles.containsKey(getHandle(handle))) {
+		if(!openFiles.containsKey(handleToString(handle))) {
 			throw new InvalidHandleException("Invalid handle passed to getFileForHandle");
 		}
 		
-		return openFiles.get(getHandle(handle)).getFile();
+		return openFiles.get(handleToString(handle)).getFile();
 	}
 
-	protected class OpenFile {
-		AbstractFile f;
-		UnsignedInteger32 flags;
-		long filePointer;
-		boolean textMode = false;
-		InputStream in;
-		OutputStream out;
-		AbstractFileRandomAccess raf;
-		boolean closed;
-
-		public OpenFile(AbstractFile f, UnsignedInteger32 flags) throws IOException, PermissionDeniedException {
-			this.f = f;
-			this.flags = flags;
-			if (f.supportsRandomAccess()) {
-				raf = f.openFile(((flags.intValue() & AbstractFileSystem.OPEN_WRITE) != 0));
-			}
-			this.textMode = (flags.intValue() & AbstractFileSystem.OPEN_TEXT) != 0;
-			if (isTextMode() && Log.isDebugEnabled()) {
-				Log.debug(f.getName() + " is being opened in TEXT mode");
-			}
-		}
-
-		public boolean isTextMode() {
-			return textMode;
-		}
-
-		public void close() throws IOException {
-			if (in != null) {
-				try {
-					in.close();
-				} finally {
-					in = null;
-				}
-			}
-			if (out != null) {
-				try {
-					out.close();
-				} finally {
-					out = null;
-				}
-			}
-			if (raf != null) {
-				try {
-					raf.close();
-				} finally {
-					raf = null;
-				}
-			}
-			closed = true;
-		}
-
-		public int read(byte[] buf, int off, int len) throws IOException, PermissionDeniedException {
-			if(closed) {
-				return -1;
-			}
-			if (raf == null) {
-				if (filePointer == -1)
-					return -1;
-				InputStream in = getInputStream();
-				int count = 0;
-				while (count < len) {
-					int r = in.read(buf, off + count, len - count);
-					if (r == -1) {
-						if (count == 0) {
-							filePointer = -1;
-							return -1;
-						} else {
-							return count;
-						}
-					} else {
-						filePointer += r;
-						count += r;
-					}
-				}
-				return count;
-			} else {
-				return raf.read(buf, off, len);
-			}
-		}
-
-		public void write(byte[] buf, int off, int len) throws IOException, PermissionDeniedException {
-			if(closed) {
-				throw new IOException("File has been closed.");
-			}
-			if (raf == null) {
-				if (filePointer == -1)
-					throw new IOException("File is EOF");
-				OutputStream out = getOutputStream();
-				out.write(buf, off, len);
-				filePointer += len;
-			} else {
-				raf.write(buf, off, len);
-			}
-		}
-
-		private OutputStream getOutputStream() throws IOException, PermissionDeniedException {
-			if(closed) {
-				throw new IOException("File has been closed [getOutputStream].");
-			}
-			if (out == null)
-				out = f.getOutputStream();
-			return out;
-		}
-
-		private InputStream getInputStream() throws IOException, PermissionDeniedException {
-			if(closed) {
-				throw new IOException("File has been closed [getInputStream].");
-			}
-			if (in == null)
-				in = f.getInputStream();
-			return in;
-		}
-
-		public void seek(long longValue) throws IOException {
-			if(closed) {
-				throw new IOException("File has been closed [getOutputStream].");
-			}
-			if (raf == null) {
-				filePointer = -1;
-				return;
-			}
-			raf.seek(longValue);
-		}
-
-		public AbstractFile getFile() {
-			return f;
-		}
-
-		public UnsignedInteger32 getFlags() {
-			return flags;
-		}
-
-		public long getFilePointer() throws IOException {
-			if(closed) {
-				throw new IOException("File has been closed [getFilePointer].");
-			}
-			return raf == null ? filePointer : raf.getFilePointer();
-		}
-	}
+	
 
 	protected class OpenDirectory {
 		AbstractFile f;
@@ -828,21 +696,10 @@ public final class AbstractFileSystem {
 		evt.addAttribute(EventCodes.ATTRIBUTE_CONNECTION, con);
 		byte[] handle = (byte[]) evt.getAttribute(EventCodes.ATTRIBUTE_HANDLE);
 		if(handle!=null) {
-			String h = getHandle(handle);
+			String h = handleToString(handle);
 			OpenFile openFile = openFiles.get(h);
 			if(openFile!=null) {
-				if(openFile.f!=null) {
-					evt.addAttribute(EventCodes.ATTRIBUTE_ABSTRACT_FILE, openFile.f);
-				}
-				if(openFile.in!=null) {
-					evt.addAttribute(EventCodes.ATTRIBUTE_ABSTRACT_FILE_INPUTSTREAM, openFile.in);
-				}
-				if(openFile.out!=null) {
-					evt.addAttribute(EventCodes.ATTRIBUTE_ABSTRACT_FILE_OUTPUTSTREAM, openFile.out);
-				}
-				if(openFile.raf!=null) {
-					evt.addAttribute(EventCodes.ATTRIBUTE_ABSTRACT_FILE_RANDOM_ACCESS, openFile.raf);
-				}
+				openFile.processEvent(evt);
 			}
 			
 			OpenDirectory openDirectory = openDirectories.get(h);
@@ -861,7 +718,7 @@ public final class AbstractFileSystem {
 
 	public String getPathForHandle(byte[] handle) throws IOException, InvalidHandleException {
 
-		String h = getHandle(handle);
+		String h = handleToString(handle);
 
 		try {
 			if (openFiles.containsKey(h)) {
@@ -899,7 +756,6 @@ public final class AbstractFileSystem {
 			}
 		} while(r > -1);
 		
-		System.out.println("Copied " + read + " bytes of data");
 	}
 
 	private void copyLength(byte[] handle, UnsignedInteger64 offset, UnsignedInteger64 length, byte[] toHandle, UnsignedInteger64 toOffset) throws EOFException, InvalidHandleException, IOException, PermissionDeniedException {
@@ -917,8 +773,38 @@ public final class AbstractFileSystem {
 				read += r;
 			}
 		} while(r > -1 && read < length.longValue());
-		
-		System.out.println("Copied " + read + " bytes of data");
+
 	}
 
+	public boolean isMultipartTransferSupported(String path) throws PermissionDeniedException, IOException {
+		
+		AbstractFile f = resolveFile(path, con);
+		return f.supportsMultipartTransfers();
+	}
+
+	public byte[] startMultipartUpload(String path, List<Multipart> multiparts) throws PermissionDeniedException, IOException {
+		
+		AbstractFile f = resolveFile(path, con);
+		MultipartTransfer mpt = f.startMultipartUpload(multiparts);
+		
+		MultipartTransferRegistry.registerTransfer(mpt);
+		
+		return mpt.getUuid().getBytes("UTF-8");
+	}
+
+	public byte[] openPart(String uuid, String partIdentifier) throws IOException, PermissionDeniedException {
+		
+		MultipartTransfer mpt = MultipartTransferRegistry.getTransfer(uuid);
+		
+		if(Objects.isNull(mpt)) {
+			throw new PermissionDeniedException("Unexpected multipart request for uuid " + uuid);
+		}
+		
+		Multipart part = mpt.getPart(partIdentifier);
+		OpenFile file = mpt.openPart(part);
+		
+		openFiles.put(handleToString(file.getHandle()), file);
+
+		return file.getHandle();
+	}
 }

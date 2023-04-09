@@ -32,6 +32,8 @@ import java.util.Set;
 import com.sshtools.common.sftp.SftpExtension;
 import com.sshtools.common.sftp.SftpExtensionFactory;
 import com.sshtools.common.sftp.extensions.filter.OpenDirectoryWithFilterExtension;
+import com.sshtools.common.sftp.extensions.multipart.CreateMultipartFileExtension;
+import com.sshtools.common.sftp.extensions.multipart.OpenMultipartFileExtension;
 
 public class DefaultSftpExtensionFactory implements SftpExtensionFactory {
 
@@ -65,6 +67,12 @@ public class DefaultSftpExtensionFactory implements SftpExtensionFactory {
 		}
 		if(supported.contains(SupportedSftpExtensions.CHECK_FILE_HANDLE)) {
 			extensions.put(FileHandleHashingExtension.EXTENSION_NAME, new FileHandleHashingExtension());
+		}
+		if(supported.contains(SupportedSftpExtensions.OPEN_PART_FILE)) {
+			extensions.put(OpenMultipartFileExtension.EXTENSION_NAME, new OpenMultipartFileExtension());
+		}
+		if(supported.contains(SupportedSftpExtensions.CREATE_MULTIPART_FILE)) {
+			extensions.put(CreateMultipartFileExtension.EXTENSION_NAME, new CreateMultipartFileExtension());
 		}
 	}
 	

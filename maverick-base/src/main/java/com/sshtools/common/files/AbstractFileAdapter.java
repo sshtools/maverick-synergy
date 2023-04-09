@@ -24,9 +24,12 @@ package com.sshtools.common.files;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.List;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.Multipart;
+import com.sshtools.common.sftp.MultipartTransfer;
 import com.sshtools.common.sftp.SftpFileAttributes;
 
 public class AbstractFileAdapter implements AbstractFile {
@@ -176,4 +179,15 @@ public class AbstractFileAdapter implements AbstractFile {
 	public String readSymbolicLink() throws IOException, PermissionDeniedException {
 		return file.readSymbolicLink();
 	}
+	
+	@Override
+	public boolean supportsMultipartTransfers() {
+		return file.supportsMultipartTransfers();
+	}
+
+	@Override
+	public MultipartTransfer startMultipartUpload(Collection<Multipart> multparts) throws IOException, PermissionDeniedException {
+		return file.startMultipartUpload(multparts);
+	}
+
 }

@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -79,8 +80,6 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 	private List<SftpOperationWrapper> wrappers = new ArrayList<SftpOperationWrapper>();
 	private SshConnection con;
 	private boolean nfsClosed = false;
-	
-	int writeBlockSize = 4096;
 	
 	// maximum version of SFTP protocol supported
 	static final int MAX_VERSION = 4;
@@ -1007,15 +1006,8 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				try {
 					fireOpenFileEvent(flags, attrs, path, started, handle, null);
 					
-					openFileHandles.put(evt.key, evt);
-					if(!openFilesByContext.containsKey(getContext())) {
-						openFilesByContext.put(getContext(), new HashSet<String>());
-					}
-					openFilesByContext.get(getContext()).add(evt.key);
-					if(Log.isDebugEnabled()) {
-						Log.debug("There are now {} file(s) open in the current context", 
-								openFilesByContext.get(getContext()).size());
-					}
+					addTransferEvent(path, evt);
+
  					sendHandleMessage(id, handle);	
 				} catch (SftpStatusEventException ex) {
 					sendStatusMessage(id, ex.getStatus(), ex.getMessage());
@@ -1395,7 +1387,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				String h = new String(handle);
 
 				evt = (TransferEvent) openFileHandles.get(h);
-
+				
 				UnsignedInteger64 offset = bar.readUINT64();
 				int count = (int) bar.readInt();
 
@@ -2004,7 +1996,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				id = (int) bar.readInt();
 				handle = bar.readBinaryString();
 				
-				TransferEvent evt = (TransferEvent) openFolderHandles.get(nfs.getHandle(handle));
+				TransferEvent evt = (TransferEvent) openFolderHandles.get(nfs.handleToString(handle));
 				evt.bytesWritten += sendFilenameMessage(id, nfs.readDirectory(handle), false, false);
 				
 			} catch (FileNotFoundException ioe) {
@@ -2521,10 +2513,22 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 	
 	public void addTransferEvent(String handle, TransferEvent evt) {
 		if(evt.isDir()) {
-			openFolderHandles.put(handle, evt);
+			openFolderHandles.put(evt.key, evt);
 		} else {
-			openFileHandles.put(handle, evt);
+			openFileHandles.put(evt.key, evt);
 		}		
+		if(!openFilesByContext.containsKey(getContext())) {
+			openFilesByContext.put(getContext(), new HashSet<String>());
+		}
+		openFilesByContext.get(getContext()).add(evt.key);
+		if(Log.isDebugEnabled()) {
+			Log.debug("There are now {} file(s) open in the current context", 
+					openFilesByContext.get(getContext()).size());
+		}
+	}
+
+	public int getVersion() {
+		return version;
 	}
 
 }

@@ -19,93 +19,67 @@
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
 
-package com.sshtools.common.sftp.extensions.filter;
+package com.sshtools.common.sftp.extensions.multipart;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Date;
 
-import com.sshtools.common.events.Event;
-import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.AbstractFileSystem;
-import com.sshtools.common.sftp.GlobSftpFileFilter;
-import com.sshtools.common.sftp.RegexSftpFileFilter;
+import com.sshtools.common.sftp.MultipartTransfer;
+import com.sshtools.common.sftp.MultipartTransferRegistry;
 import com.sshtools.common.sftp.SftpExtension;
-import com.sshtools.common.sftp.SftpStatusEventException;
 import com.sshtools.common.sftp.SftpSubsystem;
+import com.sshtools.common.sftp.TransferEvent;
 import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.common.util.UnsignedInteger32;
 
-public class OpenDirectoryWithFilterExtension implements SftpExtension {
+public class OpenMultipartFileExtension implements SftpExtension {
 
-	public static final String EXTENSION_NAME = "open-directory-with-filter@sshtools.com";
+	public static final String EXTENSION_NAME = "open-part-file@sshtools.com";
 	
 	@Override
 	public void processMessage(ByteArrayReader bar, int requestId, SftpSubsystem sftp) {
 		
-		/**
-		 * Open a directory with a filter applied so that read dir requests only
-		 * return files that match the filter.
-		 */
-		String path = null;
-		String filter = null;
+		byte[] transaction = null;
+		String partId = null;
+		
 		Date started = new Date();
 		
 		try {
 
 			AbstractFileSystem fs = sftp.getFileSystem();
 			
-			path = sftp.checkDefaultPath(bar.readString(sftp.getCharsetEncoding()));
-			filter = bar.readString(sftp.getCharsetEncoding());
-			boolean regex = bar.readBoolean();
-
+			transaction = bar.readBinaryString();
 			
-			byte[] handle = fs.openDirectory(path, 
-					regex ? new RegexSftpFileFilter(filter) : new GlobSftpFileFilter(filter));
-
-			try {
-				fireOpenDirectoryEvent(sftp, path, filter, started, handle, null);
-				sftp.sendHandleMessage(requestId, handle);
-			} catch (SftpStatusEventException ex) {
-				sftp.sendStatusMessage(requestId, ex.getStatus(), ex.getMessage());
-			}
+			MultipartTransfer t = MultipartTransferRegistry.getTransfer(fs.handleToString(transaction));
+			
+			partId = bar.readString(sftp.getCharsetEncoding());
+				
+			byte[] handle = fs.openPart(fs.handleToString(transaction), partId);
+			
+			TransferEvent evt = new TransferEvent();
+			evt.setPath(t.getPath() + "/" + partId);
+			evt.setNfs(fs);
+			evt.setHandle(handle);
+			evt.setExists(t.getExists());
+			evt.setFlags(new UnsignedInteger32(AbstractFileSystem.OPEN_WRITE));
+			evt.setKey(fs.handleToString(handle));	
+			sftp.addTransferEvent(fs.handleToString(handle), evt);
+			
+			sftp.sendHandleMessage(requestId, handle);
+		
 		} catch (FileNotFoundException ioe) {
-			fireOpenDirectoryEvent(sftp, path, filter, started, null, ioe);
 			sftp.sendStatusMessage(requestId, SftpSubsystem.STATUS_FX_NO_SUCH_FILE, ioe.getMessage());
 		} catch (IOException ioe2) {
-			fireOpenDirectoryEvent(sftp, path, filter, started, null, ioe2);
 			sftp.sendStatusMessage(requestId, SftpSubsystem.STATUS_FX_FAILURE, ioe2.getMessage());
 		} catch (PermissionDeniedException pde) {
-			fireOpenDirectoryEvent(sftp, path, filter, started, null, pde);
 			sftp.sendStatusMessage(requestId, SftpSubsystem.STATUS_FX_PERMISSION_DENIED,
 					pde.getMessage());
 		} finally {
 			bar.close();
 		}
-	}
-
-	public void fireOpenDirectoryEvent(SftpSubsystem sftp, String path, 
-				String filter, Date started, byte[] handle, Exception error) {
-		sftp.fireEvent(new Event(sftp, EventCodes.EVENT_SFTP_DIR,
-								error)
-								.addAttribute(
-										EventCodes.ATTRIBUTE_CONNECTION,
-										sftp.getConnection())
-								.addAttribute(
-										EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-										Long.valueOf(0))
-								.addAttribute(
-										EventCodes.ATTRIBUTE_HANDLE,
-										handle)
-								.addAttribute(
-										EventCodes.ATTRIBUTE_FILE_NAME,
-										path)
-								.addAttribute(
-										EventCodes.ATTRIBUTE_OPERATION_STARTED,
-										started)
-								.addAttribute(
-										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-										new Date()));
 	}
 	
 	@Override
@@ -127,6 +101,7 @@ public class OpenDirectoryWithFilterExtension implements SftpExtension {
 	public byte[] getDefaultData() {
 		return new byte[] { };
 	}
+
 
 	@Override
 	public String getName() {

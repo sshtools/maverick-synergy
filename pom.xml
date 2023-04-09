@@ -210,6 +210,7 @@
 		<module>maverick-synergy-jdk16-server</module>
 		<module>maverick-virtual-filesystem</module>
 		<module>maverick-virtual-filesystem-tests</module>
+		<module>maverick-synergy-s3</module>
 		<module>maverick-virtual-session</module>
 		<module>maverick-virtual-session-tests</module>
 		<module>maverick-x509</module>

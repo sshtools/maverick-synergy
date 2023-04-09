@@ -18,18 +18,24 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+package com.sshtools.common.sftp;
 
-package com.sshtools.common.sftp.extensions;
+import java.util.HashMap;
+import java.util.Map;
 
-public enum SupportedSftpExtensions {
+public class MultipartTransferRegistry {
 
-	MD5_FILE_HASH,
-	POSIX_RENAME,
-	COPY_FILE,
-	OPEN_DIRECTORY_WITH_FILTER,
-	COPY_DATA,
-	CHECK_FILE_NAME,
-	CHECK_FILE_HANDLE,
-	CREATE_MULTIPART_FILE,
-	OPEN_PART_FILE;
+	static Map<String,MultipartTransfer> transfers = new HashMap<>(); 
+	
+	public static void registerTransfer(MultipartTransfer transfer) {
+		transfers.put(transfer.getUuid(), transfer);
+	}
+	
+	public static MultipartTransfer getTransfer(String uuid) {
+		return transfers.get(uuid);
+	}
+	
+	public static void removeTransfer(String uuid) {
+		transfers.remove(uuid);
+	}
 }

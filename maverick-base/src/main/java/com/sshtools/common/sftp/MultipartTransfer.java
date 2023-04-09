@@ -18,18 +18,25 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
+package com.sshtools.common.sftp;
 
-package com.sshtools.common.sftp.extensions;
+import java.io.IOException;
 
-public enum SupportedSftpExtensions {
+import com.sshtools.common.permissions.PermissionDeniedException;
 
-	MD5_FILE_HASH,
-	POSIX_RENAME,
-	COPY_FILE,
-	OPEN_DIRECTORY_WITH_FILTER,
-	COPY_DATA,
-	CHECK_FILE_NAME,
-	CHECK_FILE_HANDLE,
-	CREATE_MULTIPART_FILE,
-	OPEN_PART_FILE;
+public interface MultipartTransfer {
+
+	String getPath();
+	
+	String getUploadId();
+	
+	OpenFile openPart(Multipart part) throws IOException, PermissionDeniedException;
+
+	void combineParts() throws IOException, PermissionDeniedException;
+
+	Multipart getPart(String partIdentifier);
+
+	String getUuid();
+
+	boolean getExists();
 }

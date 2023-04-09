@@ -237,6 +237,10 @@ public class EventCodes {
 
 		public static final String ATTRIBUTE_REASON = "REASON";
 
+		public static final String ATTRIBUTE_PART_IDENTIFIER = "PART_IDENTIFIER";
+		public static final String ATTRIBUTE_START_POSITION= "START_POSITION";
+		public static final String ATTRIBUTE_LENGTH = "LENGTH";
+
 		
 
 }

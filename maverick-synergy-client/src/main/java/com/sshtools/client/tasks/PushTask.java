@@ -45,17 +45,11 @@ import java.util.stream.Collectors;
 
 import com.sshtools.client.ChunkInputStream;
 import com.sshtools.client.SshClient;
-import com.sshtools.client.scp.ScpClient;
-import com.sshtools.client.scp.ScpClientIO;
 import com.sshtools.client.sftp.RemoteHash;
-import com.sshtools.client.sftp.SftpChannel;
 import com.sshtools.client.sftp.SftpClient;
 import com.sshtools.client.sftp.SftpClientTask;
-import com.sshtools.client.sftp.SftpFile;
 import com.sshtools.client.sftp.TransferCancelledException;
-import com.sshtools.client.shell.ExpectShell;
 import com.sshtools.client.tasks.PushTask.PushTaskBuilder.ProgressMessages;
-import com.sshtools.client.tasks.ShellTask.ShellTaskBuilder;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
@@ -63,8 +57,8 @@ import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.MultiIOException;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.util.FileUtils;
-import com.sshtools.common.util.UnsignedInteger64;
+import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.Utils;
 
 /**
@@ -136,17 +130,15 @@ public final class PushTask extends AbstractFileTask {
 		private Optional<Path> remoteFolder = Optional.empty();
 		private int chunks = 3;
 		private int blocksize = 32768;
+		private int buffersize = 1024000;
 		private int outstandingRequests = 64;
 		private boolean verifyIntegrity;
 		private RemoteHash digest = RemoteHash.md5;
 		private boolean ignoreIntegrity;
-		private boolean forceSFTP;
 		private List<Path> paths = new ArrayList<>();
 		private Optional<SftpClient> primarySftpClient = Optional.empty();
 		private Optional<ProgressMessages> progressMessages = Optional.empty();
 		private Function<AbstractFile, FileTransferProgress> chunkProgress = (f) -> null;
-		public boolean ignoreCopyDataExtension;
-		public boolean preAllocation = true;
 		public boolean verboseOutput = false;
 		
 
@@ -162,57 +154,6 @@ public final class PushTask extends AbstractFileTask {
 			return new PushTaskBuilder();
 		}
 
-		/**
-		 * Set to not pre-allocate a file of the required size. Usually, an attempt will
-		 * be made to do so (currently using <code>fallocate</code> where available), in
-		 * order to avoid having to recombine the chunks when transfer is complete.
-		 * 
-		 * @param ignoreCopyDataExtension ignore copy data extension
-		 * @return builder for chaining
-		 */
-		public PushTaskBuilder withoutPreAllocation() {
-			preAllocation = false;
-			return this;
-		}
-
-		/**
-		 * Set whether to pre-allocate a file to the required size. Usually, an attempt
-		 * will be made to do so (currently using <code>fallocate</code> where
-		 * available), in order to avoid having to recombine the chunks when transfer is
-		 * complete.
-		 * 
-		 * @param ignoreCopyDataExtension ignore copy data extension
-		 * @return builder for chaining
-		 */
-		public PushTaskBuilder withPreAllocation(boolean preAllocation) {
-			this.preAllocation = preAllocation;
-			return this;
-		}
-
-		/**
-		 * Set to ignore the <code>copy-data</code> extension if it is supported,
-		 * forcing a fallback to using shell command concatention (e.g. <code>cat</code>
-		 * command) to recombine any chunks on the server.
-		 * 
-		 * @param ignoreCopyDataExtension ignore copy data extension
-		 * @return builder for chaining
-		 */
-		public PushTaskBuilder withoutCopyDataExtension() {
-			return withIgnoreCopyDataExtension(true);
-		}
-
-		/**
-		 * Set whether to ignore the <code>copy-data</code> extension if it is
-		 * supported, forcing a fallback to using shell command concatention (e.g.
-		 * <code>cat</code> command) to recombine any chunks on the server.
-		 * 
-		 * @param ignoreCopyDataExtension ignore copy data extension
-		 * @return builder for chaining
-		 */
-		public PushTaskBuilder withIgnoreCopyDataExtension(boolean ignoreCopyDataExtension) {
-			this.ignoreCopyDataExtension = ignoreCopyDataExtension;
-			return this;
-		}
 
 		/**
 		 * Set the {@link ProgressMessages} callback to receive various progress
@@ -412,6 +353,16 @@ public final class PushTask extends AbstractFileTask {
 		}
 
 		/**
+		 * The size of the buffer used to pre-read the file during upload. Defaults to 1MB.
+		 * @param buffersize
+		 * @return
+		 */
+		public PushTaskBuilder withBufferSize(int buffersize) {
+			this.buffersize = buffersize;
+			return this;
+		}
+		
+		/**
 		 * The integrity of any paths transferred will be verified using the configured
 		 * digest (see {@link #withDigest(RemoteHash)}. If verification fails, an
 		 * exception will be thrown during transfer.
@@ -462,10 +413,10 @@ public final class PushTask extends AbstractFileTask {
 		 * 
 		 * @return builder for chaining
 		 */
-		public PushTaskBuilder withForceSFTP() {
-			this.forceSFTP = true;
-			return this;
-		}
+//		public PushTaskBuilder withForceSFTP() {
+//			this.forceSFTP = true;
+//			return this;
+//		}
 
 		/**
 		 * Set whether to force the use of SFTP, even when SCP would otherwise be
@@ -473,10 +424,10 @@ public final class PushTask extends AbstractFileTask {
 		 * 
 		 * @return builder for chaining
 		 */
-		public PushTaskBuilder withSFTPForcing(boolean forceSFTP) {
-			this.forceSFTP = forceSFTP;
-			return this;
-		}
+//		public PushTaskBuilder withSFTPForcing(boolean forceSFTP) {
+//			this.forceSFTP = forceSFTP;
+//			return this;
+//		}
 
 		/**
 		 * The message digest algorithm to use for integrity checks (see
@@ -555,13 +506,11 @@ public final class PushTask extends AbstractFileTask {
 
 	private final int chunks;
 	private final int blocksize;
+	private final int buffersize;
 	private final int outstandingRequests;
 	private final boolean verifyIntegrity;
 	private final RemoteHash digest;
 	private final boolean ignoreIntegrity;
-	private final boolean forceSFTP;
-	private final boolean preAllocation;
-	private final boolean ignoreCopyDataExtension;
 	private final List<Path> files;
 	private final SftpClient primarySftpClient;
 	private final Optional<ProgressMessages> progressMessages;
@@ -575,16 +524,14 @@ public final class PushTask extends AbstractFileTask {
 		super(builder);
 		this.remoteFolder = builder.remoteFolder.map(p -> p.toString()).orElse(null);
 		this.chunks = builder.chunks;
-		this.preAllocation = builder.preAllocation;
 		this.verifyIntegrity = builder.verifyIntegrity;
 		this.digest = builder.digest;
 		this.ignoreIntegrity = builder.ignoreIntegrity;
-		this.forceSFTP = builder.forceSFTP;
 		this.chunkProgress = builder.chunkProgress;
-		this.ignoreCopyDataExtension = builder.ignoreCopyDataExtension;
 		this.files = Collections.unmodifiableList(new ArrayList<Path>(builder.paths));
 		this.progressMessages = builder.progressMessages;
 		this.blocksize = builder.blocksize;
+		this.buffersize = builder.buffersize;
 		this.outstandingRequests = builder.outstandingRequests;
 		this.verboseOutput = builder.verboseOutput;
 		
@@ -660,25 +607,26 @@ public final class PushTask extends AbstractFileTask {
 		var localFile = primarySftpClient.getCurrentWorkingDirectory().resolveFile(file.toString());
 
 		if (!localFile.exists()) {
-			throw new IOException(String.format("%s does not exist!", localFile.getName()));
+
+
 		}
 
 		verboseMessage("Total to transfer is {0} bytes", localFile.length());
 
 		if (chunks <= 1) {
-			if (forceSFTP) {
+			//if (forceSFTP) {
 				sendFileViaSFTP(localFile, "");
-			} else {
-				sendFileViaSCP(localFile, FileUtils.checkEndsWithSlash(remoteFolder) + localFile.getName());
-			}
+//			} else {
+//				sendFileViaSCP(localFile, FileUtils.checkEndsWithSlash(remoteFolder) + localFile.getName());
+//			}
 
 			verifyIntegrity(localFile);
 		} else {
-			var preAllocated = tryToAllocate(localFile);
-			checkErrors(sendChunks(localFile, preAllocated));
+//			var preAllocated = tryToAllocate(localFile);
+			checkErrors(sendChunks(localFile));
 
-			if (!preAllocated)
-				combineChunks(localFile);
+//			if (!preAllocated)
+//				combineChunks(localFile);
 
 			verifyIntegrity(localFile);
 		}
@@ -713,208 +661,261 @@ public final class PushTask extends AbstractFileTask {
 		}
 	}
 
-	private boolean tryToAllocate(AbstractFile localFile) throws IOException {
-		if (!preAllocation) {
-			displayMessage("Explicitly not pre-allocating file, total transfer operation may be slower.");
-			return false;
-		}
-		var client = clientSupplier.orElseThrow(() -> new IllegalArgumentException("No connection or client supplied."))
-				.apply(0);
-		try {
-			client.runTask(ShellTaskBuilder.create().
-					withClient(client).
-					onOpen((task, session) -> {
-						Thread.sleep(1000);
-						verboseMessage("Opening shell");
-						
-						var shell = new ExpectShell(task);
-						execute(String.format("cd '%s'", escapeSingleQuotes(remoteFolder)), shell);
-						
-						verboseMessage("Allocating space");
-						
-						execute(String.format("fallocate -l %d '%s'", localFile.length(),
-								escapeSingleQuotes(localFile.getName())), shell);
-						
-						verboseMessage("Allocated space");
-					}).build());
-			return true;
-		} catch (Exception ioe) {
-			displayMessage("Unable to pre-allocate space, will recombine chunks at end of transfer");
-			return false;
-		}
-	}
+//	private boolean tryToAllocate(AbstractFile localFile) throws IOException {
+//		if (!preAllocation) {
+//			displayMessage("Explicitly not pre-allocating file, total transfer operation may be slower.");
+//			return false;
+//		}
+//		var client = clientSupplier.orElseThrow(() -> new IllegalArgumentException("No connection or client supplied."))
+//				.apply(0);
+//		try {
+//			client.runTask(ShellTaskBuilder.create().
+//					withClient(client).
+//					onOpen((task, session) -> {
+//						Thread.sleep(1000);
+//						verboseMessage("Opening shell");
+//						
+//						var shell = new ExpectShell(task);
+//						execute(String.format("cd '%s'", escapeSingleQuotes(remoteFolder)), shell);
+//						
+//						verboseMessage("Allocating space");
+//						
+//						execute(String.format("fallocate -l %d '%s'", localFile.length(),
+//								escapeSingleQuotes(localFile.getName())), shell);
+//						
+//						verboseMessage("Allocated space");
+//					}).build());
+//			return true;
+//		} catch (Exception ioe) {
+//			displayMessage("Unable to pre-allocate space, will recombine chunks at end of transfer");
+//			return false;
+//		}
+//	}
 
-	private void combineChunks(AbstractFile localFile) throws IOException, TransferCancelledException {
+//	private void combineChunks(AbstractFile localFile) throws IOException, TransferCancelledException {
+//
+//		verboseMessage("Combining parts into final file on remote machine");
+//
+//		if (!performCopyData(localFile)) {
+//			performRemoteCat(localFile);
+//		}
+//
+//	}
 
-		verboseMessage("Combining parts into final file on remote machine");
+//	private void performRemoteCat(AbstractFile localFile) throws IOException {
+//		var client = clientSupplier.orElseThrow(() -> new IllegalArgumentException("No connection or client supplied."))
+//				.apply(0);
+//		client.runTask(ShellTaskBuilder.create().withClient(client).onOpen((task, session) -> {
+//			verboseMessage("Opening shell");
+//			var shell = new ExpectShell(task);
+//			execute(String.format("cd '%s'", escapeSingleQuotes(remoteFolder)), shell);
+//			verboseMessage("Combining paths");
+//			execute(String.format("cat '%s_'* > '%s'", escapeSingleQuotes(localFile.getName()),
+//					escapeSingleQuotes(localFile.getName())), shell);
+//			verboseMessage("Deleting parts");
+//			execute(String.format("rm -f '%s_'*", escapeSingleQuotes(localFile.getName())), shell);
+//		}).build());
+//	}
 
-		if (!performCopyData(localFile)) {
-			performRemoteCat(localFile);
-		}
+//	private String escapeSingleQuotes(String text) {
+//		return text.replace("'", "\\'");
+//	}
+//
+//	private void execute(String command, ExpectShell shell) throws IOException, SshException {
+//		var process = shell.executeCommand(command);
+//		process.drain();
+//		if (process.hasSucceeded()) {
+//			if (Utils.isNotBlank(process.getCommandOutput())) {
+//				verboseMessage(process.getCommandOutput());
+//			}
+//		} else {
+//			if (Utils.isNotBlank(process.getCommandOutput())) {
+//				progressMessages.ifPresent((p) -> p.error(process.getCommandOutput(), null));
+//			}
+//			throw new IOException("Command failed");
+//		}
+//	}
 
-	}
+//	private boolean performCopyData(AbstractFile localFile) throws IOException, TransferCancelledException {
+//
+//		var errors = new ArrayList<Throwable>();
+//
+//		try {
+//			if (primarySftpClient.getSubsystemChannel().supportsExtension("copy-data")) {
+//				displayMessage("Remote server does not support copy-data SFTP extension");
+//				return false;
+//			}
+//			if (ignoreCopyDataExtension) {
+//				displayMessage("Remote server supports copy-data SFTP extension, but we are explicitly ignoring it.");
+//				return false;
+//			}
+//			primarySftpClient.cd(remoteFolder);
+//			var zero = new UnsignedInteger64(0);
+//
+//			var remoteFile = primarySftpClient.getSubsystemChannel().openFile(
+//					FileUtils.checkEndsWithSlash(remoteFolder) + localFile.getName(),
+//					SftpChannel.OPEN_WRITE | SftpChannel.OPEN_CREATE | SftpChannel.OPEN_TRUNCATE);
+//
+//			long position = 0L;
+//			var remoteChunks = new ArrayList<SftpFile>();
+//
+//			try {
+//				for (int chunk = 1; chunk <= chunks; chunk++) {
+//
+//					var remoteChunk = primarySftpClient.getSubsystemChannel().openFile(
+//							FileUtils.checkEndsWithSlash(remoteFolder) + localFile.getName() + "_part" + chunk,
+//							SftpChannel.OPEN_READ);
+//					remoteChunks.add(remoteChunk);
+//					try {
+//						primarySftpClient.copyRemoteData(remoteChunk, zero, zero, remoteFile,
+//								new UnsignedInteger64(position));
+//						verboseMessage("Copied part {0} of {1} to {2}", chunk, chunks, localFile.getName());
+//						position += remoteChunk.getAttributes().getSize().longValue();
+//					} catch (SftpStatusException e) {
+//						if (e.getStatus() == SftpStatusException.SSH_FX_OP_UNSUPPORTED) {
+//							displayMessage("Remote server does not support copy-data SFTP extension");
+//							return false;
+//						} else {
+//							errors.add(e);
+//						}
+//					} finally {
+//						remoteChunk.close();
+//					}
+//				}
+//			} finally {
+//				remoteFile.close();
+//			}
+//
+//			checkErrors(removeChunks(localFile, remoteChunks));
+//		} catch (Throwable e) {
+//			errors.add(e);
+//		}
+//
+//		checkErrors(errors);
+//
+//		return true;
+//	}
 
-	private void performRemoteCat(AbstractFile localFile) throws IOException {
-		var client = clientSupplier.orElseThrow(() -> new IllegalArgumentException("No connection or client supplied."))
-				.apply(0);
-		client.runTask(ShellTaskBuilder.create().withClient(client).onOpen((task, session) -> {
-			verboseMessage("Opening shell");
-			var shell = new ExpectShell(task);
-			execute(String.format("cd '%s'", escapeSingleQuotes(remoteFolder)), shell);
-			verboseMessage("Combining paths");
-			execute(String.format("cat '%s_'* > '%s'", escapeSingleQuotes(localFile.getName()),
-					escapeSingleQuotes(localFile.getName())), shell);
-			verboseMessage("Deleting parts");
-			execute(String.format("rm -f '%s_'*", escapeSingleQuotes(localFile.getName())), shell);
-		}).build());
-	}
+//	private Collection<Throwable> removeChunks(AbstractFile localFile, Collection<SftpFile> remoteChunks)
+//			throws IOException {
+//
+//		var errors = new ArrayList<Throwable>();
+//
+//		try {
+//			for (var remoteChunk : remoteChunks) {
+//				try {
+//					remoteChunk.delete();
+//				} catch (SftpStatusException | SshException e) {
+//					errors.add(e);
+//				}
+//			}
+//		} catch (Throwable e) {
+//			errors.add(e);
+//		}
+//		return errors;
+//	}
 
-	private String escapeSingleQuotes(String text) {
-		return text.replace("'", "\\'");
-	}
-
-	private void execute(String command, ExpectShell shell) throws IOException, SshException {
-		var process = shell.executeCommand(command);
-		process.drain();
-		if (process.hasSucceeded()) {
-			if (Utils.isNotBlank(process.getCommandOutput())) {
-				verboseMessage(process.getCommandOutput());
-			}
-		} else {
-			if (Utils.isNotBlank(process.getCommandOutput())) {
-				progressMessages.ifPresent((p) -> p.error(process.getCommandOutput(), null));
-			}
-			throw new IOException("Command failed");
-		}
-	}
-
-	private boolean performCopyData(AbstractFile localFile) throws IOException, TransferCancelledException {
-
-		var errors = new ArrayList<Throwable>();
-
-		try {
-			if (primarySftpClient.getSubsystemChannel().supportsExtension("copy-data")) {
-				displayMessage("Remote server does not support copy-data SFTP extension");
-				return false;
-			}
-			if (ignoreCopyDataExtension) {
-				displayMessage("Remote server supports copy-data SFTP extension, but we are explicitly ignoring it.");
-				return false;
-			}
-			primarySftpClient.cd(remoteFolder);
-			var zero = new UnsignedInteger64(0);
-
-			var remoteFile = primarySftpClient.getSubsystemChannel().openFile(
-					FileUtils.checkEndsWithSlash(remoteFolder) + localFile.getName(),
-					SftpChannel.OPEN_WRITE | SftpChannel.OPEN_CREATE | SftpChannel.OPEN_TRUNCATE);
-
-			long position = 0L;
-			var remoteChunks = new ArrayList<SftpFile>();
-
-			try {
-				for (int chunk = 1; chunk <= chunks; chunk++) {
-
-					var remoteChunk = primarySftpClient.getSubsystemChannel().openFile(
-							FileUtils.checkEndsWithSlash(remoteFolder) + localFile.getName() + "_part" + chunk,
-							SftpChannel.OPEN_READ);
-					remoteChunks.add(remoteChunk);
-					try {
-						primarySftpClient.copyRemoteData(remoteChunk, zero, zero, remoteFile,
-								new UnsignedInteger64(position));
-						verboseMessage("Copied part {0} of {1} to {2}", chunk, chunks, localFile.getName());
-						position += remoteChunk.getAttributes().getSize().longValue();
-					} catch (SftpStatusException e) {
-						if (e.getStatus() == SftpStatusException.SSH_FX_OP_UNSUPPORTED) {
-							displayMessage("Remote server does not support copy-data SFTP extension");
-							return false;
-						} else {
-							errors.add(e);
-						}
-					} finally {
-						remoteChunk.close();
-					}
-				}
-			} finally {
-				remoteFile.close();
-			}
-
-			checkErrors(removeChunks(localFile, remoteChunks));
-		} catch (Throwable e) {
-			errors.add(e);
-		}
-
-		checkErrors(errors);
-
-		return true;
-	}
-
-	private Collection<Throwable> removeChunks(AbstractFile localFile, Collection<SftpFile> remoteChunks)
-			throws IOException {
-
-		var errors = new ArrayList<Throwable>();
-
-		try {
-			for (var remoteChunk : remoteChunks) {
-				try {
-					remoteChunk.delete();
-				} catch (SftpStatusException | SshException e) {
-					errors.add(e);
-				}
-			}
-		} catch (Throwable e) {
-			errors.add(e);
-		}
-		return errors;
-	}
-
-	private Collection<Throwable> sendChunks(AbstractFile localFile, boolean preallocated)
-			throws PermissionDeniedException, IOException {
+	private Collection<Throwable> sendChunks(AbstractFile localFile)
+			throws PermissionDeniedException, IOException, SftpStatusException, SshException {
 
 		verboseMessage("Splitting {0} into {1} chunks", localFile.getName(), chunks);
 
+		final boolean useExtensions = primarySftpClient.getSubsystemChannel().supportsExtension("create-multipart-file@sshtools.com");
 		var executor = Executors.newFixedThreadPool(chunks);
-		var chunkLength = localFile.length() / chunks;
-		var finalLength = localFile.length() % chunkLength;
-		var progressChunks = Collections.synchronizedList(new ArrayList<FileTransferProgressWrapper>());
-		var errors = Collections.synchronizedList(new ArrayList<Throwable>());
-		var total = new AtomicLong();
-		if (progress.isPresent()) {
-			progress.get().started(localFile.length(), localFile.getName());
-		}
 		
-		for(int i = 0 ; i < chunks; i++) {
-			var chunk = i + 1;
-			var pointer = i * chunkLength;
-			verboseMessage("Starting chunk {0} at position {1} with length of {2} bytes",
-					chunk, pointer, chunkLength);
-		}
-		for (int i = 0; i < chunks; i++) {
-			var chunk = i + 1;
-			var pointer = i * chunkLength;
-			executor.submit(() -> {
-				try {
-					var tmp = chunkProgress.apply(localFile);
-					var wrapper = new FileTransferProgressWrapper(tmp, progress, total);
-					progressChunks.add(wrapper);
-					var lastChunk = chunk == chunks;
-					var thisLength = lastChunk ? chunkLength + finalLength : chunkLength;
-					sendChunk(localFile, pointer, thisLength, chunk, lastChunk, wrapper, preAllocation);
-				} catch (Throwable e) {
-					errors.add(e);
-				}
-			});
-
-		}
-		executor.shutdown();
 		try {
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e1) {
-			throw new InterruptedIOException();
+			var partSize = (5*1024*1024);
+			var totalParts = localFile.length() / partSize;
+			
+			var partsPerChunk = (totalParts / chunks) + 1;
+			var chunkLength = partsPerChunk * partSize;
+			var finalLength = localFile.length() - (chunkLength * (chunks-1));
+			
+			var progressChunks = Collections.synchronizedList(new ArrayList<FileTransferProgressWrapper>());
+			var errors = Collections.synchronizedList(new ArrayList<Throwable>());
+			var total = new AtomicLong();
+			if (progress.isPresent()) {
+				progress.get().started(localFile.length(), localFile.getName());
+			}
+			
+			for(int i = 0 ; i < chunks; i++) {
+				var chunk = i + 1;
+				var pointer = i * chunkLength;
+				verboseMessage("Starting chunk {0} at position {1} with length of {2} bytes",
+						chunk, pointer, chunkLength);
+			}
+			
+			String remotePath = primarySftpClient.getAbsolutePath(localFile.getName());
+			if(useExtensions) {
+				
+				ByteArrayWriter msg = new ByteArrayWriter();
+				msg.writeString(remotePath);
+				msg.writeInt(chunks);
+				for(int i = 0 ; i < chunks-1; i++) {
+					var chunk = i + 1;
+					msg.writeString(String.format("part%d", chunk));
+					msg.writeUINT64(i * chunkLength);
+					msg.writeUINT64(chunkLength);
+				}
+				
+				msg.writeString(String.format("part%d", chunks));
+				msg.writeUINT64((chunks-1) * chunkLength);
+				msg.writeUINT64(finalLength);
+			
+				UnsignedInteger32 requestId = primarySftpClient.getSubsystemChannel().sendExtensionMessage("create-multipart-file@sshtools.com", msg.toByteArray());
+				byte[] transaction = primarySftpClient.getSubsystemChannel().getHandleResponse(requestId);
+		
+				for (int i = 0; i < chunks; i++) {
+					var chunk = i + 1;
+					var pointer = i * chunkLength;
+					executor.submit(() -> {
+						try {
+							var tmp = chunkProgress.apply(localFile);
+							var wrapper = new FileTransferProgressWrapper(tmp, progress, total);
+							progressChunks.add(wrapper);
+							var lastChunk = chunk == chunks;
+							var thisLength = lastChunk ? chunkLength + finalLength : chunkLength;
+							
+							sendPart(localFile, pointer, thisLength, chunk, lastChunk, wrapper, transaction, String.format("part%d", chunk));
+							
+						} catch (Throwable e) {
+							errors.add(e);
+						}
+					});
+					
+				}
+			
+			} else {
+				
+				for (int i = 0; i < chunks; i++) {
+					var chunk = i + 1;
+					var pointer = i * chunkLength;
+					executor.submit(() -> {
+						try {
+							var tmp = chunkProgress.apply(localFile);
+							var wrapper = new FileTransferProgressWrapper(tmp, progress, total);
+							progressChunks.add(wrapper);
+							var lastChunk = chunk == chunks;
+							var thisLength = lastChunk ? chunkLength + finalLength : chunkLength;
+							sendChunk(localFile, pointer, thisLength, chunk, lastChunk, wrapper);
+						} catch (Throwable e) {
+							errors.add(e);
+						}
+					});
+				}
+			}
+			return errors;
 		} finally {
-			progress.get().completed();
+			executor.shutdown();
+			
+			try {
+				executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+			} catch (InterruptedException e1) {
+				throw new InterruptedIOException();
+			} finally {
+				progress.get().completed();
+			}	
 		}
-
-		return errors;
 	}
 
 	private void sendFileViaSFTP(AbstractFile localFile, String remotePath) throws IOException, SshException,
@@ -935,17 +936,17 @@ public final class PushTask extends AbstractFileTask {
 		}
 	}
 
-	private void sendFileViaSCP(AbstractFile localFile, String remotePath)
-			throws SshException, ChannelOpenException, IOException, PermissionDeniedException {
-
-		var ssh = clients.removeFirst();
-		try {
-			new ScpClient(ssh).putFile(localFile.getAbsolutePath(), remotePath, false, progress.orElse(null), false);
-		} finally {
-			clients.addLast(ssh);
-		}
-
-	}
+//	private void sendFileViaSCP(AbstractFile localFile, String remotePath)
+//			throws SshException, ChannelOpenException, IOException, PermissionDeniedException {
+//
+//		var ssh = clients.removeFirst();
+//		try {
+//			new ScpClient(ssh).putFile(localFile.getAbsolutePath(), remotePath, false, progress.orElse(null), false);
+//		} finally {
+//			clients.addLast(ssh);
+//		}
+//
+//	}
 
 	private void verifyIntegrity(AbstractFile localFile)
 			throws SshException, SftpStatusException, IOException, PermissionDeniedException {
@@ -977,18 +978,17 @@ public final class PushTask extends AbstractFileTask {
 	}
 
 	private void sendChunk(AbstractFile localFile, long pointer, long chunkLength, Integer chunkNumber,
-			boolean lastChunk, FileTransferProgress progress, boolean preAllocated)
+			boolean lastChunk, FileTransferProgress progress)
 			throws IOException, SftpStatusException, SshException, TransferCancelledException, ChannelOpenException,
 			PermissionDeniedException {
 
 		var ssh = clients.removeFirst();
 		try (var file = new RandomAccessFile(localFile.getAbsolutePath(), "r")) {
 			file.seek(pointer);
-
-			if (forceSFTP || preAllocated) {
 				try (var sftp = new SftpClient(ssh)) {
 					sftp.cd(remoteFolder);
-					if (preAllocated) {
+					sftp.lcd(primarySftpClient.lpwd());
+
 						sftp.put(new ChunkInputStream(file, chunkLength), localFile.getName(),
 								new FileTransferProgress() {
 
@@ -1013,17 +1013,67 @@ public final class PushTask extends AbstractFileTask {
 									}
 
 								}, pointer, chunkLength);
-					} else {
-						sftp.put(new ChunkInputStream(file, chunkLength), localFile.getName() + "_part" + chunkNumber,
-								progress);
-					}
 				}
-			} else {
-				var scp = new ScpClientIO(ssh);
-				scp.put(new ChunkInputStream(file, chunkLength), chunkLength, localFile.getName(),
-						FileUtils.checkEndsWithSlash(remoteFolder) + localFile.getName() + "_part" + chunkNumber,
-						progress);
+		} 
+		catch(IOException ioe) {
+			if(ioe.getCause() instanceof TransferCancelledException) {
+				throw (TransferCancelledException)ioe.getCause();
 			}
+			else
+				throw ioe;
+		} finally {
+			clients.addLast(ssh);
+		}
+	}
+	
+	private void sendPart(AbstractFile localFile, long pointer, long chunkLength, Integer chunkNumber,
+			boolean lastChunk, FileTransferProgress progress, byte[] transaction, String partId)
+			throws IOException, SftpStatusException, SshException, TransferCancelledException, ChannelOpenException,
+			PermissionDeniedException {
+
+		var ssh = clients.removeFirst();
+		try (var file = new RandomAccessFile(localFile.getAbsolutePath(), "r")) {
+			file.seek(pointer);
+				try (var sftp = new SftpClient(ssh)) {
+					sftp.cd(remoteFolder);
+					sftp.lcd(primarySftpClient.lpwd());
+
+					ByteArrayWriter msg = new ByteArrayWriter();
+					msg.writeBinaryString(transaction);
+					msg.writeString(partId);
+					
+					byte[] handle = sftp.getSubsystemChannel().getHandleResponse(sftp.getSubsystemChannel().sendExtensionMessage("open-part-file@sshtools.com", msg.toByteArray()));
+					
+					sftp.getSubsystemChannel().performOptimizedWrite(localFile.getName(), 
+							handle, 
+							blocksize,
+							outstandingRequests, 
+							new ChunkInputStream(file, chunkLength),
+								buffersize,
+								new FileTransferProgress() {
+
+									@Override
+									public void started(long bytesTotal, String file) {
+										progress.started(bytesTotal, file);
+									}
+
+									@Override
+									public boolean isCancelled() {
+										return progress.isCancelled();
+									}
+
+									@Override
+									public void progressed(long bytesSoFar) {
+										progress.progressed(bytesSoFar - pointer);
+									}
+
+									@Override
+									public void completed() {
+										progress.completed();
+									}
+
+						}, pointer);
+				}
 		} 
 		catch(IOException ioe) {
 			if(ioe.getCause() instanceof TransferCancelledException) {

@@ -528,7 +528,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 					count = new UnsignedInteger32(Math.min(remoteWindow.getWindowSpace().longValue(), remoteWindow.getMaximumPacketSize()));
 				}
 
-				if(count.equals(UnsignedInteger32.MIN_VALUE)) {
+				if(count.equals(UnsignedInteger32.ZERO)) {
 					if(Log.isDebugEnabled()) {
 						log("Waiting", String.format("for %d bytes of remote window", buf.remaining()));
 					}

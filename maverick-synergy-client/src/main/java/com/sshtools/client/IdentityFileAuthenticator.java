@@ -21,12 +21,14 @@
 
 package com.sshtools.client;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,7 +60,7 @@ public class IdentityFileAuthenticator extends PublicKeyAuthenticator {
 	}
 	
 	public IdentityFileAuthenticator(PassphrasePrompt passphrase) throws IOException {
-		this.identities = collectIdentities();
+		this.identities = collectIdentities(true);
 		this.passphrase = passphrase;
 	}
 	
@@ -66,12 +68,21 @@ public class IdentityFileAuthenticator extends PublicKeyAuthenticator {
 		return passphrase.getPasshrase(keyinfo);
 	}
 	
-	public static List<Path> collectIdentities() throws IOException {
+	public static List<Path> collectIdentities(boolean onlyWellKnown) throws IOException {
 		
 		final Path dir = Paths.get(System.getProperty("user.home"), ".ssh");
-		final PathMatcher filter = dir.getFileSystem().getPathMatcher("glob:**/*.pub");
-		try (final Stream<Path> stream = Files.list(dir)) {
-		    return stream.filter(filter::matches).collect(Collectors.toList());
+		
+		if(onlyWellKnown) {
+			return new ArrayList<>(Arrays.asList(new File(dir.toFile(), "id_ed25519.pub").toPath(),
+					new File(dir.toFile(), "id_ed448.pub").toPath(),
+					new File(dir.toFile(), "id_rsa.pub").toPath(),
+					new File(dir.toFile(), "id_ecdsa.pub").toPath()));
+		} else {
+			
+			final PathMatcher filter = dir.getFileSystem().getPathMatcher("glob:**/*.pub");
+			try (final Stream<Path> stream = Files.list(dir)) {
+			    return stream.filter(filter::matches).collect(Collectors.toList());
+			}
 		}
 	}
 
@@ -114,17 +125,19 @@ public class IdentityFileAuthenticator extends PublicKeyAuthenticator {
 			try {
 				currentPath = identities.remove(0);
 				
-				if(Log.isDebugEnabled()) {
-					Log.debug("Trying identity file {}", currentPath.toString());
+				if(currentPath.toFile().exists()) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Trying identity file {}", currentPath.toString());
+					}
+					
+					currentKey = SshKeyUtils.getPublicKey(currentPath.toAbsolutePath());
+					
+					if(Log.isDebugEnabled()) {
+						Log.debug("Authenticating with key {}", SshKeyUtils.getFingerprint(currentKey));
+					}
+					
+					return true;
 				}
-				
-				currentKey = SshKeyUtils.getPublicKey(currentPath.toAbsolutePath());
-				
-				if(Log.isDebugEnabled()) {
-					Log.debug("Authenticating with key {}", SshKeyUtils.getFingerprint(currentKey));
-				}
-				
-				return true;
 			} catch (IOException e) {
 				Log.error("Failed to parse identity file", e);
 			}

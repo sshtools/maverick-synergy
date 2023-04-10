@@ -398,13 +398,11 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			}
 			
 			if (name.equals("tcpip-forward")) {
-				ByteArrayWriter resp = new ByteArrayWriter();
 				if(processTCPIPForward(bar, response)) {
 					success = true;
 				} 
 
 			} else if (name.equals("cancel-tcpip-forward")) {
-				ByteArrayWriter resp = new ByteArrayWriter();
 				if(processTCPIPCancel(bar, response)) {
 					success = true;
 				} 

@@ -69,13 +69,13 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 	public final static class ShellTaskBuilder extends AbstractConnectionTaskBuilder<ShellTaskBuilder, ShellTask> {
 
 		private Optional<ShellTaskEvent> onClose = Optional.empty();
-		private Optional<ShellTaskEvent> onStartShell = Optional.empty();
+		private Optional<ShellTaskEvent> onBeforeOpen = Optional.empty();
 		private Optional<ShellTaskEvent> onOpen = Optional.empty();
 		private Optional<String> termType = Optional.empty();
 		private Optional<Function<SshConnection, SessionChannelNG>> session = Optional.empty();
 		private int cols = 80;
 		private int rows = 24;
-		private boolean withoutPty = false;
+		private boolean withPty = false;
 
 		private ShellTaskBuilder() {
 		}
@@ -102,7 +102,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 
 		/**
 		 * Set the terminal type to use when allocating a PTY. Note, this
-		 * will have no effect if a custom {@link #onStartShell(ShellTaskEvent)} is set.
+		 * will have no effect if a custom {@link #onBeforeOpen(ShellTaskEvent)} is set.
 		 * 
 		 * @param term type
 		 * @return builder for chaining
@@ -113,7 +113,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 
 		/**
 		 * Set the terminal type to use when allocating a PTY. Note, this
-		 * will have no effect if a custom {@link #onStartShell(ShellTaskEvent)} is set.
+		 * will have no effect if a custom {@link #onBeforeOpen(ShellTaskEvent)} is set.
 		 * 
 		 * @param term type
 		 * @return builder for chaining
@@ -125,7 +125,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 
 		/**
 		 * Set the terminal width in columns to use when allocating a PTY. Note, this
-		 * will have no effect if a custom {@link #onStartShell(ShellTaskEvent)} is set.
+		 * will have no effect if a custom {@link #onBeforeOpen(ShellTaskEvent)} is set.
 		 * 
 		 * @param cols cols
 		 * @return builder for chaining
@@ -137,7 +137,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 
 		/**
 		 * Set the terminal height in rows to use when allocating a PTY. Note, this
-		 * will have no effect if a custom {@link #onStartShell(ShellTaskEvent)} is set.
+		 * will have no effect if a custom {@link #onBeforeOpen(ShellTaskEvent)} is set.
 		 * 
 		 * @param rows row
 		 * @return builder for chaining
@@ -155,15 +155,15 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		 * @param onStartShell on start shell callback
 		 * @return builder for chaining
 		 */
-		public final ShellTaskBuilder onStartShell(ShellTaskEvent onStartShell) {
-			this.onStartShell = Optional.of(onStartShell);
+		public final ShellTaskBuilder onBeforeOpen(ShellTaskEvent onStartShell) {
+			this.onBeforeOpen = Optional.of(onStartShell);
 			return this;
 		}
 
 		/**
 		 * Set a callback to run when the shell is closed. 
 		 * 
-		 * @param onStartShell on start shell callback
+		 * @param onBeforeOpen on start shell callback
 		 * @return builder for chaining
 		 */
 		public final ShellTaskBuilder onClose(ShellTaskEvent onClose) {
@@ -187,8 +187,8 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 			return new ShellTask(this);
 		}
 
-		public ShellTaskBuilder withoutPty() {
-			this.withoutPty = true;
+		public ShellTaskBuilder withPty(boolean withPty) {
+			this.withPty = withPty;
 			return this;
 		}
 	}
@@ -200,14 +200,14 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 	private final int rows;
 	private final int cols;
 	private final Optional<Function<SshConnection, SessionChannelNG>> session;
-	private final boolean withoutPty;
+	private final boolean withPty;
 	
 	private ShellTask(ShellTaskBuilder builder) {
 		super(builder);
 		this.onClose = builder.onClose;
-		this.onStartShell = builder.onStartShell;
+		this.onStartShell = builder.onBeforeOpen;
 		this.onOpen = builder.onOpen;
-		this.withoutPty = builder.withoutPty;
+		this.withPty = builder.withPty;
 		this.termType = builder.termType.orElse("dumb");
 		this.rows = builder.rows;
 		this.cols = builder.cols;
@@ -261,13 +261,14 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 	@Deprecated(since = "3.1.0")
 	protected void beforeStartShell(SessionChannelNG session) {
 		try {
-			if(withoutPty) {
-				if(onStartShell.isPresent()) {
-					onStartShell.get().shellEvent(this, session);
-				}
-			} else {
-				onStartShell.orElse((s, c) -> session.allocatePseudoTerminal(termType, cols, rows)).shellEvent(this, session);
+			if(withPty) {
+				session.allocatePseudoTerminal(termType, cols, rows);
 			}
+			
+			if(onStartShell.isPresent()) {
+				onStartShell.get().shellEvent(this, session);
+			}
+			
 		} catch(RuntimeException re) {
 			throw re;
 		} catch (Exception e) {

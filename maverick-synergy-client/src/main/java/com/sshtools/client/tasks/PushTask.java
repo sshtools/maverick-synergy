@@ -58,6 +58,7 @@ import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.MultiIOException;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.Utils;
 
@@ -659,75 +660,75 @@ public final class PushTask extends AbstractFileTask {
 						chunk, pointer, chunkLength);
 			}
 			
-			String remotePath = primarySftpClient.getAbsolutePath(localFile.getName());
+			String remotePath = FileUtils.checkEndsWithSlash(primarySftpClient.pwd()) + localFile.getName();
 
-				ByteArrayWriter msg = new ByteArrayWriter();
-				msg.writeString(remotePath);
-				msg.writeInt(chunks);
-				for(int i = 0 ; i < chunks-1; i++) {
-					var chunk = i + 1;
-					msg.writeString(String.format("part%d", chunk));
-					msg.writeUINT64(i * chunkLength);
-					msg.writeUINT64(chunkLength);
-				}
-				
-				msg.writeString(String.format("part%d", chunks));
-				msg.writeUINT64((chunks-1) * chunkLength);
-				msg.writeUINT64(finalLength);
+			ByteArrayWriter msg = new ByteArrayWriter();
+			msg.writeString(remotePath);
+			msg.writeInt(chunks);
+			for(int i = 0 ; i < chunks-1; i++) {
+				var chunk = i + 1;
+				msg.writeString(String.format("part%d", chunk));
+				msg.writeUINT64(i * chunkLength);
+				msg.writeUINT64(chunkLength);
+			}
 			
-				UnsignedInteger32 requestId;
-				try {
-					requestId = primarySftpClient.getSubsystemChannel().sendExtensionMessage("create-multipart-file@sshtools.com", msg.toByteArray());
+			msg.writeString(String.format("part%d", chunks));
+			msg.writeUINT64((chunks-1) * chunkLength);
+			msg.writeUINT64(finalLength);
+		
+			UnsignedInteger32 requestId;
+			try {
+				requestId = primarySftpClient.getSubsystemChannel().sendExtensionMessage("create-multipart-file@sshtools.com", msg.toByteArray());
+			
+				byte[] transaction = primarySftpClient.getSubsystemChannel().getHandleResponse(requestId);
 				
-					byte[] transaction = primarySftpClient.getSubsystemChannel().getHandleResponse(requestId);
+				verboseMessage("Remote server supports multipart extensions");
+				
+				for (int i = 0; i < chunks; i++) {
+					var chunk = i + 1;
+					var pointer = i * chunkLength;
+					executor.submit(() -> {
+						try {
+							var tmp = chunkProgress.apply(localFile);
+							var wrapper = new FileTransferProgressWrapper(tmp, progress, total);
+							progressChunks.add(wrapper);
+							var lastChunk = chunk == chunks;
+							var thisLength = lastChunk ? chunkLength + finalLength : chunkLength;
+							
+							sendPart(localFile, pointer, thisLength, chunk, lastChunk, wrapper, transaction, String.format("part%d", chunk));
+							
+						} catch (Throwable e) {
+							errors.add(e);
+						}
+					});
 					
-					verboseMessage("Remote server supports multipart extensions");
-					
-					for (int i = 0; i < chunks; i++) {
-						var chunk = i + 1;
-						var pointer = i * chunkLength;
-						executor.submit(() -> {
-							try {
-								var tmp = chunkProgress.apply(localFile);
-								var wrapper = new FileTransferProgressWrapper(tmp, progress, total);
-								progressChunks.add(wrapper);
-								var lastChunk = chunk == chunks;
-								var thisLength = lastChunk ? chunkLength + finalLength : chunkLength;
-								
-								sendPart(localFile, pointer, thisLength, chunk, lastChunk, wrapper, transaction, String.format("part%d", chunk));
-								
-							} catch (Throwable e) {
-								errors.add(e);
-							}
-						});
-						
-					}
-					
-				} catch(SftpStatusException e) {
-					/**
-					 * Fallback to standard random access mode. Don't be so strict on the reason
-					 * code because we don't know what other servers are sending back in response
-					 * to an unknown extension.
-					 */
-					verboseMessage("Falling back to pure random access support which may or may not be supported.");
-					
-					for (int i = 0; i < chunks; i++) {
-						var chunk = i + 1;
-						var pointer = i * chunkLength;
-						executor.submit(() -> {
-							try {
-								var tmp = chunkProgress.apply(localFile);
-								var wrapper = new FileTransferProgressWrapper(tmp, progress, total);
-								progressChunks.add(wrapper);
-								var lastChunk = chunk == chunks;
-								var thisLength = lastChunk ? chunkLength + finalLength : chunkLength;
-								sendChunk(localFile, pointer, thisLength, chunk, lastChunk, wrapper);
-							} catch (Throwable e2) {
-								errors.add(e2);
-							}
-						});
-					}
 				}
+				
+			} catch(SftpStatusException e) {
+				/**
+				 * Fallback to standard random access mode. Don't be so strict on the reason
+				 * code because we don't know what other servers are sending back in response
+				 * to an unknown extension.
+				 */
+				verboseMessage("Falling back to pure random access support which may or may not be supported.");
+				
+				for (int i = 0; i < chunks; i++) {
+					var chunk = i + 1;
+					var pointer = i * chunkLength;
+					executor.submit(() -> {
+						try {
+							var tmp = chunkProgress.apply(localFile);
+							var wrapper = new FileTransferProgressWrapper(tmp, progress, total);
+							progressChunks.add(wrapper);
+							var lastChunk = chunk == chunks;
+							var thisLength = lastChunk ? chunkLength + finalLength : chunkLength;
+							sendChunk(localFile, pointer, thisLength, chunk, lastChunk, wrapper);
+						} catch (Throwable e2) {
+							errors.add(e2);
+						}
+					});
+				}
+			}
 
 			return errors;
 		} finally {

@@ -21,6 +21,7 @@
 package com.sshtools.common.sftp;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
 
@@ -36,6 +37,8 @@ public interface MultipartTransfer {
 
 	Multipart getPart(String partIdentifier);
 
+	Collection<Multipart> getParts();
+	
 	String getUuid();
 
 	boolean getExists();

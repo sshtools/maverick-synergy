@@ -50,6 +50,8 @@ import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
 
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -454,6 +456,10 @@ public class S3AbstractFile implements AbstractFile {
 //			executor = Executors.newCachedThreadPool();
 		}
 		
+		public Collection<Multipart> getParts() {
+			return multiparts;
+		}
+		
 		@Override
 		public String getUploadId() {
 			return uploadId;
@@ -511,22 +517,27 @@ public class S3AbstractFile implements AbstractFile {
 				Log.info("Combining {} parts into final file {}", completed.size(), path);
 			}
 			
-			CompletedMultipartUpload completedMultipartUpload = CompletedMultipartUpload.builder()
-	                .parts(completed)
-	                .build();
-			
-			CompleteMultipartUploadRequest completeMultipartUploadRequest =
-	                CompleteMultipartUploadRequest.builder()
-	                        .bucket(bucketName)
-	                        .key(path)
-	                        .uploadId(uploadId)
-	                        .multipartUpload(completedMultipartUpload)
-	                        .build();
+			try {
+				CompletedMultipartUpload completedMultipartUpload = CompletedMultipartUpload.builder()
+				        .parts(completed)
+				        .build();
+				
+				CompleteMultipartUploadRequest completeMultipartUploadRequest =
+				        CompleteMultipartUploadRequest.builder()
+				                .bucket(bucketName)
+				                .key(path)
+				                .uploadId(uploadId)
+				                .multipartUpload(completedMultipartUpload)
+				                .build();
 
-	        s3.completeMultipartUpload(completeMultipartUploadRequest);
-	        
-	        if(Log.isInfoEnabled()) {
-				Log.info("Completed multipart upload of file {}", parts.size(), path);
+				s3.completeMultipartUpload(completeMultipartUploadRequest);
+				
+				if(Log.isInfoEnabled()) {
+					Log.info("Completed multipart upload of file {}", parts.size(), path);
+				}
+			} catch (AwsServiceException | SdkClientException e) {
+				Log.error("Captured error attempting to combine multipart file {}", path);
+				throw e;
 			}
 		}
 
@@ -631,19 +642,26 @@ public class S3AbstractFile implements AbstractFile {
 					if(Log.isInfoEnabled()) {
 						Log.info("REMOVEME: Uploading {} block number {}", part.getPartIdentifier(), currentPartNumber);
 					}
-					UploadPartRequest uploadPartRequest1 = UploadPartRequest.builder()
-			                .bucket(bucketName)
-			                .key(path)
-			                .uploadId(transfer.getUploadId())
-			                .partNumber(currentPartNumber).build();
 					
-					 String etag1 = s3.uploadPart(uploadPartRequest1, 
-				        		RequestBody.fromByteBuffer(ByteBuffer.wrap(buffer, 0, bufferPointer))).eTag();
-					 
-					 completedParts.add(CompletedPart.builder().partNumber(currentPartNumber).eTag(etag1).build());
-					 
-					 currentPartNumber++;
-					 bufferPointer = 0;
+					
+					try {
+						UploadPartRequest uploadPartRequest1 = UploadPartRequest.builder()
+						        .bucket(bucketName)
+						        .key(path)
+						        .uploadId(transfer.getUploadId())
+						        .partNumber(currentPartNumber).build();
+						
+						 String etag1 = s3.uploadPart(uploadPartRequest1, 
+						    		RequestBody.fromByteBuffer(ByteBuffer.wrap(buffer, 0, bufferPointer))).eTag();
+						 
+						 completedParts.add(CompletedPart.builder().partNumber(currentPartNumber).eTag(etag1).build());
+						 
+						 currentPartNumber++;
+						 bufferPointer = 0;
+					} catch (AwsServiceException | SdkClientException e) {
+						Log.error("Failed to upload block {} of part {}/{}", currentPartNumber, part.getTargetFile().getName(), part.getPartIdentifier());
+						throw e;
+					}
 				}
 				
 				pointer += toProcess;

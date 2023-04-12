@@ -20,6 +20,7 @@
  */
 package com.sshtools.synergy.s3;
 
+import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,6 +56,7 @@ import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.AbortMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
 import software.amazon.awssdk.services.s3.model.CompletedPart;
@@ -447,6 +449,7 @@ public class S3AbstractFile implements AbstractFile {
 		String path;
 		boolean exists;
 		AbstractFile file;
+		boolean cancelled;
 		
 		public S3MultipartTransfer(String path, AbstractFile file, String uploadId, Collection<Multipart> multiparts, boolean exists) {
 			this.uploadId = uploadId;
@@ -494,8 +497,30 @@ public class S3AbstractFile implements AbstractFile {
 		public void closePart(Multipart part) throws IOException {
 			completedParts.add(part);
 			if(completedParts.size() == multiparts.size()) {
-				combineParts();
+				if(cancelled) {
+					cancelUpload();
+				} else {
+					combineParts();
+				}
 			}
+		}
+		
+		private void cancelUpload() {
+			try {
+				if(Log.isErrorEnabled()) {
+					Log.info("REMOVEME: Cancelling upload {}/{} with id {}", bucketName, path, getUploadId());
+				}
+				s3.abortMultipartUpload(AbortMultipartUploadRequest.builder()
+				      .bucket(bucketName)
+				      .key(path)
+				      .uploadId(getUploadId()).build());
+			} catch (AwsServiceException | SdkClientException e) {
+				Log.error("Failed to cancel multpart upload {}", getUploadId(), e);
+			}
+		}
+
+		public void cancel() {
+			this.cancelled = true;
 		}
 		
 		@Override
@@ -537,6 +562,7 @@ public class S3AbstractFile implements AbstractFile {
 				}
 			} catch (AwsServiceException | SdkClientException e) {
 				Log.error("Captured error attempting to combine multipart file {}", path);
+				cancelUpload();
 				throw e;
 			}
 		}
@@ -553,6 +579,11 @@ public class S3AbstractFile implements AbstractFile {
 
 		public AbstractFile getFile() {
 			return file;
+		}
+
+		@Override
+		public boolean isCancelled() {
+			return cancelled;
 		}
 	}
 	
@@ -623,11 +654,16 @@ public class S3AbstractFile implements AbstractFile {
 		public int read(byte[] buf, int start, int numBytesToRead) throws IOException, PermissionDeniedException {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
 		public void write(byte[] data, int off, int len) throws IOException, PermissionDeniedException {
 			
+			if(transfer.isCancelled()) {
+				throw new EOFException();
+			}
+			
 			if(transfered + len > part.getLength().longValue()) {
+				Log.error("Upload bounds error for {}", transfer.getUploadId());
 				throw new PermissionDeniedException("Multipart upload bounds error! Client uploaded more data than initially reported");
 			}
 			
@@ -639,28 +675,43 @@ public class S3AbstractFile implements AbstractFile {
 				
 				if(bufferPointer == buffer.length || transfered == part.getLength().longValue()) {
 				
-					if(Log.isInfoEnabled()) {
-						Log.info("REMOVEME: Uploading {} block number {}", part.getPartIdentifier(), currentPartNumber);
-					}
-					
-					
-					try {
-						UploadPartRequest uploadPartRequest1 = UploadPartRequest.builder()
-						        .bucket(bucketName)
-						        .key(path)
-						        .uploadId(transfer.getUploadId())
-						        .partNumber(currentPartNumber).build();
+					int i = 0;
+					while(true) {
+						try {
 						
-						 String etag1 = s3.uploadPart(uploadPartRequest1, 
-						    		RequestBody.fromByteBuffer(ByteBuffer.wrap(buffer, 0, bufferPointer))).eTag();
-						 
-						 completedParts.add(CompletedPart.builder().partNumber(currentPartNumber).eTag(etag1).build());
-						 
-						 currentPartNumber++;
-						 bufferPointer = 0;
-					} catch (AwsServiceException | SdkClientException e) {
-						Log.error("Failed to upload block {} of part {}/{}", currentPartNumber, part.getTargetFile().getName(), part.getPartIdentifier());
-						throw e;
+							if(Log.isInfoEnabled()) {
+								Log.info("REMOVEME: Uploading {} block number {} attempt {}", 
+										part.getPartIdentifier(), currentPartNumber, i);
+							}
+							UploadPartRequest uploadPartRequest1 = UploadPartRequest.builder()
+							        .bucket(bucketName)
+							        .key(path)
+							        .uploadId(transfer.getUploadId())
+							        .partNumber(currentPartNumber).build();
+							
+							 String etag1 = s3.uploadPart(uploadPartRequest1, 
+							    		RequestBody.fromByteBuffer(ByteBuffer.wrap(buffer, 0, bufferPointer))).eTag();
+							 
+							 completedParts.add(CompletedPart.builder().partNumber(currentPartNumber).eTag(etag1).build());
+							 
+							 currentPartNumber++;
+							 bufferPointer = 0;
+							 
+							 break;
+						} catch (AwsServiceException | SdkClientException e) {
+							Log.error("Failed to upload block {} of part {}/{} for upload {}", 
+									currentPartNumber, part.getTargetFile().getName(), 
+									part.getPartIdentifier(), transfer.getUploadId());
+							
+							if(++i > 3) {
+								if(Log.isInfoEnabled()) {
+									Log.info("REMOVEME: Marking upload {} as failed", 
+											transfer.getUploadId());
+								}
+								transfer.cancel();
+								throw e;
+							}
+						}
 					}
 				}
 				

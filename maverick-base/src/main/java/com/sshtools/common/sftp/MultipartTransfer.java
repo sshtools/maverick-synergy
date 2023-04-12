@@ -42,4 +42,8 @@ public interface MultipartTransfer {
 	String getUuid();
 
 	boolean getExists();
+	
+	void cancel();
+	
+	boolean isCancelled();
 }

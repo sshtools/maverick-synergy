@@ -30,9 +30,13 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.GetBucketLocationRequest;
 import software.amazon.awssdk.utils.StringUtils;
 
 public class S3AbstractFileFactory implements AbstractFileFactory<S3AbstractFile> {
@@ -79,6 +83,18 @@ public class S3AbstractFileFactory implements AbstractFileFactory<S3AbstractFile
 		}
 		
 		this.s3 = builder.build();
+		
+	
+		try {
+			GetBucketLocationRequest request = GetBucketLocationRequest.builder()
+					.bucket(bucketName)
+					.build();
+			s3.getBucketLocation(request);
+		} catch (AwsServiceException | SdkClientException e) {
+			CreateBucketRequest req = CreateBucketRequest.builder().bucket(bucketName).build();
+			s3.createBucket(req);
+		}
+		
 	}
 
 	@Override

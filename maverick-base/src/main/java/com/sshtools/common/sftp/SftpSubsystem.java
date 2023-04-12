@@ -1609,6 +1609,8 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			if (!evt.error && error != null) {
 				evt.error = true;
 			}
+
+			boolean closed = false;
 			
 			if(evt.error && getContext().getPolicy(FileSystemPolicy.class).isSFTPCloseFileBeforeFailedTransferEvents()) {
 				try {
@@ -1618,6 +1620,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				} finally {
 					nfs.freeHandle(evt.handle);
 				}
+				closed = true;
 			}
 			
 			if (evt.isDir) {
@@ -1820,6 +1823,16 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										.addAttribute(
 												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
 												new Date()));
+			}
+			
+			if(evt.error && !closed && evt.forceClose) {
+				try {
+					nfs.closeFile(evt.handle);
+				} catch (InvalidHandleException e) {
+				} catch (IOException e) {
+				} finally {
+					nfs.freeHandle(evt.handle);
+				}
 			}
 		}
 	}

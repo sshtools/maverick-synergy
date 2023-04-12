@@ -539,7 +539,7 @@ public class S3AbstractFile implements AbstractFile {
 			}
 			
 			if(Log.isInfoEnabled()) {
-				Log.info("Combining {} parts into final file {}", completed.size(), path);
+				Log.info("REMOVEME: Combining {} parts into final file {} for upload {}", completed.size(), path, uploadId);
 			}
 			
 			try {
@@ -558,10 +558,10 @@ public class S3AbstractFile implements AbstractFile {
 				s3.completeMultipartUpload(completeMultipartUploadRequest);
 				
 				if(Log.isInfoEnabled()) {
-					Log.info("Completed multipart upload of file {}", parts.size(), path);
+					Log.info("REMOVEME: Completed multipart upload of file {} for upload {}", parts.size(), path, uploadId);
 				}
 			} catch (AwsServiceException | SdkClientException e) {
-				Log.error("Captured error attempting to combine multipart file {}", path);
+				Log.error("REMOVEME: Captured error attempting to combine multipart file {} upload {}", path, uploadId);
 				cancelUpload();
 				throw e;
 			}
@@ -613,11 +613,11 @@ public class S3AbstractFile implements AbstractFile {
 					((int) part.getStartPosition().longValue() / buffer.length) + 1;
 
 			if(Log.isInfoEnabled()) {
-				Log.info("REMOVEME: Part {} starts at position {} with a length of {} and starting part number {}", 
+				Log.info("REMOVEME: Part {} starts at position {} with a length of {} and starting part number {} upload {}", 
 						part.getPartIdentifier(),
 						pointer,
 						part.getLength().longValue(),
-						startPartNumber);
+						startPartNumber, transfer.getUploadId());
 			}
 		}
 		
@@ -663,7 +663,7 @@ public class S3AbstractFile implements AbstractFile {
 			}
 			
 			if(transfered + len > part.getLength().longValue()) {
-				Log.error("Upload bounds error for {}", transfer.getUploadId());
+				Log.error("REMOVEME: Upload bounds error for {}", transfer.getUploadId());
 				throw new PermissionDeniedException("Multipart upload bounds error! Client uploaded more data than initially reported");
 			}
 			
@@ -680,8 +680,8 @@ public class S3AbstractFile implements AbstractFile {
 						try {
 						
 							if(Log.isInfoEnabled()) {
-								Log.info("REMOVEME: Uploading {} block number {} attempt {}", 
-										part.getPartIdentifier(), currentPartNumber, i);
+								Log.info("REMOVEME: Uploading {} block number {} attempt {} for upload {}", 
+										part.getPartIdentifier(), currentPartNumber, i, transfer.getUploadId());
 							}
 							UploadPartRequest uploadPartRequest1 = UploadPartRequest.builder()
 							        .bucket(bucketName)
@@ -699,7 +699,7 @@ public class S3AbstractFile implements AbstractFile {
 							 
 							 break;
 						} catch (AwsServiceException | SdkClientException e) {
-							Log.error("Failed to upload block {} of part {}/{} for upload {}", 
+							Log.error("REMOVEME: Failed to upload block {} of part {}/{} for upload {}", 
 									currentPartNumber, part.getTargetFile().getName(), 
 									part.getPartIdentifier(), transfer.getUploadId());
 							

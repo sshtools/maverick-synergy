@@ -700,15 +700,16 @@ public final class AbstractFileSystem {
 			OpenFile openFile = openFiles.get(h);
 			if(openFile!=null) {
 				openFile.processEvent(evt);
-			}
-			
-			OpenDirectory openDirectory = openDirectories.get(h);
-			if(openDirectory!=null) {
-				if(openDirectory.f!=null) {
-					evt.addAttribute(EventCodes.ATTRIBUTE_ABSTRACT_FILE, openDirectory.f);
-				}
+			} else {
+				OpenDirectory openDirectory = openDirectories.get(h);
+				if(openDirectory!=null) {
+					if(openDirectory.f!=null) {
+						evt.addAttribute(EventCodes.ATTRIBUTE_ABSTRACT_FILE, openDirectory.f);
+					}
+				} 
 			}
 		}
+
 		fileFactory.populateEvent(evt);
 	}
 

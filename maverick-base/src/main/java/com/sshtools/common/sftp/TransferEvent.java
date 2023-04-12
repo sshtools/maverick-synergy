@@ -39,6 +39,7 @@ public class TransferEvent {
 		public boolean error = false;
 		public Throwable ex;
 		String key;
+		public boolean forceClose;
 		
 		public byte[] getHandle() {
 			return handle;
@@ -117,6 +118,12 @@ public class TransferEvent {
 		}
 		public void setKey(String key) {
 			this.key = key;
+		}
+		public boolean isForceClose() {
+			return forceClose;
+		}
+		public void setForceClose(boolean forceClose) {
+			this.forceClose = forceClose;
 		}
 		
 	}

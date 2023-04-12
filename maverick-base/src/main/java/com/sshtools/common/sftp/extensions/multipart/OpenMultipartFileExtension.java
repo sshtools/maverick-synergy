@@ -63,6 +63,7 @@ public class OpenMultipartFileExtension implements SftpExtension {
 			evt.setPath(t.getPath() + "/" + partId);
 			evt.setNfs(fs);
 			evt.setHandle(handle);
+			evt.setForceClose(true);
 			evt.setExists(t.getExists());
 			evt.setFlags(new UnsignedInteger32(AbstractFileSystem.OPEN_WRITE));
 			evt.setKey(fs.handleToString(handle));	

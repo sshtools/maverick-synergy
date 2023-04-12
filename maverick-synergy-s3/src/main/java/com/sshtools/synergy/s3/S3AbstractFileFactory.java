@@ -37,6 +37,8 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.GetBucketLocationRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 import software.amazon.awssdk.utils.StringUtils;
 
 public class S3AbstractFileFactory implements AbstractFileFactory<S3AbstractFile> {
@@ -93,6 +95,14 @@ public class S3AbstractFileFactory implements AbstractFileFactory<S3AbstractFile
 		} catch (AwsServiceException | SdkClientException e) {
 			CreateBucketRequest req = CreateBucketRequest.builder().bucket(bucketName).build();
 			s3.createBucket(req);
+			
+			S3Waiter waiter = s3.waiter();
+	        HeadObjectRequest requestWait = HeadObjectRequest.builder()
+	                        .bucket(bucketName)
+	                        .key("")
+	                        .build();
+	         
+	        waiter.waitUntilObjectExists(requestWait);
 		}
 		
 	}

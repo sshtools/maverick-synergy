@@ -51,6 +51,7 @@ import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.client.sftp.TransferCancelledException;
 import com.sshtools.client.tasks.PushTask.PushTaskBuilder.ProgressMessages;
 import com.sshtools.common.files.AbstractFile;
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
@@ -858,35 +859,42 @@ public final class PushTask extends AbstractFileTask {
 					
 					byte[] handle = sftp.getSubsystemChannel().getHandleResponse(sftp.getSubsystemChannel().sendExtensionMessage("open-part-file@sshtools.com", msg.toByteArray()));
 					
-					sftp.getSubsystemChannel().performOptimizedWrite(localFile.getName(), 
-							handle, 
-							blocksize,
-							outstandingRequests, 
-							new ChunkInputStream(file, chunkLength),
-								buffersize,
-								new FileTransferProgress() {
+					try {
+						sftp.getSubsystemChannel().performOptimizedWrite(localFile.getName(), 
+								handle, 
+								blocksize,
+								outstandingRequests, 
+								new ChunkInputStream(file, chunkLength),
+									buffersize,
+									new FileTransferProgress() {
 
-									@Override
-									public void started(long bytesTotal, String file) {
-										progress.started(bytesTotal, file);
-									}
+										@Override
+										public void started(long bytesTotal, String file) {
+											progress.started(bytesTotal, file);
+										}
 
-									@Override
-									public boolean isCancelled() {
-										return progress.isCancelled();
-									}
+										@Override
+										public boolean isCancelled() {
+											return progress.isCancelled();
+										}
 
-									@Override
-									public void progressed(long bytesSoFar) {
-										progress.progressed(bytesSoFar - pointer);
-									}
+										@Override
+										public void progressed(long bytesSoFar) {
+											progress.progressed(bytesSoFar - pointer);
+										}
 
-									@Override
-									public void completed() {
-										progress.completed();
-									}
+										@Override
+										public void completed() {
+											progress.completed();
+										}
 
-						}, pointer);
+							}, pointer);
+					} catch (SftpStatusException | SshException | TransferCancelledException e) {
+						Log.error("Part upload failed", e);
+						throw e;
+					} finally {
+						sftp.getSubsystemChannel().closeHandle(handle);
+					}
 				}
 		} 
 		catch(IOException ioe) {

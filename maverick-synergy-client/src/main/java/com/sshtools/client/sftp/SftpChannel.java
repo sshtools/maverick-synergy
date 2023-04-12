@@ -2173,7 +2173,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 	}
 
-	void closeHandle(byte[] handle) throws SftpStatusException, SshException {
+	public void closeHandle(byte[] handle) throws SftpStatusException, SshException {
 		if (!isValidHandle(handle)) {
 			throw new SftpStatusException(SftpStatusException.INVALID_HANDLE,
 					"The handle is invalid!");

@@ -23,6 +23,8 @@ package com.sshtools.synergy.s3;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.sshtools.common.events.Event;
 import com.sshtools.common.files.AbstractFileFactory;
@@ -37,12 +39,11 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.GetBucketLocationRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 import software.amazon.awssdk.utils.StringUtils;
 
 public class S3AbstractFileFactory implements AbstractFileFactory<S3AbstractFile> {
 
+	static Set<String> cachedBucketNames = new HashSet<>();
 	
 	String bucketName;
 	S3Client s3;
@@ -87,22 +88,18 @@ public class S3AbstractFileFactory implements AbstractFileFactory<S3AbstractFile
 		this.s3 = builder.build();
 		
 	
-		try {
-			GetBucketLocationRequest request = GetBucketLocationRequest.builder()
-					.bucket(bucketName)
-					.build();
-			s3.getBucketLocation(request);
-		} catch (AwsServiceException | SdkClientException e) {
-			CreateBucketRequest req = CreateBucketRequest.builder().bucket(bucketName).build();
-			s3.createBucket(req);
-			
-			S3Waiter waiter = s3.waiter();
-	        HeadObjectRequest requestWait = HeadObjectRequest.builder()
-	                        .bucket(bucketName)
-	                        .key("")
-	                        .build();
-	         
-	        waiter.waitUntilObjectExists(requestWait);
+		if(!cachedBucketNames.contains(bucketName)) {
+			try {
+				GetBucketLocationRequest request = GetBucketLocationRequest.builder()
+						.bucket(bucketName)
+						.build();
+				s3.getBucketLocation(request);
+				cachedBucketNames.add(bucketName);
+			} catch (AwsServiceException | SdkClientException e) {
+				CreateBucketRequest req = CreateBucketRequest.builder().bucket(bucketName).build();
+				s3.createBucket(req);
+				cachedBucketNames.add(bucketName);
+			}
 		}
 		
 	}

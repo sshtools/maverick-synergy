@@ -2443,8 +2443,6 @@ public class SftpClient implements Closeable {
 			throw new IOException("Local file " + localFile + " does not exist!");
 		}
 
-		DigestInputStream dis = null;
-
 		try {
 			MessageDigest md = null;
 			switch (algorithm) {
@@ -2468,20 +2466,17 @@ public class SftpClient implements Closeable {
 				Log.debug("Remote hash for {} is {}", remoteFile, Utils.bytesToHex(remoteHash));
 			}
 
-			try {
-				dis = new DigestInputStream(local.getInputStream(), md);
+			try(var dis = new DigestInputStream(local.getInputStream(), md)) {
 				if (offset > 0) {
 					dis.skip(offset);
 				}
 
 				if (length > 0) {
-					IOUtils.copy(dis, new NullOutputStream(), length);
+					IOUtils.copy(dis, OutputStream.nullOutputStream(), length);
 				} else {
-					IOUtils.copy(dis, new NullOutputStream());
+					IOUtils.copy(dis, OutputStream.nullOutputStream());
 				}
-			} finally {
-				IOUtils.closeStream(dis);
-			}
+			} 
 
 			byte[] localHash = md.digest();
 

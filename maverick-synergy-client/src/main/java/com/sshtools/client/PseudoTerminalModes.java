@@ -23,6 +23,8 @@
 package com.sshtools.client;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayWriter;
@@ -39,26 +41,104 @@ import com.sshtools.common.util.ByteArrayWriter;
  * support them.</em></p>
  *
  * <blockquote><pre>
- * SshSession session = ssh.openSessionChannel();
- * PseudoTerminalModes modes = new PseudoTerminalModes(ssh);
- *
- * // Turning off echo
- * modes.setTerminalMode(PseudoTerminalModes.ECHO, false);
- *
- * // Setting the Input/Output baud rate
- * modes.setTerminalMode(PseudoTerminalModes.TTY_OP_ISPEED, 38400);
- * modes.setTerminalMode(PseudoTerminalModes.TTY_OP_OSPEED, 38400);
- *
- * session.requestPseudoTerminal("vt100", 80, 24, 0, 0, modes);
+ * var session = ssh.openSessionChannel();
+ * session.requestPseudoTerminal("vt100", 80, 24, 0, 0, PseudoTerminalModesBuilder.create().
+ * 			// Turning off echo
+ * 			withMode(PseudoTerminalModes.ECHO, false).
+ * 			// Setting the Input/Output baud rate
+ * 			withMode(PseudoTerminalModes.TTY_OP_ISPEED, 38400).
+ * 			withMode(PseudoTerminalModes.TTY_OP_OSPEED, 38400).
+ * 			build());
  * </pre></blockquote>
  *
- * <p>You can reuse an instance of this class providing that you do not
- * want to change any of the modes. If you do want to change modes you can
- * call the reset method to clear out old modes.</p>
  *
  * @author Lee David Painter
  */
 public class PseudoTerminalModes {
+	
+	/**
+	 * Builds {@link PseudoTerminalModes}.
+	 * 
+	 * <p>
+	 * You can reuse an instance of this class providing that you do not want to
+	 * change any of the modes. If you do want to change modes you can call the
+	 * reset method to clear out old modes.
+	 * </p>
+	 */
+	public final static class PseudoTerminalModesBuilder {
+		private final Map<Integer, Integer> codes = new LinkedHashMap<>();
+		
+		/**
+		 * Clear all modes set in this builder.
+		 * 
+		 * @return this for chaining
+		 */
+		public PseudoTerminalModesBuilder reset() {
+			codes.clear();
+			return this;
+		}
+		
+		/**
+		 * Set a <code>boolean</code> mode.
+		 *  
+		 * @param mode mode
+		 * @param value value to set
+		 * @return this for chaining
+		 */
+		public PseudoTerminalModesBuilder withMode(int mode, boolean value) {
+			return withMode(mode, value ? 1 : 0);
+		}
+		
+		/**
+		 * Set an <code>integer</code> mode.
+		 *  
+		 * @param mode mode
+		 * @param value value to set
+		 * @return this for chaining
+		 */
+		public PseudoTerminalModesBuilder withMode(int mode, int value) {
+			codes.put(mode, value);
+			return this;
+		}
+		
+		/**
+		 * Set a <code>boolean>code> mode to <code>true</code>.
+		 * 
+		 * @param mode mode
+		 * @return this for chaining
+		 */
+		public PseudoTerminalModesBuilder withMode(int mode) {
+			return withMode(mode, true);
+		}
+
+		/**
+		 * Set a <code>boolean>code> mode to <code>false</code>.
+		 * 
+		 * @param mode mode
+		 * @return this for chaining
+		 */
+		public PseudoTerminalModesBuilder withoutMode(int mode) {
+			return withMode(mode, false);
+		}
+		
+		/**
+		 * Create a new {@link PseudoTerminalModesBuilder}
+		 *
+		 * @return builder
+		 */
+		public static PseudoTerminalModesBuilder create() {
+			return new PseudoTerminalModesBuilder();
+		}
+		
+		/**
+		 * Build a new {@link PseudoTerminalModes}.
+		 * 
+		 * @return modes
+		 */
+		public PseudoTerminalModes build() {
+			return new PseudoTerminalModes(this);
+		}
+	}
 
     /**
      * Interrupt character; 255 if none.
@@ -351,20 +431,52 @@ public class PseudoTerminalModes {
      */
     public static final int TTY_OP_OSPEED = 129;
 
-
-    ByteArrayWriter encodedModes = new ByteArrayWriter();
-    byte[] output;
-
+    /*
+     * Will be removed, and {@link #output} made final. 
+     */
+    @Deprecated(since = "3.1.0", forRemoval = true)
+    private ByteArrayWriter encodedModes = new ByteArrayWriter();
+    
+    private byte[] output;
+    
+    /**
+     * Construct a new empty set of modes, and use {@link #setTerminalMode(int, boolean)} and {@link #setTerminalMode(int, int)}
+     * to set this modes.
+     * 
+     * This is deprecated, use {@link PseudoTerminalModesBuilder} instead. 
+     * 
+     * @param modes 
+     * @throws IOException
+     */
+    @Deprecated(since = "3.1.0", forRemoval = true)
     public PseudoTerminalModes() {
     }
     
+    /**
+     * Construct modes from the encoded modes data.
+     * 
+     * @param modes 
+     * @throws IOException
+     */
+    @Deprecated(since = "3.1.0", forRemoval = true)
     public PseudoTerminalModes(byte[] modes) throws IOException {
     	this.output = modes;
     }
 
-    /**
+    private PseudoTerminalModes(PseudoTerminalModesBuilder builder) {
+    	builder.codes.forEach((k,v) -> {
+    		try {
+				setTerminalMode(k, v);
+			} catch (SshException e) {
+				throw new IllegalArgumentException("Failed to set modes.", e);
+			}
+    	});
+	}
+
+	/**
      * Clear the modes
      */
+    @Deprecated(since = "3.1.0", forRemoval = true)
     public void reset() {
         output = null;
         encodedModes.reset();
@@ -376,6 +488,7 @@ public class PseudoTerminalModes {
      * @param value int
      * @throws SshException
      */
+    @Deprecated(since = "3.1.0", forRemoval = true)
     public void setTerminalMode(int mode, int value) throws SshException {
         try {
 
@@ -393,6 +506,7 @@ public class PseudoTerminalModes {
      * @param value boolean
      * @throws SshException
      */
+    @Deprecated(since = "3.1.0", forRemoval = true)
     public void setTerminalMode(int mode, boolean value) throws SshException {
         setTerminalMode(mode, value ? 1 : 0);
     }

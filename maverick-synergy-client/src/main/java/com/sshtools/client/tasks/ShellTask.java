@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.function.Function;
 
+import com.sshtools.client.PseudoTerminalModes;
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.shell.ShellTimeoutException;
@@ -75,7 +76,8 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		private Optional<Function<SshConnection, SessionChannelNG>> session = Optional.empty();
 		private int cols = 80;
 		private int rows = 24;
-		private boolean withPty = false;
+		private boolean withPty = true;
+		private Optional<PseudoTerminalModes> modes = Optional.empty();
 
 		private ShellTaskBuilder() {
 		}
@@ -102,7 +104,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 
 		/**
 		 * Set the terminal type to use when allocating a PTY. Note, this
-		 * will have no effect if a custom {@link #onBeforeOpen(ShellTaskEvent)} is set.
+		 * will have no effect if {{@link #withPty} is set to <code>false</code>.
 		 * 
 		 * @param term type
 		 * @return builder for chaining
@@ -113,7 +115,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 
 		/**
 		 * Set the terminal type to use when allocating a PTY. Note, this
-		 * will have no effect if a custom {@link #onBeforeOpen(ShellTaskEvent)} is set.
+		 * will have no effect if {{@link #withPty} is set to <code>false</code>.
 		 * 
 		 * @param term type
 		 * @return builder for chaining
@@ -125,7 +127,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 
 		/**
 		 * Set the terminal width in columns to use when allocating a PTY. Note, this
-		 * will have no effect if a custom {@link #onBeforeOpen(ShellTaskEvent)} is set.
+		 * will have no effect if {{@link #withPty} is set to <code>false</code>.
 		 * 
 		 * @param cols cols
 		 * @return builder for chaining
@@ -137,7 +139,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 
 		/**
 		 * Set the terminal height in rows to use when allocating a PTY. Note, this
-		 * will have no effect if a custom {@link #onBeforeOpen(ShellTaskEvent)} is set.
+		 * will have no effect if {{@link #withPty} is set to <code>false</code>.
 		 * 
 		 * @param rows row
 		 * @return builder for chaining
@@ -148,8 +150,20 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		}
 
 		/**
+		 * Set the terminal modes to use when allocating a PTY. Note, this
+		 * will have no effect if {{@link #withPty} is set to <code>false</code>.
+		 * 
+		 * @param modes modes
+		 * @return builder for chaining
+		 */
+		public final ShellTaskBuilder withModes(PseudoTerminalModes modes) {
+			this.modes = Optional.of(modes);
+			return this;
+		}
+
+		/**
 		 * Set a callback to run on start of the shell. By default, this will allocate a new
-		 * PTY using the other configuratio in this builder, such as terminal type, columns etc.
+		 * PTY using the other configuration in this builder, such as terminal type, columns etc.
 		 * If you set a new callback, you will have to do this allocation yourself.
 		 * 
 		 * @param onStartShell on start shell callback
@@ -187,8 +201,27 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 			return new ShellTask(this);
 		}
 
+		/**
+		 * Set whether or not to allocate a Pty. When set to <code>true</code>, other
+		 * Pty characteristics can be set using builder methods such as {@link #withRows(int)}, 
+		 * {@link #withModes(PseudoTerminalModes)} and others. By default a Pty is allocated.
+		 * 
+		 * @param withPty whether to allocate a PTY. 
+		 * @return builder for chaining
+		 */
 		public ShellTaskBuilder withPty(boolean withPty) {
 			this.withPty = withPty;
+			return this;
+		}
+
+		/**
+		 * Do not to allocate a Pty. 
+		 * 
+		 * @param withPty whether to allocate a PTY. 
+		 * @return builder for chaining
+		 */
+		public ShellTaskBuilder withoutPty() {
+			this.withPty = false;
 			return this;
 		}
 	}
@@ -201,6 +234,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 	private final int cols;
 	private final Optional<Function<SshConnection, SessionChannelNG>> session;
 	private final boolean withPty;
+	private final Optional<PseudoTerminalModes> modes;
 	
 	private ShellTask(ShellTaskBuilder builder) {
 		super(builder);
@@ -212,6 +246,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		this.rows = builder.rows;
 		this.cols = builder.cols;
 		this.session = builder.session;
+		this.modes = builder.modes;
 	}
 
 	/**
@@ -262,7 +297,10 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 	protected void beforeStartShell(SessionChannelNG session) {
 		try {
 			if(withPty) {
-				session.allocatePseudoTerminal(termType, cols, rows);
+				if(modes.isEmpty())
+					session.allocatePseudoTerminal(termType, cols, rows);
+				else
+					session.allocatePseudoTerminal(termType, cols, rows, 0, 0, modes.get());
 			}
 			
 			if(onStartShell.isPresent()) {

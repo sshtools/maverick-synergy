@@ -48,7 +48,7 @@ public class IOUtilTests extends TestCase {
 	
 	public void testRolloverPartial() throws IOException {
 		File parent = new File("tmp");
-		IOUtils.delTree(parent);
+		IOUtils.silentRecursiveDelete(parent);
 		
 		parent.mkdirs();
 		
@@ -83,7 +83,7 @@ public class IOUtilTests extends TestCase {
 	
 	public void testRolloverFull() throws IOException {
 		File parent = new File("tmp");
-		IOUtils.delTree(parent);
+		IOUtils.silentRecursiveDelete(parent);
 		
 		parent.mkdirs();
 		

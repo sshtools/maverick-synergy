@@ -32,11 +32,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -259,6 +264,94 @@ public class IOUtils {
     }
   }
 
+
+	/**
+	 * Recursively delete all contents of the given directory. By default symbolic links will not be followed.
+	 * The directory itself will NOT be deleted.
+	 * 
+	 * @param directory directory containing files or directories
+	 * @param options options
+	 * @throws UncheckedIOException on any error
+	 */
+	public static void recursiveContentsDelete(File directory, FileVisitOption... options) {
+		recursiveContentsDelete(directory.toPath(), options);
+	}
+	
+	/**
+	 * Recursively delete all contents of the given directory. By default symbolic links will not be followed.
+	 * The directory itself will NOT be deleted.
+	 * 
+	 * @param directory directory containing files or directories
+	 * @param options options
+	 * @throws UncheckedIOException on any error
+	 */
+	public static void recursiveContentsDelete(Path directory, FileVisitOption... options) {
+		try(var stream = Files.newDirectoryStream(directory)) {
+			stream.forEach(d -> recursiveDelete(d, options));
+		}
+		catch(IOException ioe) {
+			throw new UncheckedIOException(ioe);
+		}
+	}
+	
+	/**
+	 * Recursively delete a file or directory, and all child files and directories if a directory. By default symbolic links will not be followed.
+	 * An exception will NOT be thrown on error, instead <code>false</code> will be returned.
+	 * 
+	 * @param fileOrDirectory directory containing files or directories
+	 * @param options options
+	 * @return success
+	 */
+	public static boolean silentRecursiveDelete(File fileOrDirectory, FileVisitOption... options) {
+		return silentRecursiveDelete(fileOrDirectory.toPath(), options);
+	}
+	
+	/**
+	 * Recursively delete a file or directory, and all child files and directories if a directory. By default symbolic links will not be followed.
+	 * An exception will NOT be thrown on error, instead <code>false</code> will be returned.
+	 * 
+	 * @param fileOrDirectory directory containing files or directories
+	 * @param options options
+	 * @return success
+	 */
+	public static boolean silentRecursiveDelete(Path fileOrDirectory, FileVisitOption... options) {
+		try {
+			recursiveDelete(fileOrDirectory, options);
+		} catch (UncheckedIOException ioe) {
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Recursively delete a file or directory, and all child files and directories if a directory. By default symbolic links will not be followed.
+	 * 
+	 * @param fileOrDirectory directory containing files or directories
+	 * @param options options
+	 * @throws UncheckedIOException on any error
+	 */
+	public static void recursiveDelete(Path fileOrDirectory, FileVisitOption... options) {
+		try (var walk = Files.walk(fileOrDirectory, options)) {
+			walk.sorted(Comparator.reverseOrder()).forEach(p -> {
+				try {
+					Files.delete(p);
+				} catch (IOException e) {
+					throw new UncheckedIOException(e);
+				}
+			});
+		} 
+		catch(IOException ioe) {
+			throw new UncheckedIOException(ioe);
+		}
+	}
+
+  /**
+   * Deprecated and unsafe (follows symbolic links), use {@link #recursiveDelete(File, FileVisitOption...)}. 
+   * 
+   * @param file file or directory to completely remove.
+   * @return success
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public static boolean delTree(File file) {
     if (file.isFile()) {
       return file.delete();
@@ -273,7 +366,14 @@ public class IOUtils {
 	}
     return true;
   }
-
+  
+  /**
+   * Deprecated and unsafe (follows symbolic links), use {@link #recursiveContentsDelete(Path, FileVisitOption...)}. 
+   * 
+   * @param dir directory of contents to remove.
+   * @return success
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public static void recurseDeleteDirectory(File dir) {
 
     String[] files = dir.list();

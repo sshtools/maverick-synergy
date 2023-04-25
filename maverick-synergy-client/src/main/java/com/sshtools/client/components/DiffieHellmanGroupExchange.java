@@ -386,11 +386,9 @@ public abstract class DiffieHellmanGroupExchange extends SshKeyExchangeClient
 			retry--;
 
 			SecureRandom rnd = JCEComponentManager.getSecureRandom();
-	        int minBits = g.bitLength();
 	        int maxBits = p.subtract(BigInteger.ONE).divide(new BigInteger("2")).bitLength();
 	        
-	        int genBits = (int) ( ( (maxBits - minBits + 1) * rnd.nextFloat()) + minBits);
-	        x = new BigInteger(genBits, rnd);
+	        x = new BigInteger(maxBits, rnd);
 	        
 	        // Calculate e
 	        e = g.modPow(x, p);

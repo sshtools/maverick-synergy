@@ -37,7 +37,7 @@ public class UnixDomainSocketGlobalRequestHandler implements GlobalRequestHandle
 	@Override
 	public boolean processGlobalRequest(GlobalRequest request, ConnectionProtocol<SshServerContext> connection,
 			boolean wantreply, ByteArrayWriter response) throws GlobalRequestHandlerException, IOException {
-		if (UnixDomainSockets.STREAM_LOCAL_FORWARD_CHANNEL.equals(request.getName())) {
+		if (UnixDomainSockets.STREAM_LOCAL_FORWARD_REQUEST.equals(request.getName())) {
 			boolean success = false;
 			var bar = new ByteArrayReader(request.getData());
 			var path = bar.readString();
@@ -62,7 +62,7 @@ public class UnixDomainSocketGlobalRequestHandler implements GlobalRequestHandle
 				}
 			}
 			return false;
-		} else if (UnixDomainSockets.CANCEL_STREAM_LOCAL_FORWARD_CHANNEL.equals(request.getName())) {
+		} else if (UnixDomainSockets.CANCEL_STREAM_LOCAL_FORWARD_REQUEST.equals(request.getName())) {
 			var bar = new ByteArrayReader(request.getData());
 			var path = bar.readString();
 			if (connection.getContext().getForwardingManager().stopListening(path, 0,
@@ -76,8 +76,8 @@ public class UnixDomainSocketGlobalRequestHandler implements GlobalRequestHandle
 
 	@Override
 	public String[] supportedRequests() {
-		return new String[] { UnixDomainSockets.STREAM_LOCAL_FORWARD_CHANNEL,
-				UnixDomainSockets.CANCEL_STREAM_LOCAL_FORWARD_CHANNEL };
+		return new String[] { UnixDomainSockets.STREAM_LOCAL_FORWARD_REQUEST,
+				UnixDomainSockets.CANCEL_STREAM_LOCAL_FORWARD_REQUEST };
 	}
 
 }

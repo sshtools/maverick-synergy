@@ -49,7 +49,7 @@ public class UnixDomainSocketRemoteForwardRequestHandler implements RemoteForwar
 			msg.writeString(hostToBind);
 			msg.writeString(""); // Reserved
 			
-			var request = new GlobalRequest(UnixDomainSockets.STREAM_LOCAL_FORWARD_CHANNEL, conn.getConnection(), msg.toByteArray());
+			var request = new GlobalRequest(UnixDomainSockets.STREAM_LOCAL_FORWARD_REQUEST, conn.getConnection(), msg.toByteArray());
 
 			conn.sendGlobalRequest(request, true);
 			request.waitForever();
@@ -77,7 +77,7 @@ public class UnixDomainSocketRemoteForwardRequestHandler implements RemoteForwar
 		try(var msg = new ByteArrayWriter()) {
 			msg.writeString(hostToBind);
 
-			var request = new GlobalRequest(UnixDomainSockets.CANCEL_STREAM_LOCAL_FORWARD_CHANNEL, conn.getConnection(), msg.toByteArray());
+			var request = new GlobalRequest(UnixDomainSockets.CANCEL_STREAM_LOCAL_FORWARD_REQUEST, conn.getConnection(), msg.toByteArray());
 
 			conn.sendGlobalRequest(request, true);
 			request.waitForever();

@@ -39,9 +39,9 @@ public class UnixDomainSocketServerRemoteChannelFactory extends DefaultServerCha
 
 	protected ChannelNG<SshServerContext> onCreateChannel(String channeltype, SshConnection con)
 			throws UnsupportedChannelException, PermissionDeniedException {
-		if (channeltype.equals(UnixDomainSockets.STREAM_LOCAL_FORWARD_CHANNEL)) {
+		if (channeltype.equals(UnixDomainSockets.STREAM_LOCAL_FORWARD_REQUEST)) {
 			return new UnixDomainSocketRemoteForwardingChannel<SshServerContext>(
-					UnixDomainSockets.STREAM_LOCAL_FORWARD_CHANNEL, con, hostToConnect, 0, null,
+					UnixDomainSockets.STREAM_LOCAL_FORWARD_REQUEST, con, hostToConnect, 0, null,
 					(SshServerContext) con.getContext());
 		}
 		return super.onCreateChannel(channeltype, con);

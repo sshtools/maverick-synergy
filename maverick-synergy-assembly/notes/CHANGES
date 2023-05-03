@@ -1,14 +1,59 @@
-Maverick Synergy 3.0.14 - TBC
+Maverick Synergy 3.1.0 - TBC
 
+Features
+  o Minimum Java version has been increased to Java 11.
+  o The API is now compatible with JPMS (Java Modularisation)
+  o New module added to support JDK16's native Unix domain sockets to reduce dependency on third-party APIs.
+  o Unix domain socket tunnels are now supported (direct-streamlocal@openssh.com, forwarded-streamlocal@openssh.com)
+  
 Bug Fixes
-  o Release all event listeners from channel collection when all events are exhausted.
-  o Improvements to the way VirtualMappedFile caches children so that cache is cleared when events occur that could change contents of the directory.
-  o SFTP thread synchronizer releases lock on access to reading thread even when the thread had not taken the lock itself.
-  o Changed synchronization strategy in SshEngine to prevent slow shutdown. Also prevents the often seen RejectedExecutionException on shutdown.
+  o 
   
 =================
 =  HISTORY      =
 =================
+
+Maverick Synergy 3.0.17 - May 3, 2023
+
+Bug Fixes
+  o SFTP v4 file type is accessible to all versions and not correctly set when using v3 of the protocol.
+  o Ensure Diffie Hellman prime is generated with maximum bits possible to prevent random key exchange errors.
+ 
+----------------- 
+
+Maverick Synergy 3.0.16 - Jan 10, 2023
+
+Bug Fixes
+  o Version 5 "supported" structure is expecting count of supported extensions whereas specification expects read to EOF.
+  o DynamicBuffer and ScpClientIO available method implementation does not adhere to contract and returns -1 when EOF instead of zero.
+  o OpenSshCertificate incorrectly sorts extensions resulting in failed authentication attempts when custom extensions are present.
+  o PrivateKeyFileAuthenticator will now additionally use certificate for authentication if a certificate file exists for the private key.
+  
+-----------------
+
+Maverick Synergy 3.0.15 - Dec 1, 2022
+
+Bug Fixes
+  o Nested virtual mounts are not returned correctly in file listings.
+  o ssh-ed448 keys were supported but could not be generated.
+  
+-----------------
+
+Maverick Synergy 3.0.14 - Oct 20, 2022
+
+Bug Fixes
+  o Fixes to CachingDataWindow to help prevent truncation of data if data remains unread and cache is closed.
+  o Channel data cache can be closed whilst a synchronized method is being executed.
+  o Release all event listeners from channel collection when all events are exhausted.
+  o Improvements to the way VirtualMappedFile caches children so that cache is cleared when events occur that could change contents of the directory.
+  o SFTP thread synchronizer releases lock on access to reading thread even when the thread had not taken the lock itself.
+  o Changed synchronization strategy in SshEngine to prevent slow shutdown. Also prevents the often seen RejectedExecutionException on shutdown.
+  o Update VFS dependency to 3.3.0 final release
+  o Throw an exception to avoid NPE when no file system is configured.
+  o Support sandboxing in DirectFileFactory.
+  o Support Windows 10/11 home folder locations in DirectFileFactory as well as previous Windows versions.
+
+-----------------
 
 Maverick Synergy 3.0.13 - Sep 2, 2022
 

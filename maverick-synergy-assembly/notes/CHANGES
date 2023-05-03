@@ -3,11 +3,45 @@ Maverick Synergy 3.1.0 - TBC
 Features
   o Minimum Java version has been increased to Java 11.
   o The API is now compatible with JPMS (Java Modularisation)
+  o Extendible SSH Agent transports. In order to allow optional native Unix domain socket support, and to reduce 3rd party dependencies, you must now choose one or more of the `AgentProvider` implementations. So add at least one of maverick-sshagent-jdk16-sockets, maverick-sshagent-named-pipes or maverick-ssh-agent-jni-sockets.
   o New module added to support JDK16's native Unix domain sockets to reduce dependency on third-party APIs.
   o Unix domain socket tunnels are now supported (direct-streamlocal@openssh.com, forwarded-streamlocal@openssh.com)
+  o Authenticators requiring password/passphrase input now have optional Supplier argument for retrieving value when required and not at construction.
+  o Added methods to utility classes to support Path objects.
+  o Added static method getEnvironmentSocket to resolve agent socket through environment variables.
+  o New IdentityFileAuthenticator that prompts for password once the key is deemed acceptable for authentication.
+  o FileTransferProgress interface now made default.
+  o Make SftpClient Closeable.
+  o Jzlib dependency removed and replaced with standard Java compression API.
+  o ServiceLoader is now the basis of the loading of components (i.e. ciphers, kex, public keys, hmac, compress). To achieve this, each component now has an associated factory class responsible for creating the implementation. To add custom ciphers etc, simple implement the cipher, it's factory, and add the service using the standard mechanism using module-info.java or a META-INF/services files.
+  o Components may be enabled and disabled using ComponentManager.setDefaultEnabled().
+  o Improved SshdConfigFile support for reading and writing sshd_config and ssh_config files.
+  o Added isOlderThan method to IOUtils.
+  o Extract format longname so it can be used by other SFTP clients.
+  o Added IPPolicy to LoadBalancerPolicy.
+  o Changed checkConnection to take InetAddress.
+  o Added option for public key verifier implementation.
+  o RSA keys will now upgrade to SHA2 types where possible.
+  o Added UTF-8 mopde to PseudoTerminalModes          
+  o New PushSftp task to utilise multiple connections to increase throughput on latent networks.
+  o All *Task implementations (ShellTask, UploadFileTask, DownloadFileTask etc) now have deprecated constructors and should be created through their new builder implementations.
+  o Support for PseudoTerminalModes creation through new PseudoTerminalModesBuilder implementation.
+  o Added new EVENT_REMOTE_DISCONNECTED even to capture remote reason for disconnection.
+  o New multipart upload SFTP file extension to enable PushSftp on back-end storage that does not support random access across concurrent connections.
+  o New s3 abstract file implementation that supports multipart uploads on Amazon S3.
+  o Safer, modern, recursive delete methods on IOUtils.
   
 Bug Fixes
-  o 
+  o Implementations of available incorrectly return -1.
+  o Support for window space using full UnsignedInteger32 value (instead of Integer.MAX_VALUE).
+  o SshClient is missing getPort method.
+  o Extensions were not being processed and were effectively not supported.
+  
+Other
+  o Tests split into separate Maven projects. This is to allow development in Eclipse, which does not yet allow main source and tests that are modular to exist in the same project.
+  o DirectFileJava7 has been deprecated and it's features moved to DirectFile. 
+  o PuTTY support moved to it's own module, removing the Bouncycastle requirement in the core classes.
+  
   
 =================
 =  HISTORY      =

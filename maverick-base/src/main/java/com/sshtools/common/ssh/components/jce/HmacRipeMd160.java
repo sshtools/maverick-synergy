@@ -1,28 +1,14 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh.components.jce;
+
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshHmacFactory;
 
 
 /**
@@ -31,6 +17,21 @@ import com.sshtools.common.ssh.SshException;
  *
  */
 public class HmacRipeMd160 extends AbstractHmac {
+	
+	private static final String ALGORITHM = "hmac-ripemd160";
+
+
+	public static class HmacRipeMd160Factory implements SshHmacFactory<HmacRipeMd160> {
+		@Override
+		public HmacRipeMd160 create() throws NoSuchAlgorithmException, IOException {
+			return new HmacRipeMd160();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { ALGORITHM };
+		}
+	}
 
 	public HmacRipeMd160() {
 		super(JCEAlgorithms.JCE_HMACRIPEMD160, 20, SecurityLevel.WEAK, 1);
@@ -42,7 +43,7 @@ public class HmacRipeMd160 extends AbstractHmac {
 
 	
 	public String getAlgorithm() {
-		return "hmac-ripemd160";
+		return ALGORITHM;
 	}
 	
 

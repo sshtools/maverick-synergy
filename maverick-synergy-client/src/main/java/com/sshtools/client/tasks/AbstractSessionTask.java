@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.client.tasks;
 
 import java.io.IOException;
@@ -32,18 +14,24 @@ import com.sshtools.common.ssh.SshException;
 /**
  * An abstract task for using the SSH session
  */
-public abstract class AbstractSessionTask<T extends AbstractSessionChannel> extends Task {
+public abstract class AbstractSessionTask<T extends AbstractSessionChannel> extends AbstractConnectionTask {
 
 	long timeout = 10000;
 	T session;
 	ChannelRequestFuture future;
 	Throwable lastError;
 	
+	public AbstractSessionTask(AbstractConnectionTaskBuilder<?, ?> builder) {
+		super(builder);
+	}
+
+	@Deprecated
 	public AbstractSessionTask(SshClient ssh, ChannelRequestFuture future) {
 		super(ssh);
 		this.future = future;
 	}
-	
+
+	@Deprecated
 	public AbstractSessionTask(SshConnection con, ChannelRequestFuture future) {
 		super(con);
 		this.future = future;

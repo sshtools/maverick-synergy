@@ -1,42 +1,27 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.forwarding;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.Permissions;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.UnsignedInteger32;
 
 public class ForwardingPolicy extends Permissions {
 	
 	public static final int ALLOW_FORWARDING         = 0x00000001;
 	public static final int GATEWAY_FORWARDING       = 0x00000002;
+	public static final int UNIX_DOMAIN_SOCKET_FORWARDING       = 0x00000004;
 	
 	List<String> permit = new ArrayList<String>();
 	
 	private int forwardingMaxPacketSize = 65536;
-	private int forwardingMaxWindowSize = 65536 * 5;
-	private int forwardingMinWindowSize = 32768;
+	private UnsignedInteger32 forwardingMaxWindowSize = new UnsignedInteger32(65536 * 5);
+	private UnsignedInteger32 forwardingMinWindowSize = new UnsignedInteger32(32768);
 	
 	public ForwardingPolicy() {
 	}
@@ -90,14 +75,20 @@ public class ForwardingPolicy extends Permissions {
 		boolean allow = check(ALLOW_FORWARDING);
 		
 		if(allow) {
-			try {
-				InetAddress addr = InetAddress.getByName(originHost);
-				
-				allow = addr.isLoopbackAddress() | check(GATEWAY_FORWARDING);
-			} catch (UnknownHostException e) {
-				if(Log.isErrorEnabled())
-					Log.error("Failed to determine local forwarding originators interface {}", e, originHost);
-				return false;
+			var path = Paths.get(originHost);
+			if(path.isAbsolute() && originPort == 0) {					
+				allow = check(UNIX_DOMAIN_SOCKET_FORWARDING);
+			}
+			else {			
+				try {
+					InetAddress addr = InetAddress.getByName(originHost);
+					
+					allow = addr.isLoopbackAddress() | check(GATEWAY_FORWARDING);
+				} catch (UnknownHostException e) {
+					if(Log.isErrorEnabled())
+						Log.error("Failed to determine local forwarding originators interface {}", e, originHost);
+					return false;
+				}
 			}
 		}
 		
@@ -157,19 +148,19 @@ public class ForwardingPolicy extends Permissions {
 		this.forwardingMaxPacketSize = forwardingMaxPacketSize;
 	}
 
-	public int getForwardingMaxWindowSize() {
+	public UnsignedInteger32 getForwardingMaxWindowSize() {
 		return forwardingMaxWindowSize;
 	}
 
-	public void setForwardingMaxWindowSize(int forwardingMaxWindowSize) {
+	public void setForwardingMaxWindowSize(UnsignedInteger32 forwardingMaxWindowSize) {
 		this.forwardingMaxWindowSize = forwardingMaxWindowSize;
 	}
 
-	public int getForwardingMinWindowSize() {
+	public UnsignedInteger32 getForwardingMinWindowSize() {
 		return forwardingMinWindowSize;
 	}
 
-	public void setForwardingMinWindowSize(int forwardingMinWindowSize) {
+	public void setForwardingMinWindowSize(UnsignedInteger32 forwardingMinWindowSize) {
 		this.forwardingMinWindowSize = forwardingMinWindowSize;
 	}
 	

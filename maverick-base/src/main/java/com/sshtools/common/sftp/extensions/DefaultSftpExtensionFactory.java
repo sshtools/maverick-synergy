@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.sftp.extensions;
 
 import java.util.Arrays;
@@ -29,6 +11,8 @@ import java.util.Set;
 import com.sshtools.common.sftp.SftpExtension;
 import com.sshtools.common.sftp.SftpExtensionFactory;
 import com.sshtools.common.sftp.extensions.filter.OpenDirectoryWithFilterExtension;
+import com.sshtools.common.sftp.extensions.multipart.CreateMultipartFileExtension;
+import com.sshtools.common.sftp.extensions.multipart.OpenMultipartFileExtension;
 
 public class DefaultSftpExtensionFactory implements SftpExtensionFactory {
 
@@ -53,6 +37,21 @@ public class DefaultSftpExtensionFactory implements SftpExtensionFactory {
 		}
 		if(supported.contains(SupportedSftpExtensions.OPEN_DIRECTORY_WITH_FILTER)) {
 			extensions.put(OpenDirectoryWithFilterExtension.EXTENSION_NAME, new OpenDirectoryWithFilterExtension());
+		}
+		if(supported.contains(SupportedSftpExtensions.COPY_DATA)) {
+			extensions.put(CopyDataSftpExtension.EXTENSION_NAME, new CopyDataSftpExtension());
+		}
+		if(supported.contains(SupportedSftpExtensions.CHECK_FILE_NAME)) {
+			extensions.put(FilenameHashingExtension.EXTENSION_NAME, new FilenameHashingExtension());
+		}
+		if(supported.contains(SupportedSftpExtensions.CHECK_FILE_HANDLE)) {
+			extensions.put(FileHandleHashingExtension.EXTENSION_NAME, new FileHandleHashingExtension());
+		}
+		if(supported.contains(SupportedSftpExtensions.OPEN_PART_FILE)) {
+			extensions.put(OpenMultipartFileExtension.EXTENSION_NAME, new OpenMultipartFileExtension());
+		}
+		if(supported.contains(SupportedSftpExtensions.CREATE_MULTIPART_FILE)) {
+			extensions.put(CreateMultipartFileExtension.EXTENSION_NAME, new CreateMultipartFileExtension());
 		}
 	}
 	

@@ -1,30 +1,11 @@
-<!--
 
-    (c) 2002-2023 JADAPTIVE Limited. All Rights Reserved.
-
-    This file is part of the Maverick Synergy Java SSH API.
-
-    Maverick Synergy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Maverick Synergy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
-
--->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>com.sshtools</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.0.11-SNAPSHOT</version>
+		<version>3.1.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>maverick-synergy-fuse-drive</artifactId>
 	<name>Fuse Drive</name>
@@ -37,9 +18,19 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>com.sshtools</groupId>
+			<artifactId>maverick-sshagent</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sshtools</groupId>
+			<artifactId>maverick-bc</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>com.github.serceman</groupId>
 			<artifactId>jnr-fuse</artifactId>
-			<version>0.5.3</version>
+			<version>0.5.5</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>

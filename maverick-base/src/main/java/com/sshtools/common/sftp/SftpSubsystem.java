@@ -1,22 +1,4 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
+
 package com.sshtools.common.sftp;
 
 import java.io.EOFException;
@@ -57,6 +39,7 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
+import com.sshtools.common.util.Utils;
 import com.sshtools.common.util.Version;
 
 /**
@@ -75,8 +58,6 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 	private List<SftpOperationWrapper> wrappers = new ArrayList<SftpOperationWrapper>();
 	private SshConnection con;
 	private boolean nfsClosed = false;
-	
-	int writeBlockSize = 4096;
 	
 	// maximum version of SFTP protocol supported
 	static final int MAX_VERSION = 4;
@@ -115,20 +96,24 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			CHARSET_ENCODING = "ISO-8859-1";
 		}
 
-		AbstractFileFactory<?> ff = filePolicy.getFileFactory().getFileFactory(session.getConnection());
-		
-		if(filePolicy.getFileFactory() instanceof SftpOperationWrapper) {
-			addWrapper((SftpOperationWrapper)ff);
-		}
-		
-		executeOperation(SUBSYSTEM_INCOMING, new InitOperation());
-
-		// Add event listener
-		session.addEventListener(new ChannelEventListener() {
-			public void onChannelClosing(Channel channel) {
-				SessionChannelHelper.sendExitStatus(channel, 0);
+		try {
+			AbstractFileFactory<?> ff = filePolicy.getFileFactory().getFileFactory(session.getConnection());
+			
+			if(filePolicy.getFileFactory() instanceof SftpOperationWrapper) {
+				addWrapper((SftpOperationWrapper)ff);
 			}
-		});
+			
+			executeOperation(SUBSYSTEM_INCOMING, new InitOperation());
+	
+			// Add event listener
+			session.addEventListener(new ChannelEventListener() {
+				public void onChannelClosing(Channel channel) {
+					SessionChannelHelper.sendExitStatus(channel, 0);
+				}
+			});
+		} catch(Throwable t) { 
+			throw new PermissionDeniedException(t.getMessage(), t);
+		}
 	}
 	
 	protected void cleanupSubsystem() {
@@ -999,21 +984,16 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				try {
 					fireOpenFileEvent(flags, attrs, path, started, handle, null);
 					
-					openFileHandles.put(evt.key, evt);
-					if(!openFilesByContext.containsKey(getContext())) {
-						openFilesByContext.put(getContext(), new HashSet<String>());
-					}
-					openFilesByContext.get(getContext()).add(evt.key);
-					if(Log.isDebugEnabled()) {
-						Log.debug("There are now {} file(s) open in the current context", 
-								openFilesByContext.get(getContext()).size());
-					}
+					addTransferEvent(path, evt);
+
  					sendHandleMessage(id, handle);	
 				} catch (SftpStatusEventException ex) {
 					sendStatusMessage(id, ex.getStatus(), ex.getMessage());
 					try {
 						nfs.closeFile(handle);
 					} catch (InvalidHandleException e) {
+					} finally {
+						nfs.freeHandle(handle);
 					}
 				}
 
@@ -1270,10 +1250,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												con)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-												new Long(evt.bytesRead))
+												Long.valueOf(evt.bytesRead))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_READ,
-												new Long(count))
+												Long.valueOf(count))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_FILE_NAME,
 												evt.path)
@@ -1340,7 +1320,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 								con)
 						.addAttribute(
 								EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-								new Long(evt.bytesRead))
+								Long.valueOf(evt.bytesRead))
 						.addAttribute(
 								EventCodes.ATTRIBUTE_FILE_NAME,
 								evt.path)
@@ -1385,13 +1365,13 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				String h = new String(handle);
 
 				evt = (TransferEvent) openFileHandles.get(h);
-
+				
 				UnsignedInteger64 offset = bar.readUINT64();
 				int count = (int) bar.readInt();
 
 				if(filePolicy.hasUploadQuota()) {
 					if(!con.containsProperty("uploadQuota")) {
-						con.setProperty("uploadQuota", new Long(0L));
+						con.setProperty("uploadQuota", Long.valueOf(0L));
 					}
 					Long quota = (Long) con.getProperty("uploadQuota");
 					if(quota + count > filePolicy.getConnectionUploadQuota()) {
@@ -1399,7 +1379,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 						return;
 					}
 					
-					con.setProperty("uploadQuota", new Long(quota + count));
+					con.setProperty("uploadQuota", Long.valueOf(quota + count));
 				}
 				try {	
 					
@@ -1419,10 +1399,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										con)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-										new Long(evt.bytesWritten))
+										Long.valueOf(evt.bytesWritten))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_WRITTEN,
-										new Long(count))
+										Long.valueOf(count))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_FILE_NAME,
 										evt.path)
@@ -1478,7 +1458,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 								con)
 						.addAttribute(
 								EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-								new Long(evt.bytesWritten))
+								Long.valueOf(evt.bytesWritten))
 						.addAttribute(
 								EventCodes.ATTRIBUTE_FILE_NAME,
 								evt.path)
@@ -1566,7 +1546,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 							"The operation completed");
 				} catch (SftpStatusEventException ex) {
 					sendStatusMessage(id, ex.getStatus(), ex.getMessage());
-				}
+				} 
 			} catch (InvalidHandleException ihe) {
 				fireCloseFileEvent(handle, ihe);
 				sendStatusMessage(id, STATUS_FX_FAILURE, ihe.getMessage());
@@ -1574,6 +1554,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				fireCloseFileEvent(handle, ioe2);
 				sendStatusMessage(id, STATUS_FX_FAILURE, ioe2.getMessage());
 			} finally {
+				nfs.freeHandle(handle);
 				bar.close();
 			}
 		}
@@ -1607,13 +1588,18 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			if (!evt.error && error != null) {
 				evt.error = true;
 			}
+
+			boolean closed = false;
 			
 			if(evt.error && getContext().getPolicy(FileSystemPolicy.class).isSFTPCloseFileBeforeFailedTransferEvents()) {
 				try {
 					nfs.closeFile(evt.handle);
 				} catch (InvalidHandleException e) {
 				} catch (IOException e) {
+				} finally {
+					nfs.freeHandle(evt.handle);
 				}
+				closed = true;
 			}
 			
 			if (evt.isDir) {
@@ -1626,7 +1612,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												con)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-												new Long(evt.bytesWritten))
+												Long.valueOf(evt.bytesWritten))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_FILE_NAME,
 												evt.path)
@@ -1650,7 +1636,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												con)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-												new Long(evt.bytesWritten))
+												Long.valueOf(evt.bytesWritten))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_FILE_NAME,
 												evt.path)
@@ -1674,7 +1660,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												con)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-												new Long(evt.bytesRead))
+												Long.valueOf(evt.bytesRead))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_HANDLE,
 												evt.handle)
@@ -1705,10 +1691,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 													con)
 											.addAttribute(
 													EventCodes.ATTRIBUTE_BYTES_READ,
-													new Long(evt.bytesRead))
+													Long.valueOf(evt.bytesRead))
 											.addAttribute(
 													EventCodes.ATTRIBUTE_BYTES_WRITTEN,
-													new Long(evt.bytesWritten))
+													Long.valueOf(evt.bytesWritten))
 											.addAttribute(
 													EventCodes.ATTRIBUTE_HANDLE,
 													evt.handle)
@@ -1738,10 +1724,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 													con)
 											.addAttribute(
 													EventCodes.ATTRIBUTE_BYTES_READ,
-													new Long(evt.bytesRead))
+													Long.valueOf(evt.bytesRead))
 											.addAttribute(
 													EventCodes.ATTRIBUTE_BYTES_WRITTEN,
-													new Long(evt.bytesWritten))
+													Long.valueOf(evt.bytesWritten))
 											.addAttribute(
 													EventCodes.ATTRIBUTE_HANDLE,
 													evt.handle)
@@ -1775,7 +1761,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												con)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-												new Long(evt.bytesRead))
+												Long.valueOf(evt.bytesRead))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_FILE_NAME,
 												evt.path)
@@ -1800,10 +1786,10 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 												con)
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_READ,
-												new Long(evt.bytesRead))
+												Long.valueOf(evt.bytesRead))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_BYTES_WRITTEN,
-												new Long(evt.bytesWritten))
+												Long.valueOf(evt.bytesWritten))
 										.addAttribute(
 												EventCodes.ATTRIBUTE_FILE_NAME,
 												evt.path)
@@ -1816,6 +1802,16 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										.addAttribute(
 												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
 												new Date()));
+			}
+			
+			if(evt.error && !closed && evt.forceClose) {
+				try {
+					nfs.closeFile(evt.handle);
+				} catch (InvalidHandleException e) {
+				} catch (IOException e) {
+				} finally {
+					nfs.freeHandle(evt.handle);
+				}
 			}
 		}
 	}
@@ -1991,7 +1987,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				id = (int) bar.readInt();
 				handle = bar.readBinaryString();
 				
-				TransferEvent evt = (TransferEvent) openFolderHandles.get(nfs.getHandle(handle));
+				TransferEvent evt = (TransferEvent) openFolderHandles.get(nfs.handleToString(handle));
 				evt.bytesWritten += sendFilenameMessage(id, nfs.readDirectory(handle), false, false);
 				
 			} catch (FileNotFoundException ioe) {
@@ -2044,7 +2040,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				evt.path = path;
 
 				byte[] handle = nfs.openDirectory(path);
-
+				evt.handle = handle;
 				try {
 					fireOpenDirectoryEvent(path, started, handle, null);
 					openFolderHandles.put(new String(handle), evt);
@@ -2078,7 +2074,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 										con)
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-										new Long(0))
+										Long.valueOf(0))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_HANDLE,
 										handle)
@@ -2180,7 +2176,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 		// filename
 
 		StringBuffer str = new StringBuffer();
-		str.append(pad(10 - attrs.getPermissionsString().length())
+		str.append(Utils.pad(10 - attrs.getPermissionsString().length())
 				+ attrs.getPermissionsString());
 		if(attrs.isDirectory()) {
 			str.append(" 1 ");
@@ -2188,25 +2184,25 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			str.append(" 1 ");
 		}
 		if(attrs.hasUID()) {
-			str.append(attrs.getUID() + pad(8 - attrs.getUID().length()));
+			str.append(attrs.getUID() + Utils.pad(8 - attrs.getUID().length()));
 		} else {
-			str.append(String.valueOf(attrs.getUID()) + pad(8 - String.valueOf(attrs.getUID()).length()));
+			str.append(String.valueOf(attrs.getUID()) + Utils.pad(8 - String.valueOf(attrs.getUID()).length()));
 		}
 		str.append(" ");
 		if(attrs.hasGID()) {
 			str.append(attrs.getGID()
-					+ pad(8 - attrs.getGID().length()));
+					+ Utils.pad(8 - attrs.getGID().length()));
 		} else {
-			str.append(String.valueOf(attrs.getGID()) + pad(8 - String.valueOf(attrs.getGID()).length()));
+			str.append(String.valueOf(attrs.getGID()) + Utils.pad(8 - String.valueOf(attrs.getGID()).length()));
 		}
 		str.append(" ");
 
-		str.append(pad(11 - attrs.getSize().toString().length())
+		str.append(Utils.pad(11 - attrs.getSize().toString().length())
 				+ attrs.getSize().toString());
 		str.append(" ");
 		
 		String modTime = getModTimeStringInContext(attrs.getModifiedTime(), locale);
-		str.append(pad(12 - modTime.length()) + modTime);
+		str.append(Utils.pad(12 - modTime.length()) + modTime);
 		str.append(" ");
 		str.append(filename);
 
@@ -2232,17 +2228,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 		return df.format(new Date(mt));
 	}
 
-	private static String pad(int num) {
-		String str = "";
-
-		if (num > 0) {
-			for (int i = 0; i < num; i++) {
-				str += " ";
-			}
-		}
-
-		return str;
-	}
+	
 
 	public int sendFilenameMessage(int id, SftpFile[] files, boolean isRealPath,
 			boolean isAbsolute) throws IOException {
@@ -2518,10 +2504,22 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 	
 	public void addTransferEvent(String handle, TransferEvent evt) {
 		if(evt.isDir()) {
-			openFolderHandles.put(handle, evt);
+			openFolderHandles.put(evt.key, evt);
 		} else {
-			openFileHandles.put(handle, evt);
+			openFileHandles.put(evt.key, evt);
 		}		
+		if(!openFilesByContext.containsKey(getContext())) {
+			openFilesByContext.put(getContext(), new HashSet<String>());
+		}
+		openFilesByContext.get(getContext()).add(evt.key);
+		if(Log.isDebugEnabled()) {
+			Log.debug("There are now {} file(s) open in the current context", 
+					openFilesByContext.get(getContext()).size());
+		}
+	}
+
+	public int getVersion() {
+		return version;
 	}
 
 }

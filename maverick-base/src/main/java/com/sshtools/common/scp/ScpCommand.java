@@ -1,22 +1,4 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
+
 package com.sshtools.common.scp;
 
 import java.io.EOFException;
@@ -25,10 +7,12 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 
+import com.sshtools.common.command.AbstractExecutableCommand;
 import com.sshtools.common.command.ExecutableCommand;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
@@ -61,7 +45,20 @@ import com.sshtools.common.util.Utils;
  * </blockquote>
  * 
  */
-public class ScpCommand extends ExecutableCommand implements Runnable {
+public class ScpCommand extends AbstractExecutableCommand implements Runnable {
+	
+	public static class ScpCommandFactory implements ExecutableCommandFactory<ScpCommand> {
+
+		@Override
+		public ScpCommand create() throws NoSuchAlgorithmException, IOException {
+			return new ScpCommand();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { "scp" };
+		}
+	}
 	
 	private static int BUFFER_SIZE = 16384;
 
@@ -442,6 +439,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 							try {
 								nfs.closeFile(handle);
 							} catch (InvalidHandleException e) {
+							} finally {
+								nfs.freeHandle(handle);
 							}
 						}
 						
@@ -561,6 +560,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 				} catch (Exception e) {
 					if(Log.isDebugEnabled())
 						Log.debug("", e);
+				} finally {
+					nfs.freeHandle(handle);
 				}
 			}
 		}
@@ -612,7 +613,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 									new Date())
 							.addAttribute(
 									EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-									new Long(attr.getSize().longValue()))
+									Long.valueOf(attr.getSize().longValue()))
 							.addAttribute(
 									EventCodes.ATTRIBUTE_FILE_FACTORY,
 									nfs.getFileFactory())
@@ -645,7 +646,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 										new Date())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-										new Long(attr.getSize().longValue()))
+										Long.valueOf(attr.getSize().longValue()))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_FILE_FACTORY,
 										nfs.getFileFactory())
@@ -686,10 +687,10 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											session.getConnection())
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-											new Long(count))
+											Long.valueOf(count))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_READ,
-											new Long(read))
+											Long.valueOf(read))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_FILE_NAME,
 											path)
@@ -739,7 +740,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 										new Date())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-										new Long(count))
+										Long.valueOf(count))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_FILE_FACTORY,
 										nfs.getFileFactory())
@@ -767,6 +768,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					} catch (Exception e) {
 						if(Log.isDebugEnabled())
 							Log.debug("", e);
+					} finally {
+						nfs.freeHandle(handle);
 					}
 				}
 			
@@ -795,7 +798,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 								new Date())
 						.addAttribute(
 								EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-								new Long(count))
+								Long.valueOf(count))
 						.addAttribute(
 								EventCodes.ATTRIBUTE_FILE_FACTORY,
 								nfs.getFileFactory())
@@ -1003,7 +1006,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 										new Date())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-										new Long(length))
+										Long.valueOf(length))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_FILE_FACTORY,
 										nfs.getFileFactory())
@@ -1046,7 +1049,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											new Date())
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-											new Long(length))
+											Long.valueOf(length))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_FILE_FACTORY,
 											nfs.getFileFactory())
@@ -1063,7 +1066,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					
 					if(filePolicy != null && filePolicy.hasUploadQuota()) {
 						if(!con.containsProperty("uploadQuota")) {
-							con.setProperty("uploadQuota", new Long(0L));
+							con.setProperty("uploadQuota", Long.valueOf(0L));
 						}
 						Long quota = (Long) con.getProperty("uploadQuota");
 						if(quota + length > filePolicy.getConnectionUploadQuota()) {
@@ -1071,7 +1074,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 							throw new IOException("User quota will be exceeded");
 						}
 						
-						con.setProperty("uploadQuota", new Long(quota + length));
+						con.setProperty("uploadQuota", Long.valueOf(quota + length));
 					}
 					
 					UnsignedInteger64 offset = new UnsignedInteger64(0);
@@ -1104,10 +1107,10 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											con)
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-											new Long(count))
+											Long.valueOf(count))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_WRITTEN,
-											new Long(read))
+											Long.valueOf(read))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_FILE_NAME,
 											targetPath)
@@ -1142,7 +1145,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											new Date())
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-											new Long(count))
+											Long.valueOf(count))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_FILE_FACTORY,
 											nfs.getFileFactory())
@@ -1176,6 +1179,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 								Log.debug("Closing handle");
 							nfs.closeFile(handle);
 						} catch (Exception e) {
+						} finally {
+							nfs.freeHandle(handle);
 						}
 					}
 				}
@@ -1225,7 +1230,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 								new Date())
 						.addAttribute(
 								EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-								new Long(count))
+								Long.valueOf(count))
 						.addAttribute(
 								EventCodes.ATTRIBUTE_FILE_FACTORY,
 								nfs.getFileFactory())

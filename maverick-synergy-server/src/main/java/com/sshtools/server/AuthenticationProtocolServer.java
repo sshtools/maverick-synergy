@@ -1,27 +1,10 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -67,7 +50,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	String currentMethod;
 	String username;
 	String service;
-	ArrayList<String> completedAuthentications = new ArrayList<String>();
+	List<String> completedAuthentications = new ArrayList<String>();
 	Map<String, Object> authenticationParameters = new ConcurrentHashMap<String, Object>(8, 0.9f, 1);
 	Date authenticationStarted = new Date();
 	Date methodStarted;
@@ -99,9 +82,8 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	public synchronized void stop() {
 		if (transport != null) {
 			if(Log.isDebugEnabled()) {
-				Log.debug("Cleaning up authentication protocol references");
+				Log.debug("Stopping authentication protocol");
 			}
-			transport.getConnection().getAuthenticatedFuture().authenticated(authenticated);
 		}
 	}
 

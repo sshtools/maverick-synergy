@@ -1,26 +1,9 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.client.sftp;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.util.List;
 
 import com.sshtools.client.SshClient;
@@ -33,44 +16,68 @@ import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 
 /**
- * An abstract task that implements an SFTP client.
+ * A task that implements an SFTP client. The actual executable code
+ * ({@link SftpRunnable}) should be passed in the constructor. 
  */
-public abstract class SftpClientTask extends Task {
+public class SftpClientTask extends Task {
 
 	SftpClient sftp;
-	
+	TaskRunnable<SftpClientTask> runnable;
+
+	@Deprecated(forRemoval = true, since = "3.1.0")
 	public SftpClientTask(SshConnection con) {
 		super(con);
 	}
-	
+
+	public SftpClientTask(SshConnection con, TaskRunnable<SftpClientTask> runnable) {
+		super(con);
+		this.runnable = runnable;
+	}
+
 	public SftpClientTask(SshClient ssh) {
 		super(ssh.getConnection());
 	}
-	
-	protected void doTask() {
-		
-		try {
-			sftp = new SftpClient(con);
-			
-			SftpClientTask.this.doSftp();
 
-			done(true);
-			
-			sftp.exit();
-		} catch (SshException | PermissionDeniedException | IOException e) {
-			throw new IllegalStateException(e.getMessage(), e);
-		}
+	@Override
+	protected final void doTask() throws Throwable {
+
+		sftp = new SftpClient(con);
+
+		doSftpTask();
+
+		done(true);
+
+		sftp.exit();
 	}
 	
-	
-	protected abstract void doSftp();
-	
-	
+	private void doSftpTask() throws Throwable {
+		if(runnable != null) {
+			runnable.run(this);
+		}
+	}
+
+	@Deprecated(forRemoval = true, since = "3.1.0")
+	protected void doSftp() {
+		try {
+			doSftpTask();
+		}
+		catch(IOException ioe) {
+			throw new UncheckedIOException(ioe.getMessage(), ioe);
+		}
+		catch(RuntimeException re) {
+			throw re;
+		}
+		catch(Throwable e) {
+			throw new IllegalStateException("File operation failed.", e);
+		}
+	}
+
+
 	/**
 	 * Sets the block size used when transferring files, defaults to the
 	 * optimized setting of 32768. You should not increase this value as the
 	 * remote server may not be able to support higher blocksizes.
-	 * 
+	 *
 	 * @param blocksize
 	 */
 	public void setBlockSize(int blocksize) {
@@ -79,7 +86,7 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Returns the instance of the AbstractSftpChannel used by this class
-	 * 
+	 *
 	 * @return the AbstractSftpChannel instance
 	 */
 	public SftpChannel getSubsystemChannel() {
@@ -102,7 +109,7 @@ public abstract class SftpClientTask extends Task {
 	 * policy is based upon System policy as defined by the "line.seperator"
 	 * system property.
 	 * </p>
-	 * 
+	 *
 	 * @param transferMode
 	 *            int
 	 */
@@ -117,12 +124,12 @@ public abstract class SftpClientTask extends Task {
 	 * client to determine the type of EOL for text files. In versions 4+ a
 	 * mechanism is provided and this setting is overridden.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Valid values for this method are {@link EOL_CRLF} (default),
 	 * {@link EOL_CR}, and {@link EOL_LF}.
 	 * </p>
-	 * 
+	 *
 	 * @param eolMode
 	 *            int
 	 */
@@ -134,12 +141,12 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Override the default local system EOL for text mode files.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Valid values for this method are {@link EOL_CRLF} (default),
 	 * {@link EOL_CR}, and {@link EOL_LF}.
 	 * </p>
-	 * 
+	 *
 	 * @param eolMode
 	 *            int
 	 */
@@ -147,7 +154,7 @@ public abstract class SftpClientTask extends Task {
 		sftp.setLocalEOL(eolMode);
 
 	}
-	
+
 	/**
 	 * Override automatic detection of the remote EOL (any SFTP version). USE WITH CAUTION.
 	 * @param forceRemoteEOL
@@ -155,9 +162,9 @@ public abstract class SftpClientTask extends Task {
 	public void setForceRemoteEOL(boolean forceRemoteEOL) {
 		sftp.setForceRemoteEOL(forceRemoteEOL);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @return int
 	 */
 	public int getTransferMode() {
@@ -174,7 +181,7 @@ public abstract class SftpClientTask extends Task {
 	 * reads. This increases performance and so this setting should be set to
 	 * the highest value possible. The default setting is negative which means
 	 * the entire file will be read into a temporary buffer.
-	 * 
+	 *
 	 * @param buffersize
 	 */
 	public void setBufferSize(int buffersize) {
@@ -186,7 +193,7 @@ public abstract class SftpClientTask extends Task {
 	 * any one time. This setting is used to optimize the reading and writing of
 	 * files to/from the remote file system when using the get and put methods.
 	 * The default for this setting is 100.
-	 * 
+	 *
 	 * @param asyncRequests
 	 */
 	public void setMaxAsyncRequests(int asyncRequests) {
@@ -195,35 +202,35 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Sets the umask used by this client. <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * To give yourself full permissions for both files and directories and
 	 * prevent the group and other users from having access:
-	 * 
+	 *
 	 *   umask(077);
-	 * 
+	 *
 	 * This subtracts 077 from the system defaults for files and directories
 	 * 666 and 777. Giving a default access permissions for your files of
 	 * 600 (rw-------) and for directories of 700 (rwx------).
-	 * 
+	 *
 	 * To give all access permissions to the group and allow other users read
 	 * and execute permission:
-	 * 
+	 *
 	 *   umask(002);
-	 * 
+	 *
 	 * This subtracts 002 from the system defaults to give a default access permission
 	 * for your files of 664 (rw-rw-r--) and for your directories of 775 (rwxrwxr-x).
-	 * 
+	 *
 	 * To give the group and other users all access except write access:
-	 * 
+	 *
 	 *   umask(022);
-	 * 
+	 *
 	 * This subtracts 022 from the system defaults to give a default access permission
 	 * for your files of 644 (rw-r--r--) and for your directories of 755 (rwxr-xr-x).
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @param umask
 	 * @return the previous umask value
 	 */
@@ -255,10 +262,10 @@ public abstract class SftpClientTask extends Task {
 	 * directory path. The user's default directory is typically their home
 	 * directory but is dependent upon server implementation.
 	 * </p>
-	 * 
+	 *
 	 * @param dir
 	 *            the new working directory
-	 * 
+	 *
 	 * @throws IOException
 	 *             if an IO error occurs or the file does not exist
 	 * @throws SftpStatusException
@@ -273,9 +280,9 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Get the default directory (or HOME directory)
 	 * </p>
-	 * 
+	 *
 	 * @return String
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
@@ -286,7 +293,7 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Change the working directory to the parent directory
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
@@ -297,7 +304,7 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Add a custom file system root path such as "flash:"
-	 * 
+	 *
 	 * @param rootPath
 	 */
 	public void addCustomRoot(String rootPath) {
@@ -306,7 +313,7 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Remove a custom file system root path such as "flash:"
-	 * 
+	 *
 	 * @param rootPath
 	 */
 	public void removeCustomRoot(String rootPath) {
@@ -319,10 +326,10 @@ public abstract class SftpClientTask extends Task {
 	 * exception if the directory already exists. To create directories and
 	 * disregard any errors use the <code>mkdirs</code> method.
 	 * </p>
-	 * 
+	 *
 	 * @param dir
 	 *            the name of the new directory
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
@@ -338,7 +345,7 @@ public abstract class SftpClientTask extends Task {
 	 * href="#stat(java.lang.String)">stat</a> to return the directories
 	 * attributes.
 	 * </p>
-	 * 
+	 *
 	 * @param dir
 	 *            the path of directories to create.
 	 */
@@ -349,7 +356,7 @@ public abstract class SftpClientTask extends Task {
 	/**
 	 * Determine whether the file object is pointing to a symbolic link that is
 	 * pointing to a directory.
-	 * 
+	 *
 	 * @return boolean
 	 */
 	public boolean isDirectoryOrLinkedDirectory(SftpFile file)
@@ -361,10 +368,10 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Returns the absolute path name of the current remote working directory.
 	 * </p>
-	 * 
+	 *
 	 * @return the absolute path of the remote working directory.
-	 * @throws SshException 
-	 * @throws SftpStatusException 
+	 * @throws SshException
+	 * @throws SftpStatusException
 	 */
 	public String pwd() throws SftpStatusException, SshException {
 		return sftp.pwd();
@@ -374,18 +381,18 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * List the contents of the current remote working directory.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Returns a list of <a
 	 * href="../../maverick/ssh2/SftpFile.html">SftpFile</a> instances for the
 	 * current working directory.
 	 * </p>
-	 * 
+	 *
 	 * @return a list of SftpFile for the current working directory
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
-	 * 
+	 *
 	 */
 	public SftpFile[] ls() throws SftpStatusException, SshException {
 		return sftp.ls();
@@ -395,18 +402,18 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * List the contents remote directory.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Returns a list of <a
 	 * href="../../maverick/ssh2/SftpFile.html">SftpFile</a> instances for the
 	 * remote directory.
 	 * </p>
-	 * 
+	 *
 	 * @param path
 	 *            the path on the remote server to list
-	 * 
+	 *
 	 * @return a list of SftpFile for the remote directory
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
@@ -418,13 +425,13 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Changes the local working directory.
 	 * </p>
-	 * 
+	 *
 	 * @param path
 	 *            the path to the new working directory
-	 * 
+	 *
 	 * @throws SftpStatusException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void lcd(String path) throws SftpStatusException, IOException, PermissionDeniedException {
 		sftp.lcd(path);
@@ -434,10 +441,10 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Returns the absolute path to the local working directory.
 	 * </p>
-	 * 
+	 *
 	 * @return the absolute path of the local working directory.
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public String lpwd() throws IOException, PermissionDeniedException {
 		return sftp.lpwd();
@@ -447,18 +454,18 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Download the remote file to the local computer.
 	 * </p>
-	 * 
+	 *
 	 * @param path
 	 *            the path to the remote file
 	 * @param progress
-	 * 
+	 *
 	 * @return the downloaded file's attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFileAttributes get(String path, FileTransferProgress progress)
 			throws SftpStatusException, SshException,
@@ -470,20 +477,20 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Download the remote file to the local computer.
 	 * </p>
-	 * 
+	 *
 	 * @param path
 	 *            the path to the remote file
 	 * @param progress
 	 * @param resume
 	 *            attempt to resume a interrupted download
-	 * 
+	 *
 	 * @return the downloaded file's attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFileAttributes get(String path, FileTransferProgress progress,
 			boolean resume) throws SftpStatusException,
@@ -494,19 +501,19 @@ public abstract class SftpClientTask extends Task {
 	/**
 	 * <p>
 	 * Download the remote file to the local computer
-	 * 
+	 *
 	 * @param path
 	 *            the path to the remote file
 	 * @param resume
 	 *            attempt to resume an interrupted download
-	 * 
+	 *
 	 * @return the downloaded file's attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFileAttributes get(String path, boolean resume)
 			throws SftpStatusException, SshException,
@@ -517,17 +524,17 @@ public abstract class SftpClientTask extends Task {
 	/**
 	 * <p>
 	 * Download the remote file to the local computer
-	 * 
+	 *
 	 * @param path
 	 *            the path to the remote file
-	 * 
+	 *
 	 * @return the downloaded file's attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFileAttributes get(String path) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.get(path);
@@ -535,7 +542,7 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Get the target path of a symbolic link.
-	 * 
+	 *
 	 * @param linkpath
 	 * @return String
 	 * @throws SshException
@@ -552,20 +559,20 @@ public abstract class SftpClientTask extends Task {
 	 * Download the remote file to the local computer. If the paths provided are
 	 * not absolute the current working directory is used.
 	 * </p>
-	 * 
+	 *
 	 * @param remote
 	 *            the path/name of the remote file
 	 * @param local
 	 *            the path/name to place the file on the local computer
 	 * @param progress
-	 * 
+	 *
 	 * @return the downloaded file's attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFileAttributes get(String remote, String local,
 			FileTransferProgress progress) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
@@ -577,7 +584,7 @@ public abstract class SftpClientTask extends Task {
 	 * Download the remote file to the local computer. If the paths provided are
 	 * not absolute the current working directory is used.
 	 * </p>
-	 * 
+	 *
 	 * @param remote
 	 *            the path/name of the remote file
 	 * @param local
@@ -585,14 +592,14 @@ public abstract class SftpClientTask extends Task {
 	 * @param progress
 	 * @param resume
 	 *            attempt to resume an interrupted download
-	 * 
+	 *
 	 * @return the downloaded file's attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFileAttributes get(String remote, String local,
 			FileTransferProgress progress, boolean resume)
@@ -601,38 +608,38 @@ public abstract class SftpClientTask extends Task {
 
 		return sftp.get(remote, local, progress, resume);
 	}
-	
+
 	public String getRemoteNewline() throws SftpStatusException {
 		return sftp.getRemoteNewline();
 	}
-	
+
 	public int getRemoteEOL() throws SftpStatusException {
 		return sftp.getRemoteEOL();
 	}
-	
+
 	public int getEOL(String line) throws SftpStatusException {
 		return sftp.getEOL(line);
 	}
-	
+
 	public int getEOL(byte[] nl) throws SftpStatusException {
 		return sftp.getEOL(nl);
 	}
 
 	/**
 	 * Download the remote file into the local file.
-	 * 
+	 *
 	 * @param remote
 	 * @param local
 	 * @param resume
 	 *            attempt to resume an interrupted download
-	 * 
+	 *
 	 * @return the downloaded file's attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFileAttributes get(String remote, String local, boolean resume)
 			throws SftpStatusException, SshException,
@@ -642,17 +649,17 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Download the remote file into the local file.
-	 * 
+	 *
 	 * @param remote
 	 * @param local
-	 * 
+	 *
 	 * @return the downloaded file's attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFileAttributes get(String remote, String local)
 			throws SftpStatusException, SshException,
@@ -666,15 +673,15 @@ public abstract class SftpClientTask extends Task {
 	 * <code>OutputStream</code>. The OutputStream is closed by this method even
 	 * if the operation fails.
 	 * </p>
-	 * 
+	 *
 	 * @param remote
 	 *            the path/name of the remote file
 	 * @param local
 	 *            the OutputStream to write
 	 * @param progress
-	 * 
+	 *
 	 * @return the downloaded file's attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
@@ -687,7 +694,7 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * sets the type of regular expression matching to perform on gets and puts
-	 * 
+	 *
 	 * @param syntax
 	 *            , NoSyntax for no regular expression matching, GlobSyntax for
 	 *            GlobSyntax, Perl5Syntax for Perl5Syntax
@@ -699,7 +706,7 @@ public abstract class SftpClientTask extends Task {
 	/**
 	 * Called by getFileMatches() to do regular expression pattern matching on
 	 * the files in 'remote''s parent directory.
-	 * 
+	 *
 	 * @param remote
 	 * @return SftpFile[]
 	 * @throws SftpStatusException
@@ -717,7 +724,7 @@ public abstract class SftpClientTask extends Task {
 	 * <code>OutputStream</code>. The OutputStream is closed by this method even
 	 * if the operation fails.
 	 * </p>
-	 * 
+	 *
 	 * @param remote
 	 *            the path/name of the remote file
 	 * @param local
@@ -725,9 +732,9 @@ public abstract class SftpClientTask extends Task {
 	 * @param progress
 	 * @param position
 	 *            the position within the file to start reading from
-	 * 
+	 *
 	 * @return the downloaded file's attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
@@ -741,7 +748,7 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Create an InputStream for reading a remote file.
-	 * 
+	 *
 	 * @param remotefile
 	 * @param position
 	 * @return InputStream
@@ -756,7 +763,7 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Create an InputStream for reading a remote file.
-	 * 
+	 *
 	 * @param remotefile
 	 * @return InputStream
 	 * @throws SftpStatusException
@@ -769,14 +776,14 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Download the remote file into an OutputStream.
-	 * 
+	 *
 	 * @param remote
 	 * @param local
 	 * @param position
 	 *            the position from which to start reading the remote file
-	 * 
+	 *
 	 * @return the downloaded file's attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
@@ -789,12 +796,12 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Download the remote file into an OutputStream.
-	 * 
+	 *
 	 * @param remote
 	 * @param local
-	 * 
+	 *
 	 * @return the downloaded file's attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
@@ -811,7 +818,7 @@ public abstract class SftpClientTask extends Task {
 	 * underlying session channel is closed. Invoking the <code>quit</code>
 	 * method of this object will close the underlying session channel.
 	 * </p>
-	 * 
+	 *
 	 * @return true if the client is still connected, otherwise false
 	 */
 	public boolean isClosed() {
@@ -822,16 +829,16 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Upload a file to the remote computer.
 	 * </p>
-	 * 
+	 *
 	 * @param local
 	 *            the path/name of the local file
 	 * @param progress
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void put(String local, FileTransferProgress progress, boolean resume)
 			throws SftpStatusException, SshException,
@@ -843,16 +850,16 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Upload a file to the remote computer.
 	 * </p>
-	 * 
+	 *
 	 * @param local
 	 *            the path/name of the local file
 	 * @param progress
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void put(String local, FileTransferProgress progress)
 			throws SftpStatusException, SshException,
@@ -862,14 +869,14 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Upload a file to the remote computer
-	 * 
+	 *
 	 * @param local
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void put(String local) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.put(local);
@@ -877,16 +884,16 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Upload a file to the remote computer
-	 * 
+	 *
 	 * @param local
 	 * @param resume
 	 *            attempt to resume after an interrupted transfer
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void put(String local, boolean resume) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.put(local, resume);
@@ -897,18 +904,18 @@ public abstract class SftpClientTask extends Task {
 	 * Upload a file to the remote computer. If the paths provided are not
 	 * absolute the current working directory is used.
 	 * </p>
-	 * 
+	 *
 	 * @param local
 	 *            the path/name of the local file
 	 * @param remote
 	 *            the path/name of the destination file
 	 * @param progress
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void put(String local, String remote, FileTransferProgress progress)
 			throws SftpStatusException, SshException,
@@ -921,7 +928,7 @@ public abstract class SftpClientTask extends Task {
 	 * Upload a file to the remote computer. If the paths provided are not
 	 * absolute the current working directory is used.
 	 * </p>
-	 * 
+	 *
 	 * @param local
 	 *            the path/name of the local file
 	 * @param remote
@@ -929,12 +936,12 @@ public abstract class SftpClientTask extends Task {
 	 * @param progress
 	 * @param resume
 	 *            attempt to resume after an interrupted transfer
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void put(String local, String remote, FileTransferProgress progress,
 			boolean resume) throws SftpStatusException,
@@ -944,17 +951,17 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Upload a file to the remote computer
-	 * 
+	 *
 	 * @param local
 	 * @param remote
 	 * @param resume
 	 *            attempt to resume after an interrupted transfer
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void put(String local, String remote, boolean resume)
 			throws SftpStatusException, SshException,
@@ -964,15 +971,15 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Upload a file to the remote computer
-	 * 
+	 *
 	 * @param local
 	 * @param remote
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void put(String local, String remote) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.put(local, remote);
@@ -984,13 +991,13 @@ public abstract class SftpClientTask extends Task {
 	 * InputStream</code>. The InputStream is closed, even if the operation
 	 * fails.
 	 * </p>
-	 * 
+	 *
 	 * @param in
 	 *            the InputStream being read
 	 * @param remote
 	 *            the path/name of the destination file
 	 * @param progress
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
@@ -1001,16 +1008,24 @@ public abstract class SftpClientTask extends Task {
 		sftp.put(in, remote, progress);
 	}
 
+	@Deprecated
 	public void put(InputStream in, String remote,
 			FileTransferProgress progress, long position)
 			throws SftpStatusException, SshException,
 			TransferCancelledException {
-		sftp.put(in, remote, progress, position);
+		put(in, remote, progress, position, -1);
+	}
+
+	public void put(InputStream in, String remote,
+			FileTransferProgress progress, long position, long length)
+			throws SftpStatusException, SshException,
+			TransferCancelledException {
+		sftp.put(in, remote, progress, position, length);
 	}
 
 	/**
 	 * Create an OutputStream for writing to a remote file.
-	 * 
+	 *
 	 * @param remotefile
 	 * @return OutputStream
 	 * @throws SftpStatusException
@@ -1023,11 +1038,11 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Upload the contents of an InputStream to the remote computer.
-	 * 
+	 *
 	 * @param in
 	 * @param remote
 	 * @param position
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
@@ -1040,10 +1055,10 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Upload the contents of an InputStream to the remote computer.
-	 * 
+	 *
 	 * @param in
 	 * @param remote
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
@@ -1057,16 +1072,16 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Sets the user ID to owner for the file or directory.
 	 * </p>
-	 * 
+	 *
 	 * @param uid
 	 *            numeric user id of the new owner
 	 * @param path
 	 *            the path to the remote file/directory
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * 
+	 *
 	 */
 	public void chown(String uid, String path) throws SftpStatusException,
 			SshException {
@@ -1077,12 +1092,12 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Sets the group ID for the file or directory.
 	 * </p>
-	 * 
+	 *
 	 * @param gid
 	 *            the numeric group id for the new group
 	 * @param path
 	 *            the path to the remote file/directory
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
@@ -1096,17 +1111,17 @@ public abstract class SftpClientTask extends Task {
 	 * Changes the access permissions or modes of the specified file or
 	 * directory.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Modes determine who can read, change or execute a file.
 	 * </p>
 	 * <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * Absolute modes are octal numbers specifying the complete list of
 	 * attributes for the files; you specify attributes by OR'ing together
 	 * these bits.
-	 * 
+	 *
 	 * 0400       Individual read
 	 * 0200       Individual write
 	 * 0100       Individual execute (or list directory)
@@ -1117,14 +1132,14 @@ public abstract class SftpClientTask extends Task {
 	 * 0002       Other write
 	 * 0001       Other execute
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @param permissions
 	 *            the absolute mode of the file/directory
 	 * @param path
 	 *            the path to the file/directory on the remote server
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
@@ -1136,35 +1151,35 @@ public abstract class SftpClientTask extends Task {
 	/**
 	 * Sets the umask for this client.<br>
 	 * <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * To give yourself full permissions for both files and directories and
 	 * prevent the group and other users from having access:
-	 * 
+	 *
 	 *   umask(&quot;077&quot;);
-	 * 
+	 *
 	 * This subtracts 077 from the system defaults for files and directories
 	 * 666 and 777. Giving a default access permissions for your files of
 	 * 600 (rw-------) and for directories of 700 (rwx------).
-	 * 
+	 *
 	 * To give all access permissions to the group and allow other users read
 	 * and execute permission:
-	 * 
+	 *
 	 *   umask(&quot;002&quot;);
-	 * 
+	 *
 	 * This subtracts 002 from the system defaults to give a default access permission
 	 * for your files of 664 (rw-rw-r--) and for your directories of 775 (rwxrwxr-x).
-	 * 
+	 *
 	 * To give the group and other users all access except write access:
-	 * 
+	 *
 	 *   umask(&quot;022&quot;);
-	 * 
+	 *
 	 * This subtracts 022 from the system defaults to give a default access permission
 	 * for your files of 644 (rw-r--r--) and for your directories of 755 (rwxr-xr-x).
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @param umask
 	 * @throws SshException
 	 */
@@ -1176,12 +1191,12 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Rename a file on the remote computer.
 	 * </p>
-	 * 
+	 *
 	 * @param oldpath
 	 *            the old path
 	 * @param newpath
 	 *            the new path
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
@@ -1194,10 +1209,10 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Remove a file or directory from the remote computer.
 	 * </p>
-	 * 
+	 *
 	 * @param path
 	 *            the path of the remote file/directory
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
@@ -1208,11 +1223,11 @@ public abstract class SftpClientTask extends Task {
 	/**
 	 * Remove a file or directory on the remote computer with options to force
 	 * deletion of existing files and recursion.
-	 * 
+	 *
 	 * @param path
 	 * @param force
 	 * @param recurse
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
@@ -1225,12 +1240,12 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Create a symbolic link on the remote computer.
 	 * </p>
-	 * 
+	 *
 	 * @param path
 	 *            the path to the existing file
 	 * @param link
 	 *            the new link
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
@@ -1243,12 +1258,12 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Returns the attributes of the file from the remote computer.
 	 * </p>
-	 * 
+	 *
 	 * @param path
 	 *            the path of the file on the remote computer
-	 * 
+	 *
 	 * @return the attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
@@ -1256,17 +1271,17 @@ public abstract class SftpClientTask extends Task {
 			SshException {
 		return sftp.stat(path);
 	}
-	
+
 	/**
 	 * <p>
 	 * Returns the attributes of the link from the remote computer.
 	 * </p>
-	 * 
+	 *
 	 * @param path
 	 *            the path of the file on the remote computer
-	 * 
+	 *
 	 * @return the attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
@@ -1277,11 +1292,11 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Get the absolute path for a file.
-	 * 
+	 *
 	 * @param path
-	 * 
+	 *
 	 * @return String
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
@@ -1297,16 +1312,16 @@ public abstract class SftpClientTask extends Task {
 	 * @return
 	 * @throws SftpStatusException
 	 * @throws SshException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public boolean verifyFiles(String localFile, String remoteFile) throws SftpStatusException, SshException, IOException, PermissionDeniedException {
 		return sftp.verifyFiles(localFile, remoteFile);
 	}
-	
+
 	/**
 	 * Verify a local and remote file. Requires a minimum SFTP version of 5 and/or support of the "md5-hash" extension.
-	 * 
+	 *
 	 * @param localFile
 	 * @param remoteFile
 	 * @param offset
@@ -1314,8 +1329,8 @@ public abstract class SftpClientTask extends Task {
 	 * @return
 	 * @throws SftpStatusException
 	 * @throws SshException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public boolean verifyFiles(String localFile, String remoteFile, long offset, long length) throws SftpStatusException, SshException, IOException, PermissionDeniedException {
 		return sftp.verifyFiles(localFile, remoteFile, offset, length);
@@ -1324,7 +1339,7 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Close the SFTP client.
 	 * </p>
-	 * 
+	 *
 	 */
 	public void quit() throws SshException {
 		sftp.quit();
@@ -1334,7 +1349,7 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Close the SFTP client.
 	 * </p>
-	 * 
+	 *
 	 */
 	public void exit() throws SshException {
 		sftp.exit();
@@ -1342,7 +1357,7 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Copy the contents of a local directory into a remote directory.
-	 * 
+	 *
 	 * @param localdir
 	 *            the path to the local directory
 	 * @param remotedir
@@ -1358,14 +1373,14 @@ public abstract class SftpClientTask extends Task {
 	 *            returned so that the operation can be evaluated and no actual
 	 *            files will be created/transfered.
 	 * @param progress
-	 * 
+	 *
 	 * @return DirectoryOperation
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public DirectoryOperation putLocalDirectory(String localdir,
 			String remotedir, boolean recurse, boolean sync, boolean commit,
@@ -1373,17 +1388,17 @@ public abstract class SftpClientTask extends Task {
 		return sftp.putLocalDirectory(localdir, remotedir, recurse, sync, commit, progress);
 	}
 
-	
+
 
 	/**
 	 * Format a String with the details of the file. <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * -rwxr-xr-x   1 mjos     staff      348911 Mar 25 14:29 t-filexfer
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @param file
 	 * @throws SftpStatusException
 	 * @throws SshException
@@ -1396,13 +1411,13 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Format a String with the details of the file. <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * -rwxr-xr-x   1 mjos     staff      348911 Mar 25 14:29 t-filexfer
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @param attrs
 	 * @param filename
 	 * @return String
@@ -1415,7 +1430,7 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Copy the contents of a remote directory to a local directory
-	 * 
+	 *
 	 * @param remotedir
 	 *            the remote directory whose contents will be copied.
 	 * @param localdir
@@ -1431,14 +1446,14 @@ public abstract class SftpClientTask extends Task {
 	 *            href="DirectoryOperation.html">DirectoryOperation</a> will be
 	 *            returned without actually transfering any files.
 	 * @param progress
-	 * 
+	 *
 	 * @return DirectoryOperation
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public DirectoryOperation getRemoteDirectory(String remotedir,
 			String localdir, boolean recurse, boolean sync, boolean commit,
@@ -1450,25 +1465,25 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Download the remote files to the local computer
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * When RegExpSyntax is set to NoSyntax the getFiles() methods act
 	 * identically to the get() methods except for a different return type.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * When RegExpSyntax is set to GlobSyntax or Perl5Syntax, getFiles() treats
 	 * 'remote' as a regular expression, and gets all the files in 'remote''s
 	 * parent directory that match the pattern. The default parent directory of
 	 * remote is the remote cwd unless 'remote' contains file seperators(/).
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Examples can be found in SftpConnect.java
-	 * 
+	 *
 	 * <p>
 	 * Code Example: <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * // change reg exp syntax from default SftpClient.NoSyntax (no reg exp matching)
 	 * // to SftpClient.GlobSyntax
@@ -1477,20 +1492,20 @@ public abstract class SftpClientTask extends Task {
 	 * // relative to the remote cwd, and copy them to the local cwd.
 	 * sftp.getFiles(&quot;docs/unsorted/*rfc*.doc&quot;);
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
 	 * </p>
-	 * 
+	 *
 	 * @param remote
 	 *            the regular expression path to the remote file
-	 * 
+	 *
 	 * @return the downloaded files' attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFile[] getFiles(String remote) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		return sftp.getFiles(remote);
@@ -1499,19 +1514,19 @@ public abstract class SftpClientTask extends Task {
 	/**
 	 * <p>
 	 * Download the remote files to the local computer
-	 * 
+	 *
 	 * @param remote
 	 *            the regular expression path to the remote file
 	 * @param resume
 	 *            attempt to resume an interrupted download
-	 * 
+	 *
 	 * @return the downloaded files' attributes
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFile[] getFiles(String remote, boolean resume)
 			throws SftpStatusException, SshException,
@@ -1523,18 +1538,18 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Download the remote files to the local computer.
 	 * </p>
-	 * 
+	 *
 	 * @param remote
 	 *            the regular expression path to the remote file
 	 * @param progress
-	 * 
+	 *
 	 * @return SftpFile[]
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFile[] getFiles(String remote, FileTransferProgress progress)
 			throws SftpStatusException, SshException,
@@ -1546,20 +1561,20 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Download the remote files to the local computer.
 	 * </p>
-	 * 
+	 *
 	 * @param remote
 	 *            the regular expression path to the remote file
 	 * @param progress
 	 * @param resume
 	 *            attempt to resume a interrupted download
-	 * 
+	 *
 	 * @return SftpFile[]
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFile[] getFiles(String remote, FileTransferProgress progress,
 			boolean resume) throws SftpStatusException,
@@ -1569,17 +1584,17 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Download the remote files into the local file.
-	 * 
+	 *
 	 * @param remote
 	 * @param local
-	 * 
+	 *
 	 * @return SftpFile[]
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFile[] getFiles(String remote, String local)
 			throws SftpStatusException, SshException,
@@ -1589,19 +1604,19 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Download the remote files into the local file.
-	 * 
+	 *
 	 * @param remote
 	 * @param local
 	 * @param resume
 	 *            attempt to resume an interrupted download
-	 * 
+	 *
 	 * @return SftpFile[]
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFile[] getFiles(String remote, String local, boolean resume)
 			throws SftpStatusException, SshException,
@@ -1614,20 +1629,20 @@ public abstract class SftpClientTask extends Task {
 	 * Download the remote file to the local computer. If the paths provided are
 	 * not absolute the current working directory is used.
 	 * </p>
-	 * 
+	 *
 	 * @param remote
 	 *            the regular expression path/name of the remote files
 	 * @param local
 	 *            the path/name to place the file on the local computer
 	 * @param progress
-	 * 
+	 *
 	 * @return SftpFile[]
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public SftpFile[] getFiles(String remote, String local,
 			FileTransferProgress progress, boolean resume)
@@ -1640,25 +1655,25 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Upload the contents of an InputStream to the remote computer.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * When RegExpSyntax is set to NoSyntax the putFiles() methods act
 	 * identically to the put() methods except for a different return type.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * When RegExpSyntax is set to GlobSyntax or Perl5Syntax, putFiles() treats
 	 * 'local' as a regular expression, and gets all the files in 'local''s
 	 * parent directory that match the pattern. The default parent directory of
 	 * local is the local cwd unless 'local' contains file seperators.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Examples can be found in SftpConnect.java
-	 * 
+	 *
 	 * <p>
 	 * Code Example: <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * // change reg exp syntax from default SftpClient.NoSyntax (no reg exp matching)
 	 * // to SftpClient.GlobSyntax
@@ -1667,17 +1682,17 @@ public abstract class SftpClientTask extends Task {
 	 * // relative to the local cwd, and copy them to the remote cwd.
 	 * sftp.putFiles(&quot;docs/unsorted/*rfc*.doc&quot;);
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
 	 * </p>
-	 * 
+	 *
 	 * @param local
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void putFiles(String local) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
 		sftp.putFiles(local);
@@ -1685,16 +1700,16 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Upload files to the remote computer
-	 * 
+	 *
 	 * @param local
 	 * @param resume
 	 *            attempt to resume after an interrupted transfer
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void putFiles(String local, boolean resume)
 			throws SftpStatusException, SshException,
@@ -1706,16 +1721,16 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Upload files to the remote computer
 	 * </p>
-	 * 
+	 *
 	 * @param local
 	 *            the regular expression path/name of the local files
 	 * @param progress
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void putFiles(String local, FileTransferProgress progress)
 			throws SftpStatusException, SshException,
@@ -1727,16 +1742,16 @@ public abstract class SftpClientTask extends Task {
 	 * <p>
 	 * Upload files to the remote computer
 	 * </p>
-	 * 
+	 *
 	 * @param local
 	 *            the regular expression path/name of the local files
 	 * @param progress
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void putFiles(String local, FileTransferProgress progress,
 			boolean resume) throws SftpStatusException,
@@ -1746,15 +1761,15 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Upload files to the remote computer
-	 * 
+	 *
 	 * @param local
 	 * @param remote
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void putFiles(String local, String remote)
 			throws SftpStatusException, SshException,
@@ -1764,17 +1779,17 @@ public abstract class SftpClientTask extends Task {
 
 	/**
 	 * Upload files to the remote computer
-	 * 
+	 *
 	 * @param local
 	 * @param remote
 	 * @param resume
 	 *            attempt to resume after an interrupted transfer
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void putFiles(String local, String remote, boolean resume)
 			throws SftpStatusException, SshException,
@@ -1787,18 +1802,18 @@ public abstract class SftpClientTask extends Task {
 	 * Upload files to the remote computer. If the paths provided are not
 	 * absolute the current working directory is used.
 	 * </p>
-	 * 
+	 *
 	 * @param local
 	 *            the regular expression path/name of the local files
 	 * @param remote
 	 *            the path/name of the destination file
 	 * @param progress
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void putFiles(String local, String remote,
 			FileTransferProgress progress) throws SftpStatusException, SshException, TransferCancelledException, IOException, PermissionDeniedException {
@@ -1808,7 +1823,7 @@ public abstract class SftpClientTask extends Task {
 	/**
 	 * make local copies of some of the variables, then call putfilematches,
 	 * which calls "put" on each file that matches the regexp local.
-	 * 
+	 *
 	 * @param local
 	 *            the regular expression path/name of the local files
 	 * @param remote
@@ -1816,12 +1831,12 @@ public abstract class SftpClientTask extends Task {
 	 * @param progress
 	 * @param resume
 	 *            attempt to resume after an interrupted transfer
-	 * 
+	 *
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 * @throws TransferCancelledException
-	 * @throws PermissionDeniedException 
-	 * @throws IOException 
+	 * @throws PermissionDeniedException
+	 * @throws IOException
 	 */
 	public void putFiles(String local, String remote,
 			FileTransferProgress progress, boolean resume)

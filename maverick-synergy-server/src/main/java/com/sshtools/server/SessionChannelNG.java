@@ -1,25 +1,8 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 
 package com.sshtools.server;
 
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -43,6 +26,7 @@ import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.Subsystem;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.ssh.ChannelNG;
 import com.sshtools.synergy.ssh.ChannelOutputStream;
@@ -112,8 +96,9 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		this(con, false);
 	}
 	public SessionChannelNG(SshConnection con, boolean autoConsume) {
-		super("session", con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
-				0,
+		super("session", 
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
+				UnsignedInteger32.ZERO,
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
 				null,
@@ -598,7 +583,12 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 
 	protected void onSessionData(ByteBuffer data) {
 		synchronized (localWindow) {
-			cache.put(data);
+			try {
+				cache.put(data);
+			} catch (EOFException e) {
+				Log.error("Attempt to write session data to channel cache failed because the cache is closed");
+				close();
+			}
 		}		
 	}
 	/**
@@ -669,12 +659,12 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	}
 	
 	@Override
-	public int getMaximumWindowSpace() {
+	public UnsignedInteger32 getMaximumWindowSpace() {
 		return localWindow.getMaximumWindowSpace();
 	}
 
 	@Override
-	public int getMinimumWindowSpace() {
+	public UnsignedInteger32 getMinimumWindowSpace() {
 		return localWindow.getMinimumWindowSpace();
 	}
 

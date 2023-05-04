@@ -1,26 +1,9 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.callback.client;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import com.sshtools.common.logger.Log;
@@ -87,6 +70,7 @@ public class CallbackSession implements Runnable {
 		}
 		int count = 1;
 		while(app.getSshEngine().isStarted()) {
+			SshConnection currentConnection = null;
 			try {
 				future = app.getSshEngine().connect(
 						hostname, 
@@ -94,20 +78,20 @@ public class CallbackSession implements Runnable {
 						createContext(config));
 				future.waitFor(30000L);
 				if(future.isDone() && future.isSuccess()) {
-					SshConnection currentConnection = future.getConnection();
+					currentConnection = future.getConnection();
 					currentConnection.getAuthenticatedFuture().waitFor(30000L);
-					if(currentConnection.getAuthenticatedFuture().isDone() && currentConnection.getAuthenticatedFuture().isSuccess()) {
+					
+					if(currentConnection.getAuthenticatedFuture().isDone()
+							&& currentConnection.getAuthenticatedFuture().isSuccess()) {
 						currentConnection.setProperty("callbackClient", this);
 					
 						if(Log.isInfoEnabled()) {
 							Log.info("Callback {} registering with memo {}", currentConnection.getUUID(), config.getMemo());
 						}
-
-  					    GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
+						GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
 								currentConnection, ByteArrayWriter.encodeString(config.getMemo()));
 						currentConnection.sendGlobalRequest(req, false);
 						app.onClientConnected(this, currentConnection);
-
 						if(Log.isInfoEnabled()) {
 							Log.info("Client is connected to {}:{}", hostname, port);
 						}
@@ -120,6 +104,7 @@ public class CallbackSession implements Runnable {
 						currentConnection.disconnect();
 						numberOfAuthenticationErrors++;
 					}
+					
 				}
 				
 				if(!config.isReconnect()) {
@@ -146,6 +131,11 @@ public class CallbackSession implements Runnable {
 						e.getMessage(),
 						config.getServerHost(), 
 						config.getServerPort());
+				
+				if(Objects.nonNull(currentConnection)) {
+					currentConnection.disconnect();
+				}
+				
 				long interval = config.getReconnectIntervalMs() * Math.min(count, 12 * 60);
 				if(Log.isInfoEnabled()) {
 					Log.info("Reconnecting to {}:{} in {} seconds", hostname, port, interval / 1000);

@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.logger;
 
 import java.io.File;
@@ -35,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -64,6 +47,7 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	}
 	
 	public void shutdown() {
+		reset();
 		if(watcher!=null) {
 			watcher.stopThread();
 		}
@@ -150,6 +134,17 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	@Override
 	public synchronized void enableFile(Level level, File logFile) {
 		try {
+			Iterator<LoggerContext> it = contexts.iterator();
+			while(it.hasNext()) {
+				LoggerContext ctx = it.next();
+				if(ctx instanceof FileLoggingContext) {
+					FileLoggingContext context = (FileLoggingContext) ctx;
+					if(context.getFile().equals(logFile)) {
+						context.close();
+						it.remove();
+					}
+				}
+			}
 			contexts.add(new FileLoggingContext(level, logFile));
 		} catch (IOException e) {
 			System.err.println("Error logging to file");
@@ -165,6 +160,14 @@ public class DefaultLoggerContext implements RootLoggerContext {
 			System.err.println("Error logging to file");
 			e.printStackTrace();
 		}
+	}
+	
+	public synchronized void reset() {
+		for(LoggerContext ctx : contexts) {
+			ctx.close();
+		}
+		
+		contexts.clear();
 	}
 	
 	@Override

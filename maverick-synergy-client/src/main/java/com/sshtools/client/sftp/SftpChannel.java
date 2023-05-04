@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.client.sftp;
 
 import java.io.BufferedInputStream;
@@ -32,8 +14,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.sshtools.client.SessionChannelNG;
+import com.sshtools.client.SshClientContext;
 import com.sshtools.client.tasks.AbstractSubsystem;
 import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.client.tasks.Message;
@@ -162,7 +146,7 @@ public class SftpChannel extends AbstractSubsystem {
 	int version = MAX_VERSION;
 	int serverVersion = -1;
 	UnsignedInteger32 requestId = new UnsignedInteger32(0);
-	Map<UnsignedInteger32, SftpMessage> responses = new HashMap<UnsignedInteger32, SftpMessage>();
+	Map<UnsignedInteger32, SftpMessage> responses = new ConcurrentHashMap<UnsignedInteger32, SftpMessage>();
 	SftpThreadSynchronizer sync = new SftpThreadSynchronizer();
 	Map<String, byte[]> extensions = new HashMap<String, byte[]>();
 
@@ -206,11 +190,11 @@ public class SftpChannel extends AbstractSubsystem {
 		return (Integer) con.getProperty("sftpVersion");
 	}
 
-	protected int getMinimumWindowSize() {
+	protected UnsignedInteger32 getMinimumWindowSize() {
 		return con.getContext().getPolicy(FileSystemPolicy.class).getSftpMinWindowSize();
 	}
 	
-	protected int getMaximumWindowSize() {
+	protected UnsignedInteger32 getMaximumWindowSize() {
 		return con.getContext().getPolicy(FileSystemPolicy.class).getSftpMaxWindowSize();
 	}
 	
@@ -256,8 +240,6 @@ public class SftpChannel extends AbstractSubsystem {
 					int serverVersion = (int) bar.readInt();
 					int requestedVersion = MAX_VERSION;
 					version = Math.min(serverVersion, requestedVersion);
-	
-					Map<String, byte[]> extensions = new HashMap<String, byte[]>();
 	
 					if(Log.isTraceEnabled()) {
 						Log.trace("Version is " + version + " [Server="
@@ -530,14 +512,19 @@ public class SftpChannel extends AbstractSubsystem {
 
 		SftpMessage msg;
 		MessageHolder holder = new MessageHolder();
+		holder.msg = responses.get(requestId);
 		while (holder.msg == null) {
 			try {
 				// Read the next response message
 				if (sync.requestBlock(requestId, holder)) {
-					msg = new SftpMessage(nextMessage());
-					responses.put(new UnsignedInteger32(msg.getMessageId()),msg);
-					if(Log.isTraceEnabled()) {
-						Log.trace("There are " + responses.size() + " SFTP responses waiting to be processed");
+					try {
+						msg = new SftpMessage(nextMessage());
+						responses.put(new UnsignedInteger32(msg.getMessageId()),msg);
+						if(Log.isTraceEnabled()) {
+							Log.trace("There are " + responses.size() + " SFTP responses waiting to be processed");
+						}
+					} finally {
+						sync.releaseBlock();
 					}
 				}
 			} catch (InterruptedException e) {
@@ -546,9 +533,7 @@ public class SftpChannel extends AbstractSubsystem {
 						SshException.CHANNEL_FAILURE);
 			} catch (IOException ex) {
 				throw new SshException(SshException.INTERNAL_ERROR, ex);
-			} finally {
-				sync.releaseBlock();
-			}
+			} 
 		}
 
 		return (SftpMessage) responses.remove(requestId);
@@ -809,10 +794,10 @@ public class SftpChannel extends AbstractSubsystem {
 	 * @throws SshException
 	 */
 	public void performOptimizedWrite(String filename, byte[] handle, int blocksize,
-			int outstandingRequests, java.io.InputStream in, int buffersize,
+			int maxAsyncRequests, java.io.InputStream in, int buffersize,
 			FileTransferProgress progress) throws SftpStatusException,
 			SshException, TransferCancelledException {
-		performOptimizedWrite(filename, handle, blocksize, outstandingRequests, in,
+		performOptimizedWrite(filename, handle, blocksize, maxAsyncRequests, in,
 				buffersize, progress, 0);
 	}
 
@@ -844,7 +829,7 @@ public class SftpChannel extends AbstractSubsystem {
 	 * @throws SshException
 	 */
 	public void performOptimizedWrite(String filename, byte[] handle, int blocksize,
-			int outstandingRequests, java.io.InputStream in, int buffersize,
+			int maxAsyncRequests, java.io.InputStream in, int buffersize,
 			FileTransferProgress progress, long position)
 			throws SftpStatusException, SshException,
 			TransferCancelledException {
@@ -853,34 +838,30 @@ public class SftpChannel extends AbstractSubsystem {
 		long transfered = position;
 		
 		try {
-			if (blocksize < 4096) {
+			if (blocksize > 0 && blocksize < 4096) {
 				throw new SshException("Block size cannot be less than 4096",
 						SshException.BAD_API_USAGE);
 			}
 
-			/**
-			 * Optimization to ensure excessive blocksize does not exceed maximum packet
-			 * length declared by remote side, taking into account the overhead for 
-			 * this particular message. 
-			 */
-			int overhead = 4 + 		// Packet Length Field Length
-					1 + 			// Message Id Length
-					4 + 			// Request Id Length
-					4 + 			// Handle Field Length
-					handle.length + // Handle Length
-					8 + 			// Offset Field Length
-					4;				// Data Size Field Length
+			if (blocksize <= 0 || blocksize > 65536) {
+				blocksize = getSession().getMaximumRemotePacketLength() - 13;
+			} else if(blocksize + 13 > getSession().getMaxiumRemotePacketSize()) {
+				blocksize = getSession().getMaximumRemotePacketLength() - 13;
+			}
 			
-			if(blocksize + overhead > getSession().getMaximumRemotePacketLength()) {
-				blocksize = getSession().getMaximumRemotePacketLength() - overhead;
+			int calculatedRequestsMax =  (int) ((getSession().getRemoteWindow().longValue()  * 0.9D) / blocksize);
+			
+			if(maxAsyncRequests <= 0) {
+				maxAsyncRequests = calculatedRequestsMax;
 			}
 			
 			System.setProperty("maverick.write.optimizedBlock", String.valueOf(blocksize));
+			System.setProperty("maverick.write.asyncRequestsMax", String.valueOf(maxAsyncRequests));
 			
 			if(Log.isTraceEnabled()) {
 				Log.trace("Performing optimized write length=" + in.available()
 						+ " postion=" + position + " blocksize=" + blocksize
-						+ " outstandingRequests=" + outstandingRequests);
+						+ " maxAsyncRequests=" + maxAsyncRequests);
 			}
 			
 			if (position < 0)
@@ -944,10 +925,11 @@ public class SftpChannel extends AbstractSubsystem {
 						progress.progressed(transfered);
 					}
 					
-					if (requests.size() > outstandingRequests) {
+					if (requests.size() > maxAsyncRequests) {
 						requestId = (UnsignedInteger32) requests.elementAt(0);
 						requests.removeElementAt(0);
 						getOKRequestStatus(requestId);
+						
 					}
 	
 				}
@@ -1044,28 +1026,24 @@ public class SftpChannel extends AbstractSubsystem {
 		boolean reachedEOF = false;
 		long started = System.currentTimeMillis();
 		
-		if (blocksize < 1 || blocksize > 65536) {
-			if(Log.isTraceEnabled()) {
-				Log.trace("Blocksize to large for some SFTP servers, reseting to 32K");
-			}
-			blocksize = 32768;
+		if (blocksize > 0 && blocksize < 4096) {
+			throw new SshException("Block size cannot be less than 4096",
+					SshException.BAD_API_USAGE);
 		}
 
-		/**
-		 * Optimization to ensure excessive blocksize does not exceed maximum packet
-		 * length declared by local side, taking into account the overhead for 
-		 * this particular message. 
-		 */
-		int overhead = 4 + 		// Packet Length Field Length
-				1 + 			// Message Id Length
-				4 + 			// Request Id Length
-				4;				// Data Size Field Length
-		
-		if(blocksize + overhead > getSession().getMaximumLocalPacketLength()) {
-			blocksize = getSession().getMaximumLocalPacketLength() - overhead;
+		if (blocksize <= 0 || blocksize > 65536) {
+			blocksize = getSession().getMaximumLocalPacketLength() - 13;
+		} else if(blocksize + 13 > getSession().getMaximumLocalPacketLength()) {
+			blocksize = getSession().getMaximumLocalPacketLength() - 13;
 		}
 		
+		int calculatedRequests = (int) ((getSession().getMaximumWindowSpace().longValue() * 0.9D) / blocksize);
+		if(outstandingRequests <= 0 || calculatedRequests < outstandingRequests) {
+			outstandingRequests = calculatedRequests / 2;
+		}
+
 		System.setProperty("maverick.read.optimizedBlock", String.valueOf(blocksize));
+		System.setProperty("maverick.read.asyncRequests", String.valueOf(outstandingRequests));
 		
 		if(Log.isTraceEnabled()) {
 			Log.trace("Performing optimized read length=" + length
@@ -1148,12 +1126,13 @@ public class SftpChannel extends AbstractSubsystem {
 			// reconfigure the blocksize if necessary
 			if (i < blocksize && length > i) {
 				blocksize = i;
+				System.setProperty("maverick.read.optimizedBlock", String.valueOf(blocksize));
 			}
 	
 			Vector<UnsignedInteger32> requests = new Vector<UnsignedInteger32>(
 					outstandingRequests);
 			
-			int osr = 1;
+			int osr = calculatedRequests;
 			
 			long offset = position;	
 			UnsignedInteger32 requestId;
@@ -1163,7 +1142,7 @@ public class SftpChannel extends AbstractSubsystem {
 				
 				while(requests.size() < osr) {
 					
-					if(i > 0 && session.getRemoteWindow() < 29) {
+					if(i > 0 && session.getRemoteWindow().longValue() < 29) {
 						if (Log.isDebugEnabled())
 							Log.debug("Deferring post requests due to lack of remote window");
 						break;
@@ -1233,7 +1212,7 @@ public class SftpChannel extends AbstractSubsystem {
 					bar.release();
 				}
 				
-				if(osr < outstandingRequests) {
+				if(osr < calculatedRequests) {
 					osr++;
 				}
 			}
@@ -1321,12 +1300,14 @@ public class SftpChannel extends AbstractSubsystem {
 			Log.trace("Performing synchronous read postion=" + position
 					+ " blocksize=" + blocksize);
 
-		if (blocksize < 1 || blocksize > 32768) {
-
-			if(Log.isTraceEnabled())
-				Log.trace("Blocksize to large for some SFTP servers, reseting to 32K");
-
-			blocksize = 32768;
+		if (blocksize < 1 || blocksize > 65536) {
+			blocksize = getSession().getMaximumRemotePacketLength() - 13;
+		} else if(blocksize + 13 < getSession().getMaxiumRemotePacketSize()) {
+			blocksize = getSession().getMaximumLocalPacketLength() - 13;
+		}
+		
+		if(Log.isInfoEnabled()) {
+			Log.info("Optimised block size will be {}", blocksize);
 		}
 
 		if (position < 0) {
@@ -1816,14 +1797,26 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.writeInt(requestId.longValue());
 			msg.writeBinaryString(file.getHandle());
 
-			sendMessage(msg);;
-
+			sendMessage(msg);
+			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending list children request");
+			}
 			SftpMessage bar = getResponse(requestId);
 			
 			try {
 				if (bar.getType() == SSH_FXP_NAME) {
+			
+					if(Log.isDebugEnabled()) {
+						Log.debug("Received results");
+					}
+					
 					SftpFile[] files = extractFiles(bar, file.getAbsolutePath());
 	
+					if(Log.isDebugEnabled()) {
+						Log.debug("THere are {} results in this packet", files.length);
+					}
+					
 					for (int i = 0; i < files.length; i++) {
 						children.add(files[i]);
 					}
@@ -1831,6 +1824,9 @@ public class SftpChannel extends AbstractSubsystem {
 				} else if (bar.getType() == SSH_FXP_STATUS) {
 					int status = (int) bar.readInt();
 	
+					if(Log.isDebugEnabled()) {
+						Log.debug("Received status {}", status);
+					}
 					if (status == SftpStatusException.SSH_FX_EOF) {
 						return -1;
 					}
@@ -2156,7 +2152,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 	}
 
-	void closeHandle(byte[] handle) throws SftpStatusException, SshException {
+	public void closeHandle(byte[] handle) throws SftpStatusException, SshException {
 		if (!isValidHandle(handle)) {
 			throw new SftpStatusException(SftpStatusException.INVALID_HANDLE,
 					"The handle is invalid!");
@@ -2529,7 +2525,7 @@ public class SftpChannel extends AbstractSubsystem {
 			} else {
 				close();
 				throw new SshException(
-						"The server responded with an unexpected message!",
+						String.format("The server responded with an unexpected message! id=%d", bar.getType()),
 						SshException.CHANNEL_FAILURE);
 			}
 		} catch (SshIOException ex) {
@@ -2645,7 +2641,7 @@ public class SftpChannel extends AbstractSubsystem {
 		return getSession().isClosed();
 	}
 
-	public int getMaximumLocalWindowSize() {
+	public UnsignedInteger32 getMaximumLocalWindowSize() {
 		return getMaximumWindowSize();
 	}
 
@@ -2653,11 +2649,15 @@ public class SftpChannel extends AbstractSubsystem {
 		return getMaximumPacketSize();
 	}
 
-	public int getMaximumRemoteWindowSize() {
+	public UnsignedInteger32 getMaximumRemoteWindowSize() {
 		return session.getMaxiumRemoteWindowSize();
 	}
 
 	public int getMaximumRemotePacketLength() {
 		return session.getMaxiumRemotePacketSize();
+	}
+
+	public SshClientContext getContext() {
+		return (SshClientContext) con.getContext();
 	}
 }

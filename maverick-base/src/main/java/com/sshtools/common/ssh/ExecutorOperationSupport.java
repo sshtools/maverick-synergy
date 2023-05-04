@@ -1,26 +1,9 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh;
 
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import com.sshtools.common.logger.Log;
@@ -115,18 +98,19 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 		}
 
 		private void executeAllTasks() {
-			while (!subsystemOperations.isEmpty()) {
+			while (true) {
 				try {
 					Runnable r = null;
 
 					synchronized (this) {
+						if(subsystemOperations.isEmpty())
+							return;
 						r = subsystemOperations.removeFirst();
 					}
 					if (r != null) {
 						try {
 							r.run();
 						} catch (Throwable t) {
-							t.printStackTrace();
 							Log.error("{}: Caught exception in operation remainingTasks={}", queueName, subsystemOperations.size(), t);
 						} 
 					} else {
@@ -135,7 +119,6 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 						}
 					}
 				} catch (Throwable t) {
-					t.printStackTrace();
 					Log.error("{}: Caught exception in operation remainingTasks={}", queueName, subsystemOperations.size(), t);
 				}
 			}
@@ -146,35 +129,38 @@ public abstract class ExecutorOperationSupport<T extends ExecutorServiceProvider
 
 			if (!shutdown) {
 
+				shutdown = true;
+
 				if(Log.isTraceEnabled()) {
 					Log.trace("{}: Submitting clean up operation to executor service", queueName);
 				}
 
-				getContext().getExecutorService().submit(new Runnable() {
-					public void run() {
-						if (operationFuture != null) {
-				
-							if(Log.isTraceEnabled()) {
-								Log.trace("{}: Cleaning up operations", queueName);
-							}
-							
-							try {
+				ExecutorService executorService = getContext().getExecutorService();
+				if(!executorService.isShutdown()) {
+					executorService.submit(new Runnable() {
+						public void run() {
+							if (operationFuture != null) {
+					
 								if(Log.isTraceEnabled()) {
-									Log.trace("{}: Waiting for operations to complete", queueName);
+									Log.trace("{}: Cleaning up operations", queueName);
 								}
-								operationFuture.get();
-								if(Log.isTraceEnabled()) {
-									Log.trace("{}: All operations have completed", queueName);
+								
+								try {
+									if(Log.isTraceEnabled()) {
+										Log.trace("{}: Waiting for operations to complete", queueName);
+									}
+									operationFuture.get();
+									if(Log.isTraceEnabled()) {
+										Log.trace("{}: All operations have completed", queueName);
+									}
+	
+								} catch (InterruptedException e) {
+								} catch (ExecutionException e) {
 								}
-
-							} catch (InterruptedException e) {
-							} catch (ExecutionException e) {
 							}
 						}
-					}
-				});
-
-				shutdown = true;
+					});
+				}
 			}
 		}
 	}

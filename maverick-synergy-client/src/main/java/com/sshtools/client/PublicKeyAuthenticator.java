@@ -1,73 +1,91 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.client;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Objects;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.policy.SignaturePolicy;
+import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SignatureGenerator;
-import com.sshtools.common.publickey.SshPrivateKeyFile;
+import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.SshCertificate;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPrivateKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.SshRsaPublicKey;
+import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA256;
+import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA512;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.ssh.Connection;
+import com.sshtools.synergy.ssh.SshContext;
 
 /**
  * Implements public key authentication taking a separately loaded SshKeyPair as the private key for authentication.
  */
-public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements ClientAuthenticator /*, SignatureGenerator*/ {
+public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator implements ClientAuthenticator {
 
 	public final static int SSH_MSG_USERAUTH_PK_OK = 60;
 	
 	boolean isAuthenticating = false;
 	TransportProtocolClient transport;
 	String username;
-	Collection<SshKeyPair> keypairs;
 	
 	SignatureGenerator signatureGenerator;
-	
-	SshKeyPair authenticatingPair = null;
-	SshPrivateKeyFile authenticatingFile = null;
+	SshPublicKey currentKey;
+	String signingAlgorithm;
 	
 	public PublicKeyAuthenticator() {
 
 	}
-	
-	public PublicKeyAuthenticator(SshKeyPair... keys) {
-		keypairs = new ArrayList<SshKeyPair>();
-		keypairs.addAll(Arrays.asList(keys));
-	}
-	
-	public void setKeyPair(SshKeyPair... keys) {
-		keypairs = new ArrayList<SshKeyPair>();
-		keypairs.addAll(Arrays.asList(keys));
-	}
 
+	private boolean setupNextKey() throws IOException {
+		
+		do {
+			currentKey = getNextKey();
+			signingAlgorithm = currentKey.getSigningAlgorithm();
+
+			SignaturePolicy policy = transport.getContext().getPolicy(SignaturePolicy.class);
+			
+			if(!policy.getSupportedSignatures().isEmpty()) {
+				if(currentKey instanceof SshRsaPublicKey && currentKey.getBitLength() >= 1024) {
+					if(policy.getSupportedSignatures().contains(SshContext.PUBLIC_KEY_RSA_SHA512)) {
+						signingAlgorithm = SshContext.PUBLIC_KEY_RSA_SHA512;
+						currentKey = new Ssh2RsaPublicKeySHA512((SshRsaPublicKey)currentKey);
+					} else if(policy.getSupportedSignatures().contains(SshContext.PUBLIC_KEY_RSA_SHA256)) {
+						signingAlgorithm = SshContext.PUBLIC_KEY_RSA_SHA256;
+						currentKey = new Ssh2RsaPublicKeySHA256((SshRsaPublicKey)currentKey);
+					} else {
+						Log.debug("Server does not support {} signature for key {}",
+								currentKey.getSigningAlgorithm(),
+								SshKeyUtils.getOpenSSHFormattedKey(currentKey));
+						continue;
+					}
+					if(Log.isDebugEnabled()) {
+						Log.debug("Upgrading key {} to use {} signature", SshKeyUtils.getOpenSSHFormattedKey(currentKey), signingAlgorithm);
+					}
+				} else if(!policy.getSupportedSignatures().contains(signingAlgorithm)) {
+					Log.debug("Server does not support {} signature for key {}",
+							currentKey.getSigningAlgorithm(),
+							SshKeyUtils.getOpenSSHFormattedKey(currentKey));
+					continue;
+				}
+			}
+			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Authenticating with {}", SshKeyUtils.getOpenSSHFormattedKey(currentKey));
+			}
+			
+			
+			return true;
+		
+		}
+		while(hasCredentialsRemaining());
+		
+		return false;
+	}
+	
 	@Override
 	public void authenticate(TransportProtocolClient transport, String username) throws IOException, SshException {
 		
@@ -76,7 +94,15 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 		this.transport = transport;
 		this.username = username;
 
-		doPublicKeyAuth();
+		if(hasCredentialsRemaining()) {
+			setupNextKey();
+			doPublicKeyAuth();
+		} else {
+			if(Log.isDebugEnabled()) {
+				Log.debug("No more credentials", getName());
+			}
+			done(false);
+		}
 
 	}
 
@@ -87,6 +113,7 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 	void doPublicKeyAuth() throws SshException, IOException {
 		
 		try {
+
 
 			final byte[] msg = generateAuthenticationRequest(generateSignatureData());
 			
@@ -107,19 +134,14 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 		} catch (SshException e) {
 			Log.error("Public key operation failed",e);
 			failure();
+		} catch(InvalidPassphraseException e) {
+			Log.error("Public key operation failed",e);
+			failure();
 		}
 	}
 	
 	byte[] generateSignatureData() throws IOException,
-			SshException {
-		
-		if(Objects.isNull(authenticatingPair) && !keypairs.isEmpty()) {
-			authenticatingPair = keypairs.iterator().next();
-		}
-	
-		if(Objects.isNull(authenticatingPair)) {
-			throw new IOException("No suitable key found");
-		}
+			SshException, InvalidPassphraseException {
 		
 		try(ByteArrayWriter baw = new ByteArrayWriter()) {
 			baw.writeBinaryString(transport.getSessionKey());
@@ -128,53 +150,53 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 			baw.writeString("ssh-connection");
 			baw.writeString("publickey");
 			baw.writeBoolean(isAuthenticating);
-			writePublicKey(baw, getPublicKey(authenticatingPair));
+			writePublicKey(baw, currentKey);
 			
-
 			return baw.toByteArray();
 
 		} 
 	}
-
+	
+	protected abstract SshPublicKey getNextKey() throws IOException;
+	
+	protected abstract SshKeyPair getAuthenticatingKey() throws IOException, InvalidPassphraseException;
+	
+	protected abstract boolean hasCredentialsRemaining();
+	
 	private void writePublicKey(ByteArrayWriter baw, SshPublicKey key) throws IOException, SshException {
 
 		baw.writeString(key.getAlgorithm());
 		baw.writeBinaryString(key.getEncoded());
 		
 	}
-	
-	private SshPublicKey getPublicKey(SshKeyPair pair) {
-		if(pair instanceof SshCertificate) {
-			return ((SshCertificate)pair).getCertificate();
-		}
-		return pair.getPublicKey();
-	}
 
-	byte[] generateAuthenticationRequest(byte[] data) throws IOException, SshException {
+
+	byte[] generateAuthenticationRequest(byte[] data) throws IOException, SshException, InvalidPassphraseException {
 
 		ByteArrayWriter baw = new ByteArrayWriter();
-		
-		
+
 		try {
 			baw.writeBoolean(isAuthenticating);
-			writePublicKey(baw, getPublicKey(authenticatingPair));
+
+			if(!isAuthenticating) {
+				if(Log.isDebugEnabled()) {
+					Log.debug("Verifying key {}", currentKey.getAlgorithm());
+					Log.debug("Encoded key{}{}", System.lineSeparator(), Utils.bytesToHex(currentKey.getEncoded(), 32, true, true));
+				}
+			}
+			
+			writePublicKey(baw, currentKey);
 	
 			if (isAuthenticating) {
-	
-					byte[] signature = sign(authenticatingPair.getPrivateKey(), 
-							authenticatingPair.getPublicKey().getSigningAlgorithm(), data);
-					
-					// Format the signature correctly
-					ByteArrayWriter sig = new ByteArrayWriter();
-		
-					try {
-						sig.writeString(authenticatingPair.getPublicKey().getSigningAlgorithm());
-						sig.writeBinaryString(signature);
-						baw.writeBinaryString(sig.toByteArray());
-					} finally {
-						sig.close();
-					}
 
+					if(Log.isDebugEnabled()) {
+						Log.debug("Signing authentication request with {}", signingAlgorithm);
+					}
+					
+					byte[] signature = getSignatureGenerator().sign(currentKey, 
+							signingAlgorithm, 
+							data);
+					baw.writeBinaryString(signature);
 			}
 			
 			return baw.toByteArray();
@@ -185,12 +207,21 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 
 	}
 
+	protected SignatureGenerator getSignatureGenerator() throws IOException, InvalidPassphraseException {
+		return getAuthenticatingKey();
+	}
+
 	@Override
 	public boolean processMessage(ByteArrayReader msg) throws IOException, SshException {
 		
 		switch(msg.read()) {
 		case SSH_MSG_USERAUTH_PK_OK:
 		{
+ 			if(Log.isDebugEnabled()) {
+ 				Log.debug("Received SSH_MSG_USERAUTH_PK_OK");
+ 				Log.debug("Server accepts {} {}", currentKey.getAlgorithm(), SshKeyUtils.getFingerprint(currentKey));
+ 			}
+ 			
 			isAuthenticating = true;
 			try {
 				doPublicKeyAuth();
@@ -202,13 +233,16 @@ public class PublicKeyAuthenticator extends SimpleClientAuthenticator implements
 		}
 		case AuthenticationProtocolClient.SSH_MSG_USERAUTH_FAILURE:
 		{
-			if(!isAuthenticating) {
-				keypairs.remove(authenticatingPair);
-				authenticatingPair = null;
-				if(!keypairs.isEmpty()) {
-					doPublicKeyAuth();
-					return true;
+			if(hasCredentialsRemaining()) {
+				setupNextKey();
+				isAuthenticating = false;
+				doPublicKeyAuth();
+				return true;
+			} else {
+				if(Log.isDebugEnabled()) {
+					Log.debug("No more credentials", getName());
 				}
+				done(false);
 			}
 		}
 		}

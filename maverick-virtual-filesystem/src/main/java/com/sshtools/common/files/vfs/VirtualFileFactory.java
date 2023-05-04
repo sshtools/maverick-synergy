@@ -1,24 +1,7 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.files.vfs;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +13,6 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.util.FileUtils;
 
@@ -115,8 +97,16 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		
 		AbstractFile file = parent.resolveFile();
 
-		for(AbstractFile child : file.getChildren()) {
-			files.put(child.getName(), new VirtualMappedFile(child, parent.getMount(), this));
+		/**
+		 * This check is important because in some circumstances the mount might be a path
+		 * within a mount that has no hard backing. For example when / and /public/foo are
+		 * mounted, /public is not a real path and we don't want to generate errors because
+		 * we have to list foo as a directory under /public.
+		 */
+		if(file.isDirectory()) {
+			for(AbstractFile child : file.getChildren()) {
+				files.put(child.getName(), new VirtualMappedFile(child, parent.getMount(), this));
+			}
 		}
 		
 		String currentPath = FileUtils.checkEndsWithSlash(parent.getAbsolutePath());
@@ -127,6 +117,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 			if(mountPath.startsWith(currentPath) && !mountPath.equals(currentPath)) {
 				String childPath = FileUtils.checkEndsWithNoSlash(mountPath.substring(currentPath.length()));
 				List<String> childPaths = FileUtils.getParentPaths(childPath);
+				Collections.reverse(childPaths);
 				boolean intermediate = false;
 				if(intermediate = !childPaths.isEmpty()) {
 					childPath = FileUtils.checkEndsWithNoSlash(childPaths.get(0));
@@ -149,13 +140,6 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 			
 		} else {
 			virtualPath = canonicalisePath(path);
-		}
-
-		if(Log.isDebugEnabled()) {
-			Log.debug("Resolved the following mounts for the path {}", path);
-			for(VirtualMountFile m : mountCache.values()) {
-				Log.debug("Mount {}", m.getAbsolutePath());
-			}
 		}
 		
 		if (!virtualPath.equals("") && mountCache.size() > 0) {

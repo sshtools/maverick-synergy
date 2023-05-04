@@ -1,30 +1,14 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh.x509;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.interfaces.RSAPublicKey;
 
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.ssh.components.SshX509PublicKey;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
@@ -40,6 +24,20 @@ import com.sshtools.common.util.ByteArrayWriter;
 public class SshX509RsaSha1PublicKey extends Ssh2RsaPublicKey implements SshX509PublicKey {
 
 	public static final String X509V3_SIGN_RSA_SHA1 = "x509v3-sign-rsa-sha1";
+	
+	public static class SshX509RsaSha1PublicKeyFactory implements SshPublicKeyFactory<SshX509RsaSha1PublicKey> {
+
+		@Override
+		public SshX509RsaSha1PublicKey create() throws NoSuchAlgorithmException, IOException {
+			return new SshX509RsaSha1PublicKey();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { X509V3_SIGN_RSA_SHA1 };
+		}
+	}
+	
 	Certificate cert;
 
 	public SshX509RsaSha1PublicKey() {

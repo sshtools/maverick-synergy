@@ -1,115 +1,81 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.zlib;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.security.NoSuchAlgorithmException;
+import java.util.zip.DataFormatException;
+import java.util.zip.Deflater;
+import java.util.zip.Inflater;
 
-import com.jcraft.jzlib.JZlib;
-import com.jcraft.jzlib.ZStream;
+import com.sshtools.common.ssh.compression.SshCompressionFactory;
 import com.sshtools.common.ssh.compression.SshCompression;
 
-@SuppressWarnings("deprecation")
-public class ZLibCompression
-   implements SshCompression {
+public class ZLibCompression implements SshCompression {
+	
+	private static final String ALGORITHM = "zlib";
 
-  public ZLibCompression() {
-    stream = new ZStream();
-  }
+	public static class ZLibCompressionFactory implements SshCompressionFactory<ZLibCompression> {
 
-  public String getAlgorithm() {
-    return "zlib";
-  }
+		@Override
+		public ZLibCompression create() throws NoSuchAlgorithmException, IOException {
+			return new ZLibCompression();
+		}
 
-  static private final int BUF_SIZE = 65535;
+		@Override
+		public String[] getKeys() {
+			return new String[] { ALGORITHM };
+		}
+	}
 
-  ByteArrayOutputStream compressOut = new ByteArrayOutputStream(BUF_SIZE);
-  ByteArrayOutputStream uncompressOut = new ByteArrayOutputStream(BUF_SIZE);
+	private Inflater inflater;
+	private Deflater deflater;
 
-//  private int type;
-  private ZStream stream;
+	public ZLibCompression() {
+	}
 
-  private byte[] inflated_buf = new byte[BUF_SIZE];
-  private byte[] tmpbuf = new byte[BUF_SIZE];
+	public String getAlgorithm() {
+		return ALGORITHM;
+	}
 
-  public void init(int type, int level) {
-    if(type == SshCompression.DEFLATER) {
-      stream.deflateInit(level);
-//      this.type = SshCompression.DEFLATER;
-    }
-    else if(type == SshCompression.INFLATER) {
-      stream.inflateInit();
-//      this.type = SshCompression.INFLATER;
-    }
-  }
+	static private final int BUF_SIZE = 65535;
 
+	private ByteBuffer compressOut = ByteBuffer.allocate(BUF_SIZE);
+	private ByteBuffer uncompressOut = ByteBuffer.allocate(BUF_SIZE);
 
-  public byte[] compress(byte[] buf, int start, int len) throws IOException {
+	public void init(int type, int level) {
+		if (type == SshCompression.DEFLATER) {
+			deflater = new Deflater(level);
+		} else if (type == SshCompression.INFLATER) {
+			inflater = new Inflater();
+		}
+	}
 
-    compressOut.reset();
-    stream.next_in = buf;
-    stream.next_in_index = start;
-    stream.avail_in = len - start;
-    int status;
+	public byte[] compress(byte[] buf, int start, int len) throws IOException {
+		compressOut.clear();
+		deflater.setInput(buf, start, len);
 
-    do {
-      stream.next_out = tmpbuf;
-      stream.next_out_index = 0;
-      stream.avail_out = BUF_SIZE;
-      status = stream.deflate(JZlib.Z_PARTIAL_FLUSH);
-      switch(status) {
-        case JZlib.Z_OK:
-          compressOut.write(tmpbuf, 0, BUF_SIZE - stream.avail_out);
-          break;
-        default:
-          throw new IOException("compress: deflate returnd " + status);
-      }
-    }
-    while(stream.avail_out == 0);
+		while (deflater.deflate(compressOut, Deflater.SYNC_FLUSH) > 0)
+			;
 
-    return compressOut.toByteArray();
-  }
+		var b = new byte[compressOut.position()];
+		compressOut.flip();
+		compressOut.get(b);
+		return b;
+	}
 
-  public byte[] uncompress(byte[] buffer, int start, int length) throws IOException {
-
-//    int inflated_end = 0;
-    uncompressOut.reset();
-
-    stream.next_in = buffer;
-    stream.next_in_index = start;
-    stream.avail_in = length;
-
-    while(true) {
-      stream.next_out = inflated_buf;
-      stream.next_out_index = 0;
-      stream.avail_out = BUF_SIZE;
-      int status = stream.inflate(JZlib.Z_PARTIAL_FLUSH);
-      switch(status) {
-        case JZlib.Z_OK:
-          uncompressOut.write(inflated_buf, 0, BUF_SIZE - stream.avail_out);
-          break;
-        case JZlib.Z_BUF_ERROR:
-          return uncompressOut.toByteArray();
-        default:
-          throw new IOException("uncompress: inflate returnd " + status);
-      }
-    }
-  }
+	public byte[] uncompress(byte[] buffer, int start, int length) throws IOException {
+		uncompressOut.clear();
+		inflater.setInput(buffer, start, length);
+		try {
+			while (inflater.inflate(uncompressOut) > 0)
+				;
+		} catch (DataFormatException e) {
+			throw new IOException("Failed to uncompress.", e);
+		}
+		var b = new byte[uncompressOut.position()];
+		uncompressOut.flip();
+		uncompressOut.get(b, 0, b.length);
+		return b;
+	}
 
 }

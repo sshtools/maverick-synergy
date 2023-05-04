@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh.components.jce;
 
 import java.io.IOException;
@@ -31,14 +13,30 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.sshtools.common.ssh.SecurityLevel;
+import com.sshtools.common.ssh.components.SshCipherFactory;
 
 public class AES128Gcm extends AbstractJCECipher {
+	
+	private static final String CIPHER = "aes128-gcm@openssh.com";
+
+	public static class AES128GcmFactory implements SshCipherFactory<AES128Gcm> {
+
+		@Override
+		public AES128Gcm create() throws NoSuchAlgorithmException, IOException {
+			return new AES128Gcm();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] {  CIPHER };
+		}
+	}
 
 	byte[] key;
 	byte[] nonce;
 	int mode;
 	public AES128Gcm() throws IOException {
-		super(JCEAlgorithms.JCE_AESGCMNOPADDING, "AES", 16, "aes128-gcm@openssh.com", SecurityLevel.PARANOID, 5000);
+		super(JCEAlgorithms.JCE_AESGCMNOPADDING, "AES", 16, CIPHER, SecurityLevel.PARANOID, 5000);
 	}
 
 	public void init(int mode, byte[] iv, byte[] keydata) throws java.io.IOException {

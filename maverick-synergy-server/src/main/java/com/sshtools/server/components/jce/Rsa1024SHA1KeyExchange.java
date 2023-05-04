@@ -1,22 +1,4 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
+
 package com.sshtools.server.components.jce;
 
 import java.io.IOException;
@@ -42,6 +24,7 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.components.SshKeyExchangeServer;
+import com.sshtools.server.components.SshKeyExchangeServerFactory;
 import com.sshtools.synergy.ssh.SshTransport;
 import com.sshtools.synergy.ssh.TransportProtocol;
 import com.sshtools.synergy.ssh.components.jce.AbstractKeyExchange;
@@ -57,6 +40,18 @@ public class Rsa1024SHA1KeyExchange extends SshKeyExchangeServer implements Abst
    * Constant for the algorithm name "rsa1024-sha1".
    */
   public static final String RSA_1024_SHA1 = "rsa1024-sha1";
+  
+  public static class Rsa1024SHA1KeyExchangeFactory implements SshKeyExchangeServerFactory<Rsa1024SHA1KeyExchange> {
+	@Override
+	public Rsa1024SHA1KeyExchange create() throws NoSuchAlgorithmException, IOException {
+		return new Rsa1024SHA1KeyExchange();
+	}
+
+	@Override
+	public String[] getKeys() {
+		return new String[] { RSA_1024_SHA1 };
+	}
+  }
 
   final static int SSH_MSG_KEXRSA_PUBKEY = 30;
   final static int SSH_MSG_KEXRSA_SECRET = 31;

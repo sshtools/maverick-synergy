@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.synergy.nio;
 
 import java.io.File;
@@ -45,9 +27,9 @@ public class PomVersion {
 	    // try to load from maven properties first
 	    try {
 	        Properties p = new Properties();
-	        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("META-INF/maven/com.sshtools/" + artifactId + "/pom.properties");
+	        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("META-INF/maven/com.sshtools.hotfixes/" + artifactId + "/pom.properties");
 	        if(is == null) {
-		        is = PomVersion.class.getResourceAsStream("/META-INF/maven/com.sshtools/" + artifactId + "/pom.properties");
+		        is = PomVersion.class.getResourceAsStream("/META-INF/maven/com.sshtools.hotfixes/" + artifactId + "/pom.properties");
 	        }
 	        if (is != null) {
 	            p.load(is);

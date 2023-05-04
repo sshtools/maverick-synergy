@@ -1,27 +1,4 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.events;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * List of common event codes
@@ -148,6 +125,8 @@ public class EventCodes {
 		public static final int EVENT_CONNECTION_ATTEMPT = 			0xFF000000;
 		public static final int EVENT_CONNECTED = 					0xFF000001;
 		public static final int EVENT_NEGOTIATED_PROTOCOL = 		0xFF00000A;
+		public static final int EVENT_CALLBACK_CONNECTING = 		0xFF00000B;
+		
 		// Not very useful events
 		public static final int EVENT_HOSTKEY_RECEIVED	=			0xFF000002; 
 		public static final int EVENT_HOSTKEY_REJECTED 	=			0xFF000003;
@@ -214,7 +193,8 @@ public class EventCodes {
 		
 		// System Events
 		public static final int EVENT_REACHED_CONNECTION_LIMIT = 	0xFF0000A0;
-		
+
+		public static final int EVENT_REMOTE_DISCONNECTED = 		0xFF0000FE;
 		public static final int EVENT_DISCONNECTED =				0xFF0000FF;
 
 		// Shell events
@@ -235,38 +215,12 @@ public class EventCodes {
 		public static final int EVENT_SFTP_FILE_CLOSED = 			0x00FF0025;
 		public static final int EVENT_SFTP_FILE_OPENED = 			0x00FF0026;
 
-		
+		public static final String ATTRIBUTE_REASON = "REASON";
+
+		public static final String ATTRIBUTE_PART_IDENTIFIER = "PART_IDENTIFIER";
+		public static final String ATTRIBUTE_START_POSITION= "START_POSITION";
+		public static final String ATTRIBUTE_LENGTH = "LENGTH";
 
 		
-
-		
-
-		
-
-
-		public static Map<Integer,String> messageCodes=new HashMap<Integer,String>();
-		public static Map<String,String> messageAttributes=new HashMap<String,String>();
-		
-		static {
-			
-			// Utility for looking up event name
-			Class<?> mavevent=EventCodes.class;
-			Field[] fields=mavevent.getFields();
-			for(int i=0;i<fields.length;i++) {
-				int modifiers=fields[i].getModifiers();
-				if(Modifier.isFinal(modifiers) && Modifier.isStatic(modifiers)) {
-					try {
-						String fieldName=fields[i].getName();
-						if(fieldName.startsWith("EVENT_")) {
-							messageCodes.put((Integer)fields[i].get(null), fieldName.substring(6));
-						} else {
-							messageAttributes.put((String)fields[i].get(null), fieldName.substring(10));
-						}
-					} catch (IllegalArgumentException e) {
-					} catch (IllegalAccessException e) {
-					}
-				}
-			}
-		}
 
 }

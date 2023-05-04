@@ -1,25 +1,8 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh.x509;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -28,6 +11,7 @@ import java.security.interfaces.DSAPublicKey;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.ssh.components.SshX509PublicKey;
 import com.sshtools.common.ssh.components.jce.Ssh2DsaPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
@@ -37,7 +21,19 @@ public class SshX509DsaPublicKeyRfc6187 extends Ssh2DsaPublicKey implements SshX
 
 	 public static final String X509V3_SSH_DSS = "x509v3-ssh-dss";
 	 
-	
+	public static class SshX509DsaPublicKeyRfc6187Factory implements SshPublicKeyFactory<SshX509DsaPublicKeyRfc6187> {
+
+		@Override
+		public SshX509DsaPublicKeyRfc6187 create() throws NoSuchAlgorithmException, IOException {
+			return new SshX509DsaPublicKeyRfc6187();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] {  X509V3_SSH_DSS };
+		}
+	}
+		
 	Certificate[] certs;
 
 	public SshX509DsaPublicKeyRfc6187() {

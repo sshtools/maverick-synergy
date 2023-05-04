@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 
 package com.sshtools.synergy.ssh;
 
@@ -25,6 +7,7 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -40,6 +23,7 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.nio.IdleStateListener;
 import com.sshtools.common.nio.WriteOperationRequest;
+import com.sshtools.common.policy.SignaturePolicy;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.ExecutorOperationQueues;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
@@ -105,6 +89,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	static final int SSH_MSG_DEBUG = 4;
 	protected static final int SSH_MSG_SERVICE_REQUEST = 5;
 	public static final int SSH_MSG_SERVICE_ACCEPT = 6;
+	static final int SSH_MSG_EXT_INFO = 7;
 
 	static final int SSH_MSG_KEX_INIT = 20;
 	static final int SSH_MSG_NEWKEYS = 21;
@@ -281,6 +266,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	Date started = new Date();
 	ConnectRequestFuture connectFuture;
 	DisconnectRequestFuture disconnectFuture = new DisconnectRequestFuture();
+	AuthenticatedFuture authenticatedFuture = new AuthenticatedFuture(this);
 	
 	/**
 	 * Create a default transport protocol instance in CLIENT_MODE.
@@ -380,7 +366,7 @@ public abstract class TransportProtocol<T extends SshContext>
 									EventCodes.ATTRIBUTE_OPERATION_FINISHED,
 									new Date()));
 			
-			this.localIdentification += sshContext.getSoftwareVersionComments() + "\r\n";
+			this.localIdentification += sshContext.getSoftwareVersionComments()	+ "\r\n";
 			// Send our identification String
 			
 			if(!sshContext.isHttpRedirect()) {
@@ -462,7 +448,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
 				Log.info("Read error from {} {}", 
-						getRemoteAddress().toString(),
+						con.getRemoteIPAddress(),
 						ex.getMessage());
 			}
 			if(Log.isDebugEnabled())
@@ -540,8 +526,8 @@ public abstract class TransportProtocol<T extends SshContext>
 	protected boolean startBinaryProtocol() {
 		
 		if(Log.isInfoEnabled()) {
-			Log.info("Connnection {} identifies itself as {}", 
-					getRemoteAddress().toString(),
+			Log.info("Connnection {}:{} identifies itself as {}", 
+					con.getRemoteIPAddress(), con.getRemotePort(),
 					remoteIdentification.toString().trim());
 		}
 
@@ -671,7 +657,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
 				Log.info("Transport error {} {}", 
-						getRemoteAddress().toString(),
+						con.getRemoteIPAddress(),
 						ex.getMessage());
 			}
 			if(Log.isDebugEnabled())
@@ -1213,7 +1199,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
 				Log.info("Write error from {} {}", 
-						getRemoteAddress().toString(),
+						con.getRemoteIPAddress(),
 						ex.getMessage());
 			}
 			if(Log.isDebugEnabled()) {
@@ -1504,10 +1490,10 @@ public abstract class TransportProtocol<T extends SshContext>
 		disconnectStarted = new Date();
 		if(Log.isInfoEnabled()) {
 			Log.info("Disconnect {} {}", 
-					getRemoteAddress().toString(),
+					con.getRemoteIPAddress(),
 					description);
 		}
-		postMessage(new DisconnectMessage(reason, description));
+		postMessage(new DisconnectMessage(reason, description, true));
 	}
 
 	/**
@@ -1523,7 +1509,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	
 				if(Log.isInfoEnabled()) {
 					Log.info("Connection closed {}", 
-							getRemoteAddress().toString());
+							con.getRemoteIPAddress());
 				}
 				
 				if (disconnectStarted == null)
@@ -1682,6 +1668,8 @@ public abstract class TransportProtocol<T extends SshContext>
 			// Determine the negotiated key exchange
 			String localKeyExchanges = sshContext.supportedKeyExchanges().list(
 								sshContext.getPreferredKeyExchange());
+			
+
 			
 			String localCiphersCS = sshContext
 					.supportedCiphersCS()
@@ -1870,6 +1858,10 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 	}
 
+	protected abstract String getExtensionNegotiationString();
+
+	protected abstract boolean isExtensionNegotiationSupported();
+
 	protected abstract void onKeyExchangeInit() throws SshException;
 
 	private void checkAlgorithms() {
@@ -1936,9 +1928,34 @@ public abstract class TransportProtocol<T extends SshContext>
 			ByteArrayReader bar = new ByteArrayReader(msg);
 			try {
 				bar.skip(5);
+				String reason = bar.readString();
 				if(Log.isDebugEnabled()) {
-					Log.debug("Recieved SSH_MSG_DISCONNECT {}", bar.readString());
+					Log.debug("Recieved SSH_MSG_DISCONNECT {}", reason);
 				}
+				
+				addTask(EVENTS, new ConnectionTaskWrapper(con, new Runnable() {
+					public void run() {
+						
+						EventServiceImplementation
+						.getInstance()
+						.fireEvent(
+								new Event(
+										this,
+										EventCodes.EVENT_REMOTE_DISCONNECTED,
+										true)
+									.addAttribute(EventCodes.ATTRIBUTE_REASON, reason)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_CONNECTION,
+												con)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_OPERATION_STARTED,
+												disconnectStarted)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+												new Date()));
+					}
+				}));
+				
 				socketConnection.closeConnection();
 			} finally {
 				bar.close();
@@ -1954,6 +1971,13 @@ public abstract class TransportProtocol<T extends SshContext>
 
 			if(Log.isDebugEnabled())
 				Log.debug("Received SSH_MSG_DEBUG");
+			break;
+		case SSH_MSG_EXT_INFO:
+
+			if(Log.isDebugEnabled())
+				Log.debug("Received SSH_MSG_EXT_INFO");
+			
+			processExtensionInfo(msg);
 			break;
 		case SSH_MSG_NEWKEYS:
 
@@ -2371,7 +2395,9 @@ public abstract class TransportProtocol<T extends SshContext>
 				if (localkex == null) {
 
 					try {
-						localkex = TransportProtocolHelper.generateKexInit(getContext());
+						localkex = TransportProtocolHelper.generateKexInit(getContext(), 
+								isExtensionNegotiationSupported(),
+								getExtensionNegotiationString());
 
 						kexQueue.clear();
 						if(Log.isDebugEnabled())
@@ -2399,6 +2425,66 @@ public abstract class TransportProtocol<T extends SshContext>
 					"Failed to create SSH_MSG_KEX_INIT");
 		}
 
+	}
+	
+	private void processExtensionInfo(byte[] msg) throws IOException {
+		 ByteArrayReader reader = new ByteArrayReader(msg);
+		 
+		 try {
+			 reader.skip(1);
+			 int count = (int) reader.readInt();
+			 
+			 if(Log.isDebugEnabled()) {
+				 Log.debug("Server supports {} extensions", count);
+			 }
+			 
+			 for(int i=0; i<count; i++) {
+				 
+				 String name = reader.readString();
+				 String value = reader.readString();
+				 
+				 switch(name) {
+				 case "server-sig-algs":
+					 getContext().setPolicy(SignaturePolicy.class, new SignaturePolicy(Arrays.asList(value.split(","))));
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side supports the signature algorithms {}", value);
+					 }
+					 break;
+				 case "no-flow-control":
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side requested no flow control");
+					 }
+					 break;
+				 case "accept-channels":
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side accepts the following channels {}", value);
+					 }
+					 break;
+				 case "elevation":
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side requested elevation value of {}", value);
+					 }
+					 break;
+				 case "delay-compression":
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side supports compression re-negotiation");
+					 }
+					 break;
+				 default:
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side reported unsupported element {} in ext-info with a value of {}", 
+								 name, 
+								 value);
+					 }
+					 break;
+				 }
+				 
+				
+			 }
+		
+		 } finally {
+			 reader.close();
+		 }
 	}
 
  	public String getCipherCS() {
@@ -2570,10 +2656,12 @@ public abstract class TransportProtocol<T extends SshContext>
 
 		int reason;
 		String description;
+		boolean closeProtocol;
 
-		DisconnectMessage(int reason, String description) {
+		DisconnectMessage(int reason, String description, boolean closeProtocol) {
 			this.reason = reason;
 			this.description = description;
+			this.closeProtocol = closeProtocol;
 		}
 
 		public boolean writeMessageIntoBuffer(ByteBuffer buf) {
@@ -2589,7 +2677,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			if(Log.isDebugEnabled())
 				Log.debug("Sent SSH_MSG_DISCONNECT reason=" + reason + " "
 						+ description);
-			socketConnection.closeConnection();
+			socketConnection.closeConnection(closeProtocol);
 		}
 	}
 
@@ -2694,5 +2782,9 @@ public abstract class TransportProtocol<T extends SshContext>
 
 	public String getLocalIdentification() {
 		return localIdentification.trim();
+	}
+
+	public AuthenticatedFuture getAuthenticatedFuture() {
+		return authenticatedFuture;
 	}
 }

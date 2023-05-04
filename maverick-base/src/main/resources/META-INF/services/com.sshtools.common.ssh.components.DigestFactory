@@ -1,0 +1,5 @@
+com.sshtools.common.ssh.components.jce.MD5Digest$MD5DigestFactory
+com.sshtools.common.ssh.components.jce.SHA1Digest$SHA1DigestFactory
+com.sshtools.common.ssh.components.jce.SHA256Digest$SHA256DigestFactory
+com.sshtools.common.ssh.components.jce.SHA384Digest$SHA384DigestFactory
+com.sshtools.common.ssh.components.jce.SHA512Digest$SHA512DigestFactory

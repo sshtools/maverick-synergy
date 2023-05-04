@@ -1,0 +1,2 @@
+com.sshtools.common.zlib.ZLibCompression$ZLibCompressionFactory
+com.sshtools.common.zlib.OpenSSHZLibCompression$OpenSSHZLibCompressionFactory

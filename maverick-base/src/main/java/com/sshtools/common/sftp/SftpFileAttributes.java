@@ -1,22 +1,4 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
+
 package com.sshtools.common.sftp;
 
 import java.io.IOException;
@@ -37,20 +19,44 @@ import com.sshtools.common.util.UnsignedInteger64;
  * attribute information.
  * 
  * @author Lee David Painter
+ * @param <SSH_FILEXFER_TYPE_FIFO>
  */
 public class SftpFileAttributes {
 
+	
 	public static final long SSH_FILEXFER_ATTR_SIZE 			= 0x00000001;
-	public static final long SSH_FILEXFER_ATTR_PERMISSIONS 	    = 0x00000004;
+	public static final long SSH_FILEXFER_ATTR_UIDGID 			= 0x00000002;
+	public static final long SSH_FILEXFER_ATTR_PERMISSIONS 		= 0x00000004;
 	public static final long SSH_FILEXFER_ATTR_ACCESSTIME 		= 0x00000008;
+
+	public static final long SSH_FILEXFER_ATTR_EXTENDED 		= 0x80000000;
+	
+	public static final long VERSION_3_FLAGS = SSH_FILEXFER_ATTR_SIZE 
+			| SSH_FILEXFER_ATTR_UIDGID
+			| SSH_FILEXFER_ATTR_PERMISSIONS
+			| SSH_FILEXFER_ATTR_ACCESSTIME
+			| SSH_FILEXFER_ATTR_EXTENDED;
+	
+	// Version 4 flags
 	public static final long SSH_FILEXFER_ATTR_CREATETIME 		= 0x00000010;
 	public static final long SSH_FILEXFER_ATTR_MODIFYTIME 		= 0x00000020;
 	public static final long SSH_FILEXFER_ATTR_ACL 			    = 0x00000040;
 	public static final long SSH_FILEXFER_ATTR_OWNERGROUP 		= 0x00000080;
 	public static final long SSH_FILEXFER_ATTR_SUBSECOND_TIMES  = 0x00000100;
 	
+	public static final long VERSION_4_FLAGS = (VERSION_3_FLAGS ^ SSH_FILEXFER_ATTR_UIDGID)
+			| SSH_FILEXFER_ATTR_CREATETIME
+			| SSH_FILEXFER_ATTR_MODIFYTIME
+			| SSH_FILEXFER_ATTR_ACL
+			| SSH_FILEXFER_ATTR_OWNERGROUP
+			| SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
+	
 	// This is only used for version >= 5
 	public static final long SSH_FILEXFER_ATTR_BITS			    = 0x00000200;
+	
+	
+	public static final long VERSION_5_FLAGS = VERSION_4_FLAGS 
+			| SSH_FILEXFER_ATTR_BITS;
 	
 	// These are version >= 6
 	public static final long SSH_FILEXFER_ATTR_ALLOCATION_SIZE = 0x00000400;
@@ -59,12 +65,16 @@ public class SftpFileAttributes {
 	public static final long SSH_FILEXFER_ATTR_LINK_COUNT		= 0x00002000;
 	public static final long SSH_FILEXFER_ATTR_UNTRANSLATED	= 0x00004000;
 	public static final long SSH_FILEXFER_ATTR_CTIME	 		= 0x00008000;
+
+	public static final long VERSION_6_FLAGS = VERSION_5_FLAGS 
+			| SSH_FILEXFER_ATTR_ALLOCATION_SIZE
+			| SSH_FILEXFER_ATTR_TEXT_HINT
+			| SSH_FILEXFER_ATTR_MIME_TYPE
+			| SSH_FILEXFER_ATTR_LINK_COUNT
+			| SSH_FILEXFER_ATTR_UNTRANSLATED
+			| SSH_FILEXFER_ATTR_CTIME;
 	
-	public static final long SSH_FILEXFER_ATTR_EXTENDED 		= 0x80000000;
-	
-	// This is only used for version <= 3
-	public static final long SSH_FILEXFER_ATTR_UIDGID 			= 0x00000002;
-	
+	// Types
 	public static final int SSH_FILEXFER_TYPE_REGULAR 		= 1;
 	public static final int SSH_FILEXFER_TYPE_DIRECTORY 	= 2;
 	public static final int SSH_FILEXFER_TYPE_SYMLINK 		= 3;
@@ -213,8 +223,8 @@ public class SftpFileAttributes {
 	String username;
 	String group;
 	
-	char[] types = { 'p', 'c', 'd', 'b', '-', 'l', 's', };
-	
+	char[] types = { 'p', 'c', 'd', 'b', '-', 'l', 's' };
+
 	String  charsetEncoding;
 	Long supportedAttributeMask;
 	Long supportedAttributeBits;
@@ -298,24 +308,27 @@ public class SftpFileAttributes {
 		if (isFlagSet(SSH_FILEXFER_ATTR_PERMISSIONS, version) && bar.available() >= 4) {
 			permissions = new UnsignedInteger32(bar.readInt());
 			if(version <=3) {
-				if((permissions.longValue() & S_IFREG) == S_IFREG) {
-					type = SSH_FILEXFER_TYPE_REGULAR;
-				} else if((permissions.longValue() & S_IFLNK) == S_IFLNK) {
-					type = SSH_FILEXFER_TYPE_SYMLINK;
-				} else if((permissions.longValue() & S_IFCHR) == S_IFCHR) {
-					type = SSH_FILEXFER_TYPE_CHAR_DEVICE;
-				} else if((permissions.longValue() & S_IFBLK) == S_IFBLK) {
-					type = SSH_FILEXFER_TYPE_BLOCK_DEVICE;
-				} else if((permissions.longValue() & S_IFDIR) == S_IFDIR) {
-					type = SSH_FILEXFER_TYPE_DIRECTORY;
-				} else if((permissions.longValue() & S_IFIFO) == S_IFIFO) {
-					type = SSH_FILEXFER_TYPE_FIFO;
-				} else if((permissions.longValue() & S_IFSOCK) == S_IFSOCK) {
-					type = SSH_FILEXFER_TYPE_SOCKET;
-				} else if((permissions.longValue() & S_IFMT) == S_IFMT) {
-					type = SSH_FILEXFER_TYPE_SPECIAL;
-				} else  {
-					type = SSH_FILEXFER_TYPE_UNKNOWN;
+				int ifmt = (int) permissions.longValue() & S_IFMT;
+				if (ifmt > 0) {
+					if(ifmt == S_IFREG) {
+						type = SSH_FILEXFER_TYPE_REGULAR;
+					} else if(ifmt == S_IFLNK) {
+						type = SSH_FILEXFER_TYPE_SYMLINK;
+					} else if(ifmt == S_IFCHR) {
+						type = SSH_FILEXFER_TYPE_CHAR_DEVICE;
+					} else if(ifmt == S_IFBLK) {
+						type = SSH_FILEXFER_TYPE_BLOCK_DEVICE;
+					} else if(ifmt == S_IFDIR) {
+						type = SSH_FILEXFER_TYPE_DIRECTORY;
+					} else if(ifmt == S_IFIFO) {
+						type = SSH_FILEXFER_TYPE_FIFO;
+					} else if(ifmt == S_IFSOCK) {
+						type = SSH_FILEXFER_TYPE_SOCKET;
+					} else if(ifmt == S_IFMT) {
+						type = SSH_FILEXFER_TYPE_SPECIAL;
+					} else  {
+						type = SSH_FILEXFER_TYPE_UNKNOWN;
+					}
 				}
 			}
 		}
@@ -962,7 +975,20 @@ public class SftpFileAttributes {
 		ByteArrayWriter baw = new ByteArrayWriter();
 
 		try {
-			baw.writeInt(flags);
+			switch(version) {
+			case 6:
+				baw.writeInt(flags & VERSION_6_FLAGS);
+				break;
+			case 5:
+				baw.writeInt(flags & VERSION_5_FLAGS);
+				break;
+			case 4:
+				baw.writeInt(flags & VERSION_4_FLAGS);
+				break;
+			default:
+				baw.writeInt(flags & VERSION_3_FLAGS);
+				break;
+			}
 
 			if (version > 3)
 				baw.write(type);

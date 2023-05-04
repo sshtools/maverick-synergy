@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh.components.jce;
 
 import java.io.IOException;
@@ -27,11 +9,32 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.sshtools.common.ssh.SecurityLevel;
+import com.sshtools.common.ssh.components.SshCipherFactory;
 
 public class ArcFour256 extends AbstractJCECipher {
+
+	private static final String CIPHER = "arcfour256";
+
+	public static class ArcFour256Factory implements SshCipherFactory<ArcFour256> {
+
+		@Override
+		public ArcFour256 create() throws NoSuchAlgorithmException, IOException {
+			return new ArcFour256();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { CIPHER };
+		}
+
+		@Override
+		public boolean isEnabledByDefault() {
+			return false;
+		}
+	}
 	
 	public ArcFour256() throws IOException {
-		super("ARCFOUR", "ARCFOUR", 32, "arcfour256", SecurityLevel.WEAK, 1);	
+		super("ARCFOUR", "ARCFOUR", 32, CIPHER, SecurityLevel.WEAK, 1);	
 	}
 
 	public void init(int mode, byte[] iv, byte[] keydata) throws IOException {

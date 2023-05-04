@@ -1,30 +1,14 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -44,8 +28,8 @@ import com.sshtools.common.ssh.components.SshCipher;
 import com.sshtools.common.ssh.components.SshHmac;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
-import com.sshtools.common.ssh.compression.NoneCompression;
 import com.sshtools.common.ssh.compression.SshCompression;
+import com.sshtools.common.ssh.compression.SshCompressionFactory;
 import com.sshtools.common.util.ByteBufferPool;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.nio.DefaultSocketConnectionFactory;
@@ -229,7 +213,7 @@ public abstract class SshContext extends ProtocolContext implements
 	protected SshEngine daemon;
 
 	protected String softwareVersionComments = "MaverickSynergy";
-
+	protected boolean extendedIdentificationSanitization = true;
 	protected boolean killTunnelsOnRemoteForwardingCancel = false;
 	
 	protected boolean sendIgnorePacketOnIdle = false;
@@ -256,8 +240,6 @@ public abstract class SshContext extends ProtocolContext implements
 	
 	Map<Class<?>,Object> policies = new HashMap<>();
 	
-	AuthenticatedFuture authenticatedFuture = new AuthenticatedFuture();
-	
 	/** Constructs a default context but does not set the daemon 
 	 * @param componentManager 
 	 * @throws SshException */
@@ -283,14 +265,13 @@ public abstract class SshContext extends ProtocolContext implements
 		try {
 
 			compressionsCS = new ComponentFactory<SshCompression>(componentManager);
-			compressionsCS.add(COMPRESSION_NONE, NoneCompression.class);
-
-			JCEComponentManager.getDefaultInstance().loadExternalComponents("zip.properties", compressionsCS);
-			
 			compressionsSC = new ComponentFactory<SshCompression>(componentManager);
-			compressionsSC.add(COMPRESSION_NONE, NoneCompression.class);
-			
-			JCEComponentManager.getDefaultInstance().loadExternalComponents("zip.properties", compressionsSC);
+
+			for(var compress : ServiceLoader.load(SshCompressionFactory.class, 
+					JCEComponentManager.getDefaultInstance().getClassLoader())) {
+				compressionsCS.add(compress);
+				compressionsSC.add(compress);
+			}
 
 		} catch (Throwable t) {
 			throw new IOException(t.getMessage() != null ? t.getMessage() : t
@@ -335,11 +316,11 @@ public abstract class SshContext extends ProtocolContext implements
 	public <P> P getPolicy(Class<P> clz) {
 		try {
 			if(!policies.containsKey(clz)) {
-				policies.put(clz, clz.newInstance());
+				policies.put(clz, clz.getConstructor().newInstance());
 			}
 			
 			return (P) policies.get(clz);
-		} catch (InstantiationException | IllegalAccessException e) {
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}
@@ -530,7 +511,11 @@ public abstract class SshContext extends ProtocolContext implements
 	 * @return String
 	 */
 	public String getSoftwareVersionComments() {
-		return softwareVersionComments;
+		if(extendedIdentificationSanitization) {
+			return softwareVersionComments.replace(' ', '_').replace('-', '_');
+		} else {
+			return softwareVersionComments;
+		}
 	}
 
 	/**
@@ -670,7 +655,13 @@ public abstract class SshContext extends ProtocolContext implements
 		return killTunnelsOnRemoteForwardingCancel;
 	}
 
+	public boolean isExtendedIdentificationSanitization() {
+		return extendedIdentificationSanitization;
+	}
 
+	public void setExtendedIdentificationSanitization(boolean extendedIdentificationSanitization) {
+		this.extendedIdentificationSanitization = extendedIdentificationSanitization;
+	}
 
 	/**
 	 * <p>
@@ -1393,9 +1384,5 @@ public abstract class SshContext extends ProtocolContext implements
 	
 	public ForwardingPolicy getForwardingPolicy() {
 		return getPolicy(ForwardingPolicy.class);
-	}
-
-	protected AuthenticatedFuture getAuthenticatedFuture() {
-		return authenticatedFuture;
 	}
 }

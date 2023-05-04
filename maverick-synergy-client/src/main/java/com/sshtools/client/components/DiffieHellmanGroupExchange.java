@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.client.components;
 
 import java.io.IOException;
@@ -60,7 +42,7 @@ import com.sshtools.synergy.ssh.components.jce.AbstractKeyExchange;
  * Implementation of the required SSH Transport Protocol key exchange method
  * "diffie-hellman-group-exchange-sha1".
  */
-public class DiffieHellmanGroupExchange extends SshKeyExchangeClient
+public abstract class DiffieHellmanGroupExchange extends SshKeyExchangeClient
 		implements AbstractKeyExchange {
 
 	final static int SSH_MSG_KEY_DH_GEX_REQUEST_OLD = 30;
@@ -383,11 +365,9 @@ public class DiffieHellmanGroupExchange extends SshKeyExchangeClient
 			retry--;
 
 			SecureRandom rnd = JCEComponentManager.getSecureRandom();
-	        int minBits = g.bitLength();
 	        int maxBits = p.subtract(BigInteger.ONE).divide(new BigInteger("2")).bitLength();
 	        
-	        int genBits = (int) ( ( (maxBits - minBits + 1) * rnd.nextFloat()) + minBits);
-	        x = new BigInteger(genBits, rnd);
+	        x = new BigInteger(maxBits, rnd);
 	        
 	        // Calculate e
 	        e = g.modPow(x, p);

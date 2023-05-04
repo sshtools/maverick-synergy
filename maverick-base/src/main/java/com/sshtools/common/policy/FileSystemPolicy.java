@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.policy;
 
 import java.io.FileNotFoundException;
@@ -30,8 +12,9 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.permissions.Permissions;
 import com.sshtools.common.sftp.SftpExtension;
 import com.sshtools.common.sftp.SftpExtensionFactory;
-import com.sshtools.common.sftp.extensions.DefaultSftpExtensionFactory;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.IOUtils;
+import com.sshtools.common.util.UnsignedInteger32;
 
 public class FileSystemPolicy extends Permissions {
 
@@ -52,11 +35,10 @@ public class FileSystemPolicy extends Permissions {
 	boolean mkdirParentMustExist = true;
 	
 	private int sftpMaxPacketSize = 65536;
-	private int sftpMaxWindowSize = 1024000;
-	private int sftpMinWindowSize = 131072;
+	private UnsignedInteger32 sftpMaxWindowSize = new UnsignedInteger32(IOUtils.fromByteSize("16MB").longValue());
+	private UnsignedInteger32 sftpMinWindowSize = new UnsignedInteger32(131072);
 	
 	public FileSystemPolicy() {
-		sftpExtensionFactories.add(new DefaultSftpExtensionFactory());
 	}
 	
 	public long getConnectionUploadQuota() {
@@ -203,22 +185,23 @@ public class FileSystemPolicy extends Permissions {
 	public void setSftpMaxPacketSize(int sftpMaxPacketSize) {
 		this.sftpMaxPacketSize = sftpMaxPacketSize;
 	}
-	public int getSftpMaxWindowSize() {
+	public UnsignedInteger32 getSftpMaxWindowSize() {
 		return sftpMaxWindowSize;
 	}
-	public void setSftpMaxWindowSize(int sftpMaxWindowSize) {
+	public void setSftpMaxWindowSize(UnsignedInteger32 sftpMaxWindowSize) {
 		this.sftpMaxWindowSize = sftpMaxWindowSize;
 	}
-	public int getSftpMinWindowSize() {
+	public UnsignedInteger32 getSftpMinWindowSize() {
 		return sftpMinWindowSize;
 	}
-	public void setSftpMinWindowSize(int sftpMinWindowSize) {
+	public void setSftpMinWindowSize(UnsignedInteger32 sftpMinWindowSize) {
 		this.sftpMinWindowSize = sftpMinWindowSize;
 	}
 
 	class CachingFileFactory implements FileFactory {
 
-		AbstractFileFactory<?> ff = null;
+		private static final String CACHED_FILE_FACTORY = "cachedFileFactory";
+		
 		FileFactory fileFactory;
 		
 		CachingFileFactory(FileFactory fileFactory) {
@@ -228,10 +211,15 @@ public class FileSystemPolicy extends Permissions {
 		@Override
 		public AbstractFileFactory<?> getFileFactory(SshConnection con) 
 				throws IOException, PermissionDeniedException {
-			if(Objects.nonNull(ff)) {
-				return ff;
+			AbstractFileFactory<?> ff = (AbstractFileFactory<?>) con.getProperty(CACHED_FILE_FACTORY);
+			if(Objects.isNull(ff)) {
+				if(Objects.isNull(fileFactory)) {
+					throw new PermissionDeniedException("Invalid file system configuration");
+				}
+				ff = fileFactory.getFileFactory(con);
+				con.setProperty(CACHED_FILE_FACTORY, ff);
 			}
-			return ff = fileFactory.getFileFactory(con);
+			return ff;
 		}
 		
 	}

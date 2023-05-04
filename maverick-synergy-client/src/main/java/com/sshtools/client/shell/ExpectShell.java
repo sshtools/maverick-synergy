@@ -1,22 +1,4 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
+
 package com.sshtools.client.shell;
 
 import java.io.BufferedInputStream;
@@ -63,6 +45,9 @@ public class ExpectShell {
 	/** OpenVMS operating system **/
 	public static final int OS_OPENVMS = 21;
 
+	/** Linux operating system **/
+	public static final int OS_POWERSHELL = 22;
+	
 	/** The operating system is unknown **/
 	public static final int OS_UNKNOWN = 99;
 
@@ -90,7 +75,7 @@ public class ExpectShell {
 	private String PIPE_CMD = "";
 	private String ECHO_COMMAND = "echo";
 	private String EOL = "\r\n";
-	private String EXIT_CODE_VARIABLE = "%errorlevel%";
+	private String EXIT_CODE_VARIABLE = "$?";
 	private static int SHELL_INIT_PERIOD = 2000;
 
 	List<Runnable> closeHooks = new ArrayList<Runnable>();
@@ -129,12 +114,14 @@ public class ExpectShell {
 		this(session, trigger, startupTimeout, "dumb", 1024, 80);
 	}
 
+	@Deprecated
 	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
 			long startupTimeout, String termtype) throws SshException, IOException,
 			ShellTimeoutException {
 		this(session, trigger, startupTimeout, termtype, 1024, 80);
 	}
 
+	@Deprecated
 	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
 			long startupTimeout, String termtype, int cols, int rows)
 			throws SshException,
@@ -160,7 +147,9 @@ public class ExpectShell {
 			}
 		}
 		
-		determineServerType(session.getSession().getConnection());
+		if(osType == OS_UNKNOWN) {
+			determineServerType(session.getSession().getConnection());
+		}
 
 		init(session.getSession().getInputStream(), session.getSession().getOutputStream(), // true, trigger);
 		        (osType != OS_OPENVMS), trigger );
@@ -183,11 +172,12 @@ public class ExpectShell {
 	public ExpectShell(InputStream in, OutputStream out, ExpectShell parentShell)
 			throws SshIOException, SshException, IOException,
 			ShellTimeoutException {
-		this.EOL = parentShell.getNewline();
-		this.ECHO_COMMAND = parentShell.ECHO_COMMAND;
-		this.EXIT_CODE_VARIABLE = parentShell.EXIT_CODE_VARIABLE;
-		this.osType = parentShell.getOsType();
-		this.osDescription = parentShell.getOsDescription();
+		this(in, out, parentShell, parentShell.getOsType());
+	}
+	public ExpectShell(InputStream in, OutputStream out, ExpectShell parentShell, int osType)
+			throws SshIOException, SshException, IOException,
+			ShellTimeoutException {
+		this.osType = osType;
 		this.childShell = true;
 		init(in, out, true, null);
 	}
@@ -219,6 +209,11 @@ public class ExpectShell {
 	        PIPE_CMD = "PIPE ";
 	        ECHO_COMMAND = "WRITE SYS$OUTPUT";
 	        EXIT_CODE_VARIABLE = "$SEVERITY";
+	    }
+	    
+	    if(remoteID.indexOf("Windows") > 0) {
+	    	osType = OS_WINDOWS;
+	    	EXIT_CODE_VARIABLE = "%errorlevel%";
 	    }
 	}
 
@@ -321,16 +316,21 @@ public class ExpectShell {
 		ShellProcess process = executeCommand(cmd, false, false);
 		ShellProcessController contr = new ShellProcessController(process,
 				matcher);
-		process.mark(1024);
-		if (contr.expectNextLine(promptExpression)) {
+		process.mark(4096);
+		int lines = 0;
+		boolean found;
+		do {
+			found = contr.expectNextLine(promptExpression);
+		} while(!found && ++lines < 10 && !contr.isEOF());
+		
+		if(found) {
 			if(Log.isDebugEnabled())
 				Log.debug("sudo password expression matched");
 			contr.typeAndReturn(password);
-			process.mark(1024);
 			if(contr.expectNextLine(passwordErrorText)) {
 				throw new IOException("Incorrect password!");
 			}
-			process.reset();
+			process.clearOutput();
 		} else {
 			if(Log.isDebugEnabled())
 				Log.debug("sudo password expression not matched");
@@ -365,6 +365,8 @@ public class ExpectShell {
 			osDescription = "HP-UX";
 		} else if (osType == OS_OPENVMS) {
 		    osDescription = "OpenVMS";
+		} else if (osType == OS_POWERSHELL) {
+			osDescription = "Windows PowerShell";
 		} else {
 			osDescription = "Unknown";
 		}
@@ -387,8 +389,16 @@ public class ExpectShell {
 		if (osType == OS_WINDOWS) {
 			return "\r\n";
 		} else {
-			return "\n";
+			return "\r";
 		}
+	}
+
+	public synchronized String executeWithOutput(String cmd) throws SshException {
+		return executeCommand(cmd, true).getCommandOutput();
+	}
+	
+	public synchronized int executeWithExitCode(String cmd) throws SshException {
+		return executeCommand(cmd, true).getExitCode();
 	}
 	
 	public synchronized void execute(String cmd) throws SshException {
@@ -493,12 +503,16 @@ public class ExpectShell {
 				echoCmd = PIPE_CMD + ECHO_COMMAND + " \"" + BEGIN_COMMAND_MARKER + "\" && " + cmd
 		                		+ " && " + ECHO_COMMAND + " \"" + endCommand + "0\" || "
 		                		+ ECHO_COMMAND + "\"" + endCommand + "1\"" + EOL;
+			} else if(osType == OS_POWERSHELL) {
+			    // Assume it's a Unix system and 'echo' works.
+                echoCmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; " + cmd
+                        + "; echo \"" + endCommand + EXIT_CODE_VARIABLE + "\"" + EOL;
 			} else {
 			    // Assume it's a Unix system and 'echo' works.
                 echoCmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; " + cmd
                         + "; echo \"" + endCommand + EXIT_CODE_VARIABLE + "\"" + EOL;
 			}
-
+			
 			if(Log.isDebugEnabled()) {
 				Log.debug("Executing raw command: {}", echoCmd);
 			}
@@ -513,9 +527,7 @@ public class ExpectShell {
 			ShellProcess process = new ShellProcess(this, in);
 
 			if (consume) {
-				while (process.getInputStream().read() > -1) {
-
-				}
+				process.drain();
 			}
 			return process;
 		} catch (SshIOException ex) {
@@ -659,8 +671,20 @@ public class ExpectShell {
 
 			if (detectSettings) {
 
-			    String cmd = PIPE_CMD + ECHO_COMMAND + " \"" + marker1str + "\" ; " + ECHO_COMMAND + " $?" + "\r\n";
+			    String cmd;
 
+			    if (osType == OS_WINDOWS) {
+					// %errorlevel% doesnt work properly on multiple command line so
+					// we fix it to 0 and 1 for good or bad result
+				    cmd = ECHO_COMMAND + " " + BEGIN_COMMAND_MARKER + "&& " + ECHO_COMMAND + " " + EXIT_CODE_VARIABLE + EOL;
+				} else if ( osType == OS_OPENVMS ) {
+				    // Do same trick with end marker for OpenVMS via its PIPE command.
+					cmd = PIPE_CMD + ECHO_COMMAND + " \"" + BEGIN_COMMAND_MARKER + "\" && " + ECHO_COMMAND + " $?" + EOL;
+				} else {
+				    // Assume it's a Unix system and 'echo' works.
+	                cmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; " + "echo \"$?\"" + EOL;
+				}			    
+			    
 				if(Log.isDebugEnabled())
 					Log.debug("Performing marker test: " + cmd);
 
@@ -811,7 +835,7 @@ public class ExpectShell {
 
 			// Validate the output, if it has been processed correctly then it
 			// should be a *nix type shell
-			if (line.equals("0") && osType == OS_UNKNOWN ) {
+			if (line.equals("0") && osType == OS_UNKNOWN) {
 			    if(Log.isDebugEnabled())
 					Log.debug("This looks like a *nix type machine, setting EOL to CR only and exit code variable to $?");
 				EOL = "\r";
@@ -885,10 +909,19 @@ public class ExpectShell {
 
 			updateDescription();
 
-			if(Log.isDebugEnabled())
-				Log.debug("Setting default sudo prompt");
-			
-			executeCommand("export SUDO_PROMPT=Password:", true);
+			switch(osType) {
+			case OS_WINDOWS:
+			case OS_OPENVMS:
+			case OS_POWERSHELL:
+				break;
+			default:
+				if(Log.isDebugEnabled())
+					Log.debug("Setting default sudo prompt");
+				
+				executeCommand("export SUDO_PROMPT=Password:", true);
+				break;
+			}
+
 			
 			if(Log.isDebugEnabled())
 				Log.debug("Shell initialized");

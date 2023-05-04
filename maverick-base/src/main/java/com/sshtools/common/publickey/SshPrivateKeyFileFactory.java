@@ -1,22 +1,4 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
+
 package com.sshtools.common.publickey;
 
 import java.io.ByteArrayOutputStream;
@@ -28,9 +10,13 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ServiceLoader;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.components.SshKeyPair;
+import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
 
 /**
@@ -86,13 +72,15 @@ public class SshPrivateKeyFileFactory {
 			} else if (Base64EncodedFileFormat.isFormatted(formattedkey,
 					SshtoolsPrivateKeyFile.BEGIN, SshtoolsPrivateKeyFile.END)) {
 				return new SshtoolsPrivateKeyFile(formattedkey);
-			} else if (Ssh1RsaPrivateKeyFile.isFormatted(formattedkey)) {
-				return new Ssh1RsaPrivateKeyFile(formattedkey);
-			} else if (PuTTYPrivateKeyFile.isFormatted(formattedkey)) {
-				return new PuTTYPrivateKeyFile(formattedkey);
 			} else if (SSHCOMPrivateKeyFile.isFormatted(formattedkey)) {
 				return new SSHCOMPrivateKeyFile(formattedkey);
 			} else {
+				for(var provider : ServiceLoader.load(SshPrivateKeyProvider.class,
+						JCEComponentManager.getDefaultInstance().getClassLoader())) {
+					if(provider.isFormatted(formattedkey)) {
+						return provider.create(formattedkey);
+					}
+				}
 				throw new IOException(
 						"A suitable key format could not be found!");
 			}
@@ -268,5 +256,13 @@ public class SshPrivateKeyFileFactory {
 		} finally {
 			out.close();
 		}
+	}
+
+	public static SshPrivateKeyFile parse(Path path) throws IOException {
+		return parse(Files.newInputStream(path));
+	}
+
+	public static SshPrivateKeyFile parse(File identityFile) throws IOException {
+		return parse(identityFile.toPath());
 	}
 }

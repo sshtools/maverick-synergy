@@ -1,26 +1,6 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.permissions;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
@@ -31,6 +11,7 @@ import com.sshtools.common.util.ExpiringConcurrentHashMap;
 public class IPPolicy extends Permissions {
 
 	static final int ALLOW_CONNECT = 0x01;
+	static final int DISABLE_BAN = 0x02;
 	
 	IPStore blacklist = new IPStore();
 	IPStore whitelist = new IPStore();
@@ -61,31 +42,42 @@ public class IPPolicy extends Permissions {
 		this.temporaryBans = temporaryBans;
 	}
 	
+	public void disableTemporaryBanning() {
+		add(DISABLE_BAN);
+	}
+	
+	public void enableTemporaryBanning() {
+		remove(DISABLE_BAN);
+	}
+	
 	public long getTemporaryBanTime() {
 		return temporaryBans.getExpiryTime();
 	}
 	
-	protected boolean assertConnection(SocketAddress remoteAddress, SocketAddress localAddress) {
+	protected boolean assertConnection(InetAddress remoteAddress, InetAddress localAddress) {
+		
 		if(check(ALLOW_CONNECT)) {
+			if(check(DISABLE_BAN)) {
+				return true;
+			}
 			return assertAllowed(remoteAddress, localAddress);
 		}
 		return false;
 	}
 	
-	protected boolean assertAllowed(SocketAddress remoteAddress, SocketAddress localAddress) {
+	protected boolean assertAllowed(InetAddress remoteAddress, InetAddress localAddress) {
 
 		try {
 			boolean allowed = true;
 			
 			String addr;
-			InetAddress resolved = ((InetSocketAddress)remoteAddress).getAddress();
 			
-			Boolean temporarilyBanned = temporaryBans.getOrDefault(resolved, false);
+			Boolean temporarilyBanned = temporaryBans.getOrDefault(remoteAddress, false);
 			if(temporarilyBanned) {
-				Log.info("Rejecting IP {} because of temporary ban", resolved.getHostAddress());
+				Log.info("Rejecting IP {} because of temporary ban", remoteAddress.getHostAddress());
 				return false;
 			}
-			addr = resolved.getHostAddress();
+			addr = remoteAddress.getHostAddress();
 			
 			if(!whitelist.isEmpty()) {
 				allowed = isListed(addr, whitelist);
@@ -136,10 +128,28 @@ public class IPPolicy extends Permissions {
 		flaggedAddressCounts.put(addr, count);
 	}
 	
-	public final boolean checkConnection(SocketAddress remoteAddress, SocketAddress localAddress) {
+	public final boolean checkConnection(InetAddress remoteAddress, InetAddress localAddress) {
 		return assertConnection(remoteAddress, localAddress);
 	}
 	
+	public final boolean checkConnection(String remoteAddress, String localAddress) {
+		try {
+			return assertConnection(InetAddress.getByAddress(convertAddress(remoteAddress)),
+					InetAddress.getByAddress(convertAddress(remoteAddress)));
+		} catch (UnknownHostException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		}
+	}
+	
+	private byte[] convertAddress(String str) {
+		byte[] ret = new byte[4];
+		String[] s = str.split("\\.");
+		for (int i = 0; i < ret.length; i++) {
+		    ret[i] = (byte) Integer.parseInt(s[i], 10);
+		}
+		return ret;
+	}
+
 	public void stopAcceptingConnections() {
 		if(Log.isInfoEnabled()) {
 			Log.info("Stop accepting connections on IP Policy");

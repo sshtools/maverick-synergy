@@ -1,22 +1,4 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
+
 package com.sshtools.client.components;
 
 import java.io.IOException;
@@ -31,6 +13,7 @@ import javax.crypto.NoSuchPaddingException;
 
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.SshKeyExchangeClient;
+import com.sshtools.client.SshKeyExchangeClientFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.SshPublicKeyFileFactory;
 import com.sshtools.common.ssh.SecurityLevel;
@@ -63,6 +46,18 @@ public class Rsa1024Sha1 extends SshKeyExchangeClient implements AbstractKeyExch
 	 * Constant for the algorithm name "rsa1024-sha1".
 	 */
 	public static final String RSA_1024_SHA1 = "rsa1024-sha1";
+	
+	public static class Rsa1024Sha1Factory implements SshKeyExchangeClientFactory<Rsa1024Sha1> {
+		@Override
+		public Rsa1024Sha1 create() throws NoSuchAlgorithmException, IOException {
+			return new Rsa1024Sha1();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { RSA_1024_SHA1 };
+		}
+	}
 
 	final static int SSH_MSG_KEXRSA_PUBKEY = 30;
 	final static int SSH_MSG_KEXRSA_SECRET = 31;

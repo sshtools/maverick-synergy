@@ -1,30 +1,8 @@
-<!--
-
-    (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
-
-    This file is part of the Maverick Synergy Java SSH API.
-
-    Maverick Synergy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Maverick Synergy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
-
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sshtools</groupId>
 	<artifactId>maverick-synergy-group</artifactId>
-	<version>3.0.11-SNAPSHOT</version>
+	<version>3.1.0-SNAPSHOT</version>
 	<name>Maverick Synergy</name>
 	<description>Open source Java SSH API</description>
 	<url>http://www.jadaptive.com</url>
@@ -32,19 +10,9 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.target>11</maven.compiler.target>
+    	<maven.compiler.source>11</maven.compiler.source>
 	</properties>
-
-	<licenses>
-		<license>
-			<name>GNU Lesser General Public License</name>
-			<url>http://www.gnu.org/licenses/gpl.html</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
-	<scm>
-		<url>https://github.com/sshtools/maverick-synergy/</url>
-		<connection>scm:git:https://github.com/sshtools/maverick-synergy.git</connection>
-	</scm>
 
 	<developers>
 		<developer>
@@ -57,14 +25,16 @@
 	</developers>
 
 	<distributionManagement>
-		<snapshotRepository>
-			<id>ossrh-sshtools</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-		</snapshotRepository>
 		<repository>
-			<id>ossrh-sshtools</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+			<id>public-releases</id>
+			<name>public-releases</name>
+			<url>https://artifactory.jadaptive.com/public-releases</url>
 		</repository>
+		<snapshotRepository>
+			<id>public-snapshots</id>
+			<name>public-snapshots</name>
+			<url>https://artifactory.jadaptive.com/public-snapshots</url>
+		</snapshotRepository>
 	</distributionManagement>
 
 	<profiles>
@@ -92,62 +62,55 @@
 				</pluginManagement>
 			</build>
 		</profile>
-		<profile>
-			<id>sign</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-gpg-plugin</artifactId>
-						<version>1.5</version>
-						<executions>
-							<execution>
-								<id>sign-artifacts</id>
-								<phase>verify</phase>
-								<goals>
-									<goal>sign</goal>
-								</goals>
-								<configuration>
-									<gpgArguments>
-										<arg>--pinentry-mode</arg>
-										<arg>loopback</arg>
-									</gpgArguments>
-								</configuration>
-							</execution>
-
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
 	</profiles>
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
+				<version>3.10.1</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>11</source>
+					<target>11</target>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>2.2.1</version>
+				<version>3.2.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
 						<goals>
 							<goal>jar-no-fork</goal>
 						</goals>
+						<configuration>
+							<attach>false</attach>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.2.2</version>
+				<configuration>
+					<archive>
+						<index>true</index>
+						<manifest>
+							<addClasspath>true</addClasspath>
+						</manifest>
+						<manifestEntries>
+							<mode>development</mode>
+							<url>${project.url}</url>
+							<key>value</key>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.4.0</version>
 				<executions>
 					<execution>
 						<id>javadoc-jar</id>
@@ -174,9 +137,9 @@
 			<plugin>
 				<groupId>com.mycila</groupId>
 				<artifactId>license-maven-plugin</artifactId>
-				<version>2.3</version>
+				<version>4.1</version>
 				<configuration>
-					<header>templates/LGPL3.txt</header>
+					<header>templates/JAD.txt</header>
 					<properties>
 						<owner>JADAPTIVE Limited</owner>
 						<email>support@jadaptive.com</email>
@@ -189,22 +152,9 @@
 					<execution>
 						<goals>
 							<goal>check</goal>
-							<goal>format</goal>
-							<goal>remove</goal>
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.sonatype.plugins</groupId>
-				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.3</version>
-				<extensions>true</extensions>
-				<configuration>
-					<serverId>ossrh-sshtools</serverId>
-					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-					<autoReleaseAfterClose>true</autoReleaseAfterClose>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -247,21 +197,33 @@
 		<module>maverick-utils</module>
 		<module>maverick-logging</module>
 		<module>maverick-base</module>
-
+		<module>maverick-base-tests</module>
 		<module>maverick-synergy-common</module>
+		<module>maverick-synergy-common-tests</module>
+		<module>maverick-synergy-jdk16-common</module>
 		<module>maverick-synergy-client</module>
-		<module>maverick-synergy-fuse-drive</module>
+		<module>maverick-synergy-jdk16-client</module>
+		<module>maverick-synergy-client-tests</module>
 		<module>maverick-synergy-server</module>
 		<module>maverick-synergy-callback-client</module>
 		<module>maverick-synergy-callback-server</module>
-
+		<module>maverick-synergy-jdk16-server</module>
 		<module>maverick-virtual-filesystem</module>
+		<module>maverick-virtual-filesystem-tests</module>
+		<module>maverick-synergy-s3</module>
 		<module>maverick-virtual-session</module>
+		<module>maverick-virtual-session-tests</module>
 		<module>maverick-x509</module>
+		<module>maverick-putty</module>
 		<module>maverick-bc</module>
+		<module>maverick-bc-tests</module>
 		<module>maverick-bc-fips</module>
+		<module>maverick-bc-fips-tests</module>
 		<module>maverick-zip</module>
 		<module>maverick-sshagent</module>
+		<module>maverick-sshagent-jni-sockets</module>
+		<module>maverick-sshagent-jdk16-sockets</module>
+		<module>maverick-sshagent-named-pipes</module>
 
 		<module>maverick-synergy</module>
 		<module>maverick-synergy-assembly</module>

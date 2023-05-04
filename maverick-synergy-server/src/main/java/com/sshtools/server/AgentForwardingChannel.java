@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.server;
 import java.io.Closeable;
 import java.io.IOException;
@@ -33,6 +15,7 @@ import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.SessionChannelServer;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.synergy.ssh.ChannelNG;
 import com.sshtools.synergy.ssh.ChannelOutputStream;
 
@@ -51,7 +34,7 @@ public class AgentForwardingChannel extends ChannelNG<SshServerContext> implemen
 	}
 	
 	public AgentForwardingChannel(String type, SessionChannelServer session, ChannelEventListener listener) throws IOException {
-		super(type, 32768, 1024000, 1024000, 65536);
+		super(type, 32768, new UnsignedInteger32(1024000), new UnsignedInteger32(1024000), new UnsignedInteger32(65536));
 		this.session = session;
 		if(listener!=null) {
 			addEventListener(listener);

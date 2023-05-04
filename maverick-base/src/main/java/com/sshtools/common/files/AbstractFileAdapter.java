@@ -1,29 +1,14 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.files;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.List;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.Multipart;
+import com.sshtools.common.sftp.MultipartTransfer;
 import com.sshtools.common.sftp.SftpFileAttributes;
 
 public class AbstractFileAdapter implements AbstractFile {
@@ -35,6 +20,10 @@ public class AbstractFileAdapter implements AbstractFile {
 	}
 	
 	public AbstractFileAdapter() {
+	}
+	
+	public AbstractFile getParentFile() throws IOException, PermissionDeniedException {
+		return file.getParentFile();
 	}
 	
 	protected void init(AbstractFile file) {
@@ -169,4 +158,15 @@ public class AbstractFileAdapter implements AbstractFile {
 	public String readSymbolicLink() throws IOException, PermissionDeniedException {
 		return file.readSymbolicLink();
 	}
+	
+	@Override
+	public boolean supportsMultipartTransfers() {
+		return file.supportsMultipartTransfers();
+	}
+
+	@Override
+	public MultipartTransfer startMultipartUpload(Collection<Multipart> multparts) throws IOException, PermissionDeniedException {
+		return file.startMultipartUpload(multparts);
+	}
+
 }

@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh.components.jce;
 
 import java.math.BigInteger;
@@ -33,18 +15,23 @@ import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.ECGenParameterSpec;
+import java.util.ServiceLoader;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.ComponentFactory;
 import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.ssh.components.Digest;
+import com.sshtools.common.ssh.components.DigestFactory;
 import com.sshtools.common.ssh.components.SshCipher;
+import com.sshtools.common.ssh.components.SshCipherFactory;
 import com.sshtools.common.ssh.components.SshDsaPrivateKey;
 import com.sshtools.common.ssh.components.SshDsaPublicKey;
 import com.sshtools.common.ssh.components.SshHmac;
+import com.sshtools.common.ssh.components.SshHmacFactory;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.ssh.components.SshRsaPrivateCrtKey;
 import com.sshtools.common.ssh.components.SshRsaPrivateKey;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
@@ -82,21 +69,26 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 
 	
 	SecureRND rnd;
-
+	ClassLoader classLoader = JCEComponentManager.class.getClassLoader();
+	
 	public JCEComponentManager() {
-		
-		if (System.getProperty("maverick.enableBCProvider", "true").equalsIgnoreCase("false") || JCEProvider.isBCDisabled()) {
-			if(Log.isDebugEnabled()) {
-				Log.debug("Automatic configuration of BouncyCastle is disabled");
-			}
-			JCEProvider.disableBouncyCastle();
-			return;
+		if("executable".equals(System.getProperty("org.graalvm.nativeimage.kind", ""))) {
+			Log.info("Leaving provider configuration as running a native build.");
 		}
-		
-		try {
-			JCEProvider.enableBouncyCastle(false);
-		} catch(IllegalStateException ex) {
-			Log.error("Bouncycastle JCE not found in classpath");
+		else {
+			if (System.getProperty("maverick.enableBCProvider", "true").equalsIgnoreCase("false") || JCEProvider.isBCDisabled()) {
+				if(Log.isInfoEnabled()) {
+					Log.info("Automatic configuration of BouncyCastle is disabled");
+				}
+				JCEProvider.disableBouncyCastle();
+				return;
+			}
+			
+			try {
+				JCEProvider.enableBouncyCastle(false);
+			} catch(IllegalStateException ex) {
+				Log.error("Bouncycastle JCE not found in classpath");
+			}
 		}
 	}
 
@@ -287,6 +279,22 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 			throw new SshException(e);
 		}
 	}
+	
+	public SshKeyPair generateEd448KeyPair() throws SshException {
+		
+		try {
+			KeyPairGenerator keyGen = KeyPairGenerator.getInstance(JCEAlgorithms.ED448);
+			KeyPair kp = keyGen.generateKeyPair();
+
+			SshKeyPair pair = new SshKeyPair();
+			pair.setPrivateKey(new SshEd448PrivateKeyJCE(kp.getPrivate()));
+			pair.setPublicKey(new SshEd448PublicKeyJCE(kp.getPublic()));
+			
+			return pair;
+		} catch (NoSuchAlgorithmException e) {
+			throw new SshException(e);
+		}
+	}
 
 	public SshKeyPair generateEcdsaKeyPair(int bits) throws SshException {
 
@@ -334,238 +342,155 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	protected void initializeDigestFactory(ComponentFactory<Digest> digests) {
-
-		if (testDigest(JCEAlgorithms.JCE_MD5, MD5Digest.class))
-			digests.add(JCEAlgorithms.JCE_MD5, MD5Digest.class);
-
-		if (testDigest(JCEAlgorithms.JCE_SHA1, SHA1Digest.class))
-			digests.add(JCEAlgorithms.JCE_SHA1, SHA1Digest.class);
-
-		if (testDigest("SHA1", SHA1Digest.class))
-			digests.add("SHA1", SHA1Digest.class);
-
-		if (testDigest("SHA-256", SHA256Digest.class)) {
-			digests.add("SHA-256", SHA256Digest.class);
-			digests.add("SHA256", SHA256Digest.class);
-		}
-		if (testDigest("SHA-384", SHA384Digest.class)) {
-			digests.add("SHA-384", SHA384Digest.class);
-			digests.add("SHA384", SHA384Digest.class);
-		}
-
-		if (testDigest("SHA-512", SHA512Digest.class)) {
-			digests.add("SHA-512", SHA512Digest.class);
-			digests.add("SHA512", SHA512Digest.class);
-		}
 		
-		loadExternalComponents("digest.properties", digests);
-	}
-
-	protected void initializeHmacFactory(ComponentFactory<SshHmac> hmacs) {
-
-		if (testHMac("hmac-sha2-256", HmacSha256.class)) {
-			hmacs.add("hmac-sha2-256", HmacSha256.class);
-			hmacs.add("hmac-sha2-256-etm@openssh.com", HmacSha256ETM.class);
-		}
-
-		if (testHMac("hmac-sha2-256-96", HmacSha256_96.class)) {
-			hmacs.add("hmac-sha2-256-96", HmacSha256_96.class);
-		}
-
-		if (testHMac("hmac-sha2-512", HmacSha512.class)) {
-			hmacs.add("hmac-sha2-512", HmacSha512.class);
-			hmacs.add("hmac-sha2-512-etm@openssh.com", HmacSha512ETM.class);
-		}
-
-		if (testHMac("hmac-sha2-512-96", HmacSha512_96.class)) {
-			hmacs.add("hmac-sha2-512-96", HmacSha512_96.class);
-		}
-		
-		if (testHMac("hmac-sha1", HmacSha1.class)) {
-			hmacs.add("hmac-sha1", HmacSha1.class);
-			hmacs.add("hmac-sha1-etm@openssh.com", HmacSha1ETM.class);
-		}
-	
-		if (testHMac("hmac-sha1-96", HmacSha196.class)) {
-			hmacs.add("hmac-sha1-96", HmacSha196.class);
-		}
-		
-		loadExternalComponents("hmac.properties", hmacs);
-
-	}
-
-	protected void initializePublicKeyFactory(ComponentFactory<SshPublicKey> publickeys) {
-
-		testPublicKey("ssh-ed448", SshEd448PublicKeyJCE.class, publickeys);
-		testPublicKey("ssh-ed25519", SshEd25519PublicKeyJCE.class, publickeys);
-		
-		testPublicKey("rsa-sha2-256", Ssh2RsaPublicKeySHA256.class, publickeys);
-		testPublicKey("rsa-sha2-512", Ssh2RsaPublicKeySHA512.class, publickeys);
-		
-		testPublicKey("ecdsa-sha2-nistp256", Ssh2EcdsaSha2Nist256PublicKey.class, publickeys);
-		testPublicKey("ecdsa-sha2-nistp384", Ssh2EcdsaSha2Nist384PublicKey.class, publickeys);
-		testPublicKey("ecdsa-sha2-nistp521", Ssh2EcdsaSha2Nist521PublicKey.class, publickeys);
-		
-		testPublicKey("ssh-rsa-cert-v01@openssh.com", OpenSshRsaCertificate.class, publickeys);
-		testPublicKey("ecdsa-sha2-nistp256-cert-v01@openssh.com", OpenSshEcdsaSha2Nist256Certificate.class, publickeys);
-		testPublicKey("ecdsa-sha2-nistp384-cert-v01@openssh.com", OpenSshEcdsaSha2Nist384Certificate.class, publickeys);
-		testPublicKey("ecdsa-sha2-nistp521-cert-v01@openssh.com", OpenSshEcdsaSha2Nist521Certificate.class, publickeys);
-		testPublicKey("ssh-ed25519-cert-v01@openssh.com", OpenSshEd25519Certificate.class, publickeys);
-					
-		loadExternalComponents("publickey.properties", publickeys);
-		
-		testPublicKey("ssh-rsa", Ssh2RsaPublicKey.class, publickeys);
-		testPublicKey("ssh-dss", Ssh2DsaPublicKey.class, publickeys);
-
-	}
-
-	private void testPublicKey(String name, Class<? extends SshPublicKey> pub,
-			ComponentFactory<SshPublicKey> publickeys) {
-
-		if(System.getProperties().containsKey(String.format("disable.%s",  name))) {
-			if(Log.isDebugEnabled()) {
-				Log.debug("   {} WILL NOT be supported because it has been explicitly disabled by a system property", name);
+		for(var digest : ServiceLoader.load(DigestFactory.class, 
+				JCEComponentManager.getDefaultInstance().getClassLoader())) {
+			if(testDigest(digest)) {
+				digests.add(digest);
 			}
-			return;
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void initializeHmacFactory(ComponentFactory<SshHmac> hmacs) {
+		for(var hmac : ServiceLoader.load(SshHmacFactory.class, 
+				JCEComponentManager.getDefaultInstance().getClassLoader())) {
+			if(testHMac(hmac)) {
+				hmacs.add(hmac);
+			}
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void initializePublicKeyFactory(ComponentFactory<SshPublicKey> publickeys) {
+		
+		for(var pubkey : ServiceLoader.load(SshPublicKeyFactory.class, 
+				JCEComponentManager.getDefaultInstance().getClassLoader())) {
+			if(testPublicKey(pubkey)) {
+				publickeys.add(pubkey);
+			}
+		}
+	}
+
+	private boolean testPublicKey(SshPublicKeyFactory<SshPublicKey> cls) {
+		var name  = cls.getKeys() [0];
 		
 		try {
-			SshPublicKey key = pub.newInstance();
+			if(!isEnabled(cls, SshPublicKey.class, name))
+				return false;
+			SshPublicKey key = cls.create();
 			String provider = key.test();
-			if(Log.isDebugEnabled())
-				Log.debug("   " + name + " will be supported using JCE Provider " + provider);
-			publickeys.add(name, pub);
+			if(Log.isInfoEnabled())
+				Log.info("   " + name + " will be supported using JCE Provider " + provider);
+			return true;
 		} catch (Throwable e) {
-			if(Log.isDebugEnabled())
-				Log.debug("   " + name + " will not be supported: " + e.getMessage());
-		}
-	}
-
-	protected void initializeSsh2CipherFactory(ComponentFactory<SshCipher> ciphers) {
-
-		if (testJCECipher("chacha20-poly1305@openssh.com", ChaCha20Poly1305.class)) {
-			ciphers.add("chacha20-poly1305@openssh.com", ChaCha20Poly1305.class);
-		}
-		
-		if (testJCECipher("aes128-ctr", AES128Ctr.class)) {
-			ciphers.add("aes128-ctr", AES128Ctr.class);
-		}
-
-		if (testJCECipher("aes192-ctr", AES192Ctr.class)) {
-			ciphers.add("aes192-ctr", AES192Ctr.class);
-		}
-
-		if (testJCECipher("aes256-ctr", AES256Ctr.class)) {
-			ciphers.add("aes256-ctr", AES256Ctr.class);
-		}
-
-		if (testJCECipher("3des-ctr", TripleDesCtr.class)) {
-			ciphers.add("3des-ctr", TripleDesCtr.class);
-		}
-
-		if (testJCECipher("aes128-gcm@openssh.com", AES128Gcm.class)) {
-			ciphers.add("aes128-gcm@openssh.com", AES128Gcm.class);
-		}
-
-		if (testJCECipher("aes256-gcm@openssh.com", AES256Gcm.class)) {
-			ciphers.add("aes256-gcm@openssh.com", AES256Gcm.class);
-		}
-
-		loadExternalComponents("cipher.properties", ciphers);
-
-	}
-
-	
-
-	public boolean testJCECipher(String name, Class<? extends SshCipher> cls) {
-		
-		if(System.getProperties().containsKey(String.format("disable.%s",  name))) {
-			if(Log.isDebugEnabled()) {
-				Log.debug("   {} WILL NOT be supported because it has been explicitly disabled by a system property", name);
-			}
+			if(Log.isInfoEnabled())
+				Log.info("   " + name + " will not be supported: " + e.getMessage());
 			return false;
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void initializeSsh2CipherFactory(ComponentFactory<SshCipher> ciphers) {
+		
+		for(var cipher : ServiceLoader.load(SshCipherFactory.class, 
+				JCEComponentManager.getDefaultInstance().getClassLoader())) {
+			if(testJCECipher(cipher)) {
+				ciphers.add(cipher);
+			}
+		}
+	}
+
+	private boolean testJCECipher(SshCipherFactory<SshCipher> cls) {
+		
+		var name  = cls.getKeys() [0];
 		
 		SshCipher c = null;
 		try {
-			c = (SshCipher) cls.newInstance();
+			if(!isEnabled(cls, SshCipher.class, name))
+				return false;
+			c = cls.create();
 			byte[] tmp = new byte[1024];
 			getSecureRandom().nextBytes(tmp);
 			c.init(SshCipher.ENCRYPT_MODE, tmp, tmp);
 
 			if (c instanceof AbstractJCECipher)
-				if(Log.isDebugEnabled())
-					Log.debug("   " + name + " will be supported using JCE Provider "
+				if(Log.isInfoEnabled())
+					Log.info("   " + name + " will be supported using JCE Provider "
 							+ ((AbstractJCECipher) c).getProvider());
 
 			return true;
 		} catch (Throwable e) {
-			if(Log.isDebugEnabled()) {
-				Log.debug("   " + name + " WILL NOT be supported: " + e.getMessage());
+			if(Log.isInfoEnabled()) {
+				Log.info("   " + name + " WILL NOT be supported: " + e.getMessage());
 			}
 			return false;
 		}
 	}
 
-	public static boolean testDigest(String name, Class<? extends Digest> cls) {
+	private boolean testDigest(DigestFactory<Digest> cls) {
 		
-		if(System.getProperties().containsKey(String.format("disable.%s",  name))) {
-			if(Log.isDebugEnabled()) {
-				Log.debug("   {} WILL NOT be supported because it has been explicitly disabled by a system property", name);
-			}
-			return false;
-		}
-		
+		var name  = cls.getKeys() [0];
 		Digest c = null;
 		try {
-			c = (Digest) cls.newInstance();
+			if(!isEnabled(cls, Digest.class, name))
+				return false;
+			
+			c = cls.create();
 
 			if (c instanceof AbstractDigest)
-				if(Log.isDebugEnabled())
-					Log.debug("   " + name + " will be supported using JCE Provider "
+				if(Log.isInfoEnabled())
+					Log.info("   " + name + " will be supported using JCE Provider "
 							+ ((AbstractDigest) c).getProvider());
 
 			return true;
 		} catch (Throwable e) {
-			if(Log.isDebugEnabled()) {
+			if(Log.isInfoEnabled()) {
 				if(c!=null && ((AbstractDigest) c).getProvider()!=null) {
-					Log.debug("   " + name + " WILL NOT be supported from JCE Provider " + ((AbstractDigest) c).getProvider() + ": " + e.getMessage());
+					Log.info("   " + name + " WILL NOT be supported from JCE Provider " + ((AbstractDigest) c).getProvider() + ": " + e.getMessage());
 				} else {
-					Log.debug("   " + name + " WILL NOT be supported: " + e.getMessage());
+					Log.info("   " + name + " WILL NOT be supported: " + e.getMessage());
 				}
 			}
 			return false;
 		}
 	}
 
-	private boolean testHMac(String name, Class<? extends SshHmac> cls) {
+	private boolean testHMac(SshHmacFactory<SshHmac> cls) {
 		
-		if(System.getProperties().containsKey(String.format("disable.%s",  name))) {
-			if(Log.isDebugEnabled()) {
-				Log.debug("   {} WILL NOT be supported because it has been explicitly disabled by a system property", name);
-			}
-			return false;
-		}
+		var name  = cls.getKeys() [0];
 		
 		SshHmac c = null;
 		try {
-			c = (SshHmac) cls.newInstance();
+			if(!isEnabled(cls, SshHmac.class, name))
+				return false;
+			
+			c = cls.create();
 			byte[] tmp = new byte[1024];
 			c.init(tmp);
 
 			if (c instanceof AbstractHmac)
-				if(Log.isDebugEnabled())
-					Log.debug(
+				if(Log.isInfoEnabled())
+					Log.info(
 							"   " + name + " will be supported using JCE Provider " + ((AbstractHmac) c).getProvider());
 
 			return true;
 		} catch (Throwable e) {
-			if(Log.isDebugEnabled()) {
-				Log.debug("   " + name + " WILL NOT be supported: " + e.getMessage());
+			if(Log.isInfoEnabled()) {
+				Log.info("   " + name + " WILL NOT be supported: " + e.getMessage());
 			}
 			return false;
 		}
+	}
+
+	public ClassLoader getClassLoader() {
+		return classLoader;
+	}
+
+	public void setClassLoader(ClassLoader classLoader) {
+		this.classLoader = classLoader;
 	}
 
 	public static ComponentManager getDefaultInstance() {

@@ -22,6 +22,7 @@ package com.sshtools.client;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayWriter;
@@ -64,6 +65,7 @@ public class PseudoTerminalModes {
 	 */
 	public final static class PseudoTerminalModesBuilder {
 		private final Map<Integer, Integer> codes = new LinkedHashMap<>();
+		private byte[] modes;
 		
 		/**
 		 * Clear all modes set in this builder.
@@ -131,9 +133,19 @@ public class PseudoTerminalModes {
 		 * Build a new {@link PseudoTerminalModes}.
 		 * 
 		 * @return modes
+		 * @throws IOException 
 		 */
-		public PseudoTerminalModes build() {
-			return new PseudoTerminalModes(this);
+		public PseudoTerminalModes build() throws IOException {
+			if(Objects.nonNull(modes)) {
+				return new PseudoTerminalModes(modes);
+			} else {
+				return new PseudoTerminalModes(this);
+			}
+		}
+
+		public PseudoTerminalModesBuilder fromBinaryModes(byte[] modes) {
+			this.modes = modes;
+			return this;
 		}
 	}
 

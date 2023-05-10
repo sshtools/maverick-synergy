@@ -76,6 +76,10 @@ public abstract class AbstractSubsystem {
 		
 		con.setProperty(taskUUID.toString(), session);
 	}
+	
+	public final SshConnection getConnection() {
+		return con;
+	}
 
 	protected abstract UnsignedInteger32 getMinimumWindowSize();
 

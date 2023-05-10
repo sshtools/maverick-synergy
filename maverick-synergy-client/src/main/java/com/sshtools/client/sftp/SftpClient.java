@@ -2268,11 +2268,30 @@ public class SftpClient implements Closeable {
 	public void rm(String path) throws SftpStatusException, SshException {
 		String actual = resolveRemotePath(path);
 
-		SftpFileAttributes attrs = sftp.getAttributes(actual);
-		if (attrs.isDirectory()) {
-			sftp.removeDirectory(actual);
-		} else {
-			sftp.removeFile(actual);
+		try {
+			SftpFileAttributes attrs = sftp.getAttributes(actual);
+			if (attrs.isDirectory()) {
+				sftp.removeDirectory(actual);
+			} else {
+				sftp.removeFile(actual);
+			}
+		}
+		catch(SftpStatusException sse) {
+			if(sse.getStatus() == SftpStatusException.SSH_FX_NO_SUCH_FILE) {
+				try {
+					SftpFileAttributes linkAttrs = statLink(path);
+					if(linkAttrs.isLink()) {
+						sftp.removeFile(actual);
+					}
+					else
+						throw sse;
+				}
+				catch(SftpStatusException sse2) {
+					throw sse; // Intentional, actually throw original
+				}
+			}
+			else
+				throw sse;
 		}
 	}
 

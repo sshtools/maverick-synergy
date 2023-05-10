@@ -20,7 +20,6 @@ package com.sshtools.common.sftp.extensions.multipart;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Date;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.AbstractFileSystem;
@@ -41,8 +40,6 @@ public class OpenMultipartFileExtension implements SftpExtension {
 		
 		byte[] transaction = null;
 		String partId = null;
-		
-		Date started = new Date();
 		
 		try {
 

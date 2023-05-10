@@ -42,6 +42,7 @@ import com.sshtools.common.sftp.AbstractFileSystem;
 import com.sshtools.common.sftp.InvalidHandleException;
 import com.sshtools.common.sftp.SftpFile;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.UnsignedInteger32;
@@ -972,8 +973,9 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 							targetAttr = nfs.getFileAttributes(targetPath);
 							if(Log.isDebugEnabled())
 								Log.debug("Setting permissions on directory");
-							targetAttr
-									.setPermissionsFromMaskString(cmdParts[0]);
+							targetAttr.setPermissions(
+									PosixPermissionsBuilder.create().
+									fromMaskString(cmdParts[0]).build());
 						} catch (FileNotFoundException e1) {
 							writeError("File not found");
 							throw new IOException("File not found");
@@ -1206,7 +1208,9 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 				waitForResponse();
 
 				if (preserveAttributes) {
-					targetAttr.setPermissionsFromMaskString(cmdParts[0]);
+					targetAttr.setPermissions(
+							PosixPermissionsBuilder.create().
+							fromMaskString(cmdParts[0]).build());
 					if(Log.isDebugEnabled())
 						Log.debug("Setting permissions on directory to {}", targetAttr.getPermissionsString());
 

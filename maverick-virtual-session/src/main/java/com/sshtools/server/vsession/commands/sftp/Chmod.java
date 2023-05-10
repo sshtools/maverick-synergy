@@ -21,6 +21,7 @@ package com.sshtools.server.vsession.commands.sftp;
 import java.io.IOException;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.server.vsession.UsageException;
@@ -40,7 +41,7 @@ public class Chmod extends SftpCommand {
 			throw new IllegalArgumentException("Too many arguments, please note -h option not supported.");
 		} else {
 			try {
-				this.sftp.chmod(Integer.parseInt(args[1]), args[2]);
+				this.sftp.chmod(PosixPermissionsBuilder.create().withBitmaskFlags(Long.parseLong(args[1])).build(), args[2]);
 			} catch (SftpStatusException | SshException e) {
 				throw new IllegalStateException(e.getMessage(), e);
 			}

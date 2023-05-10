@@ -46,6 +46,7 @@ import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.sftp.ACL;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.Packet;
@@ -614,7 +615,7 @@ public class SftpChannel extends AbstractSubsystem {
 		SftpFileAttributes attrs = new SftpFileAttributes(
 				SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN,
 				getCharsetEncoding());
-		attrs.setPermissions(permissions);
+		attrs.setPermissions(PosixPermissionsBuilder.create().fromFileModeString(permissions).build());
 		setAttributes(filename, attrs);
 
 	}

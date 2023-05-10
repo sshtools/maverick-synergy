@@ -21,7 +21,6 @@ package com.sshtools.common.sftp.extensions.multipart;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import com.sshtools.common.files.AbstractFile;
@@ -42,8 +41,6 @@ public class CreateMultipartFileExtension implements SftpExtension {
 		
 		String path = null;
 		String transactionId = null;
-		
-		Date started = new Date();
 		
 		try {
 

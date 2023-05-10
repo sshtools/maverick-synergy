@@ -36,6 +36,7 @@ import java.util.Objects;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.util.UnsignedInteger64;
 
@@ -98,7 +99,8 @@ public class DirectFile extends AbstractDirectFile<DirectFile> {
 				attrs.setGroup(posix.group().getName());
 				attrs.setUsername(posix.owner().getName());
 				
-				attrs.setPermissions(PosixFilePermissions.toString(posix.permissions()));
+				attrs.setPermissions(PosixPermissionsBuilder.create().
+						withPermissions(posix.permissions()).build());
 				
 				hidden = f.getName().startsWith(".");
 
@@ -114,14 +116,16 @@ public class DirectFile extends AbstractDirectFile<DirectFile> {
 							DosFileAttributes.class);
 			
 				hidden = dos.isHidden();
-			
-				String read = "r";
-				String write = dos.isReadOnly() ? "-" : "w";
-				String exe = (f.getName().endsWith(".exe") 
-						|| f.getName().endsWith(".com") 
-						|| f.getName().endsWith(".cmd")) ? "x" : "-";
 				
-				attrs.setPermissions(read + write + exe + read + write + exe + read + write + exe);
+				PosixPermissionsBuilder bldr = PosixPermissionsBuilder.create();
+				bldr.withAllRead();
+				if(!dos.isReadOnly()) {
+					bldr.withAllWrite();
+				}
+				if(f.getName().endsWith(".exe") || f.getName().endsWith(".com") || f.getName().endsWith(".cmd")) {
+					bldr.withAllExecute();
+				}
+				attrs.setPermissions(bldr.build());
 		
 			} catch(UnsupportedOperationException | IOException e) {
 			}

@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.UnsignedInteger32;
@@ -597,6 +598,8 @@ public class SftpFileAttributes {
 
 	/**
 	 * Set permissions given a UNIX style mask, for example '0644'
+	 * <p>
+	 * Deprecated. See {@link #setPermissions(PosixPermissions)} for alternative.
 	 * 
 	 * @param mask
 	 *            mask
@@ -604,140 +607,68 @@ public class SftpFileAttributes {
 	 * @throws IllegalArgumentException
 	 *             if badly formatted string
 	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void setPermissionsFromMaskString(String mask) {
-		if (mask.length() != 4) {
-			throw new IllegalArgumentException("Mask length must be 4");
-		}
-
-		try {
-			setPermissions(new UnsignedInteger32(String.valueOf(Integer
-					.parseInt(mask, 8))));
-		} catch (NumberFormatException nfe) {
-			throw new IllegalArgumentException(
-					"Mask must be 4 digit octal number.");
-		}
+		setPermissions(PosixPermissionsBuilder.create().fromMaskString(mask).build());
 	}
 
 	/**
 	 * Set the permissions given a UNIX style umask, for example '0022' will
 	 * result in 0022 ^ 0777.
-	 * 
+	 * <p>
+	 * Deprecated. See {@link #setPermissions(PosixPermissions)} for alternative.
 	 * @param umask
 	 * @throws IllegalArgumentException
 	 *             if badly formatted string
 	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void setPermissionsFromUmaskString(String umask) {
-		if (umask.length() != 4) {
-			throw new IllegalArgumentException("umask length must be 4");
-		}
+		setPermissions(PosixPermissionsBuilder.create().fromUmaskString(umask).build());
+	}
 
-		try {
-			setPermissions(new UnsignedInteger32(String.valueOf(Integer
-					.parseInt(umask, 8) ^ 0777)));
-		} catch (NumberFormatException ex) {
-			throw new IllegalArgumentException(
-					"umask must be 4 digit octal number");
-		}
+	/**
+	 * Set the permissions using a {@link PosixPermissions} set, created by a {@link PosixPermissionsBuilder}.
+	 * 
+	 * @param newPermissions new permissions
+	 */
+	public void setPermissions(PosixPermissions newPermissions) {
+		setPermissions(newPermissions.asUInt32());
 	}
 
 	/**
 	 * Set the permissions from a string in the format "rwxr-xr-x"
+	 * <p>
+	 * Deprecated. See {@link #setPermissions(PosixPermissions)} for alternative.
 	 * 
-	 * @param newPermissions
+	 * @param newPermissions new permissions string
 	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void setPermissions(String newPermissions) {
 		int cp = getModeType();
 
 		if (permissions != null) {
-			cp = cp
-					| (((permissions.longValue() & S_IFMT) == S_IFMT) ? S_IFMT
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFSOCK) == S_IFSOCK) ? S_IFSOCK
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFLNK) == S_IFLNK) ? S_IFLNK
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFREG) == S_IFREG) ? S_IFREG
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFBLK) == S_IFBLK) ? S_IFBLK
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFDIR) == S_IFDIR) ? S_IFDIR
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFCHR) == S_IFCHR) ? S_IFCHR
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFIFO) == S_IFIFO) ? S_IFIFO
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_ISUID) == S_ISUID) ? S_ISUID
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_ISGID) == S_ISGID) ? S_ISGID
-							: 0);
+			cp |= ( permissions.intValue() & 0xfffff000 );
 		}
-
-		int len = newPermissions.length();
-
-		if (len >= 1) {
-			cp = cp
-					| ((newPermissions.charAt(0) == 'r') ? SftpFileAttributes.S_IRUSR
-							: 0);
-		}
-
-		if (len >= 2) {
-			cp = cp
-					| ((newPermissions.charAt(1) == 'w') ? SftpFileAttributes.S_IWUSR
-							: 0);
-		}
-
-		if (len >= 3) {
-			cp = cp
-					| ((newPermissions.charAt(2) == 'x') ? SftpFileAttributes.S_IXUSR
-							: 0);
-		}
-
-		if (len >= 4) {
-			cp = cp
-					| ((newPermissions.charAt(3) == 'r') ? SftpFileAttributes.S_IRGRP
-							: 0);
-		}
-
-		if (len >= 5) {
-			cp = cp
-					| ((newPermissions.charAt(4) == 'w') ? SftpFileAttributes.S_IWGRP
-							: 0);
-		}
-
-		if (len >= 6) {
-			cp = cp
-					| ((newPermissions.charAt(5) == 'x') ? SftpFileAttributes.S_IXGRP
-							: 0);
-		}
-
-		if (len >= 7) {
-			cp = cp
-					| ((newPermissions.charAt(6) == 'r') ? SftpFileAttributes.S_IROTH
-							: 0);
-		}
-
-		if (len >= 8) {
-			cp = cp
-					| ((newPermissions.charAt(7) == 'w') ? SftpFileAttributes.S_IWOTH
-							: 0);
-		}
-
-		if (len >= 9) {
-			cp = cp
-					| ((newPermissions.charAt(8) == 'x') ? SftpFileAttributes.S_IXOTH
-							: 0);
-		}
+		
+		cp |= PosixPermissionsBuilder.create().
+				fromLaxFileModeString(newPermissions).
+				build().asLong();
 
 		setPermissions(new UnsignedInteger32(cp));
+	}
+
+	/**
+	 * Get the current permissions value.
+	 * <p>
+	 * Deprecated. See {@link #getPosixPermissions()} for alternative.
+	 * 
+	 * @return UnsignedInteger32
+	 */
+	@Deprecated(since = "3.1.0")
+	public UnsignedInteger32 getPermissions() {
+		if (permissions != null)
+			return permissions;
+		return UnsignedInteger32.ZERO;
 	}
 
 	/**
@@ -745,10 +676,10 @@ public class SftpFileAttributes {
 	 * 
 	 * @return UnsignedInteger32
 	 */
-	public UnsignedInteger32 getPermissions() {
+	public PosixPermissions getPosixPermissions() {
 		if (permissions != null)
-			return permissions;
-		return new UnsignedInteger32(0);
+			return PosixPermissionsBuilder.create().fromBitmask(permissions).build();
+		return PosixPermissions.EMPTY;
 	}
 
 	/**
@@ -1157,29 +1088,6 @@ public class SftpFileAttributes {
 		}
 	}
 
-	private int octal(int v, int r) {
-		v >>>= r;
-
-		return (((v & 0x04) != 0) ? 4 : 0) + (((v & 0x02) != 0) ? 2 : 0)
-				+ +(((v & 0x01) != 0) ? 1 : 0);
-	}
-
-	private String rwxString(int v, int r) {
-		v >>>= r;
-
-		String rwx = ((((v & 0x04) != 0) ? "r" : "-") + (((v & 0x02) != 0) ? "w"
-				: "-"));
-
-		if (((r == 6) && ((permissions.longValue() & S_ISUID) == S_ISUID))
-				|| ((r == 3) && ((permissions.longValue() & S_ISGID) == S_ISGID))) {
-			rwx += (((v & 0x01) != 0) ? "s" : "S");
-		} else {
-			rwx += (((v & 0x01) != 0) ? "x" : "-");
-		}
-
-		return rwx;
-	}
-
 	/**
 	 * 
 	 * Returns a formatted permissions string.
@@ -1188,7 +1096,7 @@ public class SftpFileAttributes {
 	 */
 	public String getPermissionsString() {
 		if (permissions != null) {
-			StringBuffer str = new StringBuffer();
+			var str = new StringBuilder();
 			boolean has_ifmt = ((int) permissions.longValue() & S_IFMT) > 0;
 			if (has_ifmt) {
 				str.append(types[(int) (permissions.longValue() & S_IFMT) >>> 13]);
@@ -1218,13 +1126,8 @@ public class SftpFileAttributes {
 					str.append('-');
 					break;
 				}
-				
 			}
-
-			str.append(rwxString((int) permissions.longValue(), 6));
-			str.append(rwxString((int) permissions.longValue(), 3));
-			str.append(rwxString((int) permissions.longValue(), 0));
-
+			str.append(PosixPermissionsBuilder.create().fromBitmask(permissions).build().asFileModesString());
 			return str.toString();
 		}
 		return "";
@@ -1239,11 +1142,9 @@ public class SftpFileAttributes {
 		StringBuffer buf = new StringBuffer();
 
 		if (permissions != null) {
-			int i = (int) permissions.longValue();
-			buf.append('0');
-			buf.append(octal(i, 6));
-			buf.append(octal(i, 3));
-			buf.append(octal(i, 0));
+			return PosixPermissionsBuilder.create().
+					fromBitmask(permissions.longValue()).
+					build().asMaskString();
 		} else {
 			buf.append("----");
 		}

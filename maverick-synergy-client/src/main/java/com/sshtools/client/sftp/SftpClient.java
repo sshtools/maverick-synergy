@@ -50,10 +50,12 @@ import com.sshtools.common.files.direct.DirectFileFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.GlobSftpFileFilter;
+import com.sshtools.common.sftp.PosixPermissions;
 import com.sshtools.common.sftp.RegexSftpFileFilter;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpFileFilter;
 import com.sshtools.common.sftp.SftpStatusException;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
@@ -2075,6 +2077,27 @@ public class SftpClient implements Closeable {
 	 * <p>
 	 * Modes determine who can read, change or execute a file.
 	 * </p>
+	 * 
+	 * @param permissions the absolute mode of the file/directory
+	 * @param path        the path to the file/directory on the remote server
+	 *
+	 * @see PosixPermissions
+	 * @see PosixPermissionsBuilder
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	public void chmod(PosixPermissions permissions, String path) throws SftpStatusException, SshException {
+		chmod(permissions.asInt(), path);
+	}
+
+	/**
+	 * <p>
+	 * Changes the access permissions or modes of the specified file or directory.
+	 * </p>
+	 * 
+	 * <p>
+	 * Modes determine who can read, change or execute a file.
+	 * </p>
 	 * <blockquote>
 	 * 
 	 * <pre>
@@ -2094,6 +2117,10 @@ public class SftpClient implements Closeable {
 	 * </pre>
 	 * 
 	 * </blockquote>
+	 * <p>
+	 * Now deprecated, it is recommended {@link PosixPermissions} and {@link PosixPermissionsBuilder} be
+	 * used instead.
+	 * </p>
 	 * 
 	 * @param permissions the absolute mode of the file/directory
 	 * @param path        the path to the file/directory on the remote server
@@ -2101,6 +2128,7 @@ public class SftpClient implements Closeable {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
+	@Deprecated(since = "3.1.0")
 	public void chmod(int permissions, String path) throws SftpStatusException, SshException {
 		String actual = resolveRemotePath(path);
 		sftp.changePermissions(actual, permissions);

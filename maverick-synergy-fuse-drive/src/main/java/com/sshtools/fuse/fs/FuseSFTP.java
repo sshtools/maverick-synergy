@@ -38,6 +38,7 @@ import com.sshtools.client.sftp.SftpChannel;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.client.sftp.SftpFile;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
@@ -89,7 +90,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 		
 		return execute(() -> {
 			try {
-				sftp.chmod((int) mode, path);
+				sftp.chmod(PosixPermissionsBuilder.create().fromBitmask(mode).build(), path);
 				return 0;
 			} catch (SftpStatusException e) {
 				Log.error("Failed to chmod {} to {}",e,  path, mode);

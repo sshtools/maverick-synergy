@@ -22,6 +22,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +40,7 @@ import com.sshtools.common.files.AbstractFileImpl;
 import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.util.UnsignedInteger64;
 
@@ -116,10 +118,14 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 		} catch (FileSystemException e) {
 		}
 		
-		attr.setPermissions(String.format("%s%s%s------", 
-				isReadable() ? "r" : "-", 
-				isWritable() ? "w" : "-", 
-				isDirectory() ? "x" : "-"));
+		PosixPermissionsBuilder bldr = PosixPermissionsBuilder.create();
+		if(isReadable())
+			bldr.withPermissions(PosixFilePermission.OWNER_READ);
+		if(isWritable())
+			bldr.withPermissions(PosixFilePermission.OWNER_WRITE);
+		if(isDirectory())
+			bldr.withPermissions(PosixFilePermission.OWNER_EXECUTE);
+		attr.setPermissions(bldr.build());
 
 
 		try {

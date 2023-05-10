@@ -34,7 +34,7 @@ public class UnsignedInteger32 {
 
   public final static UnsignedInteger32 ZERO = new UnsignedInteger32(0);
   
-  private Long value;
+  private final Long value;
 
   /**
    * Creates a new UnsignedInteger32 object.

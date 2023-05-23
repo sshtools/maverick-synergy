@@ -18,6 +18,7 @@
  */
 package com.sshtools.common.logger;
 
+import java.io.IOException;
 import java.util.Objects;
 
 public class Log {
@@ -29,7 +30,11 @@ public class Log {
 	public static RootLoggerContext getDefaultContext() {
 		synchronized(Log.class) {
 			if(defaultContext==null) {
+				try {
 				defaultContext = new DefaultLoggerContext();
+				} catch(IOException e) {
+					throw new IllegalStateException(e.getMessage(), e);
+				}
 			}
 			return defaultContext;
 		}

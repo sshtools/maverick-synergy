@@ -24,12 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -38,8 +32,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,23 +44,20 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	static DateFormat df = new SimpleDateFormat("dd MMM yyyy HH:mm:ss,SSS");
 	Properties props; 
 	File propertiesFile;
-	FileWatcher watcher;
 	
-	public DefaultLoggerContext() {
+	public DefaultLoggerContext() throws IOException {
 		propertiesFile = new File(System.getProperty("maverick.log.config", "logging.properties"));
 		loadFile();
 		if("true".equalsIgnoreCase(getProperty("maverick.log.nothread", "false"))) {
 			return;
 		}
-		watcher = new FileWatcher(propertiesFile);
-		watcher.start();
+		FileWatchingService.getInstance().register(propertiesFile.toPath(), (path)->{
+			loadFile();
+		});
 	}
 	
 	public void shutdown() {
 		reset();
-		if(watcher!=null) {
-			watcher.stopThread();
-		}
 	}
 	
 	public String getProperty(String key, String defaultValue) {
@@ -252,69 +241,6 @@ public class DefaultLoggerContext implements RootLoggerContext {
 		for(LoggerContext context : contexts) {
 			context.raw(level, msg);
 		}
-	}
-
-	/**
-	 * From https://stackoverflow.com/questions/16251273/can-i-watch-for-single-file-change-with-watchservice-not-the-whole-directory
-	 */
-	public class FileWatcher extends Thread {
-	    private final File file;
-	    private AtomicBoolean stop = new AtomicBoolean(false);
-
-	    public FileWatcher(File file) {
-	        this.file = file;
-	        setName("MaverickLoggerWatcher");
-	        setDaemon(true);
-	        Runtime.getRuntime().addShutdownHook(new Thread() {
-	        	public void run() {
-	        		stopThread();
-	        	}
-	        });
-	    }
-
-	    public boolean isStopped() { return stop.get(); }
-	    public void stopThread() { 
-	    	stop.set(true); 
-	    }
-
-	    public void doOnChange() {
-	        loadFile();
-	    }
-
-	    @Override
-	    public void run() {
-	        try (WatchService service = FileSystems.getDefault().newWatchService()) {
-	            Path path = file.getAbsoluteFile().toPath().getParent();
-	            path.register(service, StandardWatchEventKinds.ENTRY_MODIFY);
-	            while (!isStopped()) {
-	                WatchKey key;
-	                try { key = service.poll(25, TimeUnit.MILLISECONDS); }
-	                catch (InterruptedException e) { return; }
-	                if (key == null) { Thread.yield(); continue; }
-
-	                for (WatchEvent<?> event : key.pollEvents()) {
-	                    WatchEvent.Kind<?> kind = event.kind();
-
-	                    @SuppressWarnings("unchecked")
-	                    WatchEvent<Path> ev = (WatchEvent<Path>) event;
-	                    Path filename = ev.context();
-
-	                    if (kind == StandardWatchEventKinds.OVERFLOW) {
-	                        Thread.yield();
-	                        continue;
-	                    } else if (kind == java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
-	                            && filename.toString().equals(file.getName())) {
-	                        doOnChange();
-	                    }
-	                    boolean valid = key.reset();
-	                    if (!valid) { break; }
-	                }
-	                Thread.yield();
-	            }
-	        } catch (Throwable e) {
-	            // Log or rethrow the error
-	        }
-	    }
 	}
 
 	@Override

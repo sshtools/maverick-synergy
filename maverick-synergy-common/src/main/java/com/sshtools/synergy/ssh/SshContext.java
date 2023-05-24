@@ -207,6 +207,7 @@ public abstract class SshContext extends ProtocolContext implements
 	protected ComponentFactory<SshHmac> macCS;
 	protected ComponentFactory<SshHmac> macSC;
 	protected ComponentFactory<SshPublicKey> publicKeys;
+	protected ComponentFactory<SshPublicKey> signatures;
 
 	protected String prefCipherCS = CIPHER_AES256_CTR;
 	protected String prefCipherSC = CIPHER_AES256_CTR;
@@ -257,6 +258,8 @@ public abstract class SshContext extends ProtocolContext implements
 	String httpRedirectUrl;
 	
 	Map<Class<?>,Object> policies = new HashMap<>();
+
+	private boolean sha1SignaturesSupported = true;
 	
 	/** Constructs a default context but does not set the daemon 
 	 * @param componentManager 
@@ -279,6 +282,8 @@ public abstract class SshContext extends ProtocolContext implements
 		macSC.configureSecurityLevel(securityLevel);
 		publicKeys = ComponentManager.getDefaultInstance().supportedPublicKeys();
 		publicKeys.configureSecurityLevel(securityLevel);
+		signatures = ComponentManager.getDefaultInstance().supportedPublicKeys();
+		signatures.configureSecurityLevel(securityLevel);
 
 		try {
 
@@ -421,6 +426,9 @@ public abstract class SshContext extends ProtocolContext implements
 	}
 
 
+	public ComponentFactory<SshPublicKey> getSupportedSignatures() {
+		return signatures;
+	}
 
 
 	/**
@@ -1402,5 +1410,13 @@ public abstract class SshContext extends ProtocolContext implements
 	
 	public ForwardingPolicy getForwardingPolicy() {
 		return getPolicy(ForwardingPolicy.class);
+	}
+
+	public boolean isSHA1SignaturesSupported() {
+		return sha1SignaturesSupported;
+	}
+	
+	public void setSHA1SignaturesSupported(boolean sha1SignaturesSupported) {
+		this.sha1SignaturesSupported = sha1SignaturesSupported;
 	}
 }

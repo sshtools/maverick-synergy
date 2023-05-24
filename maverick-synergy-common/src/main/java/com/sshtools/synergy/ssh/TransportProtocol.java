@@ -92,7 +92,9 @@ public abstract class TransportProtocol<T extends SshContext>
 	protected byte[] remotekex;
 	protected byte[] sessionIdentifier;
 	protected UUID uuid;
-
+	protected boolean hasExtensionCapability = false;
+	protected boolean enableExtensionCapability = true;
+	
 	LinkedList<SshMessage> outgoingQueue = new LinkedList<SshMessage>();
 	LinkedList<SshMessage> kexQueue = new LinkedList<SshMessage>();
 
@@ -107,7 +109,8 @@ public abstract class TransportProtocol<T extends SshContext>
 	static final int SSH_MSG_DEBUG = 4;
 	protected static final int SSH_MSG_SERVICE_REQUEST = 5;
 	public static final int SSH_MSG_SERVICE_ACCEPT = 6;
-	static final int SSH_MSG_EXT_INFO = 7;
+
+	public static final int SSH_MSG_EXT_INFO = 7;
 
 	static final int SSH_MSG_KEX_INIT = 20;
 	static final int SSH_MSG_NEWKEYS = 21;
@@ -1672,6 +1675,8 @@ public abstract class TransportProtocol<T extends SshContext>
 			remoteCSCompressions = bar.readString();
 			remoteSCCompressions = bar.readString();
 
+			hasExtensionCapability = remoteKeyExchanges.contains("ext-info-");
+			
 			// Read language strings and ignore as don't support other languages
 			String lang = bar.readString();
 			lang = bar.readString();
@@ -2145,12 +2150,18 @@ public abstract class TransportProtocol<T extends SshContext>
 		throw new IOException(String.format("Failed to negotiate a transport component from %s and %s", originalClient, originalServer));
 
 	}
+	
+	protected void onKeyExchangeComplete() {
+		
+	}
 
 	protected void completeKeyExchange(SshKeyExchange<T> keyExchange) {
 		
 		localkex = null; 
 		remotekex = null;
 		completedFirstKeyExchange = true;
+		
+		onKeyExchangeComplete();
 		
 		EventServiceImplementation.getInstance()
 			.fireEvent(
@@ -2396,7 +2407,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			}
 		}
 	}
-	
+
 	void sendKeyExchangeInit() {
 
 		try {

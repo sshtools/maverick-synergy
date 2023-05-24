@@ -32,11 +32,13 @@ import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.sshd.AbstractServerTransport;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.nio.LicenseException;
 import com.sshtools.synergy.nio.SocketConnection;
 import com.sshtools.synergy.ssh.ConnectionStateListener;
 import com.sshtools.synergy.ssh.Service;
+import com.sshtools.synergy.ssh.SshContext;
 import com.sshtools.synergy.ssh.TransportProtocol;
 import com.sshtools.synergy.ssh.components.SshKeyExchange;
 
@@ -45,6 +47,7 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	int disconnectReason;
 	String disconnectText;
 	boolean denyConnection = false;
+	
 	
 	public TransportProtocolServer(SshServerContext sshContext, ConnectRequestFuture connectFuture) throws LicenseException {
 		super(sshContext, connectFuture);
@@ -200,6 +203,55 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 
 		}
 	}
+	
+	protected void onKeyExchangeComplete() {
+		if(hasExtensionCapability && enableExtensionCapability) {
+			sendExtensionInfo();
+		}
+	}
+	
+	private void sendExtensionInfo() {
+		
+//		if(AdaptiveConfiguration.getBoolean("disableExtensionInfo", false, con.getRemoteAddress(), con.getIdent())) {
+//			return;
+//		}
+		
+		final ByteArrayWriter msg = new ByteArrayWriter();
+		
+		try {
+			msg.writeInt(1);
+			msg.writeString("server-sig-algs");
+			if(getContext().isSHA1SignaturesSupported()) {
+				msg.writeString(getContext().supportedPublicKeys().list(""));
+			} else {
+				msg.writeString(getContext().supportedPublicKeys().list("", SshContext.PUBLIC_KEY_SSHRSA));
+			}
+			
+			postMessage(new SshMessage() {
+				public boolean writeMessageIntoBuffer(ByteBuffer buf) {
+					buf.put((byte) TransportProtocol.SSH_MSG_EXT_INFO);
+					buf.put(msg.toByteArray());
+					return true;
+				}
+
+				public void messageSent(Long sequenceNo) {
+
+					if (Log.isDebugEnabled()) {
+						Log.debug("Sent SSH_MSG_EXT_INFO");
+					}	
+				}
+			});
+		} catch (IOException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		} finally {
+			try {
+				msg.close();
+			} catch (IOException e) {
+			}
+		}
+		
+		
+	}
 
 	protected void keyExchangeInitialized() {
 		if (denyConnection) {
@@ -345,4 +397,5 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	protected boolean isExtensionNegotiationSupported() {
 		return false;
 	}
+
 }

@@ -277,8 +277,4 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 		return true;
 	}
 
-//	@Override
-//	protected SocketAddress getConnectionAddress() {
-//		return getRemoteAddress();
-//	}
 }

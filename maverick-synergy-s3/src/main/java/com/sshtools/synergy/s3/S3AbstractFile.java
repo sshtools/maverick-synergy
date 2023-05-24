@@ -494,6 +494,12 @@ public class S3AbstractFile implements AbstractFile {
 		
 		public void closePart(Multipart part) throws IOException {
 			completedParts.add(part);
+			
+			if(Log.isErrorEnabled()) {
+				Log.info("REMOVEME: Closing part {} {}/{} with id {} {} {}", part.getPartIdentifier(),
+						bucketName, path, getUploadId(), completedParts.size(), multiparts.size());
+			}
+			
 			if(completedParts.size() == multiparts.size()) {
 				if(cancelled) {
 					cancelUpload();
@@ -590,15 +596,18 @@ public class S3AbstractFile implements AbstractFile {
 		Multipart part;
 		S3MultipartTransfer transfer;
 
+		final static int BUFFER_SIZE = 5 * 1024 * 1024;
+		byte[] buffer = new byte[BUFFER_SIZE];
+		
 		long pointer;
 		long transfered;
 		byte[] handle;
-		byte[] buffer = new byte[5 * 1024 * 1024];
 		int bufferPointer = 0;
 		
 		List<CompletedPart> completedParts = new ArrayList<>();
 		final int startPartNumber;
 		int currentPartNumber;
+		int totalParts;
 		
 		S3OpenFilePart(Multipart part, S3MultipartTransfer transfer) throws UnsupportedEncodingException {
 			this.part = part;
@@ -606,9 +615,12 @@ public class S3AbstractFile implements AbstractFile {
 			this.handle = UUID.randomUUID().toString().getBytes("UTF-8");
 			this.pointer =  part.getStartPosition().longValue();
 			this.transfered = 0L;
-		
+			this.totalParts = (int) ((part.getLength().longValue() / BUFFER_SIZE));
+			if(part.getLength().longValue() % BUFFER_SIZE != 0) {
+				this.totalParts++;
+			}
 			this.currentPartNumber = this.startPartNumber = 
-					((int) part.getStartPosition().longValue() / buffer.length) + 1;
+					((int) part.getStartPosition().longValue() /  BUFFER_SIZE) + 1;
 
 			if(Log.isInfoEnabled()) {
 				Log.info("REMOVEME: Part {} starts at position {} with a length of {} and starting part number {} upload {}", 
@@ -666,6 +678,7 @@ public class S3AbstractFile implements AbstractFile {
 			}
 			
 			int processed = 0;
+			
 			while(processed < len) {
 				int toProcess = Math.min(buffer.length - bufferPointer, len - processed);
 				System.arraycopy(data, off, buffer, bufferPointer, toProcess);
@@ -699,7 +712,7 @@ public class S3AbstractFile implements AbstractFile {
 						} catch (AwsServiceException | SdkClientException e) {
 							Log.error("REMOVEME: Failed to upload block {} of part {}/{} for upload {}", 
 									currentPartNumber, part.getTargetFile().getName(), 
-									part.getPartIdentifier(), transfer.getUploadId());
+									part.getPartIdentifier(), transfer.getUploadId(), e);
 							
 							if(++i > 3) {
 								if(Log.isInfoEnabled()) {
@@ -709,6 +722,14 @@ public class S3AbstractFile implements AbstractFile {
 								transfer.cancel();
 								throw e;
 							}
+						} catch(Throwable e) {
+							if(Log.isInfoEnabled()) {
+								Log.info("REMOVEME: Marking upload {} as failed due to unknown exception", 
+										transfer.getUploadId(), e);
+							}
+							
+							transfer.cancel();
+							throw new IOException(e.getMessage(), e);
 						}
 					}
 				}
@@ -723,8 +744,14 @@ public class S3AbstractFile implements AbstractFile {
 
 		@Override
 		public void close() throws IOException {
-			buffer = null;
+			if(totalParts != completedParts.size()) {
+				Log.info("REMOVEME: Marking upload {} as failed because completed parts {} does not equal expected total parts {}", 
+						transfer.getUploadId(), completedParts.size(), totalParts);
+				transfer.cancel();
+			}
+			
 			transfer.closePart(part);
+				
 		}
 
 		@Override

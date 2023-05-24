@@ -51,9 +51,14 @@ public class DefaultLoggerContext implements RootLoggerContext {
 		if("true".equalsIgnoreCase(getProperty("maverick.log.nothread", "false"))) {
 			return;
 		}
-		FileWatchingService.getInstance().register(propertiesFile.toPath(), (path)->{
-			loadFile();
-		});
+		try {
+			FileWatchingService.getInstance().register(propertiesFile.toPath(), (path)->{
+				loadFile();
+			});
+		} catch (IOException e) {
+			System.err.println("Logging context could not be initialized!");
+			e.printStackTrace();
+		}
 	}
 	
 	public void shutdown() {

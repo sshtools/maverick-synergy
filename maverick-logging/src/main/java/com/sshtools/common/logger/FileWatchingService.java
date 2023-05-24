@@ -49,7 +49,7 @@ public class FileWatchingService extends Thread {
     }
     
     public void register(Path path, FileWatchingCallback callback) throws IOException {
-    	paths.put(path, callback);
+    	paths.put(path.getParent(), callback);
     	path.register(service, java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY);
     }
 

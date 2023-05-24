@@ -19,6 +19,7 @@
 package com.sshtools.client.tasks;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.PrintWriter;
@@ -534,6 +535,12 @@ public final class PushTask extends AbstractFileTask {
 	private void transferFiles() throws SftpStatusException, SshException, TransferCancelledException, IOException,
 			PermissionDeniedException, ChannelOpenException {
 
+		for (var file : files) {
+			if(!file.toFile().exists()) {
+				throw new FileNotFoundException(String.format("%s does not exist", file.getFileName()));
+			}
+		}
+		
 		for (var file : files) {
 			transferFile(file);
 		}

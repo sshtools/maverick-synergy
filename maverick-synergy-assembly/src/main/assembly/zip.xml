@@ -46,7 +46,7 @@
 		<moduleSet>
 			<useAllReactorProjects>true</useAllReactorProjects>
 			<includes>
-				<include>com.sshtools.hotfixes:*</include>
+				<include>com.sshtools:*</include>
 			</includes>
 			<sources>
 				<includeModuleDirectory>false</includeModuleDirectory>

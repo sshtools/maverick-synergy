@@ -115,7 +115,7 @@
 						<!-- switch on dependency-driven aggregation -->
 						<includeDependencySources>true</includeDependencySources>
 						<dependencySourceIncludes>
-							<dependencySourceInclude>com.sshtools.hotfixes:*</dependencySourceInclude>
+							<dependencySourceInclude>com.sshtools:*</dependencySourceInclude>
 						</dependencySourceIncludes>
 						<detectJavaApiLink>false</detectJavaApiLink>
 						<source>8</source>
@@ -138,11 +138,11 @@
 						<configuration>
 							<artifactSet>
 								<includes>
-									<include>com.sshtools.hotfixes:maverick-base</include>
-									<include>com.sshtools.hotfixes:maverick-zip</include>
-									<include>com.sshtools.hotfixes:maverick-x509</include>
-									<include>com.sshtools.hotfixes:maverick-synergy-common</include>
-									<include>com.sshtools.hotfixes:maverick-synergy-client</include>
+									<include>com.sshtools:maverick-base</include>
+									<include>com.sshtools:maverick-zip</include>
+									<include>com.sshtools:maverick-x509</include>
+									<include>com.sshtools:maverick-synergy-common</include>
+									<include>com.sshtools:maverick-synergy-client</include>
 								</includes>
 							</artifactSet>
 							<createSourcesJar>true</createSourcesJar>
@@ -160,13 +160,13 @@
 						<configuration>
 							<artifactSet>
 								<includes>
-									<include>com.sshtools.hotfixes:maverick-base</include>
-									<include>com.sshtools.hotfixes:maverick-zip</include>
-									<include>com.sshtools.hotfixes:maverick-x509</include>
-									<include>com.sshtools.hotfixes:maverick-synergy-common</include>
-									<include>com.sshtools.hotfixes:maverick-synergy-server</include>
-									<include>com.sshtools.hotfixes:maverick-virtual-filesystem</include>
-									<include>com.sshtools.hotfixes:maverick-virtual-session</include>
+									<include>com.sshtools:maverick-base</include>
+									<include>com.sshtools:maverick-zip</include>
+									<include>com.sshtools:maverick-x509</include>
+									<include>com.sshtools:maverick-synergy-common</include>
+									<include>com.sshtools:maverick-synergy-server</include>
+									<include>com.sshtools:maverick-virtual-filesystem</include>
+									<include>com.sshtools:maverick-virtual-session</include>
 								</includes>
 							</artifactSet>
 							<createSourcesJar>true</createSourcesJar>
@@ -184,14 +184,14 @@
 						<configuration>
 							<artifactSet>
 								<includes>
-									<include>com.sshtools.hotfixes:maverick-base</include>
-									<include>com.sshtools.hotfixes:maverick-zip</include>
-									<include>com.sshtools.hotfixes:maverick-x509</include>
-									<include>com.sshtools.hotfixes:maverick-synergy-common</include>
-									<include>com.sshtools.hotfixes:maverick-synergy-client</include>
-									<include>com.sshtools.hotfixes:maverick-synergy-server</include>
-									<include>com.sshtools.hotfixes:maverick-virtual-filesystem</include>
-									<include>com.sshtools.hotfixes:maverick-virtual-session</include>
+									<include>com.sshtools:maverick-base</include>
+									<include>com.sshtools:maverick-zip</include>
+									<include>com.sshtools:maverick-x509</include>
+									<include>com.sshtools:maverick-synergy-common</include>
+									<include>com.sshtools:maverick-synergy-client</include>
+									<include>com.sshtools:maverick-synergy-server</include>
+									<include>com.sshtools:maverick-virtual-filesystem</include>
+									<include>com.sshtools:maverick-virtual-session</include>
 								</includes>
 							</artifactSet>
 							<createSourcesJar>true</createSourcesJar>

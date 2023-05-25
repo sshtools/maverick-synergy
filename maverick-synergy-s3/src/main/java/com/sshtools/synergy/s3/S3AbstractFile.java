@@ -666,7 +666,7 @@ public class S3AbstractFile implements AbstractFile {
 		}
 		
 		@Override
-		public void write(byte[] data, int off, int len) throws IOException, PermissionDeniedException {
+		public synchronized void write(byte[] data, int off, int len) throws IOException, PermissionDeniedException {
 			
 			if(transfer.isCancelled()) {
 				throw new EOFException();
@@ -743,7 +743,7 @@ public class S3AbstractFile implements AbstractFile {
 		}
 
 		@Override
-		public void close() throws IOException {
+		public synchronized void close() throws IOException {
 			if(totalParts != completedParts.size()) {
 				Log.info("REMOVEME: Marking upload {} as failed because completed parts {} does not equal expected total parts {}", 
 						transfer.getUploadId(), completedParts.size(), totalParts);

@@ -558,14 +558,14 @@ public final class PushTask extends AbstractFileTask {
 
 	private void configureConnections() throws IOException, SshException {
 		
-		displayMessage("Creating {0} connections to {1}@{2}:{3}", chunks,
+		displayMessage("Creating {0} connections to {1}@{2}:{3,number,#}", chunks,
 				con.getUsername(), con.getRemoteIPAddress(), con.getRemotePort());
 		
 		for (int i = 0; i < chunks; i++) {
 			clients.add(clientSupplier.get().apply(i + 1));
 		}
 
-		verboseMessage("Created {0} connections to {1}@{2}:{3}", chunks,
+		verboseMessage("Created {0} connections to {1}@{2}:{3,number,#}", chunks,
 				con.getUsername(), con.getRemoteIPAddress(), con.getRemotePort());
 	}
 

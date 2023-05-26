@@ -130,8 +130,4 @@ public class VirtualMount extends AbstractMount {
 	public void setReadOnly(boolean readOnly) {
 		this.readOnly = readOnly;
 	}
-
-	public UnsignedInteger32 defaultPermissions() {
-		return isReadOnly() ? new UnsignedInteger32(0500) : new UnsignedInteger32(0700);
-	}
 }

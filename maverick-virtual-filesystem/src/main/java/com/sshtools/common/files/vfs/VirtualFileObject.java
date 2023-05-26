@@ -36,11 +36,17 @@
  */
 package com.sshtools.common.files.vfs;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Map;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileAdapter;
 import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
+import com.sshtools.common.util.UnsignedInteger64;
 
 public abstract class VirtualFileObject extends AbstractFileAdapter implements VirtualFile {
 
@@ -76,6 +82,45 @@ public abstract class VirtualFileObject extends AbstractFileAdapter implements V
 	@Override
 	public AbstractFileFactory<? extends AbstractFile> getFileFactory() {
 		return fileFactory;
+	}
+
+
+	@Override
+	public SftpFileAttributes getAttributes() throws IOException, PermissionDeniedException {
+		
+		if(!exists()) {
+			throw new FileNotFoundException();
+		}
+		
+		SftpFileAttributes attrs = new SftpFileAttributes(
+				isDirectory() ? SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY : SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR,
+						"UTF-8");
+		attrs.setSize(new UnsignedInteger64(length()));
+		UnsignedInteger64 t = new UnsignedInteger64(lastModified());
+		
+		PosixPermissionsBuilder builder = PosixPermissionsBuilder.create();
+		
+		if(isReadable()) {
+			builder.withAllRead();
+		}
+		if(isWritable()) {
+			builder.withAllWrite();
+		}
+		if(isDirectory()) {
+			builder.withAllExecute();
+		}
+
+		
+		attrs.setPermissions(builder.build());
+		
+		attrs.setUID("0");
+		attrs.setGID("0");
+		attrs.setUsername(System.getProperty("maverick.unknownUsername", "unknown"));
+		attrs.setGroup(System.getProperty("maverick.unknownUsername", "unknown"));
+		
+		attrs.setTimes(t, t);
+
+		return attrs;
 	}
 	
 	

@@ -33,6 +33,7 @@ import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.UnsignedInteger64;
 
@@ -96,15 +97,37 @@ public class VirtualMountFile extends VirtualFileObject {
 	public SftpFileAttributes getAttributes() throws FileNotFoundException,
 			IOException, PermissionDeniedException {
 		
-		SftpFileAttributes attrs = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY, "UTF-8");
-		attrs.setPermissions(parentMount.defaultPermissions());
-		try {
-			attrs.setReadOnly(parentMount.isReadOnly());
-		} catch (SftpStatusException e) {
+		if(!exists()) {
+			throw new FileNotFoundException();
 		}
+		
+		SftpFileAttributes attrs = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY, "UTF-8");
+
+		attrs.setSize(UnsignedInteger64.ZERO);
+
+		PosixPermissionsBuilder builder = PosixPermissionsBuilder.create();
+		
+		if(isReadable()) {
+			builder.withAllRead();
+		}
+		if(isWritable()) {
+			builder.withAllWrite();
+		}
+		if(isDirectory()) {
+			builder.withAllExecute();
+		}
+
+		attrs.setPermissions(builder.build());
+		
+		attrs.setUID("0");
+		attrs.setGID("0");
+		attrs.setUsername(System.getProperty("maverick.unknownUsername", "unknown"));
+		attrs.setGroup(System.getProperty("maverick.unknownUsername", "unknown"));
+		
 		attrs.setTimes(new UnsignedInteger64(parentMount.lastModified()),
 				new UnsignedInteger64(parentMount.lastModified()),
 				new UnsignedInteger64(parentMount.lastModified()));
+		
 		return attrs;
 		
 	}

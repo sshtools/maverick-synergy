@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -52,8 +53,10 @@ public class DefaultLoggerContext implements RootLoggerContext {
 			return;
 		}
 		try {
-			FileWatchingService.getInstance().register(propertiesFile.toPath(), (path)->{
-				loadFile();
+			Path properiesPath = propertiesFile.getAbsoluteFile().toPath();
+			FileWatchingService.getInstance().register(properiesPath.getParent(), (path)->{
+				if(path.equals(properiesPath))
+					loadFile();
 			});
 		} catch (IOException e) {
 			System.err.println("Logging context could not be initialized!");

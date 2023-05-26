@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
+import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.ssh.AbstractRequestFuture;
@@ -355,6 +356,12 @@ public class MockConnection implements SshConnection {
 	@Override
 	public String getRemoteIPAddress() {
 		return "";
+	}
+
+	@Override
+	public void fireEvent(Event evt) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 

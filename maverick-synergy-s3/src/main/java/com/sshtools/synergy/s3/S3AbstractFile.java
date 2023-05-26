@@ -44,6 +44,8 @@ import com.sshtools.common.sftp.AbstractFileSystem;
 import com.sshtools.common.sftp.Multipart;
 import com.sshtools.common.sftp.MultipartTransfer;
 import com.sshtools.common.sftp.OpenFile;
+import com.sshtools.common.sftp.PosixPermissions;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.UnsignedInteger32;
@@ -260,7 +262,7 @@ public class S3AbstractFile implements AbstractFile {
         s3.deleteObject(deleteObjectRequest);
 
 		
-		return false;
+		return true;
 	}
 
 	@Override
@@ -275,6 +277,22 @@ public class S3AbstractFile implements AbstractFile {
 						"UTF-8");
 		attrs.setSize(new UnsignedInteger64(length()));
 		UnsignedInteger64 t = new UnsignedInteger64(lastModified());
+		
+		PosixPermissionsBuilder builder = PosixPermissionsBuilder.create().withAllRead();
+		if(isDirectory()) {
+			builder.withAllExecute();
+		}
+		if(isWritable()) {
+			builder.withAllWrite();
+		}
+		
+		attrs.setPermissions(builder.build());
+		
+		attrs.setUID("0");
+		attrs.setGID("0");
+		attrs.setUsername("s3");
+		attrs.setGroup("s3");
+		
 		attrs.setTimes(t, t);
 		return attrs;
 	}
@@ -361,7 +379,9 @@ public class S3AbstractFile implements AbstractFile {
 
 	@Override
 	public void setAttributes(SftpFileAttributes attrs) throws IOException {
-		throw new UnsupportedOperationException();
+		/**
+		 * We purposely ignore this because errors can cause problems with clients
+		 */
 	}
 
 	@Override
@@ -623,10 +643,11 @@ public class S3AbstractFile implements AbstractFile {
 					((int) part.getStartPosition().longValue() /  BUFFER_SIZE) + 1;
 
 			if(Log.isInfoEnabled()) {
-				Log.info("REMOVEME: Part {} starts at position {} with a length of {} and starting part number {} upload {}", 
+				Log.info("REMOVEME: Part {} starts at position {} with a length of {} with {} 5MB blocks and starting part number {} with upload id {}", 
 						part.getPartIdentifier(),
 						pointer,
 						part.getLength().longValue(),
+						totalParts,
 						startPartNumber, transfer.getUploadId());
 			}
 		}
@@ -683,6 +704,9 @@ public class S3AbstractFile implements AbstractFile {
 				int toProcess = Math.min(buffer.length - bufferPointer, len - processed);
 				System.arraycopy(data, off, buffer, bufferPointer, toProcess);
 				bufferPointer += toProcess;
+				transfered += toProcess;
+				pointer += toProcess;
+				processed += toProcess;
 				
 				if(bufferPointer == buffer.length || transfered == part.getLength().longValue()) {
 				
@@ -690,9 +714,9 @@ public class S3AbstractFile implements AbstractFile {
 					while(true) {
 						try {
 						
-							if(Log.isInfoEnabled()) {
+							if(Log.isDebugEnabled()) {
 								Log.info("REMOVEME: Uploading {} block number {} attempt {} for upload {}", 
-										part.getPartIdentifier(), currentPartNumber, i, transfer.getUploadId());
+										part.getPartIdentifier(), completedParts.size()+1, i, transfer.getUploadId());
 							}
 							UploadPartRequest uploadPartRequest1 = UploadPartRequest.builder()
 							        .bucket(bucketName)
@@ -733,11 +757,6 @@ public class S3AbstractFile implements AbstractFile {
 						}
 					}
 				}
-				
-				pointer += toProcess;
-				transfered += toProcess;
-				processed += toProcess;
-				
 			}
 
 		}

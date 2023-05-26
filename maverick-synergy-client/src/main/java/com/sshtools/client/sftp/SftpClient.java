@@ -2936,7 +2936,7 @@ public class SftpClient implements Closeable {
 		str.append(" ");
 		str.append(attrs.getGID() + pad(8 - attrs.getGID().length())); // gid
 		str.append(" ");
-		str.append(pad(8 - attrs.getSize().toString().length()) + attrs.getSize().toString());
+		str.append(pad(12 - attrs.getSize().toString().length()) + attrs.getSize().toString());
 		str.append(" ");
 		str.append(pad(12 - getModTimeString(attrs.getModifiedTime()).length())
 				+ getModTimeString(attrs.getModifiedTime()));

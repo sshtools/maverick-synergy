@@ -46,7 +46,7 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	File propertiesFile;
 	
 	public DefaultLoggerContext() throws IOException {
-		propertiesFile = new File(System.getProperty("maverick.log.config", "logging.properties"));
+		propertiesFile = new File(System.getProperty("maverick.log.config", "logging.properties")).getAbsoluteFile();
 		loadFile();
 		if("true".equalsIgnoreCase(getProperty("maverick.log.nothread", "false"))) {
 			return;

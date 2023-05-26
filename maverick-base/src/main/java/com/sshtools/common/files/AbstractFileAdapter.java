@@ -29,7 +29,7 @@ import com.sshtools.common.sftp.Multipart;
 import com.sshtools.common.sftp.MultipartTransfer;
 import com.sshtools.common.sftp.SftpFileAttributes;
 
-public class AbstractFileAdapter implements AbstractFile {
+public abstract class AbstractFileAdapter implements AbstractFile {
 
 	protected AbstractFile file;
 	
@@ -163,9 +163,7 @@ public class AbstractFileAdapter implements AbstractFile {
 		return file.resolveFile(child);
 	}
 
-	public AbstractFileFactory<? extends AbstractFile> getFileFactory() {
-		return file.getFileFactory();
-	}
+	public abstract AbstractFileFactory<? extends AbstractFile> getFileFactory();
 
 	@Override
 	public void symlinkTo(String target) throws IOException, PermissionDeniedException {

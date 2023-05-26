@@ -23,11 +23,12 @@ import java.net.InetAddress;
 import java.util.Locale;
 
 import com.sshtools.common.events.EventListener;
+import com.sshtools.common.events.EventTrigger;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.ssh.components.SshPublicKey;
 
 
-public interface SshConnection {
+public interface SshConnection extends EventTrigger {
 
 	String getUsername();
 

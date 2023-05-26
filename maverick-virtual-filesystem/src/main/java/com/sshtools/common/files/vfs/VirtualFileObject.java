@@ -40,6 +40,7 @@ import java.util.Map;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileAdapter;
+import com.sshtools.common.files.AbstractFileFactory;
 
 public abstract class VirtualFileObject extends AbstractFileAdapter implements VirtualFile {
 
@@ -71,5 +72,12 @@ public abstract class VirtualFileObject extends AbstractFileAdapter implements V
 	public VirtualMount getParentMount() {
 		return parentMount;
 	}
+
+	@Override
+	public AbstractFileFactory<? extends AbstractFile> getFileFactory() {
+		return fileFactory;
+	}
+	
+	
 
 }

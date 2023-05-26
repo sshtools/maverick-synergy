@@ -1315,13 +1315,8 @@ public abstract class SshContext extends ProtocolContext implements
 
 	public void shutdown() {
 		if(executor != null) {
-			executor.shutdown();
-			try {
-				executor.awaitTermination(30, TimeUnit.SECONDS);
-			} catch (InterruptedException e) {
-			} finally {
-				executor = null;
-			}
+			executor.shutdownNow();
+			executor = null;
 		}
 	}
 

@@ -46,6 +46,7 @@ import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.sftp.ACL;
+import com.sshtools.common.sftp.PosixPermissions;
 import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
@@ -568,14 +569,13 @@ public class SftpChannel extends AbstractSubsystem {
 	 *            an integer value containing a file permissions mask
 	 * @throws SshException
 	 *             ,SftpStatusException
+	 * @deprecated
+	 * @see #changePermissions(SftpFile, PosixPermissions)}
 	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void changePermissions(SftpFile file, int permissions)
 			throws SftpStatusException, SshException {
-		SftpFileAttributes attrs = new SftpFileAttributes(
-				SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN,
-				getCharsetEncoding());
-		attrs.setPermissions(new UnsignedInteger32(permissions));
-		setAttributes(file, attrs);
+		changePermissions(file, PosixPermissionsBuilder.create().fromBitmask(permissions).build());
 	}
 
 	/**
@@ -588,13 +588,51 @@ public class SftpChannel extends AbstractSubsystem {
 	 * 
 	 * @throws SshException
 	 *             ,SftpStatusException
+	 * @deprecated
+	 * @see #changePermissions(String, PosixPermissions)}
 	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void changePermissions(String filename, int permissions)
+			throws SftpStatusException, SshException {
+		changePermissions(filename, PosixPermissionsBuilder.create().fromBitmask(permissions).build());
+	}
+	
+	/**
+	 * Change the permissions of a file.
+	 * 
+	 * @param file
+	 *            the file
+	 * @param permissions
+	 *            permissions set.
+	 * @throws SshException
+	 *             ,SftpStatusException
+	 */
+	public void changePermissions(SftpFile file, PosixPermissions permissions)
 			throws SftpStatusException, SshException {
 		SftpFileAttributes attrs = new SftpFileAttributes(
 				SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN,
 				getCharsetEncoding());
-		attrs.setPermissions(new UnsignedInteger32(permissions));
+		attrs.setPermissions(permissions);
+		setAttributes(file, attrs);
+	}
+
+	/**
+	 * Change the permissions of a file.
+	 * 
+	 * @param filename
+	 *            the path to the file.
+	 * @param permissions
+	 *            permissions set.
+	 * 
+	 * @throws SshException
+	 *             ,SftpStatusException
+	 */
+	public void changePermissions(String filename, PosixPermissions permissions)
+			throws SftpStatusException, SshException {
+		SftpFileAttributes attrs = new SftpFileAttributes(
+				SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN,
+				getCharsetEncoding());
+		attrs.setPermissions(permissions);
 		setAttributes(filename, attrs);
 	}
 
@@ -1482,9 +1520,7 @@ public class SftpChannel extends AbstractSubsystem {
 	public SftpFile getFile(String path) throws SftpStatusException,
 			SshException {
 		String absolute = getAbsolutePath(path);
-		SftpFile file = new SftpFile(absolute, getAttributes(absolute));
-		file.sftp = this;
-		return file;
+		return new SftpFile(absolute, getAttributes(absolute), this, null, null);
 	}
 
 	/**
@@ -1897,8 +1933,7 @@ public class SftpChannel extends AbstractSubsystem {
 				}
 
 				files[i] = new SftpFile(parent != null ? parent + shortname
-						: shortname, new SftpFileAttributes(bar, getVersion(), getCharsetEncoding()));
-				files[i].longname = longname;
+						: shortname, new SftpFileAttributes(bar, getVersion(), getCharsetEncoding()), this, null, longname);
 
 				// Work out username/group from long name
 				if (longname != null && version <= 3) {
@@ -1917,8 +1952,6 @@ public class SftpChannel extends AbstractSubsystem {
 					}
 
 				}
-
-				files[i].setSFTPSubsystem(this);
 			}
 
 			return files;
@@ -2068,9 +2101,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 				byte[] handle = getHandleResponse(requestId);
 
-				SftpFile file = new SftpFile(absolutePath, null);
-				file.setHandle(handle);
-				file.setSFTPSubsystem(this);
+				SftpFile file = new SftpFile(absolutePath, null, this, handle, null);
 
 				EventServiceImplementation.getInstance().fireEvent(
 						(new Event(this,
@@ -2111,9 +2142,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 			byte[] handle = getHandleResponse(requestId);
 
-			SftpFile file = new SftpFile(absolutePath, null);
-			file.setHandle(handle);
-			file.setSFTPSubsystem(this);
+			SftpFile file = new SftpFile(absolutePath, null, this, handle, null);
 
 			EventServiceImplementation.getInstance().fireEvent(
 					(new Event(this, EventCodes.EVENT_SFTP_FILE_OPENED,
@@ -2158,11 +2187,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 			byte[] handle = getHandleResponse(requestId);
 
-			SftpFile file = new SftpFile(absolutePath, attrs);
-			file.setHandle(handle);
-			file.setSFTPSubsystem(this);
-
-			return file;
+			return new SftpFile(absolutePath, attrs, this, handle, null);
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -2203,16 +2228,7 @@ public class SftpChannel extends AbstractSubsystem {
 	 */
 	public void closeFile(SftpFile file) throws SftpStatusException,
 			SshException {
-
-		if (file.getHandle() != null) {
-			closeHandle(file.getHandle());
-			EventServiceImplementation.getInstance().fireEvent(
-					(new Event(this, EventCodes.EVENT_SFTP_FILE_CLOSED,
-							true)).addAttribute(
-							EventCodes.ATTRIBUTE_FILE_NAME,
-							file.getAbsolutePath()));
-			file.setHandle(null);
-		}
+		file.close();
 	}
 
 	boolean isValidHandle(byte[] handle) {

@@ -560,7 +560,12 @@ public class SftpFileAttributes {
 	/**
 	 * Set the permissions of the file. This value should be a valid mask of the
 	 * permissions flags defined within this class.
+	 * 
+	 * @param permissions permssions
+	 * @deprecated
+	 * @see #setPermissions(PosixPermissions)
 	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void setPermissions(UnsignedInteger32 permissions) {
 		this.permissions = permissions;
 		

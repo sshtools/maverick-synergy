@@ -566,7 +566,7 @@ public class SftpClient implements Closeable {
 					sftp.getCharsetEncoding());
 			;
 			if (applyUmask) {
-				newattrs.setPermissions(new UnsignedInteger32(0777 ^ umask));
+				newattrs.setPermissions(PosixPermissionsBuilder.create().fromBitmask(0777 ^ umask).build());
 			}
 			sftp.makeDirectory(actual, newattrs);
 			return;
@@ -730,9 +730,7 @@ public class SftpClient implements Closeable {
 			if (localFiltering) {
 				f = regexFilter ? new RegexSftpFileFilter(filter) : new GlobSftpFileFilter(filter);
 			}
-			SftpFile file = new SftpFile(actual, sftp.getAttributes(actual));
-			file.setHandle(handle);
-			file.setSFTPSubsystem(sftp);
+			SftpFile file = new SftpFile(actual, sftp.getAttributes(actual), sftp, handle, null);
 
 			Vector<SftpFile> children = new Vector<SftpFile>();
 			Vector<SftpFile> tmp = new Vector<SftpFile>();
@@ -1876,7 +1874,7 @@ public class SftpClient implements Closeable {
 		attrs = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR, "UTF-8");
 
 		if (applyUmask) {
-			attrs.setPermissions(new UnsignedInteger32(0666 ^ umask));
+			attrs.setPermissions(PosixPermissionsBuilder.create().fromBitmask(0666 ^ umask).build());
 		}
 
 		if (position > 0) {
@@ -3649,7 +3647,7 @@ public class SftpClient implements Closeable {
 
 	public FileVisitResult visit(String path, FileVisitor<SftpFile> visitor) throws SshException, SftpStatusException {
 		SftpFileAttributes attrs = stat(path);
-		SftpFile file = new SftpFile(path, attrs);
+		SftpFile file = new SftpFile(path, attrs, sftp, null, null);
 		try {
 			if (attrs.isDirectory()) {
 				FileVisitResult preVisitResult = visitor.preVisitDirectory(file, fileToBasicAttributes(file));

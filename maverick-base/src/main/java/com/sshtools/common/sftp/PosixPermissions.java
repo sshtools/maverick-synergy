@@ -311,101 +311,109 @@ public final class PosixPermissions {
 		 * Note this does not replace all permissions in this builder unless the argment string
 		 * provided specifies  to do so, e.g. <code>u=,g=,o=</code> or 
 		 * <code>u-rwx,g-rwx,o-rwx</code> would remove all permissions.
+		 * <p>
+		 * You can use an octal mask string with <code>chmod</code> and so that is also possible here. 
 		 * 
 		 * @param chmodArgument permissions expressed in format used by chmod UNIX command
 		 * @return this for chaining
 		 */
 		public PosixPermissionsBuilder withChmodArgumentString(String chmodArgument) {
-			for(var el : chmodArgument.split(",")) {
-				if(el.startsWith("u=") || el.startsWith("u+") || el.startsWith("u-")) {
-					if(el.startsWith("u=")) {
-						perms.removeAll(Arrays.asList(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE));
-					}
-					for(var ch : el.substring(2).toCharArray()) {
-						switch(ch) {
-						case 'r':
-							if(el.startsWith("u-"))
-								perms.remove(PosixFilePermission.OWNER_READ);
-							else
-								perms.add(PosixFilePermission.OWNER_READ);
-							break;
-						case 'w':
-							if(el.startsWith("u-"))
-								perms.remove(PosixFilePermission.OWNER_WRITE);
-							else
-								perms.add(PosixFilePermission.OWNER_WRITE);
-							break;
-						case 'x':
-							if(el.startsWith("u-"))
-								perms.remove(PosixFilePermission.OWNER_EXECUTE);
-							else
-								perms.add(PosixFilePermission.OWNER_EXECUTE);
-							break;
-						default:
-							throw new IllegalArgumentException("Unknown user mode '" + ch + "'");
+
+			if(chmodArgument.matches("\\d+")) {
+				return fromMaskString(chmodArgument);
+			}
+			else {
+				for(var el : chmodArgument.split(",")) {
+					if(el.startsWith("u=") || el.startsWith("u+") || el.startsWith("u-")) {
+						if(el.startsWith("u=")) {
+							perms.removeAll(Arrays.asList(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE));
+						}
+						for(var ch : el.substring(2).toCharArray()) {
+							switch(ch) {
+							case 'r':
+								if(el.startsWith("u-"))
+									perms.remove(PosixFilePermission.OWNER_READ);
+								else
+									perms.add(PosixFilePermission.OWNER_READ);
+								break;
+							case 'w':
+								if(el.startsWith("u-"))
+									perms.remove(PosixFilePermission.OWNER_WRITE);
+								else
+									perms.add(PosixFilePermission.OWNER_WRITE);
+								break;
+							case 'x':
+								if(el.startsWith("u-"))
+									perms.remove(PosixFilePermission.OWNER_EXECUTE);
+								else
+									perms.add(PosixFilePermission.OWNER_EXECUTE);
+								break;
+							default:
+								throw new IllegalArgumentException("Unknown user mode '" + ch + "'");
+							}
 						}
 					}
-				}
-				else if(el.startsWith("g=") || el.startsWith("g+") || el.startsWith("g-")) {
-					if(el.startsWith("g=")) {
-						perms.removeAll(Arrays.asList(PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE));
-					}
-					for(var ch : el.substring(2).toCharArray()) {
-						switch(ch) {
-						case 'r':
-							if(el.startsWith("g-"))
-								perms.remove(PosixFilePermission.GROUP_READ);
-							else
-								perms.add(PosixFilePermission.GROUP_READ);
-							break;
-						case 'w':
-							if(el.startsWith("g-"))
-								perms.remove(PosixFilePermission.GROUP_WRITE);
-							else
-								perms.add(PosixFilePermission.GROUP_WRITE);
-							break;
-						case 'x':
-							if(el.startsWith("g-"))
-								perms.remove(PosixFilePermission.GROUP_EXECUTE);
-							else
-								perms.add(PosixFilePermission.GROUP_EXECUTE);
-							break;
-						default:
-							throw new IllegalArgumentException("Unknown group mode '" + ch + "'");
+					else if(el.startsWith("g=") || el.startsWith("g+") || el.startsWith("g-")) {
+						if(el.startsWith("g=")) {
+							perms.removeAll(Arrays.asList(PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE));
+						}
+						for(var ch : el.substring(2).toCharArray()) {
+							switch(ch) {
+							case 'r':
+								if(el.startsWith("g-"))
+									perms.remove(PosixFilePermission.GROUP_READ);
+								else
+									perms.add(PosixFilePermission.GROUP_READ);
+								break;
+							case 'w':
+								if(el.startsWith("g-"))
+									perms.remove(PosixFilePermission.GROUP_WRITE);
+								else
+									perms.add(PosixFilePermission.GROUP_WRITE);
+								break;
+							case 'x':
+								if(el.startsWith("g-"))
+									perms.remove(PosixFilePermission.GROUP_EXECUTE);
+								else
+									perms.add(PosixFilePermission.GROUP_EXECUTE);
+								break;
+							default:
+								throw new IllegalArgumentException("Unknown group mode '" + ch + "'");
+							}
 						}
 					}
-				}
-				else if(el.startsWith("o=") || el.startsWith("o+") || el.startsWith("o-")) {
-					if(el.startsWith("o=")) {
-						perms.removeAll(Arrays.asList(PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_WRITE, PosixFilePermission.OTHERS_EXECUTE));
-					}
-					for(var ch : el.substring(2).toCharArray()) {
-						switch(ch) {
-						case 'r':
-							if(el.startsWith("o-"))
-								perms.remove(PosixFilePermission.OTHERS_READ);
-							else
-								perms.add(PosixFilePermission.OTHERS_READ);
-							break;
-						case 'w':
-							if(el.startsWith("o-"))
-								perms.remove(PosixFilePermission.OTHERS_WRITE);
-							else
-								perms.add(PosixFilePermission.OTHERS_WRITE);
-							break;
-						case 'x':
-							if(el.startsWith("o-"))
-								perms.remove(PosixFilePermission.OTHERS_EXECUTE);
-							else
-								perms.add(PosixFilePermission.OTHERS_EXECUTE);
-							break;
-						default:
-							throw new IllegalArgumentException("Unknown others mode '" + ch + "'");
+					else if(el.startsWith("o=") || el.startsWith("o+") || el.startsWith("o-")) {
+						if(el.startsWith("o=")) {
+							perms.removeAll(Arrays.asList(PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_WRITE, PosixFilePermission.OTHERS_EXECUTE));
 						}
+						for(var ch : el.substring(2).toCharArray()) {
+							switch(ch) {
+							case 'r':
+								if(el.startsWith("o-"))
+									perms.remove(PosixFilePermission.OTHERS_READ);
+								else
+									perms.add(PosixFilePermission.OTHERS_READ);
+								break;
+							case 'w':
+								if(el.startsWith("o-"))
+									perms.remove(PosixFilePermission.OTHERS_WRITE);
+								else
+									perms.add(PosixFilePermission.OTHERS_WRITE);
+								break;
+							case 'x':
+								if(el.startsWith("o-"))
+									perms.remove(PosixFilePermission.OTHERS_EXECUTE);
+								else
+									perms.add(PosixFilePermission.OTHERS_EXECUTE);
+								break;
+							default:
+								throw new IllegalArgumentException("Unknown others mode '" + ch + "'");
+							}
+						}
+					} 
+					else {
+						throw new IllegalArgumentException("Unknown scope '" + el + "'");
 					}
-				} 
-				else {
-					throw new IllegalArgumentException("Unknown scope '" + el + "'");
 				}
 			}
 			return this;

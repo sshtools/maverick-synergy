@@ -34,7 +34,7 @@
   	<dependency>
   		<groupId>com.sshtools</groupId>
   		<artifactId>vfs-sftp</artifactId>
-  		<version>3.3.0</version>
+  		<version>4.0.0</version>
   		<exclusions>
   			<exclusion>
   				<groupId>com.sshtools</groupId>

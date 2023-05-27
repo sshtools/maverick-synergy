@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import com.sshtools.client.SshClient;
+import com.sshtools.client.SshClient.SshClientBuilder;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
@@ -66,9 +66,10 @@ public class InMemoryCallbackRegistrationService implements CallbackRegistration
 						c.getConnection().getUUID());
 			}
 			
-			console.getConnection().setProperty(
-					PROXIED_CLIENT_CONNECTION, 
-					new SshClient(c.getConnection(), false));
+			console.getConnection().setProperty( PROXIED_CLIENT_CONNECTION, 
+					SshClientBuilder.create(c.getConnection()).
+						withoutCloseOnDisconnect().
+						build());
 			
 			c.getConnection().addEventListener(new EventListener() {
 

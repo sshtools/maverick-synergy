@@ -23,6 +23,10 @@ public interface RequestFuture {
 	boolean isDone();
 	
 	boolean isSuccess();
+	
+	default boolean isDoneAndSuccess() {
+		return isDone() && isSuccess();
+	}
 
 	RequestFuture waitFor(long timeout);
 

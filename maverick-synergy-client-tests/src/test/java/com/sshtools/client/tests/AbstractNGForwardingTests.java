@@ -21,6 +21,7 @@ package com.sshtools.client.tests;
 import java.io.IOException;
 
 import com.sshtools.client.SshClient;
+import com.sshtools.client.SshClient.SshClientBuilder;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.permissions.UnauthorizedException;
@@ -54,17 +55,17 @@ public abstract class AbstractNGForwardingTests extends AbstractForwardingTests<
 
 			@Override
 			public SshClient createClient(TestConfiguration config) throws IOException, SshException, InvalidPassphraseException {
-				SshClient client = new SshClient(config.getHostname(), 
-				config.getPort(), 
-				config.getUsername(), 
-				5000L,
-				config.getPassword(), 
-				config.getIdentities());
-				
-				client.getContext().setKeyExchangeTransferLimit(config.getKeyExchangeLimit());
-				client.getContext().getForwardingPolicy().allowForwarding();
-				
-				return client;
+				return SshClientBuilder.create().
+						withTarget(config.getHostname(), config.getPort()).
+						withUsername(config.getUsername()).
+						withConnectTimeout(5000L).
+						withPassword(config.getPassword()).
+						withIdentities(config.getIdentities()).
+						onConfigure(ctx -> {
+							ctx.setKeyExchangeTransferLimit(config.getKeyExchangeLimit());
+							ctx.getForwardingPolicy().allowForwarding();			
+						}).
+						build();
 			}
 
 			@Override
@@ -85,17 +86,17 @@ public abstract class AbstractNGForwardingTests extends AbstractForwardingTests<
 			
 			@Override
 			public SshClient createClient(TestConfiguration config) throws IOException, SshException, InvalidPassphraseException {
-				SshClient client = new SshClient(config.getHostname(), 
-				config.getPort(), 
-				config.getUsername(), 
-				5000L,
-				config.getPassword(), 
-				config.getIdentities());
-				
-				client.getContext().setKeyExchangeTransferLimit(config.getKeyExchangeLimit());
-				client.getContext().getForwardingPolicy().allowForwarding();
-				
-				return client;
+				return SshClientBuilder.create().
+						withTarget(config.getHostname(), config.getPort()).
+						withUsername(config.getUsername()).
+						withConnectTimeout(5000L).
+						withPassword(config.getPassword()).
+						withIdentities(config.getIdentities()).
+						onConfigure(ctx -> {
+							ctx.setKeyExchangeTransferLimit(config.getKeyExchangeLimit());
+							ctx.getForwardingPolicy().allowForwarding();			
+						}).
+						build();
 			}
 			
 			@Override

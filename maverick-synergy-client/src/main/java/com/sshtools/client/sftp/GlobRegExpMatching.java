@@ -42,7 +42,7 @@ public class GlobRegExpMatching implements RegularExpressionMatching {
 		List<SftpFile> matched = new ArrayList<>();
 		
 		for(SftpFile file : files) {
-			if(matcher.matches(Paths.get(file.filename))) {
+			if(matcher.matches(Paths.get(file.getFilename()))) {
 				matched.add(file);
 			}
 		}

@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.sshtools.client.SshClient.SshClientBuilder;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
@@ -31,7 +32,7 @@ public class SshCompatibilityUtils {
 
 	public static String[] getSupportedHostKeyAlgorithms(String hostname, int port) throws SshException, IOException {
 
-		try(SshClient ssh = new SshClient(hostname, port, "guest")) {
+		try(var ssh = SshClientBuilder.create().withTarget(hostname, port).build()) {
 			return ssh.getRemotePublicKeys();
 		}
 	}
@@ -53,31 +54,31 @@ public class SshCompatibilityUtils {
 	}
 
 	public static SshPublicKey getHostKey(String hostname, int port, String algorithm) throws SshException, IOException {
-		
-		try(SshClient ssh = new SshClient(hostname, port, "guest") {
-			public void configure(SshClientContext context) {
-				context.setPreferredPublicKey(algorithm);
-			}
-		}) {
+
+		try(var ssh = SshClientBuilder.create().
+				withTarget(hostname, port).
+				onConfigure(ctx -> ctx.setPreferredPublicKey(algorithm)).
+				build())  {
 			return ssh.getConnection().getHostKey();
 		}
 	}
 	
 
 	public static SshConnection getRemoteConfiguration(String hostname, int port) throws IOException, SshException {
-		
-		try(SshClient ssh = new SshClient(hostname, port, "guest")) {
+
+		try(var ssh = SshClientBuilder.create().withTarget(hostname, port).build()) {
 			return ssh.getConnection();
 		}
 	}
 	
 	public static SshClient getRemoteClient(String hostname, int port, String username, String password, boolean tcpNoDelay) throws SshException, IOException {
-		
-		SshClient ssh = new SshClient(hostname, port, username, password.toCharArray()) {
-			public void configure(SshClientContext context) {
-				context.setSocketOptionTcpNoDelay(tcpNoDelay);
-			}
-		};
+
+		var ssh = SshClientBuilder.create().
+				withTarget(hostname, port).
+				withUsername(username).
+				withPassword(password).
+				onConfigure(ctx -> ctx.setSocketOptionTcpNoDelay(tcpNoDelay)).
+				build();
 		
 		ssh.authenticate(new PasswordAuthenticator(password), 30000L);
 		

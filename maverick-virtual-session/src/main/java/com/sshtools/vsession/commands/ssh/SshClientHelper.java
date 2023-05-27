@@ -26,6 +26,7 @@ import com.sshtools.client.ClientStateListener;
 import com.sshtools.client.KeyPairAuthenticator;
 import com.sshtools.client.PasswordAuthenticator;
 import com.sshtools.client.SshClient;
+import com.sshtools.client.SshClient.SshClientBuilder;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -95,7 +96,7 @@ public class SshClientHelper {
 	public static SshClient connectClient(SshClientArguments arguments, VirtualConsole console) throws IOException, SshException, PermissionDeniedException {
 		
 		if(arguments.hasConnection()) {
-			return new SshClient(arguments.getConnection(), false);
+			return SshClientBuilder.create(arguments.getConnection()).withoutCloseOnDisconnect().build();
 		}
 
 		SshClientContext ctx = getSshContext(arguments);
@@ -108,7 +109,10 @@ public class SshClientHelper {
 			ctx.addStateListener(listener);
 		}
 		
-		SshClient sshClient = new SshClient(arguments.getDestination(), arguments.getPort(), arguments.getLoginName(), ctx);
+		SshClient sshClient = SshClientBuilder.create().
+				withTarget(arguments.getDestination(), arguments.getPort()).
+				withUsername(arguments.getLoginName()).
+				withSshContext(ctx).build();
 		
 		ClientAuthenticator auth;
 

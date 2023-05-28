@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sshtools</groupId>
 	<artifactId>maverick-synergy-group</artifactId>
@@ -11,7 +13,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.target>11</maven.compiler.target>
-    	<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.source>11</maven.compiler.source>
 	</properties>
 
 	<developers>
@@ -52,7 +54,8 @@
 								<!-- TODO: Why is this STILL broken! -->
 								<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
 								<excludePackageNames>**.impl.*</excludePackageNames>
-								<!-- https://bugs.openjdk.java.net/browse/JDK-8212233 -->
+								<!--
+								https://bugs.openjdk.java.net/browse/JDK-8212233 -->
 								<detectJavaApiLink>false</detectJavaApiLink>
 								<source>8</source>
 								<doclint>none</doclint>
@@ -60,6 +63,36 @@
 						</plugin>
 					</plugins>
 				</pluginManagement>
+			</build>
+		</profile>
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.mycila</groupId>
+						<artifactId>license-maven-plugin</artifactId>
+						<version>4.1</version>
+						<configuration>
+							<header>templates/LGPL3.txt</header>
+							<properties>
+								<owner>JADAPTIVE Limited</owner>
+								<email>support@jadaptive.com</email>
+							</properties>
+							<includes>
+								<include>**/*.java</include>
+							</includes>
+						</configuration>
+						<executions>
+							<execution>
+								<goals>
+									<goal>check</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+
 			</build>
 		</profile>
 	</profiles>
@@ -135,28 +168,6 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>com.mycila</groupId>
-				<artifactId>license-maven-plugin</artifactId>
-				<version>4.1</version>
-				<configuration>
-					<header>templates/LGPL3.txt</header>
-					<properties>
-						<owner>JADAPTIVE Limited</owner>
-						<email>support@jadaptive.com</email>
-					</properties>
-					<includes>
-						<include>**/*.java</include>
-					</includes>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<executions>
@@ -167,7 +178,8 @@
 							<goal>copy-dependencies</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${project.build.directory}/third-party</outputDirectory>
+							<outputDirectory>
+								${project.build.directory}/third-party</outputDirectory>
 							<overWriteReleases>true</overWriteReleases>
 							<overWriteSnapshots>true</overWriteSnapshots>
 							<overWriteIfNewer>true</overWriteIfNewer>

@@ -640,21 +640,19 @@ public final class PushTask extends AbstractFileTask {
 	private Collection<Throwable> sendChunks(AbstractFile localFile)
 			throws PermissionDeniedException, IOException, SftpStatusException, SshException {
 
-		verboseMessage("Splitting {0} into {1} chunks", localFile.getName(), chunks);
-
 		var executor = Executors.newFixedThreadPool(chunks);
 		
 		try {
-			var partSize = (5*1024*1024);
-			var totalParts = Math.max(1, localFile.length() / partSize);
-			
-			var partsPerChunk = (totalParts / chunks) + 1;
-			var chunkLength = partsPerChunk * partSize;
+
+			var chunkLength = localFile.length() /  chunks;
 			var finalLength = localFile.length() - (chunkLength * (chunks-1));
 			
 			var progressChunks = Collections.synchronizedList(new ArrayList<FileTransferProgressWrapper>());
 			var errors = Collections.synchronizedList(new ArrayList<Throwable>());
 			var total = new AtomicLong();
+			
+			verboseMessage("Splitting {0} into {1} chunks", localFile.getName(), chunks);
+
 			if (progress.isPresent()) {
 				progress.get().started(localFile.length(), localFile.getName());
 			}

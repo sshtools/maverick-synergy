@@ -74,7 +74,7 @@ public class ScpClient extends ScpClientIO {
      * @throws IOException
      */
     public ScpClient(File cwd, SshClient ssh) throws PermissionDeniedException, IOException {
-        this(new DirectFileFactory(cwd), ssh);
+        this(NioFileFactoryBuilder.create().withHome(cwd).build(), ssh);
     }
     
     /**

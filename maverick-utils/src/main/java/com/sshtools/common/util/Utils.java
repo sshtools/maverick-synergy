@@ -412,6 +412,10 @@ public class Utils {
 		return false;
 	}
 	
+	public static String formatHostnameAndPort(String hostname, int port) {
+		return port == 22 ? hostname : hostname + ":" + port;
+	}
+	
 	public static int getPort(String hostname) {
 		int idx = hostname.indexOf(":");
 		if(idx > -1) {

@@ -40,6 +40,10 @@ import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.util.UnsignedInteger64;
 
+/**
+ * Deprecated, use {@link NioFile} and {@link NioFileFactory} instead.
+ */
+@Deprecated(since = "3.2.0", forRemoval = true)
 public class DirectFile extends AbstractDirectFile<DirectFile> {
 	
 	public DirectFile(String path, AbstractFileFactory<DirectFile> fileFactory, File homeDir) throws IOException {

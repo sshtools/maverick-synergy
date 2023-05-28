@@ -24,6 +24,10 @@ import java.io.IOException;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.permissions.PermissionDeniedException;
 
+/**
+ * Deprecated, use {@link NioFile} and {@link NioFileFactory} instead.
+ */
+@Deprecated(since = "3.2.0", forRemoval = true)
 public class DirectFileFactory extends AbstractDirectFileFactory<DirectFile> {
 
 	File defaultPath = new File(".");

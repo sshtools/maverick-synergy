@@ -30,6 +30,7 @@ import org.apache.commons.cli.Options;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClient;
+import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.server.vsession.CommandArgumentsParser;
@@ -89,7 +90,10 @@ public class SftpClientCommand extends Msh {
 			
 			Connection<SshClientContext> connection = sshClient.getConnection();
 
-			SftpClient sftp = new SftpClient(connection, console.getFileFactory());
+			var sftp = SftpClientBuilder.create().
+					withConnection(connection).
+					withFileFactory(console.getFileFactory()).build();
+			
 			Object previousPrompt = console.getEnvironment().put("PROMPT", "sftp> ");
 			setCommandFactory(new SftpCommandFactory(sftp));
 			

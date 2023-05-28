@@ -31,7 +31,7 @@ import com.sshtools.client.sftp.GlobRegExpMatching;
 import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.files.direct.DirectFileFactory;
+import com.sshtools.common.files.direct.NioFileFactory.NioFileFactoryBuilder;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpStatusException;
@@ -63,7 +63,7 @@ public class ScpClient extends ScpClientIO {
      * @throws PermissionDeniedException 
      */
     public ScpClient(SshClient ssh) throws PermissionDeniedException, IOException {
-        this(new DirectFileFactory(new java.io.File(System.getProperty("user.home"))), ssh);
+        this(NioFileFactoryBuilder.create().build(), ssh);
     }
 
     /**

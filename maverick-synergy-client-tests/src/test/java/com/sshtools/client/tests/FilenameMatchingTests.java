@@ -26,7 +26,7 @@ import java.util.List;
 import com.sshtools.client.sftp.GlobRegExpMatching;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.files.direct.DirectFileFactory;
+import com.sshtools.common.files.direct.NioFileFactory.NioFileFactoryBuilder;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
@@ -40,7 +40,7 @@ public class FilenameMatchingTests extends TestCase {
 	@Override
 	protected void setUp() throws Exception {
 		
-		AbstractFileFactory<?> fileFactory = new DirectFileFactory(new File("."));
+		AbstractFileFactory<?> fileFactory = NioFileFactoryBuilder.create().withHome(new File(".")).build();
 		files = new ArrayList<>();
 		
 		files.add(fileFactory.getFile("1a.txt"));

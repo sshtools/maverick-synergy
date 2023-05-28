@@ -33,7 +33,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
 import com.sshtools.common.files.AbstractFile;
-import com.sshtools.common.files.direct.DirectFileFactory;
+import com.sshtools.common.files.direct.NioFileFactory;
+import com.sshtools.common.files.direct.NioFileFactory.NioFileFactoryBuilder;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.IOUtils;
@@ -41,12 +42,12 @@ import com.sshtools.common.util.IOUtils;
 public class DirectFileTests extends AbstractFileTest {
 
 	File baseFolder;
-	DirectFileFactory factory;
+	NioFileFactory factory;
 	
 	protected File getBaseFolder() throws IOException {
 		if(Objects.isNull(baseFolder)) {
 			baseFolder = Files.createTempDirectory("direct-file").toFile();
-			factory =  new DirectFileFactory(baseFolder); 
+			factory =  NioFileFactoryBuilder.create().withHome(baseFolder).build(); 
 		}
 		return baseFolder;
  	}

@@ -52,7 +52,7 @@ public class MultiIOException extends IOException {
     public void printStackTrace(PrintStream s) {
     	int occurence = 1;
     	s.println(String.format("Exception %d", occurence++));
-    	super.printStackTrace();
+    	super.printStackTrace(s);
     	for(var o : others) {
     		if(o != getCause()) {
     	    	s.println(String.format("Exception %d", occurence++));

@@ -19,7 +19,7 @@
 module com.sshtools.server.vsession {
 	requires transitive org.jline;
 	requires transitive com.sshtools.maverick.base;
-	requires commons.cli;
+	requires transitive commons.cli;
 	requires transitive com.sshtools.synergy.client;
 	requires transitive com.sshtools.synergy.server;
 	requires org.apache.commons.lang3;

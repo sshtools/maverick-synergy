@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Random;
 
-import com.sshtools.client.sftp.SftpClient;
+import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
 import com.sshtools.client.sftp.TransferCancelledException;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpStatusException;
@@ -121,7 +121,7 @@ public class SshReporter {
 	
 	private static void probeSFTP(SshClient ssh) throws SftpStatusException, SshException, ChannelOpenException, PermissionDeniedException, IOException {
 		
-		try(SftpClient sftp = new SftpClient(ssh)) {
+		try(var sftp = SftpClientBuilder.create().withClient(ssh).build()) {
 		
 			System.out.println("##### SFTP Configuration");
 			 
@@ -167,14 +167,14 @@ public class SshReporter {
 		
 		System.out.println("##### " + testName);
 		
-		try(SftpClient sftp = new SftpClient(ssh)) {
+		try(var sftp = SftpClientBuilder.create().
+				withClient(ssh).
+				withBlockSize(blocksize).
+				withLocalPath(System.getProperty("user.dir")).
+				build()) {
 		
 			System.out.println("Block size: " + blocksize);
 			System.out.println("Max Requests: " + maxRequests);
-			
-			sftp.setBlockSize(blocksize);
-			
-			sftp.lcd(System.getProperty("user.dir"));
 			
 	        System.out.println("Uploading " + size + " File");
 	        long started = System.currentTimeMillis();

@@ -57,12 +57,6 @@ public interface AbstractFile {
 
 	public boolean isReadable() throws IOException, PermissionDeniedException;
 
-	public void copyFrom(AbstractFile src) throws IOException,
-			PermissionDeniedException;
-
-	public void moveTo(AbstractFile target) throws IOException,
-			PermissionDeniedException;
-
 	public boolean delete(boolean recursive) throws IOException,
 			PermissionDeniedException;
 
@@ -97,6 +91,10 @@ public interface AbstractFile {
 	default void symlinkTo(String target) throws IOException, PermissionDeniedException {
 		throw new UnsupportedOperationException();
 	}
+	
+	default void linkTo(String target) throws IOException, PermissionDeniedException {
+		throw new UnsupportedOperationException();
+	}
 
 	default String readSymbolicLink() throws IOException, PermissionDeniedException {
 		throw new UnsupportedOperationException();
@@ -110,4 +108,44 @@ public interface AbstractFile {
 		throw new UnsupportedOperationException();
 	}
 	
+	default void copyFrom(AbstractFile src) throws IOException, PermissionDeniedException {
+
+		if(src.isDirectory()) {
+			createFolder();
+			for(var f : src.getChildren()) {
+				resolveFile(f.getName()).copyFrom(f);
+			}
+		} else if(src.isFile()) {
+			try(var in = src.getInputStream()) {
+				try(var out = getOutputStream()) {
+					in.transferTo(out);
+				}
+			}
+		} else {
+			throw new IOException("Cannot copy object that is not directory or a regular file");
+		}
+	
+	}
+
+	default void moveTo(AbstractFile target) throws IOException, PermissionDeniedException {
+
+		if(isDirectory()) {
+			target.createFolder();
+			for(var f : getChildren()) {
+				target.resolveFile(f.getName()).copyFrom(f);
+				f.delete(false);
+			}
+		} else if(isFile()) {
+			try(var in = getInputStream()) {
+				try(var out = target.getOutputStream()) {
+					in.transferTo(out);
+				}
+			}
+		} else {
+			throw new IOException("Cannot move object that is not directory or a regular file");
+		}
+		
+		delete(false);
+	
+	}
 }

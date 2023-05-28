@@ -42,7 +42,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.files.direct.DirectFileFactory;
+import com.sshtools.common.files.direct.NioFileFactory.NioFileFactoryBuilder;
 import com.sshtools.common.files.nio.AbstractFileURI;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.SshConnection;
@@ -78,7 +78,7 @@ public class AbstractFileNIOProviderTests {
 		File child = new File(folder, "child.txt");
 		child.createNewFile();
 		
-		return new DirectFileFactory(tmp);
+		return NioFileFactoryBuilder.create().withHome(tmp).build();
 
 	}
 	

@@ -25,6 +25,7 @@ import java.io.UncheckedIOException;
 import java.util.List;
 
 import com.sshtools.client.SshClient;
+import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
 import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.client.tasks.Task;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -61,7 +62,7 @@ public class SftpClientTask extends Task {
 	@Override
 	protected final void doTask() throws Throwable {
 
-		sftp = new SftpClient(con);
+		sftp = SftpClientBuilder.create().withConnection(con).build();
 
 		doSftpTask();
 
@@ -100,6 +101,7 @@ public class SftpClientTask extends Task {
 	 *
 	 * @param blocksize
 	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setBlockSize(int blocksize) {
 		sftp.setBlockSize(blocksize);
 	}
@@ -216,6 +218,7 @@ public class SftpClientTask extends Task {
 	 *
 	 * @param asyncRequests
 	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setMaxAsyncRequests(int asyncRequests) {
 		sftp.setMaxAsyncRequests(asyncRequests);
 	}
@@ -327,6 +330,7 @@ public class SftpClientTask extends Task {
 	 *
 	 * @param rootPath
 	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void addCustomRoot(String rootPath) {
 		sftp.addCustomRoot(rootPath);
 	}
@@ -336,6 +340,7 @@ public class SftpClientTask extends Task {
 	 *
 	 * @param rootPath
 	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void removeCustomRoot(String rootPath) {
 		sftp.removeCustomRoot(rootPath);
 	}

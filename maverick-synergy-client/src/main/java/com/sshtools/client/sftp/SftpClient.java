@@ -20,12 +20,15 @@ package com.sshtools.client.sftp;
 
 import java.io.Closeable;
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.security.DigestInputStream;
@@ -37,8 +40,11 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -47,15 +53,16 @@ import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.direct.DirectFileFactory;
+import com.sshtools.common.files.direct.NioFileFactory.NioFileFactoryBuilder;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.GlobSftpFileFilter;
 import com.sshtools.common.sftp.PosixPermissions;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.RegexSftpFileFilter;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpFileFilter;
 import com.sshtools.common.sftp.SftpStatusException;
-import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
@@ -71,17 +78,229 @@ import com.sshtools.common.util.Utils;
 /**
  * An abstract task that implements an SFTP client.
  */
+@SuppressWarnings("removal")
 public class SftpClient implements Closeable {
+	/**
+	 * Default buffer size
+	 */
+	public static final int DEFAULT_BUFFER_SIZE = 1024000;
+	
+	public final static class SftpClientBuilder {
 
-	SftpChannel sftp;
+		private Optional<SshConnection> connection = Optional.empty();
+		private Optional<AbstractFileFactory<?>> fileFactory = Optional.empty();
+		private Optional<Integer> blockSize = Optional.empty();
+		private Optional<Integer> asyncRequests = Optional.empty();
+		private int bufferSize = DEFAULT_BUFFER_SIZE;
+		private Optional<Path> localHome = Optional.empty();
+		private boolean localHomeSandbox;
+		private Set<String> customRoots = new LinkedHashSet<>();
+		private Optional<String> localPath = Optional.empty();
+		private Optional<String> remotePath = Optional.empty();
+		
+		/**
+		 * Create a new {@link SftpClientBuilder}.
+		 * 
+		 * @return builder
+		 */
+		public static SftpClientBuilder create() {
+			return new SftpClientBuilder(); 
+		}
 
-	String cwd;
-	AbstractFile lcwd;
-	AbstractFileFactory<?> fileFactory;
+		/**
+		 * Adds one or more custom file system root paths. Some devices
+		 * have unusual file system roots such as "flash:", customRoots contains these.
+		 * If a device uses roots like this, and folder traversal on the device is
+		 * required then it must have its root stored in customRoots
+		 * 
+		 * @param rootPaths root paths
+		 * @see SftpClientBuilder#withCustomRoots(String)
+		 */
+		public SftpClientBuilder withCustomRoots(String... rootPaths) {
+			customRoots.addAll(Arrays.asList(rootPaths));
+			return this;
+		}
+		
+		/**
+		 * Use an existing {@link SshConnection} to create the {@link SftpClient}.
+		 * 
+		 * @param connection connection
+		 * @return this for chaining
+		 */
+		public SftpClientBuilder withConnection(SshConnection connection) {
+			this.connection = Optional.of(connection);
+			return this;
+		}
+		
+		/**
+		 * Use an existing {@link SshClient} to create the {@link SftpClient}.
+		 * 
+		 * @param client client
+		 * @return this for chaining
+		 */
+		public SftpClientBuilder withClient(SshClient client) {
+			this.connection = Optional.of(client.getConnection());
+			return this;
+		}
+		
+		/**
+		 * Use a specific {@link AbstractFileFactory} for this client.
+		 * 
+		 * @param factory factory
+		 * @return this for chaining
+		 */
+		public SftpClientBuilder withFileFactory(AbstractFileFactory<?> fileFactory) {
+			this.fileFactory = Optional.of(fileFactory);
+			return this;
+		}
+		
+		/**
+		 * Whether or not to sandbox the path provided as the <strong>Local Home/code>. 
+		 * default this is <code>true</code>. Will only be used when {@link #withLocalHome(Path)} or
+		 * {@link #withLocalHome(File)} have been used, and {@link #withFileFactory(AbstractFileFactory)} has
+		 * <strong>not</strong> been used.
+		 *
+		 * @paran sandbox
+		 */
+		public SftpClientBuilder withLocalHomeSandbox(boolean localHomeSandbox) {
+			this.localHomeSandbox = localHomeSandbox;
+			return this;
+		}
+		
+		/**
+		 * Set to not sandbox the path provided as the <strong>Local Home/code>. 
+		 * default this is <code>true</code>. Will only be used when {@link #withLocalHome(Path)} or
+		 * {@link #withLocalHome(File)} have been used, and {@link #withFileFactory(AbstractFileFactory)} has
+		 * <strong>not</strong> been used.
+		 *
+		 * @paran sandbox
+		 */
+		public SftpClientBuilder withWithoutLocalHomeSandbox() {
+			return withLocalHomeSandbox(false);
+		}
+		
+		/**
+		 * Start off in a specified remote path. Any subsequent relative
+		 * remote paths would then be resolved against this path. The 
+		 * path may be changed at runtime using {@link SftpClient#cd(String)}.
+		 * 
+		 * @param path path
+		 * @return this for chaining
+		 */
+		public SftpClientBuilder withRemotePath(String remotePath) {
+			this.remotePath = Optional.of(remotePath);
+			return this;
+		}
+		
+		/**
+		 * Start off in a specified local path. Any subsequent relative
+		 * remote paths would then be resolved against this path. The 
+		 * path may be changed at runtime using {@link SftpClient#lcd(String)}.
+		 * 
+		 * @param path path
+		 * @return this for chaining
+		 */
+		public SftpClientBuilder withLocalPath(String localPath) {
+			this.localPath = Optional.of(localPath);
+			return this;
+		}
+		
+		/**
+		 * Use a specific {@link Path} as the home of the local file system. 
+		 * Will only be used if {@link #withFileFactory(AbstractFileFactory)} has not 
+		 * been used. If not provided, the current user's home directory (i.e. <code>System.getProperty("user.home");</code>)
+		 * will be used.
+		 * <p>
+		 * Use of this method will replace the currently configured {@link AbstractFileFactory} if any.
+		 * 
+		 * @param localHome local root path
+		 * @return this for chaining
+		 */
+		public SftpClientBuilder withLocalHome(Path localHome) {
+			this.localHome = Optional.of(localHome);
+			return this;
+		}
+		
+		/**
+		 * Use a specific {@link Path} as the home of the local file system. 
+		 * Will only be used if {@link #withFileFactory(AbstractFileFactory)} has not 
+		 * been used. If not provided, the current user's home directory (i.e. <code>System.getProperty("user.home");</code>)
+		 * will be used.
+		 * <p>
+		 * Use of this method will replace the currently configured {@link AbstractFileFactory} if any.
+		 * 
+		 * @param localRoot local root path
+		 * @return this for chaining
+		 */
+		public SftpClientBuilder withLocalHome(File localRoot) {
+			return withLocalHome(localRoot.toPath());
+		}
+		
+		/**
+		 * Sets the block size used when transferring files, defaults to the optimized
+		 * setting of 32768. You should not increase this value as the remote server may
+		 * not be able to support higher blocksizes.
+		 * 
+		 * @param blockSize block size
+		 */
+		public SftpClientBuilder withBlockSize(int blockSize) {
+			this.blockSize = blockSize == -1 ? Optional.empty() : Optional.of(blockSize);
+			return this;
+		}
+		
+		/**
+		 * Set the size of the buffer which is used to read from the local file system.
+		 * This setting is used to optimize the writing of files by allowing for a large
+		 * chunk of data to be read in one operation from a local file. The previous
+		 * version simply read each block of data before sending however this decreased
+		 * performance, this version now reads the file into a temporary buffer in order
+		 * to reduce the number of local filesystem reads. This increases performance
+		 * and so this setting should be set to the highest value possible. The default
+		 * setting is negative which means the entire file will be read into a temporary
+		 * buffer.
+		 * 
+		 * @param bufferSize buffer size
+		 */
+		public SftpClientBuilder withBufferSize(int bufferSize) {
+			this.bufferSize = bufferSize;
+			return this;
+		}
+		
+		/**
+		 * Set the maximum number of asynchronous requests to use for optimised reads and writes to remote files.
+		 * When not provided, this will be calculate from the remote window size and the block size.
+		 * 
+		 * @param asyncRequests max async requests
+		 */
+		public SftpClientBuilder withAsyncRequests(int asyncRequests) {
+			this.asyncRequests = asyncRequests == -1 ? Optional.empty() : Optional.of(asyncRequests);
+			return this;
+		}
+		
+		/**
+		 * Build a new {@link SftpClient}.
+		 * 
+		 * @return sftp client
+		 * @throws SshException on SSH error
+		 * @throws IOException  on I/O error
+		 * @throws PermissionDeniedException on permissions error
+		 */
+		public SftpClient build() throws SshException, PermissionDeniedException, IOException {
+			return new SftpClient(this);
+		}
+	}
 
-	private int blocksize = -1;
-	private int asyncRequests = -1;
-	private int buffersize = 1024000;
+	private final SftpChannel sftp;
+
+	private String cwd = "";
+	private AbstractFile lcwd;
+	
+	/** TODO: To be made final in 3.2.0 */
+	private int blocksize;
+	/** TODO: To be made final in 3.2.0 */
+	private int asyncRequests;
+	/** TODO: To be made final in 3.2.0 */
+	private int buffersize;
 
 	// Default permissions is determined by default_permissions ^ umask
 	int umask = 0022;
@@ -127,26 +346,43 @@ public class SftpClient implements Closeable {
 	private int inputEOL = EOLProcessor.TEXT_SYSTEM;
 	private boolean stripEOL = false;
 	private boolean forceRemoteEOL;
-
 	private int transferMode = MODE_BINARY;
-
-	public SftpClient(SshConnection con) throws SshException, PermissionDeniedException, IOException {
-		this(con, new DirectFileFactory(new java.io.File(System.getProperty("user.home"))));
-
+	
+	SftpClient(SftpClientBuilder builder) throws SshException, PermissionDeniedException, IOException {
+		var fileFactory = builder.fileFactory.orElseGet(() -> NioFileFactoryBuilder.create().
+				withHome(builder.localHome.orElseGet(() -> Paths.get(System.getProperty("user.home")))).
+				withSandbox(builder.localHomeSandbox).
+				build());
+		this.asyncRequests = builder.asyncRequests.orElse(-1);
+		this.buffersize = builder.bufferSize;
+		this.blocksize = builder.blockSize.orElse(-1);
+		this.sftp = new SftpChannel(builder.connection.orElseThrow(() -> new IllegalStateException("Either an existing connection or an existing client must be provided.")));
+		this.lcwd = fileFactory.getFile(builder.localPath.orElse(""));
+		this.cwd = builder.remotePath.orElse("");
+		this.customRoots.addAll(builder.customRoots);
 	}
 
+	@Deprecated(since = "3.1.0", forRemoval =  true)
+	public SftpClient(SshConnection con) throws SshException, PermissionDeniedException, IOException {
+		this(con, new DirectFileFactory(new java.io.File(System.getProperty("user.home"))));
+	}
+
+	@Deprecated(since = "3.1.0", forRemoval =  true)
 	public SftpClient(SshConnection con, AbstractFileFactory<?> fileFactory)
 			throws PermissionDeniedException, IOException, SshException {
-		this.fileFactory = fileFactory;
-		this.cwd = "";
+		this.blocksize = this.asyncRequests = -1;
+		this.buffersize = DEFAULT_BUFFER_SIZE;
 		this.lcwd = fileFactory.getFile("");
+		this.cwd = "";
 		this.sftp = new SftpChannel(con);
 	}
 
+	@Deprecated(since = "3.1.0", forRemoval =  true)
 	public SftpClient(SshClient ssh) throws SshException, PermissionDeniedException, IOException {
 		this(ssh.getConnection());
 	}
 
+	@Deprecated(since = "3.1.0", forRemoval =  true)
 	public SftpClient(SshClient ssh, AbstractFileFactory<?> fileFactory)
 			throws SshException, PermissionDeniedException, IOException {
 		this(ssh.getConnection(), fileFactory);
@@ -156,9 +392,15 @@ public class SftpClient implements Closeable {
 	 * Sets the block size used when transferring files, defaults to the optimized
 	 * setting of 32768. You should not increase this value as the remote server may
 	 * not be able to support higher blocksizes.
+	 * <p>
+	 * Deprecated, will be made final at 3.2.0, only to be set by 
+	 * {@link SftpClientBuilder#withBlockSize(int)}.
 	 * 
-	 * @param blocksize
+	 * @param blocksize block size
+	 * @deprecated
+	 * @see SftpClientBuilder#withBlockSize(int)
 	 */
+	@Deprecated(since = "3.1.0", forRemoval =  true)
 	public void setBlockSize(int blocksize) {
 		if (blocksize < 512) {
 			throw new IllegalArgumentException("Block size must be greater than 512");
@@ -300,9 +542,15 @@ public class SftpClient implements Closeable {
 	 * one time. This setting is used to optimize the reading and writing of files
 	 * to/from the remote file system when using the get and put methods. The
 	 * default for this setting is 100.
+	 * <p>
+	 * Deprecated, will be made final at 3.2.0, only to be set by 
+	 * {@link SftpClientBuilder#withAsyncRequests(int)}.
 	 * 
-	 * @param asyncRequests
+	 * @param asyncRequests aync requests
+	 * @deprecated
+	 * @see SftpClientBuilder#withAsyncRequests(int)
 	 */
+	@Deprecated(since = "3.1.0", forRemoval =  true)
 	public void setMaxAsyncRequests(int asyncRequests) {
 		if (asyncRequests < 1) {
 			throw new IllegalArgumentException("Maximum asynchronous requests must be greater or equal to 1");
@@ -345,7 +593,7 @@ public class SftpClient implements Closeable {
 	 * 
 	 * </blockquote>
 	 * 
-	 * @param umask
+	 * @param umask umask
 	 * @return the previous umask value
 	 */
 	public int umask(int umask) {
@@ -468,6 +716,8 @@ public class SftpClient implements Closeable {
 	 * some devices have unusual file system roots such as "flash:", customRoots
 	 * contains these. If a device uses roots like this, and folder traversal on the
 	 * device is required then it must have its root stored in customRoots
+	 * 
+	 * TODO: Make unmodifiable at version 3.2.x.
 	 */
 	private Vector<String> customRoots = new Vector<String>();
 
@@ -475,7 +725,9 @@ public class SftpClient implements Closeable {
 	 * Add a custom file system root path such as "flash:"
 	 * 
 	 * @param rootPath
+	 * @see SftpClientBuilder#withCustomRoots(String)
 	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void addCustomRoot(String rootPath) {
 		customRoots.addElement(rootPath);
 	}
@@ -484,7 +736,9 @@ public class SftpClient implements Closeable {
 	 * Remove a custom file system root path such as "flash:"
 	 * 
 	 * @param rootPath
+	 * @see SftpClientBuilder#withCustomRoots(String)
 	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void removeCustomRoot(String rootPath) {
 		customRoots.removeElement(rootPath);
 	}
@@ -3626,7 +3880,18 @@ public class SftpClient implements Closeable {
 			msg.writeString(path);
 			SftpChannel channel = getSubsystemChannel();
 			UnsignedInteger32 requestId = channel.sendExtensionMessage("statvfs@openssh.com", msg.toByteArray());
-			return new StatVfs(channel.getResponse(requestId));
+			SftpMessage response = channel.getResponse(requestId);
+			if (response.getType() == SftpChannel.SSH_FXP_STATUS) {
+				int status = (int) response.readInt();
+				if (sftp.version >= 3) {
+					String errmsg = response.readString();
+					throw new SftpStatusException(status, errmsg);
+				}
+				throw new SftpStatusException(status);
+			} else {
+				return new StatVfs(response);
+			}
+			
 		} catch (IOException e) {
 			throw new SshException(e);
 		}

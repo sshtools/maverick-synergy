@@ -47,6 +47,7 @@ import com.sshtools.client.sftp.RemoteHash;
 import com.sshtools.client.sftp.SftpClient;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.client.sftp.TransferCancelledException;
+import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
 import com.sshtools.client.tasks.PushTask.PushTaskBuilder.ProgressMessages;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.logger.Log;
@@ -515,7 +516,7 @@ public final class PushTask extends AbstractFileTask {
 		this.verboseOutput = builder.verboseOutput;
 		
 		try {
-			primarySftpClient = builder.primarySftpClient.orElse(new SftpClient(con));
+			primarySftpClient = builder.primarySftpClient.orElse(SftpClientBuilder.create().withConnection(con).build());
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		} catch (SshException | PermissionDeniedException e) {
@@ -645,7 +646,7 @@ public final class PushTask extends AbstractFileTask {
 		
 		try {
 			var partSize = (5*1024*1024);
-			var totalParts = localFile.length() / partSize;
+			var totalParts = Math.max(1, localFile.length() / partSize);
 			
 			var partsPerChunk = (totalParts / chunks) + 1;
 			var chunkLength = partsPerChunk * partSize;
@@ -752,15 +753,16 @@ public final class PushTask extends AbstractFileTask {
 	private void sendFileViaSFTP(AbstractFile localFile, String remotePath) throws IOException, SshException,
 			PermissionDeniedException, SftpStatusException, TransferCancelledException {
 		var ssh = clients.removeFirst();
-		try (var sftp = new SftpClient(ssh)) {
+		var bldr = SftpClientBuilder.create().withClient(ssh);
+		if(blocksize > 0) {
+			bldr.withBlockSize(blocksize);
+		}
+		if(outstandingRequests > 0) {
+			bldr.withAsyncRequests(outstandingRequests);
+		}
+		try (var sftp = bldr.build()) {
 			sftp.lcd(primarySftpClient.getCurrentWorkingDirectory().getAbsolutePath());
 			sftp.cd(remoteFolder);
-			if(blocksize > 0) {
-				sftp.setBlockSize(blocksize);
-			}
-			if(outstandingRequests > 0) {
-				sftp.setMaxAsyncRequests(outstandingRequests);
-			}
 			sftp.put(localFile.getAbsolutePath(), remotePath, progress.orElse(null));
 		} finally {
 			clients.addLast(ssh);
@@ -804,34 +806,35 @@ public final class PushTask extends AbstractFileTask {
 		var ssh = clients.removeFirst();
 		try (var file = new RandomAccessFile(localFile.getAbsolutePath(), "r")) {
 			file.seek(pointer);
-				try (var sftp = new SftpClient(ssh)) {
-					sftp.cd(remoteFolder);
-					sftp.lcd(primarySftpClient.lpwd());
+				try (var sftp = SftpClientBuilder.create().
+						withClient(ssh).
+						withRemotePath(remoteFolder).
+						withLocalPath(primarySftpClient.lpwd()).
+						build()) {
+					sftp.put(new ChunkInputStream(file, chunkLength), localFile.getName(),
+							new FileTransferProgress() {
 
-						sftp.put(new ChunkInputStream(file, chunkLength), localFile.getName(),
-								new FileTransferProgress() {
+								@Override
+								public void started(long bytesTotal, String file) {
+									progress.started(bytesTotal, file);
+								}
 
-									@Override
-									public void started(long bytesTotal, String file) {
-										progress.started(bytesTotal, file);
-									}
+								@Override
+								public boolean isCancelled() {
+									return progress.isCancelled();
+								}
 
-									@Override
-									public boolean isCancelled() {
-										return progress.isCancelled();
-									}
+								@Override
+								public void progressed(long bytesSoFar) {
+									progress.progressed(bytesSoFar - pointer);
+								}
 
-									@Override
-									public void progressed(long bytesSoFar) {
-										progress.progressed(bytesSoFar - pointer);
-									}
+								@Override
+								public void completed() {
+									progress.completed();
+								}
 
-									@Override
-									public void completed() {
-										progress.completed();
-									}
-
-								}, pointer, chunkLength);
+							}, pointer, chunkLength);
 				}
 		} 
 		catch(IOException ioe) {
@@ -853,15 +856,17 @@ public final class PushTask extends AbstractFileTask {
 		var ssh = clients.removeFirst();
 		try (var file = new RandomAccessFile(localFile.getAbsolutePath(), "r")) {
 			file.seek(pointer);
-				try (var sftp = new SftpClient(ssh)) {
-					sftp.cd(remoteFolder);
-					sftp.lcd(primarySftpClient.lpwd());
+				try (var sftp = SftpClientBuilder.create().
+						withClient(ssh).
+						withRemotePath(remoteFolder).
+						withLocalPath(primarySftpClient.lpwd()).
+						build()) {
 
-					ByteArrayWriter msg = new ByteArrayWriter();
+					var msg = new ByteArrayWriter();
 					msg.writeBinaryString(transaction);
 					msg.writeString(partId);
 					
-					byte[] handle = sftp.getSubsystemChannel().getHandleResponse(sftp.getSubsystemChannel().sendExtensionMessage("open-part-file@sshtools.com", msg.toByteArray()));
+					var handle = sftp.getSubsystemChannel().getHandleResponse(sftp.getSubsystemChannel().sendExtensionMessage("open-part-file@sshtools.com", msg.toByteArray()));
 					
 					try {
 						sftp.getSubsystemChannel().performOptimizedWrite(localFile.getName(), 

@@ -352,7 +352,6 @@ public class SftpFile {
 						getAbsolutePath()));
 		handle = null;
 	}
-    sftp.closeFile(this);
   }
 
   /**

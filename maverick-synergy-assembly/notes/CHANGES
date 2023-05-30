@@ -22,7 +22,7 @@ Features
   o Changed checkConnection to take InetAddress.
   o Added option for public key verifier implementation.
   o RSA keys will now upgrade to SHA2 types where possible.
-  o Added UTF-8 mopde to PseudoTerminalModes          
+  o Added UTF-8 mode to PseudoTerminalModes          
   o New PushSftp task to utilise multiple connections to increase throughput on latent networks.
   o All *Task implementations (ShellTask, UploadFileTask, DownloadFileTask etc) now have deprecated constructors and should be created through their new builder implementations.
   o Support for PseudoTerminalModes creation through new PseudoTerminalModesBuilder implementation.

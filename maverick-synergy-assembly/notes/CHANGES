@@ -30,6 +30,11 @@ Features
   o New multipart upload SFTP file extension to enable PushSftp on back-end storage that does not support random access across concurrent connections.
   o New s3 abstract file implementation that supports multipart uploads on Amazon S3.
   o Safer, modern, recursive delete methods on IOUtils.
+  o Server now supports hardlink@openssh.com and statvfs@openssh.com
+  o SshClientBuilder introduced as a replacement to direct SshClient construction.
+  o SftpClientBuilder introduced as a replacement to direct SftpClient construction.
+  o All Sftp extensions are now standard Java services. Use SftpExtensionLoaderFactory instead
+    of DefaultSftpExtensionFactory in configuration. 
   
 Bug Fixes
   o Implementations of available incorrectly return -1.

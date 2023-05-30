@@ -22,8 +22,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -49,6 +51,7 @@ public class FileSystemPolicy extends Permissions {
 	String sftpLongnameDateFormat = "MMM dd  yyyy";
 	String sftpLongnameDateFormatWithTime = "MMM dd HH:mm";
 	List<SftpExtensionFactory> sftpExtensionFactories = new ArrayList<SftpExtensionFactory>();
+	Set<String> disabledExtensions = new HashSet<>();
 	boolean closeFileBeforeFailedTransferEvents = false;
 	boolean mkdirParentMustExist = true;
 	
@@ -176,8 +179,19 @@ public class FileSystemPolicy extends Permissions {
 	public String getSFTPLongnameDateFormatWithTime() {
 		return sftpLongnameDateFormatWithTime; //"MMM dd HH:mm";
 	}
+	
+	public void disableSFTPExtension(String requestName) {
+		disabledExtensions.add(requestName);
+	}
+	
+	public void enableSFTPExtension(String requestName) {
+		disabledExtensions.remove(requestName);
+	}
 
 	public SftpExtension getSFTPExtension(String requestName) {
+		if(disabledExtensions.contains(requestName)) {
+			return null;
+		}
 		for(SftpExtensionFactory factory : sftpExtensionFactories) {
 			if(factory.getSupportedExtensions().contains(requestName)) {
 				return factory.getExtension(requestName);

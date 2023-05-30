@@ -20,6 +20,16 @@ import java.nio.file.spi.FileSystemProvider;
 
 import com.sshtools.common.files.nio.AbstractFileNIOProvider;
 import com.sshtools.common.publickey.SshPrivateKeyProvider;
+import com.sshtools.common.sftp.SftpExtension;
+import com.sshtools.common.sftp.extensions.CopyDataSftpExtension;
+import com.sshtools.common.sftp.extensions.CopyFileSftpExtension;
+import com.sshtools.common.sftp.extensions.FileHandleHashingExtension;
+import com.sshtools.common.sftp.extensions.FilenameHashingExtension;
+import com.sshtools.common.sftp.extensions.HardLinkExtension;
+import com.sshtools.common.sftp.extensions.MD5FileExtension;
+import com.sshtools.common.sftp.extensions.MD5HandleExtension;
+import com.sshtools.common.sftp.extensions.PosixRenameExtension;
+import com.sshtools.common.sftp.extensions.StatVFSExtension;
 import com.sshtools.common.ssh.components.DigestFactory;
 import com.sshtools.common.ssh.components.NoneCipher;
 import com.sshtools.common.ssh.components.NoneHmac;
@@ -181,6 +191,18 @@ open module com.sshtools.maverick.base {
 		TripleDesCbc.TripleDesCbcFactory,
 		TripleDesCtr.TripleDesCtrFactory,
 		ChaCha20Poly1305.ChaCha20Poly1305Factory;
+	
+	uses SftpExtension;
+	provides SftpExtension with 
+		CopyDataSftpExtension,
+		CopyFileSftpExtension,
+		FileHandleHashingExtension,
+		FilenameHashingExtension,
+		HardLinkExtension,
+		MD5FileExtension,
+		MD5HandleExtension,
+		PosixRenameExtension,
+		StatVFSExtension;
 	
 	provides SshCompressionFactory with NoneCompression.NoneCompressionFactory; 
 		

@@ -31,7 +31,7 @@ public class CopyDataSftpExtension extends AbstractSftpExtension {
 
 	public static final String EXTENSION_NAME = "copy-data";
 
-	protected CopyDataSftpExtension() {
+	public CopyDataSftpExtension() {
 		super(EXTENSION_NAME, true);
 	}
 

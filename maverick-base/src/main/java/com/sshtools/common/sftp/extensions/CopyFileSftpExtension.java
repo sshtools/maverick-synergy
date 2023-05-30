@@ -29,7 +29,7 @@ public class CopyFileSftpExtension extends AbstractSftpExtension {
 
 	public static final String EXTENSION_NAME = "copy-file";
 
-	protected CopyFileSftpExtension() {
+	public CopyFileSftpExtension() {
 		super(EXTENSION_NAME, true);
 	}
 

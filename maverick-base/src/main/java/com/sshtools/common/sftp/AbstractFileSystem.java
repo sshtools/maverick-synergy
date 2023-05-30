@@ -39,6 +39,7 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.files.FileVolume;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
@@ -467,6 +468,15 @@ public final class AbstractFileSystem {
 		
 	}
 
+	public FileVolume getVolume(String path) throws IOException, PermissionDeniedException {
+		AbstractFile f = resolveFile(path, con);
+		if (f.exists()) {
+			return f.getVolume();
+		} else {
+			throw new FileNotFoundException(path + " does not exist");
+		}
+	}
+
 	public void removeFile(String path) throws PermissionDeniedException, IOException, FileNotFoundException {
 
 		AbstractFile f = resolveFile(path, con);
@@ -620,6 +630,16 @@ public final class AbstractFileSystem {
 		}
 		catch(UnsupportedOperationException uoe) {
 			throw new UnsupportedFileOperationException("Symbolic links are not supported by the Virtual File System");
+		}
+	}
+
+	public void createLink(String link, String target)
+			throws UnsupportedFileOperationException, FileNotFoundException, IOException, PermissionDeniedException {
+		try {
+			resolveFile(link, con).linkTo(target); 
+		}
+		catch(UnsupportedOperationException uoe) {
+			throw new UnsupportedFileOperationException("Hard links are not supported by the Virtual File System");
 		}
 	}
 

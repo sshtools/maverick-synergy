@@ -148,4 +148,8 @@ public interface AbstractFile {
 		delete(false);
 	
 	}
+	
+	default FileVolume getVolume() throws IOException {
+		throw new UnsupportedOperationException("File storage information is not available on this file system.");
+	}
 }

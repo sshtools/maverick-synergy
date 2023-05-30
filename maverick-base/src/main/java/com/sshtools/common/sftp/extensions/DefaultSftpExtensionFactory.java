@@ -32,6 +32,10 @@ import com.sshtools.common.sftp.extensions.filter.OpenDirectoryWithFilterExtensi
 import com.sshtools.common.sftp.extensions.multipart.CreateMultipartFileExtension;
 import com.sshtools.common.sftp.extensions.multipart.OpenMultipartFileExtension;
 
+/**
+ * Deprecated. See {@link SftpExtensionLoaderFactory} and {@link BasicSftpExtensionFactory}.
+ */
+@Deprecated(since = "3.1.0", forRemoval = true)
 public class DefaultSftpExtensionFactory implements SftpExtensionFactory {
 
 	Map<String,SftpExtension> extensions = new HashMap<String,SftpExtension>();
@@ -70,6 +74,12 @@ public class DefaultSftpExtensionFactory implements SftpExtensionFactory {
 		}
 		if(supported.contains(SupportedSftpExtensions.CREATE_MULTIPART_FILE)) {
 			extensions.put(CreateMultipartFileExtension.EXTENSION_NAME, new CreateMultipartFileExtension());
+		}
+		if(supported.contains(SupportedSftpExtensions.HARDLINK)) {
+			extensions.put(HardLinkExtension.EXTENSION_NAME, new HardLinkExtension());
+		}
+		if(supported.contains(SupportedSftpExtensions.STATVFS)) {
+			extensions.put(StatVFSExtension.EXTENSION_NAME, new StatVFSExtension());
 		}
 	}
 	

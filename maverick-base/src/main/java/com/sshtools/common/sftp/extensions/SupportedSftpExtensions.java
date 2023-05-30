@@ -18,6 +18,10 @@
  */
 package com.sshtools.common.sftp.extensions;
 
+/**
+ * Deprecated. Use {@link SftpExtensionLoaderFactory} and {@link BasicSftpExtensionFactory}.
+ */
+@Deprecated(since = "3.1.0", forRemoval = true)
 public enum SupportedSftpExtensions {
 
 	MD5_FILE_HASH,
@@ -28,5 +32,7 @@ public enum SupportedSftpExtensions {
 	CHECK_FILE_NAME,
 	CHECK_FILE_HANDLE,
 	CREATE_MULTIPART_FILE,
-	OPEN_PART_FILE;
+	OPEN_PART_FILE,
+	HARDLINK,
+	STATVFS;
 }

@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
@@ -25,6 +26,7 @@ import java.util.Set;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.AbstractFileRandomAccess;
+import com.sshtools.common.files.FileVolume;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.PosixPermissions;
 import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
@@ -34,6 +36,9 @@ import com.sshtools.common.util.UnsignedInteger64;
 
 public final class NioFile implements AbstractFile {
 
+	public static final int SSH_FXE_STATVFS_ST_RDONLY = 0x1; /* read-only */
+	public static final int SSH_FXE_STATVFS_ST_NOSUID = 0x2; /* no setuid */
+	
 	private Path path;
 	private Path home;
 	private final NioFileFactory fileFactory;
@@ -440,6 +445,85 @@ public final class NioFile implements AbstractFile {
 	@Override
 	public String toString() {
 		return path.toString();
+	}
+
+	@Override
+	public FileVolume getVolume() throws IOException {
+		var nativeStore = path.getFileSystem().provider().getFileStore(path);
+		return new FileVolume() {
+			
+			@Override
+			public long userFreeInodes() {
+				return freeInodes();
+			}
+			
+			@Override
+			public long userFreeBlocks() {
+				try {
+					return nativeStore.getUsableSpace() / blockSize();
+				} catch (IOException e) {
+					throw new UncheckedIOException(e);
+				}
+			}
+			
+			@Override
+			public long underlyingBlockSize() {
+				return blockSize();
+			}
+			
+			@Override
+			public long totalInodes() {
+				return 0;
+			}
+			
+			@Override
+			public long maxFilenameLength() {
+				/* TODO check other os */
+				return 255;
+			}
+			
+			@Override
+			public long id() {
+				return Integer.toUnsignedLong(nativeStore.hashCode());
+			}
+			
+			@Override
+			public long freeInodes() {
+				return 0;
+			}
+			
+			@Override
+			public long freeBlocks() {
+				try {
+					return nativeStore.getUnallocatedSpace() / blockSize();
+				} catch (IOException e) {
+					throw new UncheckedIOException(e);
+				}
+			}
+			
+			@Override
+			public long flags() {
+				return nativeStore.isReadOnly() ? SSH_FXE_STATVFS_ST_RDONLY : 0;
+			}
+			
+			@Override
+			public long blocks() {
+				try {
+					return nativeStore.getTotalSpace() / blockSize();
+				} catch (IOException e) {
+					throw new UncheckedIOException(e);
+				}
+			}
+			
+			@Override
+			public long blockSize() {
+				try {
+					return nativeStore.getBlockSize();
+				} catch (IOException e) {
+					throw new UncheckedIOException(e);
+				}
+			}
+		};
 	}
 
 	private int getFileType(BasicFileAttributes attr) {

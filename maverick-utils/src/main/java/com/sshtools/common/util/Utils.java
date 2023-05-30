@@ -26,12 +26,14 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 
@@ -458,5 +460,17 @@ public class Utils {
 		}
 
 		return str;
+	}
+
+	public static Optional<String> emptyOptionalIfBlank(String str) {
+		return "".equals(str) ? Optional.empty() : Optional.ofNullable(str);
+	}
+
+	public static Optional<char[]> emptyOptionalIfBlank(char[] str) {
+		return str != null && str.length == 0 ? Optional.empty() : Optional.ofNullable(str);
+	}
+	
+	public static String translatePathString(Path path) {
+		return path.toString().replace('\\', '/');
 	}
 }

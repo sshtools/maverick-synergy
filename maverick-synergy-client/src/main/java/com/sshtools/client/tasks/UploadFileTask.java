@@ -18,6 +18,8 @@
  */
 package com.sshtools.client.tasks;
 
+import static com.sshtools.common.util.Utils.translatePathString;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -172,7 +174,7 @@ public class UploadFileTask extends AbstractFileTask {
 			if(remote.isEmpty()) {
 				self.put(local.toAbsolutePath().toString(), progress.orElse(null));
 			} else {
-				self.put(local.toAbsolutePath().toString(), remote.get().toString(), progress.orElse(null));
+				self.put(local.toAbsolutePath().toString(), translatePathString(remote.get()), progress.orElse(null));
 			}
 		}));
 	}

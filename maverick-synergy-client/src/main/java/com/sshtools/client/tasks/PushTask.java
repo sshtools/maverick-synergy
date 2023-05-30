@@ -502,7 +502,7 @@ public final class PushTask extends AbstractFileTask {
 
 	PushTask(PushTaskBuilder builder) {
 		super(builder);
-		this.remoteFolder = builder.remoteFolder.map(p -> p.toString()).orElse(null);
+		this.remoteFolder = builder.remoteFolder.map(Utils::translatePathString).orElse(null);
 		this.chunks = builder.chunks;
 		this.verifyIntegrity = builder.verifyIntegrity;
 		this.digest = builder.digest;

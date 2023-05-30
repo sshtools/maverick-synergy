@@ -18,6 +18,8 @@
  */
 package com.sshtools.client.tasks;
 
+import static com.sshtools.common.util.Utils.translatePathString;
+
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -126,7 +128,7 @@ public class StatTask extends AbstractFileTask {
 
 	@Override
 	public void doTask() {
-		doTaskUntilDone(new SftpClientTask(con, (self) -> attrs = self.stat(remote.toString())));
+		doTaskUntilDone(new SftpClientTask(con, (self) -> attrs = self.stat(translatePathString(remote))));
 	}
 
 	public SftpFileAttributes getAttributes() {

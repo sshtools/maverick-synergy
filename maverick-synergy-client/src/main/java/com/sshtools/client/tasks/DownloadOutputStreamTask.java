@@ -18,6 +18,8 @@
  */
 package com.sshtools.client.tasks;
 
+import static com.sshtools.common.util.Utils.translatePathString;
+
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -153,7 +155,7 @@ public class DownloadOutputStreamTask extends AbstractFileTask {
 	@Override
 	protected void doTask() {
 		try {
-			doTaskUntilDone(new SftpClientTask(con, (self) -> self.get(path.toString(), output, progress.orElse(null))));
+			doTaskUntilDone(new SftpClientTask(con, (self) -> self.get(translatePathString(path), output, progress.orElse(null))));
 		} finally {
 			IOUtils.closeStream(output);
 		}

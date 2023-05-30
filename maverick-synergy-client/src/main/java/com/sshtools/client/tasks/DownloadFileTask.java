@@ -18,12 +18,15 @@
  */
 package com.sshtools.client.tasks;
 
+import static com.sshtools.common.util.Utils.translatePathString;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
 
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
+import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.ssh.Connection;
 
 /**
@@ -187,7 +190,7 @@ public class DownloadFileTask extends AbstractFileTask {
 	@Override
 	public void doTask() {
 		doTaskUntilDone(new SftpClientTask(con, (self) -> {
-			self.get(remote.toString(), local.orElse(Path.of(self.lpwd())).toAbsolutePath().toString(), progress.orElse(null));
+			self.get(translatePathString(remote), local.orElse(Path.of(self.lpwd())).toAbsolutePath().toString(), progress.orElse(null));
 		}));
 	}
 

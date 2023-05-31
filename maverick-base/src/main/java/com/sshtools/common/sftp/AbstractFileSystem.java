@@ -209,13 +209,20 @@ public final class AbstractFileSystem {
 		throw new InvalidHandleException("The handle is invalid 1");
 	}
 
-	public SftpFileAttributes getFileAttributes(String path)
+	public SftpFileAttributes getFileAttributes(String path) throws FileNotFoundException, IOException, PermissionDeniedException {
+		return getFileAttributes(path, true);
+	}
+
+	public SftpFileAttributes getFileAttributes(String path, boolean followSymlinks)
 			throws IOException, FileNotFoundException, PermissionDeniedException {
 
 		if(Log.isDebugEnabled())
 			Log.debug("Getting file attributes for " + path);
 		AbstractFile f = resolveFile(path, con);
-		return f.getAttributes();
+		if(followSymlinks)
+			return f.getAttributes();
+		else
+			return f.getAttributesNoFollowLinks();
 	}
 
 	public byte[] openDirectory(String path) throws PermissionDeniedException, FileNotFoundException, IOException {
@@ -485,9 +492,9 @@ public final class AbstractFileSystem {
 			throw new PermissionDeniedException("User does not have the permission to delete.");
 		}
 
-		if (f.exists()) {
+		if (f.existsNoFollowLinks()) {
 			try {
-				if (f.isFile()) {
+				if (!f.isDirectory()) {
 					if (!f.delete(false)) {
 						throw new IOException("Failed to delete " + path);
 					}
@@ -644,9 +651,16 @@ public final class AbstractFileSystem {
 	}
 
 	public boolean fileExists(String path) throws IOException, PermissionDeniedException {
+		return fileExists(path, true);
+	}
+
+	public boolean fileExists(String path, boolean followLinks) throws IOException, PermissionDeniedException {
 		try {
 			AbstractFile f = resolveFile(path, con);
-			return f.exists();
+			if(followLinks)
+				return f.exists();
+			else
+				return f.existsNoFollowLinks();
 		} catch (FileNotFoundException fnfe) {
 			// VirtualMappedFile.translateCanonicalPath throws this when it
 			// can't translate path. I don't think this is right, but this will

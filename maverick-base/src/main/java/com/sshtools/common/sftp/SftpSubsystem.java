@@ -1943,8 +1943,8 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				id = (int) bar.readInt();
 				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
 
-				if (nfs.fileExists(path)) {
-					SftpFileAttributes attrs = nfs.getFileAttributes(path);
+				if (nfs.fileExists(path, false)) {
+					SftpFileAttributes attrs = nfs.getFileAttributes(path, false);
 					sendAttributesMessage(id, attrs);
 					fireStatEvent(path, attrs, started, null);
 				} else {

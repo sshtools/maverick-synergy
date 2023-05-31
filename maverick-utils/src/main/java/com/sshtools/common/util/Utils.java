@@ -26,6 +26,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -472,5 +474,14 @@ public class Utils {
 	
 	public static String translatePathString(Path path) {
 		return path.toString().replace('\\', '/');
+	}
+
+	public static String encodeUserInfo(String userinfo) {
+		try {
+			return new URI("sftp", userinfo, "localhost", 22, null, null, null).getRawUserInfo();
+		} catch (URISyntaxException e) {
+			/* NOTE: Will NEVER be thrown, and can't be tested for coverage :( */
+			throw new IllegalArgumentException(e);
+		}
 	}
 }

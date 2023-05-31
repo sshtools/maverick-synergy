@@ -1708,6 +1708,14 @@ public class SftpChannel extends AbstractSubsystem {
 			sendMessage(msg);
 
 			SftpMessage fileMsg = getResponse(requestId);
+			if (fileMsg.getType() == SSH_FXP_STATUS) {
+				int status = (int) fileMsg.readInt();
+				if (version >= 3) {
+					throw new SftpStatusException(status, fileMsg.readString());
+				}
+				throw new SftpStatusException(status);
+
+			}
 			try {
 				SftpFile[] files = extractFiles(fileMsg, null);
 				return files[0].getAbsolutePath();

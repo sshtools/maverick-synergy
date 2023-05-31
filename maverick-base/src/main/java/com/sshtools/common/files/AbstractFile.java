@@ -4,16 +4,16 @@
  * This file is part of the Maverick Synergy Java SSH API.
  *
  * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU Lesser General License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * Maverick Synergy is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU Lesser General License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
+ * You should have received a copy of the GNU Lesser General License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
  */
 package com.sshtools.common.files;
@@ -32,37 +32,45 @@ import com.sshtools.common.sftp.SftpFileAttributes;
 
 public interface AbstractFile {
 
-	public String getName();
+	String getName();
 
-	public InputStream getInputStream() throws IOException, PermissionDeniedException;
+	InputStream getInputStream() throws IOException, PermissionDeniedException;
 
-	public boolean exists() throws IOException, PermissionDeniedException;
+	boolean exists() throws IOException, PermissionDeniedException;
 
-	public List<AbstractFile> getChildren() throws IOException,
+	default boolean existsNoFollowLinks() throws IOException, PermissionDeniedException {
+		return exists();
+	}
+
+	List<AbstractFile> getChildren() throws IOException,
 			PermissionDeniedException;
 
-	public String getAbsolutePath() throws IOException, PermissionDeniedException;
+	String getAbsolutePath() throws IOException, PermissionDeniedException;
 
-	public AbstractFile getParentFile() throws IOException, PermissionDeniedException;
+	AbstractFile getParentFile() throws IOException, PermissionDeniedException;
 	
-	public boolean isDirectory() throws IOException, PermissionDeniedException;
+	boolean isDirectory() throws IOException, PermissionDeniedException;
 
-	public boolean isFile() throws IOException, PermissionDeniedException;
+	boolean isFile() throws IOException, PermissionDeniedException;
 
-	public OutputStream getOutputStream() throws IOException, PermissionDeniedException;
+	OutputStream getOutputStream() throws IOException, PermissionDeniedException;
 
-	public boolean isHidden() throws IOException, PermissionDeniedException;
+	boolean isHidden() throws IOException, PermissionDeniedException;
 
-	public boolean createFolder() throws PermissionDeniedException, IOException;
+	boolean createFolder() throws PermissionDeniedException, IOException;
 
-	public boolean isReadable() throws IOException, PermissionDeniedException;
+	boolean isReadable() throws IOException, PermissionDeniedException;
 
-	public boolean delete(boolean recursive) throws IOException,
+	boolean delete(boolean recursive) throws IOException,
 			PermissionDeniedException;
 
-	public SftpFileAttributes getAttributes() throws FileNotFoundException, IOException, PermissionDeniedException;
+	SftpFileAttributes getAttributes() throws FileNotFoundException, IOException, PermissionDeniedException;
 
-	public void refresh();
+	default SftpFileAttributes getAttributesNoFollowLinks() throws FileNotFoundException, IOException, PermissionDeniedException {
+		return getAttributes();
+	}
+
+	void refresh();
 	
 	long lastModified() throws IOException, PermissionDeniedException;
 

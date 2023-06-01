@@ -592,12 +592,6 @@ public final class PushTask extends AbstractFileTask {
 			IOException, PermissionDeniedException, ChannelOpenException {
 
 		var localFile = primarySftpClient.getCurrentWorkingDirectory().resolveFile(file.toString());
-
-		if (!localFile.exists()) {
-
-
-		}
-
 		verboseMessage("Total to transfer is {0} bytes", localFile.length());
 
 		if (chunks <= 1) {
@@ -767,7 +761,9 @@ public final class PushTask extends AbstractFileTask {
 			sftp.cd(remoteFolder);
 			sftp.put(localFile.getAbsolutePath(), remotePath, progress.orElse(null));
 		} finally {
-			clients.addLast(ssh);
+			synchronized(clients) {
+				clients.addLast(ssh);
+			}
 		}
 	}
 
@@ -806,7 +802,10 @@ public final class PushTask extends AbstractFileTask {
 			PermissionDeniedException {
 
 		verboseMessage("There are {0} clients, removing one", clients.size());
-		var ssh = clients.removeFirst();
+		SshClient ssh;
+		synchronized(clients) {
+			ssh = clients.removeFirst();
+		}
 		try (var file = new RandomAccessFile(localFile.getAbsolutePath(), "r")) {
 			file.seek(pointer);
 				try (var sftp = SftpClientBuilder.create().
@@ -814,30 +813,42 @@ public final class PushTask extends AbstractFileTask {
 						withRemotePath(remoteFolder).
 						withLocalPath(primarySftpClient.lpwd()).
 						build()) {
-					sftp.put(new ChunkInputStream(file, chunkLength), localFile.getName(),
-							new FileTransferProgress() {
-
-								@Override
-								public void started(long bytesTotal, String file) {
-									progress.started(bytesTotal, file);
-								}
-
-								@Override
-								public boolean isCancelled() {
-									return progress.isCancelled();
-								}
-
-								@Override
-								public void progressed(long bytesSoFar) {
-									progress.progressed(bytesSoFar - pointer);
-								}
-
-								@Override
-								public void completed() {
-									progress.completed();
-								}
-
-							}, pointer, chunkLength);
+					
+					try {
+						sftp.put(new ChunkInputStream(file, chunkLength), localFile.getName(),
+								new FileTransferProgress() {
+	
+									@Override
+									public void started(long bytesTotal, String file) {
+										progress.started(bytesTotal, file);
+									}
+	
+									@Override
+									public boolean isCancelled() {
+										return progress.isCancelled();
+									}
+	
+									@Override
+									public void progressed(long bytesSoFar) {
+										progress.progressed(bytesSoFar - pointer);
+									}
+	
+									@Override
+									public void completed() {
+										progress.completed();
+									}
+	
+								}, pointer, chunkLength);
+					}
+					catch(SftpStatusException e) {
+						if(e.getStatus() == SftpStatusException.SSH_FX_NO_SUCH_FILE) {
+							FileNotFoundException fnfe = new FileNotFoundException(localFile.getName() + " (chunk " + chunkNumber + " @ " + pointer + ", with " + chunkLength + " bytes)");
+							fnfe.initCause(e);
+							throw fnfe;
+						}
+						else
+							throw e;
+					}
 				}
 		} 
 		catch(IOException ioe) {
@@ -847,7 +858,9 @@ public final class PushTask extends AbstractFileTask {
 			else
 				throw ioe;
 		} finally {
-			clients.addLast(ssh);
+			synchronized(clients) {
+				clients.addLast(ssh);
+			}
 		}
 	}
 	
@@ -856,7 +869,10 @@ public final class PushTask extends AbstractFileTask {
 			throws IOException, SftpStatusException, SshException, TransferCancelledException, ChannelOpenException,
 			PermissionDeniedException {
 
-		var ssh = clients.removeFirst();
+		SshClient ssh;
+		synchronized(clients) {
+			ssh = clients.removeFirst();
+		}
 		try (var file = new RandomAccessFile(localFile.getAbsolutePath(), "r")) {
 			file.seek(pointer);
 				try (var sftp = SftpClientBuilder.create().
@@ -911,7 +927,9 @@ public final class PushTask extends AbstractFileTask {
 			else
 				throw ioe;
 		} finally {
-			clients.addLast(ssh);
+			synchronized(clients) {
+				clients.addLast(ssh);
+			}
 		}
 	}
 

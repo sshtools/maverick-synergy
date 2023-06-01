@@ -1947,6 +1947,16 @@ public class SftpChannel extends AbstractSubsystem {
 		}
 	}
 	
+	public SftpHandle getHandle(UnsignedInteger32 requuestId) throws SftpStatusException, SshException {
+		return getHandle(getResponse(requestId));
+	}
+	
+	public SftpHandle getHandle(SftpMessage bar) 
+			throws SftpStatusException, SshException {
+		var response = getHandleResponse(bar);
+		return SftpHandle.of(response, this);
+	}
+	
 	public byte[] getHandleResponse(UnsignedInteger32 requestId)
 			throws SftpStatusException, SshException {
 		return getHandleResponse(getResponse(requestId));

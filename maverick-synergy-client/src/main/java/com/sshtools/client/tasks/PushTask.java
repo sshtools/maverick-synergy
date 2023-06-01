@@ -869,11 +869,8 @@ public final class PushTask extends AbstractFileTask {
 					msg.writeBinaryString(transaction);
 					msg.writeString(partId);
 					
-					var handle = sftp.getSubsystemChannel().getHandleResponse(sftp.getSubsystemChannel().sendExtensionMessage("open-part-file@sshtools.com", msg.toByteArray()));
-					
-					try {
-						sftp.getSubsystemChannel().performOptimizedWrite(localFile.getName(), 
-								handle, 
+					try(var handle = sftp.getSubsystemChannel().getHandle(sftp.getSubsystemChannel().sendExtensionMessage("open-part-file@sshtools.com", msg.toByteArray()))) {
+						handle.performOptimizedWrite(localFile.getName(), 
 								blocksize,
 								outstandingRequests, 
 								new ChunkInputStream(file, chunkLength),
@@ -904,8 +901,6 @@ public final class PushTask extends AbstractFileTask {
 					} catch (SftpStatusException | SshException | TransferCancelledException e) {
 						Log.error("Part upload failed", e);
 						throw e;
-					} finally {
-						sftp.getSubsystemChannel().closeHandle(handle);
 					}
 				}
 		} 

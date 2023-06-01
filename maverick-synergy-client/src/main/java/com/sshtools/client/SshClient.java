@@ -959,13 +959,13 @@ public class SshClient implements Closeable {
 							String.format("Failed to authenticate user %s at %s:%d", sshContext.getUsername(), hostname, port));
 				}
 			}
+			return con;
 		}
 		catch(UnresolvedAddressException uae) {
 			UnknownHostException uhe = new UnknownHostException(hostname);
 			uhe.initCause(uae);
 			throw uhe;
 		}
-		return con;
 	}
 	
 	/**

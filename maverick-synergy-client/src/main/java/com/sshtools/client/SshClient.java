@@ -25,7 +25,9 @@ import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.channels.UnresolvedAddressException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -927,34 +929,41 @@ public class SshClient implements Closeable {
 		configure(sshContext);
 		if(onConfigure.isPresent())
 			onConfigure.get().accept(sshContext);
-		ConnectRequestFuture future = sshContext.getEngine().connect(hostname, port, sshContext);
-		future.waitFor(connectTimeout);
-		if(!future.isSuccess()) {
-			throw new IOException(String.format("Failed to connect to %s:%d", hostname, port));
-		}
-		var con = (Connection<SshClientContext>) future.getConnection();
-		con.addEventListener(new EventListener() {
-			@Override
-			public void processEvent(Event evt) {
-				switch(evt.getId()) {
-				case EventCodes.EVENT_KEY_EXCHANGE_INIT:
-					keys.addAll(Arrays.asList(((String) evt.getAttribute(EventCodes.ATTRIBUTE_REMOTE_PUBLICKEYS)).split(",")));
-					break;
-				case EventCodes.EVENT_DISCONNECTED:
-					disconnect();
-					break;
-				default:
-					break;
+		try {
+			ConnectRequestFuture future = sshContext.getEngine().connect(hostname, port, sshContext);
+			future.waitFor(connectTimeout);
+			if(!future.isSuccess()) {
+				throw new IOException(String.format("Failed to connect to %s:%d", hostname, port));
+			}
+			var con = (Connection<SshClientContext>) future.getConnection();
+			con.addEventListener(new EventListener() {
+				@Override
+				public void processEvent(Event evt) {
+					switch(evt.getId()) {
+					case EventCodes.EVENT_KEY_EXCHANGE_INIT:
+						keys.addAll(Arrays.asList(((String) evt.getAttribute(EventCodes.ATTRIBUTE_REMOTE_PUBLICKEYS)).split(",")));
+						break;
+					case EventCodes.EVENT_DISCONNECTED:
+						disconnect();
+						break;
+					default:
+						break;
+					}
+				}
+			});
+			if(!sshContext.getAuthenticators().isEmpty()) {
+				con.getAuthenticatedFuture().waitForever();
+				if(!con.getAuthenticatedFuture().isSuccess()) {
+					close();
+					throw new IOException(
+							String.format("Failed to authenticate user %s at %s:%d", sshContext.getUsername(), hostname, port));
 				}
 			}
-		});
-		if(!sshContext.getAuthenticators().isEmpty()) {
-			con.getAuthenticatedFuture().waitForever();
-			if(!con.getAuthenticatedFuture().isSuccess()) {
-				close();
-				throw new IOException(
-						String.format("Failed to authenticate user %s at %s:%d", sshContext.getUsername(), hostname, port));
-			}
+		}
+		catch(UnresolvedAddressException uae) {
+			UnknownHostException uhe = new UnknownHostException(hostname);
+			uhe.initCause(uae);
+			throw uhe;
 		}
 		return con;
 	}

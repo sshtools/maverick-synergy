@@ -25,7 +25,13 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 import com.sshtools.common.files.AbstractFileRandomAccess;
+import com.sshtools.common.files.direct.NioFile;
+import com.sshtools.common.files.direct.NioFileFactory;
 
+/**
+ * Deprecated. Use {@link NioFileFactory} and {@link NioFile}.
+ */
+@Deprecated(since = "3.1.0", forRemoval = true)
 public class PathRandomAccessImpl implements AbstractFileRandomAccess {
 	
 	protected FileChannel raf;

@@ -23,9 +23,15 @@ import java.nio.file.Path;
 
 import com.sshtools.common.events.Event;
 import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.files.direct.NioFile;
+import com.sshtools.common.files.direct.NioFileFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 
+/**
+ * Deprecated. Use {@link NioFileFactory} and {@link NioFile}.
+ */
+@Deprecated(since = "3.1.0", forRemoval = true)
 public class PathFileFactory implements AbstractFileFactory<PathFile> {
 	
 	private Path base;

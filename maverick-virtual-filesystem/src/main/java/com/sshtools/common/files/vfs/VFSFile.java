@@ -291,10 +291,7 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 			if (attrs.getGID() != null) {
 				file.getContent().setAttribute("gid", attrs.getGID());
 			}
-			if (attrs.getPermissions() != null) {
-				file.getContent().setAttribute("permissions",
-						attrs.getPermissions().intValue());
-			}
+			file.getContent().setAttribute("permissions", attrs.getPosixPermissions().asInt());
 		}
 
 	}

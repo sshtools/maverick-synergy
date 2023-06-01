@@ -35,11 +35,17 @@ import java.util.concurrent.TimeUnit;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.AbstractFileRandomAccess;
+import com.sshtools.common.files.direct.NioFile;
+import com.sshtools.common.files.direct.NioFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
 
+/**
+ * Deprecated. Use {@link NioFileFactory} and {@link NioFile}.
+ */
+@Deprecated(since = "3.1.0", forRemoval = true)
 public class PathFile implements AbstractFile {
 	private Path path;
 	private PathFileFactory factory;

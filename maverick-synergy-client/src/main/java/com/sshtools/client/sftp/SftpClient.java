@@ -863,6 +863,25 @@ public class SftpClient implements Closeable {
 	}
 
 	/**
+	 * Determine if a path exists.
+	 * 
+	 * @return boolean
+	 */
+	public boolean exists(String path) throws SftpStatusException, SshException {
+		try {
+			stat(path);
+			return true;
+		}
+		catch(SftpStatusException sse) {
+			if(sse.getStatus() == SftpStatusException.SSH_FX_NO_SUCH_FILE) {
+				return false;
+			}
+			else
+				throw sse;
+		}
+	}
+
+	/**
 	 * <p>
 	 * Returns the absolute path name of the current remote working directory.
 	 * </p>

@@ -45,10 +45,11 @@ import java.util.stream.Collectors;
 import com.sshtools.client.ChunkInputStream;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.sftp.RemoteHash;
+import com.sshtools.client.sftp.SftpChannel;
 import com.sshtools.client.sftp.SftpClient;
+import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.client.sftp.TransferCancelledException;
-import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
 import com.sshtools.client.tasks.PushTask.PushTaskBuilder.ProgressMessages;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.logger.Log;
@@ -638,6 +639,12 @@ public final class PushTask extends AbstractFileTask {
 		var executor = Executors.newFixedThreadPool(chunks);
 		
 		try {
+			
+			var targetFilePath = remoteFolder + "/" + localFile.getName();
+			if(!primarySftpClient.exists(targetFilePath)) {
+				verboseMessage("Pre-creating file {0}/{1}", remoteFolder, localFile.getName(), chunks);
+				primarySftpClient.openFile(targetFilePath, SftpChannel.OPEN_WRITE | SftpChannel.OPEN_CREATE).close();
+			}
 
 			var chunkLength = localFile.length() /  chunks;
 			var finalLength = localFile.length() - (chunkLength * (chunks-1));
@@ -705,6 +712,7 @@ public final class PushTask extends AbstractFileTask {
 				 */
 				verboseMessage("Falling back to pure random access support which may or may not be supported.");
 				printChunkMessages(chunkLength);
+				
 				for (int i = 0; i < chunks; i++) {
 					var chunk = i + 1;
 					var pointer = i * chunkLength;
@@ -720,6 +728,12 @@ public final class PushTask extends AbstractFileTask {
 							errors.add(e2);
 						}
 					});
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 				}
 			}
 
@@ -803,62 +817,58 @@ public final class PushTask extends AbstractFileTask {
 
 		verboseMessage("There are {0} clients, removing one", clients.size());
 		SshClient ssh;
-		synchronized(clients) {
+		synchronized (clients) {
 			ssh = clients.removeFirst();
 		}
 		try (var file = new RandomAccessFile(localFile.getAbsolutePath(), "r")) {
 			file.seek(pointer);
-				try (var sftp = SftpClientBuilder.create().
-						withClient(ssh).
-						withRemotePath(remoteFolder).
-						withLocalPath(primarySftpClient.lpwd()).
-						build()) {
-					
-					try {
-						sftp.put(new ChunkInputStream(file, chunkLength), localFile.getName(),
-								new FileTransferProgress() {
-	
-									@Override
-									public void started(long bytesTotal, String file) {
-										progress.started(bytesTotal, file);
-									}
-	
-									@Override
-									public boolean isCancelled() {
-										return progress.isCancelled();
-									}
-	
-									@Override
-									public void progressed(long bytesSoFar) {
-										progress.progressed(bytesSoFar - pointer);
-									}
-	
-									@Override
-									public void completed() {
-										progress.completed();
-									}
-	
-								}, pointer, chunkLength);
-					}
-					catch(SftpStatusException e) {
-						if(e.getStatus() == SftpStatusException.SSH_FX_NO_SUCH_FILE) {
-							FileNotFoundException fnfe = new FileNotFoundException(localFile.getName() + " (chunk " + chunkNumber + " @ " + pointer + ", with " + chunkLength + " bytes)");
-							fnfe.initCause(e);
-							throw fnfe;
+			try (var sftp = SftpClientBuilder.create().
+					withClient(ssh).
+					withRemotePath(remoteFolder).
+					withLocalPath(primarySftpClient.lpwd()).
+					build()) {
+
+				try {
+					sftp.put(new ChunkInputStream(file, chunkLength), localFile.getName(), new FileTransferProgress() {
+
+						@Override
+						public void started(long bytesTotal, String file) {
+							progress.started(bytesTotal, file);
 						}
-						else
-							throw e;
-					}
+
+						@Override
+						public boolean isCancelled() {
+							return progress.isCancelled();
+						}
+
+						@Override
+						public void progressed(long bytesSoFar) {
+							progress.progressed(bytesSoFar - pointer);
+						}
+
+						@Override
+						public void completed() {
+							progress.completed();
+						}
+
+					}, pointer, chunkLength);
+				} catch (SftpStatusException e) {
+					if (e.getStatus() == SftpStatusException.SSH_FX_NO_SUCH_FILE) {
+						FileNotFoundException fnfe = new FileNotFoundException(localFile.getName() + " (chunk "
+								+ chunkNumber + " @ " + pointer + ", with " + chunkLength + " bytes)");
+						fnfe.initCause(e);
+						throw fnfe;
+					} else
+						throw e;
 				}
-		} 
-		catch(IOException ioe) {
-			if(ioe.getCause() instanceof TransferCancelledException) {
-				throw (TransferCancelledException)ioe.getCause();
 			}
-			else
+		} catch (IOException ioe) {
+			if (ioe.getCause() instanceof TransferCancelledException) {
+				throw (TransferCancelledException) ioe.getCause();
+			} else
 				throw ioe;
 		} finally {
-			synchronized(clients) {
+			synchronized (clients) {
 				clients.addLast(ssh);
 			}
 		}

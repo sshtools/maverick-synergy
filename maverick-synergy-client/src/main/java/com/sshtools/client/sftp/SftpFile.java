@@ -23,7 +23,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.StringTokenizer;
 
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
@@ -34,14 +34,12 @@ import com.sshtools.common.ssh.SshException;
  */
 public final class SftpFile {
   private final String filename;
-  private final Optional<SftpFileAttributes> attrs;
   private final SftpChannel sftp;
   private final String absolutePath;
   private final String longname;
   private final Map<String,Object> properties = new HashMap<>();
   
-  SftpFile(String path, SftpFileAttributes attrs, SftpChannel sftp, String longname) {
-      this.attrs = Optional.ofNullable(attrs);
+  SftpFile(String path, SftpChannel sftp, String longname) {
       this.sftp = sftp;
       this.longname = longname;
 
@@ -220,14 +218,45 @@ public final class SftpFile {
   }
 
   /**
+   * Set the files attributes.
+   *
+   * @param attributes attributes
+   * @return SftpFileAttributes
+   * @throws SshException
+   * @throws SftpStatusException
+   */
+  @SuppressWarnings("deprecation")
+  public void setAttributes(SftpFileAttributes attributes) throws SftpStatusException, SshException {
+	  sftp.setAttributes(absolutePath, attributes);
+  }
+
+  /**
    * Get the files attributes.
    *
    * @return SftpFileAttributes
    * @throws SshException
    * @throws SftpStatusException
-*/
+   */
   public SftpFileAttributes getAttributes() throws SftpStatusException, SshException {
-    return attrs.isPresent() ? attrs.get() : sftp.getAttributes(getAbsolutePath());
+    SftpFileAttributes attrs = sftp.getAttributes(getAbsolutePath());
+
+	// Work out username/group from long name
+	if (longname != null && sftp.version <= 3) {
+		try {
+			StringTokenizer t = new StringTokenizer(longname);
+			t.nextToken();
+			t.nextToken();
+			String username = t.nextToken();
+			String group = t.nextToken();
+
+			attrs.setUsername(username);
+			attrs.setGroup(group);
+
+		} catch (Exception e) {
+		}
+	}
+	
+	return attrs;
   }
 
   /**

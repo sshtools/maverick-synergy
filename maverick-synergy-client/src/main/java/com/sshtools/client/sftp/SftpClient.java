@@ -990,7 +990,7 @@ public class SftpClient implements Closeable {
 			if (localFiltering) {
 				f = regexFilter ? new RegexSftpFileFilter(filter) : new GlobSftpFileFilter(filter);
 			}
-			SftpFile file = new SftpFile(actual, sftp.getAttributes(actual), sftp, null);
+			SftpFile file = new SftpFile(actual, sftp, null);
 			Vector<SftpFile> children = new Vector<SftpFile>();
 			Vector<SftpFile> tmp = new Vector<SftpFile>();
 			try(SftpHandle handleObject = new SftpHandle(handle, sftp, file)) {
@@ -2266,16 +2266,14 @@ public class SftpClient implements Closeable {
 	 * 
 	 */
 	public void chown(String uid, String path) throws SftpStatusException, SshException {
-		String actual = resolveRemotePath(path);
-
-		SftpFileAttributes attrs = sftp.getAttributes(actual);
-		SftpFileAttributes newAttrs = new SftpFileAttributes(attrs.getType(), sftp.getCharsetEncoding());
+		var file = resolve(path);
+		var attrs = file.getAttributes();
+		var newAttrs = new SftpFileAttributes(attrs.getType(), sftp.getCharsetEncoding());
 		newAttrs.setUID(uid);
 		if (sftp.getVersion() <= 3) {
 			newAttrs.setGID(attrs.getGID());
 		}
-		sftp.setAttributes(actual, newAttrs);
-
+		file.setAttributes(newAttrs);
 	}
 
 	/**
@@ -2292,14 +2290,12 @@ public class SftpClient implements Closeable {
 	 * 
 	 */
 	public void chown(String uid, String gid, String path) throws SftpStatusException, SshException {
-		String actual = resolveRemotePath(path);
-
-		SftpFileAttributes attrs = sftp.getAttributes(actual);
-		SftpFileAttributes newAttrs = new SftpFileAttributes(attrs.getType(), sftp.getCharsetEncoding());
+		var file = resolve(path);
+		var attrs = file.getAttributes();
+		var newAttrs = new SftpFileAttributes(attrs.getType(), sftp.getCharsetEncoding());
 		newAttrs.setUID(uid);
 		newAttrs.setGID(gid);
-		sftp.setAttributes(actual, newAttrs);
-
+		file.setAttributes(newAttrs);
 	}
 	
 	/**
@@ -2314,16 +2310,14 @@ public class SftpClient implements Closeable {
 	 * @throws SshException
 	 */
 	public void chgrp(String gid, String path) throws SftpStatusException, SshException {
-		String actual = resolveRemotePath(path);
-
-		SftpFileAttributes attrs = sftp.getAttributes(actual);
-		SftpFileAttributes newAttrs = new SftpFileAttributes(attrs.getType(), sftp.getCharsetEncoding());
+		var file = resolve(path);
+		var attrs = file.getAttributes();
+		var newAttrs = new SftpFileAttributes(attrs.getType(), sftp.getCharsetEncoding());
 		newAttrs.setGID(gid);
 		if (sftp.getVersion() <= 3) {
 			newAttrs.setUID(attrs.getUID());
 		}
-		sftp.setAttributes(actual, newAttrs);
-
+		file.setAttributes(newAttrs);
 	}
 
 	/**
@@ -2668,6 +2662,20 @@ public class SftpClient implements Closeable {
 	}
 
 	/**
+	 * Resolve an {@link SftpFile} object give a path.
+	 * 
+	 * @param path the path of the file on the remote computer
+	 * @return the file object
+	 * 
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	public SftpFile resolve(String path) throws SftpStatusException, SshException {
+		String actual = resolveRemotePath(path);
+		return new SftpFile(actual, sftp, null);
+	}
+
+	/**
 	 * <p>
 	 * Returns the attributes of the link from the remote computer.
 	 * </p>
@@ -2999,6 +3007,7 @@ public class SftpClient implements Closeable {
 	 * @throws TransferCancelledException
 	 * @throws PermissionDeniedException
 	 */
+	@SuppressWarnings("deprecation")
 	public DirectoryOperation putLocalDirectory(String localdir, String remotedir, boolean recurse, boolean sync,
 			boolean commit, FileTransferProgress progress) throws IOException, SftpStatusException, SshException,
 			TransferCancelledException, PermissionDeniedException {
@@ -3039,10 +3048,7 @@ public class SftpClient implements Closeable {
 					unchangedFile = ((source.length() == attrs.getSize().longValue())
 							&& ((source.lastModified() / 1000) == attrs.getModifiedTime().longValue()));
 
-					System.out.println(source.getName() + " is " + (unchangedFile ? "unchanged" : "changed"));
-
 				} catch (SftpStatusException ex) {
-					System.out.println(source.getName() + " is new");
 					newFile = true;
 				}
 
@@ -3908,9 +3914,9 @@ public class SftpClient implements Closeable {
 	}
 
 	public FileVisitResult visit(String path, FileVisitor<SftpFile> visitor) throws SshException, SftpStatusException {
-		SftpFileAttributes attrs = stat(path);
-		SftpFile file = new SftpFile(path, attrs, sftp, null);
+		var file = new SftpFile(path, sftp, null);
 		try {
+			var attrs = file.getAttributes();
 			if (attrs.isDirectory()) {
 				FileVisitResult preVisitResult = visitor.preVisitDirectory(file, fileToBasicAttributes(file));
 				try {

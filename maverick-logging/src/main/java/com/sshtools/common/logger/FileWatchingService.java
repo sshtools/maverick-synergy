@@ -61,9 +61,10 @@ public class FileWatchingService extends Thread {
     }
 
     public boolean isStopped() { return stop.get(); }
-    public void stopThread() { 
-    	IOUtils.closeStream(service);
+    public void stopThread() {
     	stop.set(true); 
+    	IOUtils.closeStream(service);
+    	interrupt(); 
     }
     
     public void register(Path path, FileWatchingCallback callback) throws IOException {

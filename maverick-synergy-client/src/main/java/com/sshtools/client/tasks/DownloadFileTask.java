@@ -26,7 +26,6 @@ import java.util.Optional;
 
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
-import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.ssh.Connection;
 
 /**

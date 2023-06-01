@@ -26,6 +26,7 @@ import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -140,7 +141,7 @@ public final class PushTask extends AbstractFileTask {
 		private Optional<SftpClient> primarySftpClient = Optional.empty();
 		private Optional<ProgressMessages> progressMessages = Optional.empty();
 		private Function<AbstractFile, FileTransferProgress> chunkProgress = (f) -> null;
-		public boolean verboseOutput = false;
+		private boolean verboseOutput = false;
 		
 
 		private PushTaskBuilder() {
@@ -537,7 +538,7 @@ public final class PushTask extends AbstractFileTask {
 			PermissionDeniedException, ChannelOpenException {
 
 		for (var file : files) {
-			if(!file.toFile().exists()) {
+			if(!Files.exists(file)) {
 				throw new FileNotFoundException(String.format("%s does not exist", file.getFileName()));
 			}
 		}
@@ -657,13 +658,6 @@ public final class PushTask extends AbstractFileTask {
 				progress.get().started(localFile.length(), localFile.getName());
 			}
 			
-			for(int i = 0 ; i < chunks; i++) {
-				var chunk = i + 1;
-				var pointer = i * chunkLength;
-				verboseMessage("Starting chunk {0} at position {1} with length of {2} bytes",
-						chunk, pointer, chunkLength);
-			}
-			
 			String remotePath = FileUtils.checkEndsWithSlash(primarySftpClient.pwd()) + localFile.getName();
 
 			ByteArrayWriter msg = new ByteArrayWriter();
@@ -687,6 +681,7 @@ public final class PushTask extends AbstractFileTask {
 				byte[] transaction = primarySftpClient.getSubsystemChannel().getHandleResponse(requestId);
 				
 				verboseMessage("Remote server supports multipart extensions");
+				printChunkMessages(chunkLength);
 				
 				for (int i = 0; i < chunks; i++) {
 					var chunk = i + 1;
@@ -715,7 +710,7 @@ public final class PushTask extends AbstractFileTask {
 				 * to an unknown extension.
 				 */
 				verboseMessage("Falling back to pure random access support which may or may not be supported.");
-				
+				printChunkMessages(chunkLength);
 				for (int i = 0; i < chunks; i++) {
 					var chunk = i + 1;
 					var pointer = i * chunkLength;
@@ -745,6 +740,15 @@ public final class PushTask extends AbstractFileTask {
 			} finally {
 				progress.get().completed();
 			}	
+		}
+	}
+
+	private void printChunkMessages(long chunkLength) {
+		for(int i = 0 ; i < chunks; i++) {
+			var chunk = i + 1;
+			var pointer = i * chunkLength;
+			verboseMessage("Starting chunk {0} at position {1} with length of {2} bytes",
+					chunk, pointer, chunkLength);
 		}
 	}
 
@@ -801,6 +805,7 @@ public final class PushTask extends AbstractFileTask {
 			throws IOException, SftpStatusException, SshException, TransferCancelledException, ChannelOpenException,
 			PermissionDeniedException {
 
+		verboseMessage("There are {0} clients, removing one", clients.size());
 		var ssh = clients.removeFirst();
 		try (var file = new RandomAccessFile(localFile.getAbsolutePath(), "r")) {
 			file.seek(pointer);

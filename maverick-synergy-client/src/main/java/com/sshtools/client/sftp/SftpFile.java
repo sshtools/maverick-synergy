@@ -22,20 +22,17 @@ package com.sshtools.client.sftp;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
-import com.sshtools.common.events.Event;
-import com.sshtools.common.events.EventCodes;
-import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.util.UnsignedInteger64;
 
 /**
  * Represents an SFTP file object.
  */
-public class SftpFile {
+public final class SftpFile {
   private final String filename;
   private final Optional<SftpFileAttributes> attrs;
   private final SftpChannel sftp;
@@ -43,23 +40,9 @@ public class SftpFile {
   private final String longname;
   private final Map<String,Object> properties = new HashMap<>();
   
-  private byte[] handle;
-  
-  /**
-   * Creates a new SftpFile object.
-   *
-   * @param path
-   * @param attrs
-   */
-  @Deprecated(since = "3.1.0", forRemoval = true)
-  public SftpFile(String path, SftpFileAttributes attrs) {
-	  this(path, attrs, null, null, null);
-  }
-
-  SftpFile(String path, SftpFileAttributes attrs, SftpChannel sftp, byte[] handle, String longname) {
+  SftpFile(String path, SftpFileAttributes attrs, SftpChannel sftp, String longname) {
       this.attrs = Optional.ofNullable(attrs);
       this.sftp = sftp;
-      this.handle = handle;
       this.longname = longname;
 
       //set filename
@@ -129,46 +112,31 @@ public class SftpFile {
       return absolutePath;
   }
 
-  public int hashCode() {
-    return absolutePath.hashCode();
-  }
   
-  /**
+  @Override
+  public int hashCode() {
+	  return Objects.hash(absolutePath);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+	  if (this == obj)
+		  return true;
+	  if (obj == null)
+		  return false;
+	  if (getClass() != obj.getClass())
+		  return false;
+	  SftpFile other = (SftpFile) obj;
+	  return Objects.equals(absolutePath, other.absolutePath);
+  }
+
+/**
    * The longname supplied by the server. Note this will not be present if SFTP version is
    * > 3.
    * @return
    */
   public String getLongname() {
 	  return longname;
-  }
-
-  /**
-   * Compares the Object to this instance and returns true if they point to the
-   * same file. If they point to the same file but have open file handles, the
-   * handles are also used to determine the equality. Therefore two separate
-   * instances both pointing to the same file will return true, unless one or both
-   * have an open file handle in which case it will only return true if the
-   * file handles also match.
-   *
-   * @param obj
-   * @return boolean
-   */
-  public boolean equals(Object obj) {
-    if(obj instanceof SftpFile) {
-      boolean match = ((SftpFile)obj).getAbsolutePath().equals(absolutePath);
-      if(handle==null && (((SftpFile)obj).handle == null)) {
-        return match;
-      }
-	if(handle!=null && ((SftpFile)obj).handle!=null) {
-	  for (int i = 0; i < handle.length; i++) {
-	    if ( ( (SftpFile) obj).handle[i] != handle[i])
-	      return false;
-	  }
-	}
-	return match;
-    }
-
-    return false;
   }
 
   /**
@@ -199,49 +167,6 @@ public class SftpFile {
       sftp.removeFile(getAbsolutePath());
     }
   }
-
-	/**
-	 * <p>
-	 * Read bytes directly from this file. This is a low-level operation,
-	 * you may only need to use {@link SftpClientTask#get(String)} methods instead if you just want
-	 * to download files.
-	 * </p>
-	 * 
-	 * @param offset offset in remote file to read from
-	 * @param output output buffer to place read bytes in
-	 * @param outputOffset offset in output buffer to write bytes to
-	 * @param len number of bytes to read
-	 * @return int number of bytes read
-	 * 
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 */
-	public int read(long offset, byte[] output, int outputOffset, int len) throws SftpStatusException, SshException {
-		if(handle == null)
-			throw new SftpStatusException(SftpStatusException.SSH_FX_FAILURE);
-		return sftp.readFile(handle, new UnsignedInteger64(offset), output, outputOffset, len);
-	}
-	
-	/**
-	 * <p>
-	 * Write bytes directly to this file. This is a low-level operation,
-	 * you may only need to use {@link SftpClientTask#put(String)} methods instead if you just want
-	 * to upload files.
-	 * </p>
-	 * 
-	 * @param offset offset in remote file to write to
-	 * @param input input buffer to retrieve bytes from to write
-	 * @param inputOffset offset in output buffer to write bytes to
-	 * @param len number of bytes to write
-	 * 
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 */
-	public void write(long offset, byte[] input, int inputOffset, int len) throws SftpStatusException, SshException {
-		if(handle == null)
-			throw new SftpStatusException(SftpStatusException.SSH_FX_FAILURE);
-		sftp.writeFile(handle, new UnsignedInteger64(offset), input, inputOffset, len);
-	}
 
   /**
    * Determine whether the user has write access to the file. This
@@ -274,28 +199,6 @@ public class SftpFile {
       return true;
     }
 	return false;
-  }
-
-  /**
-   * Determine whether the file is open.
-   *
-   * @return boolean
-   */
-  public boolean isOpen() {
-    if (sftp == null) {
-      return false;
-    }
-
-    return sftp.isValidHandle(handle);
-  }
-
-  /**
-   * Get the open file handle
-   *
-   * @return byte[]
-   */
-  public byte[] getHandle() {
-    return handle;
   }
 
   /**
@@ -334,24 +237,6 @@ public class SftpFile {
    */
   public String getAbsolutePath() {
     return absolutePath;
-  }
-
-  /**
-   * Close the file.
-   *
-   * @throws SshException
-   * @throws SftpStatusException
-   */
-  public void close() throws SftpStatusException, SshException {
-	if (handle != null) {
-		sftp.closeHandle(handle);
-		EventServiceImplementation.getInstance().fireEvent(
-				(new Event(this, EventCodes.EVENT_SFTP_FILE_CLOSED,
-						true)).addAttribute(
-						EventCodes.ATTRIBUTE_FILE_NAME,
-						getAbsolutePath()));
-		handle = null;
-	}
   }
 
   /**
@@ -434,11 +319,35 @@ public class SftpFile {
 	  return getAttributes().isSocket();
   }
 
+  /** 
+   * Set an arbitrary property in this file object.
+   * <p> 
+   * Deprecated, no replacement.
+   * 
+   * @param key key
+   * @param value vlaue
+   * @deprecated
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public void setProperty(String key, Object value) {
 	  properties.put(key, value);
   }
-  
+
+  /** 
+   * Get an arbitrary property stored in this file object.
+   * <p> 
+   * Deprecated, no replacement.
+   * 
+   * @param key key
+   * @return value
+   * @deprecated
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public Object getProperty(String key) {
 	  return properties.get(key);
+  }
+  
+  SftpHandle openFile(int flags) throws SftpStatusException, SshException {
+		return sftp.openFile(absolutePath, flags);
   }
 }

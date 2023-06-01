@@ -33,21 +33,26 @@ import com.sshtools.common.util.UnsignedInteger32;
  */
 public class SftpFileInputStream extends InputStream {
 
-	SftpFile file;
-	SftpChannel sftp;
-	long position;
-	Vector<UnsignedInteger32> outstandingRequests = new Vector<UnsignedInteger32>();
-	SftpMessage currentMessage;
-	int currentMessageRemaining;
-	boolean isEOF = false;
-	boolean error = false;
+	private final SftpHandle handle;
+	private final SftpChannel sftp;
+	private final Vector<UnsignedInteger32> outstandingRequests = new Vector<UnsignedInteger32>();
+	private long position;
+	private SftpMessage currentMessage;
+	private int currentMessageRemaining;
+	private boolean isEOF = false;
+	private boolean error = false;
 	
 	/**
 	 * 
-	 * @param file
+	 * Creates a new SftpFileInputStream object.
+	 * 
+	 * @param file file
 	 * @throws SftpStatusException
 	 * @throws SshException
+	 * @deprecated
+	 * @see SftpClient#getInputStream(String)
 	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public SftpFileInputStream(SftpFile file) throws SftpStatusException,
 			SshException {
 		this(file, 0);
@@ -56,28 +61,45 @@ public class SftpFileInputStream extends InputStream {
 	/**
 	 * Creates a new SftpFileInputStream object.
 	 * 
-	 * @param file
+	 * @param file file
+	 * @param position
+	 *            at which to start reading
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 * @deprecated
+	 * @see SftpClient#getInputStream(String)
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public SftpFileInputStream(SftpFile file, long position) throws SftpStatusException, SshException {
+		this.sftp = file.getSFTPChannel();
+		this.handle = file.openFile(SftpChannel.OPEN_READ);
+		this.position = position;
+	}
+	
+	/**
+	 * 
+	 * @param handle handle
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	SftpFileInputStream(SftpHandle handle) throws SftpStatusException,
+			SshException {
+		this(handle, 0);
+	}
+
+	/**
+	 * Creates a new SftpFileInputStream object.
+	 * 
+	 * @param handle handle
 	 * @param position
 	 *            at which to start reading
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
-	public SftpFileInputStream(SftpFile file, long position)
-			throws SftpStatusException, SshException {
-		if (file.getHandle() == null) {
-			throw new SftpStatusException(SftpStatusException.INVALID_HANDLE,
-					"The file does not have a valid handle!");
-		}
-
-		if (file.getSFTPChannel() == null) {
-			throw new SshException(
-					"The file is not attached to an SFTP subsystem!",
-					SshException.BAD_API_USAGE);
-		}
-
-		this.file = file;
+	SftpFileInputStream(SftpHandle handle, long position) {
+		this.handle = handle;
 		this.position = position;
-		this.sftp = file.getSFTPChannel();
+		this.sftp = handle.getSFTPChannel();
 	}
 
 	/*
@@ -183,8 +205,7 @@ public class SftpFileInputStream extends InputStream {
 
 	private void bufferMoreData() throws SftpStatusException, SshException {
 		while (outstandingRequests.size() < 100) {
-			outstandingRequests.addElement(sftp.postReadRequest(
-					file.getHandle(), position, 32768));
+			outstandingRequests.addElement(handle.postReadRequest(position, 32768));
 			position += 32768;
 		}
 	}
@@ -208,9 +229,10 @@ public class SftpFileInputStream extends InputStream {
 	/**
 	 * Closes the SFTP file handle.
 	 */
+	@Override
 	public void close() throws IOException {
 		try {
-			file.close();
+			handle.close();
 
 			UnsignedInteger32 requestid;
 			while (!error && outstandingRequests.size() > 0) {
@@ -221,17 +243,6 @@ public class SftpFileInputStream extends InputStream {
 			}
 		} catch (SshException ex) {
 			throw new SshIOException(ex);
-		} catch (SftpStatusException ex) {
-			throw new IOException(ex.getMessage());
-		}
-	}
-
-	/**
-	 * This method will only be available in J2SE builds
-	 */
-	protected void finalize() throws IOException {
-		if (file.getHandle() != null) {
-			close();
 		}
 	}
 }

@@ -261,21 +261,21 @@ public class SftpClientTask extends Task {
 		return sftp.umask(umask);
 	}
 
-	public SftpFile openFile(String fileName) throws SftpStatusException,
+	public SftpHandle openFile(String fileName) throws SftpStatusException,
 		SshException {
 		return openFile(fileName, SftpChannel.OPEN_READ);
 	}
 
-	public SftpFile openFile(String fileName, int flags) throws SftpStatusException,
+	public SftpHandle openFile(String fileName, int flags) throws SftpStatusException,
 			SshException {
 		return sftp.openFile(fileName, flags);
 	}
 
-	public SftpFile openDirectory(String path) throws SftpStatusException, SshException {
+	public SftpHandle openDirectory(String path) throws SftpStatusException, SshException {
 		return sftp.openDirectory(path);
 	}
 
-	public List<SftpFile> readDirectory(SftpFile dir) throws SftpStatusException, SshException {
+	public List<SftpFile> readDirectory(SftpHandle dir) throws SftpStatusException, SshException {
 		return sftp.readDirectory(dir);
 	}
 	/**

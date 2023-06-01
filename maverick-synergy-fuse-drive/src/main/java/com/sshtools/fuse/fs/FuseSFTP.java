@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.sshtools.client.sftp.SftpChannel;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.client.sftp.SftpFile;
+import com.sshtools.client.sftp.SftpHandle;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
@@ -59,7 +60,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 	private static final int MAX_READ_BUFFER_SIZE = 65536;
 	private static final int MAX_WRITE_BUFFER_SIZE = 65536;
 	private AtomicLong fileHandle = new AtomicLong();
-	private Map<Long, SftpFile> handles = new ConcurrentHashMap<>();
+	private Map<Long, SftpHandle> handles = new ConcurrentHashMap<>();
 	private Map<Long, Integer> flags = new ConcurrentHashMap<>();
 	private Map<String, List<Long>> handlesByPath = new ConcurrentHashMap<>();
 	private SftpClientTask sftp;
@@ -180,7 +181,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			try {
 				long handle = fileHandle.getAndIncrement();
 				int flgs = convertFlags(fi.flags);
-				SftpFile file;
+				SftpHandle file;
 				file = sftp.openFile(path, flgs);
 
 				fi.fh.set(handle);
@@ -205,6 +206,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 		});
 	}
 
+	@SuppressWarnings("resource")
 	@Override
 	public int truncate(String path, long size) {
 		
@@ -230,7 +232,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 				List<Long> pathHandles = handlesByPath.get(path);
 				int idx = 0;
 				for (Long l : pathHandles) {
-					SftpFile file = handles.get(l);
+					SftpHandle file = handles.get(l);
 					file.close();
 					int flgs = flags.get(l);
 					if (idx == 0) {
@@ -247,7 +249,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 				}
 				if (idx == 0) {
 					// No open files
-					SftpFile file = sftp.openFile(path, SftpChannel.OPEN_TRUNCATE | SftpChannel.OPEN_CREATE);
+					SftpHandle file = sftp.openFile(path, SftpChannel.OPEN_TRUNCATE | SftpChannel.OPEN_CREATE);
 					file.close();
 				}
 				
@@ -267,7 +269,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 		
 		return execute(() -> {
 			try {
-				SftpFile file = handles.get(fi.fh.longValue());
+				SftpHandle file = handles.get(fi.fh.longValue());
 				if (file == null)
 					return -ErrorCodes.ESTALE();
 				byte[] b = new byte[Math.min(MAX_READ_BUFFER_SIZE, (int) size)];
@@ -310,7 +312,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 			try {
 				long handle = fileHandle.getAndIncrement();
 				int flgs = convertFlags(fi.flags);
-				SftpFile file;
+				SftpHandle file;
 				file = sftp.openDirectory(path);
 				fi.fh.set(handle);
 
@@ -348,7 +350,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 				Log.debug("Reading directory {} at offset {}", path, _offset.get());
 			}
 			try {
-				SftpFile file = handles.get(fi.fh.longValue());
+				SftpHandle file = handles.get(fi.fh.longValue());
 				if (file == null) {
 					if(Log.isDebugEnabled()) {
 						Log.debug("File handle is invalid");
@@ -356,10 +358,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 					return -ErrorCodes.ESTALE();
 				}
 				
-				file.setProperty("reeaddir_state", sftp.readDirectory(file));
-				
-				@SuppressWarnings("unchecked")
-				List<SftpFile> results = (List<SftpFile>) file.getProperty("reeaddir_state");
+				List<SftpFile> results = sftp.readDirectory(file);
 				
 				if(Objects.isNull(results)) {
 					if (Log.isDebugEnabled()) {
@@ -419,28 +418,18 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 	public int release(String path, FuseFileInfo fi) {
 		
 		return execute(() -> {
-			try {
-
-				SftpFile file = handles.remove(fi.fh.longValue());
-				List<Long> l = handlesByPath.get(path);
-				flags.remove(fi.fh.longValue());
-				if (l != null) {
-					l.remove(fi.fh.longValue());
-					if (l.isEmpty())
-						handlesByPath.remove(path);
-				}
-				if (file == null)
-					return -ErrorCodes.ESTALE();
-				file.close();
-				return 0;
-				
-			} catch (SftpStatusException e) {
-				Log.error("Failed to open {}", e, path);
-				return toErr(e);
-			} catch (SshException e) {
-				Log.error("Failed to open {}", e, path);
-				return -ErrorCodes.EFAULT();
+			SftpHandle file = handles.remove(fi.fh.longValue());
+			List<Long> l = handlesByPath.get(path);
+			flags.remove(fi.fh.longValue());
+			if (l != null) {
+				l.remove(fi.fh.longValue());
+				if (l.isEmpty())
+					handlesByPath.remove(path);
 			}
+			if (file == null)
+				return -ErrorCodes.ESTALE();
+			file.close();
+			return 0;
 		});
 	}
 
@@ -516,7 +505,7 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 		
 		return execute(() -> {
 			try {
-				SftpFile file = handles.get(fi.fh.longValue());
+				SftpHandle file = handles.get(fi.fh.longValue());
 				if (file == null)
 					return -ErrorCodes.ESTALE();
 				byte[] b = new byte[Math.min(MAX_WRITE_BUFFER_SIZE, (int) size)];

@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.sshtools.client.SessionChannelNG;
@@ -693,8 +694,6 @@ public class SftpChannel extends AbstractSubsystem {
 
 	/**
 	 * Sets the attributes of a file.
-	 * <p>
-	 * Deprecated, will be made package protected and part of private API.
 	 * 
 	 * @param path
 	 *            the path to the file.
@@ -703,7 +702,6 @@ public class SftpChannel extends AbstractSubsystem {
 	 * @throws SftpStatusException
 	 *             , SshException
 	 */
-	@Deprecated(since = "3.2.0")
 	public void setAttributes(String path, SftpFileAttributes attrs)
 			throws SftpStatusException, SshException {
 		try {
@@ -1016,7 +1014,7 @@ public class SftpChannel extends AbstractSubsystem {
 	public SftpFile getFile(String path) throws SftpStatusException,
 			SshException {
 		String absolute = getAbsolutePath(path);
-		return new SftpFile(absolute, this, null);
+		return new SftpFile(absolute, getAttributes(absolute), this, null);
 	}
 
 	/**
@@ -1369,8 +1367,27 @@ public class SftpChannel extends AbstractSubsystem {
 					longname = bar.readString(CHARSET_ENCODING);
 				}
 
+				SftpFileAttributes attrs = new SftpFileAttributes(bar, getVersion(), getCharsetEncoding());
 				files[i] = new SftpFile(parent != null ? parent + shortname
-						: shortname, this, longname);
+						: shortname, attrs, this, longname);
+
+				// Work out username/group from long name
+				if (longname != null && version <= 3) {
+					try {
+						StringTokenizer t = new StringTokenizer(longname);
+						t.nextToken();
+						t.nextToken();
+						String username = t.nextToken();
+						String group = t.nextToken();
+
+						attrs.setUsername(username);
+						attrs.setGroup(group);
+
+					} catch (Exception e) {
+
+					}
+
+				}
 			}
 
 			return files;
@@ -1526,7 +1543,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 				byte[] handle = getHandleResponse(requestId);
 
-				SftpFile file = new SftpFile(absolutePath, this, null);
+				SftpFile file = new SftpFile(absolutePath, null, this, null);
 				SftpHandle handleObject = new SftpHandle(handle, this, file);
 
 				EventServiceImplementation.getInstance().fireEvent(
@@ -1568,7 +1585,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 			byte[] handle = getHandleResponse(requestId);
 
-			SftpFile file = new SftpFile(absolutePath, this, null);
+			SftpFile file = new SftpFile(absolutePath, null, this, null);
 			SftpHandle handleObj = new SftpHandle(handle, this, file);
 
 			EventServiceImplementation.getInstance().fireEvent(
@@ -1614,7 +1631,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 			byte[] handle = getHandleResponse(requestId);
 
-			return new SftpHandle(handle, this, new SftpFile(absolutePath, this, null));
+			return new SftpHandle(handle, this, new SftpFile(absolutePath, attrs, this, null));
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {

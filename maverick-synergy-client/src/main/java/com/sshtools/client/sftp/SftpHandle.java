@@ -627,10 +627,9 @@ public final class SftpHandle implements Closeable {
 	 * @param position            the postition from which to start reading the file
 	 * @throws SshException
 	 */
-	public void performOptimizedRead(String filename, long length, int blocksize, OutputStream out,
+	public void performOptimizedRead(long length, int blocksize, OutputStream out,
 			int outstandingRequests, FileTransferProgress progress, long position)
 			throws SftpStatusException, SshException, TransferCancelledException {
-
 		checkValidHandle();
 		
 		long transfered = 0;
@@ -827,8 +826,8 @@ public final class SftpHandle implements Closeable {
 			long transferTime = finished - started;
 			double seconds = transferTime > 1000 ? transferTime / 1000 : 1D;
 			if (transfered > 0) {
-				Log.info("Optimized read of {} from {} took seconds {} at {} per second",
-						IOUtils.toByteSize(transfered), filename, seconds, IOUtils.toByteSize(transfered / seconds, 1));
+				Log.info("Optimized read of {} took seconds {} at {} per second",
+						IOUtils.toByteSize(transfered), seconds, IOUtils.toByteSize(transfered / seconds, 1));
 			} else {
 				Log.info("Optimized read did not transfer any data");
 			}
@@ -882,6 +881,35 @@ public final class SftpHandle implements Closeable {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Performs an optimized read of a file through use of asynchronous messages.
+	 * The total number of outstanding read requests is configurable. This should be
+	 * safe on file objects as the SSH protocol states that file read operations
+	 * should return the exact number of bytes requested in each request. However
+	 * the server is not required to return the exact number of bytes on device
+	 * files and so this method should not be used for device files.
+	 * <p>
+	 * Deprecated. Filename argument irrelevant.
+	 * 
+	 * @param handle              the open files handle
+	 * @param length              the amount of the file file to be read, equal to
+	 *                            the file length when reading the whole file
+	 * @param blocksize           the blocksize to read
+	 * @param out                 an OutputStream to output the file into
+	 * @param outstandingRequests the maximum number of read requests to
+	 * @param progress
+	 * @param position            the postition from which to start reading the file
+	 * @throws SshException
+	 * @deprecated
+	 * @see #performOptimizedRead(long, int, OutputStream, int, FileTransferProgress, long)
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void performOptimizedRead(String filename, long length, int blocksize, OutputStream out,
+			int outstandingRequests, FileTransferProgress progress, long position)
+			throws SftpStatusException, SshException, TransferCancelledException {
+		performOptimizedRead(length, blocksize, out, outstandingRequests, progress, position);
 	}
 
 	/**

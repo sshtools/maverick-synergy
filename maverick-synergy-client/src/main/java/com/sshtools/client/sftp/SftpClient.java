@@ -128,8 +128,12 @@ public class SftpClient implements Closeable {
 		 * @return this for chaining
 		 */
 		public SftpClientBuilder withConnection(SshConnection connection) {
-			this.connection = Optional.of(connection);
-			return this;
+			if(connection.isConnected() && !connection.isDisconnecting()) {
+				this.connection = Optional.of(connection);
+				return this;
+			}
+			else
+				throw new IllegalStateException("Not connected.");
 		}
 		
 		/**
@@ -139,8 +143,7 @@ public class SftpClient implements Closeable {
 		 * @return this for chaining
 		 */
 		public SftpClientBuilder withClient(SshClient client) {
-			this.connection = Optional.of(client.getConnection());
-			return this;
+			return withConnection(client.getConnection());
 		}
 		
 		/**
@@ -2644,10 +2647,23 @@ public class SftpClient implements Closeable {
 	 * @throws SshException
 	 */
 	public void symlink(String path, String link) throws SftpStatusException, SshException {
-		String actualPath = resolveRemotePath(path);
-		String actualLink = resolveRemotePath(link);
+		relativeSymlink(resolveRemotePath(path), link);
+	}
 
-		sftp.createSymbolicLink(actualLink, actualPath);
+	/**
+	 * <p>
+	 * Create a symbolic link on the remote computer.
+	 * </p>
+	 * 
+	 * @param path the path to the existing file
+	 * @param link the new link
+	 * 
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	public void relativeSymlink(String path, String link) throws SftpStatusException, SshException {
+		String actualLink = resolveRemotePath(link);
+		sftp.createSymbolicLink(actualLink, path);
 	}
 
 	/**
@@ -3956,11 +3972,11 @@ public class SftpClient implements Closeable {
 	}
 
 	private BasicFileAttributes fileToBasicAttributes(SftpFile file) {
-		SftpFileAttributes attrs = checkAttributes(file);
+		var attrs = checkAttributes(file);
 		return new BasicFileAttributes() {
 			@Override
 			public FileTime creationTime() {
-				return FileTime.fromMillis(attrs.getCreationDateTime().getTime());
+				return attrs.createTimeOr().orElse(FileTime.fromMillis(0));
 			}
 
 			@Override
@@ -3990,17 +4006,17 @@ public class SftpClient implements Closeable {
 
 			@Override
 			public FileTime lastAccessTime() {
-				return FileTime.fromMillis(attrs.getAccessedDateTime().getTime());
+				return attrs.lastAccessTime();
 			}
 
 			@Override
 			public FileTime lastModifiedTime() {
-				return FileTime.fromMillis(attrs.getModifiedDateTime().getTime());
+				return attrs.lastModifiedTime();
 			}
 
 			@Override
 			public long size() {
-				return attrs.getSize().longValue();
+				return attrs.size().longValue();
 			}
 		};
 	}

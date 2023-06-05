@@ -361,7 +361,11 @@ public class MockConnection implements SshConnection {
 	@Override
 	public void fireEvent(Event evt) {
 		// TODO Auto-generated method stub
-		
+	}
+
+	@Override
+	public boolean isDisconnecting() {
+		return false;
 	}
 	
 

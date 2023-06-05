@@ -23,7 +23,6 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
@@ -33,15 +32,19 @@ import com.sshtools.common.ssh.SshException;
  * Represents an SFTP file object.
  */
 public final class SftpFile {
+	
   private final String filename;
-  private final Optional<SftpFileAttributes> attrs;
   private final SftpChannel sftp;
   private final String absolutePath;
   private final String longname;
   private final Map<String,Object> properties = new HashMap<>();
+  private SftpFileAttributes attrs;
   
   SftpFile(String path, SftpFileAttributes attrs, SftpChannel sftp, String longname) {
-      this.attrs = Optional.ofNullable(attrs);
+	  if(path == null || attrs == null || sftp == null)
+		  throw new NullPointerException();
+	  
+      this.attrs = attrs;
       this.sftp = sftp;
       this.longname = longname;
 
@@ -67,6 +70,42 @@ public final class SftpFile {
       }
       this.absolutePath = absolutePath;
   }
+  
+  /**
+   * Get the attributes for this file as they were when this file object was obtained. To
+   * get the latest attributes, call {@link #refresh()} to obtain a new {@link SftpFile} instance.
+   * 
+   * @return attributes
+   */
+  public SftpFileAttributes attributes() {
+	  return attrs;
+  }
+  
+ /**
+  * Set the given attributes on the remote file represented by this {@link SftpFile}.
+  * 
+  * @param attributes
+  * @return this
+  * @throws SftpStatusException
+  * @throws SshException
+  */
+  public SftpFile attributes(SftpFileAttributes attributes) throws SftpStatusException, SshException {
+	  	sftp.setAttributes(absolutePath, attributes);
+	  	this.attrs = attributes;
+		return this;
+  }
+ 
+	/**
+	 * Refresh the {@link SftpFileAttributes} from the the remote file. 
+	 * 
+	 * @return file new file instance
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	public SftpFile refresh() throws SftpStatusException, SshException {
+		attrs = sftp.getAttributes(absolutePath);
+		return this;
+	 }
 
   /**
    * Get the parent of the current file. This method determines the correct
@@ -178,8 +217,7 @@ public final class SftpFile {
    */
   @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean canWrite() throws SftpStatusException, SshException {
-    //  This is long hand because gcj chokes when it is not? Investigate why
-	if(getAttributes().getPosixPermissions().has(PosixFilePermission.OWNER_WRITE)) {
+	if(attrs.permissions().has(PosixFilePermission.OWNER_WRITE)) {
       return true;
     }
 	return false;
@@ -195,7 +233,7 @@ public final class SftpFile {
    */
   @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean canRead() throws SftpStatusException, SshException {
-    if(getAttributes().getPosixPermissions().has(PosixFilePermission.OWNER_READ)) {
+    if(attrs.permissions().has(PosixFilePermission.OWNER_READ)) {
       return true;
     }
 	return false;
@@ -225,9 +263,12 @@ public final class SftpFile {
    * @return SftpFileAttributes
    * @throws SshException
    * @throws SftpStatusException
+   * @deprecated 
+   * @see #attributes()
 */
-  public SftpFileAttributes getAttributes() throws SftpStatusException, SshException {
-    return attrs.isPresent() ? attrs.get() : sftp.getAttributes(getAbsolutePath());
+  @Deprecated(since = "3.1.0", forRemoval = true)
+  public SftpFileAttributes getAttributes() throws SshException, SftpStatusException {
+    return attrs;
   }
 
   /**
@@ -244,13 +285,16 @@ public final class SftpFile {
    * if the file is a symbolic link pointing to a directory then <code>false</code>
    * will be returned. Use {@link com.sshtools.sftp.SftpClient#isDirectoryOrLinkedDirectory(SftpFile)} instead if you
    * wish to follow links.
+   * <p>
+   * Deprecated, see {@link SftpFileAttributes#isDirectory()}.
    *
    * @return is directory
    * @throws SshException on SSH error
    * @throws SftpStatusException on SFTP error
    */
+  @Deprecated(since = "3.2.0", forRemoval = true)
   public boolean isDirectory() throws SftpStatusException, SshException {
-    return getAttributes().isDirectory();
+    return attrs.isDirectory();
   }
 
   /**
@@ -261,7 +305,7 @@ public final class SftpFile {
    * @throws SftpStatusException on SFTP error
   */
   public boolean isFile() throws SftpStatusException, SshException {
-    return getAttributes().isFile();
+    return attrs.isFile();
   }
 
   /**

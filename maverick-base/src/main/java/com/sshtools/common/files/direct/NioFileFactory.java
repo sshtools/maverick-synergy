@@ -110,5 +110,13 @@ public final class NioFileFactory implements AbstractFileFactory<NioFile> {
 	public NioFile getDefaultPath() throws PermissionDeniedException, IOException {
 		return getFile("");
 	}
+	
+	Path home() {
+		return home;
+	}
+	
+	boolean isSandboxed() {
+		return sandbox;
+	}
 
 }

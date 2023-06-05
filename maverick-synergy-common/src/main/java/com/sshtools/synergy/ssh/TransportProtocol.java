@@ -479,6 +479,15 @@ public abstract class TransportProtocol<T extends SshContext>
 
 		return wantsWrite;
 	}
+	
+	/**
+	 * Get if disconnecting has started but not yet complete.
+	 * 
+	 *  @return disconnecting
+	 */
+	public boolean isDisonnecting() {
+		return isConnected() && disconnectStarted != null;
+	}
 
 	/**
 	 * Determine if the protocol is still connected

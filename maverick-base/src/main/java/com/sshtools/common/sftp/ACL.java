@@ -57,12 +57,16 @@ public class ACL {
     public static final int ACE4_WRITE_OWNER       = 0x00080000;
     public static final int ACE4_SYNCHRONIZE       = 0x00100000;
     
-    int type;
-    int flags;
-    int mask;
-    String who;
+    private final int type;
+    private final int flags;
+    private final int mask;
+    private final String who;
 
     public ACL(int type, int flags, int mask, String who) {
+    	this.type = type;
+    	this.flags = flags;
+    	this.mask = mask;
+    	this.who = who;
     }
 
     public int getType() {
@@ -80,4 +84,9 @@ public class ACL {
     public String getWho() {
         return who;
     }
+
+	@Override
+	public String toString() {
+		return "ACL [type=" + type + ", flags=" + flags + ", mask=" + mask + ", who=" + who + "]";
+	}
 }

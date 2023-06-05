@@ -18,6 +18,7 @@ import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,7 +51,8 @@ public final class NioFile implements AbstractFile {
 		if (sandbox) {
 			if ((Files.exists(path) && !path.toRealPath().startsWith(home.toRealPath()))
 					|| (!Files.exists(path) && !path.startsWith(home.toRealPath()))) {
-				throw new PermissionDeniedException("You cannot access paths other than your home directory");
+				throw new PermissionDeniedException(
+						MessageFormat.format("You cannot access paths outside of the sandbox path {0}. The path {1} was requested.", home.toRealPath(), path));
 			}
 		}
 
@@ -83,10 +85,42 @@ public final class NioFile implements AbstractFile {
 	}
 
 	@Override
+	public void linkFrom(String target) throws IOException, PermissionDeniedException {
+		try {
+			Path targetPath = fileFactory.getFile(target).path;
+			if(target.startsWith("/")) {
+				Files.createLink(path, targetPath);				
+			}
+			else {
+				var relativeTo = path.toAbsolutePath().getParent();
+				Files.createLink(path, relativeTo.relativize(targetPath));	
+			}
+		} catch (IOException nfe) {
+			throw translateException(nfe);
+		}
+	}
+
+	@Override
 	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
 		try {
 			Files.createSymbolicLink(target.startsWith("/") ? fileFactory.getFile(target).path : home.resolve(target),
 					path);
+		} catch (IOException nfe) {
+			throw translateException(nfe);
+		}
+	}
+
+	@Override
+	public void symlinkFrom(String target) throws IOException, PermissionDeniedException {
+		try {
+			Path targetPath = fileFactory.getFile(target).path;
+			if(target.startsWith("/")) {
+				Files.createSymbolicLink(path, targetPath);				
+			}
+			else {
+				var relativeTo = path.toAbsolutePath().getParent();
+				Files.createSymbolicLink(path, relativeTo.relativize(targetPath));	
+			}
 		} catch (IOException nfe) {
 			throw translateException(nfe);
 		}
@@ -522,7 +556,10 @@ public final class NioFile implements AbstractFile {
 			
 			@Override
 			public long id() {
-				return Integer.toUnsignedLong(nativeStore.hashCode());
+				if(((NioFileFactory)getFileFactory()).isSandboxed())
+					return Integer.toUnsignedLong((((NioFileFactory)getFileFactory()).home().hashCode()));
+				else
+					return Integer.toUnsignedLong(nativeStore.name().hashCode());
 			}
 			
 			@Override

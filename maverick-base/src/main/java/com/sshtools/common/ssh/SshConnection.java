@@ -71,6 +71,8 @@ public interface SshConnection extends EventTrigger {
 
 	boolean isConnected();
 
+	boolean isDisconnecting();
+
 	void addTask(Integer queue, ConnectionAwareTask connectionAwareTask);
 
 	String getServerVersion();

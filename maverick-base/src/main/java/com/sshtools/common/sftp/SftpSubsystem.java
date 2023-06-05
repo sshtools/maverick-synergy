@@ -42,6 +42,7 @@ import com.sshtools.common.files.FileExistsException;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.ConnectionAwareTask;
@@ -473,8 +474,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				old = nfs.getFileAttributes(path);
 
 				// The next few bytes are file attributes
-				attrs = new SftpFileAttributes(bar, version, 
-						CHARSET_ENCODING);
+				attrs = SftpFileAttributesBuilder.of(bar, version, CHARSET_ENCODING).build();
 				
 				nfs.setFileAttributes(path, attrs);
 
@@ -581,8 +581,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				path = nfs.getPathForHandle(handle);
 
 				// The next few bytes are file attributes
-				attrs = new SftpFileAttributes(bar, version, 
-						CHARSET_ENCODING);
+				attrs = SftpFileAttributesBuilder.of(bar, version, CHARSET_ENCODING).build();
 				nfs.setFileAttributes(handle, attrs);
 
 				try {
@@ -966,9 +965,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				id = (int) bar.readInt();
 				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
 				flags = new UnsignedInteger32(bar.readInt());
-				attrs = new SftpFileAttributes(bar, version, 
-						CHARSET_ENCODING);
-
+				attrs = SftpFileAttributesBuilder.of(bar, version, CHARSET_ENCODING).build();
 				
 				if(getContext().getPolicy(FileSystemPolicy.class).getMaxConcurrentTransfers() > -1 && openFilesByContext.containsKey(getContext())) {
 					
@@ -2193,9 +2190,9 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 		// space(1)
 		// filename
 
-		StringBuffer str = new StringBuffer();
-		str.append(Utils.pad(10 - attrs.getPermissionsString().length())
-				+ attrs.getPermissionsString());
+		var str = new StringBuffer();
+		var permissionsString = attrs.toPermissionsString();
+		str.append(Utils.pad(10 - permissionsString.length()) + permissionsString);
 		if(attrs.isDirectory()) {
 			str.append(" 1 ");
 		} else {

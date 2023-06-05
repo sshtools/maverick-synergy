@@ -693,6 +693,22 @@ public class SftpChannel extends AbstractSubsystem {
 	}
 
 	/**
+	 * Set the attributes of a file.
+	 * 
+	 * @param path the path to the file
+	 * @param attrs the file attributes
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 * @deprecated
+	 * @see SftpFile#attributes(SftpFileAttributes)
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void setAttributes(SftpFile path, SftpFileAttributes attrs)
+			throws SftpStatusException, SshException {
+		path.attributes(attrs);
+	}
+
+	/**
 	 * Sets the attributes of a file.
 	 * 
 	 * @param path
@@ -701,7 +717,10 @@ public class SftpChannel extends AbstractSubsystem {
 	 *            the file attributes.
 	 * @throws SftpStatusException
 	 *             , SshException
+	 * @deprecated
+	 * @see SftpFile#attributes(SftpFileAttributes)
 	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void setAttributes(String path, SftpFileAttributes attrs)
 			throws SftpStatusException, SshException {
 		try {
@@ -1543,7 +1562,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 				byte[] handle = getHandleResponse(requestId);
 
-				SftpFile file = new SftpFile(absolutePath, null, this, null);
+				SftpFile file = new SftpFile(absolutePath, getAttributes(absolutePath), this, null);
 				SftpHandle handleObject = new SftpHandle(handle, this, file);
 
 				EventServiceImplementation.getInstance().fireEvent(
@@ -1585,7 +1604,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 			byte[] handle = getHandleResponse(requestId);
 
-			SftpFile file = new SftpFile(absolutePath, null, this, null);
+			SftpFile file = new SftpFile(absolutePath, getAttributes(absolutePath), this, null);
 			SftpHandle handleObj = new SftpHandle(handle, this, file);
 
 			EventServiceImplementation.getInstance().fireEvent(

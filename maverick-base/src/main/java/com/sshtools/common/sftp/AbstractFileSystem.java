@@ -23,6 +23,7 @@ import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -543,7 +544,7 @@ public final class AbstractFileSystem {
 	}
 	
 	public void copyFile(String oldpath, String newpath, boolean overwrite) 
-			throws PermissionDeniedException, FileNotFoundException, IOException {
+			throws PermissionDeniedException, FileNotFoundException, FileAlreadyExistsException, IOException {
 		
 		AbstractFile f1 = fileFactory.getFile(oldpath);
 		AbstractFile f2 = fileFactory.getFile(newpath);
@@ -557,7 +558,7 @@ public final class AbstractFileSystem {
 		}
 		
 		if(f2.exists() && !overwrite) {
-			throw new PermissionDeniedException("File already exists " + newpath);
+			throw new FileAlreadyExistsException(newpath);
 		}
 
 		if (f2.exists() && !f2.isWritable()) {
@@ -633,20 +634,30 @@ public final class AbstractFileSystem {
 	public void createSymbolicLink(String link, String target)
 			throws UnsupportedFileOperationException, FileNotFoundException, IOException, PermissionDeniedException {
 		try {
-			resolveFile(link, con).symlinkTo(target); 
+			resolveFile(target, con).symlinkFrom(link);
 		}
 		catch(UnsupportedOperationException uoe) {
-			throw new UnsupportedFileOperationException("Symbolic links are not supported by the Virtual File System");
+			try {
+				resolveFile(link, con).symlinkTo(target);
+			}
+			catch(UnsupportedOperationException uoe2) {
+				throw new UnsupportedFileOperationException("Symbolic links are not supported by the Virtual File System");
+			}
 		}
 	}
 
 	public void createLink(String link, String target)
 			throws UnsupportedFileOperationException, FileNotFoundException, IOException, PermissionDeniedException {
 		try {
-			resolveFile(link, con).linkTo(target); 
+			resolveFile(target, con).linkFrom(link);
 		}
 		catch(UnsupportedOperationException uoe) {
-			throw new UnsupportedFileOperationException("Hard links are not supported by the Virtual File System");
+			try {
+				resolveFile(link, con).linkTo(target);
+			}
+			catch(UnsupportedOperationException uoe2) {
+				throw new UnsupportedFileOperationException("Hard links are not supported by the Virtual File System");
+			}
 		}
 	}
 

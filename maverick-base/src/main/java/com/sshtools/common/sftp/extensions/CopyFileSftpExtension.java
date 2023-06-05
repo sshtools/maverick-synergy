@@ -19,6 +19,7 @@
 package com.sshtools.common.sftp.extensions;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.AbstractFileSystem;
@@ -47,6 +48,8 @@ public class CopyFileSftpExtension extends AbstractSftpExtension {
 			
 			sftp.sendStatusMessage(requestId, SftpSubsystem.STATUS_FX_OK, "The copy-file operation completed.");
 			
+		} catch(FileAlreadyExistsException e) {
+			sftp.sendStatusMessage(requestId, SftpSubsystem.SSH_FX_FILE_ALREADY_EXISTS, e.getMessage());
 		} catch(IOException e) {
 			sftp.sendStatusMessage(requestId, SftpSubsystem.STATUS_FX_FAILURE, e.getMessage());
 		} catch (PermissionDeniedException e) {

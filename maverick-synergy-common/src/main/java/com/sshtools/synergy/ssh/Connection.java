@@ -217,6 +217,10 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 		return getDisconnectFuture().isDone();
 	}
 	
+	public boolean isDisconnecting() {
+		return transport.isDisonnecting();
+	}
+	
 	public void disconnect() {
 		disconnect("By Application");
 	}

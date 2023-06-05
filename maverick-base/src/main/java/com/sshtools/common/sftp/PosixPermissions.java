@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import com.sshtools.common.util.UnsignedInteger32;
@@ -214,8 +215,21 @@ public final class PosixPermissions {
 		 * @return this for chaining
 		 */
 		public PosixPermissionsBuilder fromPermissions(PosixFilePermission... permissions) {
+			return fromPermissions(Arrays.asList(permissions));
+		}
+
+		/**
+		 * Set the mode using a collection of {@link PosixFilePermission}.
+		 * <p>
+		 * Any existing value already built will be entirely replaced with this new
+		 * value.
+		 * 
+		 * @param permissions permissions
+		 * @return this for chaining
+		 */
+		public PosixPermissionsBuilder fromPermissions(Collection<PosixFilePermission> permissions) {
 			perms.clear();
-			perms.addAll(Arrays.asList(permissions));
+			perms.addAll(permissions);
 			return this;
 		}
 
@@ -669,5 +683,28 @@ public final class PosixPermissions {
 	 */
 	public boolean isEmpty() {
 		return perms.isEmpty();
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mode);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		PosixPermissions other = (PosixPermissions) obj;
+		return mode == other.mode;
+	}
+
+	@Override
+	public String toString() {
+		return "PosixPermissions [asFileModesString()=" + asFileModesString() + ", asMaskString()=" + asMaskString()
+				+ "]";
 	}
 }

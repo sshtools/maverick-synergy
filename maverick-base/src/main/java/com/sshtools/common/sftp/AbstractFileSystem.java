@@ -631,6 +631,7 @@ public final class AbstractFileSystem {
 		}		
 	}
 
+	@SuppressWarnings("removal")
 	public void createSymbolicLink(String link, String target)
 			throws UnsupportedFileOperationException, FileNotFoundException, IOException, PermissionDeniedException {
 		try {
@@ -646,6 +647,7 @@ public final class AbstractFileSystem {
 		}
 	}
 
+	@SuppressWarnings("removal")
 	public void createLink(String link, String target)
 			throws UnsupportedFileOperationException, FileNotFoundException, IOException, PermissionDeniedException {
 		try {

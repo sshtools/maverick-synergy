@@ -77,6 +77,16 @@ public final class NioFileFactory implements AbstractFileFactory<NioFile> {
 		}
 		
 		/**
+		 * Configure the current directory to be the directory to use as the home of this
+		 * file factory, i.e. that returned by <code>System.getProperty("user.dir");</code>.
+		 * 
+		 *  @return this for chaining
+		 */
+		public NioFileFactoryBuilder withCurrentDirectoryAsHome() {
+			return withHome(Paths.get(System.getProperty("user.dir")));
+		}
+		
+		/**
 		 * Build a new {@link NioFileFactory}.
 		 * 
 		 * @return factory

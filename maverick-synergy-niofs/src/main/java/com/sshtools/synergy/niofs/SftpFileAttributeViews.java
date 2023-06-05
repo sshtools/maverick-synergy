@@ -36,16 +36,13 @@ import java.nio.file.attribute.UserPrincipal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import com.sshtools.client.sftp.SftpClient;
 import com.sshtools.common.sftp.PosixPermissions;
-import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.util.UnsignedInteger32;
-import com.sshtools.common.util.UnsignedInteger64;
 
 public class SftpFileAttributeViews {
 	
@@ -171,15 +168,15 @@ public class SftpFileAttributeViews {
 		}
 
 		public String uid() {
-			return attrs.getUID();
+			return attrs.bestUsername();
 		}
 
 		public String gid() {
-			return attrs.getGID();
+			return attrs.bestGroup();
 		}
 
 		public String maskString() {
-			return attrs.getMaskString();
+			return attrs.permissions().asMaskString();
 		}
 
 		public PosixPermissions permissions() {
@@ -201,7 +198,7 @@ public class SftpFileAttributeViews {
 			return new UserPrincipal() {
 				@Override
 				public String getName() {
-					return attrs.getUID();
+					return attrs.bestUsername();
 				}
 			};
 		}
@@ -212,7 +209,7 @@ public class SftpFileAttributeViews {
 			return new GroupPrincipal() {
 				@Override
 				public String getName() {
-					return attrs.getGID();
+					return attrs.bestGroup();
 				}
 			};
 		}
@@ -220,7 +217,7 @@ public class SftpFileAttributeViews {
 
 		@Override
 		public Set<PosixFilePermission> permissions() {
-			return attrs.getPosixPermissions().asPermissions();
+			return attrs.permissions().asPermissions();
 		}
 
 	}
@@ -277,25 +274,12 @@ public class SftpFileAttributeViews {
 				var sftpPath = toAbsolutePathString(path);
 				var stat = getSftp().stat(sftpPath);
 
-				var atime = lastAccessTime == null ? null : new UnsignedInteger64(lastAccessTime.to(TimeUnit.SECONDS));
-				var mtime = lastModifiedTime == null ? null
-						: new UnsignedInteger64(lastModifiedTime.to(TimeUnit.SECONDS));
-				var ctime = createTime == null ? null : new UnsignedInteger64(createTime.to(TimeUnit.SECONDS));
+				var bldr = SftpFileAttributesBuilder.create().withFileAttributes(stat);
+				bldr.withLastAccessTime(lastAccessTime);
+				bldr.withLastModifiedTime(lastModifiedTime);				
+				bldr.withCreateTime(createTime);
 
-				var atimeNano = atime == null ? null
-						: new UnsignedInteger32(
-								lastAccessTime.to(TimeUnit.NANOSECONDS) - TimeUnit.SECONDS.toNanos(atime.longValue()));
-				var mtimeNano = mtime == null ? null
-						: new UnsignedInteger32(lastModifiedTime.to(TimeUnit.NANOSECONDS)
-								- TimeUnit.SECONDS.toNanos(mtime.longValue()));
-				var ctimeNano = ctime == null ? null
-						: new UnsignedInteger32(
-								createTime.to(TimeUnit.NANOSECONDS) - TimeUnit.SECONDS.toNanos(ctime.longValue()));
-
-				stat.setTimes(atime == null ? stat.getAccessedTime() : atime, atimeNano, mtime, mtimeNano, ctime,
-						ctimeNano);
-
-				getSftp().getSubsystemChannel().setAttributes(sftpPath, stat);
+				getSftp().getSubsystemChannel().setAttributes(sftpPath, bldr.build());
 
 			} catch (Exception e) {
 				throw SftpFileSystemProvider.translateException(e);
@@ -480,8 +464,9 @@ public class SftpFileAttributeViews {
 			try {
 				var sftpPath = toAbsolutePathString(path);
 				var stat = getSftp().stat(sftpPath);
-				stat.setUsername(owner.getName());
-				getSftp().getSubsystemChannel().setAttributes(sftpPath, stat);
+				var bldr = SftpFileAttributesBuilder.create().withFileAttributes(stat);
+				bldr.withUidOrUsername(owner.getName());
+				getSftp().getSubsystemChannel().setAttributes(sftpPath, bldr.build());
 			} catch (Exception e) {
 				throw SftpFileSystemProvider.translateException(e);
 			}
@@ -492,8 +477,9 @@ public class SftpFileAttributeViews {
 			try {
 				var sftpPath = toAbsolutePathString(path);
 				var stat = getSftp().stat(sftpPath);
-				stat.setPermissions(PosixPermissionsBuilder.create().fromPermissions(perms.toArray(new PosixFilePermission[0])).build());
-				getSftp().getSubsystemChannel().setAttributes(sftpPath, stat);
+				var bldr = SftpFileAttributesBuilder.create().withFileAttributes(stat);
+				bldr.withPermissions(perms);
+				getSftp().getSubsystemChannel().setAttributes(sftpPath, bldr.build());
 			} catch (Exception e) {
 				throw SftpFileSystemProvider.translateException(e);
 			}
@@ -505,8 +491,9 @@ public class SftpFileAttributeViews {
 			try {
 				var sftpPath = toAbsolutePathString(path);
 				var stat = getSftp().stat(sftpPath);
-				stat.setGroup(group.getName());
-				getSftp().getSubsystemChannel().setAttributes(sftpPath, stat);
+				var bldr = SftpFileAttributesBuilder.create().withFileAttributes(stat);
+				bldr.withGidOrGroup(group.getName());
+				getSftp().getSubsystemChannel().setAttributes(sftpPath, bldr.build());
 			} catch(Exception e) {
 				throw SftpFileSystemProvider.translateException(e);
 			}
@@ -594,25 +581,28 @@ public class SftpFileAttributeViews {
 				var attr = ExtendedAttribute.valueOf(attribute);
 				switch (attr) {
 				case gid: {
-					var sftpPath = getFileSystem().toAbsolutePathString(path);
+					var sftpPath = toAbsolutePathString(path);
 					var stat = getSftp().stat(sftpPath);
-					stat.setUsername(String.valueOf(value));
-					getSftp().getSubsystemChannel().setAttributes(sftpPath, stat);
+					var bldr = SftpFileAttributesBuilder.create().withFileAttributes(stat);
+					bldr.withGidOrGroup(String.valueOf(value));
+					getSftp().getSubsystemChannel().setAttributes(sftpPath, bldr.build());
 					return;
 				}
 				case uid: {
-					var sftpPath = getFileSystem().toAbsolutePathString(path);
+					var sftpPath = toAbsolutePathString(path);
 					var stat = getSftp().stat(sftpPath);
-					stat.setUsername(String.valueOf(value));
-					getSftp().getSubsystemChannel().setAttributes(sftpPath, stat);
+					var bldr = SftpFileAttributesBuilder.create().withFileAttributes(stat);
+					bldr.withUidOrUsername(String.valueOf(value));
+					getSftp().getSubsystemChannel().setAttributes(sftpPath, bldr.build());
 					return;
 				}
 				case permissions:
 				default: /* For coverage */			
-					var sftpPath = getFileSystem().toAbsolutePathString(path);
+					var sftpPath = toAbsolutePathString(path);
 					var stat = getSftp().stat(sftpPath);
-					stat.setPermissions((PosixPermissions)value);
-					getSftp().getSubsystemChannel().setAttributes(sftpPath, stat);
+					var bldr = SftpFileAttributesBuilder.create().withFileAttributes(stat);
+					bldr.withPermissions((PosixPermissions)value);
+					getSftp().getSubsystemChannel().setAttributes(sftpPath, bldr.build());
 					break;
 				}
 				return;

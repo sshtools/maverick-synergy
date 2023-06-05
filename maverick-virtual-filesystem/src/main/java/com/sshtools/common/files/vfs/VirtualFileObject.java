@@ -44,9 +44,9 @@ import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileAdapter;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
-import com.sshtools.common.util.UnsignedInteger64;
+import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 
 public abstract class VirtualFileObject extends AbstractFileAdapter implements VirtualFile {
 
@@ -92,35 +92,34 @@ public abstract class VirtualFileObject extends AbstractFileAdapter implements V
 			throw new FileNotFoundException();
 		}
 		
-		SftpFileAttributes attrs = new SftpFileAttributes(
+		var bldr = SftpFileAttributesBuilder.ofType(
 				isDirectory() ? SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY : SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR,
 						"UTF-8");
-		attrs.setSize(new UnsignedInteger64(length()));
-		UnsignedInteger64 t = new UnsignedInteger64(lastModified());
+		bldr.withSize(length());
 		
-		PosixPermissionsBuilder builder = PosixPermissionsBuilder.create();
+		var permBldr = PosixPermissionsBuilder.create();
 		
 		if(isReadable()) {
-			builder.withAllRead();
+			permBldr.withAllRead();
 		}
 		if(isWritable()) {
-			builder.withAllWrite();
+			permBldr.withAllWrite();
 		}
 		if(isDirectory()) {
-			builder.withAllExecute();
+			permBldr.withAllExecute();
 		}
 
 		
-		attrs.setPermissions(builder.build());
+		bldr.withPermissions(permBldr.build());
 		
-		attrs.setUID("0");
-		attrs.setGID("0");
-		attrs.setUsername(System.getProperty("maverick.unknownUsername", "unknown"));
-		attrs.setGroup(System.getProperty("maverick.unknownUsername", "unknown"));
-		
-		attrs.setTimes(t, t);
+		bldr.withUid(0);
+		bldr.withGid(0);
+		bldr.withUsername(System.getProperty("maverick.unknownUsername", "unknown"));
+		bldr.withGroup(System.getProperty("maverick.unknownUsername", "unknown"));
+		bldr.withLastModifiedTime(lastModified());
+		bldr.withLastAccessTime(lastModified());
 
-		return attrs;
+		return bldr.build();
 	}
 	
 	

@@ -58,7 +58,7 @@ public abstract class AbstractFileImpl<T extends AbstractFile> implements Abstra
     		}
     		content = openFile(true);
     		try {
-				content.seek(getAttributes().getSize().longValue());
+				content.seek(getAttributes().size().longValue());
 			} catch (PermissionDeniedException e) {
 				throw new IOException(e.getMessage(), e);
 			}

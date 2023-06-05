@@ -28,7 +28,7 @@ import java.util.Objects;
 import org.junit.Test;
 
 import com.sshtools.common.files.AbstractFile;
-import com.sshtools.common.files.direct.DirectFileFactory;
+import com.sshtools.common.files.direct.NioFileFactory.NioFileFactoryBuilder;
 import com.sshtools.common.files.vfs.VFSFileFactory;
 import com.sshtools.common.files.vfs.VirtualFile;
 import com.sshtools.common.files.vfs.VirtualFileFactory;
@@ -45,7 +45,7 @@ public class VirtualFileWithDirectFactoryTests extends DirectFileTests {
 		if(Objects.isNull(factory)) {
 			try {
 				factory = new VirtualFileFactory(new VirtualMountTemplate("/", baseFolder.getAbsolutePath(), 
-						new DirectFileFactory(baseFolder), false));
+						NioFileFactoryBuilder.create().withHome(baseFolder).withoutSandbox().build(), false));
 			} catch (PermissionDeniedException e) {
 				throw new IOException(e.getMessage(), e);
 			}
@@ -76,7 +76,7 @@ public class VirtualFileWithDirectFactoryTests extends DirectFileTests {
 		
 		VirtualFileFactory factory = new VirtualFileFactory(
 				new VirtualMountTemplate("/home", super.getBaseFolder().getAbsolutePath(), 
-				new DirectFileFactory(super.getBaseFolder()), false),
+						NioFileFactoryBuilder.create().withHome(super.getBaseFolder()).withoutSandbox().build(), false),
 				new VirtualMountTemplate("/", "mem://", new VFSFileFactory(), false),
 				new VirtualMountTemplate("/level1/level2", "tmp://", new VFSFileFactory(), false));
 		

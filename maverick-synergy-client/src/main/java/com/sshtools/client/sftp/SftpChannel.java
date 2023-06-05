@@ -44,6 +44,7 @@ import com.sshtools.common.sftp.ACL;
 import com.sshtools.common.sftp.PosixPermissions;
 import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.Packet;
 import com.sshtools.common.ssh.RequestFuture;
@@ -604,11 +605,11 @@ public class SftpChannel extends AbstractSubsystem {
 	 */
 	public void changePermissions(byte[] handle, PosixPermissions permissions)
 			throws SftpStatusException, SshException {
-		SftpFileAttributes attrs = new SftpFileAttributes(
+		var bldr = SftpFileAttributesBuilder.ofType(
 				SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN,
 				getCharsetEncoding());
-		attrs.setPermissions(permissions);
-		setAttributes(handle, attrs);
+		bldr.withPermissions(permissions);
+		setAttributes(handle, bldr.build());
 	}
 
 	/**
@@ -624,11 +625,11 @@ public class SftpChannel extends AbstractSubsystem {
 	 */
 	public void changePermissions(String filename, PosixPermissions permissions)
 			throws SftpStatusException, SshException {
-		SftpFileAttributes attrs = new SftpFileAttributes(
+		var bldr = SftpFileAttributesBuilder.ofType(
 				SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN,
 				getCharsetEncoding());
-		attrs.setPermissions(permissions);
-		setAttributes(filename, attrs);
+		bldr.withPermissions(permissions);
+		setAttributes(filename, bldr.build());
 	}
 
 	/**
@@ -645,11 +646,11 @@ public class SftpChannel extends AbstractSubsystem {
 	public void changePermissions(String filename, String permissions)
 			throws SftpStatusException, SshException {
 
-		SftpFileAttributes attrs = new SftpFileAttributes(
+		var attrs = SftpFileAttributesBuilder.ofType(
 				SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN,
 				getCharsetEncoding());
-		attrs.setPermissions(PosixPermissionsBuilder.create().fromFileModeString(permissions).build());
-		setAttributes(filename, attrs);
+		attrs.withPermissions(PosixPermissionsBuilder.create().fromFileModeString(permissions).build());
+		setAttributes(filename, attrs.build());
 
 	}
 
@@ -717,10 +718,10 @@ public class SftpChannel extends AbstractSubsystem {
 	 *            the file attributes.
 	 * @throws SftpStatusException
 	 *             , SshException
-	 * @deprecated
+//	 * @deprecated
 	 * @see SftpFile#attributes(SftpFileAttributes)
 	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
+//	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void setAttributes(String path, SftpFileAttributes attrs)
 			throws SftpStatusException, SshException {
 		try {
@@ -1386,9 +1387,7 @@ public class SftpChannel extends AbstractSubsystem {
 					longname = bar.readString(CHARSET_ENCODING);
 				}
 
-				SftpFileAttributes attrs = new SftpFileAttributes(bar, getVersion(), getCharsetEncoding());
-				files[i] = new SftpFile(parent != null ? parent + shortname
-						: shortname, attrs, this, longname);
+				var bldr = SftpFileAttributesBuilder.of(bar, getVersion(), getCharsetEncoding());
 
 				// Work out username/group from long name
 				if (longname != null && version <= 3) {
@@ -1399,14 +1398,17 @@ public class SftpChannel extends AbstractSubsystem {
 						String username = t.nextToken();
 						String group = t.nextToken();
 
-						attrs.setUsername(username);
-						attrs.setGroup(group);
+						bldr.withUsername(username);
+						bldr.withGroup(group);
 
 					} catch (Exception e) {
 
 					}
 
 				}
+
+				files[i] = new SftpFile(parent != null ? parent + shortname
+						: shortname, bldr.build(), this, longname);
 			}
 
 			return files;
@@ -1470,9 +1472,9 @@ public class SftpChannel extends AbstractSubsystem {
 	 */
 	public SftpHandle openFile(String absolutePath, int flags)
 			throws SftpStatusException, SshException {
-		return openFile(absolutePath, flags, new SftpFileAttributes(
+		return openFile(absolutePath, flags, SftpFileAttributesBuilder.ofType(
 				SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN,
-				getCharsetEncoding()));
+				getCharsetEncoding()).build());
 	}
 
 	/**
@@ -1544,9 +1546,9 @@ public class SftpChannel extends AbstractSubsystem {
 			return openFileVersion5(absolutePath, newFlags, accessFlags, attrs);
 		} else {
 			if (attrs == null) {
-				attrs = new SftpFileAttributes(
+				attrs = SftpFileAttributesBuilder.ofType(
 						SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN,
-						getCharsetEncoding());
+						getCharsetEncoding()).build();
 			}
 
 			try {
@@ -1585,9 +1587,9 @@ public class SftpChannel extends AbstractSubsystem {
 			throws SftpStatusException, SshException {
 
 		if (attrs == null) {
-			attrs = new SftpFileAttributes(
+			attrs = SftpFileAttributesBuilder.ofType(
 					SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN,
-					getCharsetEncoding());
+					getCharsetEncoding()).build();
 		}
 
 		try {
@@ -1882,7 +1884,7 @@ public class SftpChannel extends AbstractSubsystem {
 			throws SftpStatusException, SshException {
 		try {
 			if (bar.getType() == SSH_FXP_ATTRS) {
-				return new SftpFileAttributes(bar, getVersion(), getCharsetEncoding());
+				return SftpFileAttributesBuilder.of(bar, getVersion(), getCharsetEncoding()).build();
 			} else if (bar.getType() == SSH_FXP_STATUS) {
 				int status = (int) bar.readInt();
 
@@ -1931,9 +1933,9 @@ public class SftpChannel extends AbstractSubsystem {
 	 */
 	public void makeDirectory(String path) throws SftpStatusException,
 			SshException {
-		makeDirectory(path, new SftpFileAttributes(
+		makeDirectory(path, SftpFileAttributesBuilder.ofType(
 				SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY,
-				getCharsetEncoding()));
+				getCharsetEncoding()).build());
 	}
 
 	/**

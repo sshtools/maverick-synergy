@@ -42,7 +42,7 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.util.UnsignedInteger64;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 
 public class VFSFile extends AbstractFileImpl<VFSFile> {
 
@@ -107,47 +107,42 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 		if(!exists()) {
 			throw new FileNotFoundException();
 		}
-		SftpFileAttributes attr = new SftpFileAttributes(getFileType(file), "UTF-8");
+		var bldr = SftpFileAttributesBuilder.ofType(getFileType(file), "UTF-8");
+		if (!isDirectory())
+			bldr.withSize(length());
 		
-		if (!attr.isDirectory())
-			attr.setSize(new UnsignedInteger64(length()));
+		bldr.withLastModifiedTime(lastModified());
+		bldr.withLastAccessTime(lastModified());
 		
-		try {
-			attr.setTimes(new UnsignedInteger64(lastModified() / 1000),
-					new UnsignedInteger64(lastModified() / 1000));
-		} catch (FileSystemException e) {
-		}
-		
-		PosixPermissionsBuilder bldr = PosixPermissionsBuilder.create();
+		var permBldr = PosixPermissionsBuilder.create();
 		if(isReadable())
-			bldr.withPermissions(PosixFilePermission.OWNER_READ);
+			permBldr.withPermissions(PosixFilePermission.OWNER_READ);
 		if(isWritable())
-			bldr.withPermissions(PosixFilePermission.OWNER_WRITE);
+			permBldr.withPermissions(PosixFilePermission.OWNER_WRITE);
 		if(isDirectory())
-			bldr.withPermissions(PosixFilePermission.OWNER_EXECUTE);
-		attr.setPermissions(bldr.build());
+			permBldr.withPermissions(PosixFilePermission.OWNER_EXECUTE);
+		bldr.withPermissions(permBldr.build());
 
 
 		try {
-			for (String name : file.getContent().getAttributeNames()) {
-				Object attribute = file.getContent().getAttribute(name);
-				attr.setExtendedAttribute(name,
+			for (var name : file.getContent().getAttributeNames()) {
+				var attribute = file.getContent().getAttribute(name);
+				bldr.addExtendedAttribute(name,
 						attribute == null ? new byte[] {} : String.valueOf(attribute).getBytes());
 
 				if (name.equals("uid")) {
-					attr.setUID((String) attribute);
+					bldr.withUidOrUsername((String) attribute);
 				} else if (name.equals("gid")) {
-					attr.setGID((String) attribute);
+					bldr.withGidOrGroup((String) attribute);
 				} else if (name.equals("accessedTime")) {
-					attr.setTimes(new UnsignedInteger64((Long) attribute),
-							attr.getModifiedTime());
+					bldr.withLastAccessTime((Long)attribute);
 				} 
 			}
 		} catch (Exception e) {
 
 		}
 
-		return attr;
+		return bldr.build();
 	}
 
 	private int getFileType(FileObject file) throws FileSystemException {
@@ -280,18 +275,19 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 
 	public void setAttributes(SftpFileAttributes attrs) throws IOException {
 		
-		file.getContent().setLastModifiedTime(
-					attrs.getModifiedTime().longValue() * 1000);
+		file.getContent().setLastModifiedTime(attrs.lastModifiedTime().toMillis());
 
 		// For SSH it's easy
 		if (file.getFileSystem().getRootName().getScheme().equals("sftp")) {
-			if (attrs.getUID() != null) {
-				file.getContent().setAttribute("uid", attrs.getUID());
+			var username = attrs.bestUsernameOr();
+			if (username.isPresent()) {
+				file.getContent().setAttribute("uid", username.get());
 			}
-			if (attrs.getGID() != null) {
-				file.getContent().setAttribute("gid", attrs.getGID());
+			var group = attrs.bestGroupOr();
+			if (group.isPresent()) {
+				file.getContent().setAttribute("gid", group.get());
 			}
-			file.getContent().setAttribute("permissions", attrs.getPosixPermissions().asInt());
+			file.getContent().setAttribute("permissions", attrs.permissions().asInt());
 		}
 
 	}

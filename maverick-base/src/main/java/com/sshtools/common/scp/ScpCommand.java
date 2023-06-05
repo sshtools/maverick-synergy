@@ -40,9 +40,10 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.sftp.AbstractFileSystem;
 import com.sshtools.common.sftp.InvalidHandleException;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFile;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.UnsignedInteger32;
@@ -539,7 +540,7 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 				basename = path.substring(idx + 1);
 			}
 
-			writeCommand("D" + attr.getMaskString() + " 0 " + basename + "\n");
+			writeCommand("D" + attr.toMaskString() + " 0 " + basename + "\n");
 			waitForResponse();
 
 			handle = nfs.openDirectory(path);
@@ -604,7 +605,7 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 				basename = path.substring(idx + 1);
 			}
 
-			writeCommand("C" + attr.getMaskString() + " " + attr.getSize()
+			writeCommand("C" + attr.toMaskString() + " " + attr.size()
 					+ " " + basename + "\n");
 			
 			waitForResponse();
@@ -632,7 +633,7 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 									new Date())
 							.addAttribute(
 									EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-									Long.valueOf(attr.getSize().longValue()))
+									attr.size().longValue())
 							.addAttribute(
 									EventCodes.ATTRIBUTE_FILE_FACTORY,
 									nfs.getFileFactory())
@@ -665,7 +666,7 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 										new Date())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-										Long.valueOf(attr.getSize().longValue()))
+										attr.size().longValue())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_FILE_FACTORY,
 										nfs.getFileFactory())
@@ -680,7 +681,7 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 				
 				byte[] buf = null;
 				
-				while (count < attr.getSize().longValue()) {
+				while (count < attr.size().longValue()) {
 
 					
 					try {
@@ -737,7 +738,7 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 
 				// pipeIn.flush();
 
-				if (count < attr.getSize().longValue()) {
+				if (count < attr.size().longValue()) {
 					throw new IOException(
 							"File transfer terminated abnormally.");
 				}
@@ -910,11 +911,15 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 
 				String name = cmdParts[2];
 				String targetPath;
+				
+				boolean dir = false;
+				boolean found = false;
 
-				SftpFileAttributes targetAttr = null;
+				SftpFileAttributesBuilder builder = SftpFileAttributesBuilder.create();
 
 				try {
-					targetAttr = nfs.getFileAttributes(path);
+					builder.withFileAttributes(nfs.getFileAttributes(path));
+					found = true;
 				} catch (FileNotFoundException ex) {
 					if(Log.isDebugEnabled())
 						Log.debug("File {} not found", path);
@@ -922,15 +927,16 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 					if(Log.isDebugEnabled())
 						Log.debug("File {} permission denied!", path);
 				}
+				
 
 				if (cmdChar == 'D') {
-
+					dir = true;
 					if(Log.isDebugEnabled())
 						Log.debug("Got directory request");
 
 					if (path.equals("."))
 						targetPath = name;
-					else if (targetAttr == null && firstPath)
+					else if (!found && firstPath)
 						targetPath = path;
 					else
 						targetPath = path + (path.endsWith("/") ? "" : "/")
@@ -939,43 +945,41 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 					firstPath = false;
 
 					try {
-						targetAttr = nfs.getFileAttributes(targetPath);
-					} catch (FileNotFoundException ex) {
-						if(Log.isDebugEnabled())
-							Log.debug("File {} not found", targetPath);
-						targetAttr = null;
-					} catch (PermissionDeniedException ex) {
-						if(Log.isDebugEnabled())
-							Log.debug("File {} permission denied", targetPath);
-						targetAttr = null;
-					}
-
-					if (targetAttr != null) {
-						if (!targetAttr.isDirectory()) {
+						var currAttr = nfs.getFileAttributes(targetPath);
+						if (!currAttr.isDirectory()) {
 							String msg = "Invalid target " + name
 									+ ", must be a directory";
 							writeError(msg);
 							throw new IOException(msg);
 						}
-					} else {
+						builder.withFileAttributes(currAttr);
+					} catch (FileNotFoundException ex) {
+						if(Log.isDebugEnabled())
+							Log.debug("File {} not found", targetPath);
+					} catch (PermissionDeniedException ex) {
+						if(Log.isDebugEnabled())
+							Log.debug("File {} permission denied", targetPath);
+					}
+
+					builder.withType(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY);
+					builder.withCharsetEncoding(getSession().getConnection().getContext().getPolicy(ScpPolicy.class).getSCPCharsetEncoding());
+
+					if (!found) {
 						try {
 							if(Log.isDebugEnabled())
 								Log.debug("Creating directory {}", targetPath);
 
-							if (!nfs.makeDirectory(targetPath, new SftpFileAttributes(
-									SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY,
-									getSession().getConnection().getContext().getPolicy(ScpPolicy.class).getSCPCharsetEncoding()))) {
+							if(Log.isDebugEnabled())
+								Log.debug("Setting permissions on directory");
+							builder.withPermissions(PosixPermissionsBuilder.create().
+									fromMaskString(cmdParts[0]).build());
+							SftpFileAttributes attrs2 = builder.build();
+							if (!nfs.makeDirectory(targetPath, attrs2)) {
 								String msg = "Could not create directory: "
 										+ name;
 								writeError(msg);
 								throw new IOException(msg);
 							}
-							targetAttr = nfs.getFileAttributes(targetPath);
-							if(Log.isDebugEnabled())
-								Log.debug("Setting permissions on directory");
-							targetAttr.setPermissions(
-									PosixPermissionsBuilder.create().
-									fromMaskString(cmdParts[0]).build());
 						} catch (FileNotFoundException e1) {
 							writeError("File not found");
 							throw new IOException("File not found");
@@ -992,16 +996,14 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 					continue;
 				}
 
-				if (targetAttr == null || !targetAttr.isDirectory()) {
+				if (!found || !dir) {
 					targetPath = path;
 				} else {
 					targetPath = path + (path.endsWith("/") ? "" : "/") + name;
 				}
-				if (targetAttr == null) {
-					targetAttr = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR, "UTF-8");
-				}
 
-				targetAttr.setSize(new UnsignedInteger64(cmdParts[1]));
+				builder.withType(SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR);
+				builder.withSize(new UnsignedInteger64(cmdParts[1]));
 
 				byte[] handle = null;
 				long length = 0;
@@ -1041,11 +1043,12 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 						Log.debug("Opening file for writing {}", targetPath);
 					
 					// Open the file
+					SftpFileAttributes attrs3 = builder.build();
 					handle = nfs.openFile(targetPath, new UnsignedInteger32(
 							AbstractFileSystem.OPEN_CREATE
 									| AbstractFileSystem.OPEN_WRITE
 									| AbstractFileSystem.OPEN_TRUNCATE),
-							targetAttr);
+							attrs3);
 					if(Log.isDebugEnabled())
 						Log.debug("NFS file opened");
 					writeOk();
@@ -1208,14 +1211,17 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 				waitForResponse();
 
 				if (preserveAttributes) {
-					targetAttr.setPermissions(
+					builder.withPermissions(
 							PosixPermissionsBuilder.create().
 							fromMaskString(cmdParts[0]).build());
+
+					var attrs = builder.build();
+					
 					if(Log.isDebugEnabled())
-						Log.debug("Setting permissions on directory to {}", targetAttr.getPermissionsString());
+						Log.debug("Setting permissions on directory to {}", attrs.toPermissionsString());
 
 					try {
-						nfs.setFileAttributes(targetPath, targetAttr);
+						nfs.setFileAttributes(targetPath, attrs);
 					} catch (Exception e) {
 						writeError("Failed to set file permissions.");
 

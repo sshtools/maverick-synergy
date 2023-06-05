@@ -33,6 +33,7 @@ import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.UnsignedInteger64;
 
@@ -100,9 +101,9 @@ public class VirtualMountFile extends VirtualFileObject {
 			throw new FileNotFoundException();
 		}
 		
-		SftpFileAttributes attrs = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY, "UTF-8");
+		var bldr = SftpFileAttributesBuilder.ofType(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY, "UTF-8");
 
-		attrs.setSize(UnsignedInteger64.ZERO);
+		bldr.withSize(UnsignedInteger64.ZERO);
 
 		PosixPermissionsBuilder builder = PosixPermissionsBuilder.create();
 		
@@ -116,18 +117,17 @@ public class VirtualMountFile extends VirtualFileObject {
 			builder.withAllExecute();
 		}
 
-		attrs.setPermissions(builder.build());
+		bldr.withPermissions(builder.build());
 		
-		attrs.setUID("0");
-		attrs.setGID("0");
-		attrs.setUsername(System.getProperty("maverick.unknownUsername", "unknown"));
-		attrs.setGroup(System.getProperty("maverick.unknownUsername", "unknown"));
+		bldr.withUid(0);
+		bldr.withGid(0);
+		bldr.withUsername(System.getProperty("maverick.unknownUsername", "unknown"));
+		bldr.withGroup(System.getProperty("maverick.unknownUsername", "unknown"));
+		bldr.withLastAccessTime(parentMount.lastModified());
+		bldr.withLastModifiedTime(parentMount.lastModified());
+		bldr.withCreateTime(parentMount.lastModified());
 		
-		attrs.setTimes(new UnsignedInteger64(parentMount.lastModified()),
-				new UnsignedInteger64(parentMount.lastModified()),
-				new UnsignedInteger64(parentMount.lastModified()));
-		
-		return attrs;
+		return bldr.build();
 		
 	}
 

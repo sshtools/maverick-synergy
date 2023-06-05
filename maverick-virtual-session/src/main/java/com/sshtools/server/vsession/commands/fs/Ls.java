@@ -29,7 +29,6 @@ import java.util.List;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.util.Utils;
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
 import com.sshtools.server.vsession.UsageHelper;
@@ -102,12 +101,12 @@ public class Ls extends ShellCommand {
 				String lastModifiedTime = "";
 				long size = 0;
 				if (file.isFile()) {
-					size = attrs.getSize().longValue();
+					size = attrs.size().longValue();
 				} else if (file.isDirectory()) {
 					size = 0;
 				}
 				SimpleDateFormat df;
-		        long mt = (attrs.getModifiedTime().longValue() * 1000L);
+		        long mt = (attrs.lastModifiedTime().toMillis());
 		        long now = System.currentTimeMillis();
 
 		        if ((now - mt) > (6 * 30 * 24 * 60 * 60 * 1000L)) {
@@ -119,10 +118,10 @@ public class Ls extends ShellCommand {
 		        lastModifiedTime = df.format(new Date(mt));
 				int linkCount = 0;
 				process.println(String.format("%s %-3d %-8s %-8s %10d %-14s %-30s", 
-						attrs.getPermissionsString(), 
+						attrs.toPermissionsString(), 
 						linkCount, 
-						Utils.defaultString(attrs.getUID(), "nouser"),
-						Utils.defaultString(attrs.getGID(), "nogroup"),
+						attrs.bestUsername(),
+						attrs.bestGroup(),
 						size, 
 						lastModifiedTime, 
 						file.getName()));
@@ -130,9 +129,9 @@ public class Ls extends ShellCommand {
 				process.println(file.getName());
 			}
 			if(CliHelper.hasOption(args,'x', "extended")) {
-				SftpFileAttributes attrs = file.getAttributes();
-				for(Object name : attrs.getExtendedAttributes().keySet()) {
-					Object val = attrs.getExtendedAttributes().get(name);
+				var attrs = file.getAttributes();
+				for(var name : attrs.extendedAttributes().keySet()) {
+					var val = attrs.extendedAttributes().get(name);
 					process.println(String.format("%" + (CliHelper.hasShortOption(args,'l') ? 64 : 4)+ "s%s", "", name.toString() + "=" + (val == null ? "" : val.toString())));
 				}
 			}

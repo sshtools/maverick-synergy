@@ -73,6 +73,7 @@ import com.sshtools.client.sftp.SftpChannel;
 import com.sshtools.client.sftp.SftpClient;
 import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
 
@@ -181,21 +182,11 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 
 			if (optionsList.contains(StandardCopyOption.COPY_ATTRIBUTES)) {
 				var stat = sftp.stat(sourcePath);
-				var otherStat = sftp.stat(targetPath);
-				otherStat.setPermissions(stat.getPosixPermissions());
-				try {
-					otherStat.setUID(stat.getUID());
-				}
-				catch(IllegalArgumentException iae) {
-					otherStat.setUsername(stat.getUID());
-				}
-				try {
-					otherStat.setGID(stat.getGID());
-				}
-				catch(IllegalArgumentException iae) {
-					otherStat.setGroup(stat.getGID());
-				}
-				sftp.getSubsystemChannel().setAttributes(targetPath, otherStat);
+				var otherStat = SftpFileAttributesBuilder.create().withFileAttributes(sftp.stat(targetPath));
+				otherStat.withPermissions(stat.permissions());
+				otherStat.withUidOrUsername(stat.bestUsernameOr());
+				otherStat.withGidOrGroup(stat.bestGroupOr());
+				sftp.getSubsystemChannel().setAttributes(targetPath, otherStat.build());
 			}
 
 		} catch (Exception e) {

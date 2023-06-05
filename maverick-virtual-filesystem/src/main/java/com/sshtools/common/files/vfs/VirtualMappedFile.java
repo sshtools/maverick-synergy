@@ -313,8 +313,25 @@ public class VirtualMappedFile extends VirtualFileObject {
 	}
 
 	@Override
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
 		super.symlinkTo(toActualPath(target));
+	}
+
+	@Override
+	public void symlinkFrom(String target) throws IOException, PermissionDeniedException {
+		super.symlinkFrom(toActualPath(target));
+	}
+
+	@Override
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void linkTo(String target) throws IOException, PermissionDeniedException {
+		super.linkTo(toActualPath(target));
+	}
+
+	@Override
+	public void linkFrom(String target) throws IOException, PermissionDeniedException {
+		super.linkFrom(toActualPath(target));
 	}
 	
 	public VirtualMount getParentMount() {

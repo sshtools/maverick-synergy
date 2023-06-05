@@ -46,9 +46,9 @@ import com.sshtools.common.sftp.MultipartTransfer;
 import com.sshtools.common.sftp.OpenFile;
 import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.UnsignedInteger32;
-import com.sshtools.common.util.UnsignedInteger64;
 
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -271,32 +271,31 @@ public class S3AbstractFile implements AbstractFile {
 			throw new FileNotFoundException();
 		}
 		
-		SftpFileAttributes attrs = new SftpFileAttributes(
+		var bldr = SftpFileAttributesBuilder.ofType(
 				isDirectory() ? SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY : SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR,
 						"UTF-8");
-		attrs.setSize(new UnsignedInteger64(length()));
-		UnsignedInteger64 t = new UnsignedInteger64(lastModified());
+		bldr.withSize(length());
 		
-		PosixPermissionsBuilder builder = PosixPermissionsBuilder.create();
+		var permBuilder = PosixPermissionsBuilder.create();
 		if(isDirectory()) {
-			builder.withAllExecute();
+			permBuilder.withAllExecute();
 		}
 		if(isReadable()) {
-			builder.withAllRead();
+			permBuilder.withAllRead();
 		}
 		if(isWritable()) {
-			builder.withAllWrite();
+			permBuilder.withAllWrite();
 		}
 		
-		attrs.setPermissions(builder.build());
+		bldr.withPermissions(permBuilder.build());
 		
-		attrs.setUID("0");
-		attrs.setGID("0");
-		attrs.setUsername(System.getProperty("maverick.unknownUsername", "unknown"));
-		attrs.setGroup(System.getProperty("maverick.unknownUsername", "unknown"));
-		
-		attrs.setTimes(t, t);
-		return attrs;
+		bldr.withUid(0);
+		bldr.withGid(0);
+		bldr.withUsername(System.getProperty("maverick.unknownUsername", "unknown"));
+		bldr.withGroup(System.getProperty("maverick.unknownUsername", "unknown"));
+		bldr.withLastModifiedTime(lastModified());
+		bldr.withLastAccessTime(lastModified());
+		return bldr.build();
 	}
 
 	@Override

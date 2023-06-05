@@ -255,8 +255,8 @@ public class DirectoryOperation {
 				}
 			} else if (obj instanceof SftpFile) {
 				sftpfile = (SftpFile) obj;
-				if (sftpfile.isFile()) {
-					size += sftpfile.getAttributes().getSize().longValue();
+				if (sftpfile.attributes().isFile()) {
+					size += sftpfile.attributes().size().longValue();
 				}
 			}
 		}
@@ -270,8 +270,8 @@ public class DirectoryOperation {
 				}
 			} else if (obj instanceof SftpFile) {
 				sftpfile = (SftpFile) obj;
-				if (sftpfile.isFile()) {
-					size += sftpfile.getAttributes().getSize().longValue();
+				if (sftpfile.attributes().isFile()) {
+					size += sftpfile.attributes().size().longValue();
 				}
 			}
 		}

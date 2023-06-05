@@ -292,18 +292,21 @@ public final class SftpFile {
    * @throws SshException on SSH error
    * @throws SftpStatusException on SFTP error
    */
-  @Deprecated(since = "3.2.0", forRemoval = true)
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean isDirectory() throws SftpStatusException, SshException {
     return attrs.isDirectory();
   }
 
   /**
    * Determine whether the file object is pointing to a file.
+   * <p>
+   * Deprecated, see {@link SftpFileAttributes#isDirectory()}.
    *
    * @return is file
    * @throws SshException on SSH error
    * @throws SftpStatusException on SFTP error
   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean isFile() throws SftpStatusException, SshException {
     return attrs.isFile();
   }
@@ -326,6 +329,7 @@ public final class SftpFile {
    * @throws SshException on SSH error
    * @throws SftpStatusException on SFTP error
    */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean isFifo() throws SftpStatusException, SshException {
     return getAttributes().isFifo();
   }
@@ -337,6 +341,7 @@ public final class SftpFile {
    * @throws SshException on SSH error
    * @throws SftpStatusException on SFTP error
    */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean isBlock() throws SftpStatusException, SshException {
     return getAttributes().isBlock();
   }
@@ -348,6 +353,7 @@ public final class SftpFile {
    * @throws SshException on SSH error
    * @throws SftpStatusException on SFTP error
    */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean isCharacter() throws SftpStatusException, SshException {
     return getAttributes().isCharacter();
   }
@@ -359,6 +365,7 @@ public final class SftpFile {
    * @throws SshException on SSH error
    * @throws SftpStatusException on SFTP error
    */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean isSocket() throws SftpStatusException, SshException {
 	  return getAttributes().isSocket();
   }

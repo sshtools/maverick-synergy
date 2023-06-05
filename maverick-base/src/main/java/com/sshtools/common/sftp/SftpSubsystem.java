@@ -23,6 +23,7 @@ import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.attribute.FileTime;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -2198,25 +2199,16 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 		} else {
 			str.append(" 1 ");
 		}
-		if(attrs.hasUID()) {
-			str.append(attrs.getUID() + Utils.pad(8 - attrs.getUID().length()));
-		} else {
-			str.append(String.valueOf(attrs.getUID()) + Utils.pad(8 - String.valueOf(attrs.getUID()).length()));
-		}
+		str.append(attrs.uidOr().map(u -> u + Utils.pad(8 - String.valueOf(u).length())).orElse("       0"));
 		str.append(" ");
-		if(attrs.hasGID()) {
-			str.append(attrs.getGID()
-					+ Utils.pad(8 - attrs.getGID().length()));
-		} else {
-			str.append(String.valueOf(attrs.getGID()) + Utils.pad(8 - String.valueOf(attrs.getGID()).length()));
-		}
+		str.append(attrs.gidOr().map(g -> g + Utils.pad(8 - String.valueOf(g).length())).orElse("       0"));
 		str.append(" ");
 
-		str.append(Utils.pad(11 - attrs.getSize().toString().length())
-				+ attrs.getSize().toString());
+		str.append(Utils.pad(11 - attrs.size().toString().length())
+				+ attrs.size().toString());
 		str.append(" ");
 		
-		String modTime = getModTimeStringInContext(attrs.getModifiedTime(), locale);
+		String modTime = getModTimeStringInContext(attrs.lastModifiedTime(), locale);
 		str.append(Utils.pad(12 - modTime.length()) + modTime);
 		str.append(" ");
 		str.append(filename);
@@ -2224,14 +2216,14 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 		return str.toString();
 	}
 
-	private String getModTimeStringInContext(UnsignedInteger64 mtime,
+	private String getModTimeStringInContext(FileTime mtime,
 			Locale locale) {
 		if (mtime == null) {
 			return "";
 		}
 
 		SimpleDateFormat df;
-		long mt = (mtime.longValue() * 1000L);
+		long mt = mtime.toMillis();
 		long now = System.currentTimeMillis();
 
 		if ((now - mt) > (6 * 30 * 24 * 60 * 60 * 1000L)) {
@@ -2295,7 +2287,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				id = (int) bar.readInt();
 				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
 				if(bar.available() > 0) {
-					attrs = new SftpFileAttributes(bar, version, CHARSET_ENCODING);
+					attrs = SftpFileAttributesBuilder.of(bar, version, CHARSET_ENCODING).build();
 				}
 				
 				boolean exists = nfs.fileExists(path);

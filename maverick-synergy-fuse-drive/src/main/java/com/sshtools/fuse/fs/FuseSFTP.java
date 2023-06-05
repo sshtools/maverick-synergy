@@ -572,22 +572,11 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 		 */
 		stat.st_uid.set(0);
 		stat.st_gid.set(0);
-		 
-		if(file.hasAccessTime()) {
-			stat.st_atim.tv_sec.set(file.getAccessedTime().longValue() / 1000);
-		}
-		if(file.hasModifiedTime()) {
-			stat.st_mtim.tv_sec.set(file.getModifiedTime().longValue() / 1000);
-		}
-		if(file.hasCreateTime()) {
-			stat.st_ctim.tv_sec.set(file.getCreationTime().longValue() / 1000);
-		}
 		
-		if(file.hasSize()) {
-			stat.st_size.set(file.getSize().longValue());
-		} else {
-			stat.st_size.set(0L);
-		}
+		file.lastAccessTimeOr().ifPresent(a -> stat.st_atim.tv_sec.set(a.to(TimeUnit.SECONDS)));		
+		file.lastModifiedTimeOr().ifPresent(a -> stat.st_mtim.tv_sec.set(a.to(TimeUnit.SECONDS)));	
+		file.createTimeOr().ifPresent(a -> stat.st_ctim.tv_sec.set(a.to(TimeUnit.SECONDS)));
+		stat.st_size.set(file.size().longValue());
 		
 		/**
 		 * This could probably be more intelligent and set "other" permissions,
@@ -596,9 +585,9 @@ public class FuseSFTP extends FuseStubFS implements Closeable {
 		 *  on this device can access the file but the remote server may deny access.
 		 */
 		if(file.isDirectory()) {
-			stat.st_mode.set(file.getModeType() | 0777);
+			stat.st_mode.set(file.toModeType() | 0777);
 		} else {
-			stat.st_mode.set(file.getModeType() | 0666);
+			stat.st_mode.set(file.toModeType() | 0666);
 		}
 
 		return 0;

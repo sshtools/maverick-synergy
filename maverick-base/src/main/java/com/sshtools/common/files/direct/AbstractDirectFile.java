@@ -121,11 +121,9 @@ public abstract class AbstractDirectFile<T extends AbstractDirectFile<T>> extend
 	}
 
 	public void setAttributes(SftpFileAttributes attrs) throws IOException {
-		
-		if(attrs.hasModifiedTime()) {
-			f.setLastModified(attrs.getModifiedTime().longValue() * 1000);
+		if(attrs.hasLastModifiedTime()) {
+			f.setLastModified(attrs.lastModifiedTime().toMillis());
 		}
-
 	}
 
 	public String getCanonicalPath() throws IOException {

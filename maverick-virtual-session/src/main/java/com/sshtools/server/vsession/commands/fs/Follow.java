@@ -45,7 +45,7 @@ public class Follow extends ShellCommand {
 			long _filePointer = 0;
 			while (true) {
 				Thread.sleep(2000);
-				long len = obj.getAttributes().getSize().longValue();
+				long len = obj.getAttributes().size().longValue();
 				if (len < _filePointer) {
 					process.println(
 									"--- TRUNCATED ---   File was reset. Restarting following from start of file.");

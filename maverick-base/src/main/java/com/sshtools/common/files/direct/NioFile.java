@@ -15,7 +15,6 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
-import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.text.MessageFormat;
@@ -33,6 +32,7 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.PosixPermissions;
 import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.UnsignedInteger64;
 
@@ -279,53 +279,51 @@ public final class NioFile implements AbstractFile {
 			Path file = path;
 
 			var attr = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-			var attrs = new SftpFileAttributes(getFileType(attr), "UTF-8");
+			var bldr = SftpFileAttributesBuilder.ofType(getFileType(attr), "UTF-8");
 
 			try {
 
-				attrs.setSize(new UnsignedInteger64(attr.size()));
+				bldr.withSize(new UnsignedInteger64(attr.size()));
 
 				try {
 					var posix = Files.readAttributes(file, PosixFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
 
-					attrs.setGroup(posix.group().getName());
-					attrs.setUsername(posix.owner().getName());
-
-					attrs.setTimes(new UnsignedInteger64(posix.lastAccessTime().toMillis() / 1000),
-							new UnsignedInteger64(posix.lastModifiedTime().toMillis() / 1000),
-							new UnsignedInteger64(posix.creationTime().toMillis() / 1000));
-					attrs.setPermissions(PosixPermissionsBuilder.create().withPermissions(posix.permissions()).build());
+					bldr.withGroup(posix.group().getName());
+					bldr.withUsername(posix.owner().getName());
+					bldr.withLastAccessTime(posix.lastAccessTime());
+					bldr.withLastModifiedTime(posix.lastModifiedTime());
+					bldr.withPermissions(posix.permissions());
 
 					// We return now as we have enough information
-					return attrs;
+					return bldr.build();
 
 				} catch (UnsupportedOperationException | IOException e) {
 				}
 
-				attrs.setTimes(new UnsignedInteger64(attr.lastAccessTime().toMillis() / 1000),
-						new UnsignedInteger64(attr.lastModifiedTime().toMillis() / 1000),
-						new UnsignedInteger64(attr.creationTime().toMillis() / 1000));
+				bldr.withLastAccessTime(attr.lastAccessTime());
+				bldr.withLastModifiedTime(attr.lastModifiedTime());
+				bldr.withCreateTime(attr.creationTime());
 
 				try {
 					var dos = Files.readAttributes(file, DosFileAttributes.class);
 
-					var bldr = PosixPermissionsBuilder.create();
-					bldr.withAllRead();
+					var permsBldr = PosixPermissionsBuilder.create();
+					permsBldr.withAllRead();
 					if (!dos.isReadOnly()) {
-						bldr.withAllWrite();
+						permsBldr.withAllWrite();
 					}
 					var filename = path.getFileName().toString();
 					if (filename.endsWith(".exe") || filename.endsWith(".com") || filename.endsWith(".cmd")) {
-						bldr.withAllExecute();
+						permsBldr.withAllExecute();
 					}
-					attrs.setPermissions(bldr.build());
+					bldr.withPermissions(permsBldr.build());
 
 				} catch (UnsupportedOperationException | IOException e) {
 				}
 
 			} catch (UnsupportedOperationException e) {
 			}
-			return attrs;
+			return bldr.build();
 		} catch (IOException ioe) {
 			throw translateException(ioe);
 		}
@@ -380,24 +378,36 @@ public final class NioFile implements AbstractFile {
 		try {
 			var basicView = Files.getFileAttributeView(path, BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS);
 			basicView.setTimes(
-					attrs.hasModifiedTime() ? FileTime.fromMillis(attrs.getModifiedDateTime().getTime()) : null,
-					attrs.hasAccessTime() ? FileTime.fromMillis(attrs.getAccessedDateTime().getTime()) : null,
-					attrs.hasCreateTime() ? FileTime.fromMillis(attrs.getCreationDateTime().getTime()) : null);
+					attrs.lastModifiedTimeOr().orElse(null),
+					attrs.lastAccessTimeOr().orElse(null),
+					attrs.createTimeOr().orElse(null));
 
-			if(attrs.hasUID()) {
+			attrs.usernameOr().ifPresentOrElse(u -> {
 				try {
-					Files.setOwner(path, path.getFileSystem().getUserPrincipalLookupService().lookupPrincipalByName(attrs.getUID()));
+					Files.setOwner(path, path.getFileSystem().getUserPrincipalLookupService().lookupPrincipalByName(u));
 				} catch (UnsupportedOperationException | IllegalArgumentException | IOException e) {
 				}
-			}
-			if(attrs.hasGID()) {
+			}, () -> attrs.uidOr().ifPresent(u -> {
 				try {
-					Files.setAttribute(path, "posix:group", path.getFileSystem().getUserPrincipalLookupService().lookupPrincipalByGroupName(attrs.getUID()));
+					Files.setOwner(path, path.getFileSystem().getUserPrincipalLookupService()
+							.lookupPrincipalByName(String.valueOf(u)));
 				} catch (UnsupportedOperationException | IllegalArgumentException | IOException e) {
 				}
-			}
+			}));
 			
-			var newPerms = attrs.getPosixPermissions();
+			attrs.groupOr().ifPresentOrElse(g -> {
+				try {
+					Files.setAttribute(path, "posix:group", path.getFileSystem().getUserPrincipalLookupService().lookupPrincipalByGroupName(g));
+				} catch (UnsupportedOperationException | IllegalArgumentException | IOException e) {
+				}
+			}, () -> attrs.uidOr().ifPresent(g -> {
+				try {
+					Files.setAttribute(path, "posix:group", path.getFileSystem().getUserPrincipalLookupService().lookupPrincipalByGroupName(String.valueOf(g)));
+				} catch (UnsupportedOperationException | IllegalArgumentException | IOException e) {
+				}
+			}));
+			
+			var newPerms = attrs.permissions();
 			if (!newPerms.equals(PosixPermissions.EMPTY)) {
 				Set<PosixFilePermission> current = null;
 				try {

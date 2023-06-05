@@ -60,6 +60,10 @@ public class SftpFileAttributes {
 			return new SftpFileAttributesBuilder();
 		}
 
+		public static SftpFileAttributesBuilder ofType(int type, String charsetEncoding) {
+			return new SftpFileAttributesBuilder().withType(type).withCharsetEncoding(charsetEncoding);
+		}
+
 		public static SftpFileAttributesBuilder of(ByteArrayReader bar, int version, String charsetEncoding)
 				throws IOException {
 			return new SftpFileAttributesBuilder().asVersion(version).withCharsetEncoding(charsetEncoding)
@@ -276,6 +280,48 @@ public class SftpFileAttributes {
 			else
 				flags &= ~SSH_FILEXFER_ATTR_UIDGID;
 			return this;
+		}
+		
+		public SftpFileAttributesBuilder withUidOrUsername(Optional<String> attribute) {
+			if(attribute.isEmpty()) {
+				username = Optional.empty();
+				uid = Optional.empty();
+			}
+			else {
+				try {
+					uid = Optional.of(Integer.parseInt(attribute.get()));
+					username = Optional.empty();
+				} catch(NumberFormatException iae) {
+					uid = Optional.empty();
+					username = Optional.ofNullable(attribute.get());
+				}
+			}
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withUidOrUsername(String attribute) {
+			return withUidOrUsername(Optional.ofNullable(attribute));
+		}
+		
+		public SftpFileAttributesBuilder withGidOrGroup(Optional<String> attribute) {
+			if(attribute.isEmpty()) {
+				group = Optional.empty();
+				gid = Optional.empty();
+			}
+			else {
+				try {
+					gid = Optional.of(Integer.parseInt(attribute.get()));
+					group = Optional.empty();
+				} catch(NumberFormatException iae) {
+					gid = Optional.empty();
+					group = Optional.ofNullable(attribute.get());
+				}
+			}
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withGidOrGroup(String attribute) {
+			return withGidOrGroup(Optional.ofNullable(attribute));
 		}
 
 		public SftpFileAttributesBuilder withGroup(Optional<String> group) {
@@ -899,6 +945,11 @@ public class SftpFileAttributes {
 		this(SftpFileAttributesBuilder.of(bar, version, charsetEncoding));
 	}
 
+	/**
+	 * @param type
+	 * @param charsetEncoding
+	 * @see SftpFileAttributesBuilder#ofType(int, String)
+	 */
 	@Deprecated(since = "3.1.0", forRemoval = true)
 	public SftpFileAttributes(int type, String charsetEncoding) {
 		this(SftpFileAttributesBuilder.create().withType(type).withCharsetEncoding(charsetEncoding));
@@ -1960,5 +2011,21 @@ public class SftpFileAttributes {
 
 	private long nanosFromFileTime(FileTime filetime) {
 		return Integer.toUnsignedLong(filetime.toInstant().getNano());
+	}
+
+	public Optional<String> bestUsernameOr() {
+		return username.or(() -> uid.map(u -> String.valueOf(u)));
+	}
+
+	public String bestUsername() {
+		return bestUsernameOr().orElse("nouser");
+	}
+
+	public Optional<String> bestGroupOr() {
+		return group.or(() -> gid.map(g -> String.valueOf(g)));
+	}
+
+	public String bestGroup() {
+		return bestGroupOr().orElse("nogroup");
 	}
 }

@@ -715,7 +715,7 @@ public class SftpClient implements Closeable {
 	 * @param rootPath
 	 * @see SftpClientBuilder#withCustomRoots(String)
 	 */
-	@Deprecated(since = "3.2.0", forRemoval = true)
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void addCustomRoot(String rootPath) {
 		customRoots.addElement(rootPath);
 	}
@@ -726,7 +726,7 @@ public class SftpClient implements Closeable {
 	 * @param rootPath
 	 * @see SftpClientBuilder#withCustomRoots(String)
 	 */
-	@Deprecated(since = "3.2.0", forRemoval = true)
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void removeCustomRoot(String rootPath) {
 		customRoots.removeElement(rootPath);
 	}

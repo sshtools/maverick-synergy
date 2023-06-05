@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 
 import org.junit.Test;

@@ -101,7 +101,7 @@ public class SftpClientTask extends Task {
 	 *
 	 * @param blocksize
 	 */
-	@Deprecated(since = "3.2.0", forRemoval = true)
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void setBlockSize(int blocksize) {
 		sftp.setBlockSize(blocksize);
 	}
@@ -218,7 +218,7 @@ public class SftpClientTask extends Task {
 	 *
 	 * @param asyncRequests
 	 */
-	@Deprecated(since = "3.2.0", forRemoval = true)
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void setMaxAsyncRequests(int asyncRequests) {
 		sftp.setMaxAsyncRequests(asyncRequests);
 	}
@@ -330,7 +330,7 @@ public class SftpClientTask extends Task {
 	 *
 	 * @param rootPath
 	 */
-	@Deprecated(since = "3.2.0", forRemoval = true)
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void addCustomRoot(String rootPath) {
 		sftp.addCustomRoot(rootPath);
 	}
@@ -340,7 +340,7 @@ public class SftpClientTask extends Task {
 	 *
 	 * @param rootPath
 	 */
-	@Deprecated(since = "3.2.0", forRemoval = true)
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void removeCustomRoot(String rootPath) {
 		sftp.removeCustomRoot(rootPath);
 	}

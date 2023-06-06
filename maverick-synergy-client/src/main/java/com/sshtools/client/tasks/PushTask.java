@@ -443,7 +443,6 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 			throws IOException, SftpStatusException, SshException, TransferCancelledException, ChannelOpenException,
 			PermissionDeniedException {
 
-		verboseMessage("There are {0} clients, removing one", clients.size());
 		SshClient ssh;
 		synchronized (clients) {
 			ssh = clients.removeFirst();

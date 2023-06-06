@@ -19,6 +19,7 @@
 package com.sshtools.synergy.s3;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
@@ -29,6 +30,7 @@ import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
 
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -64,10 +66,22 @@ public class S3AbstractFileFactory implements AbstractFileFactory<S3AbstractFile
 		this.bucketName = bucketName;
 		this.region = region;
 		
+		createClient(region, accessKey, secretKey, endpoint);
+	
+		verifyBucket(bucketName);
+	}
+	
+	private void createClient(Region region, String accessKey, String secretKey, String endpoint)  {
+		
+		
 		S3ClientBuilder builder = S3Client.builder()
-				.region(region)
-				.credentialsProvider(StaticCredentialsProvider.create(new AwsCredentials() {
-			
+				.region(region);
+		
+		if(StringUtils.isBlank(accessKey)) {
+			builder = builder.credentialsProvider(InstanceProfileCredentialsProvider.builder().build());
+		} else {
+				builder = builder.credentialsProvider(StaticCredentialsProvider.create(new AwsCredentials() {
+				
 					@Override
 					public String secretAccessKey() {
 						return secretKey;
@@ -77,15 +91,37 @@ public class S3AbstractFileFactory implements AbstractFileFactory<S3AbstractFile
 					public String accessKeyId() {
 						return accessKey;
 					}
-		}));
+			}));
+		}
 		
 		if(StringUtils.isNotBlank(endpoint)) {
-			builder = builder.endpointOverride(new URI(endpoint));
+			try {
+				builder = builder.endpointOverride(new URI(endpoint));
+			} catch (URISyntaxException e) {
+				throw new UncheckedIOException(new IOException(endpoint + " is an invalid URI"));
+			}
 		}
 		
 		this.s3 = builder.build();
+	}
+
+	public S3AbstractFileFactory(
+			Region region, 
+			String bucketName) throws URISyntaxException {
 		
+		this.bucketName = bucketName;
+		this.region = region;
+		
+		S3ClientBuilder builder = S3Client.builder()
+				.region(region)
+				.credentialsProvider(InstanceProfileCredentialsProvider.builder().build());
+		
+		this.s3 = builder.build();
+		
+		verifyBucket(bucketName);
+	}
 	
+	private void verifyBucket(String bucketName) {
 		if(!cachedBucketNames.contains(bucketName)) {
 			try {
 				GetBucketLocationRequest request = GetBucketLocationRequest.builder()
@@ -99,7 +135,6 @@ public class S3AbstractFileFactory implements AbstractFileFactory<S3AbstractFile
 				cachedBucketNames.add(bucketName);
 			}
 		}
-		
 	}
 
 	@Override

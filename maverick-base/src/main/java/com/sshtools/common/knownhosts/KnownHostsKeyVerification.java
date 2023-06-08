@@ -207,9 +207,9 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 			certificateAuthorities.add(e);
 			entry = e;
 		} else if (marker.equalsIgnoreCase("@revoked")) {
-			entry = new RevokedEntry(getNames(host), new Ssh2KeyEntry(getNames(host), key, comment));
+			entry = new RevokedEntry(getNames(host), new Ssh2KeyEntry(getNames(host), key, comment, false));
 		} else {
-			entry = new Ssh2KeyEntry(getNames(host), key, comment);
+			entry = new Ssh2KeyEntry(getNames(host), key, comment, false);
 		}
 
 		addEntry(entry);
@@ -402,17 +402,21 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 	}
 
 	public void allowHost(String host, SshPublicKey key, boolean always) throws SshException {
-		addEntry(key, "", resolveNames(host).toArray(new String[0]));
+		addEntry(key, "", always, resolveNames(host).toArray(new String[0]));
 	}
 
 	public synchronized void addEntry(SshPublicKey key, String comment, String... names) throws SshException {
+		addEntry(key, comment, true, names);
+	}
+
+	public synchronized void addEntry(SshPublicKey key, String comment, boolean always, String... names) throws SshException {
 
 		if (useHashHosts()) {
 			for (String name : names) {
-				addEntry(new Ssh2KeyEntry(new HashSet<String>(Arrays.asList(generateHash(name))), key, comment));
+				addEntry(new Ssh2KeyEntry(new HashSet<String>(Arrays.asList(generateHash(name))), key, comment, !always));
 			}
 		} else {
-			addEntry(new Ssh2KeyEntry(new HashSet<String>(Arrays.asList(names)), key, comment));
+			addEntry(new Ssh2KeyEntry(new HashSet<String>(Arrays.asList(names)), key, comment, !always));
 		}
 	}
 
@@ -440,7 +444,7 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 		return verifyHost(host, pk, true);
 	}
 
-	private synchronized boolean verifyHost(String host, SshPublicKey pk, boolean validateUnknown) throws SshException {
+	protected synchronized boolean verifyHost(String host, SshPublicKey pk, boolean validateUnknown) throws SshException {
 
 		Set<String> resolvedNames = resolveNames(host);
 
@@ -457,6 +461,24 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 				if (entry.validate(pk, resolvedNames.toArray(new String[0]))) {
 					return true;
 				}
+			}
+		}
+		else {
+			var allowed = new ArrayList<SshPublicKey>();
+			for (Map.Entry<SshPublicKey, List<KeyEntry>> entry : entriesByPublicKey.entrySet()) {
+				for(var k : entry.getValue()) {
+					if(k.matchesHost(host)) {
+						if (k.validate(entry.getKey(), resolvedNames.toArray(new String[0]))) {
+							allowed.add(entry.getKey());
+							break;
+						}
+					}
+				}
+			}
+			if(!allowed.isEmpty()) {
+				onHostKeyMismatch(host, allowed, pk);
+				// Recheck ans return the result
+				return verifyHost(host, pk, false);
 			}
 		}
 
@@ -587,13 +609,17 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 
 		StringBuffer buf = new StringBuffer("");
 		for (HostFileEntry entry : entries) {
-			buf.append(entry.getFormattedLine());
-			buf.append(System.getProperty("line.separator"));
+			if(!entry.temporary) {
+				buf.append(entry.getFormattedLine());
+				buf.append(System.getProperty("line.separator"));
+			}
 		}
 		return buf.toString();
 	}
 
 	public abstract class HostFileEntry {
+		
+		boolean temporary;
 
 		abstract String getFormattedLine();
 
@@ -610,8 +636,9 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 		SshPublicKey key;
 		boolean hashedEntry = false;
 
-		KeyEntry(Set<String> names, SshPublicKey key, String comment) {
+		KeyEntry(Set<String> names, SshPublicKey key, String comment, boolean temporary) {
 			this.names = names;
+			this.temporary = temporary;
 			this.key = key;
 			this.comment = comment;
 			if (names.size() == 1) {
@@ -754,8 +781,8 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 
 		boolean hashedEntry = false;
 
-		Ssh2KeyEntry(Set<String> names, SshPublicKey key, String comment) {
-			super(names, key, comment);
+		Ssh2KeyEntry(Set<String> names, SshPublicKey key, String comment, boolean temporary) {
+			super(names, key, comment, temporary);
 			if (names.size() == 1) {
 				if (names.iterator().next().startsWith(HASH_DELIM)) {
 					hashedEntry = true;
@@ -781,7 +808,7 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 	public class CertAuthorityEntry extends KeyEntry {
 
 		CertAuthorityEntry(Set<String> names, SshPublicKey key, String comment) {
-			super(names, key, comment);
+			super(names, key, comment, false);
 		}
 
 		@Override
@@ -819,7 +846,7 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 		KeyEntry revokedEntry;
 
 		RevokedEntry(Set<String> names, KeyEntry revokedEntry) {
-			super(names, revokedEntry.getKey(), revokedEntry.getComment());
+			super(names, revokedEntry.getKey(), revokedEntry.getComment(), false);
 			this.revokedEntry = revokedEntry;
 		}
 

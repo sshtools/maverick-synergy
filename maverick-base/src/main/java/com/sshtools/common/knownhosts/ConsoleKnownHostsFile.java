@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 
 import com.sshtools.common.publickey.SshKeyUtils;
@@ -64,7 +65,7 @@ public class ConsoleKnownHostsFile extends KnownHostsFile {
 				System.out.println(SshKeyUtils.getFormattedKey(key, ""));
 			}
 
-			getResponse(host, actual);
+			getResponse(host, actual, allowedHostKey);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -86,7 +87,7 @@ public class ConsoleKnownHostsFile extends KnownHostsFile {
 			System.out.println("The host key " + "(" + pk.getAlgorithm() + ") fingerprint is: "
 					+ SshKeyFingerprint.getFingerprint(pk.getEncoded(), SshKeyFingerprint.SHA256_FINGERPRINT));
 
-			getResponse(host, pk);
+			getResponse(host, pk, Collections.emptyList());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -97,7 +98,7 @@ public class ConsoleKnownHostsFile extends KnownHostsFile {
 		System.out.println(entry);
 	}
 
-	private void getResponse(String host, SshPublicKey pk) throws SshException, IOException {
+	private void getResponse(String host, SshPublicKey pk, List<SshPublicKey> allowedHostKey) throws SshException, IOException {
 		String response = "";
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
@@ -115,6 +116,12 @@ public class ConsoleKnownHostsFile extends KnownHostsFile {
 				response = reader.readLine();
 			} catch (IOException ex) {
 				throw new SshException("Failed to read response", SshException.INTERNAL_ERROR);
+			}
+		}
+
+		if(response.equalsIgnoreCase("YES") || response.equalsIgnoreCase("ALWAYS")) {
+			for(var key : allowedHostKey) {
+				removeEntries(key);
 			}
 		}
 

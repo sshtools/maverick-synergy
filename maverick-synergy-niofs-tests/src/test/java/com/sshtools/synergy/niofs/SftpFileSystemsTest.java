@@ -17,7 +17,7 @@ public class SftpFileSystemsTest extends AbstractNioFsTest {
 	@Test
 	public void testNewSftpFileSystemFromExistingClient() throws Exception {
 		try (var ssh = SshClientBuilder.create().
-				withTarget("localhost", 2222).
+				withTarget("localhost", port).
 				withUsername("test").
 				withPassword("test")
 				.build()) {
@@ -35,7 +35,7 @@ public class SftpFileSystemsTest extends AbstractNioFsTest {
 	@Test(expected = IOException.class)
 	public void testFailNewSftpFileSystemFromExistingClient() throws Exception {
 		try (var ssh = SshClientBuilder.create().
-				withTarget("localhost", 2222).
+				withTarget("localhost", port).
 				withUsername("test").
 				withPassword("test").
 				build()) {
@@ -80,7 +80,7 @@ public class SftpFileSystemsTest extends AbstractNioFsTest {
 				SftpFileSystemProvider.USERNAME, "test",
 			    SftpFileSystemProvider.PASSWORD, "test",
 			    SftpFileSystemProvider.HOSTNAME, "localhost",
-			    SftpFileSystemProvider.PORT, 2222
+			    SftpFileSystemProvider.PORT, port
 				))) {
 			Files.createFile(fs.getPath("testFile"));
 		}

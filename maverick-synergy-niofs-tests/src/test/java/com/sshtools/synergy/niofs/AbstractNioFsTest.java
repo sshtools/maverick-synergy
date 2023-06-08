@@ -41,7 +41,7 @@ public abstract class AbstractNioFsTest {
 
 	protected SshServer server;
 	protected Path tmpDir;
-	protected int port = 2222;
+	protected int port = -1;
 	protected static boolean sandbox = true;
 	protected SshServerContext currentContext;
 
@@ -71,7 +71,7 @@ public abstract class AbstractNioFsTest {
 	public void setupSshd() throws Exception {
 		tmpDir = Files.createTempDirectory("niofsTests");
 
-		server = new SshServer(port) {
+		server = new SshServer("127.0.0.1", 0) {
 
 			@Override
 			public SshServerContext createContext(SshEngineContext daemonContext, SocketChannel sc) throws IOException, SshException {
@@ -90,6 +90,7 @@ public abstract class AbstractNioFsTest {
 				withSandbox(sandbox).
 				build());
 		server.start();
+		port = server.getEngine().getContext().getListeningInterfaces()[0].getActualPort();
 	}
 
 	protected SftpExtension createStatVFSExtension() {

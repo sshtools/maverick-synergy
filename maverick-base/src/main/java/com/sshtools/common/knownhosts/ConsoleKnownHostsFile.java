@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.List;
 
 import com.sshtools.common.publickey.SshKeyUtils;
@@ -36,6 +37,10 @@ public class ConsoleKnownHostsFile extends KnownHostsFile {
 	}
 
 	public ConsoleKnownHostsFile(File file) throws SshException, IOException {
+		super(file);
+	}
+
+	public ConsoleKnownHostsFile(Path file) throws SshException, IOException {
 		super(file);
 	}
 	

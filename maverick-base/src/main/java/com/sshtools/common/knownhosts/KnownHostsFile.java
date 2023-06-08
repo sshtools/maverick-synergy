@@ -19,25 +19,33 @@
 package com.sshtools.common.knownhosts;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 
 import com.sshtools.common.logger.Log;
-
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.util.IOUtils;
 
 public class KnownHostsFile extends KnownHostsKeyVerification {
 
-	File file;
-	
+	public static Path defaultKnownHostsFile() {
+		return Paths.get(System.getProperty("user.home"), ".ssh", "known_hosts");
+	}
+
+	private Path file;
+
 	public KnownHostsFile(File file) throws SshException {
+		this(file.toPath());
+	}
+	
+	public KnownHostsFile(Path file) throws SshException {
 		this.file = file;
-		try(InputStream in = new FileInputStream(file)) {
+		try(var in = Files.newInputStream(file)) {
 			load(in);
 		} catch (IOException e) {
 			throw new SshException(e);
@@ -45,19 +53,26 @@ public class KnownHostsFile extends KnownHostsKeyVerification {
 	}
 	
 	public void store() throws IOException {
-		IOUtils.writeStringToFile(file, toString(), "UTF-8");
+		try(var out = Files.newBufferedWriter(file, Charset.forName("UTF-8"))) {
+			out.write(toString());
+		}
+			
 	}
 	
-	public File getKnownHostsFile() {
+	public Path getFile() {
 		return file;
 	}
 	
+	public File getKnownHostsFile() {
+		return file.toFile();
+	}
+	
 	public boolean isHostFileWriteable() {
-		return file.canWrite();
+		return Files.isReadable(file);
 	}
 	
 	public KnownHostsFile() throws SshException {
-		this(new File(new File(System.getProperty("user.home"), ".ssh"), "known_hosts"));
+		this(defaultKnownHostsFile());
 	}
 	
 	@Override

@@ -2601,9 +2601,7 @@ public class SftpClient implements Closeable {
 	public void rm(String path, boolean force, boolean recurse) throws SftpStatusException, SshException {
 		String actual = resolveRemotePath(path);
 
-		SftpFileAttributes attrs = null;
-
-		attrs = sftp.getAttributes(actual);
+		SftpFileAttributes attrs = sftp.getAttributes(actual);
 
 		SftpFile file;
 
@@ -2632,6 +2630,26 @@ public class SftpClient implements Closeable {
 			sftp.removeDirectory(actual);
 		} else {
 			sftp.removeFile(actual);
+		}
+	}
+
+	/**
+	 * Remove a directory, will fail if the directory has contents.
+	 * 
+	 * @param path
+	 * 
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	public void rmdir(String path) throws SftpStatusException, SshException {
+		String actual = resolveRemotePath(path);
+		SftpFileAttributes attrs = sftp.getAttributes(actual);
+
+		if (attrs.isDirectory()) {
+			sftp.removeDirectory(actual);
+		} else {
+			throw new SftpStatusException(SftpStatusException.SSH_FX_NOT_A_DIRECTORY,
+					"File is not a directory");
 		}
 	}
 
@@ -3205,31 +3223,23 @@ public class SftpClient implements Closeable {
 	 * @return String
 	 */
 	public static String formatLongname(SftpFileAttributes attrs, String filename) {
-
-		StringBuffer str = new StringBuffer();
-		str.append(pad(10 - attrs.getPermissionsString().length()) + attrs.getPermissionsString());
-		str.append("    1 ");
-		str.append(attrs.getUID() + pad(8 - attrs.getUID().length())); // uid
-		str.append(" ");
-		str.append(attrs.getGID() + pad(8 - attrs.getGID().length())); // gid
-		str.append(" ");
-		str.append(pad(12 - attrs.getSize().toString().length()) + attrs.getSize().toString());
-		str.append(" ");
-		str.append(pad(12 - getModTimeString(attrs.getModifiedTime()).length())
-				+ getModTimeString(attrs.getModifiedTime()));
-		str.append(" ");
-		str.append(filename);
-
-		return str.toString();
+		return String.format("%9s %d %-9s %-9 %10d %12s %s",
+				attrs.toPermissionsString(),
+				attrs.linkCount(),
+				attrs.bestUsername(),
+				attrs.bestGroup(),
+				attrs.size(),
+				getModTimeString(attrs.lastModifiedTime()),
+				filename);
 	}
 
-	private static String getModTimeString(UnsignedInteger64 mtime) {
+	private static String getModTimeString(FileTime mtime) {
 		if (mtime == null) {
 			return "";
 		}
 
 		SimpleDateFormat df;
-		long mt = (mtime.longValue() * 1000L);
+		long mt = mtime.toMillis();
 		long now = System.currentTimeMillis();
 
 		if ((now - mt) > (6 * 30 * 24 * 60 * 60 * 1000L)) {
@@ -3239,18 +3249,6 @@ public class SftpClient implements Closeable {
 		}
 
 		return df.format(new Date(mt));
-	}
-
-	private static String pad(int num) {
-
-		StringBuffer strBuf = new StringBuffer("");
-		if (num > 0) {
-			for (int i = 0; i < num; i++) {
-				strBuf.append(" ");
-			}
-		}
-
-		return strBuf.toString();
 	}
 
 	/**

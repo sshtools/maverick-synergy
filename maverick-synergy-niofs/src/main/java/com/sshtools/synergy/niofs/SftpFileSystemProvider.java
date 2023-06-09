@@ -61,9 +61,7 @@ import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
@@ -723,66 +721,6 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 	@Override
 	public void setAttribute(Path path, String attribute, Object value, LinkOption... options) throws IOException {
 		((SftpPath) path).setAttribute(attribute, value, options);
-	}
-
-	Iterator<Path> iterator(Path path, Filter<? super Path> filter) throws IOException {
-		var sftpPath = (SftpPath) path;
-		try {
-			var fs = sftpPath.getFileSystem();
-			var pstr = toAbsolutePathString(path);
-			var sftp = fs.getSftp();
-			var it = sftp.lsIterator(pstr);
-
-			return new Iterator<>() {
-
-				Path next = null;
-
-				@Override
-				public boolean hasNext() {
-					checkNext();
-					return next != null;
-				}
-
-				@Override
-				public Path next() {
-					try {
-						checkNext();
-						if (next == null) {
-							throw new NoSuchElementException();
-						}
-						return next;
-					} finally {
-						next = null;
-					}
-				}
-
-				private void checkNext() {
-					if (next == null) {
-						while (true) {
-							var hasNext = it.hasNext();
-							if (hasNext) {
-								var nextFile = it.next();
-								if (nextFile.getFilename().equals(".") || nextFile.getFilename().equals(".."))
-									continue;
-								var p = path.resolve(nextFile.getFilename());
-								try {
-									if (filter == null || filter.accept(p)) {
-										next = p;
-										return;
-									}
-								} catch (IOException ioe) {
-									throw new UncheckedIOException(ioe);
-								}
-							} else
-								return;
-						}
-					}
-				}
-
-			};
-		} catch(Exception e) {
-			throw translateException(e);
-		}
 	}
 
 	void remove(URI path) {

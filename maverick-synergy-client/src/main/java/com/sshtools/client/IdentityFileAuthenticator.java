@@ -18,18 +18,15 @@
  */
 package com.sshtools.client;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.InvalidPassphraseException;
@@ -65,19 +62,28 @@ public class IdentityFileAuthenticator extends PublicKeyAuthenticator {
 		return passphrase.getPasshrase(keyinfo);
 	}
 	
+	public Path getCurrentPath() {
+		return currentPath;
+	}
+
+	public SshPublicKey getCurrentKey() {
+		return currentKey;
+	}
+
 	public static List<Path> collectIdentities(boolean onlyWellKnown) throws IOException {
 		
 		final Path dir = Paths.get(System.getProperty("user.home"), ".ssh");
 		
 		if(onlyWellKnown) {
-			return new ArrayList<>(Arrays.asList(new File(dir.toFile(), "id_ed25519.pub").toPath(),
-					new File(dir.toFile(), "id_ed448.pub").toPath(),
-					new File(dir.toFile(), "id_rsa.pub").toPath(),
-					new File(dir.toFile(), "id_ecdsa.pub").toPath()));
+			return new ArrayList<>(Arrays.asList(
+					dir.resolve("id_ed25519.pub"),
+					dir.resolve("id_ed448.pub"),
+					dir.resolve("id_rsa.pub"),
+					dir.resolve("id_ecdsa.pub")));
 		} else {
 			
-			final PathMatcher filter = dir.getFileSystem().getPathMatcher("glob:**/*.pub");
-			try (final Stream<Path> stream = Files.list(dir)) {
+			var filter = dir.getFileSystem().getPathMatcher("glob:**/*.pub");
+			try (var stream = Files.list(dir)) {
 			    return stream.filter(filter::matches).collect(Collectors.toList());
 			}
 		}

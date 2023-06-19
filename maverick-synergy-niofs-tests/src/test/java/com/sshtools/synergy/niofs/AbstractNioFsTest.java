@@ -90,7 +90,6 @@ public abstract class AbstractNioFsTest {
 		server.setFileFactory((con) -> NioFileFactoryBuilder.create().
 				withHome(tmpDir).
 				withSandbox(sandbox).
-				withLockMode(LockMode.SIMULATED).
 				build());
 		server.start();
 		port = server.getEngine().getContext().getListeningInterfaces()[0].getActualPort();

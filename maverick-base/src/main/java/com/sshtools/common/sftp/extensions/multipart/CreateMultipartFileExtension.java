@@ -20,17 +20,15 @@ package com.sshtools.common.sftp.extensions.multipart;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.AbstractFileSystem;
-import com.sshtools.common.sftp.Multipart;
+import com.sshtools.common.sftp.MultipartTransfer;
 import com.sshtools.common.sftp.SftpExtension;
 import com.sshtools.common.sftp.SftpSubsystem;
+import com.sshtools.common.ssh.Packet;
 import com.sshtools.common.util.ByteArrayReader;
-import com.sshtools.common.util.UnsignedInteger64;
+import com.sshtools.common.util.Utils;
 
 public class CreateMultipartFileExtension implements SftpExtension {
 
@@ -40,7 +38,6 @@ public class CreateMultipartFileExtension implements SftpExtension {
 	public void processMessage(ByteArrayReader bar, int requestId, SftpSubsystem sftp) {
 		
 		String path = null;
-		String transactionId = null;
 		
 		try {
 
@@ -54,36 +51,22 @@ public class CreateMultipartFileExtension implements SftpExtension {
 				return;
 			}
 			
-			int parts = (int) bar.readInt();
-
-			long expectedStart = 0;
-			List<Multipart> multiparts = new ArrayList<>();
+			MultipartTransfer t = fs.startMultipartUpload(targetFile);
 			
-			for(int part = 0; part < parts; part++) {
-			
-				String partId = bar.readString();
-				UnsignedInteger64 position = bar.readUINT64();
-				UnsignedInteger64 length = bar.readUINT64();
-			
-				if(expectedStart!=position.longValue()) {
-					sftp.sendStatusMessage(requestId, 9999, "Expected start position of " + expectedStart + " for part " + part + " but got " + position.toString());
-					return;
-				}
-				
-				expectedStart = expectedStart += length.longValue();
-				Multipart multipart = new Multipart();
-				multipart.setStartPosition(position);
-				multipart.setLength(length);
-				multipart.setPartIdentifier(partId);
-				multipart.setTransaction(transactionId);
-				multipart.setTargetFile(targetFile);
-				
-				multiparts.add(multipart);
-		
-			}
-			
-			byte[] handle = fs.startMultipartUpload(path, multiparts);
-			sftp.sendHandleMessage(requestId, handle);
+			Packet reply = new Packet();
+		       
+	        try {
+	        	reply.write(SftpSubsystem.SSH_FXP_EXTENDED_REPLY);
+	        	reply.writeInt(requestId);
+	        	reply.writeBinaryString(Utils.getUTF8Bytes(t.getUuid()));
+	        	reply.writeInt(t.getMinimumPartSize());
+	        	reply.write(0);
+	       
+	        	sftp.sendMessage(reply);
+	        
+	        } finally {
+	        	reply.close();
+	        }
 		
 		} catch (FileNotFoundException ioe) {
 			sftp.sendStatusMessage(requestId, SftpSubsystem.STATUS_FX_NO_SUCH_FILE, ioe.getMessage());

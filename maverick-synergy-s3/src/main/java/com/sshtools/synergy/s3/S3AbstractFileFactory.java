@@ -28,7 +28,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.sshtools.common.events.Event;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -46,8 +45,6 @@ import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.CommonPrefix;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.GetBucketLocationRequest;
-import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
-import software.amazon.awssdk.services.s3.model.ListObjectsResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -186,16 +183,6 @@ public class S3AbstractFileFactory implements AbstractFileFactory<S3File> {
 			return bucket;
 		}
 		return resolveFile(bucket, path);
-	}
-
-	@Override
-	public Event populateEvent(Event evt) {
-		return evt;
-	}
-
-	@Override
-	public S3File getDefaultPath() throws PermissionDeniedException, IOException {
-		return getFile("");
 	}
 
 	protected S3File resolveFile(S3BucketFile bucket, String child) throws IOException, PermissionDeniedException {

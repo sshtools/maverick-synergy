@@ -27,8 +27,7 @@ public interface AbstractFileFactory<T extends AbstractFile> {
 
 	T getFile(String path) throws PermissionDeniedException, IOException;
 	
-	Event populateEvent(Event evt);
+	default Event populateEvent(Event evt) { return evt; };
 
-	T getDefaultPath() throws PermissionDeniedException, IOException;
-
+	default T getDefaultPath() throws PermissionDeniedException, IOException { return getFile(""); }
 }

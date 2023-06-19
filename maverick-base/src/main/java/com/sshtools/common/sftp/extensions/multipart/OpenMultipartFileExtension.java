@@ -23,6 +23,7 @@ import java.io.IOException;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.AbstractFileSystem;
+import com.sshtools.common.sftp.Multipart;
 import com.sshtools.common.sftp.MultipartTransfer;
 import com.sshtools.common.sftp.MultipartTransferRegistry;
 import com.sshtools.common.sftp.SftpExtension;
@@ -30,6 +31,7 @@ import com.sshtools.common.sftp.SftpSubsystem;
 import com.sshtools.common.sftp.TransferEvent;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.UnsignedInteger32;
+import com.sshtools.common.util.UnsignedInteger64;
 
 public class OpenMultipartFileExtension implements SftpExtension {
 
@@ -51,7 +53,16 @@ public class OpenMultipartFileExtension implements SftpExtension {
 			
 			partId = bar.readString(sftp.getCharsetEncoding());
 				
-			byte[] handle = fs.openPart(fs.handleToString(transaction), partId);
+			UnsignedInteger64 position = bar.readUINT64();
+			UnsignedInteger64 length = bar.readUINT64();
+
+			Multipart multipart = new Multipart();
+			multipart.setStartPosition(position);
+			multipart.setLength(length);
+			multipart.setPartIdentifier(partId);
+			multipart.setTargetFile(t.getFile());
+			
+			byte[] handle = fs.openPart(fs.handleToString(transaction), multipart);
 			
 			TransferEvent evt = new TransferEvent();
 			evt.setPath(t.getPath() + "/" + partId);

@@ -482,6 +482,7 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 			}
 		}
 
+		
 		if (pk instanceof OpenSshCertificate) {
 			for (CertAuthorityEntry ca : certificateAuthorities) {
 				if (ca.validate(pk, resolvedNames.toArray(new String[0]))) {
@@ -490,11 +491,27 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 			}
 		}
 
-// The host is unknown os ask the user
-		if (!validateUnknown)
-			return false;
+		var existingKeys = new ArrayList<SshPublicKey>();
+		for(KeyEntry k : keyEntries) {
+			if(k.matchesHost(resolvedNames.toArray(new String[0]))) {
+				if(k.getKey().equals(pk)) {
+					return true;
+				} else {
+					existingKeys.add(k.getKey());
+				}
+			}
+		}
+		
+		if(existingKeys.size() > 0) {
+			onHostKeyMismatch(host, null, pk);
+		} else {
 
-		onUnknownHost(host, pk);
+			// The host is unknown os ask the user
+			if (!validateUnknown)
+				return false;
+	
+			onUnknownHost(host, pk);
+		}
 
 // Recheck ans return the result
 		return verifyHost(host, pk, false);

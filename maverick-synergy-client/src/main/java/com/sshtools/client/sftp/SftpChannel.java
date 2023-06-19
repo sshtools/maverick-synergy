@@ -1978,6 +1978,35 @@ public class SftpChannel extends AbstractSubsystem {
 		return SftpHandle.of(response, this);
 	}
 	
+	public SftpMessage getExtendedReply(UnsignedInteger32 requestId) throws SftpStatusException, SshException {
+		return getExtendedReply(getResponse(requestId));
+	}
+	
+	public SftpMessage getExtendedReply(SftpMessage bar) throws SftpStatusException, SshException {
+		try {
+			if (bar.getType() == SSH_FXP_EXTENDED_REPLY) {
+				return bar;
+			} else if (bar.getType() == SSH_FXP_STATUS) {
+				int status = (int) bar.readInt();
+
+				if (version >= 3) {
+					String msg = bar.readString();
+					throw new SftpStatusException(status, msg);
+				}
+				throw new SftpStatusException(status);
+			} else {
+				close();
+				throw new SshException(
+						String.format("The server responded with an unexpected message! id=%d", bar.getType()),
+						SshException.CHANNEL_FAILURE);
+			}
+		} catch (SshIOException ex) {
+			throw ex.getRealException();
+		} catch (IOException ex) {
+			throw new SshException(ex);
+		}
+	}
+	
 	public byte[] getHandleResponse(UnsignedInteger32 requestId)
 			throws SftpStatusException, SshException {
 		return getHandleResponse(getResponse(requestId));

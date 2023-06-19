@@ -15,7 +15,7 @@ public final class SftpExtensionLoaderFactory implements SftpExtensionFactory {
 	private Map<String, SftpExtension> extensions = Collections.synchronizedMap(new HashMap<>());
 	
 	public SftpExtensionLoaderFactory() {
-		for(var ext : ServiceLoader.load(SftpExtension.class)) {
+		for(var ext : ServiceLoader.load(SftpExtension.class, getClass().getClassLoader())) {
 			extensions.put(ext.getName(), ext);
 		}
 	}

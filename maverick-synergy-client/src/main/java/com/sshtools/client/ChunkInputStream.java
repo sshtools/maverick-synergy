@@ -40,8 +40,9 @@ public class ChunkInputStream extends InputStream {
 	@Override
 	public int read() throws IOException {
 		if(length > 0) {
+			int r = file.read();
 			length--;
-			return file.read();
+			return r;
 		}
 		return -1;
 	}
@@ -50,9 +51,9 @@ public class ChunkInputStream extends InputStream {
 	public int read(byte[] b, int off, int len) throws IOException {	
 		if(length > 0) {
 			int max = (int) Math.min(len, length);
-			length-=max;
-			
-			return file.read(b, off, max);
+			int r = file.read(b, off, max);
+			length -= r;
+			return r;
 		}
 		return -1;
 	}

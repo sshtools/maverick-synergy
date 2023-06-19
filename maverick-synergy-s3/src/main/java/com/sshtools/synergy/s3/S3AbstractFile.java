@@ -29,9 +29,7 @@ import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.util.FileUtils;
 
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -105,6 +103,9 @@ public class S3AbstractFile implements S3File {
 
 	@Override
 	public boolean exists() throws IOException, PermissionDeniedException {
+		if(Objects.isNull(file) && key.endsWith("/")) {
+			return true;
+		}
 		return Objects.nonNull(file);
 	}
 
@@ -223,40 +224,6 @@ public class S3AbstractFile implements S3File {
 
 		
 		return true;
-	}
-
-	@Override
-	public SftpFileAttributes getAttributes() throws FileNotFoundException, IOException, PermissionDeniedException {
-		
-		if(!exists()) {
-			throw new FileNotFoundException();
-		}
-		
-		var bldr = SftpFileAttributesBuilder.ofType(
-				isDirectory() ? SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY : SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR,
-						"UTF-8");
-		bldr.withSize(length());
-		
-		var permBuilder = PosixPermissionsBuilder.create();
-		if(isDirectory()) {
-			permBuilder.withAllExecute();
-		}
-		if(isReadable()) {
-			permBuilder.withAllRead();
-		}
-		if(isWritable()) {
-			permBuilder.withAllWrite();
-		}
-		
-		bldr.withPermissions(permBuilder.build());
-		
-		bldr.withUid(0);
-		bldr.withGid(0);
-		bldr.withUsername(System.getProperty("maverick.unknownUsername", "unknown"));
-		bldr.withGroup(System.getProperty("maverick.unknownUsername", "unknown"));
-		bldr.withLastModifiedTime(lastModified());
-		bldr.withLastAccessTime(lastModified());
-		return bldr.build();
 	}
 
 	@Override

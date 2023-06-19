@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -827,17 +826,16 @@ public final class AbstractFileSystem {
 		return f.supportsMultipartTransfers();
 	}
 
-	public byte[] startMultipartUpload(String path, List<Multipart> multiparts) throws PermissionDeniedException, IOException {
+	public MultipartTransfer startMultipartUpload(AbstractFile targetFile) throws PermissionDeniedException, IOException {
 		
-		AbstractFile f = resolveFile(path, con);
-		MultipartTransfer mpt = f.startMultipartUpload(multiparts);
+		MultipartTransfer mpt = targetFile.startMultipartUpload(targetFile);
 		
 		MultipartTransferRegistry.registerTransfer(mpt);
 		
-		return mpt.getUuid().getBytes("UTF-8");
+		return mpt;
 	}
 
-	public byte[] openPart(String uuid, String partIdentifier) throws IOException, PermissionDeniedException {
+	public byte[] openPart(String uuid, Multipart part) throws IOException, PermissionDeniedException {
 		
 		MultipartTransfer mpt = MultipartTransferRegistry.getTransfer(uuid);
 		
@@ -845,7 +843,7 @@ public final class AbstractFileSystem {
 			throw new PermissionDeniedException("Unexpected multipart request for uuid " + uuid);
 		}
 		
-		Multipart part = mpt.getPart(partIdentifier);
+		
 		OpenFile file = mpt.openPart(part);
 		
 		openFiles.put(handleToString(file.getHandle()), file);

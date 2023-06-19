@@ -21,11 +21,16 @@ package com.sshtools.common.sftp;
 import java.io.IOException;
 import java.util.Collection;
 
+import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 
 public interface MultipartTransfer {
-
+	
+	int getMinimumPartSize();
+	
 	String getPath();
+	
+	AbstractFile getFile();
 	
 	String getUploadId();
 	

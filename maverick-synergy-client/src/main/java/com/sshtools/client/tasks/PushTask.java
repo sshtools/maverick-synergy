@@ -23,7 +23,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +40,7 @@ import com.sshtools.client.SshClient;
 import com.sshtools.client.sftp.SftpChannel;
 import com.sshtools.client.sftp.SftpClient;
 import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
+import com.sshtools.client.sftp.SftpMessage;
 import com.sshtools.client.sftp.TransferCancelledException;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.logger.Log;
@@ -268,7 +268,8 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 		verboseMessage("The paths will be transferred to {0}", targetFolder);
 		
 		for (var file : files) {
-			if(!Files.exists(file)) {
+			var resolved = primarySftpClient.getCurrentWorkingDirectory().resolveFile(file.toString());
+			if(!resolved.exists()) {
 				throw new FileNotFoundException(String.format("%s does not exist", file.getFileName()));
 			}
 		}
@@ -318,15 +319,6 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 				primarySftpClient.openFile(targetFilePath, SftpChannel.OPEN_WRITE | SftpChannel.OPEN_CREATE).close();
 			}
 
-			var chunkLength = localFile.length() /  chunks;
-			var finalLength = localFile.length() - (chunkLength * (chunks-1));
-			
-			var progressChunks = Collections.synchronizedList(new ArrayList<FileTransferProgressWrapper>());
-			var errors = Collections.synchronizedList(new ArrayList<Throwable>());
-			var total = new AtomicLong();
-			
-			verboseMessage("Splitting {0} into {1} chunks", localFile.getName(), chunks);
-
 			if (progress.isPresent()) {
 				progress.get().started(localFile.length(), localFile.getName());
 			}
@@ -335,45 +327,67 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 
 			ByteArrayWriter msg = new ByteArrayWriter();
 			msg.writeString(remotePath);
-			msg.writeInt(chunks);
-			for(int i = 0 ; i < chunks-1; i++) {
-				var chunk = i + 1;
-				msg.writeString(String.format("part%d", chunk));
-				msg.writeUINT64(i * chunkLength);
-				msg.writeUINT64(chunkLength);
-			}
-			
-			msg.writeString(String.format("part%d", chunks));
-			msg.writeUINT64((chunks-1) * chunkLength);
-			msg.writeUINT64(finalLength);
 		
 			UnsignedInteger32 requestId;
+			
+			var progressChunks = Collections.synchronizedList(new ArrayList<FileTransferProgressWrapper>());
+			var errors = Collections.synchronizedList(new ArrayList<Throwable>());
+			var total = new AtomicLong();
+			
 			try {
+				
 				requestId = primarySftpClient.getSubsystemChannel().sendExtensionMessage("create-multipart-file@sshtools.com", msg.toByteArray());
 			
-				byte[] transaction = primarySftpClient.getSubsystemChannel().getHandleResponse(requestId);
+				SftpMessage ext = primarySftpClient.getSubsystemChannel().getExtendedReply(requestId);
+				byte[] transaction = ext.readBinaryString();
 				
-				verboseMessage("Remote server supports multipart extensions");
-				printChunkMessages(chunkLength);
+				var blocksize = ext.readInt();
 				
-				for (int i = 0; i < chunks; i++) {
-					var chunk = i + 1;
-					var pointer = i * chunkLength;
-					executor.submit(() -> {
-						try {
-							var tmp = chunkProgress.apply(localFile);
-							var wrapper = new FileTransferProgressWrapper(tmp, progress, total);
-							progressChunks.add(wrapper);
-							var lastChunk = chunk == chunks;
-							var thisLength = lastChunk ? chunkLength + finalLength : chunkLength;
-							
-							sendPart(localFile, pointer, thisLength, chunk, lastChunk, wrapper, transaction, String.format("part%d", chunk), remoteFolder);
-							
-						} catch (Throwable e) {
-							errors.add(e);
-						}
-					});
+				@SuppressWarnings("unused")
+				int method = ext.read();
+				
+				verboseMessage("Remote server supports multipart extensions with minimum part size of {} bytes", blocksize);
+				
+				if(localFile.length() <= blocksize) {
+					verboseMessage("Minimum blocksize for push not met reverting to put");
+					try {
+						sendFileViaSFTP(localFile, remotePath, remoteFolder);
+					} catch (TransferCancelledException e) {
+						/**
+						 * LDP - Is this the correct behaviour?
+						 */
+						return errors;
+					}
+				} else {
+				
+					var totalBlocks = localFile.length() / blocksize;
+					if(localFile.length() % blocksize > 0) totalBlocks++;
 					
+					var blocksPerChunk = (totalBlocks / chunks);
+					var chunkLength = blocksPerChunk * blocksize;
+					var finalLength = localFile.length() - ((chunks - 1) * chunkLength);
+					
+					printChunkMessages(chunkLength);
+					
+					for (int i = 0; i < chunks; i++) {
+						var chunk = i + 1;
+						var pointer = i * chunkLength;
+						executor.submit(() -> {
+							try {
+								var tmp = chunkProgress.apply(localFile);
+								var wrapper = new FileTransferProgressWrapper(tmp, progress, total);
+								progressChunks.add(wrapper);
+								var lastChunk = chunk == chunks;
+								var thisLength = lastChunk ? finalLength : chunkLength;
+								
+								sendPart(localFile, pointer, thisLength, chunk, lastChunk, wrapper, transaction, String.format("part%d", chunk), remoteFolder);
+								
+							} catch (Throwable e) {
+								errors.add(e);
+							}
+						});
+						
+					}
 				}
 				
 			} catch(SftpStatusException e) {
@@ -382,6 +396,9 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 				 * code because we don't know what other servers are sending back in response
 				 * to an unknown extension.
 				 */
+				var chunkLength = localFile.length() / chunks;
+				var finalLength = localFile.length() - ((chunks - 1) * chunkLength);
+				
 				verboseMessage("Falling back to pure random access support which may or may not be supported.");
 				printChunkMessages(chunkLength);
 				
@@ -394,7 +411,7 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 							var wrapper = new FileTransferProgressWrapper(tmp, progress, total);
 							progressChunks.add(wrapper);
 							var lastChunk = chunk == chunks;
-							var thisLength = lastChunk ? chunkLength + finalLength : chunkLength;
+							var thisLength = lastChunk ? finalLength : chunkLength;
 							sendChunk(localFile, pointer, thisLength, chunk, lastChunk, wrapper, remoteFolder);
 						} catch (Throwable e2) {
 							errors.add(e2);
@@ -451,6 +468,8 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 			file.seek(pointer);
 			try (var sftp = SftpClientBuilder.create().
 					withClient(ssh).
+					withBlockSize(blocksize).
+					withAsyncRequests(outstandingRequests).
 					withRemotePath(remoteFolder).
 					withLocalPath(primarySftpClient.lpwd()).
 					build()) {
@@ -511,51 +530,54 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 			ssh = clients.removeFirst();
 		}
 		try (var file = new RandomAccessFile(localFile.getAbsolutePath(), "r")) {
+			
 			file.seek(pointer);
-				try (var sftp = SftpClientBuilder.create().
-						withClient(ssh).
-						withRemotePath(remoteFolder).
-						withLocalPath(primarySftpClient.lpwd()).
-						build()) {
+			try (var sftp = SftpClientBuilder.create().
+					withClient(ssh).
+					withRemotePath(remoteFolder).
+					withLocalPath(primarySftpClient.lpwd()).
+					build()) {
 
-					var msg = new ByteArrayWriter();
-					msg.writeBinaryString(transaction);
-					msg.writeString(partId);
-					
-					try(var handle = sftp.getSubsystemChannel().getHandle(sftp.getSubsystemChannel().sendExtensionMessage("open-part-file@sshtools.com", msg.toByteArray()))) {
-						handle.performOptimizedWrite(localFile.getName(), 
-								blocksize,
-								outstandingRequests, 
-								new ChunkInputStream(file, chunkLength),
-									buffersize,
-									new FileTransferProgress() {
+				var msg = new ByteArrayWriter();
+				msg.writeBinaryString(transaction);
+				msg.writeString(partId);
+				msg.writeUINT64(pointer);
+				msg.writeUINT64(chunkLength);
+				
+				try(var handle = sftp.getSubsystemChannel().getHandle(sftp.getSubsystemChannel().sendExtensionMessage("open-part-file@sshtools.com", msg.toByteArray()))) {
+					handle.performOptimizedWrite(localFile.getName(), 
+							blocksize,
+							outstandingRequests, 
+							new ChunkInputStream(file, chunkLength),
+								buffersize,
+								new FileTransferProgress() {
 
-										@Override
-										public void started(long bytesTotal, String file) {
-											progress.started(bytesTotal, file);
-										}
+									@Override
+									public void started(long bytesTotal, String file) {
+										progress.started(bytesTotal, file);
+									}
 
-										@Override
-										public boolean isCancelled() {
-											return progress.isCancelled();
-										}
+									@Override
+									public boolean isCancelled() {
+										return progress.isCancelled();
+									}
 
-										@Override
-										public void progressed(long bytesSoFar) {
-											progress.progressed(bytesSoFar - pointer);
-										}
+									@Override
+									public void progressed(long bytesSoFar) {
+										progress.progressed(bytesSoFar - pointer);
+									}
 
-										@Override
-										public void completed() {
-											progress.completed();
-										}
+									@Override
+									public void completed() {
+										progress.completed();
+									}
 
-							}, pointer);
-					} catch (SftpStatusException | SshException | TransferCancelledException e) {
-						Log.error("Part upload failed", e);
-						throw e;
-					}
+						}, pointer);
+				} catch (SftpStatusException | SshException | TransferCancelledException e) {
+					Log.error("Part upload failed", e);
+					throw e;
 				}
+			}
 		} 
 		catch(IOException ioe) {
 			if(ioe.getCause() instanceof TransferCancelledException) {

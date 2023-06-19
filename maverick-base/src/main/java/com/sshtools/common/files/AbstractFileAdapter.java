@@ -21,11 +21,9 @@ package com.sshtools.common.files;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
 import java.util.List;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.sftp.Multipart;
 import com.sshtools.common.sftp.MultipartTransfer;
 import com.sshtools.common.sftp.SftpFileAttributes;
 
@@ -198,8 +196,8 @@ public abstract class AbstractFileAdapter implements AbstractFile {
 	}
 
 	@Override
-	public MultipartTransfer startMultipartUpload(Collection<Multipart> multparts) throws IOException, PermissionDeniedException {
-		return file.startMultipartUpload(multparts);
+	public MultipartTransfer startMultipartUpload(AbstractFile targetFile) throws IOException, PermissionDeniedException {
+		return file.startMultipartUpload(targetFile);
 	}
 
 }

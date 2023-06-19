@@ -70,7 +70,6 @@ public class CopyDataSftpExtension extends AbstractSftpExtension {
 	public void processExtendedMessage(ByteArrayReader msg, SftpSubsystem sftp) {
 		
 
-
 	}
 
 }

@@ -1,6 +1,5 @@
 package com.sshtools.synergy.s3;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -13,13 +12,7 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.util.FileUtils;
 
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.s3.model.CommonPrefix;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 
 public class S3AbstractFolder implements S3File {
 
@@ -99,18 +92,13 @@ public class S3AbstractFolder implements S3File {
 	}
 
 	@Override
-	public SftpFileAttributes getAttributes() throws FileNotFoundException, IOException, PermissionDeniedException {
-		return null;
-	}
-
-	@Override
 	public void refresh() {
 		
 	}
 
 	@Override
 	public long lastModified() throws IOException, PermissionDeniedException {
-		return 0;
+		return bucket.lastModified();
 	}
 
 	@Override

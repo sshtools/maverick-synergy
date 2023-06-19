@@ -22,11 +22,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
 import java.util.List;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.sftp.Multipart;
 import com.sshtools.common.sftp.MultipartTransfer;
 import com.sshtools.common.sftp.SftpFileAttributes;
 
@@ -122,7 +120,7 @@ public interface AbstractFile {
 		return false;
 	}
 
-	default MultipartTransfer startMultipartUpload(Collection<Multipart> multparts) throws IOException, PermissionDeniedException {
+	default MultipartTransfer startMultipartUpload(AbstractFile targetFile) throws IOException, PermissionDeniedException {
 		throw new UnsupportedOperationException();
 	}
 	

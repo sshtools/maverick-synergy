@@ -39,8 +39,23 @@ public class DigestUtils {
 		}
 	}
 	
+	public static byte[] digest(String name, byte[] b, int off, int len) {
+		
+		try {
+			Digest digest = JCEComponentManager.getDefaultInstance().getDigest(name);
+			digest.putBytes(b, off, len);
+			return digest.doFinal();
+		} catch (SshException e) {
+			throw new IllegalArgumentException(String.format("%s is not a supported digest", name));
+		}
+	}
+	
 	public static byte[] md5(byte[] b) {
 		return digest(JCEAlgorithms.JCE_MD5, b);
+	}
+	
+	public static byte[] md5(byte[] b, int off, int len) {
+		return digest(JCEAlgorithms.JCE_MD5, b, off, len);
 	}
 	
 	public static byte[] sha1(byte[] b) {

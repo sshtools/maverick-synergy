@@ -13,7 +13,6 @@ import org.junit.Before;
 
 import com.sshtools.client.SshClient.SshClientBuilder;
 import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
-import com.sshtools.common.files.direct.NioFileFactory.LockMode;
 import com.sshtools.common.files.direct.NioFileFactory.NioFileFactoryBuilder;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.sftp.SftpExtension;

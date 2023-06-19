@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
@@ -40,11 +41,10 @@ import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.FileVolume;
+import com.sshtools.common.files.direct.NioFile;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
-import com.sshtools.common.sftp.files.PseduoRandomOpenFile;
-import com.sshtools.common.sftp.files.RandomAccessOpenFile;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.FileUtils;
@@ -89,6 +89,11 @@ public final class AbstractFileSystem {
      * it to the canoncial newline convention in use.
      */
     public static final int OPEN_TEXT = 0x00000040;
+    
+	public static final int BLOCK_READ 			= 0x00000040;
+	public static final int BLOCK_WRITE 			= 0x00000080;
+	public static final int BLOCK_DELETE			= 0x00000100;
+	public static final int BLOCK_ADVISORY		= 0x00000200;
     
     public static final String AUTHORIZED_KEYS_STORE = "authorized_keys";
     public static final String SFTP = "sftp";
@@ -320,7 +325,13 @@ public final class AbstractFileSystem {
 
 	}
 
+	@Deprecated(since = "3.1.0")
 	public byte[] openFile(String path, UnsignedInteger32 flags, SftpFileAttributes attrs)
+			throws PermissionDeniedException, FileNotFoundException, IOException {
+		return openFile(path, flags, Optional.empty(), attrs);
+	}
+
+	public byte[] openFile(String path, UnsignedInteger32 flags, Optional<UnsignedInteger32> accessFlags, SftpFileAttributes attrs)
 			throws PermissionDeniedException, FileNotFoundException, IOException {
 
 		if(Log.isDebugEnabled())
@@ -331,7 +342,26 @@ public final class AbstractFileSystem {
 		if(f.isDirectory()) {
 			throw new PermissionDeniedException("File cannot be opened as it is a Directory");
 		}
+
+		if(!(f instanceof NioFile)) {
+			/* NioFile uses File.newFileChannel which does these checks itself. The
+			 * below method can be removed when the alternatives to NioFile are removed.
+			 */
+			checkOpenFlagsAndFileState(path, flags, f);
+		}
+
+		// Record the open file
+		byte[] handle = createHandle();
+		openFiles.put(handleToString(handle), f.open(flags, accessFlags, handle));
 		
+		// Return the handle
+		return handle;
+	}
+
+	@Deprecated
+	protected void checkOpenFlagsAndFileState(String path, UnsignedInteger32 flags, AbstractFile f)
+			throws IOException, PermissionDeniedException, FileNotFoundException {
+		// Check if the file does not exist and process according to flags
 		if (f.exists() && !f.isReadable() && (flags.intValue() & AbstractFileSystem.OPEN_READ) != 0) {
 			throw new PermissionDeniedException("The user does not have permission to read.");
 		}
@@ -340,8 +370,7 @@ public final class AbstractFileSystem {
 				|| (flags.longValue() & AbstractFileSystem.OPEN_CREATE) != 0) && !f.isWritable()) {
 			throw new PermissionDeniedException("The user does not have permission to write/create.");
 		}
-
-		// Check if the file does not exist and process according to flags
+		
 		if (!f.exists()) {
 			if ((flags.longValue() & AbstractFileSystem.OPEN_CREATE) == AbstractFileSystem.OPEN_CREATE) {
 				// The file does not exist and the create flag is present so
@@ -370,16 +399,6 @@ public final class AbstractFileSystem {
 			// Set the length to zero
 			f.truncate();
 		}
-
-		// Record the open file
-		byte[] handle = createHandle();
-		if(f.supportsRandomAccess()) {
-			openFiles.put(handleToString(handle), new RandomAccessOpenFile(f, flags, handle));
-		} else {
-			openFiles.put(handleToString(handle), new PseduoRandomOpenFile(f, flags, handle));
-		}
-		// Return the handle
-		return handle;
 	}
 
 	public int readFile(byte[] handle, UnsignedInteger64 offset, byte[] buf, int start, int numBytesToRead)
@@ -389,7 +408,24 @@ public final class AbstractFileSystem {
 		if (openFiles.containsKey(shandle)) {
 			OpenFile file = openFiles.get(shandle);
 
-			if ((file.getFlags().longValue() & AbstractFileSystem.OPEN_READ) == AbstractFileSystem.OPEN_READ) {
+			if(file.getAccessFlags().isPresent()) {
+				var accessFlag = file.getAccessFlags().get().intValue(); 
+				if ((accessFlag & ACL.ACE4_READ_DATA) != 0) {
+					if (!file.isTextMode() && file.getFilePointer() != offset.longValue()) {
+						file.seek(offset.longValue());
+					}
+
+					int read = file.read(buf, start, numBytesToRead);
+
+					if (read >= 0) {
+						return read;
+					}
+					return -1;
+				}  else {
+					throw new InvalidHandleException("The file was not opened for writing");
+				}
+			}
+			else if ((file.getFlags().longValue() & AbstractFileSystem.OPEN_READ) == AbstractFileSystem.OPEN_READ) {
 
 				if (!file.isTextMode() && file.getFilePointer() != offset.longValue()) {
 					file.seek(offset.longValue());
@@ -415,7 +451,23 @@ public final class AbstractFileSystem {
 		if (openFiles.containsKey(shandle)) {
 			OpenFile file = openFiles.get(shandle);
 
-			if ((file.getFlags().longValue() & AbstractFileSystem.OPEN_WRITE) == AbstractFileSystem.OPEN_WRITE) {
+			if(file.getAccessFlags().isPresent()) {
+				var accessFlag = file.getAccessFlags().get().intValue(); 
+				if ((accessFlag & ACL.ACE4_APPEND_DATA) != 0) {
+					// Force the data to be written to the end of the file
+					// by seeking to the end
+					file.seek(file.getFile().length());
+				} else if ((accessFlag & ACL.ACE4_WRITE_DATA) != 0) {
+					// Move the file pointer if its not in the write place
+					if(!file.isTextMode() && file.getFilePointer() != offset.longValue())
+						 file.seek(offset.longValue());
+				} else {
+					throw new InvalidHandleException("The file was not opened for writing");
+				}
+
+				file.write(data, off, len);
+			}
+			else if ((file.getFlags().longValue() & AbstractFileSystem.OPEN_WRITE) == AbstractFileSystem.OPEN_WRITE) {
 
 				if ((file.getFlags().longValue() & AbstractFileSystem.OPEN_APPEND) == AbstractFileSystem.OPEN_APPEND) {
 					// Force the data to be written to the end of the file

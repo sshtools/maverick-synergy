@@ -28,10 +28,6 @@ import com.sshtools.common.util.UnsignedInteger64;
 
 public final class SftpHandle implements Closeable {
 
-	static SftpHandle of(byte[] handle, SftpChannel sftp) {
-		return new SftpHandle(handle, sftp, null);
-	}
-
 	private final byte[] handle;
 	private final SftpChannel sftp;
 	private final SftpFile file;
@@ -73,6 +69,59 @@ public final class SftpHandle implements Closeable {
 	 */
 	public SftpFile getFile() {
 		return file;
+	}
+
+	/**
+	 * Lock this file. Requires version 6 SFTP support.
+	 * 
+	 * @return closeable to release lock
+	 * @throws SshException 
+	 * @throws SftpStatusException 
+	 */
+	public Closeable lock() throws SftpStatusException, SshException {
+		return lock(0, 0, SftpChannel.SSH_FXF_ACCESS_BLOCK_READ | SftpChannel.SSH_FXF_ACCESS_BLOCK_WRITE | SftpChannel.SSH_FXF_ACCESS_BLOCK_DELETE);
+	}
+
+	/**
+	 * Lock this file. Requires version 6 SFTP support.  <code>lockFlags</code>
+	 * may be a mask of {@link SftpChannel#SSH_FXF_ACCESS_BLOCK_READ}, {@link SftpChannel#SSH_FXF_ACCESS_BLOCK_WRITE},
+	 * {@link SftpChannel#SSH_FXF_ACCESS_BLOCK_DELETE}, {@link SftpChannel#SSH_FXF_ACCESS_BLOCK_ADVISORY}.
+	 *
+	 * @param lockFlags
+	 * @return closeable to release lock
+	 * @throws SshException 
+	 * @throws SftpStatusException 
+	 */
+	public Closeable lock(int lockFlags) throws SftpStatusException, SshException {
+		return lock(0, 0, lockFlags);
+	}
+
+	/**
+	 * Lock this file or a region of it. Requires version 6 SFTP support. <code>lockFlags</code>
+	 * may be a mask of {@link SftpChannel#SSH_FXF_ACCESS_BLOCK_READ}, {@link SftpChannel#SSH_FXF_ACCESS_BLOCK_WRITE},
+	 * {@link SftpChannel#SSH_FXF_ACCESS_BLOCK_DELETE}, {@link SftpChannel#SSH_FXF_ACCESS_BLOCK_ADVISORY}.
+	 * 
+	 * @param length 
+	 * @param offset 
+	 * @param lockflags 
+	 * 
+	 * @return closeable to release lock
+	 * @throws SshException 
+	 * @throws SftpStatusException 
+	 */
+	@SuppressWarnings("removal")
+	public Closeable lock(long offset, long length, int lockflags) throws SftpStatusException, SshException {
+		sftp.lockFile(handle, offset, length, lockflags);
+		return new Closeable() {
+			@Override
+			public void close() throws IOException {
+				try {
+					sftp.unlockFile(handle, offset, length);
+				} catch (SftpStatusException | SshException e) {
+					throw new IOException(e);
+				}
+			}
+		};
 	}
 
 	public void copyTo(SftpHandle destinationHandle, UnsignedInteger64 fromOffset, UnsignedInteger64 length,
@@ -178,9 +227,12 @@ public final class SftpHandle implements Closeable {
 			} catch (SshException | SshIOException | SftpStatusException ex) {
 				throw new IOException("Failed to close handle.", ex);
 			}
+			finally {
+				sftp.handles.remove(handle);
+			}
 			EventServiceImplementation.getInstance()
 					.fireEvent((new Event(this, EventCodes.EVENT_SFTP_FILE_CLOSED, true))
-							.addAttribute(EventCodes.ATTRIBUTE_FILE_NAME, file.getAbsolutePath()));
+							.addAttribute(EventCodes.ATTRIBUTE_FILE_NAME, file == null ? "<unknown>" : file.getAbsolutePath()));
 		}
 	}
 

@@ -23,6 +23,7 @@ import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.attribute.FileTime;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -706,7 +708,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			}
 		}
 	}
-
+	
 	protected void fireSymlinkEvent(String linkpath, String targetpath,
 			Date started, Exception error) {
 		fireEvent(new Event(SftpSubsystem.this,
@@ -958,6 +960,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 
 			String path = "";
 			UnsignedInteger32 flags = new UnsignedInteger32(0);
+			Optional<UnsignedInteger32> accessFlags = Optional.empty();
 			Date started = new Date();
 			SftpFileAttributes attrs = null;
 
@@ -965,6 +968,9 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			try {
 				id = (int) bar.readInt();
 				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
+				if (version > 4) {
+					accessFlags = Optional.of(new UnsignedInteger32(bar.readInt())); 
+				}
 				flags = new UnsignedInteger32(bar.readInt());
 				attrs = SftpFileAttributesBuilder.of(bar, version, CHARSET_ENCODING).build();
 				
@@ -987,7 +993,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				} catch (IOException ex) {
 				}
 
-				byte[] handle = nfs.openFile(path, flags, attrs);
+				byte[] handle = nfs.openFile(path, flags, accessFlags, attrs);
 
 				TransferEvent evt = new TransferEvent();
 				evt.path = path;
@@ -1015,7 +1021,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 
 				return;
 
-			} catch (FileNotFoundException ioe) {
+			} catch (NoSuchFileException | FileNotFoundException ioe) {
 				fireOpenFileEvent(flags, attrs, path, started, null, ioe);
 				sendStatusMessage(id, STATUS_FX_NO_SUCH_FILE, ioe.getMessage());
 			} catch (IOException ioe2) {

@@ -200,10 +200,6 @@ public class SftpFileSystem extends FileSystem {
 		return SftpFileAttributeViews.viewNames();
 	}
 
-	public final SftpFileSystemProvider getFileSystemProvider() {
-		return fileSystemProvider;
-	}
-
 	SftpClient getSftp() {
 		return sftp;
 	}

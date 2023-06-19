@@ -28,7 +28,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
+import com.sshtools.client.SshClient;
 import com.sshtools.client.sftp.SftpClient;
+import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.Utils;
@@ -44,6 +47,41 @@ import com.sshtools.common.util.Utils;
 public class SftpFileSystems {
 	
 	private SftpFileSystems() {
+	}
+
+	/**
+	 * Create a new file system given an existing {@link SshClient} and using
+	 * the default directory (usually the users home directory) as the root 
+	 * of the file system.
+	 * 
+	 * @param ssh ssh instance
+	 * @return file system
+	 * @throws IOException if file system cannot be created
+	 */
+	public static FileSystem newFileSystem(SshClient ssh) throws IOException {
+		try {
+			return newFileSystem(SftpClientBuilder.create().withClient(ssh).build());
+		} catch (SshException | PermissionDeniedException e) {
+			throw new IOException("Failed to create file system.", e);
+		}
+	}
+
+	/**
+	 * Create a new file system given an existing {@link SshClient} and using
+	 * the default directory (usually the users home directory) as the root 
+	 * of the file system.
+	 * 
+	 * @param ssh ssh instance
+	 * @param path path
+	 * @return file system
+	 * @throws IOException if file system cannot be created
+	 */
+	public static FileSystem newFileSystem(SshClient ssh, Path path) throws IOException {
+		try {
+			return newFileSystem(SftpClientBuilder.create().withClient(ssh).build(), path);
+		} catch (SshException | PermissionDeniedException e) {
+			throw new IOException("Failed to create file system.", e);
+		}
 	}
 
 	/**

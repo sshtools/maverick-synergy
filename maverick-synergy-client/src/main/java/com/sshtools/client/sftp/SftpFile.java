@@ -72,6 +72,15 @@ public final class SftpFile {
   }
   
   /**
+   * Create a new handle for this file given the handle data.
+   * 
+   * @param handle
+   */
+  public SftpHandle handle(byte[] handle) {
+	  return new SftpHandle(handle, sftp, this);
+  }
+  
+  /**
    * Get the attributes for this file as they were when this file object was obtained. To
    * get the latest attributes, call {@link #refresh()} to obtain a new {@link SftpFile} instance.
    * 

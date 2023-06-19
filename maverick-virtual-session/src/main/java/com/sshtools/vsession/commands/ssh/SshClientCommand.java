@@ -106,7 +106,7 @@ public class SshClientCommand extends AbstractSshClientCommand {
 						withTermType(console.getTerminal().getType()).
 						withColumns(console.getTerminal().getWidth()).
 						withRows(console.getTerminal().getHeight()).
-						onOpen((t, session) -> {
+						onBeforeTask((t, session) -> {
 							listener.session = session;
 							((VirtualShellNG)console.getSessionChannel()).addWindowSizeChangeListener(listener);
 							connection.addTask(Task.ofRunnable(connection, (c) -> IOUtils.copy(console.getSessionChannel().getInputStream(), session.getOutputStream())));

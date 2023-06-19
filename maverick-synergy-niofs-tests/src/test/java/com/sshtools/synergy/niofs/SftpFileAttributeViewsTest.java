@@ -235,6 +235,17 @@ public class SftpFileAttributeViewsTest extends AbstractNioFsTest {
 	}
 
 	@Test
+	public void testBasicAttributesSetAttributeWithoutPrefix() throws Exception {
+		var now = FileTime.from(Instant.now().truncatedTo(ChronoUnit.SECONDS));
+		testWithFilesystem(fs -> {
+			var path = fs.getPath("testfile0");
+			Files.createFile(path);
+			Files.setAttribute(path, "lastModifiedTime", now);
+			assertEquals(now, Files.getAttribute(path, "lastModifiedTime"));
+		});
+	}
+
+	@Test
 	public void testBasicAttributesSetTimes() throws Exception {
 		testWithFilesystem(fs -> {
 			var test = fs.getPath("testfile0");

@@ -40,6 +40,7 @@ import com.sshtools.client.SshClient;
 import com.sshtools.client.sftp.SftpChannel;
 import com.sshtools.client.sftp.SftpClient;
 import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
+import com.sshtools.client.sftp.SftpHandle;
 import com.sshtools.client.sftp.SftpMessage;
 import com.sshtools.client.sftp.TransferCancelledException;
 import com.sshtools.common.files.AbstractFile;
@@ -337,14 +338,15 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 			try {
 				
 				requestId = primarySftpClient.getSubsystemChannel().sendExtensionMessage("create-multipart-file@sshtools.com", msg.toByteArray());
-			
+
 				SftpMessage ext = primarySftpClient.getSubsystemChannel().getExtendedReply(requestId);
-				byte[] transaction = ext.readBinaryString();
-				
+				byte[] handle = ext.readBinaryString();
 				var blocksize = ext.readInt();
 				
 				@SuppressWarnings("unused")
 				int method = ext.read();
+
+				SftpHandle transaction = primarySftpClient.getSubsystemChannel().getFile(remotePath).handle(handle);
 				
 				verboseMessage("Remote server supports multipart extensions with minimum part size of {} bytes", blocksize);
 				
@@ -521,7 +523,7 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 	}
 	
 	private void sendPart(AbstractFile localFile, long pointer, long chunkLength, Integer chunkNumber,
-			boolean lastChunk, FileTransferProgress progress, byte[] transaction, String partId, String remoteFolder)
+			boolean lastChunk, FileTransferProgress progress, SftpHandle transaction, String partId, String remoteFolder)
 			throws IOException, SftpStatusException, SshException, TransferCancelledException, ChannelOpenException,
 			PermissionDeniedException {
 
@@ -539,12 +541,12 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 					build()) {
 
 				var msg = new ByteArrayWriter();
-				msg.writeBinaryString(transaction);
+				msg.writeBinaryString(transaction.getHandle());
 				msg.writeString(partId);
 				msg.writeUINT64(pointer);
 				msg.writeUINT64(chunkLength);
 				
-				try(var handle = sftp.getSubsystemChannel().getHandle(sftp.getSubsystemChannel().sendExtensionMessage("open-part-file@sshtools.com", msg.toByteArray()))) {
+				try(var handle = sftp.getSubsystemChannel().getHandle(sftp.getSubsystemChannel().sendExtensionMessage("open-part-file@sshtools.com", msg.toByteArray()), transaction.getFile())) {
 					handle.performOptimizedWrite(localFile.getName(), 
 							blocksize,
 							outstandingRequests, 

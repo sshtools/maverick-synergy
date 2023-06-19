@@ -25,16 +25,11 @@ import static com.sshtools.synergy.niofs.SftpFileSystem.toAbsolutePathString;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URI;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -62,6 +57,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
@@ -93,6 +89,12 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 		if(e instanceof SftpStatusException) {
 			var sse = (SftpStatusException)e;
 			switch (sse.getStatus()) {
+			case SftpStatusException.SSH_FX_BYTE_RANGE_LOCK_REFUSED:
+				throw new IllegalArgumentException(sse.getMessage(), sse);
+			case SftpStatusException.SSH_FX_BYTE_RANGE_LOCK_CONFLICT:
+				var ovfle = new OverlappingFileLockException();
+				ovfle.initCause(e);
+				throw ovfle;
 			case SftpStatusException.SSH_FX_NO_SUCH_FILE:
 				var fnfe = new NoSuchFileException(e.getMessage());
 				fnfe.initCause(e);
@@ -270,23 +272,29 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public Path getPath(URI uri) {
-		if (uri.getScheme().equals("sftp")) {
+		if ("sftp".equals(uri.getScheme())) {
 			synchronized (filesystems) {
-				// TODO look for file systems whose URI is parent of this one and re-use it
-				var fs = filesystems.get(uri);
-				if(fs == null) {
-					try {
-						return newFileSystem(uri, Collections.emptyMap()).getPath("/");
-					} catch (IOException e) {
-						throw new UncheckedIOException(e);
-					}					
+				for(var fs : filesystems.entrySet()) {
+					if( isCompatibleUri(uri, fs.getKey())) {
+						return fs.getValue().getPath(uri.getPath());
+					}
 				}
-				else {
-					return fs.getPath("/");
+				try {
+					return newFileSystem(uri, Collections.emptyMap()).getPath("/");
+				} catch (IOException e) {
+					throw new FileSystemNotFoundException(MessageFormat.format("File system {0} not found.", uri));
 				}
 			}
 		}
 		throw new UnsupportedOperationException();
+	}
+
+	protected boolean isCompatibleUri(URI uri, URI other) {
+		var path1 = other.getPath();
+		var compatiblePath = ( path1 == null && uri.getPath() == null ) || ( path1 != null && uri.getPath() != null && uri.getPath().startsWith(path1));
+		var compatibleHost = Objects.equals(uri.getHost(), other.getHost());
+		var compatiblePort = Objects.equals(uri.getPort(), other.getPort());
+		return compatiblePath && compatibleHost && compatiblePort;
 	}
 
 	@Override
@@ -325,8 +333,6 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 				sftp.rename(sourcePath, targetPath, replaceExisting);
 			} catch (SftpStatusException se) {
 				if (se.getStatus() == SftpStatusException.SSH_FX_OP_UNSUPPORTED) {
-					if (!replaceExisting && Files.exists(target))
-						throw new FileAlreadyExistsException(targetPath);
 					if (replaceExisting && Files.exists(target))
 						Files.delete(target);
 					sftp.rename(sourcePath, targetPath);
@@ -370,203 +376,7 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 			var deleteOnClose = options.contains(StandardOpenOption.DELETE_ON_CLOSE);
 			var handle = fs.getSftp().openFile(pstr, flags);
 
-			return new FileChannel() {
-
-				long pointer;
-
-				@Override
-				public void force(boolean metaData) throws IOException {
-					// Noop?
-				}
-
-				@Override
-				public FileLock lock(long position, long size, boolean shared) throws IOException {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public MappedByteBuffer map(MapMode mode, long position, long size) throws IOException {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public long position() throws IOException {
-					return pointer;
-				}
-
-				@Override
-				public FileChannel position(long newPosition) throws IOException {
-					pointer = newPosition;
-					return this;
-				}
-
-				@Override
-				public int read(ByteBuffer dst) throws IOException {
-					// TODO optimize if buffer has array
-					var arr = new byte[dst.remaining()];
-					try {
-						int r = handle.read(pointer, arr, 0, arr.length);
-						if (r > 0) {
-							dst.put(arr, 0, r);
-							pointer += r;
-						}
-						return r;
-					} catch (Exception e) {
-						throw translateException(e);
-					}
-				}
-
-				@Override
-				public int read(ByteBuffer dst, long position) throws IOException {
-					position(position);
-					return read(dst);
-				}
-
-				@Override
-				public long read(ByteBuffer[] dsts, int offset, int length) throws IOException {
-					// TODO optimize if buffer has array
-					long t = 0;
-					try {
-						for (var dst : dsts) {
-							var arr = new byte[length];
-							int r = handle.read(pointer, arr, offset, arr.length);
-							if (r > 0) {
-								dst.put(arr, 0, r);
-								pointer += r;
-							}
-							t += r;
-						}
-						return t;
-					} catch (Exception e) {
-						throw translateException(e);
-					}
-				}
-
-				@Override
-				public long size() throws IOException {
-					return Files.size(path);
-				}
-
-				@Override
-				public long transferFrom(ReadableByteChannel src, long position, long count) throws IOException {
-					// Untrusted target: Use a newly-erased buffer
-					int c = (int) Math.min(count, TRANSFER_SIZE);
-					ByteBuffer bb = ByteBuffer.allocate(c);
-					long tw = 0; // Total bytes written
-					long pos = position;
-					try {
-						while (tw < count) {
-							bb.limit((int) Math.min((count - tw), (long) TRANSFER_SIZE));
-							// ## Bug: Will block reading src if this channel
-							// ## is asynchronously closed
-							int nr = src.read(bb);
-							if (nr <= 0)
-								break;
-							bb.flip();
-							int nw = write(bb, pos);
-							tw += nw;
-							if (nw != nr)
-								break;
-							pos += nw;
-							bb.clear();
-						}
-						return tw;
-					} catch (IOException x) {
-						if (tw > 0)
-							return tw;
-						throw x;
-					}
-				}
-
-				@Override
-				public long transferTo(long position, long count, WritableByteChannel target) throws IOException {
-					// Untrusted target: Use a newly-erased buffer
-					int c = (int) Math.min(count, TRANSFER_SIZE);
-					ByteBuffer bb = ByteBuffer.allocate(c);
-					long tw = 0; // Total bytes written
-					long pos = position;
-					try {
-						while (tw < count) {
-							bb.limit((int) Math.min(count - tw, TRANSFER_SIZE));
-							int nr = read(bb, pos);
-							if (nr <= 0)
-								break;
-							bb.flip();
-							// ## Bug: Will block writing target if this channel
-							// ## is asynchronously closed
-							int nw = target.write(bb);
-							tw += nw;
-							if (nw != nr)
-								break;
-							pos += nw;
-							bb.clear();
-						}
-						return tw;
-					} catch (IOException x) {
-						if (tw > 0)
-							return tw;
-						throw x;
-					}
-				}
-
-				@Override
-				public FileChannel truncate(long size) throws IOException {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public FileLock tryLock(long position, long size, boolean shared) throws IOException {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public int write(ByteBuffer src) throws IOException {
-					try {
-						// TODO optimize if buffer has array
-						var arr = new byte[src.remaining()];
-						src.get(arr);
-						handle.write(pointer, arr, 0, arr.length);
-						pointer += arr.length;
-						return arr.length;
-					} catch (Exception e) {
-						throw translateException(e);
-					}
-				}
-
-				@Override
-				public int write(ByteBuffer src, long position) throws IOException {
-					position(position);
-					return write(src);
-				}
-
-				@Override
-				public long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
-					try {
-						// TODO optimize if buffer has array
-						long t = 0;
-						for (var src : srcs) {
-							var arr = new byte[length];
-							src.get(arr);
-							handle.write(pointer, arr, 0, length);
-							t += arr.length;
-						}
-						return t;
-					} catch (Exception e) {
-						throw translateException(e);
-					}
-				}
-
-				@Override
-				protected void implCloseChannel() throws IOException {
-					try {
-						handle.close();
-					} finally {
-						if (deleteOnClose)
-							delete(path);
-					}
-				}
-
-			};
+			return new SftpFileChannel(deleteOnClose, path, handle);
 
 		} catch (Exception e) {
 			throw translateException(e);
@@ -577,14 +387,14 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 	@Override
 	public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
 		synchronized (filesystems) {
-			var pathStr = env == null ? null : (String) env.get(PATH);
+			var pathStr = (String) env.get(PATH);
 			if(pathStr != null) {
 				uri = uri.resolve(pathStr);
 			}
 			
 			if (filesystems.containsKey(uri))
 				throw new FileSystemAlreadyExistsException();
-			var sftpClient = env == null ? null : (SftpClient) env.get(SFTP_CLIENT);
+			var sftpClient = (SftpClient) env.get(SFTP_CLIENT);
 			var closeOnFsClose = (Boolean) env.get(SFTP_CLOSE_ON_FS_CLOSE);
 
 			if (sftpClient == null) {
@@ -592,8 +402,7 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 				if (closeOnFsClose == null)
 					closeOnFsClose = true;
 
-				@SuppressWarnings("resource")
-				var sshClient = env == null ? null : (SshClient) env.get(SSH_CLIENT);
+				var sshClient = (SshClient) env.get(SSH_CLIENT);
 
 				if (sshClient == null) {
 					String hostname = uri.getHost();
@@ -643,31 +452,27 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 							throw translateException(e);
 						}
 					}
+					else
+						throw new IllegalArgumentException(MessageFormat.format(
+								"Must either set a value for key {0} of type {1}, or key {2} of type to the environment. "
+										+ "Alternatively, the host, port, username and password can all be expressed in the URI, i.e.. sftp://user:password@hostname/path.",
+								SFTP_CLIENT, SftpClient.class.getName(), SSH_CLIENT, SshClient.class.getName()));
 				}
 
-				if (sshClient == null) {
-					throw new IllegalArgumentException(MessageFormat.format(
-							"Must either set a value for key {0} of type {1}, or key {2} of type to the environment. "
-									+ "Alternatively, the host, port, username and password can all be expressed in the URI, i.e.. sftp://user:password@hostname/path.",
-							SFTP_CLIENT, SftpClient.class.getName(), SSH_CLIENT, SshClient.class.getName()));
-				} else {
-					if (!sshClient.isConnected()) {
-						if (closeOnFsClose)
-							sshClient.close();
-						throw new IOException("SSH client is not connected.");
-					}
-					if (!sshClient.isAuthenticated()) {
-						if (closeOnFsClose)
-							sshClient.close();
-						throw new IOException("SSH client is not authenticated.");
-					}
-					try {
-						sftpClient = SftpClientBuilder.create().withClient(sshClient).build();
-					} catch (SshException e) {
-						throw translateException(e);
-					} catch (PermissionDeniedException e) {
-						throw new IOException("Failed to create SFTP client.", e);
-					}
+				if (!sshClient.isConnected()) {
+					if (closeOnFsClose)
+						sshClient.close();
+					throw new IOException("SSH client is not connected.");
+				}
+				if (!sshClient.isAuthenticated()) {
+					if (closeOnFsClose)
+						sshClient.close();
+					throw new IOException("SSH client is not authenticated.");
+				}
+				try {
+					sftpClient = SftpClientBuilder.create().withClient(sshClient).build();
+				} catch (SshException | PermissionDeniedException e) {
+					throw translateException(e);
 				}
 			} else {
 				if (closeOnFsClose == null)
@@ -749,21 +554,8 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 			}
 		}
 		if (options.contains(StandardOpenOption.CREATE_NEW)) {
-			var fs = sftpPath.getFileSystem();
-			try {
-				fs.getSftp().stat(path.toString());
-				throw new FileAlreadyExistsException(sftpPath.toString());
-			}
-			catch(SftpStatusException sse) {
-				if(sse.getStatus() == SftpStatusException.SSH_FX_NO_SUCH_FILE) {
-					flags |= SftpChannel.OPEN_CREATE;
-				}
-				else
-					throw new UncheckedIOException(new IOException(sse));
-			}
-			catch(SshException e) {
-				throw new UncheckedIOException(new IOException(e));
-			}
+			flags |= SftpChannel.OPEN_CREATE;
+			flags |= SftpChannel.OPEN_EXCLUSIVE;
 		} else {
 			if (options.contains(StandardOpenOption.CREATE)) {
 				flags |= SftpChannel.OPEN_CREATE;

@@ -343,6 +343,8 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	@SuppressWarnings("unchecked")
 	@Override
 	public void openChannel(Channel channel) {
+		if(connection == null)
+			throw new IllegalStateException("Not connected.");
 		connection.openChannel((ChannelNG<T>)channel);
 	}
 	

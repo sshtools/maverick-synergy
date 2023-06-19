@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
@@ -15,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
+import java.util.Map;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -102,6 +104,86 @@ public class SftpFileSystemTestNoSandbox extends AbstractNioFsTest {
 		}
 	}
 
+	@Test
+	public void testPathEnv() throws Exception {
+		try (var fs = FileSystems.newFileSystem(URI.create("sftp://test:test@localhost:" + port), Map.of(SftpFileSystemProvider.PATH, tmpDir.toString()))) {
+			assertTrue(Files.exists(fs.getPath("")));
+		}
+	}
+
+	@Test
+	public void testClientEnv() throws Exception {
+		try (var ssh = SshClientBuilder.create().
+				withTarget("localhost", port).
+				withUsername("test").
+				withPassword("test").
+				build()) {
+			try (var fs = FileSystems.newFileSystem(URI.create("sftp://test:test@localhost:" + port), 
+					Map.of(
+						SftpFileSystemProvider.SSH_CLIENT, ssh
+					))) {
+				assertTrue(Files.exists(fs.getPath("")));
+			}
+		}
+	}
+
+	@Test(expected = IOException.class)
+	public void testFailClientEnvSshClientNotConnected() throws Exception {
+		try (var ssh = SshClientBuilder.create().
+				withTarget("localhost", port).
+				withUsername("test").
+				withPassword("test").
+				build()) {
+			ssh.disconnect();
+ 
+			/*
+			 * TODO ssh.disconnect() doesnt immediately entirely disconnect, so it is random
+			 * as to whether SftpFileSystemProvider can detect whether it is connected() as
+			 * construction time
+			 */
+			Thread.sleep(1000);
+			
+			try (var fs = FileSystems.newFileSystem(URI.create("sftp://test:test@localhost:" + port), 
+					Map.of(
+						SftpFileSystemProvider.SSH_CLIENT, ssh
+					))) {
+			}
+		}
+	}
+
+	@Test(expected = IOException.class)
+	public void testFailClientEnvSftpClientNotConnected() throws Exception {
+		try (var ssh = SshClientBuilder.create().
+				withTarget("localhost", port).
+				withUsername("test").
+				withPassword("test").
+				build()) {
+			
+			try(var sftp = SftpClientBuilder.create().withClient(ssh).build()) {
+				sftp.close();
+				try (var fs = FileSystems.newFileSystem(URI.create("sftp://test:test@localhost:" + port), 
+						Map.of(
+							SftpFileSystemProvider.SFTP_CLIENT, sftp
+						))) {
+				}	
+			}
+		}
+	}
+
+	@Test(expected = IOException.class)
+	public void testFailClientEnvNotAuthenticated() throws Exception {
+		try (var ssh = SshClientBuilder.create().
+				withTarget("localhost", port).
+				withUsername("test").
+				build()) {
+			try (var fs = FileSystems.newFileSystem(URI.create("sftp://test:test@localhost:" + port), 
+					Map.of(
+						SftpFileSystemProvider.SSH_CLIENT, ssh
+					))) {
+			}
+		}
+	}
+
 	@Test 
 	public void testBadRootDefaultPath() throws Exception {
 		try (var ssh = SshClientBuilder.create().
@@ -143,6 +225,30 @@ public class SftpFileSystemTestNoSandbox extends AbstractNioFsTest {
 			SftpClientBuilder.create().
 					withClient(ssh).
 					build();
+		}
+	}
+
+	@Test (expected = IllegalStateException.class)
+	public void testFailNewFileSystemWhenClosed() throws Exception {
+		try (var ssh = SshClientBuilder.create().
+				withTarget("localhost", port).
+				withUsername("test").
+				withPassword("test").
+				build()) {
+			ssh.disconnect();
+			try (var fs = SftpFileSystems.newFileSystem(ssh, Paths.get(""))) {
+			}
+		}
+	}
+
+	@Test (expected = IllegalStateException.class)
+	public void testFailNewFileSystemWhenNotAuthenticated() throws Exception {
+		try (var ssh = SshClientBuilder.create().
+				withTarget("localhost", port).
+				withUsername("test").
+				build()) {
+			try (var fs = SftpFileSystems.newFileSystem(ssh, Paths.get(""))) {
+			}
 		}
 	}
 	
@@ -200,6 +306,18 @@ public class SftpFileSystemTestNoSandbox extends AbstractNioFsTest {
 		Files.createFile(file);
 		assertTrue(Files.exists(file));
 		assertNotNull(FileSystems.getFileSystem(uri));
+	}
+	
+	@Test(expected = UnknownHostException.class)
+	public void testFromUriWithoutPort() throws Exception {
+		var uri = URI.create("sftp://test:test@XXXXXXXXXXXXXXXXXXXXXXX" + tmpDir.toString());
+		FileSystems.newFileSystem(uri, Collections.emptyMap());
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void testFromBasicUri() throws Exception {
+		var uri = URI.create("sftp:///" + tmpDir.toString());
+		FileSystems.newFileSystem(uri, Collections.emptyMap());
 	}
 	
 	@Test(expected = FileSystemAlreadyExistsException.class)

@@ -41,10 +41,12 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.sshtools.client.PasswordAuthenticator.PasswordPrompt;
-import com.sshtools.client.tasks.AbstractCommandTask;
+import com.sshtools.client.tasks.CommandTask;
+import com.sshtools.client.tasks.CommandTask.CommandTaskBuilder;
 import com.sshtools.client.tasks.DownloadFileTask.DownloadFileTaskBuilder;
 import com.sshtools.client.tasks.Task;
 import com.sshtools.client.tasks.UploadFileTask.UploadFileTaskBuilder;
+import com.sshtools.common.auth.PasswordAuthentication;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
@@ -450,8 +452,6 @@ public class SshClient implements Closeable {
 		}
 	}
 
-	public static final int EXIT_CODE_NOT_RECEIVED = AbstractCommandTask.EXIT_CODE_NOT_RECEIVED;
-	
 	private final SshClientContext sshContext;
 	private final String hostname;
 	private final int port;
@@ -1149,21 +1149,16 @@ public class SshClient implements Closeable {
 	public int executeCommandWithResult(String cmd, StringBuffer buffer, long timeout, String charset) throws IOException {
 		
 		InteractiveOutputListener listener = new InteractiveOutputListener(buffer);
-		AbstractCommandTask task = new AbstractCommandTask(getConnection(), cmd) {
-			
-			protected void beforeExecuteCommand(SessionChannelNG session) {
-				session.addEventListener(listener);
-			}
-			@Override
-			protected void onOpenSession(SessionChannelNG session) throws IOException {
-
-				try {
-					while(session.getInputStream().read() > -1);
-				} catch (IOException e) {
-					throw new IllegalStateException(e.getMessage(), e);				
-				}
-			}
-		};
+		CommandTask task = CommandTaskBuilder.create(). 
+				onBeforeExecute((t, session) -> session.addEventListener(listener)).
+				onTask((t, session) -> {
+					try {
+						while(session.getInputStream().read() > -1);
+					} catch (IOException e) {
+						throw new IllegalStateException(e.getMessage(), e);				
+					}	
+				}).
+				build();
 		
 		doTask(task, timeout);
 		return task.getExitCode();

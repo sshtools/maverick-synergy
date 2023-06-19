@@ -976,27 +976,15 @@ public class SftpClient implements Closeable {
 			msg.writeString(filter);
 			msg.writeBoolean(regexFilter);
 
-			byte[] handle;
 			boolean localFiltering = false;
-			try {
-				handle = sftp.getHandleResponse(
-						sftp.sendExtensionMessage("open-directory-with-filter@sshtools.com", msg.toByteArray()));
-			} catch (SftpStatusException e) {
-				if (Boolean.getBoolean("maverick.disableLocalFiltering")) {
-					throw new SshException("Remote server does not support server side filtering",
-							SshException.UNSUPPORTED_OPERATION);
-				}
-				handle = sftp.openDirectory(actual).getHandle();
-			}
 
 			SftpFileFilter f = null;
 			if (localFiltering) {
 				f = regexFilter ? new RegexSftpFileFilter(filter) : new GlobSftpFileFilter(filter);
 			}
-			SftpFile file = new SftpFile(actual, sftp.getAttributes(actual), sftp, null);
 			Vector<SftpFile> children = new Vector<SftpFile>();
 			Vector<SftpFile> tmp = new Vector<SftpFile>();
-			try(SftpHandle handleObject = new SftpHandle(handle, sftp, file)) {
+			try(SftpHandle handleObject = openDirectoryHandle(actual, msg)) {
 				int pageCount;
 				do {
 					pageCount = handleObject.listChildren(tmp);
@@ -1043,6 +1031,20 @@ public class SftpClient implements Closeable {
 				msg.close();
 			} catch (IOException e) {
 			}
+		}
+	}
+	
+	private SftpHandle openDirectoryHandle(String actual, ByteArrayWriter msg) throws SshException, SftpStatusException {
+		SftpFile file = new SftpFile(actual, sftp.getAttributes(actual), sftp, null);
+		try {
+			return file.handle(sftp.getHandleResponse(
+					sftp.sendExtensionMessage("open-directory-with-filter@sshtools.com", msg.toByteArray())));
+		} catch (SftpStatusException e) {
+			if (Boolean.getBoolean("maverick.disableLocalFiltering")) {
+				throw new SshException("Remote server does not support server side filtering",
+						SshException.UNSUPPORTED_OPERATION);
+			}
+			return file.handle(sftp.openDirectory(actual).getHandle());
 		}
 	}
 
@@ -1094,7 +1096,6 @@ public class SftpClient implements Closeable {
 		}
 
 		lcwd = actual;
-
 	}
 
 	/**

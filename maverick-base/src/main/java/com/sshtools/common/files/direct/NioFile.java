@@ -6,10 +6,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -20,20 +22,27 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
+import com.sshtools.common.events.Event;
+import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.files.FileVolume;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.AbstractFileSystem;
+import com.sshtools.common.sftp.OpenFile;
 import com.sshtools.common.sftp.PosixPermissions;
 import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.util.IOUtils;
+import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
 
 public final class NioFile implements AbstractFile {
@@ -272,6 +281,114 @@ public final class NioFile implements AbstractFile {
 
 	}
 
+	@Override
+	public OpenFile open(UnsignedInteger32 flags, Optional<UnsignedInteger32> accessFlags, byte[] handle) throws IOException, PermissionDeniedException {
+	    var flagVal = flags.longValue();
+	    var opts = new LinkedHashSet<>();
+	    
+	    if(accessFlags.isPresent()) {
+	    	throw new UnsupportedOperationException();
+	    }
+	    else {
+		    if((flagVal & AbstractFileSystem.OPEN_WRITE) != 0) {
+		    	opts.add(StandardOpenOption.WRITE);
+		    }
+		    if((flagVal & AbstractFileSystem.OPEN_READ) != 0) {
+		    	opts.add(StandardOpenOption.READ);
+		    }
+		    if((flagVal & AbstractFileSystem.OPEN_APPEND) != 0) {
+		    	opts.add(StandardOpenOption.APPEND);
+		    }
+		    if((flagVal & AbstractFileSystem.OPEN_TRUNCATE) != 0) {
+		    	opts.add(StandardOpenOption.TRUNCATE_EXISTING);
+		    }
+		    if((flagVal & AbstractFileSystem.OPEN_EXCLUSIVE) != 0) {
+		    	opts.add(StandardOpenOption.CREATE_NEW);
+		    }
+		    else if((flagVal & AbstractFileSystem.OPEN_CREATE) != 0) {
+		    	opts.add(StandardOpenOption.CREATE);
+		    }
+	    }
+	    
+	    var textMode = (flagVal & AbstractFileSystem.OPEN_TEXT) != 0; 
+		var channel = (FileChannel)Files.newByteChannel(path, opts.toArray(new OpenOption[0])); // TODO options
+		return new OpenFile() {
+			private int lockFlags = -1;
+			
+			@Override
+			public Optional<UnsignedInteger32> getAccessFlags() {
+				return accessFlags;
+			}
+
+			@Override
+			public void lock(long offset, long length, int lockFlags) throws IOException {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void unlock(long offset, long length) throws IOException {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public int lockFlags() {
+				return lockFlags;
+			}
+
+			@Override
+			public void write(byte[] data, int off, int len) throws IOException, PermissionDeniedException {
+				channel.write(ByteBuffer.wrap(data, off, len));
+				
+			}
+			
+			@Override
+			public void seek(long longValue) throws IOException {
+				channel.position(longValue);				
+			}
+			
+			@Override
+			public int read(byte[] buf, int start, int numBytesToRead) throws IOException, PermissionDeniedException {
+				return channel.read(ByteBuffer.wrap(buf, start, numBytesToRead));
+			}
+			
+			@Override
+			public void processEvent(Event evt) {
+				evt.addAttribute(EventCodes.ATTRIBUTE_ABSTRACT_FILE, NioFile.this);
+				evt.addAttribute(EventCodes.ATTRIBUTE_ABSTRACT_FILE_RANDOM_ACCESS, channel);
+			}
+			
+			@Override
+			public boolean isTextMode() {
+				return textMode;
+			}
+			
+			@Override
+			public byte[] getHandle() {
+				return handle;
+			}
+			
+			@Override
+			public UnsignedInteger32 getFlags() {
+				return flags;
+			}
+			
+			@Override
+			public long getFilePointer() throws IOException {
+				return channel.position();
+			}
+			
+			@Override
+			public AbstractFile getFile() {
+				return NioFile.this;
+			}
+			
+			@Override
+			public void close() throws IOException {
+				channel.close();
+			}
+		};
+	}
+
 	protected SftpFileAttributes doGetAttributes() throws FileNotFoundException, IOException {
 
 		try {
@@ -381,6 +498,12 @@ public final class NioFile implements AbstractFile {
 					attrs.lastModifiedTimeOr().orElse(null),
 					attrs.lastAccessTimeOr().orElse(null),
 					attrs.createTimeOr().orElse(null));
+			
+			if(attrs.hasSize() && attrs.size().longValue() != Files.size(path)) {
+				try(var chan = Files.newByteChannel(path, StandardOpenOption.WRITE)) {
+					chan.truncate(attrs.size().longValue());
+				}
+			}
 
 			attrs.usernameOr().ifPresentOrElse(u -> {
 				try {
@@ -630,4 +753,5 @@ public final class NioFile implements AbstractFile {
 		} else
 			return nfe;
 	}
+
 }

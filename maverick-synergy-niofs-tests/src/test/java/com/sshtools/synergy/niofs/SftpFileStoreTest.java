@@ -33,16 +33,16 @@ public class SftpFileStoreTest extends AbstractNioFsTest {
 		
 		private Random rnd = new Random();
 
-		private long blockSize = rnd.nextLong();
-		private long underlyingBlockSize = rnd.nextLong();
-		private long blocks = rnd.nextLong();
-		private long freeBlocks = rnd.nextLong();
-		private long userFreeBlocks = rnd.nextLong();
-		private long totalInodes = rnd.nextLong();
-		private long freeInodes = rnd.nextLong();
-		private long userFreeInodes = rnd.nextLong();
-		private long id = rnd.nextLong();
-		private long maxFilenameLength = rnd.nextLong();
+		private long blockSize = Math.abs(rnd.nextLong());
+		private long underlyingBlockSize = Math.abs(rnd.nextLong());
+		private long blocks = Math.abs(rnd.nextLong());
+		private long freeBlocks = Math.abs(rnd.nextLong());
+		private long userFreeBlocks = Math.abs(rnd.nextLong());
+		private long totalInodes = Math.abs(rnd.nextLong());
+		private long freeInodes = Math.abs(rnd.nextLong());
+		private long userFreeInodes = Math.abs(rnd.nextLong());
+		private long id = Math.abs(rnd.nextLong());
+		private long maxFilenameLength = Math.abs(rnd.nextLong());
 		private long flags = 0;
 
 		@Override

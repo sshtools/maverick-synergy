@@ -23,10 +23,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Optional;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.MultipartTransfer;
+import com.sshtools.common.sftp.OpenFile;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.files.PseduoRandomOpenFile;
+import com.sshtools.common.sftp.files.RandomAccessOpenFile;
+import com.sshtools.common.util.UnsignedInteger32;
 
 public interface AbstractFile {
 
@@ -85,6 +90,14 @@ public interface AbstractFile {
 	String getCanonicalPath() throws IOException, PermissionDeniedException;
 	
 	boolean supportsRandomAccess();
+	
+	default OpenFile open(UnsignedInteger32 flags, Optional<UnsignedInteger32> accessFlags, byte[] handle) throws IOException, PermissionDeniedException {
+		if(supportsRandomAccess()) {
+			return new RandomAccessOpenFile(this, flags, handle);
+		} else {
+			return new PseduoRandomOpenFile(this, flags, handle);
+		}
+	}
 	
 	AbstractFileRandomAccess openFile(boolean writeAccess) throws IOException, PermissionDeniedException;
 

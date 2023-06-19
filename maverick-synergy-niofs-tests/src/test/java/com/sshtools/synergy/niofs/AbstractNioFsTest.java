@@ -13,6 +13,7 @@ import org.junit.Before;
 
 import com.sshtools.client.SshClient.SshClientBuilder;
 import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
+import com.sshtools.common.files.direct.NioFileFactory.LockMode;
 import com.sshtools.common.files.direct.NioFileFactory.NioFileFactoryBuilder;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.sftp.SftpExtension;
@@ -78,6 +79,7 @@ public abstract class AbstractNioFsTest {
 				setSecurityLevel(SecurityLevel.WEAK);
 				var ctx = super.createServerContext(daemonContext, sc);
 				currentContext = ctx;
+				ctx.getPolicy(FileSystemPolicy.class).setSupportedSFTPVersion(6);
 				ctx.getPolicy(FileSystemPolicy.class).getSFTPExtensionFactories().add(
 						new BasicSftpExtensionFactory(new HardLinkExtension(), createStatVFSExtension()));
 				return ctx;
@@ -88,6 +90,7 @@ public abstract class AbstractNioFsTest {
 		server.setFileFactory((con) -> NioFileFactoryBuilder.create().
 				withHome(tmpDir).
 				withSandbox(sandbox).
+				withLockMode(LockMode.SIMULATED).
 				build());
 		server.start();
 		port = server.getEngine().getContext().getListeningInterfaces()[0].getActualPort();

@@ -63,7 +63,7 @@ public class CallbackShell extends CallbackCommand {
 				withTermType(console.getTerminal().getType()).
 				withColumns(console.getTerminal().getWidth()).
 				withRows(console.getTerminal().getHeight()).
-				onOpen((task, session) -> {
+				onBeforeTask((task, session) -> {
 					console.getSessionChannel().enableRawMode();
 					listener.session = session;
 					((VirtualShellNG)console.getSessionChannel()).addWindowSizeChangeListener(listener);

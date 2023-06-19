@@ -19,6 +19,7 @@
 package com.sshtools.common.sftp;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import com.sshtools.common.events.Event;
 import com.sshtools.common.files.AbstractFile;
@@ -28,6 +29,10 @@ import com.sshtools.common.util.UnsignedInteger32;
 public interface OpenFile {
 
 	AbstractFile getFile();
+
+	default Optional<UnsignedInteger32> getAccessFlags() {
+		return Optional.empty();
+	}
 
 	UnsignedInteger32 getFlags();
 
@@ -46,5 +51,21 @@ public interface OpenFile {
 	void processEvent(Event evt);
 
 	byte[] getHandle();
+	
+	default void lock(long offset, long length, int lockFlags) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+	
+	default void unlock(long offset, long length) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+	
+	default int lockFlags() {
+		throw new UnsupportedOperationException();
+	}
+	
+	default boolean isLocked() {
+		return lockFlags() > -1;
+	}
 
 }

@@ -25,4 +25,5 @@ import com.sshtools.synergy.niofs.SftpFileSystemProvider;
 module com.sshtools.synergy.niofs {
 	provides FileSystemProvider with SftpFileSystemProvider;
 	requires transitive com.sshtools.synergy.client;
+	exports com.sshtools.synergy.niofs;
 }

@@ -108,8 +108,9 @@ public class SftpDirectoryStream implements DirectoryStream<Path> {
 								var hasNext = it.hasNext();
 								if (hasNext) {
 									var nextFile = it.next();
-									if (nextFile.getFilename().equals(".") || nextFile.getFilename().equals(".."))
-										continue;
+									/* TODO: check this will never actual happen */
+									/*if (nextFile.getFilename().equals(".") || nextFile.getFilename().equals(".."))
+										continue; */
 									var p = path.resolve(nextFile.getFilename());
 									try {
 										if (filter == null || filter.accept(p)) {

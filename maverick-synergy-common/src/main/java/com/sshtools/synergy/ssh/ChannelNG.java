@@ -94,6 +94,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	protected SshConnection con;
 	private ChannelInputStream channelIn;
 	private ChannelOutputStream channelOut = new ChannelOutputStream(this);
+	private final boolean autoConsume;
 	
 	/**
 	 * Construct a channel with the specified settings.
@@ -113,6 +114,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		this.channeltype = channelType;
 		this.localWindow = new ChannelDataWindow(initialWindowSize, maximumWindowSpace, minimumWindowSpace, maximumPacketSize);
 		this.closeFuture = closeFuture != null ? closeFuture : new ChannelRequestFuture();
+		this.autoConsume = autoConsume;
 		if(!autoConsume) {
 			cache = createCache(maximumWindowSpace.intValue());
 		}
@@ -126,12 +128,18 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		cachingWindow.close();
 	}
 	
+	public final boolean isAutoConsume() {
+		return autoConsume;
+	}
+	
 	public InputStream getInputStream() {
 		if(Objects.nonNull(channelIn)) {
 			return channelIn;
 		}
+		if(isClosed())
+			throw new IllegalStateException("Channel is closed");
 		if(Objects.isNull(cache)) {
-			throw new IllegalStateException("Channel is configured to auto consume input, therefore, ChannelInputStream is not available");
+			throw new IllegalStateException("Channel is not configured to auto consume input, therefore, ChannelInputStream is not available");
 		}
 		channelIn = new ChannelInputStream(cache);
 		return channelIn;

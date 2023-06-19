@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Paths;
@@ -17,8 +18,13 @@ import java.nio.file.WatchEvent.Kind;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 
 import org.junit.Test;
+
+import com.sshtools.client.SshClient.SshClientBuilder;
+import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
+import com.sshtools.common.util.Utils;
 
 public class SftpPathTest extends AbstractNioFsTest {
 
@@ -257,6 +263,31 @@ public class SftpPathTest extends AbstractNioFsTest {
 	}
 
 	@Test
+	public void testNotEndsWithCrossFileSystem() throws Exception {
+		var p1 = Paths.get("some/sub/folder");
+		testWithFilesystem(fs -> {
+			var p2 = fs.getPath("some/sub/folder/somefile");
+			assertFalse(p2.endsWith(p1));
+		});
+	}
+
+	@Test
+	public void testEndsWithString() throws Exception {
+		testWithFilesystem(fs -> {
+			var p1 = fs.getPath("some/sub/folder");
+			assertTrue(p1.endsWith("folder"));
+		});
+	}
+
+	@Test
+	public void testNotEndsWithString() throws Exception {
+		testWithFilesystem(fs -> {
+			var p1 = fs.getPath("some/sub/folder");
+			assertFalse(p1.endsWith("XXXXXXX"));
+		});
+	}
+
+	@Test
 	public void testEquals() throws Exception {
 		testWithFilesystem(fs -> {
 			var p1 = fs.getPath("some/sub/folder/somefile");
@@ -334,11 +365,46 @@ public class SftpPathTest extends AbstractNioFsTest {
 		testWithFilesystem(fs -> {
 			var p1 = fs.getPath("gravy.doc");
 			assertEquals(1, p1.compareTo(null));
+			var pX = fs.getPath("");
+			assertEquals(1, p1.compareTo(pX));
 
 			var p2 = fs.getPath("sub-folder/gravy.doc");
 			assertEquals(-12, p1.compareTo(p2));
 			assertEquals(12, p2.compareTo(p1));
 		});
+	}
+
+	@Test(expected = ProviderMismatchException.class)
+	public void testResolveOfDifferentType() throws Exception {
+		var other = Paths.get("SOMEPATH");
+		testWithFilesystem(fs -> {
+			var p1 = fs.getPath("folder");
+			p1.resolve(other);
+		});
+	}
+
+	@Test(expected = ProviderMismatchException.class)
+	public void testResolveDifferentSftpProvider() throws Exception {
+		var prov = new SftpFileSystemProvider();
+		try (var ssh = SshClientBuilder.create().
+				withTarget("localhost", port).
+				withUsername("test").
+				withPassword("test").
+				build()) {
+			var sftp = SftpClientBuilder.create().withClient(ssh).build();
+			var conx = sftp.getSubsystemChannel().getConnection();
+			var fs = prov.newFileSystem(URI.create(String.format(
+						"sftp://%s@%s", 
+						conx.getUsername(), 
+						Utils.formatHostnameAndPort(conx.getRemoteIPAddress(), conx.getRemotePort()))), 
+					Map.of(SftpFileSystemProvider.SFTP_CLIENT, sftp));
+			
+			var other = fs.getPath("SOMEPATH");
+			testWithFilesystem(fs2 -> {
+				var p1 = fs2.getPath("folder");
+				p1.resolve(other);
+			});
+		}
 	}
 
 	@Test

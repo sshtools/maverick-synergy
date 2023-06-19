@@ -19,8 +19,8 @@
 package com.sshtools.client.tasks;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Optional;
-import java.util.function.Function;
 
 import com.sshtools.client.PseudoTerminalModes;
 import com.sshtools.client.SessionChannelNG;
@@ -64,19 +64,42 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 	/**
 	 * Builder for {@link ShellTask}.
 	 */
-	public final static class ShellTaskBuilder extends AbstractConnectionTaskBuilder<ShellTaskBuilder, ShellTask> {
+	public final static class ShellTaskBuilder extends AbstractSessionTaskBuilder<ShellTaskBuilder, SessionChannelNG, ShellTask> {
 
 		private Optional<ShellTaskEvent> onClose = Optional.empty();
 		private Optional<ShellTaskEvent> onBeforeOpen = Optional.empty();
-		private Optional<ShellTaskEvent> onOpen = Optional.empty();
+		private Optional<ShellTaskEvent> onBeforeTask = Optional.empty();
+		private Optional<ShellTaskEvent> onTask = Optional.empty();
 		private Optional<String> termType = Optional.empty();
-		private Optional<Function<SshConnection, SessionChannelNG>> session = Optional.empty();
 		private int cols = 80;
 		private int rows = 24;
 		private boolean withPty = true;
 		private Optional<PseudoTerminalModes> modes = Optional.empty();
+		private boolean autoConsume;
 
 		private ShellTaskBuilder() {
+		}
+		
+		/**
+		 * Set to auto-consume input. Will be ignored if {@link #withSession(java.util.function.Function)}
+		 * has been used.
+		 * 
+		 * @return this for chaining
+		 */
+		public ShellTaskBuilder withAutoConsume() {
+			return withAutoConsume(true);
+		}
+		
+		/**
+		 * Set the whether to auto-consume input. Will be ignored if {@link #withSession(java.util.function.Function)}
+		 * has been used.
+		 * 
+		 * @param autoConsume auto consume
+		 * @return this for chaining
+		 */
+		public ShellTaskBuilder withAutoConsume(boolean autoConsume) {
+			this.autoConsume = autoConsume;
+			return this;
 		}
 
 		/**
@@ -86,17 +109,6 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		 */
 		public static ShellTaskBuilder create() {
 			return new ShellTaskBuilder();
-		}
-
-		/**
-		 * Set a function to create a custom session channel.
-		 * 
-		 * @param session session function
-		 * @return builder for chaining
-		 */
-		public final ShellTaskBuilder withSession(Function<SshConnection, SessionChannelNG> session) {
-			this.session = Optional.of(session);
-			return this;
 		}
 
 		/**
@@ -183,14 +195,39 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		}
 
 		/**
-		 * Set a callback to run when the shell channel is opened. 
+		 * Set a callback to run when the command has been executed. This 
+		 * should NOT block until the task is done. 
+		 * .
 		 * 
-		 * @param onOpen on start shell open
+		 * @param onBeforeTask on session channel open
 		 * @return builder for chaining
 		 */
-		public final ShellTaskBuilder onOpen(ShellTaskEvent onOpen) {
-			this.onOpen = Optional.of(onOpen);
+		public final ShellTaskBuilder onBeforeTask(ShellTaskEvent onBeforeTask) {
+			this.onBeforeTask = Optional.of(onBeforeTask);
 			return this;
+		}
+
+		/**
+		 * Set a callback to run when the command has been executed. Here you can obtain 
+		 * I/O streams if required, and then block until the task is done. The channel 
+		 * backing this task will be closed when the callback exits. If you do not
+		 * set this, {@link CommandTask#close()} should be called when the task
+		 * is finished with.
+		 * 
+		 * @param onTask execute task
+		 * @return builder for chaining
+		 */
+		public final ShellTaskBuilder onTask(ShellTaskEvent onTask) {
+			this.onTask = Optional.of(onTask);
+			return this;
+		}
+
+		/**
+		 * Use {@link #onTask(ShellTaskEvent)}.
+		 */
+		@Deprecated
+		public final ShellTaskBuilder onOpen(ShellTaskEvent onTask) {
+			return onTask(onTask);
 		}
 
 		@Override
@@ -225,25 +262,27 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 
 	private final Optional<ShellTaskEvent> onClose;
 	private final Optional<ShellTaskEvent> onStartShell;
-	private final Optional<ShellTaskEvent> onOpen;
+	private final Optional<ShellTaskEvent> onBeforeTask;
+	private final Optional<ShellTaskEvent> onTask;
 	private final String termType;
 	private final int rows;
 	private final int cols;
-	private final Optional<Function<SshConnection, SessionChannelNG>> session;
 	private final boolean withPty;
 	private final Optional<PseudoTerminalModes> modes;
+	private final boolean autoConsume;
 	
 	private ShellTask(ShellTaskBuilder builder) {
 		super(builder);
 		this.onClose = builder.onClose;
 		this.onStartShell = builder.onBeforeOpen;
-		this.onOpen = builder.onOpen;
+		this.onBeforeTask = builder.onBeforeTask;
+		this.onTask = builder.onTask;
 		this.withPty = builder.withPty;
 		this.termType = builder.termType.orElse("dumb");
 		this.rows = builder.rows;
 		this.cols = builder.cols;
-		this.session = builder.session;
 		this.modes = builder.modes;
+		this.autoConsume = builder.autoConsume;
 	}
 
 	/**
@@ -274,16 +313,38 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 	 * Deprecated for overriding, will be made final at 3.2.0.
 	 */
 	@Override
+	@Deprecated(since = "3.1.0")
 	protected void onOpenSession(SessionChannelNG session) throws IOException, SshException, ShellTimeoutException {
-		if(onOpen.isPresent()) {
+		onBeforeTask.ifPresent(c -> {
 			try {
-				onOpen.get().shellEvent(this, session);
+				c.shellEvent(this, session);
 			} catch(RuntimeException re) {
 				throw re;
+			} catch(IOException ioe) {
+				throw new UncheckedIOException(ioe);
 			} catch (Exception e) {
-				throw new IllegalStateException(e);
+				throw new IllegalStateException(e.getMessage(), e);
+			} 
+		});
+		onTask.ifPresent(c -> {
+			try {
+				c.shellEvent(this, session);
+			} catch(RuntimeException re) {
+				throw re;
+			} catch(IOException ioe) {
+				throw new UncheckedIOException(ioe);
+			} catch (Exception e) {
+				throw new IllegalStateException(e.getMessage(), e);
+			} finally {
+				close();
 			}
-		}
+		});
+	}
+
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	@Override
+	protected void closeOnTaskComplete() {
+		/* Noop, new style tasks should either be closed manually or in the onExec() handler */
 	}
 
 	/**
@@ -334,12 +395,12 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 	@Override
 	@Deprecated(since = "3.1.0")
 	protected SessionChannelNG createSession(SshConnection con) {
-		return session.orElse((c) -> new SessionChannelNG(
-				c.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(),
-				c.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
-				c.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
-				c.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
+		return new SessionChannelNG(
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
 				getChannelFuture(),
-				false)).apply(con);
+				autoConsume);
 	}
 }

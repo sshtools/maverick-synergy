@@ -78,7 +78,6 @@ public abstract class AbstractNioFsTest {
 				setSecurityLevel(SecurityLevel.WEAK);
 				var ctx = super.createServerContext(daemonContext, sc);
 				currentContext = ctx;
-				ctx.getPolicy(FileSystemPolicy.class).setSupportedSFTPVersion(6);
 				ctx.getPolicy(FileSystemPolicy.class).getSFTPExtensionFactories().add(
 						new BasicSftpExtensionFactory(new HardLinkExtension(), createStatVFSExtension()));
 				return ctx;

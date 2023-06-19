@@ -1149,7 +1149,10 @@ public class SshClient implements Closeable {
 	public int executeCommandWithResult(String cmd, StringBuffer buffer, long timeout, String charset) throws IOException {
 		
 		InteractiveOutputListener listener = new InteractiveOutputListener(buffer);
-		CommandTask task = CommandTaskBuilder.create(). 
+		CommandTask task = CommandTaskBuilder.create().
+				withCommand(cmd).
+				withClient(this).
+				withEncoding(charset).
 				onBeforeExecute((t, session) -> session.addEventListener(listener)).
 				onTask((t, session) -> {
 					try {

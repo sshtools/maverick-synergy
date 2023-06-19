@@ -375,6 +375,9 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 
 			var deleteOnClose = options.contains(StandardOpenOption.DELETE_ON_CLOSE);
 			var handle = fs.getSftp().openFile(pstr, flags);
+			if(deleteOnClose) {
+				System.out.println("REMOVE delete on close handle: " + new String(handle.getHandle()));
+			}
 
 			return new SftpFileChannel(deleteOnClose, path, handle);
 

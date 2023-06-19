@@ -151,7 +151,7 @@ public class SftpFileSystemTestNoSandbox extends AbstractNioFsTest {
 		}
 	}
 
-	@Test(expected = IOException.class)
+	@Test(expected = UncheckedIOException.class)
 	public void testFailClientEnvSftpClientNotConnected() throws Exception {
 		try (var ssh = SshClientBuilder.create().
 				withTarget("localhost", port).

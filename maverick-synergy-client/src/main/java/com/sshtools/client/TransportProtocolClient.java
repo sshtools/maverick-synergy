@@ -161,6 +161,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 			if(Log.isErrorEnabled()) {
 				Log.error("Could not verify host key", e);
 			}
+			getConnectFuture().setLastError(e);
 			getConnectFuture().done(false);
 			if(disconnectStarted != null)
 				disconnect(HOST_KEY_NOT_VERIFIABLE, "The host key could not be verified.");

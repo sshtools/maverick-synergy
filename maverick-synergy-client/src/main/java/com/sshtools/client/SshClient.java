@@ -933,6 +933,13 @@ public class SshClient implements Closeable {
 			ConnectRequestFuture future = sshContext.getEngine().connect(hostname, port, sshContext);
 			future.waitFor(connectTimeout);
 			if(!future.isSuccess()) {
+				var lastErr = future.getLastError();
+				if(lastErr != null) {
+					if(lastErr instanceof IOException)
+						throw (IOException)lastErr;
+					else if(lastErr instanceof SshException)
+						throw (SshException)lastErr;
+				}
 				throw new IOException(String.format("Failed to connect to %s:%d", hostname, port));
 			}
 			var con = (Connection<SshClientContext>) future.getConnection();

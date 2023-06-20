@@ -466,7 +466,7 @@ public abstract class TransportProtocol<T extends SshContext>
 				break;
 			}
 		} catch (Throwable ex) {
-			ex.printStackTrace();
+			connectFuture.setLastError(ex);
 			if(Log.isInfoEnabled()) {
 				Log.info("Read error from {} {}", 
 						con.getRemoteIPAddress(),
@@ -2407,6 +2407,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			} catch (Throwable ex) {
 				if(Log.isErrorEnabled())
 					Log.error("Failed to create transport component", ex);
+				connectFuture.setLastError(ex);
 				connectFuture.done(false);
 				if(disconnectStarted != null)
 					disconnect(

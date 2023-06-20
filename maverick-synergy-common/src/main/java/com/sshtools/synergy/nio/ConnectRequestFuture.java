@@ -27,6 +27,7 @@ public class ConnectRequestFuture extends AbstractRequestFuture {
 	Connection<?> con;
 	String host;
 	int port;
+	Throwable exception;
 	
 	ConnectRequestFuture() {
 	}
@@ -60,5 +61,13 @@ public class ConnectRequestFuture extends AbstractRequestFuture {
 	
 	public int getPort() {
 		return port;
+	}
+	
+	public Throwable getLastError() {
+		return exception;
+	}
+
+	public void setLastError(Throwable exception) {
+		this.exception = exception;
 	}
 }

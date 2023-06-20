@@ -348,7 +348,7 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 
 				SftpHandle transaction = primarySftpClient.getSubsystemChannel().getFile(remotePath).handle(handle);
 				
-				verboseMessage("Remote server supports multipart extensions with minimum part size of {} bytes", blocksize);
+				verboseMessage("Remote server supports multipart extensions with minimum part size of {0} bytes", blocksize);
 				
 				if(localFile.length() <= blocksize) {
 					verboseMessage("Minimum blocksize for push not met reverting to put");

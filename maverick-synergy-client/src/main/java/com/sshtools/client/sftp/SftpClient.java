@@ -3224,12 +3224,12 @@ public class SftpClient implements Closeable {
 	 * @return String
 	 */
 	public static String formatLongname(SftpFileAttributes attrs, String filename) {
-		return String.format("%9s %d %-9s %-9 %10d %12s %s",
+		return String.format("%9s %d %-9s %-9s %10d %12s %s",
 				attrs.toPermissionsString(),
 				attrs.linkCount(),
 				attrs.bestUsername(),
 				attrs.bestGroup(),
-				attrs.size(),
+				attrs.size().longValue(),
 				getModTimeString(attrs.lastModifiedTime()),
 				filename);
 	}

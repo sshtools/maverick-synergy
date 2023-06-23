@@ -215,7 +215,7 @@ public class SshEngine {
 					public void run() {
 						if(Log.isInfoEnabled())
 							Log.info("The system is shutting down");
-						shutdownNow(true, getLongValue(properties, 
+						shutdownNow(false, getLongValue(properties, 
 								"maverick.config.shutdown.defaultGracePeriod", 5000L));
 					}
 				};

@@ -49,4 +49,11 @@ public interface MultipartTransfer {
 	void cancel();
 	
 	boolean isCancelled();
+	
+	MultipartTransfer onComplete(MultipartCompletionCallback transfer);
+	
+	interface MultipartCompletionCallback {
+		
+		void multipartCompleted(MultipartTransfer transfer);
+	}
 }

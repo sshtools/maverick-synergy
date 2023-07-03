@@ -108,7 +108,9 @@ public class MutualCallbackAuthentication<C extends Context> implements Authenti
 						return;
 					}
 					byte[] signed = key.getPrivateKey().sign(writer.toByteArray());
-					
+					if(!key.getPublicKey().verifySignature(signed, writer.toByteArray())) {
+						throw new IllegalStateException();
+					}
 					byte[] ourChallenge = new byte[512];
 					JCEComponentManager.getSecureRandom().nextBytes(ourChallenge);
 					con.setProperty("ourChallenge", ourChallenge);

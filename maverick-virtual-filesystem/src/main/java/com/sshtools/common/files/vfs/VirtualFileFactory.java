@@ -40,7 +40,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
 	protected boolean cached = true;
 	
-	Map<String,VirtualFile> cache = null;
+	Map<String,VirtualFile> cache = new HashMap<>();
 	List<VirtualMount> mounts = new ArrayList<VirtualMount>();
 	Map<String,VirtualMountFile> mountCache = new HashMap<>();
 	private VirtualMount defaultMount;

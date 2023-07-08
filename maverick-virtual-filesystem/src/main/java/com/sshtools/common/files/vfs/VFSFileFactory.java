@@ -118,7 +118,7 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 				if (defaultDirectory == null) {
 					alt = manager.resolveFile(defaultPath, parent);
 				} else {
-					alt = manager.resolveFile(manager.resolveFile(defaultDirectory), parent);
+					alt = manager.resolveFile(manager.resolveFile(defaultDirectory, opts), parent);
 				}
 				alt = alt.resolveFile(path);
 				return new VFSFile(alt, this);
@@ -140,7 +140,7 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 				if (defaultDirectory == null) {
 					obj = manager.resolveFile(defaultPath, path);
 				} else {
-					obj = manager.resolveFile(manager.resolveFile(defaultDirectory), path);
+					obj = manager.resolveFile(manager.resolveFile(defaultDirectory, opts), path);
 				}
 			} catch (Exception e1) {
 				if(Log.isDebugEnabled()) {

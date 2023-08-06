@@ -37,7 +37,6 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 	long timeout = 10000;
 	T session;
 	ChannelRequestFuture future;
-	Throwable lastError;
 	
 	public AbstractSessionTask(SshClient ssh, ChannelRequestFuture future) {
 		super(ssh);
@@ -59,10 +58,6 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 	
 	public void disconnect() {
 		con.disconnect();
-	}
-	
-	public final Throwable getLastError() {
-		return lastError;
 	}
 	
 	public ChannelRequestFuture getChannelFuture() {

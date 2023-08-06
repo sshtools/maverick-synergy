@@ -25,7 +25,7 @@ import com.sshtools.common.logger.Log;
 public abstract class ConnectionAwareTask extends AbstractRequestFuture implements Runnable {
 
 	protected final SshConnection con;
-	private Throwable lastError;
+	protected Throwable lastError;
 	
 	public ConnectionAwareTask(SshConnection con) {
 		if(Objects.isNull(con)) {

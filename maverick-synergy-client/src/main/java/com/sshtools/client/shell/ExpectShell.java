@@ -192,12 +192,21 @@ public class ExpectShell {
 			ShellTimeoutException {
 		this(in, out, parentShell, parentShell.getOsType());
 	}
+	
 	public ExpectShell(InputStream in, OutputStream out, ExpectShell parentShell, int osType)
 			throws SshIOException, SshException, IOException,
 			ShellTimeoutException {
 		this.osType = osType;
 		this.childShell = true;
 		init(in, out, true, null);
+	}
+	
+	public ExpectShell(AbstractSessionTask<SessionChannelNG> task, int osType)
+			throws SshIOException, SshException, IOException,
+			ShellTimeoutException {
+		this.osType = osType;
+		init(task.getSession().getInputStream(),
+				task.getSession().getOutputStream(), false, null);
 	}
 
 	public String getCharacterEncoding() {

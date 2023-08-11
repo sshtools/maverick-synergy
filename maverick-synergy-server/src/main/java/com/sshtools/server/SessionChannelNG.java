@@ -99,9 +99,10 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 
 	public static final int SSH_EXTENDED_DATA_STDERR = 1;
 
-	Subsystem subsystem;
-	ExecutableCommand command;
-	Map<String, String> environment = new ConcurrentHashMap<String, String>(8, 0.9f, 1);
+	protected Subsystem subsystem;
+	protected ExecutableCommand command;
+	protected Map<String, String> environment = new ConcurrentHashMap<String, String>(8, 0.9f, 1);
+	
 	boolean hasTimedOut = false;
 	boolean haltIncomingData = false;
 	long lastActivity = System.currentTimeMillis();

@@ -73,8 +73,7 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 	
 	private long timeout = 10000;
 	private final ChannelRequestFuture future;
-	private Throwable lastError;
-
+	
 	/* TODO make final at 3.2.0 */
 	private Optional<T> session;
 	
@@ -111,10 +110,6 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 	
 	public void disconnect() {
 		con.disconnect();
-	}
-	
-	public final Throwable getLastError() {
-		return lastError;
 	}
 	
 	public ChannelRequestFuture getChannelFuture() {

@@ -332,7 +332,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 			} catch(RuntimeException re) {
 				throw re;
 			} catch(IOException ioe) {
-				throw new UncheckedIOException(ioe);
+				throw new UncheckedIOException(ioe.getMessage(), ioe);
 			} catch (Exception e) {
 				throw new IllegalStateException(e.getMessage(), e);
 			} finally {

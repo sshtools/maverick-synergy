@@ -19,11 +19,14 @@
 package com.sshtools.common.command;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.Channel;
+import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.util.IOStreamConnector;
 
 /**
@@ -84,21 +87,25 @@ public class NativeExecutableCommand extends AbstractExecutableCommand {
 		try {
 			process = Runtime.getRuntime().exec(commandLine, env);
 			thread = new ProcessThread();
+			
+			session.addEventListener(new ChannelEventListener() {
+				public void onChannelDataIn(Channel channel, ByteBuffer data) {
+					
+					byte[] tmp = new byte[data.remaining()];
+					data.get(tmp);
+					try {
+						process.getOutputStream().write(tmp);
+						process.getOutputStream().flush();
+					} catch (IOException e) {
+						Log.error("Faild to write to process", e);
+						session.close();
+					}
+				}
+			});
+			
 			return true;
 		} catch (IOException ex) {
 			return false;
-		}
-	}
-
-	public void processStdinData(byte[] data) throws IOException {
-		try {
-			if (process != null) {
-				process.getOutputStream().write(data);
-				process.getOutputStream().flush();
-			}
-		} catch (IOException ex) {
-			if(Log.isDebugEnabled())
-				Log.debug("Failed to write data into native process", ex);
 		}
 	}
 
@@ -113,10 +120,12 @@ public class NativeExecutableCommand extends AbstractExecutableCommand {
 		public void run() {
 			try {
 
+				Log.info("Starting reading I/O");
 				stdout = new IOStreamConnector(process.getInputStream(), getOutputStream());
-				stderr = new IOStreamConnector(process.getErrorStream(), getStderrOutputStream());
-
+				stderr = new IOStreamConnector(process.getErrorStream(), getOutputStream());
+				
 				exitValue = process.waitFor();
+				Log.info("Command exited with {}", exitValue);
 			} catch (Throwable ex) {
 				if(Log.isDebugEnabled())
 					Log.debug("Native process transfer thread failed", ex);

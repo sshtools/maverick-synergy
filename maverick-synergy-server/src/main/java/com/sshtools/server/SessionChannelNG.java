@@ -592,24 +592,10 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 				close();
 			}
 		} else {
-			if(rawMode) {
-				super.onChannelData(data);
-			} else {
-				onSessionData(data);
-			}
+			super.onChannelData(data);
 		}
 	}
-
-	protected void onSessionData(ByteBuffer data) {
-		synchronized (localWindow) {
-			try {
-				cache.put(data);
-			} catch (EOFException e) {
-				Log.error("Attempt to write session data to channel cache failed because the cache is closed");
-				close();
-			}
-		}		
-	}
+	
 	/**
 	 * Called when extended data arrives on the channel - for a session channel
 	 * this would not normally be called.

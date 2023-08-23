@@ -88,11 +88,8 @@ class ShellInputStream extends InputStream {
 
 			if(ch > -1) {
 				line.append((char)ch);
-				if(Boolean.getBoolean("maverick.verboseShell")) {
-					if(Log.isDebugEnabled()) {
-						Log.debug(line.toString());
-					}
-				}
+				
+				Log.debug(line.toString());
 			}
 		} while(ch != '\n' && ch != '\r' && ch != -1);
 		

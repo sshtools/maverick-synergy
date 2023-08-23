@@ -136,17 +136,25 @@ public class IPPolicy extends Permissions {
 	
 	public void flagAddress(InetAddress addr) {
 		
+		if(check(DISABLE_BAN)) {
+			return;
+		}
+		
 		Integer count = flaggedAddressCounts.getOrDefault(addr, 0);
 		
 		if(count >= failedAuthenticationThreshold) {
+			if(Log.isInfoEnabled()) {
 			Log.info("Temporarily banning IP address {} due to failed authentication count of {}", 
 					addr.getHostAddress(), count);
+			}
 			temporaryBans.put(addr, true);
 			return;
 		}
 		
 		++count;
-		Log.info("Flagging IP address {} with failed authentication count of {}", addr.getHostAddress(), count);
+		if(Log.isInfoEnabled()) {
+			Log.info("Flagging IP address {} with failed authentication count of {}", addr.getHostAddress(), count);
+		}
 		flaggedAddressCounts.put(addr, count);
 	}
 	

@@ -119,6 +119,10 @@ public class ExpectShell {
 	public ExpectShell(AbstractSessionTask<SessionChannelNG> session) throws SshException, IOException, ShellTimeoutException {
 		this(session, null, 30000, "dumb", 1024, 80);
 	}
+	
+	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, int osType) throws SshException, IOException, ShellTimeoutException {
+		this(session, null, 30000, "dumb", 1024, 80, osType);
+	}
 
 	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger)
 			throws SshException,
@@ -144,10 +148,19 @@ public class ExpectShell {
 			long startupTimeout, String termtype, int cols, int rows)
 			throws SshException,
 			IOException, ShellTimeoutException {
+		this(session, trigger, startupTimeout, termtype, cols, rows, OS_UNKNOWN);
+	}
+	
+	@Deprecated
+	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
+			long startupTimeout, String termtype, int cols, int rows, int osType)
+			throws SshException,
+			IOException, ShellTimeoutException {
 
 		this.startupTimeout = startupTimeout;
 		this.startupStarted = System.currentTimeMillis();
 		this.session = session; 
+		this.osType = osType;
 		
 		if(Log.isDebugEnabled())
 			Log.debug("Creating session for interactive shell");
@@ -198,15 +211,7 @@ public class ExpectShell {
 			ShellTimeoutException {
 		this.osType = osType;
 		this.childShell = true;
-		init(in, out, true, null);
-	}
-	
-	public ExpectShell(AbstractSessionTask<SessionChannelNG> task, int osType)
-			throws SshIOException, SshException, IOException,
-			ShellTimeoutException {
-		this.osType = osType;
-		init(task.getSession().getInputStream(),
-				task.getSession().getOutputStream(), false, null);
+		init(in, out, false, null);
 	}
 
 	public String getCharacterEncoding() {
@@ -531,7 +536,7 @@ public class ExpectShell {
 		                		+ " && " + ECHO_COMMAND + " \"" + endCommand + "0\" || "
 		                		+ ECHO_COMMAND + "\"" + endCommand + "1\"" + EOL;
 			} else if(osType == OS_POWERSHELL) {
-			    // Assume it's a Unix system and 'echo' works.
+			    // Force powershell format
                 echoCmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; " + cmd
                         + "; echo \"" + endCommand + EXIT_CODE_VARIABLE + "\"" + EOL;
 			} else {
@@ -707,6 +712,10 @@ public class ExpectShell {
 				} else if ( osType == OS_OPENVMS ) {
 				    // Do same trick with end marker for OpenVMS via its PIPE command.
 					cmd = PIPE_CMD + ECHO_COMMAND + " \"" + BEGIN_COMMAND_MARKER + "\" && " + ECHO_COMMAND + " $?" + EOL;
+				} else if(osType == OS_POWERSHELL) {
+				    // Force powershell format
+	                cmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; "
+	                        + "; echo \"" + EXIT_CODE_VARIABLE + "\"" + EOL;
 				} else {
 				    // Assume it's a Unix system and 'echo' works.
 	                cmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; " + "echo \"$?\"" + EOL;

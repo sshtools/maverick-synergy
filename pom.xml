@@ -48,9 +48,9 @@
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
-	
-	
-		<profiles>
+
+
+	<profiles>
 		<profile>
 			<activation>
 				<jdk>[9,)</jdk>
@@ -65,7 +65,8 @@
 								<!-- TODO: Why is this STILL broken! -->
 								<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
 								<excludePackageNames>**.impl.*</excludePackageNames>
-								<!-- https://bugs.openjdk.java.net/browse/JDK-8212233 -->
+								<!--
+								https://bugs.openjdk.java.net/browse/JDK-8212233 -->
 								<detectJavaApiLink>false</detectJavaApiLink>
 								<source>8</source>
 								<doclint>none</doclint>
@@ -111,8 +112,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>11</source>
+					<target>11</target>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -154,30 +155,27 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>com.mycila</groupId>
-				<artifactId>license-maven-plugin</artifactId>
-				<version>2.3</version>
-				<configuration>
-					<header>templates/LGPL3.txt</header>
-					<properties>
-						<owner>JADAPTIVE Limited</owner>
-						<email>support@jadaptive.com</email>
-					</properties>
-					<includes>
-						<include>**/*.java</include>
-					</includes>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>check</goal>
-							<goal>format</goal>
-							<goal>remove</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>org.codehaus.mojo</groupId>-->
+<!--				<artifactId>license-maven-plugin</artifactId>-->
+<!--				<version>2.2.0</version>-->
+<!--				<configuration>-->
+<!--					<licenseName>lgpl_v3</licenseName>-->
+<!--					<organizationName>JADAPTIVE Limited</organizationName>-->
+<!--					<inceptionYear>2002</inceptionYear>-->
+<!--					<includes>-->
+<!--						<include>com/sshtools/**/*.java</include>-->
+<!--					</includes>-->
+<!--				</configuration>-->
+<!--				<executions>-->
+<!--					<execution>-->
+<!--						<goals>-->
+<!--							<goal>update-file-header</goal>-->
+<!--						</goals>-->
+<!--						<phase>process-sources</phase>-->
+<!--					</execution>-->
+<!--				</executions>-->
+<!--			</plugin>-->
 			<plugin>
 				<groupId>org.sonatype.plugins</groupId>
 				<artifactId>nexus-staging-maven-plugin</artifactId>
@@ -200,7 +198,8 @@
 							<goal>copy-dependencies</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${project.build.directory}/third-party</outputDirectory>
+							<outputDirectory>
+								${project.build.directory}/third-party</outputDirectory>
 							<overWriteReleases>true</overWriteReleases>
 							<overWriteSnapshots>true</overWriteSnapshots>
 							<overWriteIfNewer>true</overWriteIfNewer>

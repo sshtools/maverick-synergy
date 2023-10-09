@@ -15,8 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-package com.sshtools.common.files;
+ */package com.sshtools.common.files;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

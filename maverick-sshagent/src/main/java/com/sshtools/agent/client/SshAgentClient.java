@@ -15,8 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-package com.sshtools.agent.client;
+ */package com.sshtools.agent.client;
 
 import java.io.Closeable;
 import java.io.IOException;

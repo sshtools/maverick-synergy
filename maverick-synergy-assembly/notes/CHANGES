@@ -1,3 +1,11 @@
+Maverick Synergy 3.0.11 - OCT 9, 2023
+
+- Rebuild with Java 8 minimum version to avoid ByteBuffer JDK conflict in Java 9+
+  
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.0.10 - Dec 1, 2022
 
 Features
@@ -13,9 +21,7 @@ Bug Fixes
   o getTotalBytesIn / getTotalBytesOut methods on Connection<T extends SshContext> were present but not on implemented interface SshConnection. 
   o Do not throw exception when unsupported agent message is received. Log and continue. This should fix support for latest OpenSSH agents that now implement some extension messages.
   
-=================
-=  HISTORY      =
-=================
+------------------
 
 Maverick Synergy 3.0.9 - Aug 21, 2022
 

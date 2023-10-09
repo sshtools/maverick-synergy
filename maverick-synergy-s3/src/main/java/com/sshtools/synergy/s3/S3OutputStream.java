@@ -1,7 +1,4 @@
-
-/**
- * From https://gist.github.com/jcputney/b5daeb86a1c0696859da2a0c3b466327
- */package com.sshtools.synergy.s3;
+package com.sshtools.synergy.s3;
 
 import java.io.ByteArrayInputStream;
 import java.io.OutputStream;

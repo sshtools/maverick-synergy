@@ -16,6 +16,18 @@
 		<maven.compiler.source>11</maven.compiler.source>
 	</properties>
 
+	<licenses>
+		<license>
+			<name>GNU Lesser General Public License</name>
+			<url>http://www.gnu.org/licenses/gpl.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<scm>
+		<url>https://github.com/sshtools/maverick-synergy/</url>
+		<connection>scm:git:https://github.com/sshtools/maverick-synergy.git</connection>
+	</scm>
+
 	<developers>
 		<developer>
 			<id>lee</id>
@@ -27,19 +39,18 @@
 	</developers>
 
 	<distributionManagement>
-		<repository>
-			<id>public-releases</id>
-			<name>public-releases</name>
-			<url>https://artifactory.jadaptive.com/public-releases</url>
-		</repository>
 		<snapshotRepository>
-			<id>public-snapshots</id>
-			<name>public-snapshots</name>
-			<url>https://artifactory.jadaptive.com/public-snapshots</url>
+			<id>ossrh-sshtools</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</snapshotRepository>
+		<repository>
+			<id>ossrh-sshtools</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
 	</distributionManagement>
-
-	<profiles>
+	
+	
+		<profiles>
 		<profile>
 			<activation>
 				<jdk>[9,)</jdk>
@@ -54,8 +65,7 @@
 								<!-- TODO: Why is this STILL broken! -->
 								<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
 								<excludePackageNames>**.impl.*</excludePackageNames>
-								<!--
-								https://bugs.openjdk.java.net/browse/JDK-8212233 -->
+								<!-- https://bugs.openjdk.java.net/browse/JDK-8212233 -->
 								<detectJavaApiLink>false</detectJavaApiLink>
 								<source>8</source>
 								<doclint>none</doclint>
@@ -66,33 +76,31 @@
 			</build>
 		</profile>
 		<profile>
-			<id>release</id>
+			<id>sign</id>
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>com.mycila</groupId>
-						<artifactId>license-maven-plugin</artifactId>
-						<version>4.1</version>
-						<configuration>
-							<header>templates/LGPL3.txt</header>
-							<properties>
-								<owner>JADAPTIVE Limited</owner>
-								<email>support@jadaptive.com</email>
-							</properties>
-							<includes>
-								<include>**/*.java</include>
-							</includes>
-						</configuration>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.5</version>
 						<executions>
 							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
 								<goals>
-									<goal>check</goal>
+									<goal>sign</goal>
 								</goals>
+								<configuration>
+									<gpgArguments>
+										<arg>--pinentry-mode</arg>
+										<arg>loopback</arg>
+									</gpgArguments>
+								</configuration>
 							</execution>
+
 						</executions>
 					</plugin>
 				</plugins>
-
 			</build>
 		</profile>
 	</profiles>
@@ -101,49 +109,28 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.10.1</version>
+				<version>3.1</version>
 				<configuration>
-					<source>11</source>
-					<target>11</target>
+					<source>1.8</source>
+					<target>1.8</target>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.2.1</version>
+				<version>2.2.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
 						<goals>
 							<goal>jar-no-fork</goal>
 						</goals>
-						<configuration>
-							<attach>false</attach>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.2.2</version>
-				<configuration>
-					<archive>
-						<index>true</index>
-						<manifest>
-							<addClasspath>true</addClasspath>
-						</manifest>
-						<manifestEntries>
-							<mode>development</mode>
-							<url>${project.url}</url>
-							<key>value</key>
-						</manifestEntries>
-					</archive>
-				</configuration>
-			</plugin>
-			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.4.0</version>
+				<version>3.2.0</version>
 				<executions>
 					<execution>
 						<id>javadoc-jar</id>
@@ -168,6 +155,41 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>com.mycila</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<version>2.3</version>
+				<configuration>
+					<header>templates/LGPL3.txt</header>
+					<properties>
+						<owner>JADAPTIVE Limited</owner>
+						<email>support@jadaptive.com</email>
+					</properties>
+					<includes>
+						<include>**/*.java</include>
+					</includes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>check</goal>
+							<goal>format</goal>
+							<goal>remove</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.3</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh-sshtools</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<executions>
@@ -178,8 +200,7 @@
 							<goal>copy-dependencies</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>
-								${project.build.directory}/third-party</outputDirectory>
+							<outputDirectory>${project.build.directory}/third-party</outputDirectory>
 							<overWriteReleases>true</overWriteReleases>
 							<overWriteSnapshots>true</overWriteSnapshots>
 							<overWriteIfNewer>true</overWriteIfNewer>
@@ -236,9 +257,6 @@
 		<module>maverick-sshagent-jni-sockets</module>
 		<module>maverick-sshagent-jdk16-sockets</module>
 		<module>maverick-sshagent-named-pipes</module>
-		<module>maverick-synergy-niofs</module>
-		<module>maverick-synergy-niofs-tests</module>
-
 		<module>maverick-synergy</module>
 		<module>maverick-synergy-assembly</module>
 	</modules>

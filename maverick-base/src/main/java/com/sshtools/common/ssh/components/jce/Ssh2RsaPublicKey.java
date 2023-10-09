@@ -142,7 +142,7 @@ public class Ssh2RsaPublicKey implements SshRsaPublicKey {
 	 * 
 	 * @see com.maverick.ssh.SshPublicKey#init(byte[], int, int)
 	 */
-	public void init(byte[] blob, int start, int len) throws SshException {
+	public SshPublicKey init(byte[] blob, int start, int len) throws SshException {
 
 		ByteArrayReader bar = new ByteArrayReader(blob, start, len);
 
@@ -185,6 +185,8 @@ public class Ssh2RsaPublicKey implements SshRsaPublicKey {
 		} finally {
 			bar.close();
 		}
+
+		return this;
 
 	}
 

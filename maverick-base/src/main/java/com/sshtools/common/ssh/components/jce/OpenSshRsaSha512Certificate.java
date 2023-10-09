@@ -50,7 +50,7 @@ public class OpenSshRsaSha512Certificate extends OpenSshCertificate implements S
 //	RSAPublicKey pubKey;
 	byte[] nonce;
 	
-	public static class OpenSshRsaSha256CertificateFactory implements SshPublicKeyFactory<OpenSshRsaSha512Certificate> {
+	public static class OpenSshRsaSha512CertificateFactory implements SshPublicKeyFactory<OpenSshRsaSha512Certificate> {
 		@Override
 		public OpenSshRsaSha512Certificate create() throws NoSuchAlgorithmException, IOException {
 			return new OpenSshRsaSha512Certificate();
@@ -113,6 +113,10 @@ public class OpenSshRsaSha512Certificate extends OpenSshCertificate implements S
 
 	public String getAlgorithm() {
 		return SSH_RSA_SHA2_512_CERT_V01;
+	}
+	
+	public String getEncodingAlgorithm() {
+		return OpenSshRsaCertificate.SSH_RSA_CERT_V01;
 	}
 
 	public boolean verifySignature(byte[] signature, byte[] data)

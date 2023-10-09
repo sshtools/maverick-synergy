@@ -91,7 +91,7 @@ public class SshEd448PublicKeyJCE implements SshEd448PublicKey {
 		publicKey = pub;
 	}
 
-	public void init(byte[] blob, int start, int len) throws SshException {
+	public SshPublicKey init(byte[] blob, int start, int len) throws SshException {
 		
 		ByteArrayReader bar = new ByteArrayReader(blob, start, len);
 		
@@ -112,6 +112,8 @@ public class SshEd448PublicKeyJCE implements SshEd448PublicKey {
 		} finally {
 			bar.close();
 		}
+
+		return this;
 	}
 
 	public String getAlgorithm() {

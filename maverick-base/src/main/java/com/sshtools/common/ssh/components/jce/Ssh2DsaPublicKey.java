@@ -174,7 +174,7 @@ public class Ssh2DsaPublicKey implements SshDsaPublicKey {
 	 * @throws SshException
 	 * @todo Implement this com.maverick.ssh.SshPublicKey method
 	 */
-	public void init(byte[] blob, int start, int len) throws SshException {
+	public SshPublicKey init(byte[] blob, int start, int len) throws SshException {
 
 		ByteArrayReader bar = new ByteArrayReader(blob, start, len);
 
@@ -210,6 +210,8 @@ public class Ssh2DsaPublicKey implements SshDsaPublicKey {
 		} finally {
 			bar.close();
 		}
+		
+		return this;
 	}
 
 	/**

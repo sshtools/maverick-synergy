@@ -26,6 +26,7 @@ import java.security.cert.CertificateFactory;
 import java.security.interfaces.RSAPublicKey;
 
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.ssh.components.SshX509PublicKey;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
@@ -116,7 +117,7 @@ public class SshX509RsaSha1PublicKey extends Ssh2RsaPublicKey implements SshX509
 	 * @throws SshException
 	 * @todo Implement this com.maverick.ssh.SshPublicKey method
 	 */
-	public void init(byte[] blob, int start, int len) throws SshException {
+	public SshPublicKey init(byte[] blob, int start, int len) throws SshException {
 
 		ByteArrayReader bar = new ByteArrayReader(blob, start, len);
 		try {
@@ -152,6 +153,8 @@ public class SshX509RsaSha1PublicKey extends Ssh2RsaPublicKey implements SshX509
 		} finally {
 			bar.close();
 		}
+
+		return this;
 	}
 
     public Certificate getCertificate() {

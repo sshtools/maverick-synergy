@@ -28,6 +28,7 @@ import java.security.interfaces.ECPublicKey;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.SshX509PublicKey;
 import com.sshtools.common.ssh.components.jce.Ssh2EcdsaSha2NistPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
@@ -50,7 +51,7 @@ public abstract class SshX509EcdsaSha2NistPublicKeyRfc6187 extends Ssh2EcdsaSha2
 		this.certs = chain;
 	}
 	
-	public void init(byte[] blob, int start, int len) throws SshException {
+	public SshPublicKey init(byte[] blob, int start, int len) throws SshException {
 
 		ByteArrayReader reader = new ByteArrayReader(blob, start, len);
 
@@ -96,6 +97,8 @@ public abstract class SshX509EcdsaSha2NistPublicKeyRfc6187 extends Ssh2EcdsaSha2
 		} finally {
 			reader.close();
 		}
+		
+		return this;
 	}
 	
     public Certificate getCertificate() {

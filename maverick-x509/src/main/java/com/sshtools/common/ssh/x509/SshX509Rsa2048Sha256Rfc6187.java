@@ -30,6 +30,7 @@ import java.security.interfaces.RSAPublicKey;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.ssh.components.SshX509PublicKey;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKey;
@@ -64,7 +65,7 @@ public class SshX509Rsa2048Sha256Rfc6187 extends Ssh2RsaPublicKey implements Ssh
 		this.certs = chain;
 	}
 	
-	public void init(byte[] blob, int start, int len) throws SshException {
+	public SshPublicKey init(byte[] blob, int start, int len) throws SshException {
 
 		ByteArrayReader reader = new ByteArrayReader(blob, start, len);
 
@@ -110,6 +111,8 @@ public class SshX509Rsa2048Sha256Rfc6187 extends Ssh2RsaPublicKey implements Ssh
 		} finally {
 			reader.close();
 		}
+
+		return this;
 	}
 	
 	public SecurityLevel getSecurityLevel() {

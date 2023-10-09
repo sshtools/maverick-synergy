@@ -41,6 +41,7 @@ Bug Fixes
   o Support for window space using full UnsignedInteger32 value (instead of Integer.MAX_VALUE).
   o SshClient is missing getPort method.
   o Extensions were not being processed and were effectively not supported.
+  o Reading SFTP v5 supported structure generates parsing error.
   
 Other
   o Tests split into separate Maven projects. This is to allow development in Eclipse, which does not yet allow main source and tests that are modular to exist in the same project.

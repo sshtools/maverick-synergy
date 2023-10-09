@@ -52,6 +52,7 @@ import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyUtils;
@@ -1290,5 +1291,18 @@ public class SshClient implements Closeable {
 
 	public int getPort() {
 		return port;
+	}
+	
+	public static void main(String[] args) throws IOException, SshException {
+		
+		Log.enableConsole(Level.DEBUG);
+		
+		SshClientContext ctx = new SshClientContext();
+		ctx.supportedPublicKeys().removeAllBut("rsa-sha2-256-cert-v01@openssh.com");
+		SshClientBuilder.create()
+		.withSshContext(ctx)
+						.withHostname("10.0.200.14")
+						.withUsername("root").build();
+						
 	}
 }

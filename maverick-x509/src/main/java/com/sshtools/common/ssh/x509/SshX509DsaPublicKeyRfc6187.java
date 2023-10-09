@@ -29,6 +29,7 @@ import java.security.interfaces.DSAPublicKey;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.ssh.components.SshX509PublicKey;
 import com.sshtools.common.ssh.components.jce.Ssh2DsaPublicKey;
@@ -63,7 +64,7 @@ public class SshX509DsaPublicKeyRfc6187 extends Ssh2DsaPublicKey implements SshX
 		this.certs = chain;
 	}
 	
-	public void init(byte[] blob, int start, int len) throws SshException {
+	public SshPublicKey init(byte[] blob, int start, int len) throws SshException {
 
 		ByteArrayReader reader = new ByteArrayReader(blob, start, len);
 
@@ -109,6 +110,8 @@ public class SshX509DsaPublicKeyRfc6187 extends Ssh2DsaPublicKey implements SshX
 		} finally {
 			reader.close();
 		}
+
+		return this;
 	}
 	
     public Certificate getCertificate() {

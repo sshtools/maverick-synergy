@@ -114,6 +114,10 @@ public class OpenSshRsaSha256Certificate extends OpenSshCertificate implements S
 	public String getAlgorithm() {
 		return SSH_RSA_SHA2_256_CERT_V01;
 	}
+	
+	public String getEncodingAlgorithm() {
+		return OpenSshRsaCertificate.SSH_RSA_CERT_V01;
+	}
 
 	public boolean verifySignature(byte[] signature, byte[] data)
 			throws SshException {

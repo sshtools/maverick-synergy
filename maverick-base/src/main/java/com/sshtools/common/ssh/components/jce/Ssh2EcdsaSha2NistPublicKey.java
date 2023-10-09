@@ -90,7 +90,7 @@ public class Ssh2EcdsaSha2NistPublicKey implements SshPublicKey {
 		this.nistpCurve = nistpCurve;
 	}
 
-	public void init(byte[] blob, int start, int len) throws SshException {
+	public SshPublicKey init(byte[] blob, int start, int len) throws SshException {
 
 		ByteArrayReader buf = new ByteArrayReader(blob, start, len);
 		try {
@@ -119,6 +119,7 @@ public class Ssh2EcdsaSha2NistPublicKey implements SshPublicKey {
 			buf.close();
 		}
 
+		return this;
 	}
 
 	public String getAlgorithm() {

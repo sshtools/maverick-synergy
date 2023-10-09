@@ -70,6 +70,8 @@ import com.sshtools.common.ssh.components.jce.OpenSshEcdsaSha2Nist384Certificate
 import com.sshtools.common.ssh.components.jce.OpenSshEcdsaSha2Nist521Certificate;
 import com.sshtools.common.ssh.components.jce.OpenSshEd25519Certificate;
 import com.sshtools.common.ssh.components.jce.OpenSshRsaCertificate;
+import com.sshtools.common.ssh.components.jce.OpenSshRsaSha256Certificate;
+import com.sshtools.common.ssh.components.jce.OpenSshRsaSha512Certificate;
 import com.sshtools.common.ssh.components.jce.SHA1Digest;
 import com.sshtools.common.ssh.components.jce.SHA256Digest;
 import com.sshtools.common.ssh.components.jce.SHA384Digest;
@@ -163,6 +165,8 @@ open module com.sshtools.maverick.base {
 		OpenSshEcdsaSha2Nist521Certificate.OpenSshEcdsaSha2Nist521CertificateFactory,
 		OpenSshEd25519Certificate.OpenSshEd25519CertificateFactory,
 		OpenSshRsaCertificate.OpenSshRsaCertificateFactory,
+		OpenSshRsaSha256Certificate.OpenSshRsaSha256CertificateFactory,
+		OpenSshRsaSha512Certificate.OpenSshRsaSha512CertificateFactory,
 		Ssh2DsaPublicKey.Ssh2DsaPublicKeyFactory,
 		Ssh2EcdsaSha2Nist256PublicKey.Ssh2EcdsaSha2Nist256PublicKeyFactory,
 		Ssh2EcdsaSha2Nist384PublicKey.Ssh2EcdsaSha2Nist384PublicKeyFactory,

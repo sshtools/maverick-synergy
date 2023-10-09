@@ -98,7 +98,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		return SshKeyFingerprint.getFingerprint(getSignedKey().getEncoded());
 	}
 	
-	public void init(byte[] blob, int start, int len) throws SshException {
+	public SshPublicKey init(byte[] blob, int start, int len) throws SshException {
 
 		ByteArrayReader bar = new ByteArrayReader(blob, start, len);
 
@@ -126,6 +126,8 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		} finally {
 			bar.close();
 		}
+		
+		return this;
 	}
 	
 	public byte[] getEncoded() throws SshException {

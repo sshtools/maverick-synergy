@@ -31,6 +31,8 @@ import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPrivateKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
+import com.sshtools.common.ssh.components.jce.OpenSshRsaCertificate;
+import com.sshtools.common.ssh.components.jce.OpenSshRsaSha256Certificate;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA256;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA512;
 import com.sshtools.common.util.ByteArrayReader;
@@ -58,7 +60,7 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 
 	}
 
-	private boolean setupNextKey() throws IOException {
+	private boolean setupNextKey() throws IOException, SshException {
 		
 		do {
 			currentKey = getNextKey();
@@ -81,9 +83,31 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 						continue;
 					}
 					if(Log.isDebugEnabled()) {
-						Log.debug("Upgrading key {} to use {} signature", SshKeyUtils.getOpenSSHFormattedKey(currentKey), signingAlgorithm);
+						Log.debug("Upgrading key {} to use {} signature", currentKey.getAlgorithm(), signingAlgorithm);
 					}
-				} else if(!policy.getSupportedSignatures().contains(signingAlgorithm)) {
+				} else if(currentKey instanceof OpenSshRsaCertificate && currentKey.getBitLength() >= 1024) {
+					if(policy.getSupportedSignatures().contains(SshContext.PUBLIC_KEY_RSA_SHA512)) {
+						signingAlgorithm = SshContext.PUBLIC_KEY_RSA_SHA512;
+						currentKey = new OpenSshRsaSha256Certificate().init(currentKey.getEncoded());
+					} else if(policy.getSupportedSignatures().contains(SshContext.PUBLIC_KEY_RSA_SHA256)) {
+						signingAlgorithm = SshContext.PUBLIC_KEY_RSA_SHA256;
+						currentKey =  new OpenSshRsaSha256Certificate().init(currentKey.getEncoded());
+					} else {
+						Log.debug("Server does not support {} signature for key {}",
+								currentKey.getSigningAlgorithm(),
+								SshKeyUtils.getOpenSSHFormattedKey(currentKey));
+						continue;
+					}
+					if(Log.isDebugEnabled()) {
+						Log.debug("Upgrading certificate {} to use {} signature", currentKey.getAlgorithm(), signingAlgorithm);
+					}
+				}
+				
+				
+				
+				
+				
+				else if(!policy.getSupportedSignatures().contains(signingAlgorithm)) {
 					Log.debug("Server does not support {} signature for key {}",
 							currentKey.getSigningAlgorithm(),
 							SshKeyUtils.getOpenSSHFormattedKey(currentKey));

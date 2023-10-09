@@ -38,8 +38,14 @@ public interface SshPublicKey extends SecureComponent {
    * @param len
    * @throws SshException
    */
-  public void init(byte[] blob, int start, int len) throws SshException;
+  public SshPublicKey init(byte[] blob, int start, int len) throws SshException;
 
+  default public SshPublicKey init(byte[] blob) throws SshException {
+		init(blob, 0, blob.length);
+		return this;
+		
+  }	
+	
   /**
    * Get the algorithm name for the public key.
    * @return the algorithm name, for example "ssh-dss"

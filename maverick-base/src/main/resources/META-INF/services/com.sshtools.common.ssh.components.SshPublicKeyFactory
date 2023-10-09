@@ -3,6 +3,8 @@ com.sshtools.common.ssh.components.jce.OpenSshEcdsaSha2Nist384Certificate$OpenSs
 com.sshtools.common.ssh.components.jce.OpenSshEcdsaSha2Nist521Certificate$OpenSshEcdsaSha2Nist521CertificateFactory
 com.sshtools.common.ssh.components.jce.OpenSshEd25519Certificate$OpenSshEd25519CertificateFactory
 com.sshtools.common.ssh.components.jce.OpenSshRsaCertificate$OpenSshRsaCertificateFactory
+com.sshtools.common.ssh.components.jce.OpenSshRsaSha256Certificate$OpenSshRsaSha256CertificateFactory
+com.sshtools.common.ssh.components.jce.OpenSshRsaSha512Certificate$OpenSshRsaSha512CertificateFactory
 com.sshtools.common.ssh.components.jce.Ssh2DsaPublicKey$Ssh2DsaPublicKeyFactory
 com.sshtools.common.ssh.components.jce.Ssh2EcdsaSha2Nist256PublicKey$Ssh2EcdsaSha2Nist256PublicKeyFactory
 com.sshtools.common.ssh.components.jce.Ssh2EcdsaSha2Nist384PublicKey$Ssh2EcdsaSha2Nist384PublicKeyFactory

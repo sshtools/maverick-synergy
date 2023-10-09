@@ -52,6 +52,9 @@ import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.ssh.components.SshCertificate;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
+import com.sshtools.common.ssh.components.jce.OpenSshRsaCertificate;
+import com.sshtools.common.ssh.components.jce.OpenSshRsaSha256Certificate;
+import com.sshtools.common.ssh.components.jce.OpenSshRsaSha512Certificate;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKey;
 import com.sshtools.server.components.SshKeyExchangeServer;
 import com.sshtools.server.components.SshKeyExchangeServerFactory;
@@ -271,6 +274,37 @@ public class SshServerContext extends SshContext {
 			}
 			
 			hostkeys.put(converted.getPublicKey().getAlgorithm(), converted);
+			
+			if(converted.getPublicKey() instanceof OpenSshRsaCertificate) {
+				if(supportedPublicKeys().contains(OpenSshRsaSha256Certificate.SSH_RSA_SHA2_256_CERT_V01) 
+						&& !hostkeys.containsKey(OpenSshRsaSha256Certificate.SSH_RSA_SHA2_256_CERT_V01)) {
+					
+					
+					try {
+						SshKeyPair upgraded = new SshKeyPair();
+						upgraded.setPrivateKey(converted.getPrivateKey());
+						upgraded.setPublicKey(new OpenSshRsaSha256Certificate().init(converted.getPublicKey().getEncoded()));
+						hostkeys.put(OpenSshRsaSha256Certificate.SSH_RSA_SHA2_256_CERT_V01, upgraded);
+					} catch (SshException e) {
+						Log.error("Could not upgrade RSA SHA1 certificate to SHA2 based", e);
+					}
+					
+				}
+				
+				if(supportedPublicKeys().contains(OpenSshRsaSha512Certificate.SSH_RSA_SHA2_512_CERT_V01) 
+						&& !hostkeys.containsKey(OpenSshRsaSha512Certificate.SSH_RSA_SHA2_512_CERT_V01)) {
+					
+					try {
+						SshKeyPair upgraded = new SshKeyPair();
+						upgraded.setPrivateKey(converted.getPrivateKey());
+						upgraded.setPublicKey(new OpenSshRsaSha512Certificate().init(converted.getPublicKey().getEncoded()));
+						hostkeys.put(OpenSshRsaSha512Certificate.SSH_RSA_SHA2_512_CERT_V01, upgraded);
+					} catch (SshException e) {
+						Log.error("Could not upgrade RSA SHA1 certificate to SHA2 based", e);
+					}
+					
+				}
+			}
 		} else {
 
 			if(hostkeys.containsKey(keyPair.getPublicKey().getAlgorithm())) {

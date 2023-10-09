@@ -416,17 +416,14 @@ public class SftpChannel extends AbstractSubsystem {
 					.readInt();
 			supportedAccessMask = supportedStructure.readInt();
 			maxReadSize = (int) supportedStructure.readInt();
-			if(supportedStructure.available() >= 4) {
-				int count = (int) supportedStructure.readInt();
-					for (int i = 0; i < count; i++) {
-						String ext = supportedStructure.readString();
-						if(Log.isTraceEnabled()) {
-							Log.trace("Server supports '" + ext
-									+ "' extension");
-						}
-						supportedExtensions.add(ext);
-					}
+			while(supportedStructure.available() >= 4) {
+				String ext = supportedStructure.readString();
+				if(Log.isTraceEnabled()) {
+					Log.trace("Server supports '" + ext
+							+ "' extension");
 				}
+				supportedExtensions.add(ext);
+			}
 			if(Log.isTraceEnabled()) {
 				Log.trace("supported-attribute-mask: "
 						+ supportedAttributeMask.toString());

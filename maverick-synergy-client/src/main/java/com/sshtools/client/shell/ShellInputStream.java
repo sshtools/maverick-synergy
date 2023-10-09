@@ -89,7 +89,9 @@ class ShellInputStream extends InputStream {
 			if(ch > -1) {
 				line.append((char)ch);
 				
-				Log.debug(line.toString());
+				if(Boolean.getBoolean("maverick.verbose")) {
+					Log.debug(line.toString());
+				}
 			}
 		} while(ch != '\n' && ch != '\r' && ch != -1);
 		

@@ -71,7 +71,7 @@ public class AbstractOSCommand extends ShellCommand {
 			}
 		}
 
-		Map<String, String> penv = this.env == null ? new HashMap<String, String>() : new HashMap<String, String>(this.env);
+		Map<String, String> penv = this.env == null ? new HashMap<String, String>(System.getenv()) : new HashMap<String, String>(this.env);
 		penv.put("TERM", console.getTerminal().getType());
 
 		var builder = new PtyProcessBuilder(args.toArray(new String[0]));

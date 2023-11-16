@@ -51,6 +51,9 @@ public class Shell extends AbstractOSCommand {
 			args.addAll(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellArguments());
 		}
 		
+		setEnv(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellEnvironment());
+		setDirectory(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellDirectory());
+		
 		return args;
 	}
 

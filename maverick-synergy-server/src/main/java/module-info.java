@@ -1,4 +1,5 @@
 
+import com.sshtools.common.command.ExecutableCommand.ExecutableCommandFactory;
 import com.sshtools.server.components.SshKeyExchangeServerFactory;
 import com.sshtools.server.components.jce.Curve25519SHA256LibSshServer;
 import com.sshtools.server.components.jce.Curve25519SHA256Server;
@@ -23,6 +24,7 @@ module com.sshtools.synergy.server {
 	requires transitive com.sshtools.synergy.common;
 	exports com.sshtools.server;
 	
+	uses ExecutableCommandFactory;
 	uses SshKeyExchangeServerFactory;
 	provides SshKeyExchangeServerFactory with
 			Curve25519SHA256LibSshServer.Curve25519SHA256LibSshServerFactory,

@@ -183,7 +183,25 @@ public class Rsa2048SHA2KeyExchange extends SshKeyExchangeServer implements Abst
 			calculateExchangeHash();
 
 			// Generate signature
-			signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
+			int count = 0;
+			while(true) {
+				signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
+		
+				if(Log.isDebugEnabled()) {
+					Log.debug("Verifying signature output to mitigate passive SSH key compromise vulnerability");
+				}
+				
+				if(!pubkey.verifySignature(signature, exchangeHash)) {
+					if(count++ >= 3) {
+						throw new SshException(SshException.HOST_KEY_ERROR, "Detected invalid signautre from private key!");
+					}
+					if(Log.isDebugEnabled()) {
+						Log.debug("Detected invalid signature output from {} implementation", pubkey.getSigningAlgorithm());
+					}
+				} else {
+					break;
+				}
+			}
 
 			// Send our reply message
 			transport.postMessage(new SshMessage() {

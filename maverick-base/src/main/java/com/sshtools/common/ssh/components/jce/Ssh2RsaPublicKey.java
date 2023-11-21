@@ -180,7 +180,7 @@ public class Ssh2RsaPublicKey implements SshRsaPublicKey {
 		try {
 
 			ByteArrayReader bar = new ByteArrayReader(signature);
-			String signatureAlgorithm = ALGORITHM;
+			String signatureAlgorithm = getSigningAlgorithm();
 			try {
 
 				long count = bar.readInt();

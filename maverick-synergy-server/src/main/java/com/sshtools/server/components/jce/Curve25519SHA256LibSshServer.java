@@ -184,7 +184,25 @@ public class Curve25519SHA256LibSshServer extends SshKeyExchangeServer implement
 
 		calculateExchangeHash();
 
-		signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
+		int count = 0;
+		while(true) {
+			signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
+	
+			if(Log.isDebugEnabled()) {
+				Log.debug("Verifying signature output to mitigate passive SSH key compromise vulnerability");
+			}
+			
+			if(!pubkey.verifySignature(signature, exchangeHash)) {
+				if(count++ >= 3) {
+					throw new SshException(SshException.HOST_KEY_ERROR, "Detected invalid signautre from private key!");
+				}
+				if(Log.isDebugEnabled()) {
+					Log.debug("Detected invalid signature output from {} implementation", pubkey.getSigningAlgorithm());
+				}
+			} else {
+				break;
+			}
+		}
 
 		transport.postMessage(new SshMessage() {
 			public boolean writeMessageIntoBuffer(ByteBuffer buf) {

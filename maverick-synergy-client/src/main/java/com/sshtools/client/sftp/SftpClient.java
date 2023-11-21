@@ -2265,6 +2265,19 @@ public class SftpClient implements Closeable {
 	}
 
 	/**
+	 * Set the attributes of a remote path.
+	 * 
+	 * @param path
+	 * @param attrs
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	public void setAttributes(String path, SftpFileAttributes attrs)
+			throws SftpStatusException, SshException {
+		sftp.setAttributes(resolveRemotePath(path), attrs);
+	}
+	
+	/**
 	 * <p>
 	 * Sets the user ID to owner for the file or directory.
 	 * </p>

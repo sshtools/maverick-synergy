@@ -126,6 +126,31 @@ public class SshClient implements Closeable {
 		}
 		
 		/**
+		 * Set multiple private keys from a Path collection.
+		 * @param paths
+		 * @return
+		 */
+		public SshClientBuilder withPrivateKeyPaths(Collection<Path> paths) {
+			for(Path path : paths) {
+				withPrivateKeyFile(path);
+			}
+			return this;
+		}
+		
+		/**
+		 * Set multiple private keys from a Path collection.
+		 * 
+		 * @param paths
+		 * @param prompt
+		 */
+		public SshClientBuilder withPrivateKeyPaths(Collection<Path> paths, PassphrasePrompt prompt) {
+			for(Path path : paths) {
+				withPrivateKeyFile(path, prompt);
+			}
+			return this;
+		}
+		
+		/**
 		 * Set a private key file to use for authentication. Internally, this adds a {@link PrivateKeyFileAuthenticator}.
 		 * 
 		 * @param file private key file
@@ -138,6 +163,63 @@ public class SshClient implements Closeable {
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
 			}
+		}
+		
+		/**
+		 * Set a private key file to use for authentication. Internally, this adds a {@link PrivateKeyFileAuthenticator}.
+		 * Additionally sets the {@link PassphrasePrompt} for a callback to retrieve the keys passphrase if it is encrypted.
+		 * @param file
+		 * @param prompt
+		 * @return
+		 */
+		public SshClientBuilder withPrivateKeyFile(File file, PassphrasePrompt prompt) {
+			try {
+				return addAuthenticators(new PrivateKeyFileAuthenticator(file, prompt));
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
+		}
+		
+		/**
+		 * Set a private key file to use for authentication. Internally, this adds a {@link PrivateKeyFileAuthenticator}.
+		 * Additionally sets the {@link PassphrasePrompt} for a callback to retrieve the keys passphrase if it is encrypted.
+		 * @param path
+		 * @param prompt
+		 * @return
+		 */
+		public SshClientBuilder withPrivateKeyFile(Path path, PassphrasePrompt prompt) {
+			try {
+				return addAuthenticators(new PrivateKeyFileAuthenticator(path, prompt));
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
+		}
+		
+		/**
+		 * Set multiple private keys from a Path collection.
+		 * @param files
+		 * @return
+		 */
+		public SshClientBuilder withPrivateKeyFiles(Collection<File> files) {
+			for(File file : files) {
+				withPrivateKeyFile(file);
+			}
+			return this;
+		}
+		
+		/**
+		 * Set a private key file to use for authentication. Internally, this adds a {@link PrivateKeyFileAuthenticator}.
+		 * Additionally sets the {@link PassphrasePrompt} for a callback to retrieve the keys passphrase if it is encrypted.
+		 * 
+		 * @param files
+		 * @param prompt
+		 * @return
+		 */
+		public SshClientBuilder withPrivateKeyFiles(Collection<File> files, PassphrasePrompt prompt) {
+			for(File file : files) {
+				withPrivateKeyFile(file, prompt);
+			}
+			return this;
 		}
 		
 		/**

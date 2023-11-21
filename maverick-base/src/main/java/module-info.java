@@ -71,6 +71,8 @@ import com.sshtools.common.ssh.components.jce.TripleDesCbc;
 import com.sshtools.common.ssh.components.jce.TripleDesCtr;
 import com.sshtools.common.ssh.compression.NoneCompression;
 import com.sshtools.common.ssh.compression.SshCompressionFactory;
+import com.sshtools.common.zlib.OpenSSHZLibCompression;
+import com.sshtools.common.zlib.ZLibCompression;
 
 @SuppressWarnings("rawtypes")
 open module com.sshtools.maverick.base {
@@ -190,6 +192,9 @@ open module com.sshtools.maverick.base {
 		PosixRenameExtension,
 		StatVFSExtension;
 	
-	provides SshCompressionFactory with NoneCompression.NoneCompressionFactory; 
+	provides SshCompressionFactory with NoneCompression.NoneCompressionFactory,
+	ZLibCompression.ZLibCompressionFactory, 
+	OpenSSHZLibCompression.OpenSSHZLibCompressionFactory;
+
 		
 }

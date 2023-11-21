@@ -69,6 +69,10 @@ public class SshKeyUtils {
 		return getPrivateKey(IOUtils.readUTF8StringFromStream(new FileInputStream(key)), passphrase);
 	}
 	
+	public static SshKeyPair getPrivateKey(File key) throws IOException, InvalidPassphraseException {
+		return getPrivateKey(IOUtils.readUTF8StringFromStream(new FileInputStream(key)), "");
+	}
+	
 	public static SshKeyPair getPrivateKey(File key, PassphrasePrompt prompt) throws IOException, InvalidPassphraseException {
 		SshPrivateKeyFile file = SshPrivateKeyFileFactory.parse(key);
 		if(file.isPassphraseProtected()) {

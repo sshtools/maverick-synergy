@@ -1,4 +1,3 @@
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -10,25 +9,27 @@
 	</parent>
 	<artifactId>maverick-base</artifactId>
 	<name>Base API</name>
-	<description>The core components shared between the Maverick Synergy and Maverick Legacy SSH APIs</description>
+	<description>The core components shared between the Maverick Synergy and
+		Maverick Legacy SSH APIs</description>
 
-	<dependencies>	
+	<dependencies>
 		<dependency>
 			<groupId>com.sshtools</groupId>
 			<artifactId>maverick-logging</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on -->
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-jdk15on</artifactId>
-			<version>1.70</version>
+			<artifactId>bcprov-jdk18on</artifactId>
+			<version>1.76</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcpkix-jdk15on</artifactId>
-			<version>1.70</version>
+			<artifactId>bcpkix-jdk18on</artifactId>
+			<version>1.76</version>
 			<scope>provided</scope>
 		</dependency>
-    </dependencies>
+	</dependencies>
 </project>

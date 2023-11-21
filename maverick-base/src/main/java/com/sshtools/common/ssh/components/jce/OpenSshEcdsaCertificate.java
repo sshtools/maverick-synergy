@@ -138,7 +138,7 @@ public class OpenSshEcdsaCertificate extends OpenSshCertificate implements SshPu
 
 	@Override
 	public String getSigningAlgorithm() {
-		return getAlgorithm();
+		return publicKey.getAlgorithm();
 	}
 	
 	@Override

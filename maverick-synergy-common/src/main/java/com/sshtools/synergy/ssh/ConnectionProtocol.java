@@ -197,6 +197,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					}
 					channel.getOpenFuture().done(false);
 
+					return;
 				}
 
 				transport.postMessage(new ChannelOpenMessage(

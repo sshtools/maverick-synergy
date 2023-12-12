@@ -2009,7 +2009,7 @@ public abstract class TransportProtocol<T extends SshContext>
 		case SSH_MSG_EXT_INFO:
 
 			checkStrictKex();
-			
+
 			if(Log.isDebugEnabled())
 				Log.debug("Received SSH_MSG_EXT_INFO");
 			
@@ -2258,6 +2258,13 @@ public abstract class TransportProtocol<T extends SshContext>
 					outgoingSequence = 0L;
 				}
 
+				if(isKexStrict) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Resetting OUTGOING sequence from {} to zero for strict transport protocol requirements", outgoingSequence);
+					}
+					outgoingSequence = 0L;
+				}
+				
 				if (keyExchange.hasReceivedNewKeys()) {
 					completeKeyExchange(keyExchange);
 				}
@@ -2505,6 +2512,8 @@ public abstract class TransportProtocol<T extends SshContext>
 
 	}
 	
+	protected abstract boolean isServerMode();
+
 	private void processExtensionInfo(byte[] msg) throws IOException {
 		 ByteArrayReader reader = new ByteArrayReader(msg);
 		 

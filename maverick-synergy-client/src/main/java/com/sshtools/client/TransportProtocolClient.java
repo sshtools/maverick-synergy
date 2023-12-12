@@ -262,5 +262,4 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 	protected boolean isServerMode() {
 		return false;
 	}
-
 }

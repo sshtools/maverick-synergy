@@ -115,6 +115,11 @@ public abstract class TransportProtocol<T extends SshContext>
 	protected boolean completedFirstKeyExchange = false;
 	protected Date disconnectStarted = null;
 	
+	private static final String STRICT_KEX_CLIENT = "kex-strict-c-v00@openssh.com";
+	private static final String STRICT_KEX_SERVER = "kex-strict-s-v00@openssh.com";
+	boolean isKexStrict = false;
+	boolean isFirstKeyExchange = true;
+	
 	protected void transferState(TransportProtocol<? extends SshContext> transport) {
 		
 		transport.localIdentification = localIdentification;
@@ -621,12 +626,12 @@ public abstract class TransportProtocol<T extends SshContext>
 				if (hasMessage) {
 					// Process the message
 					try {
-						processMessage(payloadIncoming, incomingSequence);
+						processMessage(payloadIncoming, incomingSequence++);
 					} catch (WriteOperationRequest x) {
 						requiresWriteOperation = true;
 					} finally {
 						// Update stats and sequence
-						if (++incomingSequence >= 4294967296L) {
+						if (incomingSequence >= 4294967296L) {
 							incomingSequence = 0;
 						}
 
@@ -1667,6 +1672,10 @@ public abstract class TransportProtocol<T extends SshContext>
 
 			hasExtensionCapability = remoteKeyExchanges.contains("ext-info-");
 			
+			if(!completedFirstKeyExchange) {
+				isKexStrict = remoteKeyExchanges.contains(isServerMode() ? STRICT_KEX_CLIENT : STRICT_KEX_SERVER);
+			}
+			
 			// Read language strings and ignore as don't support other languages
 			String lang = bar.readString();
 			lang = bar.readString();
@@ -1681,8 +1690,6 @@ public abstract class TransportProtocol<T extends SshContext>
 			// Determine the negotiated key exchange
 			String localKeyExchanges = sshContext.supportedKeyExchanges().list(
 								sshContext.getPreferredKeyExchange());
-			
-
 			
 			String localCiphersCS = sshContext
 					.supportedCiphersCS()
@@ -1871,11 +1878,21 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 	}
 
+	protected abstract boolean isServerMode();
+
 	protected abstract String getExtensionNegotiationString();
 
 	protected abstract boolean isExtensionNegotiationSupported();
 
 	protected abstract void onKeyExchangeInit() throws SshException;
+
+	private void checkStrictKex() {
+		
+		if(remotekex==null && !completedFirstKeyExchange) {
+			disconnect(PROTOCOL_ERROR,
+					"Strict KEX mode encountered a message that is not permitted at this time");
+		}
+	}
 
 	private void checkAlgorithms() {
 		if(Boolean.getBoolean("maverick.isolate")) {
@@ -1977,16 +1994,22 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 		case SSH_MSG_IGNORE:
 
+			checkStrictKex();
+			
 			if(Log.isDebugEnabled())
 				Log.debug("Received SSH_MSG_IGNORE");
 			break;
 		case SSH_MSG_DEBUG:
 
+			checkStrictKex();
+			
 			if(Log.isDebugEnabled())
 				Log.debug("Received SSH_MSG_DEBUG");
 			break;
 		case SSH_MSG_EXT_INFO:
 
+			checkStrictKex();
+			
 			if(Log.isDebugEnabled())
 				Log.debug("Received SSH_MSG_EXT_INFO");
 			
@@ -2004,12 +2027,16 @@ public abstract class TransportProtocol<T extends SshContext>
 
 			break;
 		case SSH_MSG_KEX_INIT: {
+			
 			if(Log.isDebugEnabled())
 				Log.debug("Received SSH_MSG_KEX_INIT");
 			performKeyExchange(msg);
 			break;
 		}
 		case SSH_MSG_UNIMPLEMENTED: {
+			
+			checkStrictKex();
+			
 			ByteArrayReader bar = new ByteArrayReader(msg);
 			try {
 				bar.skip(1);
@@ -2025,6 +2052,8 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 		default: {
 
+			checkStrictKex();
+			
 			if(processTransportMessage(msgId, msg)) {
 				return;
 			}
@@ -2221,6 +2250,13 @@ public abstract class TransportProtocol<T extends SshContext>
 					outgoingCompression.init(SshCompression.DEFLATER,
 							getSshContext().getCompressionLevel());
 				}
+				
+				if(isKexStrict) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Resetting OUTGOING sequence from {} to zero for strict transport protocol requirements", outgoingSequence);
+					}
+					outgoingSequence = 0L;
+				}
 
 				if (keyExchange.hasReceivedNewKeys()) {
 					completeKeyExchange(keyExchange);
@@ -2276,6 +2312,13 @@ public abstract class TransportProtocol<T extends SshContext>
 
 				incomingCipherLength = decryption.getBlockSize();
 
+				if(isKexStrict) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Resetting INCOMING sequence from {} to zero for strict transport protocol requirements", incomingSequence);
+					}
+					incomingSequence = 0L;
+				}
+				
 				if (keyExchange.hasSentNewKeys()) {
 					completeKeyExchange(keyExchange);
 				}
@@ -2324,6 +2367,13 @@ public abstract class TransportProtocol<T extends SshContext>
 									compressionCS);
 					outgoingCompression.init(SshCompression.DEFLATER,
 							getSshContext().getCompressionLevel());
+				}
+				
+				if(isKexStrict) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Resetting OUTGOING sequence from {} to zero for strict transport protocol requirements", outgoingSequence);
+					}
+					outgoingSequence = 0L;
 				}
 
 				if (keyExchange.hasReceivedNewKeys()) {
@@ -2381,6 +2431,13 @@ public abstract class TransportProtocol<T extends SshContext>
 
 				incomingCipherLength = decryption.getBlockSize();
 
+				if(isKexStrict) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Resetting INCOMING sequence from {} to zero for strict transport protocol requirements", incomingSequence);
+					}
+					incomingSequence = 0L;
+				}
+				
 				if (keyExchange.hasSentNewKeys()) {
 					completeKeyExchange(keyExchange);
 				}
@@ -2417,7 +2474,8 @@ public abstract class TransportProtocol<T extends SshContext>
 					try {
 						localkex = TransportProtocolHelper.generateKexInit(getContext(), 
 								isExtensionNegotiationSupported(),
-								getExtensionNegotiationString());
+								getExtensionNegotiationString(),
+								isServerMode() ? STRICT_KEX_SERVER : STRICT_KEX_CLIENT);
 
 						kexQueue.clear();
 						if(Log.isDebugEnabled())

@@ -24,8 +24,6 @@ import com.sshtools.synergy.ssh.components.SshKeyExchange;
  */
 public class TransportProtocolClient extends TransportProtocol<SshClientContext> {
 
-	
-	
 	Service pendingService; 
 	boolean proxyDone;
 	
@@ -258,6 +256,11 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 	@Override
 	protected boolean isExtensionNegotiationSupported() {
 		return true;
+	}
+
+	@Override
+	protected boolean isServerMode() {
+		return false;
 	}
 
 }

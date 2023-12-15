@@ -380,4 +380,9 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 		return false;
 	}
 
+	@Override
+	protected boolean isServerMode() {
+		return true;
+	}
+
 }

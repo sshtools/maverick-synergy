@@ -156,18 +156,12 @@ public class SshServerContext extends SshContext {
 	public String getSupportedPublicKeys() {
 
 		String list = "";
-
-		if (hostkeys.keySet().contains(prefPublicKey)) {
-			list += prefPublicKey;
-
+		
+		for(String alg : supportedPublicKeys().order()) {
+			if(isHostKeySupported(alg)) {
+				list += (list.length() == 0 ? "" : ",") + alg;
 		}
-		String type;
-		for (Iterator<String> it = hostkeys.keySet().iterator(); it.hasNext();) {
-			type = it.next();
-			if (!type.equals(prefPublicKey)) {
-				list += (list.length() == 0 ? "" : ",") + type;
-			}
-		}
+
 		return list;
 	}
 	

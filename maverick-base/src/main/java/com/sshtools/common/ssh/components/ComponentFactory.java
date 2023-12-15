@@ -75,6 +75,10 @@ public class ComponentFactory<T extends Component> implements Cloneable {
 	public Collection<String> names() {
 		return supported.keySet();
 	}
+	
+	public synchronized void order(String csv) throws SshException {
+		order(csv.split(","));
+	}
 
 	public synchronized String order(String[] ordering) throws SshException {
 		

@@ -148,6 +148,9 @@ public abstract class SshContext extends ProtocolContext implements
 	/** ED25519 Public key */
 	public static final String PUBLIC_KEY_ED25519 = "ssh-ed25519";
 	
+	/** ED25519 Public key */
+	public static final String PUBLIC_KEY_ED448 = "ssh-ed448";
+	
 	/** SSH2 RSA Public Key **/
 	public static final String PUBLIC_KEY_SSHRSA = "ssh-rsa";
 	

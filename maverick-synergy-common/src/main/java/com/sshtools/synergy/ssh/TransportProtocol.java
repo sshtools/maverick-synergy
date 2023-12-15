@@ -1878,8 +1878,6 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 	}
 
-	protected abstract boolean isServerMode();
-
 	protected abstract String getExtensionNegotiationString();
 
 	protected abstract boolean isExtensionNegotiationSupported();

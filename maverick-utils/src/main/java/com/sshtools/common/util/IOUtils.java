@@ -571,7 +571,7 @@ public class IOUtils {
 	}
 
 
-	public static void rollover(File logFile, int maxFiles) {
+	public static void rollover(File logFile, int maxFiles) throws IOException {
 		
 		String fileExtension = IOUtils.getFilenameExtension(logFile.getName());
 		String fileName = IOUtils.getFilenameWithoutExtension(logFile.getName());
@@ -588,15 +588,21 @@ public class IOUtils {
 			File backup = new File(parentDir, String.format("%s.%d%s", fileName, i, fileExtension));
 			if(backup.exists()) {
 				if(i==maxFiles) {
-					backup.delete();
+					if(!backup.delete()) {
+						throw new IOException("Failed to delete rolling log file " + fileName);
+					}
 				} else {
-					backup.renameTo(lastFile);
+					if(!backup.renameTo(lastFile)) {
+						throw new IOException("Faield to rename rolling log file to " + lastFile.getName());
+					}
 				}
 			}
 			lastFile = backup;
 		}
 		
-		logFile.renameTo(lastFile);
+		if(!logFile.renameTo(lastFile)) {
+			throw new IOException("Faield to rename rolling log file to " + lastFile.getName());
+		}
 	}
 
 

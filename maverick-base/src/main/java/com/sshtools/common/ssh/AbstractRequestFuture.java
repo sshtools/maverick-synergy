@@ -5,8 +5,8 @@ import java.util.List;
 
 public abstract class AbstractRequestFuture implements RequestFuture {
 
-	boolean done = false;
-	boolean success = false;
+	volatile boolean done = false;
+	volatile boolean success = false;
 	List<RequestFutureListener> listeners = new ArrayList<RequestFutureListener>();
 	
 	@Override
@@ -49,7 +49,14 @@ public abstract class AbstractRequestFuture implements RequestFuture {
 			return this;
 		}
 		try {
-			wait(timeout);
+			long current = System.currentTimeMillis();
+			long expected = current + timeout - 10l;
+			do {
+				wait(timeout <= 0l ? 10l : timeout);
+				long c = System.currentTimeMillis();
+				timeout -= (c - current);
+				current = c;
+			} while (!done && current < expected);
 		} catch (InterruptedException e) {
 		}
 		return this;

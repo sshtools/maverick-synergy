@@ -1,12 +1,9 @@
 package com.sshtools.client;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -14,7 +11,6 @@ import java.util.StringTokenizer;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
-import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
 import com.sshtools.common.ssh.SshException;
@@ -23,7 +19,6 @@ import com.sshtools.synergy.ssh.ConnectionProtocol;
 import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
 import com.sshtools.synergy.ssh.Service;
 import com.sshtools.synergy.ssh.TransportProtocol;
-import com.sshtools.synergy.ssh.TransportProtocolListener;
 
 /**
  * Implements the client side of the SSH authentication protocol.
@@ -42,12 +37,9 @@ public class AuthenticationProtocolClient implements Service {
 	LinkedList<ClientAuthenticator> authenticators = new LinkedList<>();
 	ClientAuthenticator currentAuthenticator;
 	Set<String> supportedAuths = null;
-	List<String> completedAuths = new ArrayList<>();
 	boolean authenticated = false;
 	int attempts;
 	NoneAuthenticator noneAuthenticator = new NoneAuthenticator();
-	Date methodStarted = new Date();
-	Date authenticationStarted = new Date();
 	
 	public AuthenticationProtocolClient(TransportProtocolClient transport,
 			SshClientContext context, String username) {
@@ -64,29 +56,21 @@ public class AuthenticationProtocolClient implements Service {
 			}
 		}));
 
-		transport.addEventListener(new TransportProtocolListener() {
-			@Override
-			public void onDisconnect(TransportProtocol<?> transport) {
-				if(currentAuthenticator != null) {
-					synchronized(currentAuthenticator) {
-						currentAuthenticator.notifyAll();
-					}
-				}
-			}
-		});
 		transport.getConnection().addEventListener(new EventListener() {
 			@Override
 			public void processEvent(Event evt) {
 				switch(evt.getId()) {
 				case EventCodes.EVENT_DISCONNECTED:
 					
-					if(Objects.nonNull(currentAuthenticator)) {
-						if(!currentAuthenticator.isDone()) {
-							currentAuthenticator.failure();
+					synchronized (AuthenticationProtocolClient.this) {
+						if(Objects.nonNull(currentAuthenticator)) {
+							if(!currentAuthenticator.isDone()) {
+								currentAuthenticator.failure();
+							}
+							currentAuthenticator = null;
 						}
-						currentAuthenticator = null;
+						authenticators.clear();
 					}
-					authenticators.clear();
 					
 					if(!transport.getConnection().getAuthenticatedFuture().isDone()) {
 						transport.getConnection().getAuthenticatedFuture().done(false);
@@ -105,6 +89,11 @@ public class AuthenticationProtocolClient implements Service {
 		ByteArrayReader bar = new ByteArrayReader(msg);
 		
 		try {
+			
+			ClientAuthenticator currentAuthenticator;
+			synchronized (this) {
+				currentAuthenticator = this.currentAuthenticator;
+			}
 	
 			/**
 			 * Try the authenticator first. It may want to handle 
@@ -122,55 +111,10 @@ public class AuthenticationProtocolClient implements Service {
 			case SSH_MSG_USERAUTH_SUCCESS:
 	
 				authenticated = true;
-				completedAuths.add(currentAuthenticator.getName());
 				if(Log.isDebugEnabled()) {
-					Log.debug("Received SSH_MSG_USERAUTH_SUCCESS");
+					Log.debug("SSH_MSG_USERAUTH_SUCCESS received");
 				}
 	
-				EventServiceImplementation
-				.getInstance()
-				.fireEvent(
-						new Event(
-								this,
-								EventCodes.EVENT_USERAUTH_SUCCESS,
-								true)
-								.addAttribute(
-										EventCodes.ATTRIBUTE_CONNECTION,
-										transport.getConnection())
-								.addAttribute(
-										EventCodes.ATTRIBUTE_ATTEMPTED_USERNAME,
-										username)
-								.addAttribute(
-										EventCodes.ATTRIBUTE_AUTHENTICATION_METHOD,
-										currentAuthenticator.getName())
-								.addAttribute(
-										EventCodes.ATTRIBUTE_OPERATION_STARTED,
-										methodStarted)
-								.addAttribute(
-										EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-										new Date()));
-
-				EventServiceImplementation
-						.getInstance()
-						.fireEvent(
-								new Event(
-										this,
-										EventCodes.EVENT_AUTHENTICATION_COMPLETE,
-										true)
-										.addAttribute(
-												EventCodes.ATTRIBUTE_CONNECTION,
-												transport.getConnection())
-										.addAttribute(
-												EventCodes.ATTRIBUTE_AUTHENTICATION_METHODS,
-												completedAuths)
-										.addAttribute(
-												EventCodes.ATTRIBUTE_OPERATION_STARTED,
-												authenticationStarted)
-										.addAttribute(
-												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-												new Date()));
-
-				
 				ConnectionProtocol<SshClientContext> con = new ConnectionProtocolClient(
 						transport, username);
 				stop();
@@ -186,7 +130,7 @@ public class AuthenticationProtocolClient implements Service {
 				final boolean partial = bar.readBoolean();
 				
 				if(Log.isDebugEnabled()) {
-					Log.debug("Received SSH_MSG_USERAUTH_FAILURE auths=" + auths);
+					Log.debug("SSH_MSG_USERAUTH_FAILURE received auths=" + auths);
 				}
 	
 				StringTokenizer t = new StringTokenizer(auths, ",");
@@ -201,7 +145,6 @@ public class AuthenticationProtocolClient implements Service {
 				} 
 				
 				if(partial) {
-					completedAuths.add(currentAuthenticator.getName());
 					currentAuthenticator.success(true, auths.split(","));
 				} else {
 					currentAuthenticator.failure();
@@ -247,11 +190,21 @@ public class AuthenticationProtocolClient implements Service {
 		}
 
 		try {
+			/*
 			authenticators.add(noneAuthenticator);
 			if(!context.getAuthenticators().isEmpty()) {
 				authenticators.addAll(context.getAuthenticators());
 			}
 			doNextAuthentication();
+			*/
+			synchronized (this) {
+				addAuthentication(noneAuthenticator, false);
+				if(!context.getAuthenticators().isEmpty()) {
+					for (ClientAuthenticator ca : context.getAuthenticators()) {
+						addAuthentication(ca, false);
+					}
+				}
+			}
 		} catch (IOException e) {
 			Log.error("Faild to send none authentication request", e);
 			transport.disconnected();
@@ -260,16 +213,26 @@ public class AuthenticationProtocolClient implements Service {
 	}
 	
 	public synchronized boolean doNextAuthentication() throws IOException, SshException {
+		if (currentAuthenticator != null) {
+			// should never happen
+			throw new IllegalStateException("Authentication in progress!");
+		}
 
 		if(!authenticators.isEmpty()) {
 			
-			methodStarted = new Date();
 			currentAuthenticator = authenticators.removeFirst();
 			
 			if(Log.isDebugEnabled()) {
 				Log.debug("Starting {} authentication", currentAuthenticator.getName());
 			}
 			attempts++;
+			currentAuthenticator.addFutureListener(rf -> {
+				if (rf.isDone()) {
+					synchronized (AuthenticationProtocolClient.this) {
+						currentAuthenticator = null;
+					}
+				}
+			});
 			currentAuthenticator.authenticate(transport, username);
 			return true;
 		} 
@@ -306,41 +269,46 @@ public class AuthenticationProtocolClient implements Service {
 	}
 	
 	public void addAuthentication(ClientAuthenticator authenticator) throws IOException, SshException {
+		addAuthentication(authenticator, true);
+	}
+
+	private void addAuthentication(ClientAuthenticator authenticator, boolean checkReady) throws IOException, SshException {
 		
-		checkReady();
+		if (checkReady) {
+			checkReady();
+		}
 		
 		synchronized(this) {
 			if(Log.isDebugEnabled()) {
 				Log.debug("Adding {} authentication", authenticator.getName());
 			}
 			
-			boolean start = authenticators.isEmpty();
+//			boolean start = authenticators.isEmpty();
+			boolean start = currentAuthenticator == null;
 			
 			if(authenticator instanceof PasswordAuthenticator) {
 				if(supportedAuths.contains("keyboard-interactive") &&
-						(supportedAuths.contains("password") || context.getPreferKeyboardInteractiveOverPassword())) {
+						(!supportedAuths.contains("password") || context.getPreferKeyboardInteractiveOverPassword())) {
 					
 					if(Log.isDebugEnabled()) {
 						Log.debug("We prefer keyboard-interactive over password so injecting keyboard-interactive authenticator");
 					}
 
-					ClientAuthenticator kbi = new KeyboardInteractiveAuthenticator(
-						new PasswordOverKeyboardInteractiveCallback(
-								((PasswordAuthenticator) authenticator))) {
-							@Override
-							public synchronized void done(boolean success) {
-								if(success || (!success && !supportedAuths.contains("password"))) {
-									((PasswordAuthenticator)authenticator).done(success);
-								} else {
-									if(supportedAuths.contains("password")) {
-										authenticators.addLast(authenticator);
-									}
-								}
-								super.done(success);
+					authenticators.addLast(new KeyboardInteractiveAuthenticator(
+							new PasswordOverKeyboardInteractiveCallback(
+									((PasswordAuthenticator) authenticator))) {
+						@Override
+						public synchronized void done(boolean success) {
+							if(success || (!success && !supportedAuths.contains("password"))) {
+								((PasswordAuthenticator)authenticator).done(success);
 							}
-					};
+							super.done(success);
+						}
+					}); 
 					
-					authenticators.addLast(kbi); 
+					if(supportedAuths.contains("password")) {
+						authenticators.addLast(authenticator);
+					}
 				}
 				else {
 					authenticators.addLast(authenticator);

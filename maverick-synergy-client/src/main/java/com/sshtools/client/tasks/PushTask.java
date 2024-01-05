@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,6 +59,7 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 
 		private Optional<Path> remoteFolder = Optional.empty();
 		private List<Path> paths = new ArrayList<>();
+		private List<AbstractFile> files = new ArrayList<>();
 		
 		private PushTaskBuilder() {
 			super();
@@ -82,6 +84,19 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 		 */
 		public PushTaskBuilder addFilePaths(Collection<String> filePaths) {
 			this.paths.addAll(filePaths.stream().map(Path::of).collect(Collectors.toList()));
+			return this;
+		}
+		
+		/**
+		 * Add a collection of AbstractFile objects to transfer. Each should be the path of the
+		 * <code>Local</code> file, and will be resolved against the current virtual
+		 * file system configured on the {@link SftpClient}.
+		 * 
+		 * @param filePaths file paths to add.
+		 * @return builder for chaining
+		 */
+		public PushTaskBuilder addAbstactFiles(Collection<AbstractFile> filePaths) {
+			this.files.addAll(filePaths);
 			return this;
 		}
 
@@ -138,6 +153,20 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 			this.paths.clear();
 			return addPaths(paths);
 		}
+		
+		/**
+		 * Set a collection of file paths to transfer. Any paths already added to this
+		 * builder will be replaced. Each should be the path of the <code>Local</code>
+		 * file, and will be resolved against the current virtual file system configured
+		 * on the {@link SftpClient}.
+		 * 
+		 * @param paths all file paths to transfer.
+		 * @return builder for chaining
+		 */
+		public PushTaskBuilder withAbstractFiles(Collection<AbstractFile> paths) {
+			this.files.clear();
+			return addAbstactFiles(paths);
+		}
 
 		/**
 		 * Set an array of files to transfer. Any paths already added to this builder
@@ -165,6 +194,19 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 		public PushTaskBuilder withPaths(Path... paths) {
 			this.paths.clear();
 			return addPaths(Arrays.asList(paths));
+		}
+		
+		/**
+		 * Set an array of files to transfer. Any paths already added to this builder
+		 * will be replaced. Each should be the path of the <code>Local</code> file, and
+		 * will be resolved against the current virtual file system configured on the
+		 * {@link SftpClient}.
+		 * 
+		 * @param paths all file paths to transfer.
+		 * @return builder for chaining
+		 */
+		public PushTaskBuilder withAbstractFiles(AbstractFile... paths) {
+			return withAbstractFiles(Arrays.asList(paths));
 		}
 
 		/**
@@ -227,16 +269,28 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 			return new PushTask(this);
 		}
 
-
 	}
 
-	private final List<Path> files;
+	private final List<AbstractFile> files;
 	private final String remoteFolder;
 
 	PushTask(PushTaskBuilder builder) {
 		super(builder);
 		this.remoteFolder = builder.remoteFolder.map(Utils::translatePathString).orElse(null);
-		this.files = Collections.unmodifiableList(new ArrayList<Path>(builder.paths));
+		this.files = new ArrayList<AbstractFile>();
+		this.files.addAll(builder.files);
+		
+		for(var file : Collections.unmodifiableList(new ArrayList<Path>(builder.paths))) {
+			try {
+				var resolved = primarySftpClient.getCurrentWorkingDirectory().resolveFile(file.toString());
+				if(!resolved.exists()) {
+					throw new FileNotFoundException(String.format("%s does not exist", file.getFileName()));
+				}
+				this.files.add(resolved);
+			} catch (IOException | PermissionDeniedException e) {
+				throw new IllegalStateException(e.getMessage(), e);
+			}
+		}
 	}
 
 	@Override
@@ -249,14 +303,7 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 		}
 
 		verboseMessage("The paths will be transferred to {0}", targetFolder);
-		
-		for (var file : files) {
-			var resolved = primarySftpClient.getCurrentWorkingDirectory().resolveFile(file.toString());
-			if(!resolved.exists()) {
-				throw new FileNotFoundException(String.format("%s does not exist", file.getFileName()));
-			}
-		}
-		
+
 		for (var file : files) {
 			transferFile(file, targetFolder);
 		}
@@ -275,10 +322,10 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 		return target;
 	}
 
-	private void transferFile(Path file, String remoteFolder) throws SftpStatusException, SshException, TransferCancelledException,
+	private void transferFile(AbstractFile localFile, String remoteFolder) throws SftpStatusException, SshException, TransferCancelledException,
 			IOException, PermissionDeniedException, ChannelOpenException {
 
-		var localFile = primarySftpClient.getCurrentWorkingDirectory().resolveFile(file.toString());
+		
 		verboseMessage("Total to transfer is {0} bytes", localFile.length());
 
 		if (chunks <= 1) {
@@ -286,7 +333,8 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 		} else {
 			checkErrors(sendChunks(localFile, remoteFolder));
 		}
-		verifyIntegrity(file, remoteFolder + "/" + file.getFileName().toString());
+		
+		verifyIntegrity(Paths.get(localFile.getAbsolutePath()), remoteFolder + "/" + localFile.getName());
 	}
 
 	private Collection<Throwable> sendChunks(AbstractFile localFile, String remoteFolder)

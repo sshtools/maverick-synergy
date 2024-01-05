@@ -160,11 +160,16 @@ public class SshServerContext extends SshContext {
 		for(String alg : supportedPublicKeys().order()) {
 			if(isHostKeySupported(alg)) {
 				list += (list.length() == 0 ? "" : ",") + alg;
+			}
 		}
 
 		return list;
 	}
 	
+	private boolean isHostKeySupported(String alg) {
+		return hostkeys.containsKey(alg);
+	}
+
 	/**
 	 * <p>
 	 * Set the preferred public key algorithm.

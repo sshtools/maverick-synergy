@@ -5,6 +5,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.util.Optional;
 
+import com.sshtools.client.PseudoTerminalModes;
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.common.ssh.SshConnection;
 
@@ -41,8 +42,13 @@ public final class CommandTask extends AbstractCommandTask {
 		private Optional<CommandTaskEvent> onTask = Optional.empty();
 		private Optional<Charset> encoding = Optional.empty();
 		private Optional<String> command = Optional.empty();
+		private Optional<String> termType = Optional.empty();
+		private int cols = 80;
+		private int rows = 24;
+		private boolean withPty = true;
+		private Optional<PseudoTerminalModes> modes = Optional.empty();
 		private boolean autoConsume;
-
+		
 		private CommandTaskBuilder() {
 		}
 		
@@ -65,6 +71,90 @@ public final class CommandTask extends AbstractCommandTask {
 		 */
 		public CommandTaskBuilder withAutoConsume(boolean autoConsume) {
 			this.autoConsume = autoConsume;
+			return this;
+		}
+		
+		/**
+		 * Set the terminal type to use when allocating a PTY. Note, this
+		 * will have no effect if {{@link #withPty} is set to <code>false</code>.
+		 * 
+		 * @param term type
+		 * @return builder for chaining
+		 */
+		public final CommandTaskBuilder withTermType(String termType) {
+			return withTermType(Optional.of(termType));
+		}
+
+		/**
+		 * Set the terminal type to use when allocating a PTY. Note, this
+		 * will have no effect if {{@link #withPty} is set to <code>false</code>.
+		 * 
+		 * @param term type
+		 * @return builder for chaining
+		 */
+		public final CommandTaskBuilder withTermType(Optional<String> termType) {
+			this.termType = termType;
+			return this;
+		}
+
+		/**
+		 * Set the terminal width in columns to use when allocating a PTY. Note, this
+		 * will have no effect if {{@link #withPty} is set to <code>false</code>.
+		 * 
+		 * @param cols cols
+		 * @return builder for chaining
+		 */
+		public final CommandTaskBuilder withColumns(int cols) {
+			this.cols = cols;
+			return this;
+		}
+
+		/**
+		 * Set the terminal height in rows to use when allocating a PTY. Note, this
+		 * will have no effect if {{@link #withPty} is set to <code>false</code>.
+		 * 
+		 * @param rows row
+		 * @return builder for chaining
+		 */
+		public final CommandTaskBuilder withRows(int rows) {
+			this.rows = rows;
+			return this;
+		}
+
+		/**
+		 * Set the terminal modes to use when allocating a PTY. Note, this
+		 * will have no effect if {{@link #withPty} is set to <code>false</code>.
+		 * 
+		 * @param modes modes
+		 * @return builder for chaining
+		 */
+		public final CommandTaskBuilder withModes(PseudoTerminalModes modes) {
+			this.modes = Optional.of(modes);
+			return this;
+		}
+
+
+		/**
+		 * Set whether or not to allocate a Pty. When set to <code>true</code>, other
+		 * Pty characteristics can be set using builder methods such as {@link #withRows(int)}, 
+		 * {@link #withModes(PseudoTerminalModes)} and others. By default a Pty is allocated.
+		 * 
+		 * @param withPty whether to allocate a PTY. 
+		 * @return builder for chaining
+		 */
+		public CommandTaskBuilder withPty(boolean withPty) {
+			this.withPty = withPty;
+			return this;
+		}
+
+		/**
+		 * Do not to allocate a Pty. 
+		 * 
+		 * @param withPty whether to allocate a PTY. 
+		 * @return builder for chaining
+		 */
+		public CommandTaskBuilder withoutPty() {
+			this.withPty = false;
 			return this;
 		}
 		
@@ -172,7 +262,12 @@ public final class CommandTask extends AbstractCommandTask {
 	private final Optional<CommandTaskEvent> onBeforeExecute;
 	private final Optional<CommandTaskEvent> onBeforeTask;
 	private final Optional<CommandTaskEvent> onTask;
-
+	private final String termType;
+	private final int rows;
+	private final int cols;
+	private final boolean withPty;
+	private final Optional<PseudoTerminalModes> modes;
+	
 	private CommandTask(CommandTaskBuilder builder) {
 		super(builder, 
 			builder.command.orElseThrow(() -> new IllegalArgumentException("Command must be supplied")),
@@ -183,6 +278,11 @@ public final class CommandTask extends AbstractCommandTask {
 		this.onBeforeExecute = builder.onBeforeExecute;
 		this.onTask = builder.onTask;
 		this.onBeforeTask = builder.onBeforeTask;
+		this.withPty = builder.withPty;
+		this.termType = builder.termType.orElse("dumb");
+		this.rows = builder.rows;
+		this.cols = builder.cols;
+		this.modes = builder.modes;
 	}
 	
 	@Override
@@ -253,17 +353,34 @@ public final class CommandTask extends AbstractCommandTask {
 	}
 
 	protected final void beforeExecuteCommand(SessionChannelNG session) {
-		onBeforeExecute.ifPresent(c -> {
-			try {
-				c.commandEvent(this, session);
-			} catch(RuntimeException re) {
-				throw re;
-			} catch(IOException ioe) {
-				throw new UncheckedIOException(ioe);
-			} catch (Exception e) {
-				throw new IllegalStateException(e.getMessage(), e);
+		
+		try {
+			if(withPty) {
+				if(modes.isEmpty())
+					session.allocatePseudoTerminal(termType, cols, rows);
+				else
+					session.allocatePseudoTerminal(termType, cols, rows, 0, 0, modes.get());
 			}
-		});
+			
+			onBeforeExecute.ifPresent(c -> {
+				try {
+					c.commandEvent(this, session);
+				} catch(RuntimeException re) {
+					throw re;
+				} catch(IOException ioe) {
+					throw new UncheckedIOException(ioe);
+				} catch (Exception e) {
+					throw new IllegalStateException(e.getMessage(), e);
+				}
+			});
+			
+		} catch(RuntimeException re) {
+			throw re;
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
+		}
+		
+
 	}
 	
 }

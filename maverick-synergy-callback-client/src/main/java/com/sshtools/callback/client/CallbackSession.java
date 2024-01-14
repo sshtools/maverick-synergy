@@ -80,10 +80,10 @@ public class CallbackSession implements Runnable {
 				if(future.isDone() && future.isSuccess()) {
 					currentConnection = future.getConnection();
 					currentConnection.getAuthenticatedFuture().waitFor(30000L);
+					currentConnection.setProperty(CallbackClient.CALLBACK_CLIENT, this);
 					
 					if(currentConnection.getAuthenticatedFuture().isDone()
 							&& currentConnection.getAuthenticatedFuture().isSuccess()) {
-						currentConnection.setProperty("callbackClient", this);
 					
 						if(Log.isInfoEnabled()) {
 							Log.info("Callback {} registering with memo {}", currentConnection.getUUID(), config.getMemo());

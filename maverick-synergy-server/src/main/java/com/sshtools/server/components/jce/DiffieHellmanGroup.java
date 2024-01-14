@@ -152,101 +152,102 @@ public abstract class DiffieHellmanGroup extends SshKeyExchangeServer implements
 			}
 
 			// Process the actual message
-			ByteArrayReader bar = new ByteArrayReader(msg);
-			bar.skip(1);
-			e = bar.readBigInteger();
-
-			if (Log.isDebugEnabled()) {
-				Log.debug("Received SSH_MSG_KEXDH_INIT e={}", e.toString(16));
-			}
-
-			DHPublicKeySpec spec = new DHPublicKeySpec(e, p, g);
-
-			try {
-				DHPublicKey key = (DHPublicKey) dhKeyFactory.generatePublic(spec);
-
-				dhKeyAgreement.doPhase(key, true);
-
-				byte[] tmp = dhKeyAgreement.generateSecret();
-				if ((tmp[0] & 0x80) == 0x80) {
-					byte[] tmp2 = new byte[tmp.length + 1];
-					System.arraycopy(tmp, 0, tmp2, 1, tmp.length);
-					tmp = tmp2;
+			try(ByteArrayReader bar = new ByteArrayReader(msg)) {
+				bar.skip(1);
+				e = bar.readBigInteger();
+	
+				if (Log.isDebugEnabled()) {
+					Log.debug("Received SSH_MSG_KEXDH_INIT e={}", e.toString(16));
 				}
-				// Calculate diffe hellman k value
-				secret = new BigInteger(tmp);
-			} catch (Exception e1) {
-				throw new SshException(e1);
-			}
-
-			// Get out host key so we can generate the exchange hash
-			hostKey = pubkey.getEncoded();
-
-			// Calculate the exchange hash
-			calculateExchangeHash();
-
-			// Generate signature
-			int count = 0;
-			while(true) {
-				signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
-		
-				if(Log.isDebugEnabled()) {
-					Log.debug("Verifying signature output to mitigate passive SSH key compromise vulnerability");
-				}
-				
-				if(!pubkey.verifySignature(signature, exchangeHash)) {
-					if(count++ >= 3) {
-						throw new SshException(SshException.HOST_KEY_ERROR, "Detected invalid signautre from private key!");
+	
+				DHPublicKeySpec spec = new DHPublicKeySpec(e, p, g);
+	
+				try {
+					DHPublicKey key = (DHPublicKey) dhKeyFactory.generatePublic(spec);
+	
+					dhKeyAgreement.doPhase(key, true);
+	
+					byte[] tmp = dhKeyAgreement.generateSecret();
+					if ((tmp[0] & 0x80) == 0x80) {
+						byte[] tmp2 = new byte[tmp.length + 1];
+						System.arraycopy(tmp, 0, tmp2, 1, tmp.length);
+						tmp = tmp2;
 					}
+					// Calculate diffe hellman k value
+					secret = new BigInteger(tmp);
+				} catch (Exception e1) {
+					throw new SshException(e1);
+				}
+	
+				// Get out host key so we can generate the exchange hash
+				hostKey = pubkey.getEncoded();
+	
+				// Calculate the exchange hash
+				calculateExchangeHash();
+	
+				// Generate signature
+				int count = 0;
+				while(true) {
+					signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
+			
 					if(Log.isDebugEnabled()) {
-						Log.debug("Detected invalid signature output from {} implementation", pubkey.getSigningAlgorithm());
+						Log.debug("Verifying signature output to mitigate passive SSH key compromise vulnerability");
 					}
-				} else {
-					break;
-				}
-			}
-
-			// Send our reply message
-			transport.postMessage(new SshMessage() {
-				public boolean writeMessageIntoBuffer(ByteBuffer buf) {
-
-					ByteArrayWriter baw = new ByteArrayWriter();
-					try {
-						buf.put((byte) SSH_MSG_KEXDH_REPLY);
-						buf.putInt(hostKey.length);
-						buf.put(hostKey);
-						byte[] tmp = f.toByteArray();
-						buf.putInt(tmp.length);
-						buf.put(tmp);
-
-						baw.writeString(pubkey.getAlgorithm());
-						baw.writeBinaryString(signature);
-						tmp = baw.toByteArray();
-
-						buf.putInt(tmp.length);
-						buf.put(tmp);
-
-					} catch (IOException ex) {
-						transport.disconnect(TransportProtocol.KEY_EXCHANGE_FAILED, "Could not read host key");
-					} finally {
-						try {
-							baw.close();
-						} catch (IOException e) {
+					
+					if(!pubkey.verifySignature(signature, exchangeHash)) {
+						if(count++ >= 3) {
+							throw new SshException(SshException.HOST_KEY_ERROR, "Detected invalid signautre from private key!");
 						}
+						if(Log.isDebugEnabled()) {
+							Log.debug("Detected invalid signature output from {} implementation", pubkey.getSigningAlgorithm());
+						}
+					} else {
+						break;
 					}
-
-					return true;
 				}
-
-				public void messageSent(Long sequenceNo) {
-					if (Log.isDebugEnabled())
-						Log.debug("Sent SSH_MSG_KEXDH_REPLY");
-				}
-			}, true);
-
-			transport.sendNewKeys();
-
-			return true;
+	
+				// Send our reply message
+				transport.postMessage(new SshMessage() {
+					public boolean writeMessageIntoBuffer(ByteBuffer buf) {
+	
+						ByteArrayWriter baw = new ByteArrayWriter();
+						try {
+							buf.put((byte) SSH_MSG_KEXDH_REPLY);
+							buf.putInt(hostKey.length);
+							buf.put(hostKey);
+							byte[] tmp = f.toByteArray();
+							buf.putInt(tmp.length);
+							buf.put(tmp);
+	
+							baw.writeString(pubkey.getAlgorithm());
+							baw.writeBinaryString(signature);
+							tmp = baw.toByteArray();
+	
+							buf.putInt(tmp.length);
+							buf.put(tmp);
+	
+						} catch (IOException ex) {
+							transport.disconnect(TransportProtocol.KEY_EXCHANGE_FAILED, "Could not read host key");
+						} finally {
+							try {
+								baw.close();
+							} catch (IOException e) {
+							}
+						}
+	
+						return true;
+					}
+	
+					public void messageSent(Long sequenceNo) {
+						if (Log.isDebugEnabled())
+							Log.debug("Sent SSH_MSG_KEXDH_REPLY");
+					}
+				}, true);
+	
+				transport.sendNewKeys();
+	
+				return true;
+			}
 
 		default:
 			return false;

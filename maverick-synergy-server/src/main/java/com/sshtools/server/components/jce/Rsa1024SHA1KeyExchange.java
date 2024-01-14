@@ -156,89 +156,89 @@ public class Rsa1024SHA1KeyExchange extends SshKeyExchangeServer implements Abst
         }
 
         // Process the actual message
-        ByteArrayReader bar = new ByteArrayReader(msg);
-        bar.skip(1);
-
-        encryptedSecret = bar.readBinaryString();
-        
-        try {
-			cipher.init(Cipher.DECRYPT_MODE, transientKey.getPrivateKey().getJCEPrivateKey());
-			byte[] tmp = cipher.doFinal(encryptedSecret);
-			try(ByteArrayReader r = new ByteArrayReader(tmp)) {
-				tmp = r.readBinaryString();
-				secret = new BigInteger(tmp);
-			}
-		} catch (Throwable t) {
-			Rsa1024SHA1KeyExchange.this.transport.disconnect(
-					TransportProtocol.KEY_EXCHANGE_FAILED,
-                    "Could not decrypt secret");
-			throw new SshException(t);
-		} 
-		
-        // Get our host key so we can generate the exchange hash
-        hostKey = pubkey.getEncoded();
-
-        // Calculate the exchange hash
-        calculateExchangeHash();
-
-        // Generate signature
-        int count = 0;
-		while(true) {
-			signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
+        try(ByteArrayReader bar = new ByteArrayReader(msg)) {
+	        bar.skip(1);
 	
-			if(Log.isDebugEnabled()) {
-				Log.debug("Verifying signature output to mitigate passive SSH key compromise vulnerability");
-			}
+	        encryptedSecret = bar.readBinaryString();
+	        
+	        try {
+				cipher.init(Cipher.DECRYPT_MODE, transientKey.getPrivateKey().getJCEPrivateKey());
+				byte[] tmp = cipher.doFinal(encryptedSecret);
+				try(ByteArrayReader r = new ByteArrayReader(tmp)) {
+					tmp = r.readBinaryString();
+					secret = new BigInteger(tmp);
+				}
+			} catch (Throwable t) {
+				Rsa1024SHA1KeyExchange.this.transport.disconnect(
+						TransportProtocol.KEY_EXCHANGE_FAILED,
+	                    "Could not decrypt secret");
+				throw new SshException(t);
+			} 
 			
-			if(!pubkey.verifySignature(signature, exchangeHash)) {
-				if(count++ >= 3) {
-					throw new SshException(SshException.HOST_KEY_ERROR, "Detected invalid signautre from private key!");
-				}
+	        // Get our host key so we can generate the exchange hash
+	        hostKey = pubkey.getEncoded();
+	
+	        // Calculate the exchange hash
+	        calculateExchangeHash();
+	
+	        // Generate signature
+	        int count = 0;
+			while(true) {
+				signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
+		
 				if(Log.isDebugEnabled()) {
-					Log.debug("Detected invalid signature output from {} implementation", pubkey.getSigningAlgorithm());
+					Log.debug("Verifying signature output to mitigate passive SSH key compromise vulnerability");
 				}
-			} else {
-				break;
+				
+				if(!pubkey.verifySignature(signature, exchangeHash)) {
+					if(count++ >= 3) {
+						throw new SshException(SshException.HOST_KEY_ERROR, "Detected invalid signautre from private key!");
+					}
+					if(Log.isDebugEnabled()) {
+						Log.debug("Detected invalid signature output from {} implementation", pubkey.getSigningAlgorithm());
+					}
+				} else {
+					break;
+				}
 			}
-		}
-
-        // Send our reply message
-        transport.postMessage(new SshMessage() {
-          public boolean writeMessageIntoBuffer(ByteBuffer buf) {
-
-        	  ByteArrayWriter baw = new ByteArrayWriter();		
-            try {
-              buf.put( (byte) SSH_MSG_KEXRSA_DONE);
-              
-              baw.writeString(pubkey.getSigningAlgorithm());
-              baw.writeBinaryString(signature);
-
-              byte[] h = baw.toByteArray();
-              buf.putInt(h.length);
-              buf.put(h);
-              
-            } catch (IOException ex) {
-              transport.disconnect(TransportProtocol.KEY_EXCHANGE_FAILED,
-                                   "Could not read host key");
-            } finally {
-            	try {
-					baw.close();
-				} catch (IOException e) {
-				}
-            }
-
-            return true;
-          }
-
-          public void messageSent(Long sequenceNo) {
-            if(Log.isDebugEnabled()) Log.debug("Sent SSH_MSG_KEXRSA_DONE");
-          }
-        }, true);
-
-        transport.sendNewKeys();
-
-        return true;
-
+	
+	        // Send our reply message
+	        transport.postMessage(new SshMessage() {
+	          public boolean writeMessageIntoBuffer(ByteBuffer buf) {
+	
+	        	  ByteArrayWriter baw = new ByteArrayWriter();		
+	            try {
+	              buf.put( (byte) SSH_MSG_KEXRSA_DONE);
+	              
+	              baw.writeString(pubkey.getSigningAlgorithm());
+	              baw.writeBinaryString(signature);
+	
+	              byte[] h = baw.toByteArray();
+	              buf.putInt(h.length);
+	              buf.put(h);
+	              
+	            } catch (IOException ex) {
+	              transport.disconnect(TransportProtocol.KEY_EXCHANGE_FAILED,
+	                                   "Could not read host key");
+	            } finally {
+	            	try {
+						baw.close();
+					} catch (IOException e) {
+					}
+	            }
+	
+	            return true;
+	          }
+	
+	          public void messageSent(Long sequenceNo) {
+	            if(Log.isDebugEnabled()) Log.debug("Sent SSH_MSG_KEXRSA_DONE");
+	          }
+	        }, true);
+	
+	        transport.sendNewKeys();
+	
+	        return true;
+        }
       default:
         return false;
     }

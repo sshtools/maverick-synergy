@@ -33,6 +33,8 @@ import com.sshtools.synergy.ssh.ChannelFactoryListener;
 
 public class CallbackClient implements ChannelFactoryListener<SshServerContext> {
 
+	public static final String CALLBACK_CLIENT = "callbackClient";
+	
 	SshEngine ssh = new SshEngine();
 	Set<CallbackSession> clients = new HashSet<CallbackSession>();
 	ExecutorService executor;
@@ -164,10 +166,10 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 				if(!executor.isShutdown()) {
 					executor.execute(new Runnable() {
 						public void run() {
-							if(con.containsProperty("callbackClient")) {
-								CallbackSession client = (CallbackSession) con.getProperty("callbackClient");
+							if(con.containsProperty(CALLBACK_CLIENT)) {
+								CallbackSession client = (CallbackSession) con.getProperty(CALLBACK_CLIENT);
 								onClientStop(client, con);
-								con.removeProperty("callbackClient");
+								con.removeProperty(CALLBACK_CLIENT);
 								clients.remove(client);
 								if(!client.isStopped() && client.getConfig().isReconnect()) {
 									while(getSshEngine().isStarted()) {

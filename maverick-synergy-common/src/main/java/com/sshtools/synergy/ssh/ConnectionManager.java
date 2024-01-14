@@ -26,7 +26,7 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
     public static final String DEFAULT_NAME = "default";
     
     final String name;
-	ThreadLocal<SshConnection> currentConnection = new ThreadLocal<>();
+	static ThreadLocal<SshConnection> currentConnection = new ThreadLocal<>();
 	ConnectionLoggingContext ctx;
 		
     public ConnectionManager(String name) {
@@ -76,7 +76,7 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
 		Log.clearCurrentContext();
 	}
 	
-	public SshConnection getCurrentConnection() {
+	public static SshConnection getCurrentConnection() {
 		return currentConnection.get();
 	}
 	

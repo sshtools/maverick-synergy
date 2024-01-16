@@ -94,7 +94,7 @@ public class ExpectShell {
 	long startupTimeout;
 	long startupStarted;
 	
-	AbstractSessionTask<SessionChannelNG> session;
+	SessionChannelNG session;
 	String characterEncoding = "UTF-8";
 	
 	public ExpectShell(AbstractSessionTask<SessionChannelNG> session) throws SshException, IOException, ShellTimeoutException {
@@ -137,6 +137,17 @@ public class ExpectShell {
 			long startupTimeout, String termtype, int cols, int rows, int osType)
 			throws SshException,
 			IOException, ShellTimeoutException {
+		this(session.getSession(), trigger, startupTimeout, termtype, cols, rows, osType);
+	}
+	
+	public ExpectShell(SessionChannelNG session, int osType) throws SshException, IOException, ShellTimeoutException {
+		this(session, null, 30000, "dumb", 1024, 80, osType);
+	}
+	
+	public ExpectShell(SessionChannelNG session, ShellStartupTrigger trigger,
+			long startupTimeout, String termtype, int cols, int rows, int osType)
+			throws SshException,
+			IOException, ShellTimeoutException {
 
 		this.startupTimeout = startupTimeout;
 		this.startupStarted = System.currentTimeMillis();
@@ -160,10 +171,10 @@ public class ExpectShell {
 		}
 		
 		if(osType == OS_UNKNOWN) {
-			determineServerType(session.getSession().getConnection());
+			determineServerType(session.getConnection());
 		}
 
-		init(session.getSession().getInputStream(), session.getSession().getOutputStream(), // true, trigger);
+		init(session.getInputStream(), session.getOutputStream(), // true, trigger);
 		        (osType != OS_OPENVMS), trigger );
 	}
 

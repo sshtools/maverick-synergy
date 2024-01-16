@@ -1,9 +1,12 @@
 package com.sshtools.client;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -11,6 +14,7 @@ import java.util.StringTokenizer;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
+import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
 import com.sshtools.common.ssh.SshException;
@@ -40,6 +44,8 @@ public class AuthenticationProtocolClient implements Service {
 	boolean authenticated = false;
 	int attempts;
 	NoneAuthenticator noneAuthenticator = new NoneAuthenticator();
+	Date authenticationStarted = new Date();
+	List<String> completedAuthentications = new ArrayList<String>();
 	
 	public AuthenticationProtocolClient(TransportProtocolClient transport,
 			SshClientContext context, String username) {
@@ -121,7 +127,30 @@ public class AuthenticationProtocolClient implements Service {
 				transport.setActiveService(con);
 				con.start();
 				
+
+				completedAuthentications.add(currentAuthenticator.getName());
 				currentAuthenticator.success();
+
+
+				EventServiceImplementation
+						.getInstance()
+						.fireEvent(
+								new Event(
+										this,
+										EventCodes.EVENT_AUTHENTICATION_COMPLETE,
+										true)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_CONNECTION,
+												transport.getConnection())
+										.addAttribute(
+												EventCodes.ATTRIBUTE_AUTHENTICATION_METHODS,
+												completedAuthentications)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_OPERATION_STARTED,
+												authenticationStarted)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+												new Date()));
 				
 				return true;
 			case SSH_MSG_USERAUTH_FAILURE:
@@ -145,6 +174,7 @@ public class AuthenticationProtocolClient implements Service {
 				} 
 				
 				if(partial) {
+					completedAuthentications.add(currentAuthenticator.getName());
 					currentAuthenticator.success(true, auths.split(","));
 				} else {
 					currentAuthenticator.failure();

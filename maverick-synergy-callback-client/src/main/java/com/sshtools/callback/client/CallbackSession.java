@@ -11,6 +11,7 @@ import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.server.ServerConnectionStateListener;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.nio.DisconnectRequestFuture;
@@ -76,11 +77,12 @@ public class CallbackSession implements Runnable {
 						hostname, 
 						port, 
 						createContext(config));
+				
 				future.waitFor(30000L);
 				if(future.isDone() && future.isSuccess()) {
+				
 					currentConnection = future.getConnection();
 					currentConnection.getAuthenticatedFuture().waitFor(30000L);
-					currentConnection.setProperty(CallbackClient.CALLBACK_CLIENT, this);
 					
 					if(currentConnection.getAuthenticatedFuture().isDone()
 							&& currentConnection.getAuthenticatedFuture().isSuccess()) {
@@ -155,6 +157,11 @@ public class CallbackSession implements Runnable {
 		
 	protected ProtocolContext createContext(CallbackConfiguration config) throws IOException, SshException {
 		SshServerContext ctx = app.createContext(app.getSshEngine().getContext(), config);
+		ctx.addStateListener(new ServerConnectionStateListener() {
+			public void connected(SshConnection con) {
+				con.setProperty(CallbackClient.CALLBACK_CLIENT, CallbackSession.this);
+			}
+		});
 		return ctx;
 	}
 

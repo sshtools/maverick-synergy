@@ -12,6 +12,10 @@ public interface ConnectionStateListener {
 		
 	}
 
+	default void ready(SshConnection con) {
+		
+	}
+
 	
 
 }

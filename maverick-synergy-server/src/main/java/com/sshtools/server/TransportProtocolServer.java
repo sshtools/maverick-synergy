@@ -19,6 +19,7 @@ import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.nio.LicenseException;
 import com.sshtools.synergy.nio.SocketConnection;
 import com.sshtools.synergy.ssh.ConnectionStateListener;
+import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
 import com.sshtools.synergy.ssh.Service;
 import com.sshtools.synergy.ssh.SshContext;
 import com.sshtools.synergy.ssh.TransportProtocol;
@@ -340,6 +341,13 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	protected void onConnected() {
 		this.con = getContext().getConnectionManager().registerTransport(this, getContext());
 		getConnectFuture().connected(this, con);
+		addTask(EVENTS, new ConnectionTaskWrapper(getConnection(), new Runnable() {
+			public void run() {
+				for(ServerConnectionStateListener listener : getContext().getStateListeners()) {
+					listener.connected(con);
+				}
+			}
+		}));
 	}
 
 	@Override

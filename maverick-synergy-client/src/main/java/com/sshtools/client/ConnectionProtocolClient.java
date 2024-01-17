@@ -42,7 +42,7 @@ public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContex
 		addTask(ExecutorOperationSupport.EVENTS, new ConnectionTaskWrapper(con, new Runnable() {
 			public void run() {
 				for (ConnectionStateListener stateListener : getContext().getStateListeners()) {
-					stateListener.connected(con);
+					stateListener.ready(con);
 				}
 			}
 		}));

@@ -234,8 +234,15 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 
 	@Override
 	protected void onConnected() {
-		if(Objects.isNull(this.con)) {
-			this.con = getContext().getConnectionManager().registerTransport(this, sshContext);
+		if(Objects.isNull(con)) {
+			con = getContext().getConnectionManager().registerTransport(this, sshContext);
+			addTask(EVENTS, new ConnectionTaskWrapper(getConnection(), new Runnable() {
+				public void run() {
+					for(ClientStateListener listener : getContext().getStateListeners()) {
+						listener.connected(con);
+					}
+				}
+			}));
 		}
 	}
 

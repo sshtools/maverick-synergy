@@ -5,8 +5,8 @@ import java.io.IOException;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
+import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 
 public interface S3File extends AbstractFile {

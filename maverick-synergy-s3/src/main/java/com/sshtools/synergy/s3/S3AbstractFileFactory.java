@@ -29,6 +29,11 @@ import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.GetBucketLocationRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
+import software.amazon.awssdk.services.s3.model.PutObjectAclRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectAclResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
@@ -73,6 +78,16 @@ public class S3AbstractFileFactory implements AbstractFileFactory<S3File> {
 		this.bucket = new S3BucketFile(this, s3, verifyBucket(bucketName));
 	}
 	
+	public void makePublic(S3File file) throws IOException, PermissionDeniedException {
+			
+		PutObjectAclResponse putObjRes = s3.putObjectAcl(
+	            PutObjectAclRequest.builder()
+	                    .bucket(bucketName)
+	                    .key(file.getAbsolutePath())
+	                    .acl(ObjectCannedACL.PUBLIC_READ)
+	                    .build());
+		
+	}
 	private void createClient(Region region, String accessKey, String secretKey, String endpoint)  {
 		
 		

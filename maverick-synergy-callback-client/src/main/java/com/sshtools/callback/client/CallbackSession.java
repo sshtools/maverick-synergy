@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.GlobalRequest;
@@ -24,8 +23,6 @@ import com.sshtools.synergy.ssh.TransportProtocol;
  * key held by the CallbackClient.
  */
 public class CallbackSession implements Runnable {
-
-	//public static final String CALLBACK_IDENTIFIER = "CallbackClient_";
 
 	CallbackConfiguration config;
 	CallbackClient app;
@@ -69,7 +66,7 @@ public class CallbackSession implements Runnable {
 				}
 			}
 		}
-		int count = 1;
+
 		while(app.getSshEngine().isStarted()) {
 			SshConnection currentConnection = null;
 			try {
@@ -97,14 +94,12 @@ public class CallbackSession implements Runnable {
 						if(Log.isInfoEnabled()) {
 							Log.info("Client is connected to {}:{}", hostname, port);
 						}
-						numberOfAuthenticationErrors = 0;
 						break;
 					} else {
 						if(Log.isInfoEnabled()) {
 							Log.info("Could not authenticate to {}:{}", hostname, port);
 						}
 						currentConnection.disconnect();
-						numberOfAuthenticationErrors++;
 					}
 					
 				}
@@ -115,12 +110,7 @@ public class CallbackSession implements Runnable {
 				
 				try {
 					long interval = config.getReconnectIntervalMs();
-					if(numberOfAuthenticationErrors >= 3) {
-						interval = TimeUnit.MINUTES.toMillis(10);
-					}
-					if(numberOfAuthenticationErrors >= 9) {
-						interval = TimeUnit.MINUTES.toMillis(60);
-					}
+
 					if(Log.isInfoEnabled()) {
 						Log.info("Will reconnect to {}:{} in {} seconds", hostname, port, interval / 1000);
 					}
@@ -138,18 +128,13 @@ public class CallbackSession implements Runnable {
 					currentConnection.disconnect();
 				}
 				
-				long interval = config.getReconnectIntervalMs() * Math.min(count, 12 * 60);
+				long interval = config.getReconnectIntervalMs();
 				if(Log.isInfoEnabled()) {
 					Log.info("Reconnecting to {}:{} in {} seconds", hostname, port, interval / 1000);
 				}
 				try {
 					Thread.sleep(interval);
 				} catch (InterruptedException e1) {
-				}
-				if(count >= 12) {
-					count += 12;
-				} else {
-					count++;
 				}
 			}
 		}

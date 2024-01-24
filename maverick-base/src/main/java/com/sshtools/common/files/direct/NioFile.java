@@ -595,6 +595,16 @@ public final class NioFile implements AbstractFile {
 			public void close() throws IOException {
 				channel.close();
 			}
+
+			@Override
+			public int read() throws IOException {
+				byte[] tmp = new byte[1];
+				int c = read(tmp, 0, 1);
+				if(c == 1) {
+					return tmp[0] & 0xFF;
+				}
+				return c;
+			}
 		};
 	}
 

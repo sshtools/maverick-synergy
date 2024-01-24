@@ -60,4 +60,14 @@ public class PathRandomAccessImpl implements AbstractFileRandomAccess {
 	public long getFilePointer() throws IOException {
 		return raf.position();
 	}
+
+	@Override
+	public int read() throws IOException {
+		byte[] tmp = new byte[1];
+		int r = read(tmp, 0, 1);
+		if(r==1) {
+			return tmp[0] & 0xFF;
+		}
+		return r;
+	}
 }

@@ -341,6 +341,11 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 			return randomAccessContent.getFilePointer();
 		}
 
+		@Override
+		public int read() throws IOException {
+			return randomAccessContent.readByte() & 0xFF;
+		}
+
 	}
 
 	public void refresh() {

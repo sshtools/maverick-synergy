@@ -40,4 +40,8 @@ public class RandomAccessImpl implements AbstractFileRandomAccess {
 	public long getFilePointer() throws IOException {
 		return raf.getFilePointer();
 	}
+	@Override
+	public int read() throws IOException {
+		return raf.read();
+	}
 }

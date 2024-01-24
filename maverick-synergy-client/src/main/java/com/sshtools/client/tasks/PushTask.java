@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -496,7 +495,7 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 		synchronized (clients) {
 			ssh = clients.removeFirst();
 		}
-		try (var file = new RandomAccessFile(localFile.getAbsolutePath(), "r")) {
+		try (var file = localFile.openFile(false)) {
 			file.seek(pointer);
 			try (var sftp = SftpClientBuilder.create().
 					withClient(ssh).
@@ -561,7 +560,7 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 		synchronized(clients) {
 			ssh = clients.removeFirst();
 		}
-		try (var file = new RandomAccessFile(localFile.getAbsolutePath(), "r")) {
+		try (var file = localFile.openFile(false)) {
 			
 			file.seek(pointer);
 			try (var sftp = SftpClientBuilder.create().

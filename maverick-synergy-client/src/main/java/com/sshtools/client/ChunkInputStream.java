@@ -2,14 +2,15 @@ package com.sshtools.client;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
+
+import com.sshtools.common.files.AbstractFileRandomAccess;
 
 public class ChunkInputStream extends InputStream {
 
-	RandomAccessFile file;
+	AbstractFileRandomAccess file;
 	long length;
 	
-	public ChunkInputStream(RandomAccessFile file, long length) {
+	public ChunkInputStream(AbstractFileRandomAccess file, long length) {
 		this.file = file;
 		this.length = length;
 	}

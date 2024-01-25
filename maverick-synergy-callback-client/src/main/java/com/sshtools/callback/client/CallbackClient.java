@@ -61,28 +61,15 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		defaultPolicies.addAll(Arrays.asList(policies));
 	}
 	
-	
-	
-	public void start(Collection<CallbackConfiguration> configs) {
-		
-		for(CallbackConfiguration config : configs) {
-			
-			try {
-				start(config, config.getServerHost(), config.getServerPort());						
-			} catch (Throwable e) {
-				Log.error("Could not load configuration {}", e, config.getAgentName());
-			}
-		}
+	public synchronized CallbackSession start(CallbackConfiguration config) throws IOException {
+		return start(config, config.getServerHost(), config.getServerPort());
 	}
 	
-	public synchronized void start(CallbackConfiguration config) throws IOException {
-		start(config, config.getServerHost(), config.getServerPort());
-	}
-	
-	public synchronized void start(CallbackConfiguration config, String hostname, int port) throws IOException {
+	public synchronized CallbackSession start(CallbackConfiguration config, String hostname, int port) throws IOException {
 		CallbackSession session = new CallbackSession(config, this, hostname, port);
 		onClientStarting(session);
 		start(session);
+		return session;
 	}
 	
 	public synchronized void start(CallbackSession client) {

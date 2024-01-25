@@ -1305,7 +1305,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	}
 
 	void log() {
-		if(Log.isInfoEnabled()) {
+		if(Log.isInfoEnabled() && Boolean.getBoolean("maverick.channelDebug")) {
 			Log.info("Channel id={} type={} localEOF={} remoteEOF={} sentClose={} receivedClose={} completedClose={} remoteWindow={} localWindow={}",
 						getLocalId(), getChannelType(), isLocalEOF, isRemoteEOF, sentClose, receivedClose, completedClose, getRemoteWindow(), getLocalWindow());
 		}

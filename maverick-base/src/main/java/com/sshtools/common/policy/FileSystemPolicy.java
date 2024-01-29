@@ -193,23 +193,39 @@ public class FileSystemPolicy extends Permissions {
 	public void setSFTPCloseFileBeforeFailedTransferEvents(boolean closeFileBeforeFailedTransferEvents) {
 		this.closeFileBeforeFailedTransferEvents = closeFileBeforeFailedTransferEvents;
 	}
+	
 	public int getSftpMaxPacketSize() {
 		return sftpMaxPacketSize;
 	}
+	
 	public void setSftpMaxPacketSize(int sftpMaxPacketSize) {
 		this.sftpMaxPacketSize = sftpMaxPacketSize;
 	}
+	
 	public UnsignedInteger32 getSftpMaxWindowSize() {
 		return sftpMaxWindowSize;
 	}
+	
+	@Deprecated(forRemoval = true, since = "3.1.0")
+	public void setSftpMaxWindowSize(int sftpMaxWindowSize) {
+		setSftpMaxWindowSize(new UnsignedInteger32(Integer.toUnsignedLong(sftpMaxWindowSize)));
+	}
+	
 	public void setSftpMaxWindowSize(UnsignedInteger32 sftpMaxWindowSize) {
 		this.sftpMaxWindowSize = sftpMaxWindowSize;
 	}
+	
 	public UnsignedInteger32 getSftpMinWindowSize() {
 		return sftpMinWindowSize;
 	}
+	
 	public void setSftpMinWindowSize(UnsignedInteger32 sftpMinWindowSize) {
 		this.sftpMinWindowSize = sftpMinWindowSize;
+	}
+	
+	@Deprecated(forRemoval = true, since = "3.1.0")
+	public void setSftpMinWindowSize(int sftpMinWindowSize) {
+		setSftpMinWindowSize(new UnsignedInteger32(Integer.toUnsignedLong(sftpMinWindowSize)));
 	}
 
 	class CachingFileFactory implements FileFactory {

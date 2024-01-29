@@ -72,6 +72,11 @@ public class ShellPolicy extends Permissions {
 		this.sessionMaxWindowSize = sessionMaxWindowSize;
 	}
 
+	@Deprecated(forRemoval = true, since = "3.1.0")
+	public void setSessionMaxWindowSize(int sessionMaxWindowSize) {
+		setSessionMaxWindowSize(new UnsignedInteger32(Integer.toUnsignedLong(sessionMaxWindowSize)));
+	}
+
 	public UnsignedInteger32 getSessionMinWindowSize() {
 		return sessionMinWindowSize;
 	}
@@ -79,6 +84,10 @@ public class ShellPolicy extends Permissions {
 	public void setSessionMinWindowSize(UnsignedInteger32 sessionMinWindowSize) {
 		this.sessionMinWindowSize = sessionMinWindowSize;
 	}
-	
+
+	@Deprecated(forRemoval = true, since = "3.1.0")
+	public void setSessionMinWindowSize(int sessionMinWindowSize) {
+		setSessionMinWindowSize(new UnsignedInteger32(Integer.toUnsignedLong(sessionMinWindowSize)));
+	}
 	
 }

@@ -1886,7 +1886,7 @@ public abstract class TransportProtocol<T extends SshContext>
 
 	private void checkStrictKex() {
 		
-		if(remotekex==null && !completedFirstKeyExchange) {
+		if(isKexStrict && !completedFirstKeyExchange) {
 			disconnect(PROTOCOL_ERROR,
 					"Strict KEX mode encountered a message that is not permitted at this time");
 		}

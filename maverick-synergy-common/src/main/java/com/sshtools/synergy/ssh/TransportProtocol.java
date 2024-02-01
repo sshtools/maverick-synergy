@@ -2050,7 +2050,7 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 		default: {
 
-			checkStrictKex();
+			
 			
 			if(processTransportMessage(msgId, msg)) {
 				return;

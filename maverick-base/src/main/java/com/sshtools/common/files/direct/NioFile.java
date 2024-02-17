@@ -146,7 +146,7 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public String getName() {
-		return path.getFileName().toString();
+		return path.getFileName() == null ? "" : path.getFileName().toString();
 	}
 
 	@Override
@@ -429,8 +429,8 @@ public final class NioFile implements AbstractFile {
 					if (!dos.isReadOnly()) {
 						permsBldr.withAllWrite();
 					}
-					var filename = path.getFileName().toString();
-					if (filename.endsWith(".exe") || filename.endsWith(".com") || filename.endsWith(".cmd")) {
+					var filename = path.getFileName();
+					if (filename != null &&  filename.toString().endsWith(".exe") || filename.toString().endsWith(".com") || filename.toString().endsWith(".cmd")) {
 						permsBldr.withAllExecute();
 					}
 					bldr.withPermissions(permsBldr.build());

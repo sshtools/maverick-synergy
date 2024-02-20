@@ -104,18 +104,25 @@ public class CallbackSession implements Runnable {
 					
 				}
 				
-				if(!config.isReconnect()) {
-					break;
-				}
-				
-				try {
-					long interval = config.getReconnectIntervalMs();
-
+				if(Objects.isNull(currentConnection)) {
+					
 					if(Log.isInfoEnabled()) {
-						Log.info("Will reconnect to {}:{} in {} seconds", hostname, port, interval / 1000);
+						Log.info("Connection did not complete to {}:{}", hostname, port);
 					}
-					Thread.sleep(interval);
-				} catch (InterruptedException e) {
+					
+					if(!config.isReconnect()) {
+						break;
+					}
+					
+					try {
+						long interval = config.getReconnectIntervalMs();
+	
+						if(Log.isInfoEnabled()) {
+							Log.info("Will reconnect to {}:{} in {} seconds", hostname, port, interval / 1000);
+						}
+						Thread.sleep(interval);
+					} catch (InterruptedException e) {
+					}
 				}
 			} catch(Throwable e) {
 				Log.error("{} on {}:{}", 

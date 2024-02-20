@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sshtools</groupId>
 	<artifactId>maverick-synergy-group</artifactId>
-	<version>3.1.0-SNAPSHOT</version>
+	<version>3.1.0</version>
 	<name>Maverick Synergy</name>
 	<description>Open source Java SSH API</description>
 	<url>http://www.jadaptive.com</url>
@@ -254,8 +254,7 @@
 		<module>maverick-sshagent</module>
 		<module>maverick-sshagent-jni-sockets</module>
 		<module>maverick-sshagent-jdk16-sockets</module>
-		<module>maverick-sshagent-named-pipes</module>
-		
+		<module>maverick-sshagent-named-pipes</module>		
 		<module>maverick-synergy</module>
 		<module>maverick-synergy-assembly</module>
 	</modules>

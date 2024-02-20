@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.sshtools</groupId>
     <artifactId>maverick-synergy-group</artifactId>
-    <version>3.1.0-SNAPSHOT</version>
+    <version>3.1.0</version>
   </parent>
 
   <artifactId>maverick-synergy-assembly</artifactId>
@@ -44,11 +44,6 @@
   	<dependency>
   		<groupId>com.sshtools</groupId>
   		<artifactId>maverick-virtual-session</artifactId>
-  		<version>${project.version}</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.sshtools</groupId>
-  		<artifactId>maverick-zip</artifactId>
   		<version>${project.version}</version>
   	</dependency>
   	<dependency>

@@ -1,22 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
 package com.sshtools.common.util;
 
 import java.io.ByteArrayInputStream;
@@ -29,10 +10,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -255,6 +242,94 @@ public class IOUtils {
     }
   }
 
+
+	/**
+	 * Recursively delete all contents of the given directory. By default symbolic links will not be followed.
+	 * The directory itself will NOT be deleted.
+	 * 
+	 * @param directory directory containing files or directories
+	 * @param options options
+	 * @throws UncheckedIOException on any error
+	 */
+	public static void recursiveContentsDelete(File directory, FileVisitOption... options) {
+		recursiveContentsDelete(directory.toPath(), options);
+	}
+	
+	/**
+	 * Recursively delete all contents of the given directory. By default symbolic links will not be followed.
+	 * The directory itself will NOT be deleted.
+	 * 
+	 * @param directory directory containing files or directories
+	 * @param options options
+	 * @throws UncheckedIOException on any error
+	 */
+	public static void recursiveContentsDelete(Path directory, FileVisitOption... options) {
+		try(var stream = Files.newDirectoryStream(directory)) {
+			stream.forEach(d -> recursiveDelete(d, options));
+		}
+		catch(IOException ioe) {
+			throw new UncheckedIOException(ioe);
+		}
+	}
+	
+	/**
+	 * Recursively delete a file or directory, and all child files and directories if a directory. By default symbolic links will not be followed.
+	 * An exception will NOT be thrown on error, instead <code>false</code> will be returned.
+	 * 
+	 * @param fileOrDirectory directory containing files or directories
+	 * @param options options
+	 * @return success
+	 */
+	public static boolean silentRecursiveDelete(File fileOrDirectory, FileVisitOption... options) {
+		return silentRecursiveDelete(fileOrDirectory.toPath(), options);
+	}
+	
+	/**
+	 * Recursively delete a file or directory, and all child files and directories if a directory. By default symbolic links will not be followed.
+	 * An exception will NOT be thrown on error, instead <code>false</code> will be returned.
+	 * 
+	 * @param fileOrDirectory directory containing files or directories
+	 * @param options options
+	 * @return success
+	 */
+	public static boolean silentRecursiveDelete(Path fileOrDirectory, FileVisitOption... options) {
+		try {
+			recursiveDelete(fileOrDirectory, options);
+		} catch (UncheckedIOException ioe) {
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Recursively delete a file or directory, and all child files and directories if a directory. By default symbolic links will not be followed.
+	 * 
+	 * @param fileOrDirectory directory containing files or directories
+	 * @param options options
+	 * @throws UncheckedIOException on any error
+	 */
+	public static void recursiveDelete(Path fileOrDirectory, FileVisitOption... options) {
+		try (var walk = Files.walk(fileOrDirectory, options)) {
+			walk.sorted(Comparator.reverseOrder()).forEach(p -> {
+				try {
+					Files.delete(p);
+				} catch (IOException e) {
+					throw new UncheckedIOException(e);
+				}
+			});
+		} 
+		catch(IOException ioe) {
+			throw new UncheckedIOException(ioe);
+		}
+	}
+
+  /**
+   * Deprecated and unsafe (follows symbolic links), use {@link #recursiveDelete(File, FileVisitOption...)}. 
+   * 
+   * @param file file or directory to completely remove.
+   * @return success
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public static boolean delTree(File file) {
     if (file.isFile()) {
       return file.delete();
@@ -269,7 +344,14 @@ public class IOUtils {
 	}
     return true;
   }
-
+  
+  /**
+   * Deprecated and unsafe (follows symbolic links), use {@link #recursiveContentsDelete(Path, FileVisitOption...)}. 
+   * 
+   * @param dir directory of contents to remove.
+   * @return success
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public static void recurseDeleteDirectory(File dir) {
 
     String[] files = dir.list();
@@ -393,18 +475,28 @@ public class IOUtils {
 	  case "P":
 	  case "PB":
 		  return v * 1000 * 1000 * 1000 * 1000 * 1000;
+	  case "PIB":
+		  	return v * 1024 * 1024 * 1024 * 1024 * 1024;
 	  case "T":
 	  case "TB":
 		  return v * 1000 * 1000 * 1000 * 1000;
+	  case "TIB":
+		  return v * 1024 * 1024 * 1024 * 1024;
 	  case "G":
 	  case "GB":
 		  return v * 1000 * 1000 * 1000;
+	  case "GIB":
+		  return v * 1024 * 1024 * 1024;
 	  case "M":
 	  case "MB":
 		  return v * 1000 * 1000;
+	  case "MIB":
+		  return v * 1024 * 1024;
 	  case "K":
 	  case "KB":
 		  return v * 1000;
+	  case "KIB":
+		  return v * 1024;
 	  default:
 		  throw new IllegalArgumentException(String.format("Invalid input %s", val));
 	  }
@@ -479,7 +571,7 @@ public class IOUtils {
 	}
 
 
-	public static void rollover(File logFile, int maxFiles) {
+	public static void rollover(File logFile, int maxFiles) throws IOException {
 		
 		String fileExtension = IOUtils.getFilenameExtension(logFile.getName());
 		String fileName = IOUtils.getFilenameWithoutExtension(logFile.getName());
@@ -496,15 +588,21 @@ public class IOUtils {
 			File backup = new File(parentDir, String.format("%s.%d%s", fileName, i, fileExtension));
 			if(backup.exists()) {
 				if(i==maxFiles) {
-					backup.delete();
+					if(!backup.delete()) {
+						throw new IOException("Failed to delete rolling log file " + fileName);
+					}
 				} else {
-					backup.renameTo(lastFile);
+					if(!backup.renameTo(lastFile)) {
+						throw new IOException("Faield to rename rolling log file to " + lastFile.getName());
+					}
 				}
 			}
 			lastFile = backup;
 		}
 		
-		logFile.renameTo(lastFile);
+		if(!logFile.renameTo(lastFile)) {
+			throw new IOException("Faield to rename rolling log file to " + lastFile.getName());
+		}
 	}
 
 
@@ -543,5 +641,17 @@ public class IOUtils {
 			closeStream(out);
 		}
 		
+	}
+
+	public static void copy(File file, OutputStream out) throws IOException {
+		try(FileInputStream in = new FileInputStream(file)) {
+			in.transferTo(out);
+		}
+	}
+
+	public static boolean isOlderThan(File file, Duration duration) {
+		
+		long now = System.currentTimeMillis();
+		return file.lastModified() < (now - duration.toMillis()) ; 
 	}
 }

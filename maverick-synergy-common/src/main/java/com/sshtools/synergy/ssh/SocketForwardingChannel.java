@@ -1,22 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
@@ -77,7 +58,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(), 
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize());
-		toChannel = new ForwardingDataWindow(con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize());
+		toChannel = new ForwardingDataWindow(con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize().intValue());
 	}
 
 	protected CachingDataWindow createCache(int maximumWindowSpace) {
@@ -349,6 +330,9 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 					}
 					getConnectionProtocol().addOutgoingTask(new ConnectionAwareTask(con) {
 						protected void doTask() {
+							if(Log.isDebugEnabled()) {
+								log("The socket has returned EOF");
+							}
 							sendEOF();
 							evaluateClosure();
 						}
@@ -501,7 +485,7 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 				
 			} catch (IOException e) {
 				log("Channel I/O error", e);
-				close(true);
+				close(e);
 			} 
 		}
 	}

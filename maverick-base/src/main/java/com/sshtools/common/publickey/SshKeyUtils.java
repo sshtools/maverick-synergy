@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.publickey;
 
 import java.io.File;
@@ -23,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import com.sshtools.common.ssh.SshKeyFingerprint;
 import com.sshtools.common.ssh.components.SshCertificate;
@@ -71,6 +55,11 @@ public class SshKeyUtils {
 		return file.toPublicKey();
 	}
 	
+	public static SshPublicKey getPublicKey(Path path) throws IOException {
+		SshPublicKeyFile file = SshPublicKeyFileFactory.parse(Files.newInputStream(path));
+		return file.toPublicKey();
+	}
+	
 	public static String getPublicKeyComment(String formattedKey) throws IOException {
 		SshPublicKeyFile file = SshPublicKeyFileFactory.parse(formattedKey.getBytes("UTF-8"));
 		return file.getComment();
@@ -80,6 +69,19 @@ public class SshKeyUtils {
 		return getPrivateKey(IOUtils.readUTF8StringFromStream(new FileInputStream(key)), passphrase);
 	}
 	
+	public static SshKeyPair getPrivateKey(File key) throws IOException, InvalidPassphraseException {
+		return getPrivateKey(IOUtils.readUTF8StringFromStream(new FileInputStream(key)), "");
+	}
+	
+	public static SshKeyPair getPrivateKey(File key, PassphrasePrompt prompt) throws IOException, InvalidPassphraseException {
+		SshPrivateKeyFile file = SshPrivateKeyFileFactory.parse(key);
+		if(file.isPassphraseProtected()) {
+			return file.toKeyPair(prompt.getPasshrase(key.getName()));
+		} else {
+			return file.toKeyPair(null);
+		}
+	}
+	
 	public static SshKeyPair getPrivateKey(InputStream key, String passphrase) throws IOException, InvalidPassphraseException {
 		return getPrivateKey(IOUtils.readUTF8StringFromStream(key), passphrase);
 	}
@@ -87,6 +89,15 @@ public class SshKeyUtils {
 	public static SshKeyPair getPrivateKey(String formattedKey, String passphrase) throws IOException, InvalidPassphraseException {
 		SshPrivateKeyFile file = SshPrivateKeyFileFactory.parse(formattedKey.getBytes("UTF-8"));
 		return file.toKeyPair(passphrase);
+	}
+	
+	public static SshKeyPair getPrivateKey(String formattedKey, PassphrasePrompt prompt) throws IOException, InvalidPassphraseException {
+		SshPrivateKeyFile file = SshPrivateKeyFileFactory.parse(formattedKey.getBytes("UTF-8"));
+		if(file.isPassphraseProtected()) {
+			return file.toKeyPair(prompt.getPasshrase(file.getType()));
+		} else {
+			return file.toKeyPair(null);
+		}
 	}
 	
 	public static SshCertificate getCertificate(File privateKey, String passphrase) throws IOException, InvalidPassphraseException {
@@ -161,6 +172,18 @@ public class SshKeyUtils {
 	
 	public static SshKeyPair getRSAPrivateKeyWithSHA512Signature(File key, String passphrase) throws IOException, InvalidPassphraseException {
 		return makeRSAWithSHA512Signature(getPrivateKey(key, passphrase));
+	}
+	
+	public static String getFingerprint(File key) throws IOException {
+		return SshKeyFingerprint.getFingerprint(getPublicKey(key));
+	}
+	
+	public static String getFingerprint(String key) throws IOException {
+		return SshKeyFingerprint.getFingerprint(getPublicKey(key));
+	}
+	
+	public static String getFingerprint(InputStream key) throws IOException {
+		return SshKeyFingerprint.getFingerprint(getPublicKey(key));
 	}
 	
 	public static String getFingerprint(SshPublicKey key) {
@@ -238,7 +261,5 @@ public class SshKeyUtils {
 		
 		IOUtils.writeBytesToFile(publicFile.getFormattedKey(), publicKeyFile);
 	}
-	
-	
 
 }

@@ -1,25 +1,7 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
 package com.sshtools.common.publickey;
 
 import java.io.IOException;
+import java.util.ServiceLoader;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.ComponentFactory;
@@ -70,6 +52,7 @@ public class SshKeyPairGenerator {
 	public static final String SSH2_RSA = "ssh-rsa";
 	public static final String ECDSA = "ecdsa";
 	public static final String ED25519 = "ed25519";
+	public static final String ED448 = "ed448";
 
 	/**
 	 * Generate a new key pair using the default bit size.
@@ -85,6 +68,8 @@ public class SshKeyPairGenerator {
 		case ECDSA:
 			return generateKeyPair(algorithm, 256);
 		case ED25519:
+			return generateKeyPair(algorithm, 0);
+		case ED448:
 			return generateKeyPair(algorithm, 0);
 		case SSH2_RSA:
 		case "rsa":
@@ -109,6 +94,9 @@ public class SshKeyPairGenerator {
 		case ED25519:
 		case "ssh-ed25519":
 			return ComponentManager.getDefaultInstance().generateEd25519KeyPair();
+		case ED448:
+		case "ssh-ed448":
+			return ComponentManager.getDefaultInstance().generateEd448KeyPair();
 		case ECDSA:
 			return ComponentManager.getDefaultInstance().generateEcdsaKeyPair(bits);
 		case SSH2_RSA:
@@ -116,11 +104,12 @@ public class SshKeyPairGenerator {
 		case "RSA":
 			return ComponentManager.getDefaultInstance().generateRsaKeyPair(bits, 2);
 		default:
-			ComponentFactory<KeyGenerator> generators = new ComponentFactory<>(JCEComponentManager.getDefaultInstance());
-			JCEComponentManager.getDefaultInstance().loadExternalComponents("generator.properties",generators);
-			
-			KeyGenerator gen = generators.getInstance(algorithm);
-			return gen.generateKey(bits);
+			var generators = new ComponentFactory<KeyGenerator>(JCEComponentManager.getDefaultInstance());
+			for(var s : ServiceLoader.load(KeyGeneratorFactory.class, JCEComponentManager.getDefaultInstance().getClassLoader())) {
+				if(ComponentManager.isDefaultEnabled(KeyGenerator.class, s.getKeys()[0]).orElse(false))
+					generators.add(s);
+			}
+			return generators.getInstance(algorithm).generateKey(bits);
 		}
 	}
 

@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.client;
 
 import java.io.IOException;
@@ -26,6 +8,7 @@ import com.sshtools.common.ssh.ChannelRequestFuture;
 import com.sshtools.common.ssh.RequestFuture;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.synergy.ssh.ChannelNG;
 
 /**
@@ -42,14 +25,14 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 	private boolean singleSession = false;
 	
 
-	public AbstractSessionChannel(int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
-			int minimumWindowSpace, boolean autoConsume) {
+	public AbstractSessionChannel(int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace,
+			UnsignedInteger32 minimumWindowSpace, boolean autoConsume) {
 		super("session", maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace,
 				new ChannelRequestFuture(), autoConsume);
 	}
 
-	public AbstractSessionChannel(int maximumPacketSize, int initialWindowSize, int maximumWindowSpace,
-			int minimumWindowSpace, ChannelRequestFuture closeFuture, boolean autoConsume) {
+	public AbstractSessionChannel(int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace,
+			UnsignedInteger32 minimumWindowSpace, ChannelRequestFuture closeFuture, boolean autoConsume) {
 		super("session", maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
 	}
 

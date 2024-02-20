@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.client;
 
 import java.io.IOException;
@@ -42,8 +24,6 @@ import com.sshtools.synergy.ssh.components.SshKeyExchange;
  */
 public class TransportProtocolClient extends TransportProtocol<SshClientContext> {
 
-	
-	
 	Service pendingService; 
 	boolean proxyDone;
 	
@@ -161,6 +141,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 			if(Log.isErrorEnabled()) {
 				Log.error("Could not verify host key", e);
 			}
+			getConnectFuture().setLastError(e);
 			getConnectFuture().done(false);
 			if(disconnectStarted != null)
 				disconnect(HOST_KEY_NOT_VERIFIABLE, "The host key could not be verified.");
@@ -253,8 +234,15 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 
 	@Override
 	protected void onConnected() {
-		if(Objects.isNull(this.con)) {
-			this.con = getContext().getConnectionManager().registerTransport(this, sshContext);
+		if(Objects.isNull(con)) {
+			con = getContext().getConnectionManager().registerTransport(this, sshContext);
+			addTask(EVENTS, new ConnectionTaskWrapper(getConnection(), new Runnable() {
+				public void run() {
+					for(ClientStateListener listener : getContext().getStateListeners()) {
+						listener.connected(con);
+					}
+				}
+			}));
 		}
 	}
 
@@ -267,8 +255,18 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 		return "transport-client";
 	}
 
-//	@Override
-//	protected SocketAddress getConnectionAddress() {
-//		return getRemoteAddress();
-//	}
+	@Override
+	protected String getExtensionNegotiationString() {
+		return "ext-info-c";
+	}
+
+	@Override
+	protected boolean isExtensionNegotiationSupported() {
+		return true;
+	}
+
+	@Override
+	protected boolean isServerMode() {
+		return false;
+	}
 }

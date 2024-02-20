@@ -1,27 +1,15 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh.components.jce;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
+import org.bouncycastle.crypto.generators.Poly1305KeyGenerator;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.ParametersWithIV;
 
 import com.sshtools.common.ssh.SecurityLevel;
-import com.sshtools.common.ssh.components.SshCipher;
+import com.sshtools.common.ssh.components.AbstractSshCipher;
+import com.sshtools.common.ssh.components.SshCipherFactory;
 import com.sshtools.common.ssh.components.jce.ChaCha20Poly1305.ChaCha20.WrongKeySizeException;
 import com.sshtools.common.ssh.components.jce.ChaCha20Poly1305.ChaCha20.WrongNonceSizeException;
 import com.sshtools.common.util.Arrays;
@@ -29,7 +17,22 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.UnsignedInteger64;
 
-public class ChaCha20Poly1305 extends SshCipher {
+public class ChaCha20Poly1305 extends AbstractSshCipher {
+	
+	private static final String CIPHER = "chacha20-poly1305@openssh.com";
+
+	public static class ChaCha20Poly1305Factory implements SshCipherFactory<ChaCha20Poly1305> {
+
+		@Override
+		public ChaCha20Poly1305 create() throws NoSuchAlgorithmException, IOException {
+			return new ChaCha20Poly1305();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { CIPHER };
+		}
+	}
 	
 	byte[] k1 = new byte[32];
 	byte[] k2 = new byte[32];
@@ -38,7 +41,7 @@ public class ChaCha20Poly1305 extends SshCipher {
 	
 	public ChaCha20Poly1305()
 			throws IOException {
-		super("chacha20-poly1305@openssh.com", SecurityLevel.PARANOID, 4000);
+		super(CIPHER, SecurityLevel.PARANOID, 4000);
 	}
 
 	public void init(int mode, byte[] iv, byte[] keydata) throws java.io.IOException {

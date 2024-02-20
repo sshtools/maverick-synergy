@@ -1,23 +1,6 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.files.vfs;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
@@ -82,7 +65,7 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 		this.manager = manager;
 		if (defaultDirectory == null) {
 			try {
-				defaultPath = manager.resolveFile(System.getProperty("maverick.vfsDefaultPath", "."));
+				defaultPath = manager.resolveFile(System.getProperty("maverick.vfsDefaultPath", new File(".").getAbsolutePath()));
 		 	} catch (FileSystemException e) {
 				if(Log.isDebugEnabled()) {
 					Log.debug("Unable to determine default path", e);
@@ -117,7 +100,7 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 				if (defaultDirectory == null) {
 					alt = manager.resolveFile(defaultPath, parent);
 				} else {
-					alt = manager.resolveFile(manager.resolveFile(defaultDirectory), parent);
+					alt = manager.resolveFile(manager.resolveFile(defaultDirectory, opts), parent);
 				}
 				alt = alt.resolveFile(path);
 				return new VFSFile(alt, this);
@@ -139,7 +122,7 @@ public class VFSFileFactory implements AbstractFileFactory<VFSFile> {
 				if (defaultDirectory == null) {
 					obj = manager.resolveFile(defaultPath, path);
 				} else {
-					obj = manager.resolveFile(manager.resolveFile(defaultDirectory), path);
+					obj = manager.resolveFile(manager.resolveFile(defaultDirectory, opts), path);
 				}
 			} catch (Exception e1) {
 				if(Log.isDebugEnabled()) {

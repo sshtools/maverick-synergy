@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.client;
 
 import java.io.BufferedReader;
@@ -25,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Random;
 
-import com.sshtools.client.sftp.SftpClient;
+import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
 import com.sshtools.client.sftp.TransferCancelledException;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpStatusException;
@@ -121,16 +103,17 @@ public class SshReporter {
 	
 	private static void probeSFTP(SshClient ssh) throws SftpStatusException, SshException, ChannelOpenException, PermissionDeniedException, IOException {
 		
-		SftpClient sftp = new SftpClient(ssh);
+		try(var sftp = SftpClientBuilder.create().withClient(ssh).build()) {
 		
-		 System.out.println("##### SFTP Configuration");
-		 
-		System.out.println("Local window: " + sftp.getSubsystemChannel().getMaximumLocalWindowSize());
-		System.out.println("Local packet: " + sftp.getSubsystemChannel().getMaximumLocalPacketLength());
-		System.out.println("Remote window: " + sftp.getSubsystemChannel().getMaximumRemoteWindowSize());
-		System.out.println("Remote packet: " + sftp.getSubsystemChannel().getMaximumRemotePacketLength());
-		
-		System.out.println("#####");
+			System.out.println("##### SFTP Configuration");
+			 
+			System.out.println("Local window: " + sftp.getSubsystemChannel().getMaximumLocalWindowSize());
+			System.out.println("Local packet: " + sftp.getSubsystemChannel().getMaximumLocalPacketLength());
+			System.out.println("Remote window: " + sftp.getSubsystemChannel().getMaximumRemoteWindowSize());
+			System.out.println("Remote packet: " + sftp.getSubsystemChannel().getMaximumRemotePacketLength());
+			
+			System.out.println("#####");
+		}
 		
 		ssh.disconnect();
 		
@@ -166,29 +149,30 @@ public class SshReporter {
 		
 		System.out.println("##### " + testName);
 		
-		SftpClient sftp = new SftpClient(ssh);
+		try(var sftp = SftpClientBuilder.create().
+				withClient(ssh).
+				withBlockSize(blocksize).
+				withLocalPath(System.getProperty("user.dir")).
+				build()) {
 		
-		System.out.println("Block size: " + blocksize);
-		System.out.println("Max Requests: " + maxRequests);
-		
-		sftp.setBlockSize(blocksize);
-		
-		sftp.lcd(System.getProperty("user.dir"));
-		
-        System.out.println("Uploading " + size + " File");
-        long started = System.currentTimeMillis();
-        sftp.put(filename);
-        long ended = System.currentTimeMillis();
-        System.out.println("Upload took " + ((double)(ended-started)/ 1000) + " seconds");
-        
-        System.out.println("Optimized Block: " + System.getProperty("maverick.write.optimizedBlock"));
-        System.out.println("Round Trip: " + System.getProperty("maverick.write.blockRoundtrip"));
-        
-        System.out.println("Downloading " + size + " File");
-        started = System.currentTimeMillis();
-        sftp.get(filename);
-        ended = System.currentTimeMillis();
-        System.out.println("Download took " + ((double)(ended-started)/ 1000) + " seconds");
+			System.out.println("Block size: " + blocksize);
+			System.out.println("Max Requests: " + maxRequests);
+			
+	        System.out.println("Uploading " + size + " File");
+	        long started = System.currentTimeMillis();
+	        sftp.put(filename);
+	        long ended = System.currentTimeMillis();
+	        System.out.println("Upload took " + ((double)(ended-started)/ 1000) + " seconds");
+	        
+	        System.out.println("Optimized Block: " + System.getProperty("maverick.write.optimizedBlock"));
+	        System.out.println("Round Trip: " + System.getProperty("maverick.write.blockRoundtrip"));
+	        
+	        System.out.println("Downloading " + size + " File");
+	        started = System.currentTimeMillis();
+	        sftp.get(filename);
+	        ended = System.currentTimeMillis();
+	        System.out.println("Download took " + ((double)(ended-started)/ 1000) + " seconds");
+		}
 		
         ssh.disconnect();
         

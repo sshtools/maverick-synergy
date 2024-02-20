@@ -1,22 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package com.sshtools.client.tasks;
 
 /**
@@ -35,9 +16,9 @@ public interface FileTransferProgress {
    * The transfer has started
    *
    * @param bytesTotal
-   * @param remoteFile
+   * @param file
    */
-  public void started(long bytesTotal, String remoteFile);
+  default void started(long bytesTotal, String file) { } ;
 
   /**
    * The transfer is cancelled. Implementations should return true if the
@@ -46,17 +27,17 @@ public interface FileTransferProgress {
    *
    * @return boolean
    */
-  public boolean isCancelled();
+  default boolean isCancelled() { return false; };
 
   /**
    * The transfer has progressed
    *
    * @param bytesSoFar
    */
-  public void progressed(long bytesSoFar);
+  default void progressed(long bytesSoFar) { };
 
   /**
    * The transfer has completed.
    */
-  public void completed();
+  default void completed() { };
 }

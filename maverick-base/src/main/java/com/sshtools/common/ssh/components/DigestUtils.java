@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh.components;
 
 import java.io.UnsupportedEncodingException;
@@ -39,8 +21,23 @@ public class DigestUtils {
 		}
 	}
 	
+	public static byte[] digest(String name, byte[] b, int off, int len) {
+		
+		try {
+			Digest digest = JCEComponentManager.getDefaultInstance().getDigest(name);
+			digest.putBytes(b, off, len);
+			return digest.doFinal();
+		} catch (SshException e) {
+			throw new IllegalArgumentException(String.format("%s is not a supported digest", name));
+		}
+	}
+	
 	public static byte[] md5(byte[] b) {
 		return digest(JCEAlgorithms.JCE_MD5, b);
+	}
+	
+	public static byte[] md5(byte[] b, int off, int len) {
+		return digest(JCEAlgorithms.JCE_MD5, b, off, len);
 	}
 	
 	public static byte[] sha1(byte[] b) {

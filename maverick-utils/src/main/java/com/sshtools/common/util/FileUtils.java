@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.util;
 
 import java.io.File;
@@ -89,17 +71,32 @@ public class FileUtils {
 			return str;
 		}
 	}
-
+	
+	public static String checkEndsWithBackslash(String str) {
+		return checkEndsWith(str, "\\");
+	}
+	
+	public static String checkEndsWithoutBackslash(String str) {
+		return checkEndsWithNo(str, "\\");
+	}
+	
 	public static String checkEndsWithSlash(String str) {
-		if (str.endsWith("/")) {
+		return checkEndsWith(str, "/");
+	}
+	
+	public static String checkEndsWith(String str, String slash) {
+		if (str.endsWith(slash)) {
 			return str;
 		} else {
-			return str + "/";
+			return str + slash;
 		}
 	}
-
 	public static String checkEndsWithNoSlash(String str) {
-		if (str.endsWith("/")) {
+		return checkEndsWithNo(str, "/");
+	}
+	
+	public static String checkEndsWithNo(String str, String slash) {
+		if (str.endsWith(slash)) {
 			return str.substring(0, str.length() - 1);
 		} else {
 			return str;

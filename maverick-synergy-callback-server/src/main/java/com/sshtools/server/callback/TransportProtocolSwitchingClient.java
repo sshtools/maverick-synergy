@@ -1,27 +1,14 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.server.callback;
 
 
 
+import java.util.Date;
+
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.TransportProtocolClient;
+import com.sshtools.common.events.Event;
+import com.sshtools.common.events.EventCodes;
+import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.TransportProtocolServer;
@@ -71,13 +58,42 @@ class TransportProtocolSwitchingClient extends TransportProtocolClient {
 			if(idx > -1) {
 				if(remoteIdentification.trim().length() > idx+1) {
 					String username = remoteIdentification.substring(idx+1).trim();
+					if(Log.isDebugEnabled()) {
+						Log.debug("Callback client username is {}", username);
+					}
 					getContext().setUsername(username);
+					generateCallbackEvent(username);
 					return;
 				}
+			} else {
+				int length = "SSH-2.0-".length() + callbackIdentifier.length();
+				String username = remoteIdentification.substring(length+1).trim();
+				if(Log.isDebugEnabled()) {
+					Log.debug("Callback client username is {}", username);
+				}
+				getContext().setUsername(username);
+				generateCallbackEvent(username);
+				return;
 			}
 			
 			throw new IllegalStateException(String.format("Callback identifier missing _ or username token [%s]", remoteIdentification.trim()));
 		}
+		
+	}
+
+	private void generateCallbackEvent(String username) {
+		
+		EventServiceImplementation.getInstance().fireEvent(
+				(new Event(this, EventCodes.EVENT_CALLBACK_CONNECTING, true))
+						.addAttribute(
+								EventCodes.ATTRIBUTE_CONNECTION,
+								con)
+						.addAttribute(
+								EventCodes.ATTRIBUTE_OPERATION_STARTED,
+								new Date())
+						.addAttribute(
+								EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+								new Date()));
 		
 	}
 

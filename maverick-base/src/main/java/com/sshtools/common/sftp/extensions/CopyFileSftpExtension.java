@@ -1,24 +1,7 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.sftp.extensions;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.AbstractFileSystem;
@@ -29,8 +12,8 @@ public class CopyFileSftpExtension extends AbstractSftpExtension {
 
 	public static final String EXTENSION_NAME = "copy-file";
 
-	protected CopyFileSftpExtension() {
-		super(EXTENSION_NAME, false);
+	public CopyFileSftpExtension() {
+		super(EXTENSION_NAME, true);
 	}
 
 	@Override
@@ -47,6 +30,8 @@ public class CopyFileSftpExtension extends AbstractSftpExtension {
 			
 			sftp.sendStatusMessage(requestId, SftpSubsystem.STATUS_FX_OK, "The copy-file operation completed.");
 			
+		} catch(FileAlreadyExistsException e) {
+			sftp.sendStatusMessage(requestId, SftpSubsystem.SSH_FX_FILE_ALREADY_EXISTS, e.getMessage());
 		} catch(IOException e) {
 			sftp.sendStatusMessage(requestId, SftpSubsystem.STATUS_FX_FAILURE, e.getMessage());
 		} catch (PermissionDeniedException e) {

@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh.x509;
 
 import java.io.ByteArrayInputStream;
@@ -28,6 +10,7 @@ import java.security.interfaces.ECPublicKey;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.SshX509PublicKey;
 import com.sshtools.common.ssh.components.jce.Ssh2EcdsaSha2NistPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
@@ -50,7 +33,7 @@ public abstract class SshX509EcdsaSha2NistPublicKeyRfc6187 extends Ssh2EcdsaSha2
 		this.certs = chain;
 	}
 	
-	public void init(byte[] blob, int start, int len) throws SshException {
+	public SshPublicKey init(byte[] blob, int start, int len) throws SshException {
 
 		ByteArrayReader reader = new ByteArrayReader(blob, start, len);
 
@@ -96,6 +79,8 @@ public abstract class SshX509EcdsaSha2NistPublicKeyRfc6187 extends Ssh2EcdsaSha2
 		} finally {
 			reader.close();
 		}
+		
+		return this;
 	}
 	
     public Certificate getCertificate() {

@@ -1,22 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
 package com.sshtools.client.shell;
 
 import java.io.IOException;
@@ -33,7 +14,7 @@ public class ShellController implements ShellReader, ShellWriter {
 	protected ShellMatcher matcher = null;
 	protected int readlimit = 32768;
 	protected InputStream in;
-	
+	private boolean eof = false;
 	
 	ShellController(ExpectShell shell, ShellMatcher matcher, InputStream in) {
 		this.shell = shell;
@@ -192,6 +173,10 @@ public class ShellController implements ShellReader, ShellWriter {
 			try {
 				int ch = in.read();
 				if(ch == -1) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Expect encountered EOF {}", line.toString());
+					}
+					eof = true;
 					return false;
 				}
 				if(ch != '\n' && ch!='\r') {
@@ -200,13 +185,13 @@ public class ShellController implements ShellReader, ShellWriter {
 				
 				switch(matcher.matches(line.toString(), pattern)) {
 				case CONTENT_DOES_NOT_MATCH:
-					return false;
+					break;
 				case CONTENT_MATCHES:
 					if(Log.isDebugEnabled())
 						Log.debug("Matched: [" + pattern + "] " + line.toString());
 					if(consumeRemainingLine && ch!='\n' && ch != -1) {
 						do {
-							
+							ch = in.read();
 						} while(ch!='\n' && ch != -1);
 					}
 					if(Log.isDebugEnabled()) {
@@ -236,6 +221,10 @@ public class ShellController implements ShellReader, ShellWriter {
 		}
 
 		throw new ShellTimeoutException();
+	}
+	
+	public boolean isEOF() {
+		return eof;
 	}
 	
 	public boolean isActive() {

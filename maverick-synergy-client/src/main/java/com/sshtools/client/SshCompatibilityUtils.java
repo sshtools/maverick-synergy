@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.client;
 
 import java.io.IOException;
@@ -23,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.sshtools.client.SshClient.SshClientBuilder;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
@@ -31,7 +14,7 @@ public class SshCompatibilityUtils {
 
 	public static String[] getSupportedHostKeyAlgorithms(String hostname, int port) throws SshException, IOException {
 
-		try(SshClient ssh = new SshClient(hostname, port, "guest")) {
+		try(var ssh = SshClientBuilder.create().withTarget(hostname, port).build()) {
 			return ssh.getRemotePublicKeys();
 		}
 	}
@@ -53,31 +36,31 @@ public class SshCompatibilityUtils {
 	}
 
 	public static SshPublicKey getHostKey(String hostname, int port, String algorithm) throws SshException, IOException {
-		
-		try(SshClient ssh = new SshClient(hostname, port, "guest") {
-			public void configure(SshClientContext context) {
-				context.setPreferredPublicKey(algorithm);
-			}
-		}) {
+
+		try(var ssh = SshClientBuilder.create().
+				withTarget(hostname, port).
+				onConfigure(ctx -> ctx.setPreferredPublicKey(algorithm)).
+				build())  {
 			return ssh.getConnection().getHostKey();
 		}
 	}
 	
 
 	public static SshConnection getRemoteConfiguration(String hostname, int port) throws IOException, SshException {
-		
-		try(SshClient ssh = new SshClient(hostname, port, "guest")) {
+
+		try(var ssh = SshClientBuilder.create().withTarget(hostname, port).build()) {
 			return ssh.getConnection();
 		}
 	}
 	
 	public static SshClient getRemoteClient(String hostname, int port, String username, String password, boolean tcpNoDelay) throws SshException, IOException {
-		
-		SshClient ssh = new SshClient(hostname, port, username, password.toCharArray()) {
-			public void configure(SshClientContext context) {
-				context.setSocketOptionTcpNoDelay(tcpNoDelay);
-			}
-		};
+
+		var ssh = SshClientBuilder.create().
+				withTarget(hostname, port).
+				withUsername(username).
+				withPassword(password).
+				onConfigure(ctx -> ctx.setSocketOptionTcpNoDelay(tcpNoDelay)).
+				build();
 		
 		ssh.authenticate(new PasswordAuthenticator(password), 30000L);
 		

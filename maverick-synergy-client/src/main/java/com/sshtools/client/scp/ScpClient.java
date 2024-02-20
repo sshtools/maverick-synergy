@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.client.scp;
 
 import java.io.EOFException;
@@ -31,7 +13,7 @@ import com.sshtools.client.sftp.GlobRegExpMatching;
 import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.files.direct.DirectFileFactory;
+import com.sshtools.common.files.direct.NioFileFactory.NioFileFactoryBuilder;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpStatusException;
@@ -63,7 +45,7 @@ public class ScpClient extends ScpClientIO {
      * @throws PermissionDeniedException 
      */
     public ScpClient(SshClient ssh) throws PermissionDeniedException, IOException {
-        this(new DirectFileFactory(new java.io.File(System.getProperty("user.home"))), ssh);
+        this(NioFileFactoryBuilder.create().build(), ssh);
     }
 
     /**
@@ -74,7 +56,7 @@ public class ScpClient extends ScpClientIO {
      * @throws IOException
      */
     public ScpClient(File cwd, SshClient ssh) throws PermissionDeniedException, IOException {
-        this(new DirectFileFactory(cwd), ssh);
+        this(NioFileFactoryBuilder.create().withHome(cwd).build(), ssh);
     }
     
     /**

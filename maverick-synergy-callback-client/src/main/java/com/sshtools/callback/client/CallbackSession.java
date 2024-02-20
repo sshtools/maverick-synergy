@@ -1,33 +1,16 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.callback.client;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.Objects;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.server.ServerConnectionStateListener;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.nio.DisconnectRequestFuture;
@@ -40,8 +23,6 @@ import com.sshtools.synergy.ssh.TransportProtocol;
  * key held by the CallbackClient.
  */
 public class CallbackSession implements Runnable {
-
-	//public static final String CALLBACK_IDENTIFIER = "CallbackClient_";
 
 	CallbackConfiguration config;
 	CallbackClient app;
@@ -85,60 +66,63 @@ public class CallbackSession implements Runnable {
 				}
 			}
 		}
-		int count = 1;
+
 		while(app.getSshEngine().isStarted()) {
+			SshConnection currentConnection = null;
 			try {
 				future = app.getSshEngine().connect(
 						hostname, 
 						port, 
 						createContext(config));
+				
 				future.waitFor(30000L);
 				if(future.isDone() && future.isSuccess()) {
-					SshConnection currentConnection = future.getConnection();
+				
+					currentConnection = future.getConnection();
 					currentConnection.getAuthenticatedFuture().waitFor(30000L);
-					if(currentConnection.getAuthenticatedFuture().isDone() && currentConnection.getAuthenticatedFuture().isSuccess()) {
-						currentConnection.setProperty("callbackClient", this);
+					
+					if(currentConnection.getAuthenticatedFuture().isDone()
+							&& currentConnection.getAuthenticatedFuture().isSuccess()) {
 					
 						if(Log.isInfoEnabled()) {
 							Log.info("Callback {} registering with memo {}", currentConnection.getUUID(), config.getMemo());
 						}
-
-  					    GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
+						GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
 								currentConnection, ByteArrayWriter.encodeString(config.getMemo()));
 						currentConnection.sendGlobalRequest(req, false);
 						app.onClientConnected(this, currentConnection);
-
 						if(Log.isInfoEnabled()) {
 							Log.info("Client is connected to {}:{}", hostname, port);
 						}
-						numberOfAuthenticationErrors = 0;
 						break;
 					} else {
 						if(Log.isInfoEnabled()) {
 							Log.info("Could not authenticate to {}:{}", hostname, port);
 						}
 						currentConnection.disconnect();
-						numberOfAuthenticationErrors++;
 					}
+					
 				}
 				
-				if(!config.isReconnect()) {
-					break;
-				}
-				
-				try {
-					long interval = config.getReconnectIntervalMs();
-					if(numberOfAuthenticationErrors >= 3) {
-						interval = TimeUnit.MINUTES.toMillis(10);
-					}
-					if(numberOfAuthenticationErrors >= 9) {
-						interval = TimeUnit.MINUTES.toMillis(60);
-					}
+				if(Objects.isNull(currentConnection)) {
+					
 					if(Log.isInfoEnabled()) {
-						Log.info("Will reconnect to {}:{} in {} seconds", hostname, port, interval / 1000);
+						Log.info("Connection did not complete to {}:{}", hostname, port);
 					}
-					Thread.sleep(interval);
-				} catch (InterruptedException e) {
+					
+					if(!config.isReconnect()) {
+						break;
+					}
+					
+					try {
+						long interval = config.getReconnectIntervalMs();
+	
+						if(Log.isInfoEnabled()) {
+							Log.info("Will reconnect to {}:{} in {} seconds", hostname, port, interval / 1000);
+						}
+						Thread.sleep(interval);
+					} catch (InterruptedException e) {
+					}
 				}
 			} catch(Throwable e) {
 				Log.error("{} on {}:{}", 
@@ -146,7 +130,12 @@ public class CallbackSession implements Runnable {
 						e.getMessage(),
 						config.getServerHost(), 
 						config.getServerPort());
-				long interval = config.getReconnectIntervalMs() * Math.min(count, 12 * 60);
+				
+				if(Objects.nonNull(currentConnection)) {
+					currentConnection.disconnect();
+				}
+				
+				long interval = config.getReconnectIntervalMs();
 				if(Log.isInfoEnabled()) {
 					Log.info("Reconnecting to {}:{} in {} seconds", hostname, port, interval / 1000);
 				}
@@ -154,17 +143,17 @@ public class CallbackSession implements Runnable {
 					Thread.sleep(interval);
 				} catch (InterruptedException e1) {
 				}
-				if(count >= 12) {
-					count += 12;
-				} else {
-					count++;
-				}
 			}
 		}
 	}
 		
 	protected ProtocolContext createContext(CallbackConfiguration config) throws IOException, SshException {
 		SshServerContext ctx = app.createContext(app.getSshEngine().getContext(), config);
+		ctx.addStateListener(new ServerConnectionStateListener() {
+			public void connected(SshConnection con) {
+				con.setProperty(CallbackClient.CALLBACK_CLIENT, CallbackSession.this);
+			}
+		});
 		return ctx;
 	}
 

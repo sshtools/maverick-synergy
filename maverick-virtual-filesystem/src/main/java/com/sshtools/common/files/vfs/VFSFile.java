@@ -1,27 +1,10 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.files.vfs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,12 +22,11 @@ import com.sshtools.common.files.AbstractFileImpl;
 import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.util.UnsignedInteger64;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 
 public class VFSFile extends AbstractFileImpl<VFSFile> {
-
-	
 
 	FileObject file;
 	FileSystemOptions opts;
@@ -53,11 +35,7 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 		super(fileFactory);
 		this.file = file;
 	}
-
-	public FileObject getFileObject() {
-		return file;
-	}
-
+	
 	public VFSFile(String path, VFSFileFactory fileFactory) throws IOException {
 		super(fileFactory);
 		this.file = fileFactory.getFileSystemManager().resolveFile(path);
@@ -70,6 +48,14 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 		this.opts = opts;
 	}
 
+	public FileObject getFileObject() {
+		return file;
+	}
+
+	public AbstractFile getParentFile() throws IOException {
+		return new VFSFile(file.getParent(), (VFSFileFactory) fileFactory);
+	}
+	
 	public boolean exists() throws IOException {
 		return file.exists();
 	}
@@ -103,43 +89,42 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 		if(!exists()) {
 			throw new FileNotFoundException();
 		}
-		SftpFileAttributes attr = new SftpFileAttributes(getFileType(file), "UTF-8");
+		var bldr = SftpFileAttributesBuilder.ofType(getFileType(file), "UTF-8");
+		if (!isDirectory())
+			bldr.withSize(length());
 		
-		if (!attr.isDirectory())
-			attr.setSize(new UnsignedInteger64(length()));
+		bldr.withLastModifiedTime(lastModified());
+		bldr.withLastAccessTime(lastModified());
 		
-		try {
-			attr.setTimes(new UnsignedInteger64(lastModified() / 1000),
-					new UnsignedInteger64(lastModified() / 1000));
-		} catch (FileSystemException e) {
-		}
-		
-		attr.setPermissions(String.format("%s%s%s------", 
-				isReadable() ? "r" : "-", 
-				isWritable() ? "w" : "-", 
-				isDirectory() ? "x" : "-"));
+		var permBldr = PosixPermissionsBuilder.create();
+		if(isReadable())
+			permBldr.withPermissions(PosixFilePermission.OWNER_READ);
+		if(isWritable())
+			permBldr.withPermissions(PosixFilePermission.OWNER_WRITE);
+		if(isDirectory())
+			permBldr.withPermissions(PosixFilePermission.OWNER_EXECUTE);
+		bldr.withPermissions(permBldr.build());
 
 
 		try {
-			for (String name : file.getContent().getAttributeNames()) {
-				Object attribute = file.getContent().getAttribute(name);
-				attr.setExtendedAttribute(name,
+			for (var name : file.getContent().getAttributeNames()) {
+				var attribute = file.getContent().getAttribute(name);
+				bldr.addExtendedAttribute(name,
 						attribute == null ? new byte[] {} : String.valueOf(attribute).getBytes());
 
 				if (name.equals("uid")) {
-					attr.setUID((String) attribute);
+					bldr.withUidOrUsername((String) attribute);
 				} else if (name.equals("gid")) {
-					attr.setGID((String) attribute);
+					bldr.withGidOrGroup((String) attribute);
 				} else if (name.equals("accessedTime")) {
-					attr.setTimes(new UnsignedInteger64((Long) attribute),
-							attr.getModifiedTime());
+					bldr.withLastAccessTime((Long)attribute);
 				} 
 			}
 		} catch (Exception e) {
 
 		}
 
-		return attr;
+		return bldr.build();
 	}
 
 	private int getFileType(FileObject file) throws FileSystemException {
@@ -272,21 +257,19 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 
 	public void setAttributes(SftpFileAttributes attrs) throws IOException {
 		
-		file.getContent().setLastModifiedTime(
-					attrs.getModifiedTime().longValue() * 1000);
+		file.getContent().setLastModifiedTime(attrs.lastModifiedTime().toMillis());
 
 		// For SSH it's easy
 		if (file.getFileSystem().getRootName().getScheme().equals("sftp")) {
-			if (attrs.getUID() != null) {
-				file.getContent().setAttribute("uid", attrs.getUID());
+			var username = attrs.bestUsernameOr();
+			if (username.isPresent()) {
+				file.getContent().setAttribute("uid", username.get());
 			}
-			if (attrs.getGID() != null) {
-				file.getContent().setAttribute("gid", attrs.getGID());
+			var group = attrs.bestGroupOr();
+			if (group.isPresent()) {
+				file.getContent().setAttribute("gid", group.get());
 			}
-			if (attrs.getPermissions() != null) {
-				file.getContent().setAttribute("permissions",
-						attrs.getPermissions().intValue());
-			}
+			file.getContent().setAttribute("permissions", attrs.permissions().asInt());
 		}
 
 	}
@@ -356,6 +339,11 @@ public class VFSFile extends AbstractFileImpl<VFSFile> {
 
 		public long getFilePointer() throws IOException {
 			return randomAccessContent.getFilePointer();
+		}
+
+		@Override
+		public int read() throws IOException {
+			return randomAccessContent.readByte() & 0xFF;
 		}
 
 	}

@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.server.vsession.commands.sftp;
 
 import java.io.IOException;
@@ -28,10 +10,8 @@ import java.util.Objects;
 
 import com.sshtools.client.sftp.SftpFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
-import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.util.Utils;
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.UsageException;
 import com.sshtools.server.vsession.UsageHelper;
@@ -93,7 +73,7 @@ public class Ls extends SftpCommand {
 	private void processSftpFilesForPrinting(String[] args, VirtualConsole console, SftpFile[] sftpFiles)
 			throws SftpStatusException, SshException, IOException, PermissionDeniedException {
 		for (SftpFile sftpFile : sftpFiles) {
-			if (sftpFile.isFile() && (isOption(args, LISTING_SHORT_DIRECTORY) || isOption(args, LISTING_LONG_DIRECTORY))) {
+			if (sftpFile.attributes().isFile() && (isOption(args, LISTING_SHORT_DIRECTORY) || isOption(args, LISTING_LONG_DIRECTORY))) {
 				continue;
 			}
 			
@@ -104,7 +84,7 @@ public class Ls extends SftpCommand {
 	protected void printFile(String[] args, VirtualConsole console, SftpFile file) throws IOException, 
 		PermissionDeniedException, SftpStatusException, SshException {
 		
-		SftpFileAttributes fileAttributes = file.getAttributes();
+		var fileAttributes = file.attributes();
 		
 		if (!(isHidden(file)) || (isOption(args, LISTING_SHORT_ALL) || isOption(args, LISTING_LONG_ALL))) {
 			
@@ -112,13 +92,13 @@ public class Ls extends SftpCommand {
 				
 				String lastModifiedTime = "";
 				long size = 0;
-				if (file.isFile()) {
-					size = fileAttributes.getSize().longValue();
-				} else if (file.isDirectory()) {
+				if (file.attributes().isFile()) {
+					size = fileAttributes.size().longValue();
+				} else if (fileAttributes.isDirectory()) {
 					size = 0;
 				}
 				SimpleDateFormat df;
-		        long mt = (fileAttributes.getModifiedTime().longValue() * 1000L);
+		        long mt = (fileAttributes.lastModifiedTime().toMillis() * 1000L);
 		        long now = System.currentTimeMillis();
 
 		        if ((now - mt) > (6 * 30 * 24 * 60 * 60 * 1000L)) {
@@ -130,10 +110,10 @@ public class Ls extends SftpCommand {
 		        lastModifiedTime = df.format(new Date(mt));
 				int linkCount = 0;
 				console.println(String.format("%s %-3d %-8s %-8s %10d %-14s %-30s", 
-						fileAttributes.getPermissionsString(), 
+						fileAttributes.toPermissionsString(), 
 						linkCount, 
-						Utils.defaultString(fileAttributes.getUID(), "nouser"),
-						Utils.defaultString(fileAttributes.getGID(), "nogroup"),
+						fileAttributes.bestUsername(),
+						fileAttributes.bestGroup(),
 						size, 
 						lastModifiedTime, 
 						file.getFilename()));
@@ -141,8 +121,8 @@ public class Ls extends SftpCommand {
 				console.println(file.getFilename());
 			}
 			if(isOption(args, LISTING_SHORT_EXTENDED) || isOption(args, LISTING_LONG_EXTENDED)) {
-				for(Object name : fileAttributes.getExtendedAttributes().keySet()) {
-					Object val = fileAttributes.getExtendedAttributes().get(name);
+				for(var name : fileAttributes.extendedAttributes().keySet()) {
+					var val = fileAttributes.extendedAttributes().get(name);
 					console.println(String.format("%" + (CliHelper.hasShortOption(args,'l') ? 64 : 4)+ "s%s", "", name.toString() + "=" + (val == null ? "" : val.toString())));
 				}
 			}
@@ -150,7 +130,7 @@ public class Ls extends SftpCommand {
 	}
 	
 	private boolean isHidden(SftpFile sftpFile) throws SftpStatusException, SshException {
-		SftpFileAttributes fileAttributes = sftpFile.getAttributes();
+		var fileAttributes = sftpFile.attributes();
 		if (fileAttributes.hasAttributeBits() && fileAttributes.isHidden()) {
 			return true;
 		}

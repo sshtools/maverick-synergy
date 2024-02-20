@@ -1,22 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package com.sshtools.server;
 
 import java.io.ByteArrayOutputStream;
@@ -43,6 +24,7 @@ import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.Subsystem;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.ssh.ChannelNG;
 import com.sshtools.synergy.ssh.ChannelOutputStream;
@@ -97,9 +79,10 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 
 	public static final int SSH_EXTENDED_DATA_STDERR = 1;
 
-	Subsystem subsystem;
-	ExecutableCommand command;
-	Map<String, String> environment = new ConcurrentHashMap<String, String>(8, 0.9f, 1);
+	protected Subsystem subsystem;
+	protected ExecutableCommand command;
+	protected Map<String, String> environment = new ConcurrentHashMap<String, String>(8, 0.9f, 1);
+	
 	boolean hasTimedOut = false;
 	boolean haltIncomingData = false;
 	long lastActivity = System.currentTimeMillis();
@@ -112,8 +95,9 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		this(con, false);
 	}
 	public SessionChannelNG(SshConnection con, boolean autoConsume) {
-		super("session", con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
-				0,
+		super("session", 
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
+				UnsignedInteger32.ZERO,
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
 				null,
@@ -588,19 +572,10 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 				close();
 			}
 		} else {
-			if(rawMode) {
-				super.onChannelData(data);
-			} else {
-				onSessionData(data);
-			}
+			super.onChannelData(data);
 		}
 	}
-
-	protected void onSessionData(ByteBuffer data) {
-		synchronized (localWindow) {
-			cache.put(data);
-		}		
-	}
+	
 	/**
 	 * Called when extended data arrives on the channel - for a session channel
 	 * this would not normally be called.
@@ -669,12 +644,12 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	}
 	
 	@Override
-	public int getMaximumWindowSpace() {
+	public UnsignedInteger32 getMaximumWindowSpace() {
 		return localWindow.getMaximumWindowSpace();
 	}
 
 	@Override
-	public int getMinimumWindowSpace() {
+	public UnsignedInteger32 getMinimumWindowSpace() {
 		return localWindow.getMinimumWindowSpace();
 	}
 

@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh.components;
 
 import java.util.ArrayList;
@@ -43,14 +25,14 @@ import com.sshtools.common.util.Utils;
  * 
  * @author Lee David Painter
  */
-public class ComponentFactory<T> implements Cloneable {
+public class ComponentFactory<T extends Component> implements Cloneable {
 
 	/**
 	 * The supported components stored in a Hashtable with a String key as the
 	 * component name such as "3des-cbc" and a Class value storing the
 	 * implementation class.
 	 */
-	protected Map<String, Class<? extends T>> supported = new HashMap<>();
+	protected Map<String, ComponentInstanceFactory<? extends T>> supported = new HashMap<>();
 	protected List<String> order = new ArrayList<>();
 
 	private boolean locked = false;
@@ -92,6 +74,10 @@ public class ComponentFactory<T> implements Cloneable {
 	
 	public Collection<String> names() {
 		return supported.keySet();
+	}
+	
+	public synchronized void order(String csv) throws SshException {
+		order(csv.split(","));
 	}
 
 	public synchronized String order(String[] ordering) throws SshException {
@@ -192,21 +178,24 @@ public class ComponentFactory<T> implements Cloneable {
 	 * if the class cannot be resolved. The name of the component IS NOT
 	 * verified to allow component implementations to be overridden.
 	 * 
-	 * @param name
-	 * @param cls
+	 * @param name name
+	 * @param factory factory
 	 * @throws ClassNotFoundException
 	 */
-	public synchronized void add(String name, Class<? extends T> cls) {
+	@SuppressWarnings("unchecked")
+	public synchronized void add(ComponentInstanceFactory<?> factory) {
 
 		if (locked) {
 			throw new IllegalStateException(
 					"Component factory is locked. Components cannot be added");
 		}
 
-		supported.put(name, cls);
-		// add name to end of order vector
-		if (!order.contains(name))
-			order.add(name);
+		for(var name : factory.getKeys()) {
+			supported.put(name, (ComponentInstanceFactory<? extends T>) factory);
+			// add name to end of order vector
+			if (!order.contains(name))
+				order.add(name);
+		}
 	}
 
 	/**
@@ -220,7 +209,7 @@ public class ComponentFactory<T> implements Cloneable {
 	public T getInstance(String name) throws SshException {
 		if (supported.containsKey(name)) {
 			try {
-				return createInstance(name, supported.get(name));
+				return supported.get(name).create();
 			} catch (Throwable t) {
 				throw new SshException(t.getMessage(),
 						SshException.INTERNAL_ERROR, t);
@@ -239,7 +228,7 @@ public class ComponentFactory<T> implements Cloneable {
 	 */
 	protected T createInstance(String name, Class<? extends T> cls)
 			throws Throwable {
-		return cls.newInstance();
+		return cls.getConstructor().newInstance();
 	}
 
 	/**
@@ -310,7 +299,7 @@ public class ComponentFactory<T> implements Cloneable {
 	}
 
 	public Object clone() {
-		ComponentFactory<T> clone = new ComponentFactory<T>(componentManager);
+		var clone = new ComponentFactory<T>(componentManager);
 		clone.order = new ArrayList<>(order);
 		clone.supported = new HashMap<>(supported);
 		return clone;
@@ -357,7 +346,7 @@ public class ComponentFactory<T> implements Cloneable {
 		list.sort(new Comparator<SecureComponent>() {
 			@Override
 			public int compare(SecureComponent o1, SecureComponent o2) {
-				return new Integer(o2.getPriority()).compareTo(o1.getPriority());
+				return Integer.valueOf(o2.getPriority()).compareTo(o1.getPriority());
 			}
 		});
 		
@@ -390,7 +379,7 @@ public class ComponentFactory<T> implements Cloneable {
 				if(Objects.isNull(strongest)) {
 					strongest = component;
 				} else {
-					if(new Integer(component.getPriority()).compareTo(strongest.getPriority()) > 0) {
+					if(Integer.valueOf(component.getPriority()).compareTo(strongest.getPriority()) > 0) {
 						strongest = component;
 					}
 				}

@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.files.vfs;
 
 import java.io.FileNotFoundException;
@@ -31,8 +13,9 @@ import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.sftp.SftpStatusException;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.UnsignedInteger64;
 
@@ -96,16 +79,37 @@ public class VirtualMountFile extends VirtualFileObject {
 	public SftpFileAttributes getAttributes() throws FileNotFoundException,
 			IOException, PermissionDeniedException {
 		
-		SftpFileAttributes attrs = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY, "UTF-8");
-		attrs.setPermissions(parentMount.defaultPermissions());
-		try {
-			attrs.setReadOnly(parentMount.isReadOnly());
-		} catch (SftpStatusException e) {
+		if(!exists()) {
+			throw new FileNotFoundException();
 		}
-		attrs.setTimes(new UnsignedInteger64(parentMount.lastModified()),
-				new UnsignedInteger64(parentMount.lastModified()),
-				new UnsignedInteger64(parentMount.lastModified()));
-		return attrs;
+		
+		var bldr = SftpFileAttributesBuilder.ofType(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY, "UTF-8");
+
+		bldr.withSize(UnsignedInteger64.ZERO);
+
+		PosixPermissionsBuilder builder = PosixPermissionsBuilder.create();
+		
+		if(isReadable()) {
+			builder.withAllRead();
+		}
+		if(isWritable()) {
+			builder.withAllWrite();
+		}
+		if(isDirectory()) {
+			builder.withAllExecute();
+		}
+
+		bldr.withPermissions(builder.build());
+		
+		bldr.withUid(0);
+		bldr.withGid(0);
+		bldr.withUsername(System.getProperty("maverick.unknownUsername", "unknown"));
+		bldr.withGroup(System.getProperty("maverick.unknownUsername", "unknown"));
+		bldr.withLastAccessTime(parentMount.lastModified());
+		bldr.withLastModifiedTime(parentMount.lastModified());
+		bldr.withCreateTime(parentMount.lastModified());
+		
+		return bldr.build();
 		
 	}
 

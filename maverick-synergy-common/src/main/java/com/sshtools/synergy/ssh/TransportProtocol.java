@@ -1,22 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
@@ -25,6 +6,7 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -40,6 +22,7 @@ import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.nio.IdleStateListener;
 import com.sshtools.common.nio.WriteOperationRequest;
+import com.sshtools.common.policy.SignaturePolicy;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.ExecutorOperationQueues;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
@@ -90,7 +73,9 @@ public abstract class TransportProtocol<T extends SshContext>
 	protected byte[] remotekex;
 	protected byte[] sessionIdentifier;
 	protected UUID uuid;
-
+	protected boolean hasExtensionCapability = false;
+	protected boolean enableExtensionCapability = true;
+	
 	LinkedList<SshMessage> outgoingQueue = new LinkedList<SshMessage>();
 	LinkedList<SshMessage> kexQueue = new LinkedList<SshMessage>();
 
@@ -105,6 +90,8 @@ public abstract class TransportProtocol<T extends SshContext>
 	static final int SSH_MSG_DEBUG = 4;
 	protected static final int SSH_MSG_SERVICE_REQUEST = 5;
 	public static final int SSH_MSG_SERVICE_ACCEPT = 6;
+
+	public static final int SSH_MSG_EXT_INFO = 7;
 
 	static final int SSH_MSG_KEX_INIT = 20;
 	static final int SSH_MSG_NEWKEYS = 21;
@@ -127,6 +114,11 @@ public abstract class TransportProtocol<T extends SshContext>
 	
 	protected boolean completedFirstKeyExchange = false;
 	protected Date disconnectStarted = null;
+	
+	private static final String STRICT_KEX_CLIENT = "kex-strict-c-v00@openssh.com";
+	private static final String STRICT_KEX_SERVER = "kex-strict-s-v00@openssh.com";
+	boolean isKexStrict = false;
+	boolean isFirstKeyExchange = true;
 	
 	protected void transferState(TransportProtocol<? extends SshContext> transport) {
 		
@@ -281,6 +273,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	Date started = new Date();
 	ConnectRequestFuture connectFuture;
 	DisconnectRequestFuture disconnectFuture = new DisconnectRequestFuture();
+	AuthenticatedFuture authenticatedFuture = new AuthenticatedFuture(this);
 	
 	/**
 	 * Create a default transport protocol instance in CLIENT_MODE.
@@ -380,7 +373,7 @@ public abstract class TransportProtocol<T extends SshContext>
 									EventCodes.ATTRIBUTE_OPERATION_FINISHED,
 									new Date()));
 			
-			this.localIdentification += sshContext.getSoftwareVersionComments() + "\r\n";
+			this.localIdentification += sshContext.getSoftwareVersionComments()	+ "\r\n";
 			// Send our identification String
 			
 			if(!sshContext.isHttpRedirect()) {
@@ -459,10 +452,10 @@ public abstract class TransportProtocol<T extends SshContext>
 				break;
 			}
 		} catch (Throwable ex) {
-			ex.printStackTrace();
+			connectFuture.setLastError(ex);
 			if(Log.isInfoEnabled()) {
 				Log.info("Read error from {} {}", 
-						getRemoteAddress().toString(),
+						con.getRemoteIPAddress(),
 						ex.getMessage());
 			}
 			if(Log.isDebugEnabled())
@@ -471,6 +464,15 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 
 		return wantsWrite;
+	}
+	
+	/**
+	 * Get if disconnecting has started but not yet complete.
+	 * 
+	 *  @return disconnecting
+	 */
+	public boolean isDisonnecting() {
+		return isConnected() && disconnectStarted != null;
 	}
 
 	/**
@@ -540,8 +542,8 @@ public abstract class TransportProtocol<T extends SshContext>
 	protected boolean startBinaryProtocol() {
 		
 		if(Log.isInfoEnabled()) {
-			Log.info("Connnection {} identifies itself as {}", 
-					getRemoteAddress().toString(),
+			Log.info("Connnection {}:{} identifies itself as {}", 
+					con.getRemoteIPAddress(), con.getRemotePort(),
 					remoteIdentification.toString().trim());
 		}
 
@@ -624,12 +626,12 @@ public abstract class TransportProtocol<T extends SshContext>
 				if (hasMessage) {
 					// Process the message
 					try {
-						processMessage(payloadIncoming, incomingSequence);
+						processMessage(payloadIncoming, incomingSequence++);
 					} catch (WriteOperationRequest x) {
 						requiresWriteOperation = true;
 					} finally {
 						// Update stats and sequence
-						if (++incomingSequence >= 4294967296L) {
+						if (incomingSequence >= 4294967296L) {
 							incomingSequence = 0;
 						}
 
@@ -671,7 +673,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
 				Log.info("Transport error {} {}", 
-						getRemoteAddress().toString(),
+						con.getRemoteIPAddress(),
 						ex.getMessage());
 			}
 			if(Log.isDebugEnabled())
@@ -1213,7 +1215,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			ex.printStackTrace();
 			if(Log.isInfoEnabled()) {
 				Log.info("Write error from {} {}", 
-						getRemoteAddress().toString(),
+						con.getRemoteIPAddress(),
 						ex.getMessage());
 			}
 			if(Log.isDebugEnabled()) {
@@ -1504,10 +1506,10 @@ public abstract class TransportProtocol<T extends SshContext>
 		disconnectStarted = new Date();
 		if(Log.isInfoEnabled()) {
 			Log.info("Disconnect {} {}", 
-					getRemoteAddress().toString(),
+					con.getRemoteIPAddress(),
 					description);
 		}
-		postMessage(new DisconnectMessage(reason, description));
+		postMessage(new DisconnectMessage(reason, description, true));
 	}
 
 	/**
@@ -1523,7 +1525,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	
 				if(Log.isInfoEnabled()) {
 					Log.info("Connection closed {}", 
-							getRemoteAddress().toString());
+							con.getRemoteIPAddress());
 				}
 				
 				if (disconnectStarted == null)
@@ -1566,9 +1568,6 @@ public abstract class TransportProtocol<T extends SshContext>
 								cleanupOperations(new ConnectionAwareTask(con) {
 									protected void doTask() {
 										
-										disconnected();
-										onDisconnected();
-										
 										EventServiceImplementation
 										.getInstance()
 										.fireEvent(
@@ -1586,6 +1585,9 @@ public abstract class TransportProtocol<T extends SshContext>
 																EventCodes.ATTRIBUTE_OPERATION_FINISHED,
 																new Date()));
 										
+
+										disconnected();
+										onDisconnected();
 	
 									}
 								});
@@ -1668,6 +1670,12 @@ public abstract class TransportProtocol<T extends SshContext>
 			remoteCSCompressions = bar.readString();
 			remoteSCCompressions = bar.readString();
 
+			hasExtensionCapability = remoteKeyExchanges.contains("ext-info-");
+			
+			if(!completedFirstKeyExchange) {
+				isKexStrict = remoteKeyExchanges.contains(isServerMode() ? STRICT_KEX_CLIENT : STRICT_KEX_SERVER);
+			}
+			
 			// Read language strings and ignore as don't support other languages
 			String lang = bar.readString();
 			lang = bar.readString();
@@ -1870,7 +1878,19 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 	}
 
+	protected abstract String getExtensionNegotiationString();
+
+	protected abstract boolean isExtensionNegotiationSupported();
+
 	protected abstract void onKeyExchangeInit() throws SshException;
+
+	private void checkStrictKex() {
+		
+		if(isKexStrict && !completedFirstKeyExchange) {
+			disconnect(PROTOCOL_ERROR,
+					"Strict KEX mode encountered a message that is not permitted at this time");
+		}
+	}
 
 	private void checkAlgorithms() {
 		if(Boolean.getBoolean("maverick.isolate")) {
@@ -1936,9 +1956,34 @@ public abstract class TransportProtocol<T extends SshContext>
 			ByteArrayReader bar = new ByteArrayReader(msg);
 			try {
 				bar.skip(5);
+				String reason = bar.readString();
 				if(Log.isDebugEnabled()) {
-					Log.debug("Recieved SSH_MSG_DISCONNECT {}", bar.readString());
+					Log.debug("Recieved SSH_MSG_DISCONNECT {}", reason);
 				}
+				
+				addTask(EVENTS, new ConnectionTaskWrapper(con, new Runnable() {
+					public void run() {
+						
+						EventServiceImplementation
+						.getInstance()
+						.fireEvent(
+								new Event(
+										this,
+										EventCodes.EVENT_REMOTE_DISCONNECTED,
+										true)
+									.addAttribute(EventCodes.ATTRIBUTE_REASON, reason)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_CONNECTION,
+												con)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_OPERATION_STARTED,
+												disconnectStarted)
+										.addAttribute(
+												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+												new Date()));
+					}
+				}));
+				
 				socketConnection.closeConnection();
 			} finally {
 				bar.close();
@@ -1947,13 +1992,26 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 		case SSH_MSG_IGNORE:
 
+			checkStrictKex();
+			
 			if(Log.isDebugEnabled())
 				Log.debug("Received SSH_MSG_IGNORE");
 			break;
 		case SSH_MSG_DEBUG:
 
+			checkStrictKex();
+			
 			if(Log.isDebugEnabled())
 				Log.debug("Received SSH_MSG_DEBUG");
+			break;
+		case SSH_MSG_EXT_INFO:
+
+			checkStrictKex();
+
+			if(Log.isDebugEnabled())
+				Log.debug("Received SSH_MSG_EXT_INFO");
+			
+			processExtensionInfo(msg);
 			break;
 		case SSH_MSG_NEWKEYS:
 
@@ -1967,12 +2025,16 @@ public abstract class TransportProtocol<T extends SshContext>
 
 			break;
 		case SSH_MSG_KEX_INIT: {
+			
 			if(Log.isDebugEnabled())
 				Log.debug("Received SSH_MSG_KEX_INIT");
 			performKeyExchange(msg);
 			break;
 		}
 		case SSH_MSG_UNIMPLEMENTED: {
+			
+			checkStrictKex();
+			
 			ByteArrayReader bar = new ByteArrayReader(msg);
 			try {
 				bar.skip(1);
@@ -1988,6 +2050,8 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 		default: {
 
+			
+			
 			if(processTransportMessage(msgId, msg)) {
 				return;
 			}
@@ -2103,12 +2167,18 @@ public abstract class TransportProtocol<T extends SshContext>
 		throw new IOException(String.format("Failed to negotiate a transport component from %s and %s", originalClient, originalServer));
 
 	}
+	
+	protected void onKeyExchangeComplete() {
+		
+	}
 
 	protected void completeKeyExchange(SshKeyExchange<T> keyExchange) {
 		
 		localkex = null; 
 		remotekex = null;
 		completedFirstKeyExchange = true;
+		
+		onKeyExchangeComplete();
 		
 		EventServiceImplementation.getInstance()
 			.fireEvent(
@@ -2178,7 +2248,21 @@ public abstract class TransportProtocol<T extends SshContext>
 					outgoingCompression.init(SshCompression.DEFLATER,
 							getSshContext().getCompressionLevel());
 				}
+				
+				if(isKexStrict) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Resetting OUTGOING sequence from {} to zero for strict transport protocol requirements", outgoingSequence);
+					}
+					outgoingSequence = 0L;
+				}
 
+				if(isKexStrict) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Resetting OUTGOING sequence from {} to zero for strict transport protocol requirements", outgoingSequence);
+					}
+					outgoingSequence = 0L;
+				}
+				
 				if (keyExchange.hasReceivedNewKeys()) {
 					completeKeyExchange(keyExchange);
 				}
@@ -2233,6 +2317,13 @@ public abstract class TransportProtocol<T extends SshContext>
 
 				incomingCipherLength = decryption.getBlockSize();
 
+				if(isKexStrict) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Resetting INCOMING sequence from {} to zero for strict transport protocol requirements", incomingSequence);
+					}
+					incomingSequence = 0L;
+				}
+				
 				if (keyExchange.hasSentNewKeys()) {
 					completeKeyExchange(keyExchange);
 				}
@@ -2281,6 +2372,13 @@ public abstract class TransportProtocol<T extends SshContext>
 									compressionCS);
 					outgoingCompression.init(SshCompression.DEFLATER,
 							getSshContext().getCompressionLevel());
+				}
+				
+				if(isKexStrict) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Resetting OUTGOING sequence from {} to zero for strict transport protocol requirements", outgoingSequence);
+					}
+					outgoingSequence = 0L;
 				}
 
 				if (keyExchange.hasReceivedNewKeys()) {
@@ -2338,6 +2436,13 @@ public abstract class TransportProtocol<T extends SshContext>
 
 				incomingCipherLength = decryption.getBlockSize();
 
+				if(isKexStrict) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Resetting INCOMING sequence from {} to zero for strict transport protocol requirements", incomingSequence);
+					}
+					incomingSequence = 0L;
+				}
+				
 				if (keyExchange.hasSentNewKeys()) {
 					completeKeyExchange(keyExchange);
 				}
@@ -2345,6 +2450,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			} catch (Throwable ex) {
 				if(Log.isErrorEnabled())
 					Log.error("Failed to create transport component", ex);
+				connectFuture.setLastError(ex);
 				connectFuture.done(false);
 				if(disconnectStarted != null)
 					disconnect(
@@ -2354,7 +2460,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			}
 		}
 	}
-	
+
 	void sendKeyExchangeInit() {
 
 		try {
@@ -2371,7 +2477,10 @@ public abstract class TransportProtocol<T extends SshContext>
 				if (localkex == null) {
 
 					try {
-						localkex = TransportProtocolHelper.generateKexInit(getContext());
+						localkex = TransportProtocolHelper.generateKexInit(getContext(), 
+								isExtensionNegotiationSupported(),
+								getExtensionNegotiationString(),
+								isServerMode() ? STRICT_KEX_SERVER : STRICT_KEX_CLIENT);
 
 						kexQueue.clear();
 						if(Log.isDebugEnabled())
@@ -2399,6 +2508,68 @@ public abstract class TransportProtocol<T extends SshContext>
 					"Failed to create SSH_MSG_KEX_INIT");
 		}
 
+	}
+	
+	protected abstract boolean isServerMode();
+
+	private void processExtensionInfo(byte[] msg) throws IOException {
+		 ByteArrayReader reader = new ByteArrayReader(msg);
+		 
+		 try {
+			 reader.skip(1);
+			 int count = (int) reader.readInt();
+			 
+			 if(Log.isDebugEnabled()) {
+				 Log.debug("Server supports {} extensions", count);
+			 }
+			 
+			 for(int i=0; i<count; i++) {
+				 
+				 String name = reader.readString();
+				 String value = reader.readString();
+				 
+				 switch(name) {
+				 case "server-sig-algs":
+					 getContext().setPolicy(SignaturePolicy.class, new SignaturePolicy(Arrays.asList(value.split(","))));
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side supports the signature algorithms {}", value);
+					 }
+					 break;
+				 case "no-flow-control":
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side requested no flow control");
+					 }
+					 break;
+				 case "accept-channels":
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side accepts the following channels {}", value);
+					 }
+					 break;
+				 case "elevation":
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side requested elevation value of {}", value);
+					 }
+					 break;
+				 case "delay-compression":
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side supports compression re-negotiation");
+					 }
+					 break;
+				 default:
+					 if(Log.isDebugEnabled()) {
+						 Log.debug("Remote side reported unsupported element {} in ext-info with a value of {}", 
+								 name, 
+								 value);
+					 }
+					 break;
+				 }
+				 
+				
+			 }
+		
+		 } finally {
+			 reader.close();
+		 }
 	}
 
  	public String getCipherCS() {
@@ -2570,10 +2741,12 @@ public abstract class TransportProtocol<T extends SshContext>
 
 		int reason;
 		String description;
+		boolean closeProtocol;
 
-		DisconnectMessage(int reason, String description) {
+		DisconnectMessage(int reason, String description, boolean closeProtocol) {
 			this.reason = reason;
 			this.description = description;
+			this.closeProtocol = closeProtocol;
 		}
 
 		public boolean writeMessageIntoBuffer(ByteBuffer buf) {
@@ -2589,7 +2762,7 @@ public abstract class TransportProtocol<T extends SshContext>
 			if(Log.isDebugEnabled())
 				Log.debug("Sent SSH_MSG_DISCONNECT reason=" + reason + " "
 						+ description);
-			socketConnection.closeConnection();
+			socketConnection.closeConnection(closeProtocol);
 		}
 	}
 
@@ -2694,5 +2867,9 @@ public abstract class TransportProtocol<T extends SshContext>
 
 	public String getLocalIdentification() {
 		return localIdentification.trim();
+	}
+
+	public AuthenticatedFuture getAuthenticatedFuture() {
+		return authenticatedFuture;
 	}
 }

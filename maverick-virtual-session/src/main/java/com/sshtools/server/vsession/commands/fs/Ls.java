@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.server.vsession.commands.fs;
 
 import java.io.IOException;
@@ -29,7 +11,6 @@ import java.util.List;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.util.Utils;
 import com.sshtools.server.vsession.CliHelper;
 import com.sshtools.server.vsession.ShellCommand;
 import com.sshtools.server.vsession.UsageHelper;
@@ -102,12 +83,12 @@ public class Ls extends ShellCommand {
 				String lastModifiedTime = "";
 				long size = 0;
 				if (file.isFile()) {
-					size = attrs.getSize().longValue();
+					size = attrs.size().longValue();
 				} else if (file.isDirectory()) {
 					size = 0;
 				}
 				SimpleDateFormat df;
-		        long mt = (attrs.getModifiedTime().longValue() * 1000L);
+		        long mt = (attrs.lastModifiedTime().toMillis());
 		        long now = System.currentTimeMillis();
 
 		        if ((now - mt) > (6 * 30 * 24 * 60 * 60 * 1000L)) {
@@ -119,10 +100,10 @@ public class Ls extends ShellCommand {
 		        lastModifiedTime = df.format(new Date(mt));
 				int linkCount = 0;
 				process.println(String.format("%s %-3d %-8s %-8s %10d %-14s %-30s", 
-						attrs.getPermissionsString(), 
+						attrs.toPermissionsString(), 
 						linkCount, 
-						Utils.defaultString(attrs.getUID(), "nouser"),
-						Utils.defaultString(attrs.getGID(), "nogroup"),
+						attrs.bestUsername(),
+						attrs.bestGroup(),
 						size, 
 						lastModifiedTime, 
 						file.getName()));
@@ -130,9 +111,9 @@ public class Ls extends ShellCommand {
 				process.println(file.getName());
 			}
 			if(CliHelper.hasOption(args,'x', "extended")) {
-				SftpFileAttributes attrs = file.getAttributes();
-				for(Object name : attrs.getExtendedAttributes().keySet()) {
-					Object val = attrs.getExtendedAttributes().get(name);
+				var attrs = file.getAttributes();
+				for(var name : attrs.extendedAttributes().keySet()) {
+					var val = attrs.extendedAttributes().get(name);
 					process.println(String.format("%" + (CliHelper.hasShortOption(args,'l') ? 64 : 4)+ "s%s", "", name.toString() + "=" + (val == null ? "" : val.toString())));
 				}
 			}

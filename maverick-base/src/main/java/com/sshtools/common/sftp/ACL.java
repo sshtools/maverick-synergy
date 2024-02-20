@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.sftp;
 
 /**
@@ -57,12 +39,16 @@ public class ACL {
     public static final int ACE4_WRITE_OWNER       = 0x00080000;
     public static final int ACE4_SYNCHRONIZE       = 0x00100000;
     
-    int type;
-    int flags;
-    int mask;
-    String who;
+    private final int type;
+    private final int flags;
+    private final int mask;
+    private final String who;
 
     public ACL(int type, int flags, int mask, String who) {
+    	this.type = type;
+    	this.flags = flags;
+    	this.mask = mask;
+    	this.who = who;
     }
 
     public int getType() {
@@ -80,4 +66,9 @@ public class ACL {
     public String getWho() {
         return who;
     }
+
+	@Override
+	public String toString() {
+		return "ACL [type=" + type + ", flags=" + flags + ", mask=" + mask + ", who=" + who + "]";
+	}
 }

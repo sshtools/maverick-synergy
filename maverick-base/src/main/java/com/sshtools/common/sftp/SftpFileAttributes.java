@@ -1,31 +1,25 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
 package com.sshtools.common.sftp;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermission;
+import java.text.MessageFormat;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Vector;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
+import com.sshtools.common.logger.Log;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.UnsignedInteger32;
@@ -37,76 +31,781 @@ import com.sshtools.common.util.UnsignedInteger64;
  * attribute information.
  * 
  * @author Lee David Painter
+ * @param <SSH_FILEXFER_TYPE_FIFO>
  */
 public class SftpFileAttributes {
 
-	public static final long SSH_FILEXFER_ATTR_SIZE 			= 0x00000001;
-	public static final long SSH_FILEXFER_ATTR_PERMISSIONS 	    = 0x00000004;
-	public static final long SSH_FILEXFER_ATTR_ACCESSTIME 		= 0x00000008;
-	public static final long SSH_FILEXFER_ATTR_CREATETIME 		= 0x00000010;
-	public static final long SSH_FILEXFER_ATTR_MODIFYTIME 		= 0x00000020;
-	public static final long SSH_FILEXFER_ATTR_ACL 			    = 0x00000040;
-	public static final long SSH_FILEXFER_ATTR_OWNERGROUP 		= 0x00000080;
-	public static final long SSH_FILEXFER_ATTR_SUBSECOND_TIMES  = 0x00000100;
-	
+	public final static class SftpFileAttributesBuilder {
+
+		public static SftpFileAttributesBuilder create() {
+			return new SftpFileAttributesBuilder();
+		}
+
+		public static SftpFileAttributesBuilder ofType(int type, String charsetEncoding) {
+			return new SftpFileAttributesBuilder().withType(type).withCharsetEncoding(charsetEncoding);
+		}
+
+		public static SftpFileAttributesBuilder of(ByteArrayReader bar, int version, String charsetEncoding)
+				throws IOException {
+			return new SftpFileAttributesBuilder().asVersion(version).withCharsetEncoding(charsetEncoding)
+					.fromPacket(bar);
+		}
+
+		private Optional<FileTime> lastAccessTime = Optional.empty();
+		private Optional<FileTime> createTime = Optional.empty();
+		private Optional<FileTime> lastModifiedTime = Optional.empty();
+		private Optional<FileTime> lastAttributesModifiedTime = Optional.empty();
+		private Optional<UnsignedInteger64> size = Optional.empty();
+		private Optional<UnsignedInteger64> allocationSize = Optional.empty();
+		private int type = 0;
+		private long flags = 0;
+		private Optional<String> charsetEncoding = Optional.empty();
+		private int version = 4;
+		private Optional<Long> supportedAttributeMask = Optional.empty();
+		private Optional<Long> supportedAttributeBits = Optional.empty();
+		private Optional<PosixPermissions> permissions = Optional.empty();
+		private Optional<Integer> uid = Optional.empty();
+		private Optional<String> username = Optional.empty();
+		private Optional<Integer> gid = Optional.empty();
+		private Optional<String> group = Optional.empty();
+		private Optional<UnsignedInteger32> aclFlags = Optional.empty();
+		private final List<ACL> acls = new ArrayList<>();
+		private final Map<String, byte[]> extendedAttributes = new HashMap<String, byte[]>();
+		private Optional<UnsignedInteger32> attributeBits = Optional.empty();
+		private Optional<String> mimeType = Optional.empty();
+		private Optional<Byte> textHint = Optional.empty();
+		private Optional<UnsignedInteger32> attributeBitsValid = Optional.empty();
+		private Optional<Integer> linkCount = Optional.empty();
+		private Optional<String> untranslatedName = Optional.empty();
+
+		private SftpFileAttributesBuilder() {
+		}
+
+		public SftpFileAttributesBuilder addAcls(ACL... acls) {
+			return addAcls(Arrays.asList(acls));
+		}
+
+		public SftpFileAttributesBuilder addAcls(Collection<ACL> acls) {
+			this.acls.addAll(acls);
+			flags |= SSH_FILEXFER_ATTR_UIDGID;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder addExtendedAttribute(String key, byte[] value) {
+			extendedAttributes.put(key, value);
+			flags |= SSH_FILEXFER_ATTR_EXTENDED;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder addExtendedAttributes(Map<String, byte[]> extendedAttributes) {
+			this.extendedAttributes.putAll(extendedAttributes);
+			flags |= SSH_FILEXFER_ATTR_EXTENDED;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder asVersion(int version) {
+			this.version = version;
+			return this;
+		}
+
+		public SftpFileAttributes build() {
+			return new SftpFileAttributes(this);
+		}
+
+		public SftpFileAttributesBuilder removeExtendedAttribute(String key) {
+			extendedAttributes.remove(key);
+			flags |= SSH_FILEXFER_ATTR_EXTENDED;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withAclFlags(long aclFlags) {
+			return withAclFlags(new UnsignedInteger32(aclFlags));
+		}
+
+		public SftpFileAttributesBuilder withAclFlags(Optional<UnsignedInteger32> aclFlags) {
+			this.aclFlags = aclFlags;
+			flags |= SSH_FILEXFER_ATTR_UIDGID;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withAclFlags(UnsignedInteger32 aclFlags) {
+			return withAclFlags(Optional.of(aclFlags));
+		}
+
+		public SftpFileAttributesBuilder withAcls(ACL... acls) {
+			return withAcls(Arrays.asList(acls));
+		}
+
+		public SftpFileAttributesBuilder withAcls(Collection<ACL> acls) {
+			this.acls.clear();
+			return addAcls(acls);
+		}
+
+		public SftpFileAttributesBuilder withAppendOnly(boolean value) {
+			setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_APPEND_ONLY, value);
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withArchive(boolean value) {
+			setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_ARCHIVE, value);
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withAttributeBits(int attributeBits) {
+			return withAttributeBits(new UnsignedInteger32(attributeBits));
+		}
+
+		public SftpFileAttributesBuilder withAttributeBits(Optional<UnsignedInteger32> attributeBits) {
+			this.attributeBits = attributeBits;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withAttributeBits(UnsignedInteger32 attributeBits) {
+			return withAttributeBits(Optional.of(attributeBits));
+		}
+
+		public SftpFileAttributesBuilder withCaseSensitive(boolean value) {
+			setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_CASE_INSENSITIVE, value);
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withCharsetEncoding(Charset charsetEncoding) {
+			return withCharsetEncoding(charsetEncoding.name());
+		}
+
+		public SftpFileAttributesBuilder withCharsetEncoding(Optional<String> charsetEncoding) {
+			this.charsetEncoding = charsetEncoding;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withCharsetEncoding(String charsetEncoding) {
+			return withCharsetEncoding(Optional.ofNullable(charsetEncoding));
+		}
+
+		public SftpFileAttributesBuilder withCompressed(boolean value) {
+			setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_COMPRESSED, value);
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withCreateTime(FileTime createTime) {
+			return withCreateTime(Optional.ofNullable(createTime));
+		}
+
+		public SftpFileAttributesBuilder withCreateTime(long createTimeMs) {
+			return withCreateTime(FileTime.fromMillis(createTimeMs));
+		}
+
+		public SftpFileAttributesBuilder withCreateTime(Optional<FileTime> createTime) {
+			this.createTime = createTime;
+			if (this.createTime.isPresent())
+				flags |= SSH_FILEXFER_ATTR_CREATETIME;
+			else
+				flags &= ~SSH_FILEXFER_ATTR_CREATETIME;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withEncrypted(boolean value) {
+			setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_ENCRYPTED, value);
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withExtendedAttributes(Map<String, byte[]> extendedAttributes) {
+			this.extendedAttributes.clear();
+			return addExtendedAttributes(extendedAttributes);
+		}
+
+		public SftpFileAttributesBuilder withFileAttributes(SftpFileAttributes attributes) {
+			this.size = attributes.size;
+			this.type = attributes.type;
+			this.charsetEncoding = Optional.of(attributes.charsetEncoding);
+			this.supportedAttributeBits = attributes.supportedAttributeBits;
+			this.supportedAttributeMask = attributes.supportedAttributeMask;
+			this.flags = attributes.flags;
+			this.allocationSize = attributes.allocationSize;
+			this.uid = attributes.uid;
+			this.gid = attributes.gid;
+			this.username = attributes.username;
+			this.group = attributes.group;
+			this.permissions = attributes.permissions;
+			this.lastAccessTime = attributes.lastAccessTime;
+			this.createTime = attributes.createTime;
+			this.lastModifiedTime = attributes.lastModifiedTime;
+			this.lastAttributesModifiedTime = attributes.lastAttributesModifiedTime;
+			this.acls.clear();
+			this.acls.addAll(attributes.acls);
+			this.aclFlags = attributes.aclFlags;
+			this.extendedAttributes.clear();
+			this.extendedAttributes.putAll(attributes.extendedAttributes);
+			this.attributeBits = attributes.attributeBits;
+			this.mimeType = attributes.mimeType;
+			this.textHint = attributes.textHint;
+			this.attributeBitsValid = attributes.attributeBitsValid;
+			this.linkCount = attributes.linkCount;
+			this.untranslatedName = attributes.untranslatedName;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withFlags(long flags) {
+			this.flags = flags;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withGid(int gid) {
+			return withGid(Optional.of(gid));
+		}
+
+		public SftpFileAttributesBuilder withGid(Optional<Integer> gid) {
+			this.gid = gid;
+			if (this.gid.isPresent() || this.uid.isPresent())
+				flags |= SSH_FILEXFER_ATTR_UIDGID;
+			else
+				flags &= ~SSH_FILEXFER_ATTR_UIDGID;
+			return this;
+		}
+		
+		public SftpFileAttributesBuilder withUidOrUsername(Optional<String> attribute) {
+			if(attribute.isEmpty()) {
+				username = Optional.empty();
+				uid = Optional.empty();
+			}
+			else {
+				try {
+					uid = Optional.of(Integer.parseInt(attribute.get()));
+					username = Optional.empty();
+				} catch(NumberFormatException iae) {
+					uid = Optional.empty();
+					username = Optional.ofNullable(attribute.get());
+				}
+			}
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withUidOrUsername(String attribute) {
+			return withUidOrUsername(Optional.ofNullable(attribute));
+		}
+		
+		public SftpFileAttributesBuilder withGidOrGroup(Optional<String> attribute) {
+			if(attribute.isEmpty()) {
+				group = Optional.empty();
+				gid = Optional.empty();
+			}
+			else {
+				try {
+					gid = Optional.of(Integer.parseInt(attribute.get()));
+					group = Optional.empty();
+				} catch(NumberFormatException iae) {
+					gid = Optional.empty();
+					group = Optional.ofNullable(attribute.get());
+				}
+			}
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withGidOrGroup(String attribute) {
+			return withGidOrGroup(Optional.ofNullable(attribute));
+		}
+
+		public SftpFileAttributesBuilder withGroup(Optional<String> group) {
+			this.group = group;
+			if (this.username.isPresent() || this.group.isPresent())
+				flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
+			else
+				flags &= ~SSH_FILEXFER_ATTR_OWNERGROUP;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withGroup(String group) {
+			return withGroup(Optional.of(group));
+		}
+
+		public SftpFileAttributesBuilder withHidden(boolean value) {
+			setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_HIDDEN, value);
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withImmutable(boolean value) {
+			setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_IMMUTABLE, value);
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withLastAccessTime(FileTime atime) {
+			return withLastAccessTime(Optional.ofNullable(atime));
+		}
+
+		public SftpFileAttributesBuilder withLastAccessTime(long atimeMs) {
+			return withLastAccessTime(FileTime.fromMillis(atimeMs));
+		}
+
+		public SftpFileAttributesBuilder withLastAccessTime(Optional<FileTime> atime) {
+			this.lastAccessTime = atime;
+			if (this.lastAccessTime.isPresent())
+				flags |= SSH_FILEXFER_ATTR_ACCESSTIME;
+			else
+				flags &= ~SSH_FILEXFER_ATTR_ACCESSTIME;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withLastModifiedTime(FileTime lastModifiedTime) {
+			return withLastModifiedTime(Optional.ofNullable(lastModifiedTime));
+		}
+
+		public SftpFileAttributesBuilder withLastModifiedTime(long lastModifiedTimeMs) {
+			return withLastModifiedTime(FileTime.fromMillis(lastModifiedTimeMs));
+		}
+
+		public SftpFileAttributesBuilder withLastModifiedTime(Optional<FileTime> lastModifiedTime) {
+			this.lastModifiedTime = lastModifiedTime;
+			if (this.lastModifiedTime.isPresent())
+				flags |= SSH_FILEXFER_ATTR_MODIFYTIME;
+			else
+				flags &= ~SSH_FILEXFER_ATTR_MODIFYTIME;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withPermissions(Collection<PosixFilePermission> permissions) {
+			return withPermissions(PosixPermissionsBuilder.create().withPermissions(permissions).build());
+		}
+
+		public SftpFileAttributesBuilder withPermissions(Optional<PosixPermissions> permissions) {
+			this.permissions = permissions;
+			if (this.permissions.isPresent())
+				flags |= SSH_FILEXFER_ATTR_PERMISSIONS;
+			else
+				flags &= ~SSH_FILEXFER_ATTR_PERMISSIONS;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withPermissions(PosixFilePermission... permissions) {
+			return withPermissions(Arrays.asList(permissions));
+		}
+
+		public SftpFileAttributesBuilder withPermissions(PosixPermissions permissions) {
+			return withPermissions(Optional.of(permissions));
+		}
+
+		public SftpFileAttributesBuilder withReadOnly(boolean value) {
+			setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_READONLY, value);
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withSize(long size) {
+			return withSize(new UnsignedInteger64(size));
+		}
+
+		public SftpFileAttributesBuilder withSize(Optional<UnsignedInteger64> size) {
+			this.size = size;
+			if (this.size.isPresent())
+				flags |= SSH_FILEXFER_ATTR_SIZE;
+			else
+				flags &= ~SSH_FILEXFER_ATTR_SIZE;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withSize(UnsignedInteger64 size) {
+			return withSize(Optional.of(size));
+		}
+
+		public SftpFileAttributesBuilder withSparse(boolean value) {
+			setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_SPARSE, value);
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withSubSecondsTimes(boolean subSecondTimes) {
+			if (subSecondTimes)
+				flags |= SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
+			else
+				flags &= ~SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withSupportedAttributeBits(long supportedAttributeBits) {
+			return withSupportedAttributeBits(Optional.of(supportedAttributeBits));
+		}
+
+		public SftpFileAttributesBuilder withSupportedAttributeBits(Optional<Long> supportedAttributeBits) {
+			this.supportedAttributeBits = supportedAttributeBits;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withSupportedAttributeMask(long supportedAttributeMask) {
+			return withSupportedAttributeMask(Optional.of(supportedAttributeMask));
+		}
+
+		public SftpFileAttributesBuilder withSupportedAttributeMask(Optional<Long> supportedAttributeMask) {
+			this.supportedAttributeMask = supportedAttributeMask;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withSync(boolean value) {
+			setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_SYNC, value);
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withSystem(boolean value) {
+			setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_SYSTEM, value);
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withType(int type) {
+			this.type = type;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withUid(int uid) {
+			return withUid(Optional.of(uid));
+		}
+
+		public SftpFileAttributesBuilder withUid(Optional<Integer> uid) {
+			this.uid = uid;
+			if (this.uid.isPresent() || this.gid.isPresent())
+				flags |= SSH_FILEXFER_ATTR_UIDGID;
+			else
+				flags &= ~SSH_FILEXFER_ATTR_UIDGID;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withUsername(Optional<String> username) {
+			this.username = username;
+			if (this.username.isPresent() || this.group.isPresent())
+				flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
+			else
+				flags &= ~SSH_FILEXFER_ATTR_OWNERGROUP;
+			return this;
+		}
+
+		public SftpFileAttributesBuilder withUsername(String username) {
+			return withUsername(Optional.of(username));
+		}
+
+		String calcCharset() {
+			return charsetEncoding.map(e -> {
+				try {
+					"1234567890".getBytes(e);
+					return e;
+				} catch (UnsupportedEncodingException ex) {
+					if (Log.isDebugEnabled())
+						Log.debug(e + " is not a supported character set encoding. Defaulting to ISO-8859-1");
+					return "ISO-8859-1";
+				}
+			}).orElse("ISO-8859-1");
+		}
+
+		SftpFileAttributesBuilder fromPacket(ByteArrayReader bar) throws IOException {
+
+			var charsetEncoding = calcCharset();
+
+			if (bar.available() >= 4)
+				flags = bar.readInt();
+			else
+				flags = 0;
+
+			// Work out the type from the permissions field later if we're not using
+			// version
+			// 4 of the protocol
+			type = 0;
+			if (version > 3) {
+				// Get the type if were using version 4+ of the protocol
+				if (bar.available() > 0)
+					type = bar.read();
+			}
+
+			// if ATTR_SIZE flag is set then read size
+			if (isFlagSet(SSH_FILEXFER_ATTR_SIZE, version) && bar.available() >= 8) {
+				byte[] raw = new byte[8];
+				bar.read(raw);
+				size = Optional.of(new UnsignedInteger64(raw));
+			} else {
+				size = Optional.empty();
+			}
+
+			if (isFlagSet(SSH_FILEXFER_ATTR_ALLOCATION_SIZE, version) && bar.available() >= 8) {
+				byte[] raw = new byte[8];
+				bar.read(raw);
+				allocationSize = Optional.of(new UnsignedInteger64(raw));
+			} else {
+				allocationSize = Optional.empty();
+			}
+
+			if (version <= 3 && isFlagSet(SSH_FILEXFER_ATTR_UIDGID, version) && bar.available() >= 8) {
+
+				uid = Optional.of((int) bar.readInt());
+				gid = Optional.of((int) bar.readInt());
+			} else if (version > 3 && isFlagSet(SSH_FILEXFER_ATTR_OWNERGROUP, version) && bar.available() > 0) {
+				username = Optional.of(bar.readString(charsetEncoding));
+				group = Optional.of(bar.readString(charsetEncoding));
+				uid = Optional.ofNullable(username.map(u -> {
+					try {
+						return Integer.parseInt(u);
+					} catch (Exception e) {
+						return null;
+					}
+				}).orElse(null));
+				gid = Optional.ofNullable(group.map(g -> {
+					try {
+						return Integer.parseInt(g);
+					} catch (Exception e) {
+						return null;
+					}
+				}).orElse(null));
+			} else {
+				username = Optional.empty();
+				uid = Optional.empty();
+				group = Optional.empty();
+				gid = Optional.empty();
+			}
+
+			if (isFlagSet(SSH_FILEXFER_ATTR_PERMISSIONS, version) && bar.available() >= 4) {
+				var fullPermissionsMask = bar.readInt();
+				permissions = Optional
+						.of(PosixPermissionsBuilder.create().withBitmaskFlags(fullPermissionsMask).build());
+				if (version <= 3) {
+					int ifmt = (int) fullPermissionsMask & S_IFMT;
+					if (ifmt > 0) {
+						if (ifmt == S_IFREG) {
+							type = SSH_FILEXFER_TYPE_REGULAR;
+						} else if (ifmt == S_IFLNK) {
+							type = SSH_FILEXFER_TYPE_SYMLINK;
+						} else if (ifmt == S_IFCHR) {
+							type = SSH_FILEXFER_TYPE_CHAR_DEVICE;
+						} else if (ifmt == S_IFBLK) {
+							type = SSH_FILEXFER_TYPE_BLOCK_DEVICE;
+						} else if (ifmt == S_IFDIR) {
+							type = SSH_FILEXFER_TYPE_DIRECTORY;
+						} else if (ifmt == S_IFIFO) {
+							type = SSH_FILEXFER_TYPE_FIFO;
+						} else if (ifmt == S_IFSOCK) {
+							type = SSH_FILEXFER_TYPE_SOCKET;
+						} else if (ifmt == S_IFMT) {
+							type = SSH_FILEXFER_TYPE_SPECIAL;
+						} else {
+							type = SSH_FILEXFER_TYPE_UNKNOWN;
+						}
+					}
+				}
+			} else
+				permissions = Optional.empty();
+
+			if (type == 0) {
+				type = SSH_FILEXFER_TYPE_UNKNOWN;
+			}
+
+			lastModifiedTime = Optional.empty();
+			createTime = Optional.empty();
+			lastAccessTime = Optional.empty();
+			lastAttributesModifiedTime = Optional.empty();
+
+			if (version <= 3 && isFlagSet(SSH_FILEXFER_ATTR_ACCESSTIME, version) && bar.available() >= 8) {
+				lastAccessTime = Optional.of(FileTime.from(bar.readInt(), TimeUnit.SECONDS));
+				lastModifiedTime = Optional.of(FileTime.from(bar.readInt(), TimeUnit.SECONDS));
+			} else if (version > 3 && bar.available() > 0) {
+				if (isFlagSet(SSH_FILEXFER_ATTR_ACCESSTIME, version) && bar.available() >= 8) {
+					var atimeSeconds = bar.readUINT64().longValue();
+					if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version) && bar.available() >= 4) {
+						lastAccessTime = Optional.of(FileTime
+								.from(Instant.ofEpochSecond(atimeSeconds).plusNanos(bar.readUINT32().longValue())));
+					} else {
+						lastAccessTime = Optional.of(FileTime.from(atimeSeconds, TimeUnit.SECONDS));
+					}
+				} else
+					lastAccessTime = Optional.empty();
+			}
+
+			if (version > 3 && bar.available() > 0) {
+				if (isFlagSet(SSH_FILEXFER_ATTR_CREATETIME, version) && bar.available() >= 8) {
+					var ctimeSeconds = bar.readUINT64().longValue();
+					if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version) && bar.available() >= 4) {
+						createTime = Optional.of(FileTime
+								.from(Instant.ofEpochSecond(ctimeSeconds).plusNanos(bar.readUINT32().longValue())));
+					} else {
+						createTime = Optional.of(FileTime.from(ctimeSeconds, TimeUnit.SECONDS));
+					}
+				}
+			}
+
+			if (version > 3 && bar.available() > 0) {
+				if (isFlagSet(SSH_FILEXFER_ATTR_MODIFYTIME, version) && bar.available() >= 8) {
+					var mtimeSeconds = bar.readUINT64().longValue();
+					if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version) && bar.available() >= 4) {
+						lastModifiedTime = Optional.of(FileTime
+								.from(Instant.ofEpochSecond(mtimeSeconds).plusNanos(bar.readUINT32().longValue())));
+					} else {
+						lastModifiedTime = Optional.of(FileTime.from(mtimeSeconds, TimeUnit.SECONDS));
+					}
+				}
+			}
+
+			if (version >= 6 && bar.available() > 0) {
+				if (isFlagSet(SSH_FILEXFER_ATTR_CTIME, version) && bar.available() >= 8) {
+					var ctimeSeconds = bar.readUINT64().longValue();
+					if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version) && bar.available() >= 4) {
+						lastAttributesModifiedTime = Optional.of(FileTime
+								.from(Instant.ofEpochSecond(ctimeSeconds).plusNanos(bar.readUINT32().longValue())));
+					} else {
+						lastAttributesModifiedTime = Optional.of(FileTime.from(ctimeSeconds, TimeUnit.SECONDS));
+					}
+				}
+			}
+
+			aclFlags = Optional.empty();
+			acls.clear();
+			if (version > 3 && isFlagSet(SSH_FILEXFER_ATTR_ACL, version) && bar.available() >= 4) {
+
+				if (version >= 6 && bar.available() >= 4) {
+					aclFlags = Optional.of(bar.readUINT32());
+				}
+
+				int length = (int) bar.readInt();
+
+				if (length > 0 && bar.available() >= length) {
+					int count = (int) bar.readInt();
+					for (int i = 0; i < count; i++) {
+						acls.add(new ACL((int) bar.readInt(), (int) bar.readInt(), (int) bar.readInt(),
+								bar.readString()));
+					}
+				}
+			}
+
+			if (version >= 5 && isFlagSet(SSH_FILEXFER_ATTR_BITS, version) && bar.available() >= 4) {
+				attributeBits = Optional.of(bar.readUINT32());
+			} else {
+				attributeBits = Optional.empty();
+			}
+
+			attributeBitsValid = Optional.empty();
+			textHint = Optional.empty();
+			mimeType = Optional.empty();
+			linkCount = Optional.empty();
+			untranslatedName = Optional.empty();
+			if (version >= 6) {
+
+				if (isFlagSet(SSH_FILEXFER_ATTR_BITS, version) && bar.available() >= 4) {
+					attributeBitsValid = Optional.of(bar.readUINT32());
+				}
+
+				if (isFlagSet(SSH_FILEXFER_ATTR_TEXT_HINT, version) && bar.available() >= 1) {
+					textHint = Optional.of((byte) bar.read());
+				}
+				if (isFlagSet(SSH_FILEXFER_ATTR_MIME_TYPE, version) && bar.available() >= 4) {
+					mimeType = Optional.of(bar.readString());
+				}
+
+				if (isFlagSet(SSH_FILEXFER_ATTR_LINK_COUNT, version) && bar.available() >= 4) {
+					linkCount = Optional.of(bar.readUINT32().intValue());
+				}
+
+				if (isFlagSet(SSH_FILEXFER_ATTR_UNTRANSLATED, version) && bar.available() >= 4) {
+					untranslatedName = Optional.of(bar.readString());
+				}
+			}
+
+			extendedAttributes.clear();
+			if (version >= 3 && isFlagSet(SSH_FILEXFER_ATTR_EXTENDED, version) && bar.available() >= 4) {
+				var count = (int) bar.readInt();
+				for (int i = 0; i < count; i++) {
+					extendedAttributes.put(bar.readString(), bar.readBinaryString());
+				}
+			}
+
+			return this;
+		}
+
+		boolean isFlagSet(long flag, int version) {
+			return SftpFileAttributes.isFlagSet(flag, flags, version, supportedAttributeMask);
+		}
+
+		void setAttributeBit(long attributeBit, boolean value) {
+			flags = flags | SSH_FILEXFER_ATTR_BITS;
+			if (value) {
+				attributeBits = Optional.of(new UnsignedInteger32(
+						attributeBits.map(UnsignedInteger32::longValue).orElse(0l) | attributeBit));
+			} else {
+				attributeBits = Optional.of(new UnsignedInteger32(
+						attributeBits.map(UnsignedInteger32::longValue).orElse(0l) & ~attributeBit));
+			}
+		}
+	}
+
+	public static final long SSH_FILEXFER_ATTR_SIZE = 0x00000001;
+	public static final long SSH_FILEXFER_ATTR_UIDGID = 0x00000002;
+	public static final long SSH_FILEXFER_ATTR_PERMISSIONS = 0x00000004;
+
+	public static final long SSH_FILEXFER_ATTR_ACCESSTIME = 0x00000008;
+
+	public static final long SSH_FILEXFER_ATTR_EXTENDED = 0x80000000;
+
+	public static final long VERSION_3_FLAGS = SSH_FILEXFER_ATTR_SIZE | SSH_FILEXFER_ATTR_UIDGID
+			| SSH_FILEXFER_ATTR_PERMISSIONS | SSH_FILEXFER_ATTR_ACCESSTIME | SSH_FILEXFER_ATTR_EXTENDED;
+	// Version 4 flags
+	public static final long SSH_FILEXFER_ATTR_CREATETIME = 0x00000010;
+	public static final long SSH_FILEXFER_ATTR_MODIFYTIME = 0x00000020;
+	public static final long SSH_FILEXFER_ATTR_ACL = 0x00000040;
+	public static final long SSH_FILEXFER_ATTR_OWNERGROUP = 0x00000080;
+
+	public static final long SSH_FILEXFER_ATTR_SUBSECOND_TIMES = 0x00000100;
+
+	public static final long VERSION_4_FLAGS = (VERSION_3_FLAGS ^ SSH_FILEXFER_ATTR_UIDGID)
+			| SSH_FILEXFER_ATTR_CREATETIME | SSH_FILEXFER_ATTR_MODIFYTIME | SSH_FILEXFER_ATTR_ACL
+			| SSH_FILEXFER_ATTR_OWNERGROUP | SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
+
 	// This is only used for version >= 5
-	public static final long SSH_FILEXFER_ATTR_BITS			    = 0x00000200;
-	
+	public static final long SSH_FILEXFER_ATTR_BITS = 0x00000200;
+
+	public static final long VERSION_5_FLAGS = VERSION_4_FLAGS | SSH_FILEXFER_ATTR_BITS;
 	// These are version >= 6
 	public static final long SSH_FILEXFER_ATTR_ALLOCATION_SIZE = 0x00000400;
-	public static final long SSH_FILEXFER_ATTR_TEXT_HINT		= 0x00000800;
-	public static final long SSH_FILEXFER_ATTR_MIME_TYPE	 	= 0x00001000;
-	public static final long SSH_FILEXFER_ATTR_LINK_COUNT		= 0x00002000;
-	public static final long SSH_FILEXFER_ATTR_UNTRANSLATED	= 0x00004000;
-	public static final long SSH_FILEXFER_ATTR_CTIME	 		= 0x00008000;
-	
-	public static final long SSH_FILEXFER_ATTR_EXTENDED 		= 0x80000000;
-	
-	// This is only used for version <= 3
-	public static final long SSH_FILEXFER_ATTR_UIDGID 			= 0x00000002;
-	
-	public static final int SSH_FILEXFER_TYPE_REGULAR 		= 1;
-	public static final int SSH_FILEXFER_TYPE_DIRECTORY 	= 2;
-	public static final int SSH_FILEXFER_TYPE_SYMLINK 		= 3;
-	public static final int SSH_FILEXFER_TYPE_SPECIAL 		= 4;
-	public static final int SSH_FILEXFER_TYPE_UNKNOWN 		= 5;
-	
-	// This is only used for version >= 5
-	public static final int SSH_FILEXFER_TYPE_SOCKET 		= 6;
-	public static final int SSH_FILEXFER_TYPE_CHAR_DEVICE 	= 7;
-	public static final int SSH_FILEXFER_TYPE_BLOCK_DEVICE 	= 8;
-	public static final int SSH_FILEXFER_TYPE_FIFO 			= 9;
-	
-	// Attribute bits
-	public static final int  SSH_FILEXFER_ATTR_FLAGS_READONLY         =	0x00000001;
-    public static final int  SSH_FILEXFER_ATTR_FLAGS_SYSTEM           =	0x00000002;
-    public static final int  SSH_FILEXFER_ATTR_FLAGS_HIDDEN           =	0x00000004;
-    public static final int  SSH_FILEXFER_ATTR_FLAGS_CASE_INSENSITIVE =	0x00000008;
-    public static final int  SSH_FILEXFER_ATTR_FLAGS_ARCHIVE          =	0x00000010;
-    public static final int  SSH_FILEXFER_ATTR_FLAGS_ENCRYPTED        =	0x00000020;
-    public static final int  SSH_FILEXFER_ATTR_FLAGS_COMPRESSED       =	0x00000040;
-    public static final int  SSH_FILEXFER_ATTR_FLAGS_SPARSE           =	0x00000080;
-    public static final int  SSH_FILEXFER_ATTR_FLAGS_APPEND_ONLY      = 0x00000100;
-    public static final int  SSH_FILEXFER_ATTR_FLAGS_IMMUTABLE        =	0x00000200;
-    public static final int  SSH_FILEXFER_ATTR_FLAGS_SYNC             =	0x00000400;
-    public static final int  SSH_FILEXFER_ATTR_FLAGS_TRANSLATION_ERR  =	0x00000800;
-    
-	// ACL Flags 
-    public static final int SFX_ACL_CONTROL_INCLUDED 				  = 0x00000001;
-    public static final int SFX_ACL_CONTROL_PRESENT 				  = 0x00000002;
-    public static final int SFX_ACL_CONTROL_INHERITED 				  = 0x00000004;
-    public static final int SFX_ACL_AUDIT_ALARM_INCLUDED			  = 0x00000010;
-    public static final int SFX_ACL_AUDIT_ALARM_INHERITED			  = 0x00000020;
+	public static final long SSH_FILEXFER_ATTR_TEXT_HINT = 0x00000800;
+	public static final long SSH_FILEXFER_ATTR_MIME_TYPE = 0x00001000;
+	public static final long SSH_FILEXFER_ATTR_LINK_COUNT = 0x00002000;
+	public static final long SSH_FILEXFER_ATTR_UNTRANSLATED = 0x00004000;
 
-    // Text Hint
-    public static final int SSH_FILEXFER_ATTR_KNOWN_TEXT			  = 0x00;
-    public static final int SSH_FILEXFER_ATTR_GUESSED_TEXT			  = 0x01;
-    public static final int SSH_FILEXFER_ATTR_KNOWN_BINARY			  = 0x02;
-    public static final int SSH_FILEXFER_ATTR_GUESSED_BINARY		  = 0x00;
-    
+	public static final long SSH_FILEXFER_ATTR_CTIME = 0x00008000;
+
+	public static final long VERSION_6_FLAGS = VERSION_5_FLAGS | SSH_FILEXFER_ATTR_ALLOCATION_SIZE
+			| SSH_FILEXFER_ATTR_TEXT_HINT | SSH_FILEXFER_ATTR_MIME_TYPE | SSH_FILEXFER_ATTR_LINK_COUNT
+			| SSH_FILEXFER_ATTR_UNTRANSLATED | SSH_FILEXFER_ATTR_CTIME;
+	// Types
+	public static final int SSH_FILEXFER_TYPE_REGULAR = 1;
+	public static final int SSH_FILEXFER_TYPE_DIRECTORY = 2;
+	public static final int SSH_FILEXFER_TYPE_SYMLINK = 3;
+	public static final int SSH_FILEXFER_TYPE_SPECIAL = 4;
+
+	public static final int SSH_FILEXFER_TYPE_UNKNOWN = 5;
+	// This is only used for version >= 5
+	public static final int SSH_FILEXFER_TYPE_SOCKET = 6;
+	public static final int SSH_FILEXFER_TYPE_CHAR_DEVICE = 7;
+	public static final int SSH_FILEXFER_TYPE_BLOCK_DEVICE = 8;
+
+	public static final int SSH_FILEXFER_TYPE_FIFO = 9;
+	// Attribute bits
+	public static final int SSH_FILEXFER_ATTR_FLAGS_READONLY = 0x00000001;
+	public static final int SSH_FILEXFER_ATTR_FLAGS_SYSTEM = 0x00000002;
+	public static final int SSH_FILEXFER_ATTR_FLAGS_HIDDEN = 0x00000004;
+	public static final int SSH_FILEXFER_ATTR_FLAGS_CASE_INSENSITIVE = 0x00000008;
+	public static final int SSH_FILEXFER_ATTR_FLAGS_ARCHIVE = 0x00000010;
+	public static final int SSH_FILEXFER_ATTR_FLAGS_ENCRYPTED = 0x00000020;
+	public static final int SSH_FILEXFER_ATTR_FLAGS_COMPRESSED = 0x00000040;
+	public static final int SSH_FILEXFER_ATTR_FLAGS_SPARSE = 0x00000080;
+	public static final int SSH_FILEXFER_ATTR_FLAGS_APPEND_ONLY = 0x00000100;
+	public static final int SSH_FILEXFER_ATTR_FLAGS_IMMUTABLE = 0x00000200;
+	public static final int SSH_FILEXFER_ATTR_FLAGS_SYNC = 0x00000400;
+
+	public static final int SSH_FILEXFER_ATTR_FLAGS_TRANSLATION_ERR = 0x00000800;
+	// ACL Flags
+	public static final int SFX_ACL_CONTROL_INCLUDED = 0x00000001;
+	public static final int SFX_ACL_CONTROL_PRESENT = 0x00000002;
+	public static final int SFX_ACL_CONTROL_INHERITED = 0x00000004;
+	public static final int SFX_ACL_AUDIT_ALARM_INCLUDED = 0x00000010;
+
+	public static final int SFX_ACL_AUDIT_ALARM_INHERITED = 0x00000020;
+	// Text Hint
+	public static final int SSH_FILEXFER_ATTR_KNOWN_TEXT = 0x00;
+	public static final int SSH_FILEXFER_ATTR_GUESSED_TEXT = 0x01;
+	public static final int SSH_FILEXFER_ATTR_KNOWN_BINARY = 0x02;
+
+	public static final int SSH_FILEXFER_ATTR_GUESSED_BINARY = 0x00;
+
 	/**
-	 * Format mask constant can be used to mask off a file
-	 * type from the mode.
+	 * Format mask constant can be used to mask off a file type from the mode.
 	 */
 	public static final int S_IFMT = 0xF000;
 
@@ -114,7 +813,7 @@ public class SftpFileAttributes {
 	 * Format mask constant to mask off file mode from the type.
 	 */
 	public static final int S_MODE_MASK = 0x0FFF;
-	
+
 	/** Permissions flag: Identifies the file as a socket */
 	public static final int S_IFSOCK = 0xC000;
 
@@ -137,14 +836,13 @@ public class SftpFileAttributes {
 	public static final int S_IFIFO = 0x1000;
 
 	/**
-	 * Permissions flag: Bit to determine whether a file is executed as the
-	 * owner
+	 * Permissions flag: Bit to determine whether a file is executed as the owner
 	 */
 	public final static int S_ISUID = 0x800;
 
 	/**
-	 * Permissions flag: Bit to determine whether a file is executed as the
-	 * group owner
+	 * Permissions flag: Bit to determine whether a file is executed as the group
+	 * owner
 	 */
 	public final static int S_ISGID = 0x400;
 
@@ -167,8 +865,8 @@ public class SftpFileAttributes {
 	public final static int S_IWGRP = 0x10;
 
 	/**
-	 * Permissions flag: Permits a file's group to execute the file or to search
-	 * the file's directory.
+	 * Permissions flag: Permits a file's group to execute the file or to search the
+	 * file's directory.
 	 */
 	public final static int S_IXGRP = 0x08;
 
@@ -179,775 +877,916 @@ public class SftpFileAttributes {
 	public final static int S_IWOTH = 0x02;
 
 	/**
-	 * Permissions flag: Permits others to execute the file or to search the
-	 * file's directory.
+	 * Permissions flag: Permits others to execute the file or to search the file's
+	 * directory.
 	 */
 	public final static int S_IXOTH = 0x01;
 
-	long flags = 0x0000000;
-	int type; // Version 4+
-	UnsignedInteger64 size = null;
-	UnsignedInteger64 allocationSize = null;
-	String uid = null;
-	String gid = null;
-	UnsignedInteger32 permissions = null;
-	UnsignedInteger64 atime = null;
-	UnsignedInteger32 atime_nano = null; // Version 4+
-	UnsignedInteger64 createtime = null;
-	UnsignedInteger32 createtime_nano = null; // Version 4+
-	UnsignedInteger64 mtime = null;
-	UnsignedInteger32 mtime_nano = null;  // Version 4+
-	UnsignedInteger64 ctime = null;		  // Version 6+
-	UnsignedInteger32 ctime_nano = null;  // Version 6+
-	UnsignedInteger32 attributeBits; 	  // Version 5+
-	UnsignedInteger32 attributeBitsValid; // Version 6+
-	byte textHint;
-	String mimeType;
-	UnsignedInteger32 linkCount;
-	String untralsatedName;
-	
-	UnsignedInteger32 aclFlags = null;
-	private Vector<ACL> acls = new Vector<ACL>();
-	private Map<String, byte[]> extendedAttributes = new HashMap<String, byte[]>();
-	
-	String username;
-	String group;
-	
-	char[] types = { 'p', 'c', 'd', 'b', '-', 'l', 's', };
-	
-	String  charsetEncoding;
-	Long supportedAttributeMask;
-	Long supportedAttributeBits;
-	
-	/**
-	 * Creates a new FileAttributes object.
-	 */
-	public SftpFileAttributes(int type, 
-			String charsetEncoding, 
-			long supportedAttributeBits,
-			long supportedAttributeMask) {
-		this.supportedAttributeBits = supportedAttributeBits;
-		this.supportedAttributeMask = supportedAttributeMask;
-		this.charsetEncoding = charsetEncoding;
-		this.type = type;
+	private static boolean isFlagSet(long flag, long flags, int version, Optional<Long> supportedAttributeMask) {
+		if (version >= 5 && supportedAttributeMask.isPresent()) {
+			boolean set = ((flags & (flag & 0xFFFFFFFFL)) == (flag & 0xFFFFFFFFL));
+			if (set) {
+				set = ((supportedAttributeMask.get() & (flag & 0xFFFFFFFFL)) == (flag & 0xFFFFFFFFL));
+			}
+			return set;
+		}
+		return ((flags & (flag & 0xFFFFFFFFL)) == (flag & 0xFFFFFFFFL));
 	}
 
-	public SftpFileAttributes(int type, 
-			String charsetEncoding) {
-		this(type, charsetEncoding, 0L, 0L);
+	private final String charsetEncoding;
+	private final Optional<Long> supportedAttributeMask;
+	private final Optional<Long> supportedAttributeBits;
+	private final Optional<UnsignedInteger64> allocationSize;
+	private final Optional<FileTime> lastAttributesModifiedTime;
+	private final Optional<UnsignedInteger32> aclFlags;
+	private final List<ACL> acls;
+	private final Optional<UnsignedInteger32> attributeBits;
+	private final Optional<String> mimeType;
+	private final Optional<Byte> textHint;
+	private final Optional<UnsignedInteger32> attributeBitsValid;
+	private final Optional<Integer> linkCount;
+	private final Optional<String> untranslatedName;
+
+	/* TODO: Will be made final at 3.2.0 */
+	private int type;
+	private Optional<Integer> uid;
+	private Optional<Integer> gid;
+	private long flags;
+	private Optional<String> username;
+	private Optional<String> group;
+	private Optional<UnsignedInteger64> size;
+	private Optional<FileTime> lastAccessTime;
+	private Optional<FileTime> createTime;
+	private Optional<FileTime> lastModifiedTime;
+	private Map<String, byte[]> extendedAttributes;
+	private Optional<PosixPermissions> permissions;
+
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public SftpFileAttributes(ByteArrayReader bar, int version, String charsetEncoding) throws IOException {
+		this(SftpFileAttributesBuilder.of(bar, version, charsetEncoding));
 	}
-	
+
+	/**
+	 * @param type
+	 * @param charsetEncoding
+	 * @see SftpFileAttributesBuilder#ofType(int, String)
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public SftpFileAttributes(int type, String charsetEncoding) {
+		this(SftpFileAttributesBuilder.create().withType(type).withCharsetEncoding(charsetEncoding));
+	}
+
+	private SftpFileAttributes(SftpFileAttributesBuilder builder) {
+		this.size = builder.size;
+		this.type = builder.type;
+		this.charsetEncoding = builder.calcCharset();
+		this.supportedAttributeBits = builder.supportedAttributeBits;
+		this.supportedAttributeMask = builder.supportedAttributeMask;
+		this.flags = builder.flags;
+		this.allocationSize = builder.allocationSize;
+		this.uid = builder.uid;
+		this.username = builder.username;
+		this.gid = builder.gid;
+		this.group = builder.group;
+		this.permissions = builder.permissions;
+		this.lastAccessTime = builder.lastAccessTime;
+		this.createTime = builder.createTime;
+		this.lastModifiedTime = builder.lastModifiedTime;
+		this.lastAttributesModifiedTime = builder.lastAttributesModifiedTime;
+		this.acls = Collections.unmodifiableList(new ArrayList<>(builder.acls));
+		this.aclFlags = builder.aclFlags;
+		this.attributeBits = builder.attributeBits;
+		this.mimeType = builder.mimeType;
+		this.textHint = builder.textHint;
+		this.attributeBitsValid = builder.attributeBitsValid;
+		this.linkCount = builder.linkCount;
+		this.untranslatedName = builder.untranslatedName;
+
+		/* TODO: Activate this code at 3.2.0 when everything is made final */
+		// this.extendedAttributes = Collections.unmodifiableMap(new HashMap<String,
+		// byte[]>(builder.extendedAttributes));
+		this.extendedAttributes = new HashMap<String, byte[]>(builder.extendedAttributes);
+
+	}
+
+	public List<ACL> acls() {
+		return acls;
+	}
+
+	public UnsignedInteger32 aclsFlag() {
+		return aclFlags.orElse(UnsignedInteger32.ZERO);
+	}
+
+	public Optional<UnsignedInteger32> aclsFlagOr() {
+		return aclFlags;
+	}
+
+	public UnsignedInteger64 allocationSize() {
+		return allocationSize.orElse(UnsignedInteger64.ZERO);
+	}
+
+	public Optional<UnsignedInteger64> allocationSizeOr() {
+		return allocationSize;
+	}
+
+	public UnsignedInteger32 attributeBits() {
+		return attributeBits.orElse(UnsignedInteger32.ZERO);
+	}
+
+	public Optional<UnsignedInteger32> attributeBitsOr() {
+		return attributeBits;
+	}
+
+	public UnsignedInteger32 attributeBitsValid() {
+		return attributeBitsValid.orElseThrow(() -> new IllegalStateException("No valid attribute bits set."));
+	}
+
+	public Optional<UnsignedInteger32> attributeBitsValidOr() {
+		return attributeBitsValid;
+	}
+
+	public String charsetEncoding() {
+		return charsetEncoding;
+	}
+
+	public FileTime createTime() {
+		return createTime.orElseGet(() -> FileTime.fromMillis(0));
+	}
+
+	public Optional<FileTime> createTimeOr() {
+		return createTime;
+	}
+
+	public byte[] extendedAttribute(String key) {
+		return extendedAttributeOr(key)
+				.orElseThrow(() -> new IllegalArgumentException(MessageFormat.format("No such key {0}", key)));
+	}
+
+	public Optional<byte[]> extendedAttributeOr(String key) {
+		return Optional.ofNullable(extendedAttributes.get(key));
+	}
+
+	public Map<String, byte[]> extendedAttributes() {
+		/* TODO: this will be a unmodifiable member map at 3.2.0 */
+		return Collections.unmodifiableMap(extendedAttributes);
+	}
+
+	public long flags() {
+		return flags;
+	}
+
+	/**
+	 * @deprecated
+	 * @see #lastAccessTime()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public Date getAccessedDateTime() {
+		return new Date(lastAccessTime().toMillis());
+	}
+
+	/**
+	 * @deprecated
+	 * @see #lastAccessTime()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public UnsignedInteger64 getAccessedTime() {
+		return new UnsignedInteger64(lastAccessTime().toMillis() / 1000);
+	}
+
+	/**
+	 * @deprecated
+	 * @see #createTime()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public Date getCreationDateTime() {
+		return new Date(createTime().toMillis());
+	}
+
+	/**
+	 * @deprecated
+	 * @see #createTime()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public UnsignedInteger64 getCreationTime() {
+		return new UnsignedInteger64(createTime().toMillis() / 1000);
+	}
+
+	/**
+	 * @deprecated
+	 * @see #extendedAttributes()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public Map<String, byte[]> getExtendedAttributes() {
+		return extendedAttributes();
+	}
+
+	/**
+	 * @deprecated
+	 * @see #uid()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public String getGID() {
+		return group.orElseGet(() -> gid.map(g -> g.toString()).orElse(null));
+	}
+
+	/**
+	 * @deprecated
+	 * @see #toMaskString()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public String getMaskString() {
+		return toMaskString();
+	}
+
+	/**
+	 * @deprecated
+	 * @see #getModeType()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public int getModeType() {
+		return toModeType();
+	}
+
+	/**
+	 * @deprecated
+	 * @see #getModifiedDateTime()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public Date getModifiedDateTime() {
+		return new Date(lastModifiedTime().toMillis());
+	}
+
+	/**
+	 * @deprecated
+	 * @see #getModifiedTime()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public UnsignedInteger64 getModifiedTime() {
+		return new UnsignedInteger64(lastModifiedTime().toMillis() / 1000);
+	}
+
+	/**
+	 * @deprecated
+	 * @see #toPermissionsString()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public String getPermissionsString() {
+		return toPermissionsString();
+	}
+
+	/**
+	 * @deprecated
+	 * @see #permissions()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public PosixPermissions getPosixPermissions() {
+		return permissions();
+	}
+
+	/**
+	 * @deprecated
+	 * @see #size()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public UnsignedInteger64 getSize() {
+		return size();
+	}
+
+	/**
+	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
+	 * immutable.
+	 * 
+	 * @return type
+	 * @see #type()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public int getType() {
-		return type;
+		return type();
 	}
 
 	/**
-	 * @param sftp
-	 * @param bar
-	 * @throws IOException
+	 * @deprecated
+	 * @see #uid()
 	 */
-	public SftpFileAttributes(ByteArrayReader bar, int version, String charsetEncoding)
-			throws IOException {
-		this(bar, version, charsetEncoding, 0L, 0L);
-	}
-	
-	public SftpFileAttributes(ByteArrayReader bar, int version, String charsetEncoding, 
-			long supportedAttributeBits,
-			long supportedAttributeMask)
-			throws IOException {
-		this.supportedAttributeBits = supportedAttributeBits;
-		this.supportedAttributeMask = supportedAttributeMask;
-		this.charsetEncoding = charsetEncoding;
-		
-		if (bar.available() >= 4)
-			flags = bar.readInt();
-
-		// Work out the type from the permissions field later if we're not using
-		// version
-		// 4 of the protocol
-		if (version > 3) {
-			// Get the type if were using version 4+ of the protocol
-			if (bar.available() > 0)
-				type = bar.read();
-		}
-
-		// if ATTR_SIZE flag is set then read size
-		if (isFlagSet(SSH_FILEXFER_ATTR_SIZE, version) && bar.available() >= 8) {
-			byte[] raw = new byte[8];
-			bar.read(raw);
-			size = new UnsignedInteger64(raw);
-		}
-
-		if (isFlagSet(SSH_FILEXFER_ATTR_ALLOCATION_SIZE, version) && bar.available() >= 8) {
-			byte[] raw = new byte[8];
-			bar.read(raw);
-			allocationSize = new UnsignedInteger64(raw);
-		}
-
-		if (version <= 3 && isFlagSet(SSH_FILEXFER_ATTR_UIDGID, version)
-				&& bar.available() >= 8) {
-
-			uid = String.valueOf(bar.readInt());
-			gid = String.valueOf(bar.readInt());
-		} else if (version > 3 && isFlagSet(SSH_FILEXFER_ATTR_OWNERGROUP, version)
-				&& bar.available() > 0) {
-			uid = bar.readString(charsetEncoding);
-			gid = bar.readString(charsetEncoding);
-		}
-
-		if (isFlagSet(SSH_FILEXFER_ATTR_PERMISSIONS, version) && bar.available() >= 4) {
-			permissions = new UnsignedInteger32(bar.readInt());
-			if(version <=3) {
-				if((permissions.longValue() & S_IFREG) == S_IFREG) {
-					type = SSH_FILEXFER_TYPE_REGULAR;
-				} else if((permissions.longValue() & S_IFLNK) == S_IFLNK) {
-					type = SSH_FILEXFER_TYPE_SYMLINK;
-				} else if((permissions.longValue() & S_IFCHR) == S_IFCHR) {
-					type = SSH_FILEXFER_TYPE_CHAR_DEVICE;
-				} else if((permissions.longValue() & S_IFBLK) == S_IFBLK) {
-					type = SSH_FILEXFER_TYPE_BLOCK_DEVICE;
-				} else if((permissions.longValue() & S_IFDIR) == S_IFDIR) {
-					type = SSH_FILEXFER_TYPE_DIRECTORY;
-				} else if((permissions.longValue() & S_IFIFO) == S_IFIFO) {
-					type = SSH_FILEXFER_TYPE_FIFO;
-				} else if((permissions.longValue() & S_IFSOCK) == S_IFSOCK) {
-					type = SSH_FILEXFER_TYPE_SOCKET;
-				} else if((permissions.longValue() & S_IFMT) == S_IFMT) {
-					type = SSH_FILEXFER_TYPE_SPECIAL;
-				} else  {
-					type = SSH_FILEXFER_TYPE_UNKNOWN;
-				}
-			}
-		}
-		
-		if(type==0) {
-			type = SSH_FILEXFER_TYPE_UNKNOWN;
-		}
-
-		if (version <= 3 && isFlagSet(SSH_FILEXFER_ATTR_ACCESSTIME, version)
-				&& bar.available() >= 8) {
-			atime = new UnsignedInteger64(bar.readInt());
-			mtime = new UnsignedInteger64(bar.readInt());
-		} else if (version > 3 && bar.available() > 0) {
-			if (isFlagSet(SSH_FILEXFER_ATTR_ACCESSTIME, version) && bar.available() >= 8) {
-				atime = bar.readUINT64();
-				if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)
-						&& bar.available() >= 4) {
-					atime_nano = bar.readUINT32();
-				}
-			}
-		}
-
-		if (version > 3 && bar.available() > 0) {
-			if (isFlagSet(SSH_FILEXFER_ATTR_CREATETIME, version) && bar.available() >= 8) {
-				createtime = bar.readUINT64();
-				if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)
-						&& bar.available() >= 4)
-					createtime_nano = bar.readUINT32();
-			}
-		}
-
-		if (version > 3 && bar.available() > 0) {
-			if (isFlagSet(SSH_FILEXFER_ATTR_MODIFYTIME, version) && bar.available() >= 8) {
-				mtime = bar.readUINT64();
-				if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)
-						&& bar.available() >= 4)
-					mtime_nano = bar.readUINT32();
-			}
-		}
-
-		if (version >= 6 && bar.available() > 0) {
-			if (isFlagSet(SSH_FILEXFER_ATTR_CTIME, version) && bar.available() >= 8) {
-				ctime = bar.readUINT64();
-				if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)
-						&& bar.available() >= 4)
-					ctime_nano = bar.readUINT32();
-			}
-		}
-		// We are currently ignoring ACL and extended attributes
-		if (version > 3 && isFlagSet(SSH_FILEXFER_ATTR_ACL, version)
-				&& bar.available() >= 4) {
-
-			if(version >= 6 && bar.available() >= 4) {
-				aclFlags = bar.readUINT32();
-			}
-			
-			int length = (int) bar.readInt();
-
-			if (length > 0 && bar.available() >= length) {
-				int count = (int) bar.readInt();
-				for (int i = 0; i < count; i++) {
-					acls.addElement(new ACL((int) bar.readInt(), (int) bar
-							.readInt(), (int) bar.readInt(), bar.readString()));
-				}
-			}
-		}
-
-		if (version >= 5 && isFlagSet(SSH_FILEXFER_ATTR_BITS, version) && bar.available() >= 4) {
-			attributeBits = bar.readUINT32();
-		}
-
-		if (version >= 6) {
-				
-			if(isFlagSet(SSH_FILEXFER_ATTR_BITS, version) && bar.available() >= 4) {
-				attributeBitsValid = bar.readUINT32();
-			}
-		
-			if(isFlagSet(SSH_FILEXFER_ATTR_TEXT_HINT, version) && bar.available() >= 1) {
-				textHint = (byte) bar.read();
-			}
-			if(isFlagSet(SSH_FILEXFER_ATTR_MIME_TYPE, version) && bar.available() >= 4) {
-				mimeType = bar.readString();
-			}
-			
-			if(isFlagSet(SSH_FILEXFER_ATTR_LINK_COUNT, version) && bar.available() >= 4) {
-				linkCount = bar.readUINT32();
-			}
-			
-			if(isFlagSet(SSH_FILEXFER_ATTR_UNTRANSLATED, version) && bar.available() >= 4) {
-				untralsatedName = bar.readString();
-			}
-		}
-		
-		if (version >= 3 && isFlagSet(SSH_FILEXFER_ATTR_EXTENDED, version)
-				&& bar.available() >= 4) {
-			int count = (int) bar.readInt();
-			// read each extended attribute
-			for (int i = 0; i < count; i++) {
-				extendedAttributes
-						.put(bar.readString(), bar.readBinaryString());
-			}
-		}
-	}
-
-	/**
-	 * Get the UID of the owner.
-	 * 
-	 * @return String
-	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public String getUID() {
-		if (username != null) {
-			return username;
-		}
-		if (uid != null) {
-			return uid;
-		}
-		return "";
+		return usernameOr().orElse(uid.map(u -> u.toString()).orElse(null));
+	}
+
+	public int gid() {
+		return gid.orElse(0);
+	}
+
+	public Optional<Integer> gidOr() {
+		return gid;
+	}
+
+	public String group() {
+		return group.orElse("");
+	}
+
+	public Optional<String> groupOr() {
+		return group;
 	}
 
 	/**
-	 * Set the UID of the owner.
-	 * 
-	 * @param uid
+	 * @deprecated
+	 * @see #hasLastAccessTime()
 	 */
-	public void setUID(String uid) {
-		if(uid==null) {
-			throw new IllegalArgumentException("uid cannot be null!");
-		}
-		if(!uid.matches("\\d+")) {
-			throw new IllegalArgumentException("uid must be a user id containing only digits");
-		}
-		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
-		flags |= SSH_FILEXFER_ATTR_UIDGID;
-		this.uid = uid;
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public boolean hasAccessTime() {
+		return hasLastAccessTime();
+	}
+
+	public boolean hasAclFlags() {
+		return aclFlags.isPresent();
+	}
+
+	public boolean hasAllocationSize() {
+		return allocationSize.isPresent();
+	}
+
+	public boolean hasAttributeBits() {
+		return attributeBits.isPresent();
+	}
+
+	public boolean hasCreateTime() {
+		return createTime.isPresent();
+	}
+
+	public boolean hasExtendedAttribute(String key) {
+		return extendedAttributes.containsKey(key);
+	}
+
+	public boolean hasGid() {
+		return gid.isPresent();
+	}
+
+	/**
+	 * @deprecated
+	 * @see #hasGid()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public boolean hasGID() {
+		return hasGid();
+	}
+
+	public boolean hasGroup() {
+		return group.isPresent();
+	}
+
+	public boolean hasLastAccessTime() {
+		return lastAccessTime.isPresent();
+	}
+
+	public boolean hasLastAttributesModifiedTime() {
+		return lastAttributesModifiedTime.isPresent();
+	}
+
+	public boolean hasLastModifiedTime() {
+		return lastModifiedTime.isPresent();
+	}
+
+	/**
+	 * @deprecated
+	 * @see #hasLastModifiedTime()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public boolean hasModifiedTime() {
+		return hasLastModifiedTime();
+	}
+
+	public boolean hasPermissions() {
+		return permissions.isPresent();
+	}
+
+	public boolean hasSize() {
+		return size.isPresent();
+	}
+
+	public boolean hasSubSecondTimes() {
+		return (flags & SSH_FILEXFER_ATTR_SUBSECOND_TIMES) != 0;
+	}
+
+	public boolean hasSupportedAttributeBits() {
+		return supportedAttributeBits.isPresent();
+	}
+
+	public boolean hasSupportedAttributeMask() {
+		return supportedAttributeMask.isPresent();
+	}
+
+	public boolean hasUid() {
+		return uid.isPresent();
+	}
+
+	/**
+	 * @deprecated
+	 * @see #hasUid()
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public boolean hasUID() {
+		return hasUid();
+	}
+
+	public boolean hasUsername() {
+		return username.isPresent();
+	}
+
+	public boolean isAppendOnly() {
+		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_APPEND_ONLY);
+	}
+
+	public boolean isArchive() {
+		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_ARCHIVE);
+	}
+
+	public boolean isAttributeBitSet(long attributeBit) {
+		return attributeBits.isPresent()
+				&& ((attributeBits.get().longValue() & (attributeBit & 0xFFFFFFFFL)) == (attributeBit & 0xFFFFFFFFL));
+	}
+
+	public boolean isBlock() {
+		return type == SSH_FILEXFER_TYPE_BLOCK_DEVICE;
+	}
+
+	public boolean isCaseInsensitive() {
+		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_CASE_INSENSITIVE);
+	}
+
+	public boolean isCharacter() {
+		return type == SSH_FILEXFER_TYPE_CHAR_DEVICE;
+	}
+
+	public boolean isSpecial() {
+		return type == SSH_FILEXFER_TYPE_SPECIAL;
+	}
+
+	public boolean isCompressed() {
+		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_COMPRESSED);
+	}
+
+	public boolean isDirectory() {
+		return type == SSH_FILEXFER_TYPE_DIRECTORY;
+	}
+
+	public boolean isEncrypted() {
+		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_ENCRYPTED);
+	}
+
+	public boolean isFifo() {
+		return type == SSH_FILEXFER_TYPE_FIFO;
+	}
+
+	public boolean isFile() {
+		return type == SSH_FILEXFER_TYPE_REGULAR;
+	}
+
+	public boolean isHidden() {
+		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_HIDDEN);
+	}
+
+	public boolean isImmutable() {
+		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_IMMUTABLE);
+	}
+
+	public boolean isLink() {
+		return type == SSH_FILEXFER_TYPE_SYMLINK;
+	}
+
+	public boolean isReadOnly() {
+		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_READONLY);
+	}
+
+	public boolean isSocket() {
+		return type == SSH_FILEXFER_TYPE_SOCKET;
+	}
+
+	public boolean isSparse() {
+		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_SPARSE);
+	}
+
+	public boolean isSync() {
+		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_SYNC);
+	}
+
+	public boolean isSubSecondTimes() {
+		return ( flags & SSH_FILEXFER_ATTR_SUBSECOND_TIMES ) != 0;
+	}
+
+	public boolean isSystem() {
+		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_SYSTEM);
+	}
+
+	public FileTime lastAccessTime() {
+		return lastAccessTime.orElseGet(() -> FileTime.fromMillis(0));
+	}
+
+	public Optional<FileTime> lastAccessTimeOr() {
+		return lastAccessTime;
+	}
+
+	public FileTime lastAttributesModifiedTime() {
+		return lastAttributesModifiedTime.orElseGet(() -> FileTime.fromMillis(0));
+	}
+
+	public Optional<FileTime> lastAttributesModifiedTimeOr() {
+		return lastAttributesModifiedTime;
+	}
+
+	public FileTime lastModifiedTime() {
+		return lastModifiedTime.orElseGet(() -> FileTime.fromMillis(0));
+	}
+
+	public Optional<FileTime> lastModifiedTimeOr() {
+		return lastModifiedTime;
+	}
+
+	public int linkCount() {
+		return linkCount.orElse(0);
+	}
+
+	public Optional<Integer> linkCountOr() {
+		return linkCount;
+	}
+
+	public String mimeType() {
+		return mimeType.orElse("application/octet-stream");
+	}
+
+	public Optional<String> mimeTypeOr() {
+		return mimeType;
+	}
+
+	public PosixPermissions permissions() {
+		return permissions.orElse(PosixPermissions.EMPTY);
+	}
+
+	public Optional<PosixPermissions> permissionsOr() {
+		return permissions;
+	}
+
+	/**
+	 * Set a single extended attribute value.
+	 * <p>
+	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
+	 * immutable.
+	 * 
+	 * @param attrName attribute name to remove
+	 * @deprecated
+	 * @see SftpFileAttributesBuilder#removeExtendedAttribute(String)
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void removeExtendedAttribute(String attrName) {
+		extendedAttributes.remove(attrName);
+	}
+
+	/**
+	 * Set a single extended attribute value.
+	 * <p>
+	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
+	 * immutable.
+	 * 
+	 * @param attrName  attribute name
+	 * @param attrValue attribute value
+	 * @deprecated
+	 * @see SftpFileAttributesBuilder#removeExtendedAttribute(String)
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void setExtendedAttribute(String attrName, byte[] attrValue) {
+		flags |= SSH_FILEXFER_ATTR_EXTENDED;
+		extendedAttributes.put(attrName, attrValue);
+	}
+
+	/**
+	 * Set all the extended attributes. The keys should be of type String, as should
+	 * the values.
+	 * <p>
+	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
+	 * immutable.
+	 * 
+	 * @param attributes map of all extended attributes
+	 * @deprecated
+	 * @see SftpFileAttributesBuilder#removeExtendedAttribute(String)
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void setExtendedAttributes(Map<String, byte[]> attributes) {
+		flags |= SSH_FILEXFER_ATTR_EXTENDED;
+		this.extendedAttributes = attributes;
 	}
 
 	/**
 	 * Set the GID of this file.
+	 * <p>
+	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
+	 * immutable.
 	 * 
-	 * @param gid
+	 * @param gid gid
+	 * @see SftpFileAttributesBuilder#withGid(int)
 	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void setGID(String gid) {
-		if(gid==null) {
+		if (gid == null) {
 			throw new IllegalArgumentException("gid cannot be null!");
 		}
-		if(!gid.matches("\\d+")) {
+		if (!gid.matches("\\d+")) {
 			throw new IllegalArgumentException("gid must be a group id containing only digits");
 		}
 		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
 		flags |= SSH_FILEXFER_ATTR_UIDGID;
-		this.gid = gid;
+		this.gid = Optional.of(Integer.parseInt(gid));
 	}
 
 	/**
-	 * Get the GID of this file.
+	 * Set the group of this file.
+	 * <p>
+	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
+	 * immutable.
 	 * 
-	 * @return String
+	 * @param group group
+	 * @see SftpFileAttributesBuilder#withGroup(String)
 	 */
-	public String getGID() {
-		if (group != null) {
-			return group;
-		}
-		if (gid != null) {
-			return gid;
-		}
-		return "";
-	}
-
-	public boolean hasUID() {
-		return username!=null || uid != null;
-	}
-
-	public boolean hasGID() {
-		return group != null || gid != null;
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void setGroup(String group) {
+		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
+		this.group = Optional.ofNullable(group);
 	}
 
 	/**
-	 * Set the size of the file.
+	 * Set the permissions using a {@link PosixPermissions} set, created by a
+	 * {@link PosixPermissionsBuilder}.
+	 * <p>
+	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
+	 * immutable.
 	 * 
-	 * @param size
+	 * @param newPermissions new permissions
 	 */
-	public void setSize(UnsignedInteger64 size) {
-		this.size = size;
-
-		// Set the flag
-		if (size != null) {
-			flags |= SSH_FILEXFER_ATTR_SIZE;
-		} else {
-			flags ^= SSH_FILEXFER_ATTR_SIZE;
-		}
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void setPermissions(PosixPermissions newPermissions) {
+		setPermissions(newPermissions.asUInt32());
 	}
 
 	/**
+	 * Set the permissions from a string in the format "rwxr-xr-x"
+	 * <p>
+	 * Deprecated. See {@link #setPermissions(PosixPermissions)} for alternative.
 	 * 
-	 * Get the size of the file.
-	 * 
-	 * @return UnsignedInteger64
+	 * @param newPermissions new permissions string
 	 */
-	public UnsignedInteger64 getSize() {
-		if (size != null) {
-			return size;
-		}
-		return new UnsignedInteger64("0");
-	}
-
-	public boolean hasSize() {
-		return size != null;
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void setPermissions(String newPermissions) {
+		int cp = getModeType();
+		cp |= (permissions.map(PosixPermissions::asInt).orElse(0) & 0xfffff000);
+		cp |= PosixPermissionsBuilder.create().fromLaxFileModeString(newPermissions).build().asLong();
+		setPermissions(new UnsignedInteger32(cp));
 	}
 
 	/**
 	 * Set the permissions of the file. This value should be a valid mask of the
 	 * permissions flags defined within this class.
+	 * 
+	 * @param permissions permssions
+	 * @deprecated
+	 * @see #setPermissions(PosixPermissions)
 	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void setPermissions(UnsignedInteger32 permissions) {
-		this.permissions = permissions;
-		
-		if(permissions!=null) {
-			if(type == 0) {
-				if((permissions.longValue() & SftpFileAttributes.S_IFDIR) == SftpFileAttributes.S_IFDIR) {
+		if (permissions != null) {
+			if (type == 0) {
+				if ((permissions.longValue() & SftpFileAttributes.S_IFDIR) == SftpFileAttributes.S_IFDIR) {
 					this.type = SSH_FILEXFER_TYPE_DIRECTORY;
-				} else if((permissions.longValue() & SftpFileAttributes.S_IFREG) == SftpFileAttributes.S_IFREG) {
+				} else if ((permissions.longValue() & SftpFileAttributes.S_IFREG) == SftpFileAttributes.S_IFREG) {
 					this.type = SSH_FILEXFER_TYPE_REGULAR;
-				} else if((permissions.longValue() & SftpFileAttributes.S_IFCHR) == SftpFileAttributes.S_IFCHR) {
+				} else if ((permissions.longValue() & SftpFileAttributes.S_IFCHR) == SftpFileAttributes.S_IFCHR) {
 					this.type = SSH_FILEXFER_TYPE_SPECIAL;
-				} else if((permissions.longValue() & SftpFileAttributes.S_IFBLK) == SftpFileAttributes.S_IFBLK) {
+				} else if ((permissions.longValue() & SftpFileAttributes.S_IFBLK) == SftpFileAttributes.S_IFBLK) {
 					this.type = SSH_FILEXFER_TYPE_SPECIAL;
-				} else if((permissions.longValue() & SftpFileAttributes.S_IFIFO) == SftpFileAttributes.S_IFIFO) {
+				} else if ((permissions.longValue() & SftpFileAttributes.S_IFIFO) == SftpFileAttributes.S_IFIFO) {
 					this.type = SSH_FILEXFER_TYPE_SPECIAL;
-				} else if((permissions.longValue() & SftpFileAttributes.S_IFMT) == SftpFileAttributes.S_IFMT) {
+				} else if ((permissions.longValue() & SftpFileAttributes.S_IFMT) == SftpFileAttributes.S_IFMT) {
 					this.type = SSH_FILEXFER_TYPE_SPECIAL;
-				} else if((permissions.longValue() & SftpFileAttributes.S_IFSOCK) == SftpFileAttributes.S_IFSOCK) {
+				} else if ((permissions.longValue() & SftpFileAttributes.S_IFSOCK) == SftpFileAttributes.S_IFSOCK) {
 					this.type = SSH_FILEXFER_TYPE_SPECIAL;
-				} else if((permissions.longValue() & SftpFileAttributes.S_IFLNK) == SftpFileAttributes.S_IFLNK) {
+				} else if ((permissions.longValue() & SftpFileAttributes.S_IFLNK) == SftpFileAttributes.S_IFLNK) {
 					this.type = SSH_FILEXFER_TYPE_SYMLINK;
 				} else {
 					this.type = SSH_FILEXFER_TYPE_UNKNOWN;
 				}
 			}
+			this.permissions = Optional.of(PosixPermissionsBuilder.create().fromBitmask(permissions.longValue()).build());
+			flags |= SSH_FILEXFER_ATTR_PERMISSIONS;
 
-			flags |= SSH_FILEXFER_ATTR_PERMISSIONS;	
-		
 		} else {
-			if((flags & SSH_FILEXFER_ATTR_PERMISSIONS) == SSH_FILEXFER_ATTR_PERMISSIONS) {
-				flags ^= SSH_FILEXFER_ATTR_PERMISSIONS;
-			}
+			flags &= ~SSH_FILEXFER_ATTR_PERMISSIONS;
+			this.permissions = Optional.empty();
 		}
 	}
 
 	/**
 	 * Set permissions given a UNIX style mask, for example '0644'
+	 * <p>
+	 * Deprecated. See {@link #setPermissions(PosixPermissions)} for alternative.
 	 * 
-	 * @param mask
-	 *            mask
+	 * @param mask mask
 	 * 
-	 * @throws IllegalArgumentException
-	 *             if badly formatted string
+	 * @throws IllegalArgumentException if badly formatted string
 	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void setPermissionsFromMaskString(String mask) {
-		if (mask.length() != 4) {
-			throw new IllegalArgumentException("Mask length must be 4");
-		}
-
-		try {
-			setPermissions(new UnsignedInteger32(String.valueOf(Integer
-					.parseInt(mask, 8))));
-		} catch (NumberFormatException nfe) {
-			throw new IllegalArgumentException(
-					"Mask must be 4 digit octal number.");
-		}
+		setPermissions(PosixPermissionsBuilder.create().fromMaskString(mask).build());
 	}
 
 	/**
-	 * Set the permissions given a UNIX style umask, for example '0022' will
-	 * result in 0022 ^ 0777.
+	 * Set the permissions given a UNIX style umask, for example '0022' will result
+	 * in 0022 ^ 0777.
+	 * <p>
+	 * Deprecated. See {@link #setPermissions(PosixPermissions)} for alternative.
 	 * 
 	 * @param umask
-	 * @throws IllegalArgumentException
-	 *             if badly formatted string
+	 * @throws IllegalArgumentException if badly formatted string
 	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void setPermissionsFromUmaskString(String umask) {
-		if (umask.length() != 4) {
-			throw new IllegalArgumentException("umask length must be 4");
-		}
-
-		try {
-			setPermissions(new UnsignedInteger32(String.valueOf(Integer
-					.parseInt(umask, 8) ^ 0777)));
-		} catch (NumberFormatException ex) {
-			throw new IllegalArgumentException(
-					"umask must be 4 digit octal number");
-		}
+		setPermissions(PosixPermissionsBuilder.create().fromUmaskString(umask).build());
 	}
 
 	/**
-	 * Set the permissions from a string in the format "rwxr-xr-x"
+	 * Set the size of the file.
+	 * <p>
+	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
+	 * immutable.
 	 * 
-	 * @param newPermissions
+	 * @param group group
+	 * @deprecated
+	 * @see SftpFileAttributesBuilder#withSize(long)
 	 */
-	public void setPermissions(String newPermissions) {
-		int cp = getModeType();
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void setSize(UnsignedInteger64 size) {
+		this.size = Optional.ofNullable(size);
 
-		if (permissions != null) {
-			cp = cp
-					| (((permissions.longValue() & S_IFMT) == S_IFMT) ? S_IFMT
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFSOCK) == S_IFSOCK) ? S_IFSOCK
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFLNK) == S_IFLNK) ? S_IFLNK
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFREG) == S_IFREG) ? S_IFREG
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFBLK) == S_IFBLK) ? S_IFBLK
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFDIR) == S_IFDIR) ? S_IFDIR
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFCHR) == S_IFCHR) ? S_IFCHR
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_IFIFO) == S_IFIFO) ? S_IFIFO
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_ISUID) == S_ISUID) ? S_ISUID
-							: 0);
-			cp = cp
-					| (((permissions.longValue() & S_ISGID) == S_ISGID) ? S_ISGID
-							: 0);
-		}
-
-		int len = newPermissions.length();
-
-		if (len >= 1) {
-			cp = cp
-					| ((newPermissions.charAt(0) == 'r') ? SftpFileAttributes.S_IRUSR
-							: 0);
-		}
-
-		if (len >= 2) {
-			cp = cp
-					| ((newPermissions.charAt(1) == 'w') ? SftpFileAttributes.S_IWUSR
-							: 0);
-		}
-
-		if (len >= 3) {
-			cp = cp
-					| ((newPermissions.charAt(2) == 'x') ? SftpFileAttributes.S_IXUSR
-							: 0);
-		}
-
-		if (len >= 4) {
-			cp = cp
-					| ((newPermissions.charAt(3) == 'r') ? SftpFileAttributes.S_IRGRP
-							: 0);
-		}
-
-		if (len >= 5) {
-			cp = cp
-					| ((newPermissions.charAt(4) == 'w') ? SftpFileAttributes.S_IWGRP
-							: 0);
-		}
-
-		if (len >= 6) {
-			cp = cp
-					| ((newPermissions.charAt(5) == 'x') ? SftpFileAttributes.S_IXGRP
-							: 0);
-		}
-
-		if (len >= 7) {
-			cp = cp
-					| ((newPermissions.charAt(6) == 'r') ? SftpFileAttributes.S_IROTH
-							: 0);
-		}
-
-		if (len >= 8) {
-			cp = cp
-					| ((newPermissions.charAt(7) == 'w') ? SftpFileAttributes.S_IWOTH
-							: 0);
-		}
-
-		if (len >= 9) {
-			cp = cp
-					| ((newPermissions.charAt(8) == 'x') ? SftpFileAttributes.S_IXOTH
-							: 0);
-		}
-
-		setPermissions(new UnsignedInteger32(cp));
-	}
-
-	/**
-	 * Get the current permissions value.
-	 * 
-	 * @return UnsignedInteger32
-	 */
-	public UnsignedInteger32 getPermissions() {
-		if (permissions != null)
-			return permissions;
-		return new UnsignedInteger32(0);
-	}
-
-	/**
-	 * Set the last access and last modified times. These times are represented
-	 * by integers containing the number of seconds from Jan 1, 1970 UTC. NOTE:
-	 * You should divide any value returned from Java's
-	 * System.currentTimeMillis() method by 1000 to set the correct times as
-	 * this returns the time in milliseconds from Jan 1, 1970 UTC.
-	 * 
-	 * @param atime
-	 * @param mtime
-	 */
-	public void setTimes(UnsignedInteger64 atime, UnsignedInteger64 mtime) {
-		this.atime = atime;
-		this.mtime = mtime;
-
-		// Set the flags
-		if (atime != null) {
-			flags |= SSH_FILEXFER_ATTR_ACCESSTIME;
+		// Set the flag
+		if (this.size.isPresent()) {
+			flags |= SSH_FILEXFER_ATTR_SIZE;
 		} else {
-			if(isFlagSet(SSH_FILEXFER_ATTR_ACCESSTIME)) {
-				flags ^= SSH_FILEXFER_ATTR_ACCESSTIME;
-			}
-		}
-
-		if (mtime != null) {
-			flags |= SSH_FILEXFER_ATTR_MODIFYTIME;
-		} else {
-			if(isFlagSet(SSH_FILEXFER_ATTR_MODIFYTIME)) {
-				flags ^= SSH_FILEXFER_ATTR_MODIFYTIME;
-			}
+			flags &= ~SSH_FILEXFER_ATTR_SIZE;
 		}
 	}
-	
+
 	/**
-	 * Sets SFTP v4 time attributes including sub-second times. If you pass a null value
-	 * for any sub-second time it will be defaulted to zero. If you pass null value for 
-	 * any time value if will be not be included in the attributes and its sub-second
-	 * value will also not be included. 
+	 * Sets SFTP v4 time attributes including sub-second times. If you pass a null
+	 * value for any sub-second time it will be defaulted to zero. If you pass null
+	 * value for any time value if will be not be included in the attributes and its
+	 * sub-second value will also not be included.
+	 * <p>
+	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
+	 * immutable.
+	 * 
 	 * @param atime
 	 * @param atime_nano
 	 * @param mtime
 	 * @param mtime_nano
 	 * @param ctime
 	 * @param ctime_nano
+	 * @deprecated
+	 * @see SftpFileAttributesBuilder#withLastAccessTime(FileTime)
+	 * @see SftpFileAttributesBuilder#withLastModifiedTime(FileTime)
+	 * @see SftpFileAttributesBuilder#withCreateTime(FileTime)
 	 */
-	public void setTimes(UnsignedInteger64 atime, UnsignedInteger32 atime_nano,
-			UnsignedInteger64 mtime, UnsignedInteger32 mtime_nano,
-			UnsignedInteger64 ctime, UnsignedInteger32 ctime_nano) {
-		
-		setTimes(atime, mtime);
-		
+	public void setTimes(UnsignedInteger64 atime, UnsignedInteger32 atime_nano, UnsignedInteger64 mtime,
+			UnsignedInteger32 mtime_nano, UnsignedInteger64 ctime, UnsignedInteger32 ctime_nano) {
+
+		setTimes(atime, mtime, ctime);
+
 		flags |= SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
 		
-		this.atime_nano = atime_nano != null ? atime_nano : new UnsignedInteger32(0);
-		this.mtime_nano = mtime_nano != null ? mtime_nano : new UnsignedInteger32(0);
-		this.createtime_nano = ctime_nano != null ? ctime_nano : new UnsignedInteger32(0);
-		
-		this.createtime = ctime;
-	
-		if(ctime != null) {
-			flags |= SSH_FILEXFER_ATTR_CREATETIME;
-		} else {
-			if(isFlagSet(SSH_FILEXFER_ATTR_CREATETIME)) {
-				flags ^= SSH_FILEXFER_ATTR_CREATETIME;
-			}
-		}
+		lastAccessTime = lastAccessTime.map(ft -> FileTime.from(ft.toInstant().plusNanos(atime_nano == null ? 0l : atime_nano.longValue())));		
+		lastModifiedTime = lastModifiedTime.map(ft -> FileTime.from(ft.toInstant().plusNanos(mtime_nano == null ? 0l : mtime_nano.longValue())));		
+		createTime = createTime.map(ft -> FileTime.from(ft.toInstant().plusNanos(ctime_nano == null ? 0l : ctime_nano.longValue())));
 	}
-	
+
 	/**
-	 * Set SFTP v4 time attributes without any sub-second times. 
+	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
+	 * immutable.
+	 * 
+	 * @param atime atime
+	 * @param mtime mtime
+	 * @deprecated
+	 * @see SftpFileAttributesBuilder#withLastAccessTime(FileTime)
+	 * @see SftpFileAttributesBuilder#withLastModifiedTime(FileTime)
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void setTimes(UnsignedInteger64 atime, UnsignedInteger64 mtime) {
+		lastAccessTime = atime == null ? Optional.empty() : Optional.of(FileTime.fromMillis(atime.longValue() * 1000));
+		if (lastAccessTime.isPresent())
+			flags |= SSH_FILEXFER_ATTR_ACCESSTIME;
+		else
+			flags &= ~SSH_FILEXFER_ATTR_ACCESSTIME;
+		lastModifiedTime = mtime == null ? Optional.empty()
+				: Optional.of(FileTime.fromMillis(mtime.longValue() * 1000));
+		if (lastModifiedTime.isPresent())
+			flags |= SSH_FILEXFER_ATTR_MODIFYTIME;
+		else
+			flags &= ~SSH_FILEXFER_ATTR_MODIFYTIME;
+		flags &= ~SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
+	}
+
+	/**
+	 * Set SFTP v4 time attributes without any sub-second times.
+	 * <p>
+	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
+	 * immutable.
+	 * 
 	 * @param atime last accessed time
 	 * @param mtime last modified time
 	 * @param ctime creation time
+	 * @deprecated
+	 * @see SftpFileAttributesBuilder#withLastAccessTime(FileTime)
+	 * @see SftpFileAttributesBuilder#withLastModifiedTime(FileTime)
+	 * @see SftpFileAttributesBuilder#withCreateTime(FileTime)
 	 */
-	public void setTimes(UnsignedInteger64 atime, 
-			UnsignedInteger64 mtime, 
-			UnsignedInteger64 ctime) {
-		
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void setTimes(UnsignedInteger64 atime, UnsignedInteger64 mtime, UnsignedInteger64 ctime) {
+
 		setTimes(atime, mtime);
-		
-		if(isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES)) {
-			flags ^= SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
-		}
-		
-		this.atime_nano = null;
-		this.mtime_nano = null;
-		this.createtime_nano = null;
-		
-		this.createtime = ctime;
-	
-		if(ctime != null) {
+
+		createTime = ctime == null ? Optional.empty()
+				: Optional.of(FileTime.fromMillis(ctime.longValue() * 1000));
+		if (lastModifiedTime.isPresent())
 			flags |= SSH_FILEXFER_ATTR_CREATETIME;
-		} else {
-			if(isFlagSet(SSH_FILEXFER_ATTR_CREATETIME)) {
-				flags ^= SSH_FILEXFER_ATTR_CREATETIME;
-			}
-		}
-	}
-
-	public boolean hasAccessTime() {
-		return atime!=null;
-	}
-	
-	public boolean hasCreateTime() {
-		return createtime!=null;
-	}
-	
-	/**
-	 * Get the last accessed time. This integer value represents the number of
-	 * seconds from Jan 1, 1970 UTC. When using with Java Date/Time classes you
-	 * should multiply this value by 1000 as Java uses the time in milliseconds
-	 * rather than seconds.
-	 * 
-	 * @return UnsignedInteger64
-	 */
-	public UnsignedInteger64 getAccessedTime() {
-		return atime;
-	}
-
-	
-	public boolean hasModifiedTime() {
-		return mtime!=null;
-	}
-	
-	/**
-	 * Get the last modified time. This integer value represents the number of
-	 * seconds from Jan 1, 1970 UTC. When using with Java Date/Time classes you
-	 * should multiply this value by 1000 as Java uses the time in milliseconds
-	 * rather than seconds.
-	 * 
-	 * @return UnsignedInteger64
-	 */
-	public UnsignedInteger64 getModifiedTime() {
-		if (mtime != null) {
-			return mtime;
-		}
-		return new UnsignedInteger64(0);
+		else
+			flags &= ~SSH_FILEXFER_ATTR_CREATETIME;
 	}
 
 	/**
-	 * Returns the modified date/time as a Java Date object.
+	 * Set the UID of the owner.
+	 * <p>
+	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
+	 * immutable.
 	 * 
-	 * @return
+	 * @param uid uid
+	 * @deprecated
+	 * @see SftpFileAttributesBuilder#withUid(int)
 	 */
-	public Date getModifiedDateTime() {
-
-		long time = 0;
-
-		if (mtime != null) {
-			time = mtime.longValue() * 1000;
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void setUID(String uid) {
+		if (uid == null) {
+			throw new IllegalArgumentException("uid cannot be null!");
 		}
-
-		if (mtime_nano != null) {
-			time += (mtime_nano.longValue() / 1000000);
+		if (!uid.matches("\\d+")) {
+			throw new IllegalArgumentException("uid must be a user id containing only digits");
 		}
-		return new Date(time);
-	}
-	
-	/**
-	 * Returns the creation date/time as a Java Date object.
-	 * 
-	 * @return
-	 */
-	public Date getCreationDateTime() {
-
-		long time = 0;
-
-		if (createtime != null) {
-			time = createtime.longValue() * 1000;
-		}
-
-		if (createtime_nano != null) {
-			time += (createtime_nano.longValue() / 1000000);
-		}
-		return new Date(time);
+		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
+		flags |= SSH_FILEXFER_ATTR_UIDGID;
+		this.uid = Optional.of(Integer.parseInt(uid));
 	}
 
 	/**
-	 * Returns the last accessed date/time as a Java Date object.
+	 * Set the username of this file.
+	 * <p>
+	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
+	 * immutable.
 	 * 
-	 * @return
+	 * @param username usernameuid
+	 * @deprecated
+
+	 * @see SftpFileAttributesBuilder#withUsername(String)
 	 */
-	public Date getAccessedDateTime() {
-
-		long time = 0;
-
-		if (atime != null) {
-			time = atime.longValue() * 1000;
-		}
-
-		if (atime_nano != null) {
-			time += (atime_nano.longValue() / 1000000);
-		}
-		return new Date(time);
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void setUsername(String username) {
+		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
+		this.username = Optional.of(username);
 	}
 
-	/**
-	 * Get the creation time of this file. This is only supported for SFTP
-	 * protocol version 4 and above; if called when protocol revision is lower
-	 * this method will return a zero value.
-	 * 
-	 * @return UnsignedInteger64
-	 */
-	public UnsignedInteger64 getCreationTime() {
-		if (createtime != null)
-			return createtime;
-		return new UnsignedInteger64(0);
+	public UnsignedInteger64 size() {
+		return size.orElse(UnsignedInteger64.ZERO);
 	}
 
-	/**
-	 * Determine if a permissions flag is set.
-	 * 
-	 * @param flag
-	 * 
-	 * @return boolean
-	 */
-	private boolean isFlagSet(long flag, int version) {
-		if(version >= 5 && supportedAttributeMask != null && supportedAttributeMask.longValue()!=0) {
-			boolean set = ((flags & (flag & 0xFFFFFFFFL)) == (flag & 0xFFFFFFFFL));
-			if(set) {
-				set =  ((supportedAttributeMask & (flag & 0xFFFFFFFFL)) == (flag & 0xFFFFFFFFL));
-			}
-			return set;
-		}
-		return ((flags & (flag & 0xFFFFFFFFL)) == (flag & 0xFFFFFFFFL));
+	public Optional<UnsignedInteger64> sizeOr() {
+		return size;
 	}
-	
-	private boolean isFlagSet(long flag) {
-		return ((flags & (flag & 0xFFFFFFFFL)) == (flag & 0xFFFFFFFFL));
+
+	public long supportedAttributeBits() {
+		return supportedAttributeBits.orElse(0l);
+	}
+
+	public Optional<Long> supportedAttributeBitsOr() {
+		return supportedAttributeBits;
+	}
+
+	public long supportedAttributeMask() {
+		return supportedAttributeMask.orElse(0l);
+	}
+
+	public Optional<Long> supportedAttributeMaskOr() {
+		return supportedAttributeMask;
+	}
+
+	public byte textHint() {
+		return textHint.orElseThrow(() -> new IllegalStateException("No text hint set."));
+	}
+
+	public Optional<Byte> textHintOr() {
+		return textHint;
 	}
 
 	/**
@@ -959,123 +1798,96 @@ public class SftpFileAttributes {
 	 * @throws IOException
 	 */
 	public byte[] toByteArray(int version) throws IOException {
-		ByteArrayWriter baw = new ByteArrayWriter();
+		var baw = new ByteArrayWriter();
 
 		try {
-			baw.writeInt(flags);
+			switch (version) {
+			case 6:
+				baw.writeInt(flags & VERSION_6_FLAGS);
+				break;
+			case 5:
+				baw.writeInt(flags & VERSION_5_FLAGS);
+				break;
+			case 4:
+				baw.writeInt(flags & VERSION_4_FLAGS);
+				break;
+			default:
+				baw.writeInt(flags & VERSION_3_FLAGS);
+				break;
+			}
 
 			if (version > 3)
 				baw.write(type);
 
 			if (isFlagSet(SSH_FILEXFER_ATTR_SIZE, version)) {
-				baw.write(size.toByteArray());
+				baw.write(size.orElse(UnsignedInteger64.ZERO).toByteArray());
 			}
 
 			if (version <= 3 && isFlagSet(SSH_FILEXFER_ATTR_UIDGID, version)) {
-				if (uid != null) {
-					try {
-						baw.writeInt(Long.parseLong(uid));
-					} catch (NumberFormatException ex) {
-						baw.writeInt(0);
-					}
-				} else {
-					baw.writeInt(0);
-				}
-
-				if (gid != null) {
-					try {
-						baw.writeInt(Long.parseLong(gid));
-					} catch (NumberFormatException ex) {
-						baw.writeInt(0);
-					}
-				} else {
-					baw.writeInt(0);
-				}
+				baw.writeInt(uid.orElse(0));
+				baw.writeInt(gid.orElse(0));
 			} else if (version > 3 && isFlagSet(SSH_FILEXFER_ATTR_OWNERGROUP, version)) {
-				if (username != null)
-					baw.writeString(username, charsetEncoding);
-				else if(uid!=null) 
-					baw.writeString(uid, charsetEncoding);
-				else
-					baw.writeString("");
-
-				if (group != null)
-					baw.writeString(username, charsetEncoding);
-				else if(gid!=null)
-					baw.writeString(gid, charsetEncoding);
-				else
-					baw.writeString("");
+				baw.writeString(username.orElseGet(() -> uid.map(Long::toString).orElse("")), charsetEncoding);
+				baw.writeString(group.orElseGet(() -> gid.map(Long::toString).orElse("")), charsetEncoding);
 			}
 
 			if (isFlagSet(SSH_FILEXFER_ATTR_PERMISSIONS, version)) {
-				baw.writeInt((permissions.longValue() & S_MODE_MASK) | getModeType());
+				baw.writeInt((permissions.map(PosixPermissions::asLong).orElse(0l) & S_MODE_MASK) | toModeType());
 			}
 
 			if (version <= 3 && isFlagSet(SSH_FILEXFER_ATTR_ACCESSTIME, version)) {
-				baw.writeInt(atime.longValue());
-				baw.writeInt(mtime.longValue());
+				baw.writeInt(lastAccessTime.map(a -> a.to(TimeUnit.SECONDS)).orElse(0l));
+				baw.writeInt(lastModifiedTime.map(a -> a.to(TimeUnit.SECONDS)).orElse(0l));
 			} else if (version > 3) {
 
 				if (isFlagSet(SSH_FILEXFER_ATTR_ACCESSTIME, version)) {
-					baw.writeUINT64(atime);
+					baw.writeUINT64(lastAccessTime.map(a -> a.to(TimeUnit.SECONDS)).orElse(0l));
 					if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)) {
-						baw.writeUINT32(atime_nano);
+						baw.writeUINT32(new UnsignedInteger32(lastAccessTime.map(this::nanosFromFileTime).orElse(0l)));
 					}
 				}
 
 				if (isFlagSet(SSH_FILEXFER_ATTR_CREATETIME, version)) {
-					baw.writeUINT64(createtime);
+					baw.writeUINT64(createTime.map(a -> a.to(TimeUnit.SECONDS)).orElse(0l));
 					if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)) {
-						baw.writeUINT32(createtime_nano);
+						baw.writeUINT32(new UnsignedInteger32(createTime.map(this::nanosFromFileTime).orElse(0l)));
 					}
 				}
 
 				if (isFlagSet(SSH_FILEXFER_ATTR_MODIFYTIME, version)) {
-					baw.writeUINT64(mtime);
+					baw.writeUINT64(lastModifiedTime.map(a -> a.to(TimeUnit.SECONDS)).orElse(0l));
 					if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)) {
-						baw.writeUINT32(mtime_nano);
+						baw.writeUINT32(
+								new UnsignedInteger32(lastModifiedTime.map(this::nanosFromFileTime).orElse(0l)));
 					}
 				}
 
 			}
 
 			if (isFlagSet(SSH_FILEXFER_ATTR_ACL, version)) {
-				ByteArrayWriter tmp = new ByteArrayWriter();
-
+				var tmp = new ByteArrayWriter();
 				try {
-					Enumeration<ACL> e = acls.elements();
 					tmp.writeInt(acls.size());
-					while (e.hasMoreElements()) {
-						ACL acl = e.nextElement();
+					for (var acl : acls) {
 						tmp.writeInt(acl.getType());
 						tmp.writeInt(acl.getFlags());
 						tmp.writeInt(acl.getMask());
 						tmp.writeString(acl.getWho());
 					}
-
 					baw.writeBinaryString(tmp.toByteArray());
-
 				} finally {
 					tmp.close();
 				}
 			}
 
-			if(version >= 5 && isFlagSet(SSH_FILEXFER_ATTR_BITS, version)) {
-				if(attributeBits==null) {
-					baw.writeInt(0);
-				} else {
-					if(supportedAttributeBits==null) {
-						baw.writeInt(attributeBits.longValue());
-					}else {
-						baw.writeInt(attributeBits.longValue() & supportedAttributeBits.longValue());	
-					}
-					
-				}
+			if (version >= 5 && isFlagSet(SSH_FILEXFER_ATTR_BITS, version)) {
+				baw.writeInt(attributeBits.map(a -> supportedAttributeBits.isEmpty() ? a.longValue()
+						: a.longValue() & supportedAttributeBits.get().longValue()).orElse(0l));
 			}
-			
+//
 			if (isFlagSet(SSH_FILEXFER_ATTR_EXTENDED, version)) {
 				baw.writeInt(extendedAttributes.size());
-				for(String key : extendedAttributes.keySet()) {
+				for (String key : extendedAttributes.keySet()) {
 					baw.writeString(key);
 					baw.writeBinaryString((byte[]) extendedAttributes.get(key));
 				}
@@ -1088,8 +1900,11 @@ public class SftpFileAttributes {
 		}
 	}
 
-	public int getModeType() {
-		
+	public String toMaskString() {
+		return permissions.map(PosixPermissions::asMaskString).orElse("----");
+	}
+
+	public int toModeType() {
 		switch (type) {
 		case SSH_FILEXFER_TYPE_DIRECTORY:
 			return S_IFDIR;
@@ -1109,353 +1924,89 @@ public class SftpFileAttributes {
 		case SSH_FILEXFER_TYPE_UNKNOWN:
 		default:
 			return 0;
-
 		}
 	}
 
-	private int octal(int v, int r) {
-		v >>>= r;
-
-		return (((v & 0x04) != 0) ? 4 : 0) + (((v & 0x02) != 0) ? 2 : 0)
-				+ +(((v & 0x01) != 0) ? 1 : 0);
-	}
-
-	private String rwxString(int v, int r) {
-		v >>>= r;
-
-		String rwx = ((((v & 0x04) != 0) ? "r" : "-") + (((v & 0x02) != 0) ? "w"
-				: "-"));
-
-		if (((r == 6) && ((permissions.longValue() & S_ISUID) == S_ISUID))
-				|| ((r == 3) && ((permissions.longValue() & S_ISGID) == S_ISGID))) {
-			rwx += (((v & 0x01) != 0) ? "s" : "S");
-		} else {
-			rwx += (((v & 0x01) != 0) ? "x" : "-");
+	public String toPermissionsString() {
+		var str = new StringBuilder();
+		switch (type) {
+		case SSH_FILEXFER_TYPE_BLOCK_DEVICE:
+			str.append('b');
+			break;
+		case SSH_FILEXFER_TYPE_CHAR_DEVICE:
+			str.append('c');
+			break;
+		case SSH_FILEXFER_TYPE_DIRECTORY:
+			str.append('d');
+			break;
+		case SSH_FILEXFER_TYPE_FIFO:
+			str.append('p');
+			break;
+		case SSH_FILEXFER_TYPE_SOCKET:
+			str.append('s');
+			break;
+		case SSH_FILEXFER_TYPE_SYMLINK:
+			str.append('l');
+			break;
+		case SSH_FILEXFER_TYPE_UNKNOWN:
+		case SSH_FILEXFER_TYPE_REGULAR:
+		default:
+			str.append('-');
+			break;
 		}
-
-		return rwx;
+		str.append(permissions.map(PosixPermissions::asFileModesString).orElse(""));
+		return str.toString();
 	}
 
-	/**
-	 * 
-	 * Returns a formatted permissions string.
-	 * 
-	 * @return String
-	 */
-	public String getPermissionsString() {
-		if (permissions != null) {
-			StringBuffer str = new StringBuffer();
-			boolean has_ifmt = ((int) permissions.longValue() & S_IFMT) > 0;
-			if (has_ifmt) {
-				str.append(types[(int) (permissions.longValue() & S_IFMT) >>> 13]);
-			} else {
-				switch(type) {
-				case SSH_FILEXFER_TYPE_BLOCK_DEVICE:
-					str.append('b');
-					break;
-				case SSH_FILEXFER_TYPE_CHAR_DEVICE:
-					str.append('c');
-					break;
-				case SSH_FILEXFER_TYPE_DIRECTORY:
-					str.append('d');
-					break;
-				case SSH_FILEXFER_TYPE_FIFO:
-					str.append('p');
-					break;
-				case SSH_FILEXFER_TYPE_SOCKET:
-					str.append('s');
-					break;
-				case SSH_FILEXFER_TYPE_SYMLINK:
-					str.append('l');
-					break;
-				case SSH_FILEXFER_TYPE_UNKNOWN:
-				case SSH_FILEXFER_TYPE_REGULAR:
-				default:
-					str.append('-');
-					break;
-				}
-				
-			}
-
-			str.append(rwxString((int) permissions.longValue(), 6));
-			str.append(rwxString((int) permissions.longValue(), 3));
-			str.append(rwxString((int) permissions.longValue(), 0));
-
-			return str.toString();
-		}
-		return "";
+	public int type() {
+		return type;
 	}
 
-	/**
-	 * Return the UNIX style mode mask
-	 * 
-	 * @return mask
-	 */
-	public String getMaskString() {
-		StringBuffer buf = new StringBuffer();
-
-		if (permissions != null) {
-			int i = (int) permissions.longValue();
-			buf.append('0');
-			buf.append(octal(i, 6));
-			buf.append(octal(i, 3));
-			buf.append(octal(i, 0));
-		} else {
-			buf.append("----");
-		}
-		return buf.toString();
+	public int uid() {
+		return uid.orElse(0);
 	}
 
-	/**
-	 * Determine whether these attributes refer to a directory
-	 * 
-	 * @return boolean
-	 */
-	public boolean isDirectory() {
-		return type == SSH_FILEXFER_TYPE_DIRECTORY;
+	public Optional<Integer> uidOr() {
+		return uid;
 	}
 
-	/**
-	 * 
-	 * Determine whether these attributes refer to a file.
-	 * 
-	 * @return boolean
-	 */
-	public boolean isFile() {
-		return type == SSH_FILEXFER_TYPE_REGULAR;
+	public String untranslatedName() {
+		return untranslatedName.orElseThrow(() -> new IllegalStateException("No untranslated name set"));
 	}
 
-	/**
-	 * Determine whether these attributes refer to a symbolic link.
-	 * 
-	 * @return boolean
-	 */
-	public boolean isLink() {
-		return type == SSH_FILEXFER_TYPE_SYMLINK;
+	public Optional<String> untranslatedNameOr() {
+		return untranslatedName;
 	}
 
-	/**
-	 * Determine whether these attributes refer to a pipe.
-	 * 
-	 * @return boolean
-	 */
-	public boolean isFifo() {
-		return type == SSH_FILEXFER_TYPE_FIFO;
+	public String username() {
+		return username.orElse("");
 	}
 
-	/**
-	 * Determine whether these attributes refer to a block special file.
-	 * 
-	 * @return boolean
-	 */
-	public boolean isBlock() {
-		return type == SSH_FILEXFER_TYPE_BLOCK_DEVICE;
+	public Optional<String> usernameOr() {
+		return username;
 	}
 
-	/**
-	 * Determine whether these attributes refer to a character device.
-	 * 
-	 * @return boolean
-	 */
-	public boolean isCharacter() {
-		return type == SSH_FILEXFER_TYPE_CHAR_DEVICE;
+	private boolean isFlagSet(long flag, int version) {
+		return isFlagSet(flag, flags, version, supportedAttributeMask);
 	}
 
-	/**
-	 * Determine whether these attributes refer to a socket.
-	 * 
-	 * @return boolean
-	 */
-	public boolean isSocket() {
-		return type == SSH_FILEXFER_TYPE_SOCKET;
+	private long nanosFromFileTime(FileTime filetime) {
+		return Integer.toUnsignedLong(filetime.toInstant().getNano());
 	}
 
-	public void setUsername(String username) {
-		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
-		this.username = username;
+	public Optional<String> bestUsernameOr() {
+		return username.or(() -> uid.map(u -> String.valueOf(u)));
 	}
 
-	public void setGroup(String group) {
-		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
-		this.group = group;
-	}
-	
-	public boolean hasAttributeBits() {
-		return attributeBits!=null;
-	}
-	
-	private void setAttributeBit(long attributeBit, boolean value) throws SftpStatusException {
-		
-		if(!hasAttributeBits()) {
-			attributeBits = new UnsignedInteger32(0);
-		}
-		
-		flags = flags | SSH_FILEXFER_ATTR_BITS;
-		
-		if(value) {
-			attributeBits = new UnsignedInteger32(attributeBits.longValue() | attributeBit);
-		} else {
-			if((attributeBits.longValue() & attributeBit) == attributeBit) {
-				attributeBits = new UnsignedInteger32(attributeBits.longValue() ^ attributeBit);
-			}
-		}
-		
-	}
-	
-	public boolean isAttributeBitSet(long attributeBit) throws SftpStatusException {
-		if(!hasAttributeBits()) {
-			return false;
-		}
-		return ((attributeBits.longValue() & (attributeBit & 0xFFFFFFFFL)) == (attributeBit & 0xFFFFFFFFL));
-	}
-	
-	public boolean isReadOnly() throws SftpStatusException {
-		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_READONLY);
-	}
-	
-	public void setReadOnly(boolean value) throws SftpStatusException {
-		setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_READONLY, value);
-	}
-	
-	public boolean isSystem() throws SftpStatusException {
-		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_SYSTEM);
+	public String bestUsername() {
+		return bestUsernameOr().orElse("nouser");
 	}
 
-	public void setSystem(boolean value) throws SftpStatusException {
-		setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_SYSTEM, value);
-	}
-	
-	public boolean isHidden() throws SftpStatusException {
-		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_HIDDEN);
-	}
-	
-	public void setHidden(boolean value) throws SftpStatusException {
-		setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_HIDDEN, value);
-	}
-	
-	public boolean isCaseInsensitive() throws SftpStatusException {
-		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_CASE_INSENSITIVE);
-	}
-	
-	public void setCaseSensitive(boolean value) throws SftpStatusException {
-		setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_CASE_INSENSITIVE, value);
-	}
-	
-	public boolean isArchive() throws SftpStatusException {
-		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_ARCHIVE);
-	}
-	
-	public void setArchive(boolean value) throws SftpStatusException {
-		setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_ARCHIVE, value);
-	}
-	
-	public boolean isEncrypted() throws SftpStatusException {
-		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_ENCRYPTED);
-	}
-	
-	public void setEncrypted(boolean value) throws SftpStatusException {
-		setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_ENCRYPTED, value);
-	}
-	
-	public boolean isCompressed() throws SftpStatusException {
-		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_COMPRESSED);
-	}
-	
-	public void setCompressed(boolean value) throws SftpStatusException {
-		setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_COMPRESSED, value);
-	}
-	
-	public boolean isSparse() throws SftpStatusException {
-		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_SPARSE);
-	}
-	
-	public void setSparse(boolean value) throws SftpStatusException {
-		setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_SPARSE, value);
-	}
-	
-	public boolean isAppendOnly() throws SftpStatusException {
-		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_APPEND_ONLY);
+	public Optional<String> bestGroupOr() {
+		return group.or(() -> gid.map(g -> String.valueOf(g)));
 	}
 
-	public void setAppendOnly(boolean value) throws SftpStatusException {
-		setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_APPEND_ONLY, value);
+	public String bestGroup() {
+		return bestGroupOr().orElse("nogroup");
 	}
-	
-	public boolean isImmutable() throws SftpStatusException {
-		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_IMMUTABLE);
-	}
-	
-	public void setImmutable(boolean value) throws SftpStatusException {
-		setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_IMMUTABLE, value);
-	}
-	
-	public boolean isSync() throws SftpStatusException {
-		return isAttributeBitSet(SSH_FILEXFER_ATTR_FLAGS_SYNC);
-	}
-	
-	public void setSync(boolean value) throws SftpStatusException {
-		setAttributeBit(SSH_FILEXFER_ATTR_FLAGS_SYNC, value);
-	}
-	
-	/**
-	 * Set all the extended attributes. The keys should be of type String, as
-	 * should the values.
-	 * 
-	 * @param attributes
-	 *            map of all extended attributes
-	 */
-	public void setExtendedAttributes(Map<String, byte[]> attributes) {
-		flags |= SSH_FILEXFER_ATTR_EXTENDED;
-		this.extendedAttributes = attributes;
-	}
-
-	/**
-	 * Set a single extended attribute value.
-	 * 
-	 * @param attrName
-	 *            attribute name
-	 * @param attrValue
-	 *            attribute value
-	 */
-	public void setExtendedAttribute(String attrName, byte[] attrValue) {
-		flags |= SSH_FILEXFER_ATTR_EXTENDED;
-		if (extendedAttributes == null) {
-			extendedAttributes = new HashMap<String, byte[]>();
-		}
-		extendedAttributes.put(attrName, attrValue);
-	}
-
-	/**
-	 * Set a single extended attribute value.
-	 * 
-	 * @param attrName
-	 *            attribute name to remove
-	 */
-	public void removeExtendedAttribute(String attrName) {
-		if (extendedAttributes != null) {
-			if (extendedAttributes.containsKey(attrName)) {
-				extendedAttributes.remove(attrName);
-			}
-		}
-	}
-
-	/**
-	 * Get the extended attributes. The key is of type String, as is the value.
-	 * 
-	 * @return attribute values
-	 */
-	public Map<String, byte[]> getExtendedAttributes() {
-		return this.extendedAttributes;
-	}
-	
-	public boolean hasExtendedAttribute(String attrName) {
-		return extendedAttributes.containsKey(attrName);
-	}
-	
-	public byte[] getExtendedAttribute(String attrName) {
-		if(extendedAttributes!=null) {
-			return extendedAttributes.get(attrName);
-		}
-		return null;
-	}	
 }

@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.util;
 
 import java.io.BufferedReader;
@@ -26,12 +8,16 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 
@@ -60,6 +46,22 @@ public class Utils {
 		} else {
 			return "";
 		}
+	}
+	
+	public static String after(String value, String token) {
+		int idx = value.indexOf(token);
+		if(idx < 0) {
+			throw new IndexOutOfBoundsException();
+		}
+		return value.substring(idx+token.length());
+	}
+	
+	public static String before(String value, String token) {
+		int idx = value.indexOf(token);
+		if(idx < 0) {
+			throw new IndexOutOfBoundsException();
+		}
+		return value.substring(0, idx);
 	}
 	
 	public static String bytesToHex(byte[] bytes) {
@@ -322,6 +324,21 @@ public class Utils {
 		return b.toString();
 	}
 
+	public static String csv(String separator, String... elements) {
+		return csv(separator, Arrays.asList(elements));
+	}
+	
+	public static String csv(String separator, Collection<String> elements) {
+		StringBuffer b = new StringBuffer();
+		for(String element : elements) {
+			if(b.length() > 0) {
+				b.append(separator);
+			}
+			b.append(element);
+		}
+		return b.toString();
+	}
+	
 	public static String randomAlphaNumericString(int length) {
 		 return new BigInteger(length * 8, new Random()).toString(32).substring(0,  length);
 	}
@@ -347,7 +364,7 @@ public class Utils {
             throw new IOException("Unexpected exit code " + exitVal + "[" + output.toString() + "]");
         }
 	}
-
+	
 	public static String prompt(BufferedReader reader, String message) throws IOException {
 		
 		System.out.print(String.format("%s: ", message));
@@ -379,6 +396,10 @@ public class Utils {
 			return false;
 		}
 		return false;
+	}
+	
+	public static String formatHostnameAndPort(String hostname, int port) {
+		return port == 22 ? hostname : hostname + ":" + port;
 	}
 	
 	public static int getPort(String hostname) {
@@ -413,4 +434,36 @@ public class Utils {
         return data;
     }
 
+    public static String pad(int num) {
+		String str = "";
+
+		if (num > 0) {
+			for (int i = 0; i < num; i++) {
+				str += " ";
+			}
+		}
+
+		return str;
+	}
+
+	public static Optional<String> emptyOptionalIfBlank(String str) {
+		return "".equals(str) ? Optional.empty() : Optional.ofNullable(str);
+	}
+
+	public static Optional<char[]> emptyOptionalIfBlank(char[] str) {
+		return str != null && str.length == 0 ? Optional.empty() : Optional.ofNullable(str);
+	}
+	
+	public static String translatePathString(Path path) {
+		return path.toString().replace('\\', '/');
+	}
+
+	public static String encodeUserInfo(String userinfo) {
+		try {
+			return new URI("sftp", userinfo, "localhost", 22, null, null, null).getRawUserInfo();
+		} catch (URISyntaxException e) {
+			/* NOTE: Will NEVER be thrown, and can't be tested for coverage :( */
+			throw new IllegalArgumentException(e);
+		}
+	}
 }

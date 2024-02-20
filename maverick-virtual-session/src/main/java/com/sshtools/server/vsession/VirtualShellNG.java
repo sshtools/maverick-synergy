@@ -1,24 +1,7 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.server.vsession;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
@@ -49,6 +32,8 @@ import com.sshtools.common.files.nio.AbstractFileURI;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.ClassLoaderPolicy;
+import com.sshtools.common.ssh.Channel;
+import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.Utils;
 import com.sshtools.server.AgentForwardingChannel;
@@ -72,8 +57,8 @@ public class VirtualShellNG extends SessionChannelNG {
 	}
 
 	RootShell shell;
-	VirtualConsole console;
-	ShellCommandFactory commandFactory;
+	protected VirtualConsole console;
+	protected ShellCommandFactory commandFactory;
 
 	boolean rawMode = false;
 	
@@ -84,6 +69,28 @@ public class VirtualShellNG extends SessionChannelNG {
 			ShellCommandFactory commandFactory) {
 		super(con);
 		this.commandFactory = commandFactory;
+		addEventListener(new ChannelEventListener() {
+			@Override
+			public void onChannelDataIn(Channel channel, ByteBuffer data) {
+
+				byte[] tmp = new byte[data.remaining()];
+				data.get(tmp);
+				
+				try {
+					if(terminal instanceof AbstractPosixTerminal) {
+						((AbstractPosixTerminal)terminal).getPty().getMasterOutput().write(tmp);
+						((AbstractPosixTerminal)terminal).getPty().getMasterOutput().flush();
+					}
+					else {
+						((ExternalTerminal)terminal).processInputBytes(tmp, 0, tmp.length);
+					}
+					evaluateWindowSpace();
+				} catch (Exception e) {
+					Log.error("Failed to send input to terminal.", e);
+					close();
+				}
+			}
+		});
 	}
 
 	public void addWindowSizeChangeListener(WindowSizeChangeListener listener) {
@@ -120,30 +127,8 @@ public class VirtualShellNG extends SessionChannelNG {
 		}
 	}
 
-	@Override
-	protected void onSessionData(ByteBuffer data) {
-
-		byte[] tmp = new byte[data.remaining()];
-		data.get(tmp);
-		
-		try {
-			if(terminal instanceof AbstractPosixTerminal) {
-				((AbstractPosixTerminal)terminal).getPty().getMasterOutput().write(tmp);
-				((AbstractPosixTerminal)terminal).getPty().getMasterOutput().flush();
-			}
-			else {
-				((ExternalTerminal)terminal).processInputBytes(tmp, 0, tmp.length);
-			}
-			evaluateWindowSpace();
-		} catch (Exception e) {
-			Log.error("Failed to send input to terminal.", e);
-			close();
-		}
-		
-	}
-
-
 	public void onSessionOpen() {
+	
 		shell.start();
 	}
 
@@ -301,7 +286,7 @@ public class VirtualShellNG extends SessionChannelNG {
 					cmd.complete(reader, line, candidates);
 				} catch (IllegalAccessException | InstantiationException
 						| UnsupportedCommandException | IOException
-						| PermissionDeniedException e) {
+						| PermissionDeniedException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				}
 			}
 		}

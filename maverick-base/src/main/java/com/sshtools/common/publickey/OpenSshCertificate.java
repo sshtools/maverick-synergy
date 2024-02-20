@@ -1,28 +1,9 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.publickey;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,7 +55,6 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 	UnsignedInteger64 validBefore;
 	List<CriticalOption> criticalOptions = new ArrayList<>();
 	List<CertificateExtension> extensions =new ArrayList<>();
-	List<String> customExtensionsOrder = new ArrayList<>();
 	
 	String reserved;
 	SshPublicKey signedBy;
@@ -100,7 +80,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		return SshKeyFingerprint.getFingerprint(getSignedKey().getEncoded());
 	}
 	
-	public void init(byte[] blob, int start, int len) throws SshException {
+	public SshPublicKey init(byte[] blob, int start, int len) throws SshException {
 
 		ByteArrayReader bar = new ByteArrayReader(blob, start, len);
 
@@ -128,6 +108,8 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		} finally {
 			bar.close();
 		}
+		
+		return this;
 	}
 	
 	public byte[] getEncoded() throws SshException {
@@ -188,17 +170,8 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		writer.writeUINT64(validBefore);
 		
 		ByteArrayWriter options = new ByteArrayWriter();
-		List<CriticalOption> exts = filterExtensions(criticalOptions, true);
-		
-		for(CriticalOption e : exts) {
-
-			options.writeString(e.getName());
-			options.writeBinaryString(e.getStoredValue());
-		}
-		
-		exts = filterExtensions(criticalOptions, false);
-		
-		for(CriticalOption e : exts) {
+	
+		for(CriticalOption e : criticalOptions) {
 
 			options.writeString(e.getName());
 			options.writeBinaryString(e.getStoredValue());
@@ -209,25 +182,9 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		
 		ByteArrayWriter ext = new ByteArrayWriter();
 		
-		List<CertificateExtension> exts2 = filterExtensions(extensions, true);
-		
-		for(CertificateExtension e : exts2) {
+		for(CertificateExtension e : extensions) {
 			ext.writeString(e.getName());
 			ext.writeBinaryString(e.getStoredValue());
-		}
-		
-		if(customExtensionsOrder.size() > 0) {
-			for(String key : customExtensionsOrder) {
-				CertificateExtension e = getExtension(key);
-				ext.writeString(e.getName());
-				ext.writeBinaryString(e.getStoredValue());
-			}
-		} else {
-			exts2 = filterExtensions(extensions, false);
-			for(CertificateExtension e : exts2) {
-				ext.writeString(e.getName());
-				ext.writeBinaryString(e.getStoredValue());
-			}
 		}
 
 		writer.writeBinaryString(ext.toByteArray());
@@ -246,25 +203,6 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 			}
 		}
 		return null;
-	}
-
-	private <T extends EncodedExtension> List<T> filterExtensions(List<T> exts, boolean requireKnown) {
-		
-		List<T> certs = new ArrayList<>();
-		for(T ext : exts) {
-			if(ext.isKnown()==requireKnown) {
-				certs.add(ext);
-			}
-		}
-		Collections.sort(certs, new Comparator<T>() {
-
-			@Override
-			public int compare(T o1, T o2) {
-				return o1.getName().compareTo(o2.getName());
-			}
-			
-		});
-		return certs;
 	}
 
 	protected void decodeCertificate(ByteArrayReader reader) throws IOException,
@@ -291,8 +229,6 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		tmp = new ByteArrayReader(reader.readBinaryString());
 
 		criticalOptions.clear();
-		extensions.clear();
-		customExtensionsOrder.clear();
 		
 		while (tmp.available() > 0) {
 			String name = tmp.readString();
@@ -302,12 +238,11 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 		tmp.close();
 		tmp = new ByteArrayReader(reader.readBinaryString());
 
+		extensions.clear();
+		
 		while (tmp.available() > 0) {
 			String name = tmp.readString().trim();
 			CertificateExtension ext = CertificateExtension.createKnownExtension(name, tmp.readBinaryString());
-			if(!ext.isKnown()) {
-				customExtensionsOrder.add(ext.getName());
-			}
 			extensions.add(ext);
 		}
 		tmp.close();
@@ -318,12 +253,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 
 		signature = reader.readBinaryString();
 
-		byte[] data = new byte[reader.array().length - (signature.length + 4)];
-		System.arraycopy(reader.array(), 0, data, 0, data.length);
-
-		if(!signedBy.verifySignature(signature, data)) {
-			throw new SshException("Certificate file could not validate the signature supplied by the CA", SshException.JCE_ERROR);
-		}
+		verify();
 	}
 	
 	public void sign(SshPublicKey publicKey, UnsignedInteger64 serial, int type,
@@ -369,7 +299,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 			ByteArrayWriter sig = new ByteArrayWriter();
 			try {
 				sig.writeString(signingKey.getPublicKey().getSigningAlgorithm());
-				sig.writeBinaryString(signingKey.getPrivateKey().sign(encoded, signingKey.getPublicKey().getSigningAlgorithm()));
+				sig.writeBinaryString(signingKey.getPrivateKey().sign(encoded));
 				this.signature = sig.toByteArray();
 			} finally {
 				sig.close();
@@ -401,6 +331,46 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 			Log.error("Ssh certificate sign failed", t);
 			t.printStackTrace();
 			throw new SshException("Failed to encode public key",
+					SshException.INTERNAL_ERROR);
+		} finally {
+			try {
+				blob.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+	
+	public void verify() throws SshException {
+		
+		ByteArrayWriter blob = new ByteArrayWriter();
+
+		try {
+
+			blob.writeString(getEncodingAlgorithm());
+			blob.writeBinaryString(nonce);
+			
+			ByteArrayReader reader = new ByteArrayReader(publicKey.getEncoded());
+			try {
+				reader.readString();
+				
+				blob.write(reader.array(), reader.getPosition(), reader.available());
+			} finally {
+				reader.close();
+			}
+			
+			encodeCertificate(blob);
+			byte[] encoded =  blob.toByteArray();
+			
+			if(!this.signedBy.verifySignature(this.signature, encoded)) {
+				throw new SshException("Failed to verify signature of certificate",
+						SshException.INTERNAL_ERROR);
+			}
+			
+			
+		} catch (IOException t) {
+			Log.error("Ssh certificate sign failed", t);
+			t.printStackTrace();
+			throw new SshException("Failed to process signature verification",
 					SshException.INTERNAL_ERROR);
 		} finally {
 			try {
@@ -449,6 +419,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 	 * @return
 	 * @deprecated Process CertificateExtension values directly.
 	 */
+	@Deprecated
 	public Map<String,String> getExtensionsMap() {
 		Map<String,String> tmp = new HashMap<>();
 		for(CertificateExtension ext : extensions) {
@@ -498,18 +469,5 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 	
 	public String getKeyId() {
 		return keyId;
-	}
-
-	/**
-	 * 
-	 * @return
-	 * @deprecated Process CertificateExtension values directly.
-	 */
-	public Map<String,String> getCriticalOptions() {
-		Map<String,String> tmp = new HashMap<>();
-		for(CriticalOption ext : criticalOptions) {
-			tmp.put(ext.getName(), ext.getStringValue());
-		}
-		return Collections.unmodifiableMap(tmp);
 	}
 }

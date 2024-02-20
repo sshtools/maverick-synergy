@@ -1,24 +1,7 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.synergy.ssh;
 
 import com.sshtools.common.ssh.ChannelRequestFuture;
+import com.sshtools.common.util.UnsignedInteger32;
 
 /**
  * <p>An abstract forwarding channel implementation for use with both local
@@ -50,11 +33,11 @@ public abstract class ForwardingChannel<T extends SshContext>
      * @param windowSize int
      * @see com.sshtools.synergy.ssh.ChannelNG#Channel(String channelType, int maximumPacketSize, int initialWindowSize)
      */
-    public ForwardingChannel(String channelType, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace) {
+    public ForwardingChannel(String channelType, int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace, UnsignedInteger32 minimumWindowSpace) {
         super(channelType, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace);
     }
     
-    public ForwardingChannel(String channelType, int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace, boolean autoConsume) {
+    public ForwardingChannel(String channelType, int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace, UnsignedInteger32 minimumWindowSpace, boolean autoConsume) {
         super(channelType, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, new ChannelRequestFuture(), autoConsume);
     }
 
@@ -89,8 +72,5 @@ public abstract class ForwardingChannel<T extends SshContext>
     public int getOriginatingPort() {
         return originatingPort;
     }
-    
-    protected boolean checkWindowSpace() {
-    	throw new UnsupportedOperationException();
-    }
+
 }

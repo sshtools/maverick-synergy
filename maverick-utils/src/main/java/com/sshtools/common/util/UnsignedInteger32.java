@@ -1,22 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
 package com.sshtools.common.util;
 
 /**
@@ -31,7 +12,10 @@ public class UnsignedInteger32 {
 
   /** The minimum value of a 32bit unsigned integer */
   public final static long MIN_VALUE = 0;
-  private Long value;
+
+  public final static UnsignedInteger32 ZERO = new UnsignedInteger32(0);
+  
+  private final Long value;
 
   /**
    * Creates a new UnsignedInteger32 object.
@@ -45,7 +29,7 @@ public class UnsignedInteger32 {
       throw new NumberFormatException();
     }
 
-    value = new Long(a);
+    value = Long.valueOf(a);
   }
 
   /**
@@ -63,7 +47,7 @@ public class UnsignedInteger32 {
       throw new NumberFormatException();
     }
 
-    value = new Long(longValue);
+    value = Long.valueOf(longValue);
   }
 
   /**
@@ -138,7 +122,16 @@ public class UnsignedInteger32 {
    *
    * @return UnsignedInteger32
    */
-  public static UnsignedInteger32 add(UnsignedInteger32 x, int y) {
+  public static UnsignedInteger32 add(UnsignedInteger32 x, long y) {
     return new UnsignedInteger32(x.longValue() + y);
+  }
+
+
+  public static UnsignedInteger32 deduct(UnsignedInteger32 x, UnsignedInteger32 y) {
+		return new UnsignedInteger32(x.longValue() - y.longValue());
+  }
+  
+  public static UnsignedInteger32 deduct(UnsignedInteger32 x, long y) {
+		return new UnsignedInteger32(x.longValue() - y);
   }
 }

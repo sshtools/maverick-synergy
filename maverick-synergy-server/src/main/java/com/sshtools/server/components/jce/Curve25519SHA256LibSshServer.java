@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.server.components.jce;
 
 import java.io.IOException;
@@ -41,6 +23,7 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.components.SshKeyExchangeServer;
+import com.sshtools.server.components.SshKeyExchangeServerFactory;
 import com.sshtools.synergy.ssh.SshTransport;
 import com.sshtools.synergy.ssh.TransportProtocol;
 
@@ -51,6 +34,19 @@ public class Curve25519SHA256LibSshServer extends SshKeyExchangeServer implement
 	public static final int SSH_MSG_KEX_ECDH_REPLY = 31;
 
 	public static final String CURVE25519_SHA2_AT_LIBSSH_ORG = "curve25519-sha256@libssh.org";
+	
+	public static class Curve25519SHA256LibSshServerFactory implements SshKeyExchangeServerFactory<Curve25519SHA256LibSshServer> {
+		@Override
+		public Curve25519SHA256LibSshServer create() throws NoSuchAlgorithmException, IOException {
+			return new Curve25519SHA256LibSshServer();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { CURVE25519_SHA2_AT_LIBSSH_ORG };
+		}
+	}
+	
 	public final String name;
 	
 	byte[] f;
@@ -188,7 +184,25 @@ public class Curve25519SHA256LibSshServer extends SshKeyExchangeServer implement
 
 		calculateExchangeHash();
 
-		signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
+		int count = 0;
+		while(true) {
+			signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
+	
+			if(Log.isDebugEnabled()) {
+				Log.debug("Verifying signature output to mitigate passive SSH key compromise vulnerability");
+			}
+			
+			if(!pubkey.verifySignature(signature, exchangeHash)) {
+				if(count++ >= 3) {
+					throw new SshException(SshException.HOST_KEY_ERROR, "Detected invalid signautre from private key!");
+				}
+				if(Log.isDebugEnabled()) {
+					Log.debug("Detected invalid signature output from {} implementation", pubkey.getSigningAlgorithm());
+				}
+			} else {
+				break;
+			}
+		}
 
 		transport.postMessage(new SshMessage() {
 			public boolean writeMessageIntoBuffer(ByteBuffer buf) {

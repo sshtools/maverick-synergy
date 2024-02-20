@@ -1,22 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
@@ -114,7 +95,7 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
     }
     
 	public AuthenticatedFuture getAuthenticatedFuture() {
-		return context.getAuthenticatedFuture();
+		return transport.getAuthenticatedFuture();
 	}
 	
 	public String getSessionId() {
@@ -126,12 +107,15 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	}
 	
 	@Override
-	public void addTask(ConnectionAwareTask r) {
+	public ConnectionAwareTask addTask(ConnectionAwareTask r) {
 		context.getExecutorService().execute(r);
+		return r;
 	}
 	
-	public void addTask(Runnable r) {
-		context.getExecutorService().execute(new ConnectionTaskWrapper(this, r));
+	public ConnectionAwareTask addTask(Runnable r) {
+		var t = new ConnectionTaskWrapper(this, r);
+		context.getExecutorService().execute(t);
+		return t;
 	}
 	
 	public <R> Future<R> executeTask(Callable<R> task) {
@@ -212,6 +196,10 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	
 	public boolean isDisconnected() {
 		return getDisconnectFuture().isDone();
+	}
+	
+	public boolean isDisconnecting() {
+		return transport.isDisonnecting();
 	}
 	
 	public void disconnect() {
@@ -336,6 +324,8 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	@SuppressWarnings("unchecked")
 	@Override
 	public void openChannel(Channel channel) {
+		if(connection == null)
+			throw new IllegalStateException("Not connected.");
 		connection.openChannel((ChannelNG<T>)channel);
 	}
 	

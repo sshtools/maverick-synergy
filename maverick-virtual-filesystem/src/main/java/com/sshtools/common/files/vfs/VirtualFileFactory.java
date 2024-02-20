@@ -1,24 +1,10 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.files.vfs;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +12,6 @@ import java.util.Objects;
 import java.util.Stack;
 import java.util.StringTokenizer;
 
-import com.sshtools.common.events.Event;
-import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.logger.Log;
@@ -37,17 +21,74 @@ import com.sshtools.common.util.FileUtils;
 public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
 	protected boolean cached = true;
-	protected VirtualMountManager mgr;
 	
-	Map<String,VirtualFile> cache = null;
-	
+	Map<String,VirtualFile> cache = new HashMap<>();
+	List<VirtualMount> mounts = new ArrayList<VirtualMount>();
 	Map<String,VirtualMountFile> mountCache = new HashMap<>();
+	private VirtualMount defaultMount;
 	
 	public VirtualFileFactory(VirtualMountTemplate defaultMount,
 			VirtualMountTemplate... additionalMounts) throws IOException, PermissionDeniedException {
-		this.mgr = new VirtualMountManager(this, defaultMount, additionalMounts);
+		setupMounts(defaultMount, additionalMounts);
+	}
+
+	public VirtualMount getMount(String path) throws IOException {
+
+		path = path.replace('\\', '/').trim();
+
+		if (path.equals("") || path.equals(".") || path.startsWith("./")) {
+			return defaultMount;
+		}
+
+		for (VirtualMount mount : mounts) {
+			String mountPath = FileUtils.checkEndsWithSlash(mount.getMount());
+			path = FileUtils.checkEndsWithSlash(path);
+			if (path.startsWith(mountPath)) {
+				return mount;
+			}
+		}
+		throw new FileNotFoundException("No mount for " + path);
+	}
+	
+	private void setupMounts(VirtualMountTemplate homeMount,
+			VirtualMountTemplate... additionalMounts) throws IOException, PermissionDeniedException {
 		
-		for(VirtualMount mount : mgr.getMounts()) {
+		if (homeMount != null) {
+			defaultMount = new VirtualMount(homeMount, 
+					this, homeMount.getActualFileFactory(), 
+					true, false, homeMount.isCreateMountFolder(),
+					homeMount.lastModified());
+			if(defaultMount.isCreateMountFolder()) {
+				defaultMount.getActualFileFactory().getFile(defaultMount.getRoot()).createFolder();
+			}
+			mounts.add(defaultMount);
+		}
+
+		// Add any remaining templates
+		for (VirtualMountTemplate m : additionalMounts) {
+			VirtualMount vm = createMount(m,
+					m.getActualFileFactory(),
+					m.isCreateMountFolder(),
+					m.lastModified());
+			
+
+			if(vm.isCreateMountFolder()) {
+				vm.getActualFileFactory().getFile(vm.getRoot()).createFolder();
+			}
+			mounts.add(vm);
+		}
+
+		sort(mounts);
+		
+		rebuildMountCache();
+	}
+	
+	private void rebuildMountCache() throws PermissionDeniedException, IOException {
+		
+		mountCache.clear();
+		cache.clear();
+		
+		for(VirtualMount mount : mounts) {
 			String mountPath = FileUtils.addTrailingSlash(mount.getMount());
 			mountCache.put(mountPath, new VirtualMountFile(mountPath, mount, this, false));
 			for(String parentPath : FileUtils.getParentPaths(mountPath)) {
@@ -58,10 +99,57 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 				if(!mountCache.containsKey(parentPath)) {
 					mountCache.put(parentPath, new VirtualMountFile(
 							isRoot(parentPath) ? parentPath : FileUtils.checkEndsWithNoSlash(parentPath), 
-								mgr.getMount(parentPath), this, true));
+								getMount(parentPath), this, true));
 				}
 			}
 		}
+	}
+	private void sort(List<VirtualMount> mounts) {
+		Collections.sort(mounts, new Comparator<VirtualMount>() {
+
+			@Override
+			public int compare(VirtualMount o1, VirtualMount o2) {
+				if(o1.isParentOf(o2)) {
+					return 1;
+				} else if(o1.isChildOf(o2)) {
+					return -1;
+				} else {
+					return o2.getMount().compareTo(o1.getMount());
+				}
+			}
+			
+		});
+		
+		if(Log.isDebugEnabled()) {
+			Log.debug("Sorting mounts by path and with child relationship preferred");
+			for(VirtualMount m : mounts) {
+				Log.debug("Mount {} on {}", m.getMount(), m.getRoot());
+			}
+		}
+	}
+	
+	private VirtualMount createMount(VirtualMountTemplate template,
+			AbstractFileFactory<?> actualFileFactory, boolean createMoundFolder, long lastModified) throws IOException,
+			PermissionDeniedException {
+		return new VirtualMount(template, this, actualFileFactory, createMoundFolder, lastModified);
+	}
+	
+	public VirtualMount[] getMounts(String path) {
+		if (path.equals("")) {
+			return new VirtualMount[] { defaultMount };
+		}
+
+		path = FileUtils.addTrailingSlash(path);
+
+		List<VirtualMount> matched = new ArrayList<VirtualMount>();
+		for (VirtualMount m : mounts) {
+			String mountPath = FileUtils.addTrailingSlash(m.getMount());
+			if (path.startsWith(mountPath) || mountPath.startsWith(path)) {
+				matched.add(m);
+			}
+		}		
+		
+		return matched.toArray(new VirtualMount[0]);
 	}
 
 	private boolean isRoot(String path) {
@@ -75,7 +163,6 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 	public void setCached(boolean cached) {
 		this.cached = cached;
 	}
-
 
 	private String canonicalisePath(String path) {
 		StringTokenizer t = new StringTokenizer(path, "/", true);
@@ -103,7 +190,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 
 		if (!ret.startsWith("/")) {
 			ret = FileUtils
-					.addTrailingSlash(mgr.getDefaultMount().getMount()) + ret;
+					.addTrailingSlash(defaultMount.getMount()) + ret;
 		}
 		return ret;
 
@@ -115,18 +202,27 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		
 		AbstractFile file = parent.resolveFile();
 
-		for(AbstractFile child : file.getChildren()) {
-			files.put(child.getName(), new VirtualMappedFile(child, parent.getMount(), this));
+		/**
+		 * This check is important because in some circumstances the mount might be a path
+		 * within a mount that has no hard backing. For example when / and /public/foo are
+		 * mounted, /public is not a real path and we don't want to generate errors because
+		 * we have to list foo as a directory under /public.
+		 */
+		if(file.isDirectory()) {
+			for(AbstractFile child : file.getChildren()) {
+				files.put(child.getName(), new VirtualMappedFile(child, parent.getMount(), this));
+			}
 		}
 		
 		String currentPath = FileUtils.checkEndsWithSlash(parent.getAbsolutePath());
-		for(VirtualMount m : mgr.getMounts(currentPath)) {
+		for(VirtualMount m : getMounts(currentPath)) {
 			
 			String mountPath = FileUtils.checkEndsWithSlash(m.getMount());
 			
 			if(mountPath.startsWith(currentPath) && !mountPath.equals(currentPath)) {
 				String childPath = FileUtils.checkEndsWithNoSlash(mountPath.substring(currentPath.length()));
 				List<String> childPaths = FileUtils.getParentPaths(childPath);
+				Collections.reverse(childPaths);
 				boolean intermediate = false;
 				if(intermediate = !childPaths.isEmpty()) {
 					childPath = FileUtils.checkEndsWithNoSlash(childPaths.get(0));
@@ -145,17 +241,10 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		String virtualPath;
 
 		if (path.equals("")) {
-			virtualPath = mgr.getDefaultMount().getMount();
+			virtualPath = defaultMount.getMount();
 			
 		} else {
 			virtualPath = canonicalisePath(path);
-		}
-
-		if(Log.isDebugEnabled()) {
-			Log.debug("Resolved the following mounts for the path {}", path);
-			for(VirtualMountFile m : mountCache.values()) {
-				Log.debug("Mount {}", m.getAbsolutePath());
-			}
 		}
 		
 		if (!virtualPath.equals("") && mountCache.size() > 0) {
@@ -170,7 +259,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 			virtualPath = FileUtils.removeTrailingSlash(virtualPath);
 		}
 
-		VirtualMount m = mgr.getMount(virtualPath);
+		VirtualMount m = getMount(virtualPath);
 		VirtualFile cached = getCachedObject(virtualPath);
 		if(Objects.nonNull(cached)) {
 			return cached;
@@ -198,24 +287,76 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 		return null;
 	}
 
-	public VirtualMountManager getMountManager()
-			throws IOException, PermissionDeniedException {
-		return mgr;
-	}
-
-	public Event populateEvent(Event evt) {
-		try {
-			return evt
-					.addAttribute(
-							EventCodes.ATTRIBUTE_MOUNT_MANAGER,
-							getMountManager());
-		} catch (Exception e) {
-			return evt;
-		}
-	}
-
 	public VirtualFile getDefaultPath()
 			throws PermissionDeniedException, IOException {
 		return getFile("");
 	}
+	
+	public void mount(VirtualMountTemplate template) throws IOException, PermissionDeniedException {
+		mount(template, false);
+	}
+	
+	public void mount(VirtualMountTemplate template, boolean unmount) throws IOException, PermissionDeniedException {
+		mount(createMount(template, 
+				template.getActualFileFactory(),
+				template.isCreateMountFolder(),
+				template.lastModified()), unmount);
+	}
+	
+	private void mount(VirtualMount mount, boolean unmount) throws IOException,
+			PermissionDeniedException {
+		
+		if(unmount && isMounted(mount.getMount())) {
+			unmount(mount);
+		}
+
+		if(isMounted(mount.getMount())) {
+			throw new IOException(mount.getMount() + " already mounted on " + getMount(mount.getMount()).getRoot());
+		} 
+		
+		Log.info("Mounting " + mount.getMount() + " on " + mount.getRoot());
+		
+		// Add the mount
+		mounts.add(mount);
+		sort(mounts);
+		rebuildMountCache();
+		Log.info("Mounted " + mount.getMount() + " on " + mount.getRoot());
+
+	}
+
+	public void unmount(VirtualMount mount) throws IOException, PermissionDeniedException {
+		Log.info("Unmounting " + mount.getMount() + " from " + mount.getRoot());
+		VirtualMount mounted = null;
+		for(VirtualMount m : mounts) {
+			if(FileUtils.checkEndsWithSlash(m.getMount())
+					.equals(FileUtils.checkEndsWithSlash(mount.getMount()))) {
+				mounted = m;
+			}
+		}
+		if(Objects.isNull(mounted)) {
+			throw new IOException(String.format("Could not find mount %s", mount.getMount()));
+		}
+		mounts.remove(mounted);
+		sort(mounts);
+		rebuildMountCache();
+	}
+
+	public VirtualMount getDefaultMount() {
+		return defaultMount;
+	}
+
+	public boolean isMounted(String path) {
+		if (path.equals("")) {
+			return true;
+		}
+
+		for (VirtualMount mount : mounts) {
+			if (FileUtils.addTrailingSlash(mount.getMount()).equals(
+					FileUtils.addTrailingSlash(path))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 }

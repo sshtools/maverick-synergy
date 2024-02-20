@@ -1,22 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
 package com.sshtools.common.scp;
 
 import java.io.EOFException;
@@ -25,10 +6,12 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 
+import com.sshtools.common.command.AbstractExecutableCommand;
 import com.sshtools.common.command.ExecutableCommand;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
@@ -38,8 +21,10 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.sftp.AbstractFileSystem;
 import com.sshtools.common.sftp.InvalidHandleException;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFile;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.UnsignedInteger32;
@@ -61,7 +46,20 @@ import com.sshtools.common.util.Utils;
  * </blockquote>
  * 
  */
-public class ScpCommand extends ExecutableCommand implements Runnable {
+public class ScpCommand extends AbstractExecutableCommand implements Runnable {
+	
+	public static class ScpCommandFactory implements ExecutableCommandFactory<ScpCommand> {
+
+		@Override
+		public ScpCommand create() throws NoSuchAlgorithmException, IOException {
+			return new ScpCommand();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { "scp" };
+		}
+	}
 	
 	private static int BUFFER_SIZE = 16384;
 
@@ -442,6 +440,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 							try {
 								nfs.closeFile(handle);
 							} catch (InvalidHandleException e) {
+							} finally {
+								nfs.freeHandle(handle);
 							}
 						}
 						
@@ -521,7 +521,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 				basename = path.substring(idx + 1);
 			}
 
-			writeCommand("D" + attr.getMaskString() + " 0 " + basename + "\n");
+			writeCommand("D" + attr.toMaskString() + " 0 " + basename + "\n");
 			waitForResponse();
 
 			handle = nfs.openDirectory(path);
@@ -561,6 +561,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 				} catch (Exception e) {
 					if(Log.isDebugEnabled())
 						Log.debug("", e);
+				} finally {
+					nfs.freeHandle(handle);
 				}
 			}
 		}
@@ -584,7 +586,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 				basename = path.substring(idx + 1);
 			}
 
-			writeCommand("C" + attr.getMaskString() + " " + attr.getSize()
+			writeCommand("C" + attr.toMaskString() + " " + attr.size()
 					+ " " + basename + "\n");
 			
 			waitForResponse();
@@ -612,7 +614,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 									new Date())
 							.addAttribute(
 									EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-									new Long(attr.getSize().longValue()))
+									attr.size().longValue())
 							.addAttribute(
 									EventCodes.ATTRIBUTE_FILE_FACTORY,
 									nfs.getFileFactory())
@@ -645,7 +647,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 										new Date())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-										new Long(attr.getSize().longValue()))
+										attr.size().longValue())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_FILE_FACTORY,
 										nfs.getFileFactory())
@@ -660,7 +662,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 				
 				byte[] buf = null;
 				
-				while (count < attr.getSize().longValue()) {
+				while (count < attr.size().longValue()) {
 
 					
 					try {
@@ -686,10 +688,10 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											session.getConnection())
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-											new Long(count))
+											Long.valueOf(count))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_READ,
-											new Long(read))
+											Long.valueOf(read))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_FILE_NAME,
 											path)
@@ -717,7 +719,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 
 				// pipeIn.flush();
 
-				if (count < attr.getSize().longValue()) {
+				if (count < attr.size().longValue()) {
 					throw new IOException(
 							"File transfer terminated abnormally.");
 				}
@@ -739,7 +741,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 										new Date())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-										new Long(count))
+										Long.valueOf(count))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_FILE_FACTORY,
 										nfs.getFileFactory())
@@ -767,6 +769,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					} catch (Exception e) {
 						if(Log.isDebugEnabled())
 							Log.debug("", e);
+					} finally {
+						nfs.freeHandle(handle);
 					}
 				}
 			
@@ -795,7 +799,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 								new Date())
 						.addAttribute(
 								EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-								new Long(count))
+								Long.valueOf(count))
 						.addAttribute(
 								EventCodes.ATTRIBUTE_FILE_FACTORY,
 								nfs.getFileFactory())
@@ -888,11 +892,15 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 
 				String name = cmdParts[2];
 				String targetPath;
+				
+				boolean dir = false;
+				boolean found = false;
 
-				SftpFileAttributes targetAttr = null;
+				SftpFileAttributesBuilder builder = SftpFileAttributesBuilder.create();
 
 				try {
-					targetAttr = nfs.getFileAttributes(path);
+					builder.withFileAttributes(nfs.getFileAttributes(path));
+					found = true;
 				} catch (FileNotFoundException ex) {
 					if(Log.isDebugEnabled())
 						Log.debug("File {} not found", path);
@@ -900,15 +908,16 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					if(Log.isDebugEnabled())
 						Log.debug("File {} permission denied!", path);
 				}
+				
 
 				if (cmdChar == 'D') {
-
+					dir = true;
 					if(Log.isDebugEnabled())
 						Log.debug("Got directory request");
 
 					if (path.equals("."))
 						targetPath = name;
-					else if (targetAttr == null && firstPath)
+					else if (!found && firstPath)
 						targetPath = path;
 					else
 						targetPath = path + (path.endsWith("/") ? "" : "/")
@@ -917,42 +926,41 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					firstPath = false;
 
 					try {
-						targetAttr = nfs.getFileAttributes(targetPath);
-					} catch (FileNotFoundException ex) {
-						if(Log.isDebugEnabled())
-							Log.debug("File {} not found", targetPath);
-						targetAttr = null;
-					} catch (PermissionDeniedException ex) {
-						if(Log.isDebugEnabled())
-							Log.debug("File {} permission denied", targetPath);
-						targetAttr = null;
-					}
-
-					if (targetAttr != null) {
-						if (!targetAttr.isDirectory()) {
+						var currAttr = nfs.getFileAttributes(targetPath);
+						if (!currAttr.isDirectory()) {
 							String msg = "Invalid target " + name
 									+ ", must be a directory";
 							writeError(msg);
 							throw new IOException(msg);
 						}
-					} else {
+						builder.withFileAttributes(currAttr);
+					} catch (FileNotFoundException ex) {
+						if(Log.isDebugEnabled())
+							Log.debug("File {} not found", targetPath);
+					} catch (PermissionDeniedException ex) {
+						if(Log.isDebugEnabled())
+							Log.debug("File {} permission denied", targetPath);
+					}
+
+					builder.withType(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY);
+					builder.withCharsetEncoding(getSession().getConnection().getContext().getPolicy(ScpPolicy.class).getSCPCharsetEncoding());
+
+					if (!found) {
 						try {
 							if(Log.isDebugEnabled())
 								Log.debug("Creating directory {}", targetPath);
 
-							if (!nfs.makeDirectory(targetPath, new SftpFileAttributes(
-									SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY,
-									getSession().getConnection().getContext().getPolicy(ScpPolicy.class).getSCPCharsetEncoding()))) {
+							if(Log.isDebugEnabled())
+								Log.debug("Setting permissions on directory");
+							builder.withPermissions(PosixPermissionsBuilder.create().
+									fromMaskString(cmdParts[0]).build());
+							SftpFileAttributes attrs2 = builder.build();
+							if (!nfs.makeDirectory(targetPath, attrs2)) {
 								String msg = "Could not create directory: "
 										+ name;
 								writeError(msg);
 								throw new IOException(msg);
 							}
-							targetAttr = nfs.getFileAttributes(targetPath);
-							if(Log.isDebugEnabled())
-								Log.debug("Setting permissions on directory");
-							targetAttr
-									.setPermissionsFromMaskString(cmdParts[0]);
 						} catch (FileNotFoundException e1) {
 							writeError("File not found");
 							throw new IOException("File not found");
@@ -969,16 +977,14 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					continue;
 				}
 
-				if (targetAttr == null || !targetAttr.isDirectory()) {
+				if (!found || !dir) {
 					targetPath = path;
 				} else {
 					targetPath = path + (path.endsWith("/") ? "" : "/") + name;
 				}
-				if (targetAttr == null) {
-					targetAttr = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR, "UTF-8");
-				}
 
-				targetAttr.setSize(new UnsignedInteger64(cmdParts[1]));
+				builder.withType(SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR);
+				builder.withSize(new UnsignedInteger64(cmdParts[1]));
 
 				byte[] handle = null;
 				long length = 0;
@@ -1003,7 +1009,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 										new Date())
 								.addAttribute(
 										EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-										new Long(length))
+										Long.valueOf(length))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_FILE_FACTORY,
 										nfs.getFileFactory())
@@ -1018,11 +1024,12 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 						Log.debug("Opening file for writing {}", targetPath);
 					
 					// Open the file
+					SftpFileAttributes attrs3 = builder.build();
 					handle = nfs.openFile(targetPath, new UnsignedInteger32(
 							AbstractFileSystem.OPEN_CREATE
 									| AbstractFileSystem.OPEN_WRITE
 									| AbstractFileSystem.OPEN_TRUNCATE),
-							targetAttr);
+							attrs3);
 					if(Log.isDebugEnabled())
 						Log.debug("NFS file opened");
 					writeOk();
@@ -1046,7 +1053,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											new Date())
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_EXPECTED,
-											new Long(length))
+											Long.valueOf(length))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_FILE_FACTORY,
 											nfs.getFileFactory())
@@ -1063,7 +1070,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 					
 					if(filePolicy != null && filePolicy.hasUploadQuota()) {
 						if(!con.containsProperty("uploadQuota")) {
-							con.setProperty("uploadQuota", new Long(0L));
+							con.setProperty("uploadQuota", Long.valueOf(0L));
 						}
 						Long quota = (Long) con.getProperty("uploadQuota");
 						if(quota + length > filePolicy.getConnectionUploadQuota()) {
@@ -1071,7 +1078,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 							throw new IOException("User quota will be exceeded");
 						}
 						
-						con.setProperty("uploadQuota", new Long(quota + length));
+						con.setProperty("uploadQuota", Long.valueOf(quota + length));
 					}
 					
 					UnsignedInteger64 offset = new UnsignedInteger64(0);
@@ -1104,10 +1111,10 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											con)
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-											new Long(count))
+											Long.valueOf(count))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_WRITTEN,
-											new Long(read))
+											Long.valueOf(read))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_FILE_NAME,
 											targetPath)
@@ -1142,7 +1149,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 											new Date())
 									.addAttribute(
 											EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-											new Long(count))
+											Long.valueOf(count))
 									.addAttribute(
 											EventCodes.ATTRIBUTE_FILE_FACTORY,
 											nfs.getFileFactory())
@@ -1176,6 +1183,8 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 								Log.debug("Closing handle");
 							nfs.closeFile(handle);
 						} catch (Exception e) {
+						} finally {
+							nfs.freeHandle(handle);
 						}
 					}
 				}
@@ -1183,12 +1192,17 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 				waitForResponse();
 
 				if (preserveAttributes) {
-					targetAttr.setPermissionsFromMaskString(cmdParts[0]);
+					builder.withPermissions(
+							PosixPermissionsBuilder.create().
+							fromMaskString(cmdParts[0]).build());
+
+					var attrs = builder.build();
+					
 					if(Log.isDebugEnabled())
-						Log.debug("Setting permissions on directory to {}", targetAttr.getPermissionsString());
+						Log.debug("Setting permissions on directory to {}", attrs.toPermissionsString());
 
 					try {
-						nfs.setFileAttributes(targetPath, targetAttr);
+						nfs.setFileAttributes(targetPath, attrs);
 					} catch (Exception e) {
 						writeError("Failed to set file permissions.");
 
@@ -1225,7 +1239,7 @@ public class ScpCommand extends ExecutableCommand implements Runnable {
 								new Date())
 						.addAttribute(
 								EventCodes.ATTRIBUTE_BYTES_TRANSFERED,
-								new Long(count))
+								Long.valueOf(count))
 						.addAttribute(
 								EventCodes.ATTRIBUTE_FILE_FACTORY,
 								nfs.getFileFactory())

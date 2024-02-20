@@ -1,27 +1,11 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.knownhosts;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 
 import com.sshtools.common.publickey.SshKeyUtils;
@@ -36,6 +20,10 @@ public class ConsoleKnownHostsFile extends KnownHostsFile {
 	}
 
 	public ConsoleKnownHostsFile(File file) throws SshException, IOException {
+		super(file);
+	}
+
+	public ConsoleKnownHostsFile(Path file) throws SshException, IOException {
 		super(file);
 	}
 	
@@ -59,7 +47,7 @@ public class ConsoleKnownHostsFile extends KnownHostsFile {
 				System.out.println(SshKeyUtils.getFormattedKey(key, ""));
 			}
 
-			getResponse(host, actual);
+			getResponse(host, actual, allowedHostKey);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -81,7 +69,7 @@ public class ConsoleKnownHostsFile extends KnownHostsFile {
 			System.out.println("The host key " + "(" + pk.getAlgorithm() + ") fingerprint is: "
 					+ SshKeyFingerprint.getFingerprint(pk.getEncoded(), SshKeyFingerprint.SHA256_FINGERPRINT));
 
-			getResponse(host, pk);
+			getResponse(host, pk, Collections.emptyList());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -92,7 +80,7 @@ public class ConsoleKnownHostsFile extends KnownHostsFile {
 		System.out.println(entry);
 	}
 
-	private void getResponse(String host, SshPublicKey pk) throws SshException, IOException {
+	private void getResponse(String host, SshPublicKey pk, List<SshPublicKey> allowedHostKey) throws SshException, IOException {
 		String response = "";
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
@@ -110,6 +98,12 @@ public class ConsoleKnownHostsFile extends KnownHostsFile {
 				response = reader.readLine();
 			} catch (IOException ex) {
 				throw new SshException("Failed to read response", SshException.INTERNAL_ERROR);
+			}
+		}
+
+		if(response.equalsIgnoreCase("YES") || response.equalsIgnoreCase("ALWAYS")) {
+			for(var key : allowedHostKey) {
+				removeEntries(key);
 			}
 		}
 

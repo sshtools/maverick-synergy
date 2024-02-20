@@ -1,25 +1,6 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.agent.client;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,12 +10,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.newsclub.net.unix.AFUNIXSocket;
-import org.newsclub.net.unix.AFUNIXSocketAddress;
+import java.util.ServiceLoader;
 
 import com.sshtools.agent.AgentMessage;
 import com.sshtools.agent.KeyConstraints;
+import com.sshtools.agent.AgentProvider;
 import com.sshtools.agent.exceptions.AgentNotAvailableException;
 import com.sshtools.agent.exceptions.InvalidMessageException;
 import com.sshtools.agent.openssh.OpenSSHAgentMessages;
@@ -56,12 +36,12 @@ import com.sshtools.agent.rfc.SshAgentRequestVersion;
 import com.sshtools.agent.rfc.SshAgentSuccess;
 import com.sshtools.agent.rfc.SshAgentUnlock;
 import com.sshtools.agent.rfc.SshAgentVersionResponse;
-import com.sshtools.agent.win32.NamedPipeClient;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.publickey.SignatureGenerator;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPrivateKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 
@@ -69,7 +49,7 @@ import com.sshtools.common.util.ByteArrayWriter;
  * @author Aruna Abesekara
  * @date  21/07/2014
  */
-public class SshAgentClient implements SignatureGenerator {
+public class SshAgentClient implements SignatureGenerator, Closeable {
 
 	public static final String HASH_AND_SIGN = "hash-and-sign";
 	InputStream in;
@@ -160,63 +140,19 @@ public class SshAgentClient implements SignatureGenerator {
 	public static SshAgentClient connectLocalAgent(String application,
 			String location, AgentSocketType type, boolean RFCAgent) throws AgentNotAvailableException, IOException {
 		try {
-
-			switch(type) {
-			case WINDOWS_NAMED_PIPE:
-				NamedPipeClient namedPipe = new NamedPipeClient(location);
-				return new SshAgentClient(false, application, namedPipe, namedPipe.getInputStream(), namedPipe.getOutputStream(), false);
-			default:
-				Socket socket = connectAgentSocket(location, type);
-				return new SshAgentClient(false, application, socket, socket.getInputStream(), socket.getOutputStream(), false);
-			}
-		} catch (IOException ex) {
-			Log.error("Agent socket error :",ex);
-			throw new AgentNotAvailableException();
-		}
-	}
-
-	/**
-	 * Connect a socket to the agent at the location specified.
-	 * 
-	 * @param location
-	 *            the location of the agent, in the form "localhost:port"
-	 * 
-	 * @return the connected socket
-	 * 
-	 * @throws AgentNotAvailableException
-	 *             if an agent is not available at the location specified
-	 * @throws IOException
-	 *             if an IO error occurs
-	 */
-	public static Socket connectAgentSocket(String location, AgentSocketType type)
-			throws AgentNotAvailableException, IOException {
-		try {
 			if (location == null) {
 				throw new AgentNotAvailableException();
 			}
-			Socket socket = null;
-			switch(type) {
-			case TCPIP:
-				int idx = location.indexOf(":");
-
-				if (idx == -1) {
-					throw new AgentNotAvailableException();
-				}
-
-				String host = location.substring(0, idx);
-				int port = Integer.parseInt(location.substring(idx + 1));
-			    socket = new Socket(host, port);
-				break;
-			case UNIX_DOMAIN:
-				File socketFile = new File(location);
-				socket = AFUNIXSocket.newInstance();
-				socket.connect(new AFUNIXSocketAddress(socketFile));
-				break;
-			default:
-				throw new AgentNotAvailableException("Invalid socket type!");
+			SshAgentClient socket = null;
+			for(AgentProvider l : ServiceLoader.load(AgentProvider.class,
+					JCEComponentManager.getDefaultInstance().getClassLoader())) {
+				socket = l.client(application, location, type, RFCAgent);
+				if(socket != null)
+					break;
 			}
-			
-
+			if(socket == null) {
+				throw new IOException("No unix domain socket provider available. Check that you have a provider, such as maverick-sshagent-jnr-sockets, maverick-sshagent-jdk16-sockets or maverick-sshagent-namedpipes on the classpath and is the address in the correct format.");
+			}
 			return socket;
 		} catch (IOException ex) {
 			Log.error("Agent socket error :",ex);
@@ -282,29 +218,29 @@ public class SshAgentClient implements SignatureGenerator {
 
 	protected void registerMessages() {
 		
-		messages.put(new Integer(OpenSSHAgentMessages.SSH_AGENT_SUCCESS),
+		messages.put(Integer.valueOf(OpenSSHAgentMessages.SSH_AGENT_SUCCESS),
 				SshAgentSuccess.class);
-		messages.put(new Integer(OpenSSHAgentMessages.SSH_AGENT_FAILURE),
+		messages.put(Integer.valueOf(OpenSSHAgentMessages.SSH_AGENT_FAILURE),
 				SshAgentFailure.class);
-		messages.put(new Integer(OpenSSHAgentMessages.SSH2_AGENT_IDENTITIES_ANSWER),
+		messages.put(Integer.valueOf(OpenSSHAgentMessages.SSH2_AGENT_IDENTITIES_ANSWER),
 				SshAgentKeyList.class);
 		
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_VERSION_RESPONSE),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_VERSION_RESPONSE),
 				SshAgentVersionResponse.class);
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_SUCCESS),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_SUCCESS),
 				SshAgentSuccess.class);
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_FAILURE),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_FAILURE),
 				SshAgentFailure.class);
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_KEY_LIST),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_KEY_LIST),
 				SshAgentKeyList.class);
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_RANDOM_DATA),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_RANDOM_DATA),
 				SshAgentRandomData.class);
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_ALIVE),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_ALIVE),
 				SshAgentAlive.class);
-		messages.put(new Integer(RFCAgentMessages.SSH_AGENT_OPERATION_COMPLETE),
+		messages.put(Integer.valueOf(RFCAgentMessages.SSH_AGENT_OPERATION_COMPLETE),
 				SshAgentOperationComplete.class);
 		
-		messages.put(new Integer(OpenSSHAgentMessages.SSH2_AGENT_SIGN_RESPONSE),
+		messages.put(Integer.valueOf(OpenSSHAgentMessages.SSH2_AGENT_SIGN_RESPONSE),
 				SshAgentOperationComplete.class);
 	}
 
@@ -448,11 +384,11 @@ public class SshAgentClient implements SignatureGenerator {
 				len += in.read(msgdata, len, msgdata.length - len);
 			}
 
-			Integer id = new Integer((int) msgdata[0] & 0xFF);
+			Integer id = Integer.valueOf((int) msgdata[0] & 0xFF);
 
 			if (messages.containsKey(id)) {
 				Class<? extends AgentMessage> cls = messages.get(id);
-				AgentMessage msg = cls.newInstance();
+				AgentMessage msg = cls.getConstructor().newInstance();
 				msg.fromByteArray(msgdata);
 				Log.info("Received message " + msg.getMessageName());
 
@@ -668,6 +604,16 @@ public class SshAgentClient implements SignatureGenerator {
 	@Override
 	public Collection<SshPublicKey> getPublicKeys() throws IOException {
 		return listKeys().keySet();
+	}
+
+	public static String getEnvironmentSocket() throws AgentNotAvailableException {
+		String location = System.getenv("SSH_AUTH_SOCK");
+		if(location==null && System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+			location = SshAgentClient.WINDOWS_SSH_AGENT_SERVICE;
+		} else if(location==null) {
+			throw new AgentNotAvailableException("SSH_AUTH_SOCK is undefined");
+		}
+		return location;
 	}
 
 }

@@ -1,29 +1,15 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh.x509;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.interfaces.RSAPublicKey;
 
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshPublicKey;
+import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.ssh.components.SshX509PublicKey;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEProvider;
@@ -38,6 +24,19 @@ public class SshX509RsaPublicKey extends Ssh2RsaPublicKey implements SshX509Publ
 
     public static final String X509V3_SIGN_RSA = "x509v3-sign-rsa";
     Certificate cert;
+	 
+	public static class SshX509RsaPublicKeyFactory implements SshPublicKeyFactory<SshX509RsaPublicKey> {
+
+		@Override
+		public SshX509RsaPublicKey create() throws NoSuchAlgorithmException, IOException {
+			return new SshX509RsaPublicKey();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { X509V3_SIGN_RSA };
+		}
+	}
 
     public SshX509RsaPublicKey() {
     }
@@ -88,7 +87,7 @@ public class SshX509RsaPublicKey extends Ssh2RsaPublicKey implements SshX509Publ
      * @throws SshException
      * @todo Implement this com.maverick.ssh.SshPublicKey method
      */
-    public void init(byte[] blob, int start, int len) throws SshException {
+    public SshPublicKey init(byte[] blob, int start, int len) throws SshException {
 
         try {
             
@@ -108,6 +107,8 @@ public class SshX509RsaPublicKey extends Ssh2RsaPublicKey implements SshX509Publ
          } catch (Throwable ex) {
              throw new SshException(ex.getMessage(), SshException.JCE_ERROR, ex);
          }
+
+		return this;
     }
 
     public Certificate getCertificate() {

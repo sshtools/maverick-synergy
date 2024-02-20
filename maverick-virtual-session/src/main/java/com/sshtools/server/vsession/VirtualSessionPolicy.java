@@ -1,32 +1,18 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.server.vsession;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class VirtualSessionPolicy {
 
-	String welcomeText = "Maverick Synergy\r\nVirtual Shell ${version}";
-	String shellCommand = null;
-	List<String> shellArguments = new ArrayList<>();
+	private String welcomeText = "Maverick Synergy\r\nVirtual Shell ${version}";
+	private String shellCommand = null;
+	private List<String> shellArguments = new ArrayList<>();
+	private Map<String, String> shellEnvironment;
+	private File shellDirectory;
 	
 	public VirtualSessionPolicy() {
 		
@@ -55,7 +41,18 @@ public class VirtualSessionPolicy {
 	public void setShellCommand(String shellCommand) {
 		this.shellCommand = shellCommand;
 	}
-	
-	
+
+	public Map<String, String> getShellEnvironment() {
+		return shellEnvironment;
+	}
+
+	public File getShellDirectory() {
+		return shellDirectory;
+	}
+
+	public void setShellDirectory(File shellDirectory) {
+		this.shellDirectory = shellDirectory;
+	}
+
 	
 }

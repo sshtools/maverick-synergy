@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.server.callback;
 
 import java.io.IOException;
@@ -28,6 +10,7 @@ import com.sshtools.client.SimpleClientAuthenticator;
 import com.sshtools.client.TransportProtocolClient;
 import com.sshtools.common.auth.MutualKeyAuthenticatonStore;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
@@ -99,6 +82,9 @@ public class MutualCallbackAuthenticator extends SimpleClientAuthenticator {
 				
 				SshPublicKey remotePublicKey = authenticationStore.getPublicKey(con);
 
+				if(Log.isDebugEnabled()) {
+					Log.debug("Mutual authentication is using the remote key {}", SshKeyUtils.getOpenSSHFormattedKey(remotePublicKey));
+				}
 				if(Objects.isNull(remotePublicKey)) {
 					failure();
 					transport.disconnect(TransportProtocol.AUTH_CANCELLED_BY_USER, "There was no public key configured for the user");
@@ -118,6 +104,11 @@ public class MutualCallbackAuthenticator extends SimpleClientAuthenticator {
 				writer.writeBinaryString(transport.getSessionKey());
 				
 				SshKeyPair localPrivateKey = authenticationStore.getPrivateKey(con);
+				
+				if(Log.isDebugEnabled()) {
+					Log.debug("Mutual authentication is using the local key {}", SshKeyUtils.getOpenSSHFormattedKey(localPrivateKey.getPublicKey()));
+				}
+				
 				byte[] signature2 = localPrivateKey.getPrivateKey().sign(writer.toByteArray());
 				
 				transport.postMessage(new SshMessage() {

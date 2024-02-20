@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.files.vfs;
 
 import java.io.IOException;
@@ -35,11 +17,17 @@ import java.util.concurrent.TimeUnit;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.AbstractFileRandomAccess;
+import com.sshtools.common.files.direct.NioFile;
+import com.sshtools.common.files.direct.NioFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
 
+/**
+ * Deprecated. Use {@link NioFileFactory} and {@link NioFile}.
+ */
+@Deprecated(since = "3.1.0", forRemoval = true)
 public class PathFile implements AbstractFile {
 	private Path path;
 	private PathFileFactory factory;
@@ -76,6 +64,8 @@ public class PathFile implements AbstractFile {
 	public boolean exists() throws IOException {
 		return Files.exists(path, LinkOption.NOFOLLOW_LINKS);
 	}
+	
+	
 
 	@Override
 	public String getAbsolutePath() throws IOException, PermissionDeniedException {
@@ -324,5 +314,10 @@ public class PathFile implements AbstractFile {
 	@Override
 	public String readSymbolicLink() throws IOException, PermissionDeniedException {
 		return Files.readSymbolicLink(path).toString();
+	}
+
+	@Override
+	public AbstractFile getParentFile() throws IOException, PermissionDeniedException {
+		return new PathFile(path.getParent(), factory);
 	}
 }

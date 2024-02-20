@@ -1,37 +1,22 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.policy;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.permissions.Permissions;
 import com.sshtools.common.sftp.SftpExtension;
 import com.sshtools.common.sftp.SftpExtensionFactory;
-import com.sshtools.common.sftp.extensions.DefaultSftpExtensionFactory;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.common.util.IOUtils;
+import com.sshtools.common.util.UnsignedInteger32;
 
 public class FileSystemPolicy extends Permissions {
 
@@ -48,15 +33,15 @@ public class FileSystemPolicy extends Permissions {
 	String sftpLongnameDateFormat = "MMM dd  yyyy";
 	String sftpLongnameDateFormatWithTime = "MMM dd HH:mm";
 	List<SftpExtensionFactory> sftpExtensionFactories = new ArrayList<SftpExtensionFactory>();
+	Set<String> disabledExtensions = new HashSet<>();
 	boolean closeFileBeforeFailedTransferEvents = false;
 	boolean mkdirParentMustExist = true;
 	
 	private int sftpMaxPacketSize = 65536;
-	private int sftpMaxWindowSize = 1024000;
-	private int sftpMinWindowSize = 131072;
+	private UnsignedInteger32 sftpMaxWindowSize = new UnsignedInteger32(IOUtils.fromByteSize("16MB").longValue());
+	private UnsignedInteger32 sftpMinWindowSize = new UnsignedInteger32(131072);
 	
 	public FileSystemPolicy() {
-		sftpExtensionFactories.add(new DefaultSftpExtensionFactory());
 	}
 	
 	public long getConnectionUploadQuota() {
@@ -176,8 +161,19 @@ public class FileSystemPolicy extends Permissions {
 	public String getSFTPLongnameDateFormatWithTime() {
 		return sftpLongnameDateFormatWithTime; //"MMM dd HH:mm";
 	}
+	
+	public void disableSFTPExtension(String requestName) {
+		disabledExtensions.add(requestName);
+	}
+	
+	public void enableSFTPExtension(String requestName) {
+		disabledExtensions.remove(requestName);
+	}
 
 	public SftpExtension getSFTPExtension(String requestName) {
+		if(disabledExtensions.contains(requestName)) {
+			return null;
+		}
 		for(SftpExtensionFactory factory : sftpExtensionFactories) {
 			if(factory.getSupportedExtensions().contains(requestName)) {
 				return factory.getExtension(requestName);
@@ -197,28 +193,45 @@ public class FileSystemPolicy extends Permissions {
 	public void setSFTPCloseFileBeforeFailedTransferEvents(boolean closeFileBeforeFailedTransferEvents) {
 		this.closeFileBeforeFailedTransferEvents = closeFileBeforeFailedTransferEvents;
 	}
+	
 	public int getSftpMaxPacketSize() {
 		return sftpMaxPacketSize;
 	}
+	
 	public void setSftpMaxPacketSize(int sftpMaxPacketSize) {
 		this.sftpMaxPacketSize = sftpMaxPacketSize;
 	}
-	public int getSftpMaxWindowSize() {
+	
+	public UnsignedInteger32 getSftpMaxWindowSize() {
 		return sftpMaxWindowSize;
 	}
+	
+	@Deprecated(forRemoval = true, since = "3.1.0")
 	public void setSftpMaxWindowSize(int sftpMaxWindowSize) {
+		setSftpMaxWindowSize(new UnsignedInteger32(Integer.toUnsignedLong(sftpMaxWindowSize)));
+	}
+	
+	public void setSftpMaxWindowSize(UnsignedInteger32 sftpMaxWindowSize) {
 		this.sftpMaxWindowSize = sftpMaxWindowSize;
 	}
-	public int getSftpMinWindowSize() {
+	
+	public UnsignedInteger32 getSftpMinWindowSize() {
 		return sftpMinWindowSize;
 	}
-	public void setSftpMinWindowSize(int sftpMinWindowSize) {
+	
+	public void setSftpMinWindowSize(UnsignedInteger32 sftpMinWindowSize) {
 		this.sftpMinWindowSize = sftpMinWindowSize;
+	}
+	
+	@Deprecated(forRemoval = true, since = "3.1.0")
+	public void setSftpMinWindowSize(int sftpMinWindowSize) {
+		setSftpMinWindowSize(new UnsignedInteger32(Integer.toUnsignedLong(sftpMinWindowSize)));
 	}
 
 	class CachingFileFactory implements FileFactory {
 
-		AbstractFileFactory<?> ff = null;
+		private static final String CACHED_FILE_FACTORY = "cachedFileFactory";
+		
 		FileFactory fileFactory;
 		
 		CachingFileFactory(FileFactory fileFactory) {
@@ -228,10 +241,15 @@ public class FileSystemPolicy extends Permissions {
 		@Override
 		public AbstractFileFactory<?> getFileFactory(SshConnection con) 
 				throws IOException, PermissionDeniedException {
-			if(Objects.nonNull(ff)) {
-				return ff;
+			AbstractFileFactory<?> ff = (AbstractFileFactory<?>) con.getProperty(CACHED_FILE_FACTORY);
+			if(Objects.isNull(ff)) {
+				if(Objects.isNull(fileFactory)) {
+					throw new PermissionDeniedException("Invalid file system configuration");
+				}
+				ff = fileFactory.getFileFactory(con);
+				con.setProperty(CACHED_FILE_FACTORY, ff);
 			}
-			return ff = fileFactory.getFileFactory(con);
+			return ff;
 		}
 		
 	}

@@ -1,52 +1,24 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
 package com.sshtools.common.command;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 
-import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SessionChannel;
 import com.sshtools.common.ssh.SessionChannelServer;
+import com.sshtools.common.ssh.components.Component;
+import com.sshtools.common.ssh.components.ComponentInstanceFactory;
 
-/**
- * This class can be extended to provide a single executable command. Commands
- * are configured in the {@link com.maverick.sshd.ConfigurationContext} and they
- * make use of the input/output streams provided to communicate with the client.
- *
- * @author Lee David Painter
- */
-public abstract class ExecutableCommand {
+public interface ExecutableCommand extends Component {
+
+	public interface ExecutableCommandFactory<T extends ExecutableCommand> extends ComponentInstanceFactory<T> {
+	}
 
 	/**
 	 * Value returned from {@link #getExitCode()} to indicate that the process
 	 * is still active.
 	 */
-	public static final int STILL_ACTIVE = Integer.MIN_VALUE;
-
-	/** The session channel instance on which this command is being executed **/
-	protected SessionChannelServer session;
-
-	public ExecutableCommand() {
-	}
+	int STILL_ACTIVE = Integer.MIN_VALUE;
 
 	/**
 	 * Initialize the command. This can be overridden but always call this super
@@ -54,14 +26,9 @@ public abstract class ExecutableCommand {
 	 * 
 	 * @param session
 	 */
-	public void init(SessionChannelServer session) {
-		this.session = session;
-		session.haltIncomingData();
-	}
+	void init(SessionChannelServer session);
 
-	public SessionChannel getSession() {
-		return session;
-	}
+	SessionChannel getSession();
 
 	/**
 	 * Create the process but wait for the {@link #onStart()} method before
@@ -71,35 +38,24 @@ public abstract class ExecutableCommand {
 	 * @param environment
 	 * @return boolean
 	 */
-	public abstract boolean createProcess(String[] args, Map<String, String> environment);
+	boolean createProcess(String[] args, Map<String, String> environment);
 
 	/**
 	 * Start the command.
 	 *
 	 */
-	public void start() {
-		session.getConnection().executeTask(new Runnable() {
-			public void run() {
-				try {
-					onStart();
-				} catch (Throwable e) {
-					Log.error("Consumed error from executable command", e);
-				}
-			}
-		});
-		
-	}
+	void start();
 
 	/**
 	 * Called once the command has been started. Operations within this method
 	 * SHOULD NOT block as this will cause the connection to lockup.
 	 */
-	public abstract void onStart();
+	void onStart();
 
 	/**
 	 * Kill the command.
 	 */
-	public abstract void kill();
+	void kill();
 
 	/**
 	 * Get the exit code for this process. If the process has not completed
@@ -107,37 +63,29 @@ public abstract class ExecutableCommand {
 	 *
 	 * @return int
 	 */
-	public abstract int getExitCode();
+	int getExitCode();
 
 	/**
 	 * Get the STDOUT OutputStream for this process.
 	 * 
 	 * @return OutputStream
 	 */
-	public OutputStream getOutputStream() {
-		return session.getOutputStream();
-	}
+	OutputStream getOutputStream();
 
 	/**
 	 * Get the STDERR OutputStream for this process.
 	 * 
 	 * @return OutputStream
 	 */
-	public OutputStream getStderrOutputStream() {
-		return session.getErrorStream();
-	}
+	OutputStream getStderrOutputStream();
 
 	/**
 	 * Get the STDIN InputStream for this process.
 	 * 
 	 * @return InputStream
 	 */
-	public InputStream getInputStream() {
-		return session.getInputStream();
-	}
+	InputStream getInputStream();
 
-	public boolean allocatePseudoTerminal(String term, int cols, int rows, int width, int height, byte[] modes) {
-		return false;
-	}
+	boolean allocatePseudoTerminal(String term, int cols, int rows, int width, int height, byte[] modes);
 
 }

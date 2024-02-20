@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh;
 
 import java.io.IOException;
@@ -23,11 +5,12 @@ import java.net.InetAddress;
 import java.util.Locale;
 
 import com.sshtools.common.events.EventListener;
+import com.sshtools.common.events.EventTrigger;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.ssh.components.SshPublicKey;
 
 
-public interface SshConnection {
+public interface SshConnection extends EventTrigger {
 
 	String getUsername();
 
@@ -44,8 +27,14 @@ public interface SshConnection {
 	void setUsername(String username);
 
 	void disconnect(String message);
+	
 	void disconnect(int reason, String message);
 	
+	/**
+	 * @deprectated use getRemoteIPAddress instead
+	 * @return
+	 */
+	@Deprecated
 	InetAddress getRemoteAddress();
 
 	InetAddress getLocalAddress();
@@ -63,6 +52,8 @@ public interface SshConnection {
 	SshConnectionManager getConnectionManager();
 
 	boolean isConnected();
+
+	boolean isDisconnecting();
 
 	void addTask(Integer queue, ConnectionAwareTask connectionAwareTask);
 
@@ -84,7 +75,7 @@ public interface SshConnection {
 
 	void removeEventListener(EventListener listener);
 
-	void addTask(ConnectionAwareTask r);
+	ConnectionAwareTask addTask(ConnectionAwareTask r);
 
 	String[] getRemotePublicKeys();
 
@@ -133,5 +124,7 @@ public interface SshConnection {
 	long getTotalBytesIn();
 	
 	long getTotalBytesOut();
+
+	String getRemoteIPAddress();
 
 }

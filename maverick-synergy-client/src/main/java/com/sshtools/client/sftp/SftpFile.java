@@ -1,55 +1,36 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package com.sshtools.client.sftp;
 
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.util.UnsignedInteger64;
 
 /**
  * Represents an SFTP file object.
  */
-public class SftpFile {
-  String filename;
-  byte[] handle;
-  SftpFileAttributes attrs;
-  SftpChannel sftp;
-  String absolutePath;
-  String longname;
-  Map<String,Object> properties = new HashMap<>();
+public final class SftpFile {
+	
+  private final String filename;
+  private final SftpChannel sftp;
+  private final String absolutePath;
+  private final String longname;
+  private final Map<String,Object> properties = new HashMap<>();
+  private SftpFileAttributes attrs;
   
-  /**
-   * Creates a new SftpFile object.
-   *
-   * @param path
-   * @param attrs
-   */
-  public SftpFile(String path, SftpFileAttributes attrs) {
-      absolutePath = path;
+  SftpFile(String path, SftpFileAttributes attrs, SftpChannel sftp, String longname) {
+	  if(path == null || attrs == null || sftp == null)
+		  throw new NullPointerException();
+	  
       this.attrs = attrs;
+      this.sftp = sftp;
+      this.longname = longname;
 
       //set filename
+      var absolutePath = path;
       if(absolutePath.equals("/")) {
           this.filename = "/";
       } else {
@@ -68,7 +49,53 @@ public class SftpFile {
               this.filename = absolutePath;
           }
       }
+      this.absolutePath = absolutePath;
   }
+  
+  /**
+   * Create a new handle for this file given the handle data.
+   * 
+   * @param handle
+   */
+  public SftpHandle handle(byte[] handle) {
+	  return new SftpHandle(handle, sftp, this);
+  }
+  
+  /**
+   * Get the attributes for this file as they were when this file object was obtained. To
+   * get the latest attributes, call {@link #refresh()} to obtain a new {@link SftpFile} instance.
+   * 
+   * @return attributes
+   */
+  public SftpFileAttributes attributes() {
+	  return attrs;
+  }
+  
+ /**
+  * Set the given attributes on the remote file represented by this {@link SftpFile}.
+  * 
+  * @param attributes
+  * @return this
+  * @throws SftpStatusException
+  * @throws SshException
+  */
+  public SftpFile attributes(SftpFileAttributes attributes) throws SftpStatusException, SshException {
+	  	sftp.setAttributes(absolutePath, attributes);
+	  	this.attrs = attributes;
+		return this;
+  }
+ 
+	/**
+	 * Refresh the {@link SftpFileAttributes} from the the remote file. 
+	 * 
+	 * @return file new file instance
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	public SftpFile refresh() throws SftpStatusException, SshException {
+		attrs = sftp.getAttributes(absolutePath);
+		return this;
+	 }
 
   /**
    * Get the parent of the current file. This method determines the correct
@@ -114,46 +141,31 @@ public class SftpFile {
       return absolutePath;
   }
 
-  public int hashCode() {
-    return absolutePath.hashCode();
-  }
   
-  /**
+  @Override
+  public int hashCode() {
+	  return Objects.hash(absolutePath);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+	  if (this == obj)
+		  return true;
+	  if (obj == null)
+		  return false;
+	  if (getClass() != obj.getClass())
+		  return false;
+	  SftpFile other = (SftpFile) obj;
+	  return Objects.equals(absolutePath, other.absolutePath);
+  }
+
+/**
    * The longname supplied by the server. Note this will not be present if SFTP version is
    * > 3.
    * @return
    */
   public String getLongname() {
 	  return longname;
-  }
-
-  /**
-   * Compares the Object to this instance and returns true if they point to the
-   * same file. If they point to the same file but have open file handles, the
-   * handles are also used to determine the equality. Therefore two separate
-   * instances both pointing to the same file will return true, unless one or both
-   * have an open file handle in which case it will only return true if the
-   * file handles also match.
-   *
-   * @param obj
-   * @return boolean
-   */
-  public boolean equals(Object obj) {
-    if(obj instanceof SftpFile) {
-      boolean match = ((SftpFile)obj).getAbsolutePath().equals(absolutePath);
-      if(handle==null && (((SftpFile)obj).handle == null)) {
-        return match;
-      }
-	if(handle!=null && ((SftpFile)obj).handle!=null) {
-	  for (int i = 0; i < handle.length; i++) {
-	    if ( ( (SftpFile) obj).handle[i] != handle[i])
-	      return false;
-	  }
-	}
-	return match;
-    }
-
-    return false;
   }
 
   /**
@@ -185,49 +197,6 @@ public class SftpFile {
     }
   }
 
-	/**
-	 * <p>
-	 * Read bytes directly from this file. This is a low-level operation,
-	 * you may only need to use {@link SftpClientTask#get(String)} methods instead if you just want
-	 * to download files.
-	 * </p>
-	 * 
-	 * @param offset offset in remote file to read from
-	 * @param output output buffer to place read bytes in
-	 * @param outputOffset offset in output buffer to write bytes to
-	 * @param len number of bytes to read
-	 * @return int number of bytes read
-	 * 
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 */
-	public int read(long offset, byte[] output, int outputOffset, int len) throws SftpStatusException, SshException {
-		if(handle == null)
-			throw new SftpStatusException(SftpStatusException.SSH_FX_FAILURE);
-		return sftp.readFile(handle, new UnsignedInteger64(offset), output, outputOffset, len);
-	}
-	
-	/**
-	 * <p>
-	 * Write bytes directly to this file. This is a low-level operation,
-	 * you may only need to use {@link SftpClientTask#put(String)} methods instead if you just want
-	 * to upload files.
-	 * </p>
-	 * 
-	 * @param offset offset in remote file to write to
-	 * @param input input buffer to retrieve bytes from to write
-	 * @param inputOffset offset in output buffer to write bytes to
-	 * @param len number of bytes to write
-	 * 
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 */
-	public void write(long offset, byte[] input, int inputOffset, int len) throws SftpStatusException, SshException {
-		if(handle == null)
-			throw new SftpStatusException(SftpStatusException.SSH_FX_FAILURE);
-		sftp.writeFile(handle, new UnsignedInteger64(offset), input, inputOffset, len);
-	}
-
   /**
    * Determine whether the user has write access to the file. This
    * checks the S_IWUSR flag is set in permissions.
@@ -236,9 +205,9 @@ public class SftpFile {
    * @throws SftpStatusException
    * @throws SshException
    */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean canWrite() throws SftpStatusException, SshException {
-    //  This is long hand because gcj chokes when it is not? Investigate why
-    if((getAttributes().getPermissions().longValue() & SftpFileAttributes.S_IWUSR) == SftpFileAttributes.S_IWUSR) {
+	if(attrs.permissions().has(PosixFilePermission.OWNER_WRITE)) {
       return true;
     }
 	return false;
@@ -246,58 +215,18 @@ public class SftpFile {
 
   /**
    * Determine whether the user has read access to the file. This
-   * checks the S_IRUSR flag is set in permissions.
+   * checks the S_IRUSR flag is set in permissions. 
    *
    * @return boolean
    * @throws SftpStatusException
    * @throws SshException
    */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean canRead() throws SftpStatusException, SshException {
-    //  This is long hand because gcj chokes when it is not? Investigate why
-    if((getAttributes().getPermissions().longValue() & SftpFileAttributes.S_IRUSR) == SftpFileAttributes.S_IRUSR) {
+    if(attrs.permissions().has(PosixFilePermission.OWNER_READ)) {
       return true;
     }
 	return false;
-  }
-
-  /**
-   * Determine whether the file is open.
-   *
-   * @return boolean
-   */
-  public boolean isOpen() {
-    if (sftp == null) {
-      return false;
-    }
-
-    return sftp.isValidHandle(handle);
-  }
-
-  /**
-   * Set the open file handle
-   *
-   * @param handle
-   */
-  void setHandle(byte[] handle) {
-    this.handle = handle;
-  }
-
-  /**
-   * Get the open file handle
-   *
-   * @return byte[]
-   */
-  public byte[] getHandle() {
-    return handle;
-  }
-
-  /**
-   * Sets the SFTP subsystem
-   *
-   * @param sftp
-   */
-  void setSFTPSubsystem(SftpChannel sftp) {
-    this.sftp = sftp;
   }
 
   /**
@@ -324,12 +253,11 @@ public class SftpFile {
    * @return SftpFileAttributes
    * @throws SshException
    * @throws SftpStatusException
+   * @deprecated 
+   * @see #attributes()
 */
-  public SftpFileAttributes getAttributes() throws SftpStatusException, SshException {
-    if (attrs == null) {
-      attrs = sftp.getAttributes(getAbsolutePath());
-    }
-
+  @Deprecated(since = "3.1.0", forRemoval = true)
+  public SftpFileAttributes getAttributes() throws SshException, SftpStatusException {
     return attrs;
   }
 
@@ -343,46 +271,42 @@ public class SftpFile {
   }
 
   /**
-   * Close the file.
-   *
-   * @throws SshException
-   * @throws SftpStatusException
-   */
-  public void close() throws SftpStatusException, SshException {
-    sftp.closeFile(this);
-  }
-
-  /**
    * Determine whether the file object is pointing to a directory. Note,
    * if the file is a symbolic link pointing to a directory then <code>false</code>
    * will be returned. Use {@link com.sshtools.sftp.SftpClient#isDirectoryOrLinkedDirectory(SftpFile)} instead if you
    * wish to follow links.
+   * <p>
+   * Deprecated, see {@link SftpFileAttributes#isDirectory()}.
    *
-   * @return boolean
-   * @throws SshException
-   * @throws SftpStatusException
+   * @return is directory
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
    */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean isDirectory() throws SftpStatusException, SshException {
-    return getAttributes().isDirectory();
+    return attrs.isDirectory();
   }
 
   /**
    * Determine whether the file object is pointing to a file.
+   * <p>
+   * Deprecated, see {@link SftpFileAttributes#isDirectory()}.
    *
-   * @return boolean
-   * @throws SshException
-   * @throws SftpStatusException
+   * @return is file
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean isFile() throws SftpStatusException, SshException {
-    return getAttributes().isFile();
+    return attrs.isFile();
   }
 
   /**
    * Determine whether the file object is a symbolic link.
    *
-   * @return boolean
-   * @throws SshException
-   * @throws SftpStatusException
+   * @return is link
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
    */
   public boolean isLink() throws SftpStatusException, SshException {
     return getAttributes().isLink();
@@ -391,71 +315,80 @@ public class SftpFile {
   /**
    * Determine whether the file is pointing to a pipe.
    *
-   * @return boolean
-   * @throws SshException
-   * @throws SftpStatusException
+   * @return is fifo
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
    */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean isFifo() throws SftpStatusException, SshException {
-    //  This is long hand because gcj chokes when it is not? Investigate why
-    if((getAttributes().getPermissions().longValue()
-            & SftpFileAttributes.S_IFIFO) == SftpFileAttributes.S_IFIFO)
-      return true;
-	return false;
+    return getAttributes().isFifo();
   }
 
   /**
    * Determine whether the file is pointing to a block special file.
    *
-   * @return boolean
-   * @throws SshException
-   * @throws SftpStatusException
+   * @return is block special file
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
    */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean isBlock() throws SftpStatusException, SshException {
-    //  This is long hand because gcj chokes when it is not? Investigate why
-    if((getAttributes().getPermissions().longValue()
-            & SftpFileAttributes.S_IFBLK) == SftpFileAttributes.S_IFBLK) {
-      return true;
-    }
-	return false;
+    return getAttributes().isBlock();
   }
 
   /**
    * Determine whether the file is pointing to a character mode device.
    *
-   * @return boolean
-   * @throws SshException
-   * @throws SftpStatusException
+   * @return is character mode device
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
    */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean isCharacter() throws SftpStatusException, SshException {
-    //  This is long hand because gcj chokes when it is not? Investigate why
-    if((getAttributes().getPermissions().longValue()
-            & SftpFileAttributes.S_IFCHR) == SftpFileAttributes.S_IFCHR) {
-      return true;
-    }
-	return false;
+    return getAttributes().isCharacter();
   }
 
   /**
    * Determine whether the file is pointing to a socket.
    *
-   * @return boolean
-   * @throws SshException
-   * @throws SftpStatusException
+   * @return is socket file
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
    */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public boolean isSocket() throws SftpStatusException, SshException {
-    //  This is long hand because gcj chokes when it is not? Investigate why
-    if((getAttributes().getPermissions().longValue()
-            & SftpFileAttributes.S_IFSOCK) == SftpFileAttributes.S_IFSOCK) {
-      return true;
-    }
-	return false;
+	  return getAttributes().isSocket();
   }
 
+  /** 
+   * Set an arbitrary property in this file object.
+   * <p> 
+   * Deprecated, no replacement.
+   * 
+   * @param key key
+   * @param value vlaue
+   * @deprecated
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public void setProperty(String key, Object value) {
 	  properties.put(key, value);
   }
-  
+
+  /** 
+   * Get an arbitrary property stored in this file object.
+   * <p> 
+   * Deprecated, no replacement.
+   * 
+   * @param key key
+   * @return value
+   * @deprecated
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
   public Object getProperty(String key) {
 	  return properties.get(key);
+  }
+  
+  SftpHandle openFile(int flags) throws SftpStatusException, SshException {
+		return sftp.openFile(absolutePath, flags);
   }
 }

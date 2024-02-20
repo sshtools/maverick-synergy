@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.callback.client;
 
 import java.io.IOException;
@@ -51,6 +33,8 @@ import com.sshtools.synergy.ssh.ChannelFactoryListener;
 
 public class CallbackClient implements ChannelFactoryListener<SshServerContext> {
 
+	public static final String CALLBACK_CLIENT = "callbackClient";
+	
 	SshEngine ssh = new SshEngine();
 	Set<CallbackSession> clients = new HashSet<CallbackSession>();
 	ExecutorService executor;
@@ -77,28 +61,15 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		defaultPolicies.addAll(Arrays.asList(policies));
 	}
 	
-	
-	
-	public void start(Collection<CallbackConfiguration> configs) {
-		
-		for(CallbackConfiguration config : configs) {
-			
-			try {
-				start(config, config.getServerHost(), config.getServerPort());						
-			} catch (Throwable e) {
-				Log.error("Could not load configuration {}", e, config.getAgentName());
-			}
-		}
+	public synchronized CallbackSession start(CallbackConfiguration config) throws IOException {
+		return start(config, config.getServerHost(), config.getServerPort());
 	}
 	
-	public synchronized void start(CallbackConfiguration config) throws IOException {
-		start(config, config.getServerHost(), config.getServerPort());
-	}
-	
-	public synchronized void start(CallbackConfiguration config, String hostname, int port) throws IOException {
+	public synchronized CallbackSession start(CallbackConfiguration config, String hostname, int port) throws IOException {
 		CallbackSession session = new CallbackSession(config, this, hostname, port);
 		onClientStarting(session);
 		start(session);
+		return session;
 	}
 	
 	public synchronized void start(CallbackSession client) {
@@ -109,9 +80,9 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		executor.execute(client);
 	}
 	
-	void onClientConnected(CallbackSession client, SshConnection con) {
+	void onClientConnected(CallbackSession client, SshConnection connection) {
 		clients.add(client);
-		onClientStart(client, con);
+		onClientStart(client, connection);
 	}
 	
 	public boolean isConnected() {
@@ -131,10 +102,10 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 	}
 	
 	protected void onClientStart(CallbackSession client, SshConnection connection) {
-
+		
 	}
 	
-	protected void onClientStop(CallbackSession client) {
+	protected void onClientStop(CallbackSession client, SshConnection connection) {
 		
 	}
 	
@@ -153,7 +124,13 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		}
 	}
 	
-	public void stop() {
+	public void stop() {	
+		for(CallbackSession client : new ArrayList<CallbackSession>(clients)) {
+			stop(client);
+		}
+	}
+	
+	public void shutdown() {
 		
 		for(CallbackSession client : new ArrayList<CallbackSession>(clients)) {
 			stop(client);
@@ -176,13 +153,28 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 				if(!executor.isShutdown()) {
 					executor.execute(new Runnable() {
 						public void run() {
-							if(con.containsProperty("callbackClient")) {
-								CallbackSession client = (CallbackSession) con.getProperty("callbackClient");
-								onClientStop(client);
-								con.removeProperty("callbackClient");
+							if(con.containsProperty(CALLBACK_CLIENT)) {
+								CallbackSession client = (CallbackSession) con.getProperty(CALLBACK_CLIENT);
+								
+								if(Log.isInfoEnabled()) {
+									Log.info("Disconnected from {}:{}" , 
+											client.getConfig().getServerHost(), 
+											client.getConfig().getServerPort());
+								}
+								
+								onClientStop(client, con);
+								con.removeProperty(CALLBACK_CLIENT);
 								clients.remove(client);
+								
 								if(!client.isStopped() && client.getConfig().isReconnect()) {
 									while(getSshEngine().isStarted()) {
+										
+										if(Log.isInfoEnabled()) {
+											Log.info("Will connect again to {}:{} in {} seconds" , 
+													client.getConfig().getServerHost(), 
+													client.getConfig().getServerPort(), 
+													client.getConfig().getReconnectIntervalMs() / 1000);
+										}
 										try {
 											try {
 												Thread.sleep(client.getConfig().getReconnectIntervalMs());
@@ -214,7 +206,7 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		SshServerContext sshContext = new SshServerContext(getSshEngine(), JCEComponentManager.getDefaultInstance());
 		
 		sshContext.setIdleConnectionTimeoutSeconds(0);
-		
+		sshContext.setExtendedIdentificationSanitization(false);
 		for(SshKeyPair key : hostKeys) {
 			sshContext.addHostKey(key);
 		}

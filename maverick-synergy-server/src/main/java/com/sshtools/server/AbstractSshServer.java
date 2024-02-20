@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.server;
 
 import java.io.Closeable;
@@ -28,13 +10,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.ServiceLoader;
 
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.Authenticator;
+import com.sshtools.common.command.ExecutableCommand.ExecutableCommandFactory;
+import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.files.direct.DirectFileHomeFactory;
+import com.sshtools.common.files.direct.NioFileFactory.NioFileFactoryBuilder;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.IPPolicy;
+import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.publickey.InvalidPassphraseException;
@@ -43,6 +32,7 @@ import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.scp.ScpCommand;
 import com.sshtools.common.ssh.AbstractRequestFuture;
 import com.sshtools.common.ssh.SecurityLevel;
+import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
@@ -51,6 +41,7 @@ import com.sshtools.synergy.nio.SshEngine;
 import com.sshtools.synergy.nio.SshEngineContext;
 import com.sshtools.synergy.nio.SshEngineListenerAdapter;
 import com.sshtools.synergy.ssh.ChannelFactory;
+import com.sshtools.synergy.ssh.GlobalRequestHandler;
 
 public abstract class AbstractSshServer implements Closeable {
 
@@ -66,10 +57,17 @@ public abstract class AbstractSshServer implements Closeable {
 			Collections.unmodifiableCollection(
 					Arrays.asList(new NoOpPasswordAuthenticator(),
 							new NoOpPublicKeyAuthenticator()));
-	FileFactory fileFactory;
+	protected FileFactory fileFactory = new FileFactory() {
+		@Override
+		public AbstractFileFactory<?> getFileFactory(SshConnection con) throws IOException, PermissionDeniedException {
+			return NioFileFactoryBuilder.create().withHome(new File(new DirectFileHomeFactory().getHomeDirectory(con))).build();
+		}	
+	};
+	
 	ForwardingPolicy forwardingPolicy = new ForwardingPolicy();
 	
 	ChannelFactory<SshServerContext> channelFactory; 
+	List<GlobalRequestHandler<SshServerContext>> globalRequestHandlers = new ArrayList<>();
 	File confFolder = new File(".");
 	IPPolicy ipPolicy = new IPPolicy();
 	SecurityLevel securityLevel = SecurityLevel.STRONG;
@@ -105,6 +103,10 @@ public abstract class AbstractSshServer implements Closeable {
 		this.securityLevel = securityLevel;
 	}
 	
+	public SecurityLevel getSecurityLevel() {
+		return securityLevel;
+	}
+	
 	public void addInterface(String addressToBind, int portToBind) throws IOException {
 		engine.getContext().addListeningInterface(addressToBind, portToBind, getDefaultContextFactory(), true);
 	}
@@ -115,6 +117,10 @@ public abstract class AbstractSshServer implements Closeable {
 	
 	public void removeInterface(String addressToBind, int portToBind) throws UnknownHostException {
 		engine.getContext().removeListeningInterface(addressToBind, portToBind);
+	}
+	
+	public void addGlobalRequestHandler(GlobalRequestHandler<SshServerContext> handler) {
+		globalRequestHandlers.add(handler);
 	}
 	
 	public void start(boolean requireListeningInterface) throws IOException {
@@ -173,6 +179,10 @@ public abstract class AbstractSshServer implements Closeable {
 	
 	public void setFileFactory(FileFactory fileFactory) {
 		this.fileFactory = fileFactory;
+	}
+	
+	public FileFactory getFileFactory() {
+		return fileFactory;
 	}
 	
 	public void setChannelFactory(ChannelFactory<SshServerContext> channelFactory) {
@@ -239,6 +249,10 @@ public abstract class AbstractSshServer implements Closeable {
 		}
 	}
 	
+	public Collection<SshKeyPair> getHostKeys() {
+		return hostKeys;
+	}
+	
 	private void loadOrGenerateHostKey(SshServerContext context, File file, String type, int bitlength) {
 		try {
 			hostKeys.add(context.loadOrGenerateHostKey(file, type, bitlength));
@@ -255,9 +269,12 @@ public abstract class AbstractSshServer implements Closeable {
 	}
 	
 	protected void configureFilesystem(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
-		sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(fileFactory);
+		sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(getFileFactory());
 		if(enableScp) {
-			sshContext.getChannelFactory().supportedCommands().add("scp", ScpCommand.class);
+			sshContext.getChannelFactory().supportedCommands().add(new ScpCommand.ScpCommandFactory());
+		}
+		for(var cf : ServiceLoader.load(ExecutableCommandFactory.class)) {
+			sshContext.getChannelFactory().supportedCommands().add(cf);
 		}
 	}
 	
@@ -270,25 +287,37 @@ public abstract class AbstractSshServer implements Closeable {
 		}
 	}
 	
+	protected ChannelFactory<SshServerContext> getChannelFactory() {
+		return channelFactory;
+	}
+	
 	protected void configureChannels(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
 		
-		if(Objects.nonNull(channelFactory)) {
-			sshContext.setChannelFactory(channelFactory);
+		if(Objects.nonNull(getChannelFactory())) {
+			sshContext.setChannelFactory(getChannelFactory());
 		}
 	}
 	
 	protected void configureForwarding(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
 		sshContext.setPolicy(ForwardingPolicy.class, forwardingPolicy);
 	}
-	
-	protected void configure(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
-		sshContext.setPolicy(IPPolicy.class, ipPolicy);
-	}
-	
+
 	public SshServerContext createServerContext(SshEngineContext daemonContext, SocketChannel sc)
 			throws IOException, SshException {
 		
 		SshServerContext sshContext = new SshServerContext(daemonContext.getEngine(), securityLevel);
+		configure(sshContext, sc);
+		return sshContext;
+		
+	}
+	
+	public void configure(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
+		
+		sshContext.setPolicy(IPPolicy.class, ipPolicy);
+		
+		for(GlobalRequestHandler<SshServerContext> globalRequestHandler : globalRequestHandlers) {
+			sshContext.addGlobalRequestHandler(globalRequestHandler);
+		}
 		
 		configureHostKeys(sshContext, sc);
 
@@ -299,9 +328,7 @@ public abstract class AbstractSshServer implements Closeable {
 		configureFilesystem(sshContext, sc);
 
 		configureForwarding(sshContext, sc);
-		
-		configure(sshContext, sc);
-		return sshContext;
+
 	}
 
 	public SshEngine getEngine() {

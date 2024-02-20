@@ -1,22 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
 package com.sshtools.common.ssh;
 
 import java.io.IOException;
@@ -25,6 +6,7 @@ import java.nio.ByteBuffer;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.util.ByteBufferPool;
+import com.sshtools.common.util.UnsignedInteger32;
 
 /**
  * Defines the abstract attributes of an SSH Subsystem.
@@ -45,7 +27,7 @@ public abstract class Subsystem {
 	ByteBufferPool bufferPool;
 	
 	boolean shutdown = false;
-	int bytesSinceLastWindowIssue = 0;
+	long bytesSinceLastWindowIssue = 0;
 	
 	public Subsystem(String name) {
 		this.name = name;
@@ -349,10 +331,10 @@ public abstract class Subsystem {
 		}
 		
 		bytesSinceLastWindowIssue += msg.length + 4;
-		int threshold = Math.min(session.getMaximumWindowSpace() - session.getMinimumWindowSpace(), 
-				session.getMaximumWindowSpace() - (Math.max(session.getLocalPacket(), maximumPacketSize) * 2));
+		long threshold = Math.min(session.getMaximumWindowSpace().longValue() - session.getMinimumWindowSpace().longValue(), 
+				session.getMaximumWindowSpace().longValue() - (Math.max(session.getLocalPacket(), maximumPacketSize) * 2));
 		if(bytesSinceLastWindowIssue >= threshold) {
-			session.sendWindowAdjust(bytesSinceLastWindowIssue);
+			session.sendWindowAdjust(new UnsignedInteger32(bytesSinceLastWindowIssue));
 			bytesSinceLastWindowIssue = 0;
 		}
 		

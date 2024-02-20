@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.ssh.components.jce;
 
 import java.security.KeyFactory;
@@ -84,7 +66,11 @@ public class JCEProvider implements JCEAlgorithms {
 	 * @param provider
 	 */
 	public static void initializeProviderForAlgorithm(String jceAlgorithm, Provider provider) {
-		specficProviders.put(jceAlgorithm, provider);
+		if("executable".equals(System.getProperty("org.graalvm.nativeimage.kind", ""))) {
+			Log.warn("Leaving provider configuration as running a native build.");
+		}
+		else
+			specficProviders.put(jceAlgorithm, provider);
 	}
 	
 	/**
@@ -182,6 +168,10 @@ public class JCEProvider implements JCEAlgorithms {
 	}
 	
 	public static void enableBouncyCastle(boolean makeDefault) {
+		if("executable".equals(System.getProperty("org.graalvm.nativeimage.kind", ""))) {
+			Log.warn("Leaving provider configuration as running a native build.");
+			return;
+		}
 		
 		BC_FLAVOR bcFlavor = configureBC();
 		
@@ -238,7 +228,7 @@ public class JCEProvider implements JCEAlgorithms {
 			if(enableSC) {
 				@SuppressWarnings("unchecked")
 				Class<Provider> cls = (Class<Provider>) Class.forName("org.spongycastle.jce.provider.BouncyCastleProvider");
-				bcProvider = (Provider) cls.newInstance();
+				bcProvider = (Provider) cls.getConstructor().newInstance();
 				return BC_FLAVOR.SC;
 			}
 		} catch (Throwable e) {
@@ -247,13 +237,13 @@ public class JCEProvider implements JCEAlgorithms {
 		try {
 			@SuppressWarnings("unchecked")
 			Class<Provider> cls = (Class<Provider>) Class.forName("org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider");
-			bcProvider = (Provider) cls.newInstance();
+			bcProvider = (Provider) cls.getConstructor().newInstance();
 			return BC_FLAVOR.BCFIPS;
 		} catch(Throwable t) {
 			try {
 				@SuppressWarnings("unchecked")
 				Class<Provider> cls = (Class<Provider>) Class.forName("org.bouncycastle.jce.provider.BouncyCastleProvider");
-				bcProvider = (Provider) cls.newInstance();
+				bcProvider = (Provider) cls.getConstructor().newInstance();
 				return BC_FLAVOR.BC;
 			} catch(Throwable f) {
 				throw new IllegalStateException("Bouncycastle, BCFIPS or SpongyCastle is not installed");

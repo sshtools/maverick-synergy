@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.files;
 
 import java.io.FileNotFoundException;
@@ -23,47 +5,57 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Optional;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.MultipartTransfer;
+import com.sshtools.common.sftp.OpenFile;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.files.PseduoRandomOpenFile;
+import com.sshtools.common.sftp.files.RandomAccessOpenFile;
+import com.sshtools.common.util.UnsignedInteger32;
 
 public interface AbstractFile {
 
-	public abstract String getName();
+	String getName();
 
-	public abstract InputStream getInputStream() throws IOException, PermissionDeniedException;
+	InputStream getInputStream() throws IOException, PermissionDeniedException;
 
-	public abstract boolean exists() throws IOException, PermissionDeniedException;
+	boolean exists() throws IOException, PermissionDeniedException;
 
-	public abstract List<AbstractFile> getChildren() throws IOException,
+	default boolean existsNoFollowLinks() throws IOException, PermissionDeniedException {
+		return exists();
+	}
+
+	List<AbstractFile> getChildren() throws IOException,
 			PermissionDeniedException;
 
-	public abstract String getAbsolutePath() throws IOException, PermissionDeniedException;
+	String getAbsolutePath() throws IOException, PermissionDeniedException;
 
-	public abstract boolean isDirectory() throws IOException, PermissionDeniedException;
+	AbstractFile getParentFile() throws IOException, PermissionDeniedException;
+	
+	boolean isDirectory() throws IOException, PermissionDeniedException;
 
-	public abstract boolean isFile() throws IOException, PermissionDeniedException;
+	boolean isFile() throws IOException, PermissionDeniedException;
 
-	public abstract OutputStream getOutputStream() throws IOException, PermissionDeniedException;
+	OutputStream getOutputStream() throws IOException, PermissionDeniedException;
 
-	public abstract boolean isHidden() throws IOException, PermissionDeniedException;
+	boolean isHidden() throws IOException, PermissionDeniedException;
 
-	public abstract boolean createFolder() throws PermissionDeniedException, IOException;
+	boolean createFolder() throws PermissionDeniedException, IOException;
 
-	public abstract boolean isReadable() throws IOException, PermissionDeniedException;
+	boolean isReadable() throws IOException, PermissionDeniedException;
 
-	public abstract void copyFrom(AbstractFile src) throws IOException,
+	boolean delete(boolean recursive) throws IOException,
 			PermissionDeniedException;
 
-	public abstract void moveTo(AbstractFile target) throws IOException,
-			PermissionDeniedException;
+	SftpFileAttributes getAttributes() throws FileNotFoundException, IOException, PermissionDeniedException;
 
-	public abstract boolean delete(boolean recursive) throws IOException,
-			PermissionDeniedException;
+	default SftpFileAttributes getAttributesNoFollowLinks() throws FileNotFoundException, IOException, PermissionDeniedException {
+		return getAttributes();
+	}
 
-	public abstract SftpFileAttributes getAttributes() throws FileNotFoundException, IOException, PermissionDeniedException;
-
-	public abstract void refresh();
+	void refresh();
 	
 	long lastModified() throws IOException, PermissionDeniedException;
 
@@ -81,6 +73,14 @@ public interface AbstractFile {
 	
 	boolean supportsRandomAccess();
 	
+	default OpenFile open(UnsignedInteger32 flags, Optional<UnsignedInteger32> accessFlags, byte[] handle) throws IOException, PermissionDeniedException {
+		if(supportsRandomAccess()) {
+			return new RandomAccessOpenFile(this, flags, handle);
+		} else {
+			return new PseduoRandomOpenFile(this, flags, handle);
+		}
+	}
+	
 	AbstractFileRandomAccess openFile(boolean writeAccess) throws IOException, PermissionDeniedException;
 
 	OutputStream getOutputStream(boolean append) throws IOException, PermissionDeniedException;
@@ -89,7 +89,21 @@ public interface AbstractFile {
 	
 	AbstractFileFactory<? extends AbstractFile> getFileFactory();
 	
+	@Deprecated(since = "3.1.0",  forRemoval = true)
 	default void symlinkTo(String target) throws IOException, PermissionDeniedException {
+		throw new UnsupportedOperationException();
+	}
+	
+	default void symlinkFrom(String target) throws IOException, PermissionDeniedException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Deprecated(since = "3.1.0",  forRemoval = true)
+	default void linkTo(String target) throws IOException, PermissionDeniedException {
+		throw new UnsupportedOperationException();
+	}
+
+	default void linkFrom(String target) throws IOException, PermissionDeniedException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -97,4 +111,56 @@ public interface AbstractFile {
 		throw new UnsupportedOperationException();
 	}
 	
+	default boolean supportsMultipartTransfers() {
+		return false;
+	}
+
+	default MultipartTransfer startMultipartUpload(AbstractFile targetFile) throws IOException, PermissionDeniedException {
+		throw new UnsupportedOperationException();
+	}
+	
+	default void copyFrom(AbstractFile src) throws IOException, PermissionDeniedException {
+
+		if(src.isDirectory()) {
+			createFolder();
+			for(var f : src.getChildren()) {
+				resolveFile(f.getName()).copyFrom(f);
+			}
+		} else if(src.isFile()) {
+			try(var in = src.getInputStream()) {
+				try(var out = getOutputStream()) {
+					in.transferTo(out);
+				}
+			}
+		} else {
+			throw new IOException("Cannot copy object that is not directory or a regular file");
+		}
+	
+	}
+
+	default void moveTo(AbstractFile target) throws IOException, PermissionDeniedException {
+
+		if(isDirectory()) {
+			target.createFolder();
+			for(var f : getChildren()) {
+				target.resolveFile(f.getName()).copyFrom(f);
+				f.delete(false);
+			}
+		} else if(isFile()) {
+			try(var in = getInputStream()) {
+				try(var out = target.getOutputStream()) {
+					in.transferTo(out);
+				}
+			}
+		} else {
+			throw new IOException("Cannot move object that is not directory or a regular file");
+		}
+		
+		delete(false);
+	
+	}
+	
+	default FileVolume getVolume() throws IOException {
+		throw new UnsupportedOperationException("File storage information is not available on this file system.");
+	}
 }

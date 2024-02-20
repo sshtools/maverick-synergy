@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.common.logger;
 
 import java.io.File;
@@ -24,21 +6,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,22 +27,27 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	static DateFormat df = new SimpleDateFormat("dd MMM yyyy HH:mm:ss,SSS");
 	Properties props; 
 	File propertiesFile;
-	FileWatcher watcher;
 	
-	public DefaultLoggerContext() {
-		propertiesFile = new File(System.getProperty("maverick.log.config", "logging.properties"));
+	public DefaultLoggerContext() throws IOException {
+		propertiesFile = new File(System.getProperty("maverick.log.config", "logging.properties")).getAbsoluteFile();
 		loadFile();
 		if("true".equalsIgnoreCase(getProperty("maverick.log.nothread", "false"))) {
 			return;
 		}
-		watcher = new FileWatcher(propertiesFile);
-		watcher.start();
+		try {
+			Path propertiesPath = propertiesFile.getAbsoluteFile().toPath();
+			FileWatchingService.getInstance().register(propertiesPath.getParent(), (path)->{
+				if(path.equals(propertiesPath))
+					loadFile();
+			});
+		} catch (IOException e) {
+			System.err.println("Logging context could not be initialized!");
+			e.printStackTrace();
+		}
 	}
 	
 	public void shutdown() {
-		if(watcher!=null) {
-			watcher.stopThread();
-		}
+		reset();
 	}
 	
 	public String getProperty(String key, String defaultValue) {
@@ -150,6 +131,17 @@ public class DefaultLoggerContext implements RootLoggerContext {
 	@Override
 	public synchronized void enableFile(Level level, File logFile) {
 		try {
+			Iterator<LoggerContext> it = contexts.iterator();
+			while(it.hasNext()) {
+				LoggerContext ctx = it.next();
+				if(ctx instanceof FileLoggingContext) {
+					FileLoggingContext context = (FileLoggingContext) ctx;
+					if(context.getFile().equals(logFile)) {
+						context.close();
+						it.remove();
+					}
+				}
+			}
 			contexts.add(new FileLoggingContext(level, logFile));
 		} catch (IOException e) {
 			System.err.println("Error logging to file");
@@ -165,6 +157,14 @@ public class DefaultLoggerContext implements RootLoggerContext {
 			System.err.println("Error logging to file");
 			e.printStackTrace();
 		}
+	}
+	
+	public synchronized void reset() {
+		for(LoggerContext ctx : contexts) {
+			ctx.close();
+		}
+		
+		contexts.clear();
 	}
 	
 	@Override
@@ -231,69 +231,6 @@ public class DefaultLoggerContext implements RootLoggerContext {
 		for(LoggerContext context : contexts) {
 			context.raw(level, msg);
 		}
-	}
-
-	/**
-	 * From https://stackoverflow.com/questions/16251273/can-i-watch-for-single-file-change-with-watchservice-not-the-whole-directory
-	 */
-	public class FileWatcher extends Thread {
-	    private final File file;
-	    private AtomicBoolean stop = new AtomicBoolean(false);
-
-	    public FileWatcher(File file) {
-	        this.file = file;
-	        setName("MaverickLoggerWatcher");
-	        setDaemon(true);
-	        Runtime.getRuntime().addShutdownHook(new Thread() {
-	        	public void run() {
-	        		stopThread();
-	        	}
-	        });
-	    }
-
-	    public boolean isStopped() { return stop.get(); }
-	    public void stopThread() { 
-	    	stop.set(true); 
-	    }
-
-	    public void doOnChange() {
-	        loadFile();
-	    }
-
-	    @Override
-	    public void run() {
-	        try (WatchService service = FileSystems.getDefault().newWatchService()) {
-	            Path path = file.getAbsoluteFile().toPath().getParent();
-	            path.register(service, StandardWatchEventKinds.ENTRY_MODIFY);
-	            while (!isStopped()) {
-	                WatchKey key;
-	                try { key = service.poll(25, TimeUnit.MILLISECONDS); }
-	                catch (InterruptedException e) { return; }
-	                if (key == null) { Thread.yield(); continue; }
-
-	                for (WatchEvent<?> event : key.pollEvents()) {
-	                    WatchEvent.Kind<?> kind = event.kind();
-
-	                    @SuppressWarnings("unchecked")
-	                    WatchEvent<Path> ev = (WatchEvent<Path>) event;
-	                    Path filename = ev.context();
-
-	                    if (kind == StandardWatchEventKinds.OVERFLOW) {
-	                        Thread.yield();
-	                        continue;
-	                    } else if (kind == java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
-	                            && filename.toString().equals(file.getName())) {
-	                        doOnChange();
-	                    }
-	                    boolean valid = key.reset();
-	                    if (!valid) { break; }
-	                }
-	                Thread.yield();
-	            }
-	        } catch (Throwable e) {
-	            // Log or rethrow the error
-	        }
-	    }
 	}
 
 	@Override

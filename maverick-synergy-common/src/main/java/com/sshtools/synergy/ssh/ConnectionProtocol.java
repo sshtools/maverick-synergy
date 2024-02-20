@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
@@ -42,6 +24,8 @@ import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.UnsignedInteger32;
+import com.sshtools.synergy.ssh.GlobalRequestHandler.GlobalRequestHandlerException;
 
 /**
  * This class implements the SSH Connection Protocol as an SSH Transport
@@ -91,7 +75,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 		this.con = transport.getConnection();
 		
 		for(int i=0;i<transport.getSshContext().getChannelLimit();i++) {
-			channeIdPool.add(new Integer(i));
+			channeIdPool.add(Integer.valueOf(i));
 		}
 
 		if(Log.isDebugEnabled())
@@ -213,6 +197,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					}
 					channel.getOpenFuture().done(false);
 
+					return;
 				}
 
 				transport.postMessage(new ChannelOpenMessage(
@@ -385,7 +370,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			String name = bar.readString();
 			boolean wantreply = bar.read() != 0;
 			boolean success = false;
-			byte[] response = null;
+			ByteArrayWriter response = new ByteArrayWriter();
 
 			if(Log.isDebugEnabled()) {
 				Log.debug("Received SSH_MSG_GLOBAL_REQUEST request="
@@ -393,16 +378,12 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			}
 			
 			if (name.equals("tcpip-forward")) {
-				ByteArrayWriter resp = new ByteArrayWriter();
-				if(processTCPIPForward(bar, resp)) {
-					response = resp.toByteArray();
+				if(processTCPIPForward(bar, response)) {
 					success = true;
 				} 
 
 			} else if (name.equals("cancel-tcpip-forward")) {
-				ByteArrayWriter resp = new ByteArrayWriter();
-				if(processTCPIPCancel(bar, resp)) {
-					response = resp.toByteArray();
+				if(processTCPIPCancel(bar, response)) {
 					success = true;
 				} 
 			} else if (name.equals("ping@sshtools.com")) {
@@ -425,13 +406,17 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					byte[] requestdata = new byte[bar.available()];
 					bar.read(requestdata);
 					GlobalRequest request = new GlobalRequest(name, con, requestdata);
-					success = handler.processGlobalRequest(request, this);
+					
+					try {
+						success = handler.processGlobalRequest(request, this, wantreply, response);
+					} catch (GlobalRequestHandlerException e) {
+					}
 				}
 			}
 
 			if (wantreply) {
 				if (success) {
-					sendGlobalRequestSuccess(name, response);
+					sendGlobalRequestSuccess(name, response.toByteArray());
 				} else {
 					sendGlobalRequestFailure(name);
 				}
@@ -493,7 +478,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 		try {
 			// read message id and throw away. int messageid =
 			int channelid = (int) bar.readInt();
-			int count = (int) bar.readInt();
+			UnsignedInteger32 count = bar.readUINT32();
 
 			ChannelNG<T> channel = getChannel(channelid);
 
@@ -604,7 +589,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			} else {
 
 				int remoteid = (int) bar.readInt();
-				int remotewindow = (int) bar.readInt();
+				UnsignedInteger32 remotewindow = bar.readUINT32();
 				int remotepacket = (int) bar.readInt();
 				byte[] responsedata = null;
 				if (bar.available() > 0) {
@@ -674,7 +659,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 		
 			String channeltype = bar.readString();
 			int remoteid = (int) bar.readInt();
-			int remotewindow = (int) bar.readInt();
+			UnsignedInteger32 remotewindow = bar.readUINT32();
 			int remotepacket = (int) bar.readInt();
 			byte[] requestdata = null;
 			if (bar.available() > 0) {
@@ -947,7 +932,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			buf.putInt(channel.getChannelType().length());
 			buf.put(channel.getChannelType().getBytes());
 			buf.putInt(channel.getLocalId());
-			buf.putInt(channel.getLocalWindow());
+			buf.put(ByteArrayWriter.encodeInt(channel.getLocalWindow()));
 			buf.putInt(channel.getLocalPacket());
 
 			if (requestdata != null) {
@@ -979,7 +964,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			buf.put((byte) SSH_MSG_CHANNEL_OPEN_CONFIRMATION);
 			buf.putInt(channel.remoteid);
 			buf.putInt(channel.getLocalId());
-			buf.putInt(channel.getLocalWindow());
+			buf.put(ByteArrayWriter.encodeInt(channel.getLocalWindow()));
 			buf.putInt(channel.getLocalPacket());
 
 			if (responsedata != null) {

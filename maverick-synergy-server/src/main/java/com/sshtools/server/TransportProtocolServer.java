@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.server;
 
 import java.io.IOException;
@@ -32,67 +14,27 @@ import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.sshd.AbstractServerTransport;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.nio.LicenseException;
 import com.sshtools.synergy.nio.SocketConnection;
 import com.sshtools.synergy.ssh.ConnectionStateListener;
+import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
 import com.sshtools.synergy.ssh.Service;
+import com.sshtools.synergy.ssh.SshContext;
 import com.sshtools.synergy.ssh.TransportProtocol;
 import com.sshtools.synergy.ssh.components.SshKeyExchange;
-
-//#ifdef LICENSE
-//import com.sshtools.synergy.common.nio.LicenseManager;
-//#endif
 
 public final class TransportProtocolServer extends TransportProtocol<SshServerContext> implements AbstractServerTransport<SshServerContext> {
 
 	int disconnectReason;
 	String disconnectText;
 	boolean denyConnection = false;
-
-	//#ifdef LICENSE
-	//final static LicenseVerification license = new LicenseVerification();
-	//#endif
+	
 	
 	public TransportProtocolServer(SshServerContext sshContext, ConnectRequestFuture connectFuture) throws LicenseException {
 		super(sshContext, connectFuture);
-		//#ifdef LICENSE
-		//checkLicensing();
-		//#endif
 	}
-
-	//#ifdef LICENSE
-	/*
-	 private final void checkLicensing() throws LicenseException {
-		
-		if(!license.isLicensed()) {
-			license.verifyLicense();
-			
-			if(license.isValid()) {
-				if(Log.isInfoEnabled()) {
-					Log.info("This Maverick NG API product is licensed to " + license.getLicensee());
-				}
-			}
-		}
-		
-		switch (license.getStatus() & LicenseVerification.LICENSE_VERIFICATION_MASK) {
-			case LicenseVerification.EXPIRED:
-				throw new LicenseException("Your license has expired! visit http://www.sshtools.com to obtain an update version of the software.");
-			case LicenseVerification.OK:
-				break;
-			case LicenseVerification.INVALID:
-				throw new LicenseException("Your license is invalid!");
-			case LicenseVerification.NOT_LICENSED:
-				throw new LicenseException("NOT_LICENSED_TEXT");
-			case LicenseVerification.EXPIRED_MAINTENANCE:
-				throw new LicenseException(
-						"Your support and maintenance has expired! visit http://www.sshtools.com to purchase a subscription");
-			default:
-				throw new LicenseException("An unexpected license status was received.");
-		}
-	}
-	*/
-	//#endif
 	
 	public SshServerContext getContext() {
 		return sshContext;
@@ -100,13 +42,15 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	
 	private void processProxyProtocol(String tmp) throws IOException {
 		
-		if(!getContext().getPolicy(LoadBalancerPolicy.class).isProxyProtocolEnabled()) {
+		LoadBalancerPolicy policy = getContext().getPolicy(LoadBalancerPolicy.class);
+		
+		if(!policy.isProxyProtocolEnabled()) {
 			throw new IOException("Received PROXY protocol directive but the current policy does not support it");
 		}
 		
-		if(getContext().getPolicy(LoadBalancerPolicy.class).isRestrictedAccess()) {
+		if(policy.isRestrictedAccess()) {
 			String remoteAddress = ((InetSocketAddress)socketConnection.getRemoteAddress()).getAddress().getHostAddress();
-			if(!getContext().getPolicy(LoadBalancerPolicy.class).isSupportedIPAddress(remoteAddress)) {
+			if(!policy.isSupportedIPAddress(remoteAddress)) {
 				throw new IOException(String.format("Received PROXY protocol string from unsupported IP address %s", remoteAddress));
 			}
 			if(Log.isDebugEnabled()) {
@@ -114,20 +58,26 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 			}
 		}
 		
-		if(Log.isInfoEnabled()) {
-			Log.info(String.format("Parsing PROXY protocol string [%s]", tmp));
-		}
-		
-		String[] elements = tmp.split(" ");
-		if(elements.length < 4) {
-		
+		try {
+			if(Log.isInfoEnabled()) {
+				Log.info(String.format("Parsing PROXY protocol string [%s]", tmp));
+			}
+			
+			String[] elements = tmp.split(" ");
+			if(elements.length < 6) {
+					if(Log.isInfoEnabled()) {
+						Log.info("Not enough parameters in PROXY statement");
+					}
+					return;
+			}
+			
+			if(!"TCP4".equals(elements[1]) && !"TCP6".equals(elements[1])) {
 				if(Log.isInfoEnabled()) {
-					Log.info("Not enough parameters in PROXY statement");
+					Log.info("Unsupported TCP element {} in PROXY statement", elements[1]);
 				}
-				return;
-		}
-		
-		if("TCP4".equals(elements[1]) || "TCP6".equals(elements[1])) {
+				return;	
+			}
+	
 			String sourceAddress = elements[2].trim();
 			String targetAddress = elements[3].trim();
 			int sourcePort = Integer.parseInt(elements[4].trim());
@@ -135,8 +85,17 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 			
 			con.setRemoteAddress(InetSocketAddress.createUnresolved(sourceAddress, sourcePort));
 			con.setLocalAddress(InetSocketAddress.createUnresolved(targetAddress, targetPort));
+
+		} catch (Throwable e) {
+			Log.error("Failed to parse proxy protocol", e);
+			return;
 		}
-		
+
+		if(!policy.getIPPolicy().checkConnection(con.getRemoteIPAddress(), con.getLocalIPAddress())) {
+			throw new IOException(String.format("IP addresss is not allowed by Load Balancer IP Policy remoteAddress=%s localAddress=%s", 
+					con.getRemoteIPAddress(),
+					con.getLocalIPAddress()));
+		}
 	}
 
 	@Override
@@ -149,8 +108,9 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	@Override
 	protected boolean canConnect(SocketConnection connection) {
 
-		boolean canConnect = sshContext.getPolicy(IPPolicy.class).checkConnection(connection.getRemoteAddress(),
-				connection.getLocalAddress());
+		boolean canConnect = sshContext.getPolicy(IPPolicy.class).checkConnection(
+				((InetSocketAddress)connection.getRemoteAddress()).getAddress(),
+				((InetSocketAddress)connection.getLocalAddress()).getAddress());
 
 		if(Log.isDebugEnabled()) {
 			Log.debug("IP policy has " + (canConnect ? "authorized" : "denied") + " access to "
@@ -225,6 +185,55 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 					getContext().supportedMacsSC().selectStrongestComponent(getRemoteMacsSC()));
 
 		}
+	}
+	
+	protected void onKeyExchangeComplete() {
+		if(hasExtensionCapability && enableExtensionCapability) {
+			sendExtensionInfo();
+		}
+	}
+	
+	private void sendExtensionInfo() {
+		
+//		if(AdaptiveConfiguration.getBoolean("disableExtensionInfo", false, con.getRemoteAddress(), con.getIdent())) {
+//			return;
+//		}
+		
+		final ByteArrayWriter msg = new ByteArrayWriter();
+		
+		try {
+			msg.writeInt(1);
+			msg.writeString("server-sig-algs");
+			if(getContext().isSHA1SignaturesSupported()) {
+				msg.writeString(getContext().supportedPublicKeys().list(""));
+			} else {
+				msg.writeString(getContext().supportedPublicKeys().list("", SshContext.PUBLIC_KEY_SSHRSA));
+			}
+			
+			postMessage(new SshMessage() {
+				public boolean writeMessageIntoBuffer(ByteBuffer buf) {
+					buf.put((byte) TransportProtocol.SSH_MSG_EXT_INFO);
+					buf.put(msg.toByteArray());
+					return true;
+				}
+
+				public void messageSent(Long sequenceNo) {
+
+					if (Log.isDebugEnabled()) {
+						Log.debug("Sent SSH_MSG_EXT_INFO");
+					}	
+				}
+			});
+		} catch (IOException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		} finally {
+			try {
+				msg.close();
+			} catch (IOException e) {
+			}
+		}
+		
+		
 	}
 
 	protected void keyExchangeInitialized() {
@@ -332,6 +341,13 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	protected void onConnected() {
 		this.con = getContext().getConnectionManager().registerTransport(this, getContext());
 		getConnectFuture().connected(this, con);
+		addTask(EVENTS, new ConnectionTaskWrapper(getConnection(), new Runnable() {
+			public void run() {
+				for(ServerConnectionStateListener listener : getContext().getStateListeners()) {
+					listener.connected(con);
+				}
+			}
+		}));
 	}
 
 	@Override
@@ -361,4 +377,20 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	public void startService(com.sshtools.common.sshd.Service<SshServerContext> service) {
 		
 	}
+
+	@Override
+	protected String getExtensionNegotiationString() {
+		return "ext-info-s";
+	}
+
+	@Override
+	protected boolean isExtensionNegotiationSupported() {
+		return false;
+	}
+
+	@Override
+	protected boolean isServerMode() {
+		return true;
+	}
+
 }

@@ -1,25 +1,8 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -43,7 +26,7 @@ import com.sshtools.synergy.nio.SshEngine;
  */
 public class RemoteForwardingChannel<T extends SshContext> extends SocketForwardingChannel<T> implements ClientConnector {
 
-	boolean hasConnected = false;
+	protected boolean hasConnected = false;
 	
 	/**
 	 * Constructs a forwarding channel of the type "forwarded-tcpip"
@@ -194,12 +177,9 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 
 			
 			// Create a non-blocking socket channel
-			socketChannel = SocketChannel.open();
-			socketChannel.configureBlocking(false);
-			socketChannel.socket().setTcpNoDelay(true);
+			createSocketChannel();
 
-			if (socketChannel.connect(new InetSocketAddress(hostToConnect,
-					portToConnect))) {
+			if (socketChannel.connect(createSocketAddress())) {
 				if(Log.isInfoEnabled()) {
 					if(Log.isInfoEnabled()) {
 						Log.info("Remote forwarding socket to {}:{} has connected [synchronously] channel={} remote={}",
@@ -230,6 +210,17 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 		// channel open confirmation or failure when the socket has
 		// connected
 		throw new WriteOperationRequest();
+	}
+
+	protected SocketAddress createSocketAddress() {
+		return new InetSocketAddress(hostToConnect,
+				portToConnect);
+	}
+
+	protected void createSocketChannel() throws IOException {
+		socketChannel = SocketChannel.open();
+		socketChannel.configureBlocking(false);
+		socketChannel.socket().setTcpNoDelay(true);
 	}
 
 	/**

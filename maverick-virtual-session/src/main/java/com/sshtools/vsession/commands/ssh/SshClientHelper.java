@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.vsession.commands.ssh;
 
 import java.io.IOException;
@@ -23,9 +5,10 @@ import java.util.Objects;
 
 import com.sshtools.client.ClientAuthenticator;
 import com.sshtools.client.ClientStateListener;
+import com.sshtools.client.KeyPairAuthenticator;
 import com.sshtools.client.PasswordAuthenticator;
-import com.sshtools.client.PublicKeyAuthenticator;
 import com.sshtools.client.SshClient;
+import com.sshtools.client.SshClient.SshClientBuilder;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -95,7 +78,7 @@ public class SshClientHelper {
 	public static SshClient connectClient(SshClientArguments arguments, VirtualConsole console) throws IOException, SshException, PermissionDeniedException {
 		
 		if(arguments.hasConnection()) {
-			return new SshClient(arguments.getConnection(), false);
+			return SshClientBuilder.create(arguments.getConnection()).withoutCloseOnDisconnect().build();
 		}
 
 		SshClientContext ctx = getSshContext(arguments);
@@ -108,7 +91,10 @@ public class SshClientHelper {
 			ctx.addStateListener(listener);
 		}
 		
-		SshClient sshClient = new SshClient(arguments.getDestination(), arguments.getPort(), arguments.getLoginName(), ctx);
+		SshClient sshClient = SshClientBuilder.create().
+				withTarget(arguments.getDestination(), arguments.getPort()).
+				withUsername(arguments.getLoginName()).
+				withSshContext(ctx).build();
 		
 		ClientAuthenticator auth;
 
@@ -128,7 +114,7 @@ public class SshClientHelper {
 						continue;
 					}
 					
-					auth = new PublicKeyAuthenticator(pair);
+					auth = new KeyPairAuthenticator(pair);
 
 					if(!sshClient.authenticate(auth, 30000)) {
 						console.println("Public key authentication failed");
@@ -140,7 +126,7 @@ public class SshClientHelper {
 		} 
 		
 		if(!sshClient.isAuthenticated() && Objects.nonNull(arguments.getIdentity())) {
-			auth = new PublicKeyAuthenticator(arguments.getIdentity());
+			auth = new KeyPairAuthenticator(arguments.getIdentity());
 
 			if(!sshClient.authenticate(auth, 30000)) {
 				console.println("Public key authentication failed");

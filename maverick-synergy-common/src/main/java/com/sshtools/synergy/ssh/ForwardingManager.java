@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
@@ -39,16 +21,42 @@ public class ForwardingManager<T extends SshContext> {
 	public interface Listener {
 		
 	}
+	
+	final static String REMOTE_FORWARDS_KEY = "remoteForwards";
 
-	Map<Connection<T>, List<String>> portsByConnection = new HashMap<Connection<T>, List<String>>();
-	protected Map<String, ForwardingFactory<T>> listeningPorts = Collections
-			.synchronizedMap(new HashMap<String, ForwardingFactory<T>>());
+	private ForwardingFactory<T, ForwardingChannelFactory<T>> forwardingFactory;
+	private Map<Connection<T>, List<String>> portsByConnection = new HashMap<Connection<T>, List<String>>();
+	private List<RemoteForwardRequestHandler<T>> remoteForwardRequestHandlers = Collections.synchronizedList(new ArrayList<>());
+	
+	protected Map<String, ForwardingChannelFactory<T>> listeningPorts = Collections
+			.synchronizedMap(new HashMap<String, ForwardingChannelFactory<T>>());
 
 	public ForwardingManager() {
 	}
 	
-	public ForwardingFactory<T> getFactory(String addressToBind, int portToBind) {
+	public ForwardingChannelFactory<T> getFactory(String addressToBind, int portToBind) {
 		return listeningPorts.get(addressToBind + ":" + portToBind);
+	}
+
+	public ForwardingFactory<T, ForwardingChannelFactory<T>> getForwardingFactory() {
+		return forwardingFactory;
+	}
+
+	public void setForwardingFactory(
+			ForwardingFactory<T, ForwardingChannelFactory<T>> forwardingFactory) {
+		this.forwardingFactory = forwardingFactory;
+	}
+	
+	public void addRemoteForwardRequestHandler(RemoteForwardRequestHandler<T> handler) {
+		remoteForwardRequestHandlers.add(handler);
+	}
+	
+	public void removeRemoteForwardRequestHandler(RemoteForwardRequestHandler<T> handler) {
+		remoteForwardRequestHandlers.remove(handler);
+	}
+
+	public List<RemoteForwardRequestHandler<T>> getRemoteForwardRequestHandlers() {
+		return Collections.unmodifiableList(remoteForwardRequestHandlers);
 	}
 
 	/**
@@ -66,22 +74,110 @@ public class ForwardingManager<T extends SshContext> {
 		}
 	}
 
-	public synchronized int startListening(String addressToBind, int portToBind, Connection<T> con,
-			SocketListeningForwardingFactoryImpl<T> forwardingFactory) throws SshException {
+	public void stopRemoteForwarding(ConnectionProtocol<T> con) throws SshException {
+		synchronized(remoteForwardRequestHandlers) {
+
+			if(Log.isInfoEnabled()) {
+				Log.info("Canceling all remote forwarding for connection");
+			}
+			
+			SshException exception = null;
+			
+			@SuppressWarnings("unchecked")
+			var remoteForwards = (Map<String, RemoteForward>)con.getConnection().getProperty(REMOTE_FORWARDS_KEY);
+			if(remoteForwards != null) {
+				for(var m : remoteForwards.entrySet()) {
+					var a = m.getKey().split(":");
+					var addressToBind = a[0];
+					var portToBind = a.length > 1 ? Integer.parseInt(a[1]) : 0;
+					for(var handler : remoteForwardRequestHandlers) {
+						if(handler.isHandled(addressToBind, portToBind, m.getValue().getHostToConnect(), m.getValue().getPortToConnect(), con)) {
+							try {
+								handler.stopRemoteForward(addressToBind, portToBind, m.getValue().getHostToConnect(), m.getValue().getPortToConnect(), con);
+							} catch (SshException e) {
+								exception = e;
+							}
+						}
+					}					
+				}
+			}
+			remoteForwards.clear();
+			con.getConnection().removeProperty(REMOTE_FORWARDS_KEY);
+			if(exception != null)
+				throw exception;
+			
+		}
+	}
+
+	public void stopRemoteForwarding(String addressToBind, int portToBind, ConnectionProtocol<T> connection) throws SshException {
+		synchronized(remoteForwardRequestHandlers) {
+
+			if(Log.isInfoEnabled()) {
+				Log.info("Canceling remote forwarding from " + addressToBind + ":" + portToBind);
+			}
+			
+			@SuppressWarnings("unchecked")
+			var remoteForwards = (Map<String, RemoteForward>)connection.getConnection().getProperty(REMOTE_FORWARDS_KEY);
+			var remoteForwardKey = addressToBind + ":" + portToBind;
+			if(remoteForwards == null || !remoteForwards.containsKey(remoteForwardKey)) {
+				if(Log.isDebugEnabled())
+					Log.debug("No known remote forward for " + addressToBind + ":" + portToBind);
+				return;
+			}
+			
+			var remoteForward = remoteForwards.get(remoteForwardKey);
+			
+			for(var handler : remoteForwardRequestHandlers) {
+				if(handler.isHandled(addressToBind, portToBind, remoteForward.getHostToConnect(), remoteForward.getPortToConnect(), connection)) {
+					handler.stopRemoteForward(addressToBind, portToBind, remoteForward.getHostToConnect(), remoteForward.getPortToConnect(), connection);
+					remoteForwards.remove(addressToBind + ":" + portToBind);
+					if(remoteForwards.isEmpty())
+						connection.getConnection().removeProperty(REMOTE_FORWARDS_KEY);
+					return;
+				}
+			}
+			throw new SshException(SshException.INTERNAL_ERROR, "Nothing handled closing the remote forward.");
+		}
+	}
+
+	public int startRemoteForwarding(String addressToBind, int portToBind, String destinationHost,
+			int destinationPort, ConnectionProtocol<T> con) throws SshException {
+		synchronized(remoteForwardRequestHandlers) {
+			for(var handler : remoteForwardRequestHandlers) {
+				if(handler.isHandled(addressToBind, portToBind, destinationHost, destinationPort, con)) {
+					portToBind = handler.startRemoteForward(addressToBind, portToBind, destinationHost, destinationPort, con);
+					@SuppressWarnings("unchecked")
+					var remoteForwards = (Map<String, RemoteForward>)con.getConnection().getProperty(REMOTE_FORWARDS_KEY);
+					if(remoteForwards == null) {
+						remoteForwards = new HashMap<>();
+						con.getConnection().setProperty(REMOTE_FORWARDS_KEY, remoteForwards);
+						
+					}
+					remoteForwards.put(addressToBind + ":" + portToBind, new RemoteForward(destinationHost, destinationPort));
+					return portToBind;
+				}
+			}
+			throw new SshException(SshException.INTERNAL_ERROR, "Nothing handled the remote forwarding request.");
+		}
+	}
+
+	public synchronized int startListening(String addressToBind, int portToBind, Connection<T> con, String destinationHost, int destinationPort) throws SshException {
 
 		String key = addressToBind + ":" + portToBind;
 		
 		if (portToBind > 0 && isListening(portToBind)) {
 			throw new SshException("Port " + portToBind + " already in use", SshException.FORWARDING_ERROR);
 		}
+		
+		var forwardingChannelFactory = forwardingFactory.createChannelFactory(destinationHost, destinationPort);
 
 		try {
 			
-			portToBind = forwardingFactory.bindInterface(addressToBind, portToBind, con.getConnectionProtocol(),
-					forwardingFactory.getChannelType());
+			portToBind = forwardingChannelFactory.bindInterface(addressToBind, portToBind, con.getConnectionProtocol(),
+					forwardingChannelFactory.getChannelType());
 			key = addressToBind + ":" + portToBind;
 			
-			listeningPorts.put(key, forwardingFactory);
+			listeningPorts.put(key, forwardingChannelFactory);
 			
 			if(!portsByConnection.containsKey(con)) {
 				portsByConnection.put(con,  new ArrayList<String>());
@@ -90,7 +186,7 @@ public class ForwardingManager<T extends SshContext> {
 			portsByConnection.get(con).add(key);
 			
 			EventServiceImplementation.getInstance()
-					.fireEvent((new Event(this, forwardingFactory.getStartedEventCode(), true))
+					.fireEvent((new Event(this, forwardingChannelFactory.getStartedEventCode(), true))
 							.addAttribute(EventCodes.ATTRIBUTE_CONNECTION, con)
 							.addAttribute(EventCodes.ATTRIBUTE_FORWARDING_TUNNEL_ENTRANCE,
 									addressToBind + ":" + portToBind));
@@ -105,10 +201,10 @@ public class ForwardingManager<T extends SshContext> {
 				Log.debug("Exception caught on socket bind", ex);
 		} catch (Throwable t) {
 			if(Log.isDebugEnabled())
-				Log.debug("Could not instantiate remote forwarding channel factory", t);
+				Log.debug("Could not instantiate forwarding channel factory", t);
 		}
 
-		throw new SshException("Failed to start listening socket on " + addressToBind + ":" + portToBind,
+		throw new SshException("Failed to start listening socket on " + addressToBind + (portToBind > 0 ? ":" + portToBind : ""),
 				SshException.FORWARDING_ERROR);
 
 	}
@@ -161,7 +257,7 @@ public class ForwardingManager<T extends SshContext> {
 		}
 		if (listeningPorts.containsKey(key)) {
 
-			ForwardingFactory<T> ff = (ForwardingFactory<T>) listeningPorts.get(key);
+			ForwardingChannelFactory<T> ff = (ForwardingChannelFactory<T>) listeningPorts.get(key);
 
 			if (ff.belongsTo(connection.getConnectionProtocol())) {
 				ff.stopListening(dropActiveTunnels);

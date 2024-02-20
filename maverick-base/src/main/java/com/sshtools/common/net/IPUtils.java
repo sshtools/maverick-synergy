@@ -1,48 +1,7 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-//     _           _             _   _           
-//    (_) __ _  __| | __ _ _ __ | |_(_)_   _____ 
-//    | |/ _` |/ _` |/ _` | '_ \| __| \ \ / / _ \
-//    | | (_| | (_| | (_| | |_) | |_| |\ V /  __/
-//   _/ |\__,_|\__,_|\__,_| .__/ \__|_| \_/ \___|
-//  |__/                  |_|                    
-//        
-//   JADAPTIVE CONFIDENTIAL SOURCE FILE
-//
-//   (c) 2003 - 2018 JAdaptive Limited. All Rights Reserved.                                               
-//                                               
-//   NOTICE:  All information contained herein is, and remains
-//   the property of JAdaptive Limited and its suppliers if any.
-//   The intellectual and technical concepts contained
-//   herein are proprietary to Adobe Systems Incorporated
-//   and its suppliers and may be covered by U.S. and Foreign 
-//   Patents, patents in process, and are protected by trade 
-//   secret or copyright law. Dissemination of this information 
-//   or reproduction of this material is strictly forbidden unless 
-//   prior written permission is obtained from JAdaptive Limited.                                        
-//                                                  
 package com.sshtools.common.net;
 
 import java.util.StringTokenizer;
 
-/**
- */
 public abstract class IPUtils {
 
     private IPUtils() {
@@ -80,10 +39,10 @@ public abstract class IPUtils {
         int[] mask = new int[4];
         int rem = (bit + 1) / 8;
         int mod = (bit + 1) % 8;
-        Integer Int = new Integer(2);
-        Integer modInt = new Integer(8 - mod);
+        Integer Int = Integer.valueOf(2);
+        Integer modInt = Integer.valueOf(8 - mod);
         double d = Math.pow(Int.doubleValue(), modInt.doubleValue());
-        Double dd = new Double(d);
+        Double dd = Double.valueOf(d);
         int i;
         for (i = 0; i < rem; i++)
             mask[i] = 255;
@@ -116,21 +75,21 @@ public abstract class IPUtils {
      */
     public static int[] calcBroadcastAddress(int in[], int m) {
         int ret[] = new int[4];
-        Integer totalBits = new Integer(32);
-        Integer bits = new Integer(totalBits.intValue() - m - 1);
+        Integer totalBits = Integer.valueOf(32);
+        Integer bits = Integer.valueOf(totalBits.intValue() - m - 1);
         int mask[] = createMaskArray(m);
         double two = 2D;
-        Double hosts = new Double(Math.pow(two, bits.doubleValue()));
+        Double hosts = Double.valueOf(Math.pow(two, bits.doubleValue()));
         hosts.intValue();
         int ffOctets = bits.intValue() / 8;
-        Integer modBits = new Integer(bits.intValue() % 8);
+        Integer modBits = Integer.valueOf(bits.intValue() % 8);
         for (int i = 0; i < 4; i++) {
             ret[i] = in[i];
             if (i > 4 - ffOctets - 1)
                 ret[i] = 255;
         }
 
-        hosts = new Double(Math.pow(two, modBits.doubleValue()));
+        hosts = Double.valueOf(Math.pow(two, modBits.doubleValue()));
         if (ffOctets > 0)
             ret[4 - ffOctets - 1] = (in[4 - ffOctets - 1] + hosts.intValue()) - 1;
         else
@@ -144,10 +103,10 @@ public abstract class IPUtils {
      * @return int
      */
     public static int getNumberOfHosts(int ip[], int m) {
-        Integer totalBits = new Integer(32);
-        Integer bits = new Integer(totalBits.intValue() - m - 1);
+        Integer totalBits = Integer.valueOf(32);
+        Integer bits = Integer.valueOf(totalBits.intValue() - m - 1);
         double two = 2D;
-        Double hosts = new Double(Math.pow(two, bits.doubleValue()));
+        Double hosts = Double.valueOf(Math.pow(two, bits.doubleValue()));
         return hosts.intValue() - 2;
     }
 

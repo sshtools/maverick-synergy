@@ -1,22 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
-/* HEADER */
 package com.sshtools.server.components.jce;
 
 import java.io.IOException;
@@ -42,6 +23,7 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.components.SshKeyExchangeServer;
+import com.sshtools.server.components.SshKeyExchangeServerFactory;
 import com.sshtools.synergy.ssh.SshTransport;
 import com.sshtools.synergy.ssh.TransportProtocol;
 import com.sshtools.synergy.ssh.components.jce.AbstractKeyExchange;
@@ -60,6 +42,18 @@ public class Rsa2048SHA2KeyExchange extends SshKeyExchangeServer implements Abst
 	 * Constant for the algorithm name "rsa2048-sha256".
 	 */
 	public static final String RSA_2048_SHA2 = "rsa2048-sha256";
+	
+	public static class Rsa2048SHA2KeyExchangeFactory implements SshKeyExchangeServerFactory<Rsa2048SHA2KeyExchange> {
+		@Override
+		public Rsa2048SHA2KeyExchange create() throws NoSuchAlgorithmException, IOException {
+			return new Rsa2048SHA2KeyExchange();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { RSA_2048_SHA2 };
+		}
+	}
 
 	final static int SSH_MSG_KEXRSA_PUBKEY = 30;
 	final static int SSH_MSG_KEXRSA_SECRET = 31;
@@ -164,69 +158,88 @@ public class Rsa2048SHA2KeyExchange extends SshKeyExchangeServer implements Abst
 			}
 
 			// Process the actual message
-			ByteArrayReader bar = new ByteArrayReader(msg);
-			bar.skip(1);
-
-			encryptedSecret = bar.readBinaryString();
-
-			try {
-				cipher.init(Cipher.DECRYPT_MODE, transientKey.getPrivateKey().getJCEPrivateKey());
-				byte[] tmp = cipher.doFinal(encryptedSecret);
-				try (ByteArrayReader r = new ByteArrayReader(tmp)) {
-					tmp = r.readBinaryString();
-					secret = new BigInteger(tmp);
-				}
-			} catch (Throwable t) {
-				Rsa2048SHA2KeyExchange.this.transport.disconnect(TransportProtocol.KEY_EXCHANGE_FAILED,
-						"Could not decrypt secret");
-				throw new SshException(t);
-			}
-
-			// Get our host key so we can generate the exchange hash
-			hostKey = pubkey.getEncoded();
-
-			// Calculate the exchange hash
-			calculateExchangeHash();
-
-			// Generate signature
-			signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
-
-			// Send our reply message
-			transport.postMessage(new SshMessage() {
-				public boolean writeMessageIntoBuffer(ByteBuffer buf) {
-
-					ByteArrayWriter baw = new ByteArrayWriter();
-					try {
-						buf.put((byte) SSH_MSG_KEXRSA_DONE);
-
-						baw.writeString(pubkey.getSigningAlgorithm());
-						baw.writeBinaryString(signature);
-
-						byte[] h = baw.toByteArray();
-						buf.putInt(h.length);
-						buf.put(h);
-
-					} catch (IOException ex) {
-						transport.disconnect(TransportProtocol.KEY_EXCHANGE_FAILED, "Could not read host key");
-					} finally {
-						try {
-							baw.close();
-						} catch (IOException e) {
-						}
+			try(ByteArrayReader bar = new ByteArrayReader(msg)) {
+				bar.skip(1);
+	
+				encryptedSecret = bar.readBinaryString();
+	
+				try {
+					cipher.init(Cipher.DECRYPT_MODE, transientKey.getPrivateKey().getJCEPrivateKey());
+					byte[] tmp = cipher.doFinal(encryptedSecret);
+					try (ByteArrayReader r = new ByteArrayReader(tmp)) {
+						tmp = r.readBinaryString();
+						secret = new BigInteger(tmp);
 					}
-
-					return true;
+				} catch (Throwable t) {
+					Rsa2048SHA2KeyExchange.this.transport.disconnect(TransportProtocol.KEY_EXCHANGE_FAILED,
+							"Could not decrypt secret");
+					throw new SshException(t);
 				}
-
-				public void messageSent(Long sequenceNo) {
-					if (Log.isDebugEnabled())
-						Log.debug("Sent SSH_MSG_KEXRSA_DONE");
+	
+				// Get our host key so we can generate the exchange hash
+				hostKey = pubkey.getEncoded();
+	
+				// Calculate the exchange hash
+				calculateExchangeHash();
+	
+				// Generate signature
+				int count = 0;
+				while(true) {
+					signature = prvkey.sign(exchangeHash, pubkey.getSigningAlgorithm());
+			
+					if(Log.isDebugEnabled()) {
+						Log.debug("Verifying signature output to mitigate passive SSH key compromise vulnerability");
+					}
+					
+					if(!pubkey.verifySignature(signature, exchangeHash)) {
+						if(count++ >= 3) {
+							throw new SshException(SshException.HOST_KEY_ERROR, "Detected invalid signautre from private key!");
+						}
+						if(Log.isDebugEnabled()) {
+							Log.debug("Detected invalid signature output from {} implementation", pubkey.getSigningAlgorithm());
+						}
+					} else {
+						break;
+					}
 				}
-			}, true);
-
-			transport.sendNewKeys();
-
-			return true;
+	
+				// Send our reply message
+				transport.postMessage(new SshMessage() {
+					public boolean writeMessageIntoBuffer(ByteBuffer buf) {
+	
+						ByteArrayWriter baw = new ByteArrayWriter();
+						try {
+							buf.put((byte) SSH_MSG_KEXRSA_DONE);
+	
+							baw.writeString(pubkey.getSigningAlgorithm());
+							baw.writeBinaryString(signature);
+	
+							byte[] h = baw.toByteArray();
+							buf.putInt(h.length);
+							buf.put(h);
+	
+						} catch (IOException ex) {
+							transport.disconnect(TransportProtocol.KEY_EXCHANGE_FAILED, "Could not read host key");
+						} finally {
+							try {
+								baw.close();
+							} catch (IOException e) {
+							}
+						}
+	
+						return true;
+					}
+	
+					public void messageSent(Long sequenceNo) {
+						if (Log.isDebugEnabled())
+							Log.debug("Sent SSH_MSG_KEXRSA_DONE");
+					}
+				}, true);
+	
+				transport.sendNewKeys();
+	
+				return true;
+			}
 
 		default:
 			return false;

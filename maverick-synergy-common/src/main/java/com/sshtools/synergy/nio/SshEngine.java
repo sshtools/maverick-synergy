@@ -1,21 +1,3 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.synergy.nio;
 
 import java.io.IOException;
@@ -37,6 +19,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
@@ -74,10 +57,11 @@ public class SshEngine {
 	ConcurrentLinkedQueue<Runnable> shutdownHooks = new ConcurrentLinkedQueue<Runnable>();
 	Throwable lastError = null;
 	AbstractRequestFuture shutdownFuture = new ChannelRequestFuture();
-	
-	List<SshEngineListener> listeners = Collections.synchronizedList(new ArrayList<SshEngineListener>());
+	Object lock = new Object();
+
+	List<SshEngineListener> listeners = new CopyOnWriteArrayList<SshEngineListener>();
 	final protected static char[] hexArray = "0123456789abcdef".toCharArray();
-	
+
 	private final static String[] SOCKSV5_ERROR = {
 	        "Success", "General SOCKS server failure",
 	        "Connection not allowed by ruleset", "Network unreachable",
@@ -114,11 +98,6 @@ public class SshEngine {
 
 	private static String version = PomVersion.getVersion();
 	
-	private static long releaseDate = 0L;
-
-	// LICENSE static {releaseDate = /* RELEASE_DATE */;}
-	Object license;
-	
 	public Throwable getLastError() {
 		return lastError;
 	}
@@ -147,7 +126,7 @@ public class SshEngine {
 	 * @returns the release date of the current version.
 	 */
 	public static Date getReleaseDate() {
-		return new Date(releaseDate);
+		return new Date(/* RELEASE_DATE */);
 	}
 
 	public boolean isStarting() {
@@ -197,117 +176,122 @@ public class SshEngine {
 	 * @return <tt>true</tt> if at least one interface started, otherwise
 	 *         <tt>false</tt>.
 	 */
-	public synchronized boolean startup() throws IOException {
-		return startup(System.getProperties());
+	public boolean startup() throws IOException {
+		synchronized(lock) {
+			return startup(System.getProperties());
+		}
 	}
 	
-	public synchronized boolean startup(Properties properties) throws IOException {
-		isStarting = true;
-		lastError = null;
-		try {
+	public boolean startup(Properties properties) throws IOException {
 
-			for(SshEngineListener listener : listeners) {
-				listener.starting(this);
-			}
-			
-			shutdownHook = new Thread() {
-				public void run() {
-					if(Log.isInfoEnabled())
-						Log.info("The system is shutting down");
-					shutdownNow(true, getLongValue(properties, 
-							"maverick.config.shutdown.defaultGracePeriod", 5000L));
+		synchronized(lock) {
+			isStarting = true;
+			lastError = null;
+			try {
+
+				for(SshEngineListener listener : listeners) {
+					listener.starting(this);
 				}
-			};
-
-			if(Log.isInfoEnabled()) {
-
-				Log.info("Product version: " + version);
-				Log.info("Java version: "
-						+ System.getProperty("java.version"));
-
-				Log.info("OS: " + System.getProperty("os.name") + " " + System.getProperty("os.arch"));
-
-
-				Log.info("Configuring SSH engine");
-			}
-
-			if(Log.isInfoEnabled())
-				Log.info("Configuration complete");
-
-			if (Runtime.getRuntime() != null)
-				Runtime.getRuntime().addShutdownHook(shutdownHook);
-
-			connectThreads = new SelectorThreadPool(
-					new ConnectSelectorThread(),
-					getIntValue(properties, "maverick.config.connect.threads", context.getPermanentConnectThreads()),
-					getIntValue(properties, "maverick.config.channelsPerThread", context.getMaximumChannelsPerThread()),
-					getIntValue(properties, "maverick.config.idlePeriod", context.getIdleServiceRunPeriod()),
-					getIntValue(properties, "maverick.config.idleEvents", context.getInactiveServiceRunsPerIdleEvent()),
-					context.getSelectorProvider());
-
-			transferThreads = new SelectorThreadPool(
-					new TransferSelectorThread(),
-					getIntValue(properties, "maverick.config.transfer.threads", context.getPermanentTransferThreads()),
-					getIntValue(properties, "maverick.config.channelsPerThread", context.getMaximumChannelsPerThread()),
-					getIntValue(properties, "maverick.config.idlePeriod", context.getIdleServiceRunPeriod()),
-					getIntValue(properties, "maverick.config.idleEvents", context.getInactiveServiceRunsPerIdleEvent()),
-					context.getSelectorProvider());
-
-			acceptThreads = new SelectorThreadPool(new AcceptSelectorThread(),
-					getIntValue(properties, "maverick.config.accept.threads", context.getPermanentAcceptThreads()),
-					getIntValue(properties, "maverick.config.channelsPerThread", context.getMaximumChannelsPerThread()),
-					getIntValue(properties, "maverick.config.idlePeriod", context.getIdleServiceRunPeriod()),
-					getIntValue(properties, "maverick.config.idleEvents", context.getInactiveServiceRunsPerIdleEvent()),
-					context.getSelectorProvider());
-
-			ListeningInterface[] interfaces = context.getListeningInterfaces();
-
-			int listening = 0;
-			for (int i = 0; i < interfaces.length; i++) {
-				if (startListeningInterface(interfaces[i]))
-					listening++;
-			}
-
-			if (listening == 0 && startupRequiresListeningInterfaces) {
-				if(Log.isInfoEnabled())
-					Log.info("No listening interfaces were bound!");
-				shutdownNow(false, 0);
-				return false;
-			}
-
-			started = true;
-			
-			for(SshEngineListener listener : listeners) {
-				listener.started(this);
-			}
-			
-			if(getBooleanValue(properties, "maverick.threadDump", false)) {
-				new Thread("ThreadMonitor") {
+				
+				shutdownHook = new Thread() {
 					public void run() {
-						while(isStarted()) {
-							
-							try {
-								Thread.sleep(getLongValue(properties, "maverick.threadDumpInterval", 300000L));
-							} catch (InterruptedException e) {
-							}
-							
-							Log.raw(Level.INFO, Utils.generateThreadDump(), true);
-						}
+						if(Log.isInfoEnabled())
+							Log.info("The system is shutting down");
+						shutdownNow(false, getLongValue(properties, 
+								"maverick.config.shutdown.defaultGracePeriod", 5000L));
 					}
-				}.start();
+				};
+	
+				if(Log.isInfoEnabled()) {
+	
+					Log.info("Product version: " + version);
+					Log.info("Java version: "
+							+ System.getProperty("java.version"));
+	
+					Log.info("OS: " + System.getProperty("os.name") + " " + System.getProperty("os.arch"));
+	
+	
+					Log.info("Configuring SSH engine");
+				}
+	
+				if(Log.isInfoEnabled())
+					Log.info("Configuration complete");
+	
+				if (Runtime.getRuntime() != null)
+					Runtime.getRuntime().addShutdownHook(shutdownHook);
+	
+				connectThreads = new SelectorThreadPool(
+						new ConnectSelectorThread(),
+						getIntValue(properties, "maverick.config.connect.threads", context.getPermanentConnectThreads()),
+						getIntValue(properties, "maverick.config.channelsPerThread", context.getMaximumChannelsPerThread()),
+						getIntValue(properties, "maverick.config.idlePeriod", context.getIdleServiceRunPeriod()),
+						getIntValue(properties, "maverick.config.idleEvents", context.getInactiveServiceRunsPerIdleEvent()),
+						context.getSelectorProvider());
+	
+				transferThreads = new SelectorThreadPool(
+						new TransferSelectorThread(),
+						getIntValue(properties, "maverick.config.transfer.threads", context.getPermanentTransferThreads()),
+						getIntValue(properties, "maverick.config.channelsPerThread", context.getMaximumChannelsPerThread()),
+						getIntValue(properties, "maverick.config.idlePeriod", context.getIdleServiceRunPeriod()),
+						getIntValue(properties, "maverick.config.idleEvents", context.getInactiveServiceRunsPerIdleEvent()),
+						context.getSelectorProvider());
+	
+				acceptThreads = new SelectorThreadPool(new AcceptSelectorThread(),
+						getIntValue(properties, "maverick.config.accept.threads", context.getPermanentAcceptThreads()),
+						getIntValue(properties, "maverick.config.channelsPerThread", context.getMaximumChannelsPerThread()),
+						getIntValue(properties, "maverick.config.idlePeriod", context.getIdleServiceRunPeriod()),
+						getIntValue(properties, "maverick.config.idleEvents", context.getInactiveServiceRunsPerIdleEvent()),
+						context.getSelectorProvider());
+	
+				ListeningInterface[] interfaces = context.getListeningInterfaces();
+	
+				int listening = 0;
+				for (int i = 0; i < interfaces.length; i++) {
+					if (startListeningInterface(interfaces[i]))
+						listening++;
+				}
+	
+				if (listening == 0 && startupRequiresListeningInterfaces) {
+					if(Log.isInfoEnabled())
+						Log.info("No listening interfaces were bound!");
+					shutdownNow(false, 0);
+					return false;
+				}
+	
+				started = true;
+				
+				for(SshEngineListener listener : listeners) {
+					listener.started(this);
+				}
+				
+				if(getBooleanValue(properties, "maverick.threadDump", false)) {
+					new Thread("ThreadMonitor") {
+						public void run() {
+							while(isStarted()) {
+								
+								try {
+									Thread.sleep(getLongValue(properties, "maverick.threadDumpInterval", 300000L));
+								} catch (InterruptedException e) {
+								}
+								
+								Log.raw(Level.INFO, Utils.generateThreadDump(), true);
+							}
+						}
+					}.start();
+				}
+				return true;
+	
+			} catch (Throwable ex) {
+				if(Log.isInfoEnabled())
+					Log.info("The engine failed to start", ex);
+				lastError = ex;
+				shutdownNow(false, 0);
+				if (ex instanceof LicenseException)
+					throw (IOException) ex;
+				return false;
+			} finally {
+				isStarting = false;
 			}
-			return true;
-
-		} catch (Throwable ex) {
-			if(Log.isInfoEnabled())
-				Log.info("The engine failed to start", ex);
-			lastError = ex;
-			shutdownNow(false, 0);
-			if (ex instanceof LicenseException)
-				throw (IOException) ex;
-			return false;
-		} finally {
-			isStarting = false;
 		}
 
 	}
@@ -418,79 +402,81 @@ public class SshEngine {
 	 * This method should be used to shutdown the server from your main thread. If you need to shutdown
 	 * the server from within a session that is running on a transfer thread use {@link shutdownAsync().}
 	 */
-	public synchronized void shutdownNow(boolean graceful, long forceAfterMs) {
+	public void shutdownNow(boolean graceful, long forceAfterMs) {
 	
-		try {
-
-			for(SshEngineListener listener : listeners) {
-				listener.shuttingDown(this);
-			}
-			
-			// Stop accepting new connections
-			if (acceptThreads != null)
-				acceptThreads.shutdown();
-			
-			for(ListeningInterface li : listeningInterfaces) {
-				for(SshEngineListener listener : listeners) {
-					listener.interfaceStopped(this, li);
-				}
-			}
-			
-			listeningInterfaces.clear();
-			
-			if(graceful) {
-			
-				long started = System.currentTimeMillis();
-
-				while (transferThreads.getCurrentLoad() > 0) {
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-					}
-
-					if (forceAfterMs > 0
-							&& System.currentTimeMillis() - started > forceAfterMs)
-						break;
-				}
-			}
-			
-			// First close the channels whilst maintaining I/O
-			if(transferThreads!=null) {
-				transferThreads.closeAllChannels();
-			}
-			
+		synchronized(lock) {
 			try {
-				if (Runtime.getRuntime() != null && shutdownHook!=null)
-					Runtime.getRuntime().removeShutdownHook(shutdownHook);
-			} catch (IllegalStateException ex) {
-			} finally {
-				shutdownHook = null;
-				
+	
 				for(SshEngineListener listener : listeners) {
-					listener.shutdown(this);
+					listener.shuttingDown(this);
 				}
-			}
-			
-			// Run any shutdown hooks
-			if(shutdownHooks!=null) {
-				for(Runnable r : shutdownHooks) {
-					try {
-						r.run();
-					} catch (Exception e) {
+				
+				// Stop accepting new connections
+				if (acceptThreads != null)
+					acceptThreads.shutdown();
+				
+				for(ListeningInterface li : listeningInterfaces) {
+					for(SshEngineListener listener : listeners) {
+						listener.interfaceStopped(this, li);
 					}
 				}
+				
+				listeningInterfaces.clear();
+				
+				if(graceful) {
+				
+					long started = System.currentTimeMillis();
+	
+					while (transferThreads.getCurrentLoad() > 0) {
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+						}
+	
+						if (forceAfterMs > 0
+								&& System.currentTimeMillis() - started > forceAfterMs)
+							break;
+					}
+				}
+				
+				// First close the channels whilst maintaining I/O
+				if(transferThreads!=null) {
+					transferThreads.closeAllChannels();
+				}
+				
+				try {
+					if (Runtime.getRuntime() != null && shutdownHook!=null)
+						Runtime.getRuntime().removeShutdownHook(shutdownHook);
+				} catch (IllegalStateException ex) {
+				} finally {
+					shutdownHook = null;
+					
+					for(SshEngineListener listener : listeners) {
+						listener.shutdown(this);
+					}
+				}
+				
+				// Run any shutdown hooks
+				if(shutdownHooks!=null) {
+					for(Runnable r : shutdownHooks) {
+						try {
+							r.run();
+						} catch (Exception e) {
+						}
+					}
+				}
+	
+				if (connectThreads != null)
+					connectThreads.shutdown();
+				
+				if (transferThreads != null)
+					transferThreads.shutdown();
+	
+				
+			} finally {
+				started = false;
+				shutdownFuture.done(true);
 			}
-
-			if (connectThreads != null)
-				connectThreads.shutdown();
-			
-			if (transferThreads != null)
-				transferThreads.shutdown();
-
-			
-		} finally {
-			started = false;
-			shutdownFuture.done(true);
 		}
 	}
 	
@@ -641,13 +627,13 @@ public class SshEngine {
 		InetAddress hostAddr = InetAddress.getByName(hostToConnect);
 		ByteBuffer buf = ByteBuffer.allocate(1024);
 		
-		buf.put((byte)0x04);
-		buf.put((byte)0x01);
+		buf.put((byte)SOCKS4);
+		buf.put((byte)CONNECT);
 		buf.put((byte)((portToConnect >>> 8) & 0xff));
 		buf.put((byte)(portToConnect & 0xff));
 		buf.put(hostAddr.getAddress());
 		buf.put(protocolContext.getProxyUsername().getBytes("UTF-8"));
-		buf.put((byte)0x00);
+		buf.put((byte)NULL_TERMINATION);
 
 		buf.flip();
 		
@@ -1110,6 +1096,11 @@ public class SshEngine {
 					if(protocolContext.getSendBufferSize() > 0) {
 						sc.socket().setSendBufferSize(
 							protocolContext.getSendBufferSize());
+					}
+					
+					if(protocolContext.getReceiveBufferSize() > 0) {
+						sc.socket().setReceiveBufferSize(
+							protocolContext.getReceiveBufferSize());
 					}
 					
 					sc.configureBlocking(false);

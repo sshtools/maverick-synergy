@@ -1,33 +1,15 @@
-/**
- * (c) 2002-2021 JADAPTIVE Limited. All Rights Reserved.
- *
- * This file is part of the Maverick Synergy Java SSH API.
- *
- * Maverick Synergy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Maverick Synergy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Maverick Synergy.  If not, see <https://www.gnu.org/licenses/>.
- */
 package com.sshtools.agent.server;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.ServiceLoader;
 
-import org.newsclub.net.unix.AFUNIXServerSocket;
-import org.newsclub.net.unix.AFUNIXSocketAddress;
-
+import com.sshtools.agent.AgentProvider;
 import com.sshtools.agent.InMemoryKeyStore;
 import com.sshtools.agent.KeyStore;
+import com.sshtools.agent.client.AgentSocketType;
 import com.sshtools.agent.openssh.OpenSSHConnectionFactory;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 
 public class SshAgentServer {
 
@@ -51,14 +33,25 @@ public class SshAgentServer {
 		t.start();
 	}
 	
-	public void startUnixSocketListener(String location) throws IOException{
+	public void startListener(String location, AgentSocketType type) throws IOException {
 		
-		File socketFile = new File(location);
-		AFUNIXServerSocket server = AFUNIXServerSocket.newInstance(); 
-		server.bind(new AFUNIXSocketAddress(socketFile));
+		SshAgentAcceptor serverAcceptor = null;
+		for(AgentProvider l : ServiceLoader.load(AgentProvider.class,
+				JCEComponentManager.getDefaultInstance().getClassLoader())) {
+			serverAcceptor = l.server(location, type);
+			if(serverAcceptor != null)
+				break;
+		}
+		if(serverAcceptor == null) {
+			throw new IOException("No provider available. Do you have maverick-sshagent-jnr-sockets or maverick-sshagent-jdk16-sockets on the classpath?");
+		}
 		
-		ServerThread t = new ServerThread(acceptor = new UnixSocketAdapter(server));
+		ServerThread t = new ServerThread(serverAcceptor);
 		t.start();
+	}
+	
+	public void startUnixSocketListener(String location) throws IOException {
+		startListener(location, AgentSocketType.UNIX_DOMAIN);
 	}
 	
 	public void close() throws IOException {

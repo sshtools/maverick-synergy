@@ -1,4 +1,4 @@
-Maverick Synergy 3.1.0 - TBC
+Maverick Synergy 3.1.0 - Feb 20, 2024
 
 Features
   o Minimum Java version has been increased to Java 11.
@@ -33,8 +33,7 @@ Features
   o Server now supports hardlink@openssh.com and statvfs@openssh.com
   o SshClientBuilder introduced as a replacement to direct SshClient construction.
   o SftpClientBuilder introduced as a replacement to direct SftpClient construction.
-  o All Sftp extensions are now standard Java services. Use SftpExtensionLoaderFactory instead
-    of DefaultSftpExtensionFactory in configuration. 
+  o All Sftp extensions are now standard Java services. Use SftpExtensionLoaderFactory instead of DefaultSftpExtensionFactory in configuration. 
   
 Bug Fixes
   o Implementations of available incorrectly return -1.
@@ -47,7 +46,6 @@ Other
   o Tests split into separate Maven projects. This is to allow development in Eclipse, which does not yet allow main source and tests that are modular to exist in the same project.
   o DirectFileJava7 has been deprecated and it's features moved to DirectFile. 
   o PuTTY support moved to it's own module, removing the Bouncycastle requirement in the core classes.
-  
   
 =================
 =  HISTORY      =

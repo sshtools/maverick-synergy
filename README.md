@@ -15,7 +15,7 @@ Built upon the Java NIO framework, this third generation of the API for the firs
 The following solutions utilize the Maverick Synergy API in some form. If you would like your own project adding here, please get in touch or create a PR with the necersary changes to this page. 
 
 From the API Developers, JADAPTIVE Limited
-- [SSH Key Management for Teams](https://ssh.team)
+- [Secure File Exchange](https://jadaptive.com/secure-file-exchange)
 - [Desktop SSH Agent](https://jadaptive.com/en/products/desktop-ssh-agent)
 
 Third-party Solutions

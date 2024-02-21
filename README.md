@@ -68,9 +68,16 @@ In the first instance, for a no dependency Java SSH client API simply use the ma
 ```
 We have created a high level API that makes it easy to make calls to SSH servers and perform common tasks. For example, downloading a file over SFTP is as simple as:
 ```java	
-try(SshClient ssh = new SshClient("hostname", port, "username", password.toCharArray())) {		
-   File file = ssh.getFile("report.csv");
-  ...
+try(SshClient ssh = SshClientBuilder.create()
+                    .withHostname("localhost")
+                    .withPort(2222)	  
+                    .withUsername("root")
+                    .withPassword("xxxxx")
+                    .build()) {
+   ssh.putFile(new File("package.deb"));
+   ssh.executeCommand("dpkg -i package.deb");
+} catch (IOException | SshException e) { 
+     e.printStackTrace();
 }
 ```
 

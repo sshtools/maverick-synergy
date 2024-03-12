@@ -140,7 +140,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	private static final String STRICT_KEX_CLIENT = "kex-strict-c-v00@openssh.com";
 	private static final String STRICT_KEX_SERVER = "kex-strict-s-v00@openssh.com";
 	boolean isKexStrict = false;
-	boolean isFirstKeyExchange = true;
+	boolean hasFirstNewKeys = false;
 	
 	protected void transferState(TransportProtocol<? extends SshContext> transport) {
 		
@@ -1908,7 +1908,7 @@ public abstract class TransportProtocol<T extends SshContext>
 
 	private void checkStrictKex() {
 		
-		if(isKexStrict && !completedFirstKeyExchange) {
+		if(isKexStrict && !hasFirstNewKeys) {
 			disconnect(PROTOCOL_ERROR,
 					"Strict KEX mode encountered a message that is not permitted at this time");
 		}
@@ -2039,6 +2039,9 @@ public abstract class TransportProtocol<T extends SshContext>
 
 			if(Log.isDebugEnabled())
 				Log.debug("Received SSH_MSG_NEWKEYS");
+			
+			hasFirstNewKeys = true;
+			
 			synchronized (keyExchange) {
 				keyExchange.setReceivedNewKeys(true);
 				// Put the keys into use

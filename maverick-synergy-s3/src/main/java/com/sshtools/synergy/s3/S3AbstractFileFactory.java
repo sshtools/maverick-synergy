@@ -78,6 +78,7 @@ public class S3AbstractFileFactory implements AbstractFileFactory<S3File> {
 	
 	public void makePublic(S3File file) throws IOException, PermissionDeniedException {
 			
+		@SuppressWarnings("unused")
 		PutObjectAclResponse putObjRes = s3.putObjectAcl(
 	            PutObjectAclRequest.builder()
 	                    .bucket(bucketName)
@@ -86,6 +87,7 @@ public class S3AbstractFileFactory implements AbstractFileFactory<S3File> {
 	                    .build());
 		
 	}
+	
 	private void createClient(Region region, String accessKey, String secretKey, String endpoint)  {
 		
 		

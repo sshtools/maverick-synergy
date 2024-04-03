@@ -59,7 +59,7 @@ public abstract class AbstractConnectionTask extends Task {
 	protected final Optional<Function<Integer, SshClient>> clientSupplier;
 
 	protected AbstractConnectionTask(AbstractConnectionTaskBuilder<?, ?> builder) {
-		super(builder.connection.orElse(builder.clientSupplier.orElseThrow(() -> new IllegalArgumentException("No connection or client supplied.")).apply(0).getConnection()));
+		super(builder.connection.orElseGet(() -> builder.clientSupplier.orElseThrow(() -> new IllegalArgumentException("No connection or client supplied.")).apply(0).getConnection()));
 		this.clientSupplier = builder.clientSupplier;
 	}
 

@@ -1,3 +1,12 @@
+Maverick Synergy 3.1.1 - 3 Apr, 2024
+
+Bug Fixes
+  o Fixed issue with Terrapin strict kex mode and messages after SSH_MSG_NEWKEYS.
+  
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.1.0 - Feb 20, 2024
 
 Features
@@ -47,9 +56,7 @@ Other
   o DirectFileJava7 has been deprecated and it's features moved to DirectFile. 
   o PuTTY support moved to it's own module, removing the Bouncycastle requirement in the core classes.
   
-=================
-=  HISTORY      =
-=================
+-----------------
 
 Maverick Synergy 3.0.17 - May 3, 2023
 

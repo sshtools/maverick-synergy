@@ -748,7 +748,7 @@ public class SftpClient implements Closeable {
 			actual = path;
 		}
 
-		if (!actual.equals("/") && actual.endsWith("/")) {
+		if (!Boolean.getBoolean("maverick.disableSlashRemoval") && !actual.equals("/") && actual.endsWith("/")) {
 			return actual.substring(0, actual.length() - 1);
 		} else {
 			return actual;

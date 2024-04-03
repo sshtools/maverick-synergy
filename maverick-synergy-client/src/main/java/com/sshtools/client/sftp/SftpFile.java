@@ -36,7 +36,7 @@ public final class SftpFile {
       } else {
 
           //Remove trailing forward slash
-          if (absolutePath.endsWith("/")) {
+          if (!Boolean.getBoolean("maverick.disableSlashRemoval") && absolutePath.endsWith("/")) {
               absolutePath = absolutePath.substring(0, absolutePath.length() - 1);
           }
 

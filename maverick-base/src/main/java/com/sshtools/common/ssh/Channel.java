@@ -44,6 +44,8 @@ public interface Channel {
 
 	void addEventListener(ChannelEventListener listener);
 
+	void removeEventListener(ChannelEventListener listener);
+
 	void sendChannelRequest(String requestName, boolean wantReply, byte[] data);
 
 	void sendChannelRequest(String type, boolean wantreply,

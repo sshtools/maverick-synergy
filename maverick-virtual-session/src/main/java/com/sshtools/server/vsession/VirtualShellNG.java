@@ -24,7 +24,6 @@ package com.sshtools.server.vsession;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -47,15 +46,11 @@ import org.jline.terminal.Attributes.InputFlag;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import org.jline.terminal.impl.AbstractPosixTerminal;
-import org.jline.terminal.impl.ExternalTerminal;
 
 import com.sshtools.common.files.nio.AbstractFileURI;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.ClassLoaderPolicy;
-import com.sshtools.common.ssh.Channel;
-import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.Utils;
 import com.sshtools.server.AgentForwardingChannel;
@@ -82,8 +77,6 @@ public class VirtualShellNG extends SessionChannelNG {
 	protected VirtualConsole console;
 	protected ShellCommandFactory commandFactory;
 
-	boolean rawMode = false;
-	
 	List<WindowSizeChangeListener> listeners = new ArrayList<WindowSizeChangeListener>();
 	private Terminal terminal;
 	
@@ -91,28 +84,6 @@ public class VirtualShellNG extends SessionChannelNG {
 			ShellCommandFactory commandFactory) {
 		super(con);
 		this.commandFactory = commandFactory;
-		addEventListener(new ChannelEventListener() {
-			@Override
-			public void onChannelDataIn(Channel channel, ByteBuffer data) {
-
-				byte[] tmp = new byte[data.remaining()];
-				data.get(tmp);
-				
-				try {
-					if(terminal instanceof AbstractPosixTerminal) {
-						((AbstractPosixTerminal)terminal).getPty().getMasterOutput().write(tmp);
-						((AbstractPosixTerminal)terminal).getPty().getMasterOutput().flush();
-					}
-					else {
-						((ExternalTerminal)terminal).processInputBytes(tmp, 0, tmp.length);
-					}
-					evaluateWindowSpace();
-				} catch (Exception e) {
-					Log.error("Failed to send input to terminal.", e);
-					close();
-				}
-			}
-		});
 	}
 
 	public void addWindowSizeChangeListener(WindowSizeChangeListener listener) {
@@ -252,13 +223,14 @@ public class VirtualShellNG extends SessionChannelNG {
 	@Override
 	public void enableRawMode() {
 		console.getTerminal().pause();
+		setAutoconsume(true);
 		super.enableRawMode();
-		
 	}
 
 	@Override
 	public void disableRawMode() {
 		console.getTerminal().resume();
+		setAutoconsume(false);
 		super.disableRawMode();
 	}
 

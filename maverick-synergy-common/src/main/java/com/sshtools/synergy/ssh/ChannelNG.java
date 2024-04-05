@@ -98,9 +98,8 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	protected SshConnection con;
 	private ChannelInputStream channelIn;
 	private ChannelOutputStream channelOut = new ChannelOutputStream(this);
-	private final boolean autoConsume;
+	private boolean autoConsume;
 	
-
 	@Deprecated(forRemoval = true, since = "3.1.0")
 	public ChannelNG(String channelType,  int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace, ChannelRequestFuture closeFuture, boolean autoConsume) {
 		this(channelType, maximumPacketSize, new UnsignedInteger32(initialWindowSize), new UnsignedInteger32(maximumWindowSpace), new UnsignedInteger32(minimumWindowSpace), closeFuture, autoConsume);
@@ -140,6 +139,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	
 	public final boolean isAutoConsume() {
 		return autoConsume;
+	}
+	
+	public void setAutoconsume(boolean autoConsume) {
+		this.autoConsume = autoConsume;
 	}
 	
 	public InputStream getInputStream() {
@@ -239,6 +242,17 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	public void addEventListener(ChannelEventListener listener) {
 		if (listener != null) {
 			eventListeners.add(listener);
+		}
+	}
+
+	/**
+	 * Stop listening for channel events
+	 * 
+	 * @param listener
+	 */
+	public void removeEventListener(ChannelEventListener listener) {
+		if (listener != null) {
+			eventListeners.remove(listener);
 		}
 	}
 
@@ -445,9 +459,9 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 
 	protected void onChannelData(ByteBuffer data) {
 		for (ChannelEventListener listener : eventListeners) {
-			listener.onChannelDataIn(this, data);
+			listener.onChannelDataIn(this, data.asReadOnlyBuffer());
 		}
-		if(Objects.nonNull(cache)) {
+		if(!autoConsume && Objects.nonNull(cache)) {
 			try {
 				cache.put(data);
 			} catch (EOFException e) {

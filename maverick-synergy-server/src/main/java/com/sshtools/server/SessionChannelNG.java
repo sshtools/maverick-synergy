@@ -119,10 +119,12 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		}
 	}
 	
+	@Deprecated
 	public void enableRawMode() {
 		rawMode = true;
 	}
-	
+
+	@Deprecated
 	public void disableRawMode() {
 		rawMode = false;
 	}

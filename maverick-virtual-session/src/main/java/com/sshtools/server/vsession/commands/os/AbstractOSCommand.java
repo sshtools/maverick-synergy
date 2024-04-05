@@ -99,11 +99,11 @@ public class AbstractOSCommand extends ShellCommand {
 
 		console.getSessionChannel().enableRawMode();
 		
-		console.getSessionChannel().addEventListener(new ChannelEventListener() {
+		ChannelEventListener l = new ChannelEventListener() {
 
 			@Override
 			public void onChannelDataIn(Channel channel, ByteBuffer buffer) {
-				
+
 				byte[] tmp = new byte[buffer.remaining()];
 				buffer.get(tmp);
 
@@ -116,7 +116,8 @@ public class AbstractOSCommand extends ShellCommand {
 					IOUtils.closeStream(in);
 				}
 			}
-		});
+		};
+		console.getSessionChannel().addEventListener(l);
 
 		try {
 			IOUtils.copy(in, console.getSessionChannel().getOutputStream());
@@ -128,7 +129,12 @@ public class AbstractOSCommand extends ShellCommand {
 			}
 		} catch (Exception e) {
 		} finally {
-			console.getSessionChannel().disableRawMode();
+			try {
+				console.getSessionChannel().disableRawMode();
+			}
+			finally {
+				console.getSessionChannel().removeEventListener(l);
+			}
 		}
 	}
 

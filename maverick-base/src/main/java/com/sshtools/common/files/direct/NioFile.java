@@ -430,7 +430,7 @@ public final class NioFile implements AbstractFile {
 						permsBldr.withAllWrite();
 					}
 					var filename = path.getFileName();
-					if (filename != null &&  filename.toString().endsWith(".exe") || filename.toString().endsWith(".com") || filename.toString().endsWith(".cmd")) {
+					if (filename != null && ( filename.toString().endsWith(".exe") || filename.toString().endsWith(".com") || filename.toString().endsWith(".cmd"))) {
 						permsBldr.withAllExecute();
 					}
 					bldr.withPermissions(permsBldr.build());

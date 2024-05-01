@@ -29,7 +29,11 @@ public class AbstractMount {
 	private boolean filesystemRoot;
 	private boolean isDefault;
 	protected boolean isImaginary;
-
+	protected String username = "unknown";
+	protected String group = "unknown";
+	protected int uid = 0;
+	protected int gid = 0;
+	
 	protected AbstractMount(String mount, String path) {
 		this(mount, path, false, false);
 	}
@@ -98,5 +102,21 @@ public class AbstractMount {
 	
 	public String toString() {
 		return getMount() + " on " + getRoot();
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public String getGroup() {
+		return group;
+	}
+
+	public int getUid() {
+		return uid;
+	}
+
+	public int getGid() {
+		return gid;
 	}
 }

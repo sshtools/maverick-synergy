@@ -55,4 +55,24 @@ public class VirtualMountTemplate extends AbstractMount {
 	public long lastModified() {
 		return lastModified;
 	}
+	
+	public VirtualMountTemplate setUsername(String username) {
+		this.username = username;
+		return this;
+	}
+
+	public VirtualMountTemplate setGroup(String group) {
+		this.group = group;
+		return this;
+	}
+
+	public VirtualMountTemplate setUid(int uid) {
+		this.uid = uid;
+		return this;
+	}
+
+	public VirtualMountTemplate setGid(int gid) {
+		this.gid = gid;
+		return this;
+	}
 }

@@ -123,10 +123,10 @@ public class VirtualMountFile extends VirtualFileObject {
 
 		bldr.withPermissions(builder.build());
 		
-		bldr.withUid(0);
-		bldr.withGid(0);
-		bldr.withUsername(System.getProperty("maverick.unknownUsername", "unknown"));
-		bldr.withGroup(System.getProperty("maverick.unknownUsername", "unknown"));
+		bldr.withUid(parentMount.getUid());
+		bldr.withGid(parentMount.getGid());
+		bldr.withUsername(System.getProperty("maverick.unknownUsername", parentMount.getUsername()));
+		bldr.withGroup(System.getProperty("maverick.unknownUsername", parentMount.getGroup()));
 		bldr.withLastAccessTime(parentMount.lastModified());
 		bldr.withLastModifiedTime(parentMount.lastModified());
 		bldr.withCreateTime(parentMount.lastModified());

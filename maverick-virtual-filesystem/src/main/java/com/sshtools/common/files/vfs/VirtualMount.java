@@ -60,11 +60,6 @@ public class VirtualMount extends AbstractMount {
 			AbstractFile f = actualFileFactory.getFile(path);
 			this.path = f.getAbsolutePath();
 		}
-		
-		this.uid = mountTemplate.getUid();
-		this.gid = mountTemplate.getGid();
-		this.username = mountTemplate.getUsername();
-		this.group = mountTemplate.getGroup();
 
 	}
 

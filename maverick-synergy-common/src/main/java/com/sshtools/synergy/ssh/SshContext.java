@@ -165,7 +165,6 @@ public abstract class SshContext extends ProtocolContext implements
 	public static final String KEX_DIFFIE_HELLMAN_ECDH_NISTP_521 = "ecdh-sha2-nistp521";
 	
 	/** SSH2 DSA Public Key **/
-	@Deprecated
 	public static final String PUBLIC_KEY_SSHDSS = "ssh-dss";
 
 	/** ED25519 Public key */
@@ -227,8 +226,7 @@ public abstract class SshContext extends ProtocolContext implements
 	protected String prefCompressionSC = COMPRESSION_NONE;
 
 	protected String prefKeyExchange = KEX_DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA256;
-	
-	protected String prefPublicKey = PUBLIC_KEY_ED25519;
+	protected String prefPublicKey = PUBLIC_KEY_ECDSA_SHA2_NISPTP_256;
 
 	protected int maxChannels = 100;
 

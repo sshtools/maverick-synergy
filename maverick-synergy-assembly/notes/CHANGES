@@ -3,6 +3,7 @@ Maverick Synergy 3.1.2 - TBC
 Bug Fixes
   o User and group information can now be defaulted on an AbstractMount.
   o Changed default public key preference from ecdsa to ed25519.
+  o Incorrect parent mount passed to VirtualMountFile when resolving children.
   
 =================
 =  HISTORY      =

@@ -249,7 +249,7 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 				if(intermediate = !childPaths.isEmpty()) {
 					childPath = FileUtils.checkEndsWithNoSlash(childPaths.get(0));
 				}
-				files.put(childPath, new VirtualMountFile(currentPath + childPath, parent.getMount(), this, intermediate));
+				files.put(childPath, new VirtualMountFile(currentPath + childPath, m, this, intermediate));
 			}
 		}
 		

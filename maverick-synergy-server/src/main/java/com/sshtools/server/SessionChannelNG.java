@@ -109,7 +109,6 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	boolean haltIncomingData = false;
 	long lastActivity = System.currentTimeMillis();
 	boolean agentForwardingRequested;
-	boolean rawMode = false;
 	boolean singleSession = false;
 	ChannelOutputStream stderrOutputStream = new ChannelOutputStream(this, SSH_EXTENDED_DATA_STDERR);
 	
@@ -141,16 +140,6 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		}
 	}
 	
-	@Deprecated
-	public void enableRawMode() {
-		rawMode = true;
-	}
-
-	@Deprecated
-	public void disableRawMode() {
-		rawMode = false;
-	}
-	
 	public Subsystem getSubsystem() {
 		return subsystem;
 	}
@@ -168,6 +157,13 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		return agentForwardingRequested;
 	}
 	
+	public void pauseDataCaching() {
+		paused = true;
+	}
+	
+	public void resumeDataCaching() {
+		paused = false;
+	}
 	/**
 	 * Implement this method to support agent forwarding.
 	 * 

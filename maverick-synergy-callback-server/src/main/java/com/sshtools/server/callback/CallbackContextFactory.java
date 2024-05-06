@@ -87,14 +87,12 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 		clientContext.addStateListener(new ClientStateListener() {
 
 			@Override
-			public void connected(SshConnection con) {
-				Log.info("Callback client {} connected", con.getUsername());
-				callbacks.registerCallbackClient(con);
-			}
-
-			@Override
 			public void disconnected(SshConnection con) {
-				callbacks.unregisterCallbackClient(con.getUUID());
+				if(con.getRemoteIdentification().substring(8).startsWith(callbackIdentifier)) {
+					Log.info("Callback client {} disconnected", con.getUsername());
+					callbacks.unregisterCallbackClient(con.getUUID());
+				}
+				
 			}
 		});
 		
@@ -112,8 +110,9 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 					try {
 						String memo = ByteArrayReader.decodeString(request.getData());
 						if(Log.isInfoEnabled()) {
-							Log.info("Callback {} registered with memo {}", connection.getUUID(), memo);
+							Log.info("Callback client {} registered with memo {}", connection.getUUID(), memo);
 						}
+						callbacks.registerCallbackClient(connection.getConnection(), memo);
 						Callback c = callbacks.getCallbackByUUID(connection.getUUID());
 						connection.getConnection().setProperty(CALLBACK_MEMO, memo);
 						c.setMemo(memo);

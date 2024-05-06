@@ -64,6 +64,7 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 	ChannelFactory<SshServerContext> channelFactory;
 	List<Object> defaultPolicies = new ArrayList<>();
 	FileFactory fileFactory;
+	String welcomeText = "Callback Client";
 	
 	public CallbackClient() {
 		executor = getExecutorService();
@@ -229,6 +230,7 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		
 		sshContext.setIdleConnectionTimeoutSeconds(0);
 		sshContext.setExtendedIdentificationSanitization(false);
+		
 		for(SshKeyPair key : hostKeys) {
 			sshContext.addHostKey(key);
 		}

@@ -28,9 +28,9 @@ public interface SessionChannelServer extends SessionChannel {
 
 	OutputStream getErrorStream();
 	
-	void enableRawMode();
+	default void pauseDataCaching() { };
 
-	void disableRawMode();
+	default void resumeDataCaching() { };
 
 	boolean setEnvironmentVariable(String name, String value);
 }

@@ -119,7 +119,7 @@ public class AbstractOSCommand extends ShellCommand {
 		
 		shell.addWindowSizeChangeListener(listener);
 
-		console.getSessionChannel().enableRawMode();
+		console.getSessionChannel().pauseDataCaching();
 		
 		ChannelEventListener l = new ChannelEventListener() {
 
@@ -152,7 +152,7 @@ public class AbstractOSCommand extends ShellCommand {
 		} catch (Exception e) {
 		} finally {
 			try {
-				console.getSessionChannel().disableRawMode();
+				console.getSessionChannel().resumeDataCaching();
 			}
 			finally {
 				console.getSessionChannel().removeEventListener(l);

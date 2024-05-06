@@ -5,10 +5,11 @@ import com.sshtools.common.ssh.SshConnection;
 public class DefaultCallback implements Callback {
 
 	SshConnection con;
-	String memo = "Undefined";
+	String memo;
 	
-	DefaultCallback(SshConnection con) {
+	DefaultCallback(SshConnection con, String memo) {
 		this.con = con;
+		this.memo = memo;
 	}
 	
 	@Override

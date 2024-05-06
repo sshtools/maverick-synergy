@@ -46,7 +46,7 @@ public class CallbackShell extends CallbackCommand {
 				withColumns(console.getTerminal().getWidth()).
 				withRows(console.getTerminal().getHeight()).
 				onBeforeTask((task, session) -> {
-					console.getSessionChannel().enableRawMode();
+					console.getSessionChannel().pauseDataCaching();
 					listener.session = session;
 					((VirtualShellNG)console.getSessionChannel()).addWindowSizeChangeListener(listener);
 					con.addTask(Task.ofRunnable(con.getConnection(), (c) -> IOUtils.copy(console.getSessionChannel().getInputStream(), session.getOutputStream())));
@@ -55,7 +55,7 @@ public class CallbackShell extends CallbackCommand {
 				onClose((task, session) -> ((VirtualShellNG)console.getSessionChannel()).removeWindowSizeChangeListener(listener)).
 				build()).waitForever();
 		
-		console.getSessionChannel().disableRawMode();
+		console.getSessionChannel().resumeDataCaching();
 		console.println();
 		console.println(String.format("---- Exited shell on %s", clientName));
 	}

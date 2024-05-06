@@ -199,17 +199,16 @@ public class VirtualShellNG extends SessionChannelNG {
 	}
 
 	@Override
-	public void enableRawMode() {
+	public void pauseDataCaching() {
 		console.getTerminal().pause();
-		setAutoconsume(true);
-		super.enableRawMode();
+		super.pauseDataCaching();
 	}
 
 	@Override
-	public void disableRawMode() {
+	public void resumeDataCaching() {
+		super.resumeDataCaching();
 		console.getTerminal().resume();
-		setAutoconsume(false);
-		super.disableRawMode();
+		
 	}
 
 	class VirtualShellCompletor implements Completer, MshListener {

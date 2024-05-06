@@ -7,6 +7,7 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -77,6 +78,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	private ChannelInputStream channelIn;
 	private ChannelOutputStream channelOut = new ChannelOutputStream(this);
 	private boolean autoConsume;
+	protected boolean paused;
 	
 	@Deprecated(forRemoval = true, since = "3.1.0")
 	public ChannelNG(String channelType,  int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace, ChannelRequestFuture closeFuture, boolean autoConsume) {
@@ -346,7 +348,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		openFuture.done(true);
 		onChannelOpenConfirmation();
 
-		for (ChannelEventListener listener : eventListeners) {
+		for (ChannelEventListener listener : new ArrayList<>(eventListeners)) {
 			listener.onChannelOpen(this);
 		}
 
@@ -377,7 +379,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		
 		onWindowAdjust(count);
 
-		for (ChannelEventListener listener : eventListeners) {
+		for (ChannelEventListener listener : new ArrayList<>(eventListeners)) {
 			listener.onWindowAdjust(this, remoteWindow.getWindowSpace().longValue());
 		}
 
@@ -436,14 +438,14 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	}
 
 	protected void onChannelData(ByteBuffer data) {
-		for (ChannelEventListener listener : eventListeners) {
+		for (ChannelEventListener listener : new ArrayList<>(eventListeners)) {
 			listener.onChannelDataIn(this, data.asReadOnlyBuffer());
 		}
-		if(!autoConsume && Objects.nonNull(cache)) {
+		if(!paused && !autoConsume && Objects.nonNull(cache)) {
 			try {
 				cache.put(data);
 			} catch (EOFException e) {
-				Log.error("Attempt to write data to channel cache failed because the cache is closed");
+				Log.error("Attempt to write data to channel cache failed because the cache is closed", e);
 				close();
 			}
 		} else {
@@ -569,7 +571,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 								processedBuffer.remaining(), processedBuffer.position(), 
 								processedBuffer.limit(), processedBuffer.capacity());
 					}
-					for (ChannelEventListener listener : eventListeners) {
+					for (ChannelEventListener listener : new ArrayList<>(eventListeners)) {
 						listener.onChannelDataOut(this, processedBuffer);
 					}
 					connection.sendMessage(new ChannelData(processedBuffer, type, window));
@@ -579,7 +581,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 						Log.trace("Final Buffer rem={} pos={} limit={}, capacity={}", 
 								buf.remaining(), buf.position(), buf.limit(), buf.capacity());
 					}
-					for (ChannelEventListener listener : eventListeners) {
+					for (ChannelEventListener listener : new ArrayList<>(eventListeners)) {
 						listener.onChannelDataOut(this, buf);
 					}
 					connection.sendMessage(lastMessage = new ChannelData(buf, type, window));
@@ -670,7 +672,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	 * @param data
 	 */
 	protected void onExtendedData(ByteBuffer data, int type) {
-		for (ChannelEventListener listener : eventListeners) {
+		for (ChannelEventListener listener : new ArrayList<>(eventListeners)) {
 			listener.onChannelExtendedData(this, data, type);
 		}
 		if(Objects.isNull(cache)) {
@@ -680,7 +682,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 
 	void processChannelEOF() {
 		
-		for (ChannelEventListener listener : eventListeners) {
+		for (ChannelEventListener listener : new ArrayList<>(eventListeners)) {
 			listener.onChannelEOF(this);
 		}
 		
@@ -804,7 +806,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 				sentClose.set(true);
 				doSend = true;
 				
-				for (ChannelEventListener listener : eventListeners) {
+				for (ChannelEventListener listener : new ArrayList<>(eventListeners)) {
 					listener.onChannelClosing(this);
 				}
 
@@ -835,7 +837,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 			if(forceClose) {
 				
 				this.forcedClose = true;
-				for (ChannelEventListener listener : eventListeners) {
+				for (ChannelEventListener listener : new ArrayList<>(eventListeners)) {
 					listener.onChannelError(this, closingError != null ? closingError : 
 						new IOException("Channel has been forced to close"));
 				}
@@ -871,7 +873,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 						if(Log.isTraceEnabled()) {
 							log("Completing", "the close operation");
 						}
-						for (ChannelEventListener listener : eventListeners) {
+						for (ChannelEventListener listener : new ArrayList<>(eventListeners)) {
 							listener.onChannelClose(ChannelNG.this);
 						}
 						eventListeners.clear();
@@ -1435,6 +1437,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 					try {
 						streamCache.waitFor(1000);
 					} catch (InterruptedException e) {
+						throw new InterruptedIOException("The thread was interrupted");
 					}
 				}
 				

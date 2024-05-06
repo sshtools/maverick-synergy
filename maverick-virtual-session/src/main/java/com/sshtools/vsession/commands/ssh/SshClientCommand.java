@@ -55,7 +55,7 @@ public class SshClientCommand extends AbstractSshClientCommand {
 	@Override
 	public void runCommand(SshClient sshClient, SshClientArguments arguments, VirtualConsole console) {
 
-		console.getSessionChannel().enableRawMode();
+		//console.getSessionChannel().enableRawMode();
 		
 		try {
 			Connection<SshClientContext> connection = sshClient.getConnection();		
@@ -106,7 +106,7 @@ public class SshClientCommand extends AbstractSshClientCommand {
 			task.waitForever();
 
 		} finally {
-			console.getSessionChannel().disableRawMode();
+			//console.getSessionChannel().disableRawMode();
 			console.println();
 		}
 

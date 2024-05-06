@@ -66,6 +66,7 @@ public class SshClientCommand extends AbstractSshClientCommand {
 			if (CommandUtil.isNotEmpty(arguments.getCommand())) {
 				String command = arguments.getCommand();
 				task = CommandTaskBuilder.create()
+						.withConnection(connection)
 						.withCommand(command)
 						.withTermType(console.getTerminal().getType())
 						.withColumns(console.getTerminal().getWidth())

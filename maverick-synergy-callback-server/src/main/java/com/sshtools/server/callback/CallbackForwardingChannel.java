@@ -48,7 +48,12 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 	final static Integer CHANNEL_QUEUE = ExecutorOperationQueues.generateUniqueQueue("callbackDataQueue");
 	
 	public CallbackForwardingChannel(Context ctx, SshConnection callbackClient) {
-		super(LocalForwardingChannel.LOCAL_FORWARDING_CHANNEL_TYPE, 
+		this(LocalForwardingChannel.LOCAL_FORWARDING_CHANNEL_TYPE, ctx, callbackClient);
+		this.callbackClient = callbackClient;
+	}
+	
+	public CallbackForwardingChannel(String channel, Context ctx, SshConnection callbackClient) {
+		super(channel, 
 				ctx.getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
 				ctx.getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
 				ctx.getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),

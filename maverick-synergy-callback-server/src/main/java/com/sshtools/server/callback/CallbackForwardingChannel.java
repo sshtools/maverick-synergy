@@ -43,6 +43,7 @@ import com.sshtools.synergy.ssh.SshContext;
 
 public class CallbackForwardingChannel<T extends SshContext> extends ForwardingChannel<T> {
 
+	static final String DIRECT_STREAM_LOCAL_CHANNEL = "direct-streamlocal@openssh.com";
 	CallbackForwardingChannel<?> channel;
 	SshConnection callbackClient;
 	final static Integer CHANNEL_QUEUE = ExecutorOperationQueues.generateUniqueQueue("callbackDataQueue");
@@ -97,17 +98,44 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 		this.hostToConnect = hostToConnect;
 		this.portToConnect = portToConnect;
 	}
+	
+	/**
+	 * Constructs a forwarding channel of the type "forwarded-tcpip"
+	 * 
+	 * @param addressToBind
+	 *            String
+	 * @param portToBind
+	 *            int
+	 * @param socketChannel
+	 *            SocketChannel
+	 */
+	public CallbackForwardingChannel(String channelType, Context ctx, SshConnection con, String hostToConnect, int portToConnect) {
+		super(channelType, con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxPacketSize(),
+				ctx.getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
+				ctx.getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
+				ctx.getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize(),
+				true);
+		this.hostToConnect = hostToConnect;
+		this.portToConnect = portToConnect;
+	}
+	
 	/**
 	 * Create the forwarding channel.
 	 * 
 	 * @return byte[]
 	 */
 	protected byte[] createChannel() throws IOException {
-		
+		if(getChannelType().equals(DIRECT_STREAM_LOCAL_CHANNEL)) {
+			try(var baw = new ByteArrayWriter()) {
+				baw.writeString(hostToConnect);
+				baw.writeString(""); // Reserved
+				baw.writeInt(0); // Reserved
+				return baw.toByteArray();
+	
+			}
+		}
 
-		ByteArrayWriter baw = new ByteArrayWriter();
-
-		try {
+		try(var baw = new ByteArrayWriter()) {
 			baw.writeString(hostToConnect);
 			baw.writeInt(portToConnect);
 			baw.writeString(originatingHost = con.getRemoteIPAddress());
@@ -115,9 +143,7 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 
 			return baw.toByteArray();
 
-		} finally {
-			baw.close();
-		}
+		} 
 	}
 
 	/**
@@ -135,10 +161,17 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 		ByteArrayReader bar = new ByteArrayReader(requestdata);
 		try {
 
-			hostToConnect = bar.readString();
-			portToConnect = (int) bar.readInt();
-			originatingHost = bar.readString();
-			originatingPort = (int) bar.readInt();
+			if(getChannelType().equals(DIRECT_STREAM_LOCAL_CHANNEL)) {
+				hostToConnect = bar.readString(); // socket path
+				bar.readString(); // reserved
+				bar.readInt(); // reserved
+			}
+			else {
+				hostToConnect = bar.readString();
+				portToConnect = (int) bar.readInt();
+				originatingHost = bar.readString();
+				originatingPort = (int) bar.readInt();
+			}
 
 			boolean success = checkPermissions();
 
@@ -167,7 +200,7 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 				@Override
 				protected void doTask() throws Throwable {
 					
-				    channel = new CallbackForwardingChannel<SshClientContext>( 
+				    channel = new CallbackForwardingChannel<SshClientContext>(getChannelType(), 
 								connection.getContext(), callbackClient, hostToConnect, portToConnect);
 					
 				    channel.setBoundChannel(CallbackForwardingChannel.this);

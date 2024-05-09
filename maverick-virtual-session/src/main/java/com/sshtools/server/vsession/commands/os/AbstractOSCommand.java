@@ -100,7 +100,7 @@ public class AbstractOSCommand extends ShellCommand {
 		if(directory != null)
 			builder.setDirectory(directory.getAbsolutePath());
 		builder.setConsole(false);
-		builder.setEnvironment(env);
+		builder.setEnvironment(penv);
 		pty = builder.start();
 
 		final InputStream in = pty.getInputStream();

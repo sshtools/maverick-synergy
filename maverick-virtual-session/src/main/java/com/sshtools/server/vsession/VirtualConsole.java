@@ -38,6 +38,7 @@ import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.ssh.Context;
 import com.sshtools.common.ssh.SessionChannelServer;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.synergy.ssh.TerminalModes;
 
 public class VirtualConsole {
 
@@ -49,11 +50,11 @@ public class VirtualConsole {
 	Msh shell;
 	AbstractFile cwd;
 	AbstractFileFactory<?> fileFactory;
-	byte[] modes;
+	TerminalModes modes;
 	
 	static ThreadLocal<VirtualConsole> threadConsoles = new ThreadLocal<>();
 	
-	public VirtualConsole(SessionChannelServer channel, Environment env, Terminal terminal, LineReader reader, Msh shell, byte[] modes) throws IOException, PermissionDeniedException {
+	public VirtualConsole(SessionChannelServer channel, Environment env, Terminal terminal, LineReader reader, Msh shell, TerminalModes modes) throws IOException, PermissionDeniedException {
 		this.channel = channel;
 		this.con = channel.getConnection();
 		this.env = env;
@@ -65,7 +66,7 @@ public class VirtualConsole {
 		this.modes = modes;
 	}
 	
-	public byte[] getPseudoTerminalModes() {
+	public TerminalModes getPseudoTerminalModes() {
 		return modes;
 	}
 	

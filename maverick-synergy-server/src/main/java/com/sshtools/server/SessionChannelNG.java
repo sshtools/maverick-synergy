@@ -50,6 +50,7 @@ import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.ssh.ChannelNG;
 import com.sshtools.synergy.ssh.ChannelOutputStream;
+import com.sshtools.synergy.ssh.TerminalModes;
 
 /**
  * <p>
@@ -176,6 +177,9 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	/**
 	 * If the client requests a pseudo terminal for the session this method will
 	 * be invoked before the shell, exec or subsystem is started.
+	 * <p>
+	 * Deprecated, at version 3.2.0 {@link #allocatePseudoTerminal(String, int, int, int, int, TerminalModes)}.
+	 * will be made abstract and this method will be removed.
 	 * 
 	 * @param term
 	 * @param cols
@@ -185,8 +189,28 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	 * @param modes
 	 * @return boolean
 	 */
-	protected abstract boolean allocatePseudoTerminal(String term, int cols,
-			int rows, int width, int height, byte[] modes);
+	@Deprecated(forRemoval = true, since = "3.1.2")
+	protected boolean allocatePseudoTerminal(String term, int cols,
+			int rows, int width, int height, byte[] modes) {
+		throw new UnsupportedOperationException("No longer used, instead call allocatePseudoTerminal() with TerminalModes.");
+	}
+	
+	/**
+	 * If the client requests a pseudo terminal for the session this method will
+	 * be invoked before the shell, exec or subsystem is started.
+	 * 
+	 * @param term
+	 * @param cols
+	 * @param rows
+	 * @param width
+	 * @param height
+	 * @param modes
+	 * @return boolean
+	 */
+	protected boolean allocatePseudoTerminal(String term, int cols,
+			int rows, int width, int height, TerminalModes modes) {
+		return allocatePseudoTerminal(term, cols, width, width, height, modes.toByteArray());
+	}
 
 	/**
 	 * When the window (terminal) size changes on the client side, it MAY send
@@ -312,10 +336,10 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 				int rows = (int) bar.readInt();
 				int width = (int) bar.readInt();
 				int height = (int) bar.readInt();
-				byte[] modes = bar.readBinaryString();
 
 				success = allocatePseudoTerminal(term, cols, rows, width,
-						height, modes);
+						height, new TerminalModes.TerminalModesBuilder().fromBytes(bar.readBinaryString()).build());
+				
 				if(Log.isDebugEnabled())
 					Log.debug(term + " pseudo terminal requested");
 				if(Log.isDebugEnabled())

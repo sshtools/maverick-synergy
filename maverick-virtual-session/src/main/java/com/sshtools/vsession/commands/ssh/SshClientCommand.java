@@ -140,10 +140,7 @@ public class SshClientCommand extends AbstractSshClientCommand {
 						}).
 						onClose((t, session) -> ((VirtualShellNG)console.getSessionChannel()).removeWindowSizeChangeListener(listener));
 				if(console.getPseudoTerminalModes() != null) {
-					try {
-						builder.withModes(PseudoTerminalModesBuilder.create().fromBinaryModes(console.getPseudoTerminalModes()).build());
-					} catch (IOException e) {
-					}
+					builder.withModes(console.getPseudoTerminalModes());
 				}
 				task = builder.
 						build();

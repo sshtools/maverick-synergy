@@ -29,6 +29,7 @@ import java.util.Objects;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.synergy.ssh.TerminalModes;
 
 /**
  *
@@ -52,9 +53,12 @@ import com.sshtools.common.util.ByteArrayWriter;
  * 			build());
  * </pre></blockquote>
  *
+ * <p>Deprecated, to be replaced by {@link TerminalModes} that allows the same
+ * object to be used by the client and the server.</p>
  *
  * @author Lee David Painter
  */
+@Deprecated(since = "3.1.2", forRemoval = true)
 public class PseudoTerminalModes {
 	
 	/**

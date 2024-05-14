@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
+import com.sshtools.client.PseudoTerminalModes.PseudoTerminalModesBuilder;
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
@@ -70,7 +71,7 @@ public class SshClientCommand extends AbstractSshClientCommand {
 			
 			if (CommandUtil.isNotEmpty(arguments.getCommand())) {
 				String command = arguments.getCommand();
-				task = CommandTaskBuilder.create()
+				var builder = CommandTaskBuilder.create()
 						.withConnection(connection)
 						.withCommand(command)
 						.withTermType(console.getTerminal().getType())
@@ -85,12 +86,18 @@ public class SshClientCommand extends AbstractSshClientCommand {
 							IOUtils.copy(session.getInputStream(), console.getSessionChannel().getOutputStream());
 							
 						})
-						.onClose((t, session) -> ((VirtualShellNG)console.getSessionChannel()).removeWindowSizeChangeListener(listener))
-						.build();
+						.onClose((t, session) -> ((VirtualShellNG)console.getSessionChannel()).removeWindowSizeChangeListener(listener));
+				if(console.getPseudoTerminalModes() != null) {
+					try {
+						builder.withModes(PseudoTerminalModesBuilder.create().build());
+					} catch (IOException e) {
+					}
+				}
+				task = builder.build();
 				
 			} else {
 				
-				task = ShellTaskBuilder.create().
+				var builder = ShellTaskBuilder.create().
 						withConnection(connection).
 						withTermType(console.getTerminal().getType()).
 						withColumns(console.getTerminal().getWidth()).
@@ -131,7 +138,14 @@ public class SshClientCommand extends AbstractSshClientCommand {
 						.onTask((t, session)-> {
 							IOUtils.copy(session.getInputStream(), console.getSessionChannel().getOutputStream());
 						}).
-						onClose((t, session) -> ((VirtualShellNG)console.getSessionChannel()).removeWindowSizeChangeListener(listener)).
+						onClose((t, session) -> ((VirtualShellNG)console.getSessionChannel()).removeWindowSizeChangeListener(listener));
+				if(console.getPseudoTerminalModes() != null) {
+					try {
+						builder.withModes(PseudoTerminalModesBuilder.create().fromBinaryModes(console.getPseudoTerminalModes()).build());
+					} catch (IOException e) {
+					}
+				}
+				task = builder.
 						build();
 			}
 	

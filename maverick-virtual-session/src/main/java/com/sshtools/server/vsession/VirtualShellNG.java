@@ -78,7 +78,9 @@ public class VirtualShellNG extends SessionChannelNG {
 	protected ShellCommandFactory commandFactory;
 
 	List<WindowSizeChangeListener> listeners = new ArrayList<WindowSizeChangeListener>();
+	
 	private Terminal terminal;
+	private byte[] modes;
 	
 	public VirtualShellNG(SshConnection con,
 			ShellCommandFactory commandFactory) {
@@ -170,7 +172,7 @@ public class VirtualShellNG extends SessionChannelNG {
                 .variable(LineReader.HISTORY_SIZE, 1000)
                 .variable(LineReader.HISTORY_FILE, fs.getPath(".history"));
 
-		return new VirtualConsole(this, this.env, terminal, lineReaderBuilder.build(), shell);
+		return new VirtualConsole(this, this.env, terminal, lineReaderBuilder.build(), shell, modes);
 	}
 
 	@Override
@@ -193,6 +195,7 @@ public class VirtualShellNG extends SessionChannelNG {
 			env.put("COLS", cols);
 			env.put("ROWS", rows);
 			env.put("PTYMODES", modes);
+			this.modes = modes;
 	
 			return true;
 	}

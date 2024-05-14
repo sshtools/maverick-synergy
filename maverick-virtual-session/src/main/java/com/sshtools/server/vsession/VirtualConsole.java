@@ -49,10 +49,11 @@ public class VirtualConsole {
 	Msh shell;
 	AbstractFile cwd;
 	AbstractFileFactory<?> fileFactory;
+	byte[] modes;
 	
 	static ThreadLocal<VirtualConsole> threadConsoles = new ThreadLocal<>();
 	
-	public VirtualConsole(SessionChannelServer channel, Environment env, Terminal terminal, LineReader reader, Msh shell) throws IOException, PermissionDeniedException {
+	public VirtualConsole(SessionChannelServer channel, Environment env, Terminal terminal, LineReader reader, Msh shell, byte[] modes) throws IOException, PermissionDeniedException {
 		this.channel = channel;
 		this.con = channel.getConnection();
 		this.env = env;
@@ -61,6 +62,11 @@ public class VirtualConsole {
 		this.shell = shell;
 		this.fileFactory = getContext().getPolicy(FileSystemPolicy.class)
 				.getFileFactory().getFileFactory(con);
+		this.modes = modes;
+	}
+	
+	public byte[] getPseudoTerminalModes() {
+		return modes;
 	}
 	
 	public SshConnection getConnection() {

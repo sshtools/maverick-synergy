@@ -676,7 +676,6 @@ public final class TerminalModes {
 		 */
 		public TerminalModesBuilder withMode(Mode mode, int value) {
 			codes.put(mode, value);
-			System.out.println(mode + " : " + value);
 			return this;
 		}
 		

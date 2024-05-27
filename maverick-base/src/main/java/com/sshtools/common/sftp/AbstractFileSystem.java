@@ -22,7 +22,6 @@ import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.files.FileVolume;
-import com.sshtools.common.files.direct.NioFile;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
@@ -306,12 +305,6 @@ public final class AbstractFileSystem {
 
 	}
 
-	@Deprecated(since = "3.1.0")
-	public byte[] openFile(String path, UnsignedInteger32 flags, SftpFileAttributes attrs)
-			throws PermissionDeniedException, FileNotFoundException, IOException {
-		return openFile(path, flags, Optional.empty(), attrs);
-	}
-
 	public byte[] openFile(String path, UnsignedInteger32 flags, Optional<UnsignedInteger32> accessFlags, SftpFileAttributes attrs)
 			throws PermissionDeniedException, FileNotFoundException, IOException {
 
@@ -324,62 +317,12 @@ public final class AbstractFileSystem {
 			throw new PermissionDeniedException("File cannot be opened as it is a Directory");
 		}
 
-		if(!(f instanceof NioFile)) {
-			/* NioFile uses File.newFileChannel which does these checks itself. The
-			 * below method can be removed when the alternatives to NioFile are removed.
-			 */
-			checkOpenFlagsAndFileState(path, flags, f);
-		}
-
 		// Record the open file
 		byte[] handle = createHandle();
 		openFiles.put(handleToString(handle), f.open(flags, accessFlags, handle));
 		
 		// Return the handle
 		return handle;
-	}
-
-	@Deprecated
-	protected void checkOpenFlagsAndFileState(String path, UnsignedInteger32 flags, AbstractFile f)
-			throws IOException, PermissionDeniedException, FileNotFoundException {
-		// Check if the file does not exist and process according to flags
-		if (f.exists() && !f.isReadable() && (flags.intValue() & AbstractFileSystem.OPEN_READ) != 0) {
-			throw new PermissionDeniedException("The user does not have permission to read.");
-		}
-
-		if (((flags.intValue() & AbstractFileSystem.OPEN_WRITE) != 0
-				|| (flags.longValue() & AbstractFileSystem.OPEN_CREATE) != 0) && !f.isWritable()) {
-			throw new PermissionDeniedException("The user does not have permission to write/create.");
-		}
-		
-		if (!f.exists()) {
-			if ((flags.longValue() & AbstractFileSystem.OPEN_CREATE) == AbstractFileSystem.OPEN_CREATE) {
-				// The file does not exist and the create flag is present so
-				// lets create it
-				if (!f.createNewFile()) {
-					throw new IOException(path + " could not be created");
-				}
-			} else {
-				// The file does not exist and no create flag present
-				throw new FileNotFoundException(path + " does not exist");
-			}
-		} else {
-			if (((flags.longValue() & AbstractFileSystem.OPEN_CREATE) == AbstractFileSystem.OPEN_CREATE)
-					&& ((flags.longValue() & AbstractFileSystem.OPEN_EXCLUSIVE) == AbstractFileSystem.OPEN_EXCLUSIVE)) {
-				// The file exists but the EXCL flag is set which requires that
-				// the
-				// file should not exist prior to creation, so throw a status
-				// exception
-				throw new IOException(path + " already exists");
-			}
-		}
-
-		// Determine whether we need to truncate the file
-		if (((flags.longValue() & AbstractFileSystem.OPEN_CREATE) == AbstractFileSystem.OPEN_CREATE)
-				&& ((flags.longValue() & AbstractFileSystem.OPEN_TRUNCATE) == AbstractFileSystem.OPEN_TRUNCATE)) {
-			// Set the length to zero
-			f.truncate();
-		}
 	}
 
 	public int readFile(byte[] handle, UnsignedInteger64 offset, byte[] buf, int start, int numBytesToRead)
@@ -663,36 +606,14 @@ public final class AbstractFileSystem {
 		}		
 	}
 
-	@SuppressWarnings("removal")
 	public void createSymbolicLink(String link, String target)
 			throws UnsupportedFileOperationException, FileNotFoundException, IOException, PermissionDeniedException {
-		try {
-			resolveFile(target, con).symlinkFrom(link);
-		}
-		catch(UnsupportedOperationException uoe) {
-			try {
-				resolveFile(link, con).symlinkTo(target);
-			}
-			catch(UnsupportedOperationException uoe2) {
-				throw new UnsupportedFileOperationException("Symbolic links are not supported by the Virtual File System");
-			}
-		}
+		resolveFile(target, con).symlinkFrom(link);
 	}
 
-	@SuppressWarnings("removal")
 	public void createLink(String link, String target)
 			throws UnsupportedFileOperationException, FileNotFoundException, IOException, PermissionDeniedException {
-		try {
-			resolveFile(target, con).linkFrom(link);
-		}
-		catch(UnsupportedOperationException uoe) {
-			try {
-				resolveFile(link, con).linkTo(target);
-			}
-			catch(UnsupportedOperationException uoe2) {
-				throw new UnsupportedFileOperationException("Hard links are not supported by the Virtual File System");
-			}
-		}
+		resolveFile(target, con).linkFrom(link);
 	}
 
 	public boolean fileExists(String path) throws IOException, PermissionDeniedException {

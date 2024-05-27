@@ -63,16 +63,4 @@ public abstract class AbstractConnectionTask extends Task {
 		this.clientSupplier = builder.clientSupplier;
 	}
 
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	protected AbstractConnectionTask(SshClient ssh) {
-		super(ssh);
-		clientSupplier = Optional.empty();
-	}
-
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	protected AbstractConnectionTask(SshConnection con) {
-		super(con);
-		clientSupplier = Optional.empty();
-	}
-
 }

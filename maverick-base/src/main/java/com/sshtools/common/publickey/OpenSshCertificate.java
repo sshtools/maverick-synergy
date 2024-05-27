@@ -5,10 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -391,20 +389,6 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 	public List<String> getPrincipals() {
 		return Collections.unmodifiableList(validPrincipals);
 	}
-
-	/**
-	 * 
-	 * @return
-	 * @deprecated Process CertificateExtension values directly.
-	 */
-	@Deprecated
-	public List<String> getExtensions() {
-		List<String> tmp = new ArrayList<>();
-		for(CertificateExtension ext : extensions) {
-			tmp.add(ext.getName());
-		}
-		return Collections.unmodifiableList(tmp);
-	}
 	
 	public List<CriticalOption> getCriticalOptionsList() {
 		return Collections.unmodifiableList(criticalOptions);
@@ -412,20 +396,6 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 	
 	public List<CertificateExtension> getExtensionsList() {
 		return Collections.unmodifiableList(extensions);
-	}
-	
-	/**
-	 * 
-	 * @return
-	 * @deprecated Process CertificateExtension values directly.
-	 */
-	@Deprecated
-	public Map<String,String> getExtensionsMap() {
-		Map<String,String> tmp = new HashMap<>();
-		for(CertificateExtension ext : extensions) {
-			tmp.put(ext.getName(), ext.getValue());
-		}
-		return Collections.unmodifiableMap(tmp);
 	}
 
 	public boolean isForceCommand() {

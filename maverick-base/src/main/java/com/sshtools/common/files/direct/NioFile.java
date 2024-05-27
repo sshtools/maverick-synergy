@@ -85,15 +85,6 @@ public final class NioFile implements AbstractFile {
 	}
 
 	@Override
-	public void linkTo(String target) throws IOException, PermissionDeniedException {
-		try {
-			Files.createLink(target.startsWith("/") ? fileFactory.getFile(target).path : home.resolve(target), path);
-		} catch (IOException nfe) {
-			throw translateException(nfe);
-		}
-	}
-
-	@Override
 	public void linkFrom(String target) throws IOException, PermissionDeniedException {
 		try {
 			Path targetPath = fileFactory.getFile(target).path;
@@ -104,16 +95,6 @@ public final class NioFile implements AbstractFile {
 				var relativeTo = path.toAbsolutePath().getParent();
 				Files.createLink(path, relativeTo.relativize(targetPath));	
 			}
-		} catch (IOException nfe) {
-			throw translateException(nfe);
-		}
-	}
-
-	@Override
-	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
-		try {
-			Files.createSymbolicLink(target.startsWith("/") ? fileFactory.getFile(target).path : home.resolve(target),
-					path);
 		} catch (IOException nfe) {
 			throw translateException(nfe);
 		}

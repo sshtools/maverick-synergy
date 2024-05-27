@@ -14,22 +14,18 @@ public abstract class AbstractFileImpl<T extends AbstractFile> implements Abstra
 	}
 
 	@Override
-	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
-		throw new UnsupportedOperationException();
-	}
-	
 	public OutputStream getOutputStream(boolean append) throws IOException, PermissionDeniedException {
 		if(!append) {
 			return getOutputStream();
 		}
-		
+
 		return new AppendOutputStream();
 	}
 
     class AppendOutputStream extends OutputStream {
 
     	AbstractFileRandomAccess content;
-    	
+
     	AppendOutputStream() throws IOException, PermissionDeniedException {
     		if(!exists()) {
     			try {
@@ -49,34 +45,37 @@ public abstract class AbstractFileImpl<T extends AbstractFile> implements Abstra
 		public void write(int b) throws IOException {
 			content.write(new byte[] { (byte)b },0,1);
 		}
-		
+
+		@Override
 		public void write(byte[] buf, int off, int len) throws IOException {
 			content.write(buf, off, len);
 		}
-		
+
+		@Override
 		public void close() throws IOException {
 			content.close();
 		}
-    	
+
     }
-    
-    public AbstractFileFactory<T> getFileFactory() {
+
+    @Override
+	public AbstractFileFactory<T> getFileFactory() {
     	return fileFactory;
     }
 
     protected abstract int doHashCode();
-    
+
 	@Override
 	public final int hashCode() {
 		return doHashCode();
 	}
-	
+
 	protected abstract boolean doEquals(Object obj);
 
 	@Override
 	public final boolean equals(Object obj) {
 		return doEquals(obj);
 	}
-    
-    
+
+
 }

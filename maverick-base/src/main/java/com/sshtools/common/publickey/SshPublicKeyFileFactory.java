@@ -47,16 +47,8 @@ import com.sshtools.common.util.ByteArrayReader;
  */
 public class SshPublicKeyFileFactory {
 
-	
-	
 	public static final int OPENSSH_FORMAT = 0;
 	public static final int SECSH_FORMAT = 1;
-	
-	/**
-	 * @deprecated Never correctly implemented. 
-	 */
-	@Deprecated
-	public static final int OPENSSL_FORMAT = 4;
 
 	/**
 	 * Decode an SSH2 encoded public key as specified in the SSH2 transport

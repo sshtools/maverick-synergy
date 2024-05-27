@@ -1,12 +1,9 @@
 package com.sshtools.client.sftp;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -15,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.tasks.AbstractSubsystem;
-import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.client.tasks.Message;
 import com.sshtools.client.tasks.MessageHolder;
 import com.sshtools.common.events.Event;
@@ -36,7 +32,6 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.UnsignedInteger32;
-import com.sshtools.common.util.UnsignedInteger64;
 import com.sshtools.synergy.ssh.ByteArrays;
 import com.sshtools.synergy.ssh.PacketPool;
 
@@ -46,7 +41,7 @@ import com.sshtools.synergy.ssh.PacketPool;
 public class SftpChannel extends AbstractSubsystem {
 
 	
-	private String CHARSET_ENCODING = "UTF-8";
+	static String CHARSET_ENCODING = "UTF-8";
 	
 	/**
 	 * File open flag, opens the file for reading.
@@ -145,7 +140,6 @@ public class SftpChannel extends AbstractSubsystem {
 	Map<UnsignedInteger32, SftpMessage> responses = new ConcurrentHashMap<UnsignedInteger32, SftpMessage>();
 	SftpThreadSynchronizer sync = new SftpThreadSynchronizer();
 	Map<String, byte[]> extensions = new HashMap<String, byte[]>();
-	Map<byte[], SftpHandle> handles = Collections.synchronizedMap(new HashMap<byte[], SftpHandle>());
 
 	/**
 	 * Version 5 new flags
@@ -536,62 +530,6 @@ public class SftpChannel extends AbstractSubsystem {
 		return (SftpMessage) responses.remove(requestId);
 
 	}
-	
-	/**
-	 * Change the permissions of a file.
-	 * 
-	 * @param file
-	 *            the file
-	 * @param permissions
-	 *            an integer value containing a file permissions mask
-	 * @throws SshException
-	 *             ,SftpStatusException
-	 * @deprecated
-	 * @see #changePermissions(SftpFile, PosixPermissions)}
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void changePermissions(byte[] file, int permissions)
-			throws SftpStatusException, SshException {
-		changePermissions(file, PosixPermissionsBuilder.create().fromBitmask(permissions).build());
-	}
-
-	/**
-	 * Change the permissions of a file.
-	 * 
-	 * @param filename
-	 *            the path to the file.
-	 * @param permissions
-	 *            an integer value containing a file permissions mask.
-	 * 
-	 * @throws SshException
-	 *             ,SftpStatusException
-	 * @deprecated
-	 * @see #changePermissions(String, PosixPermissions)}
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void changePermissions(String filename, int permissions)
-			throws SftpStatusException, SshException {
-		changePermissions(filename, PosixPermissionsBuilder.create().fromBitmask(permissions).build());
-	}
-	
-	/**
-	 * Change the permissions of a file.
-	 * 
-	 * @param handle
-	 *            the file
-	 * @param permissions
-	 *            permissions set.
-	 * @throws SshException
-	 *             ,SftpStatusException
-	 */
-	public void changePermissions(byte[] handle, PosixPermissions permissions)
-			throws SftpStatusException, SshException {
-		var bldr = SftpFileAttributesBuilder.ofType(
-				SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN,
-				getCharsetEncoding());
-		bldr.withPermissions(permissions);
-		setAttributes(handle, bldr.build());
-	}
 
 	/**
 	 * Change the permissions of a file.
@@ -675,22 +613,6 @@ public class SftpChannel extends AbstractSubsystem {
 	}
 
 	/**
-	 * Set the attributes of a file.
-	 * 
-	 * @param path the path to the file
-	 * @param attrs the file attributes
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpFile#attributes(SftpFileAttributes)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setAttributes(SftpFile path, SftpFileAttributes attrs)
-			throws SftpStatusException, SshException {
-		path.attributes(attrs);
-	}
-
-	/**
 	 * Sets the attributes of a file.
 	 * 
 	 * @param path
@@ -725,286 +647,6 @@ public class SftpChannel extends AbstractSubsystem {
 	}
 
 	/**
-	 * Sets the attributes of a file.
-	 * 
-	 * @param handle
-	 *            the file object.
-	 * @param attrs
-	 *            the new attributes.
-	 * 
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpHandle#setAttributes(byte[], SftpFileAttributes)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setAttributes(byte[] handle, SftpFileAttributes attrs)
-			throws SftpStatusException, SshException {
-		if (!isValidHandle(handle)) {
-			throw new SftpStatusException(SftpStatusException.INVALID_HANDLE,
-					"The handle is not an open file handle!");
-		}
-		getBestHandle(handle).setAttributes(attrs);
-	}
-
-	/**
-	 * Send a write request for an open file but do not wait for the response
-	 * from the server.
-	 * 
-	 * @param handle
-	 * @param position
-	 * @param data
-	 * @param off
-	 * @param len
-	 * @return UnsignedInteger32
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpHandle#postWriteRequest(long, byte[], int, int)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public UnsignedInteger32 postWriteRequest(byte[] handle, long position,
-			byte[] data, int off, int len) throws SftpStatusException,
-			SshException {
-		return getBestHandle(handle).postWriteRequest(position, data, off, len);
-	}
-
-	/**
-	 * Write a block of data to an open file.
-	 * 
-	 * @param handle
-	 *            the open file handle.
-	 * @param offset
-	 *            the offset in the file to start writing
-	 * @param data
-	 *            a buffer containing the data to write
-	 * @param off
-	 *            the offset to start in the buffer
-	 * @param len
-	 *            the length of data to write (setting to false will increase
-	 *            file transfer but may miss errors)
-	 * @throws SshException
-	 */
-	public void writeFile(byte[] handle, UnsignedInteger64 offset, byte[] data,
-			int off, int len) throws SftpStatusException, SshException {
-
-		getOKRequestStatus(getBestHandle(handle).postWriteRequest(offset.longValue(), data,
-				off, len));
-	}
-
-	/**
-	 * Performs an optimized write of a file through asynchronous messaging and
-	 * through buffering the local file into memory.
-	 * 
-	 * @param handle
-	 *            the open file handle to write to
-	 * @param blocksize
-	 *            the block size to send data, should be between 4096 and 65536
-	 * @param outstandingRequests
-	 *            the maximum number of requests that can be outstanding at any
-	 *            one time
-	 * @param in
-	 *            the InputStream to read from
-	 * @param buffersize
-	 *            the size of the temporary buffer to read from the InputStream.
-	 *            Data is buffered into a temporary buffer so that the number of
-	 *            local filesystem reads is reducted to a minimum. This
-	 *            increases performance and so the buffer size should be as high
-	 *            as possible. The default operation, if buffersize <= 0 is to
-	 *            allocate a buffer the same size as the blocksize, meaning no
-	 *            buffer optimization is performed.
-	 * @param progress
-	 *            provides progress information, may be null.
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpHandle#performOptimizedWrite(String, int, int, java.io.InputStream, int, FileTransferProgress, long)
-	 */
-	public void performOptimizedWrite(String filename, byte[] handle, int blocksize,
-			int maxAsyncRequests, java.io.InputStream in, int buffersize,
-			FileTransferProgress progress) throws SftpStatusException,
-			SshException, TransferCancelledException {
-		performOptimizedWrite(filename, handle, blocksize, maxAsyncRequests, in,
-				buffersize, progress, 0);
-	}
-
-	/**
-	 * Performs an optimized write of a file through asynchronous messaging and
-	 * through buffering the local file into memory.
-	 * 
-	 * @param handle
-	 *            the open file handle to write to
-	 * @param blocksize
-	 *            the block size to send data, should be between 4096 and 65536
-	 * @param outstandingRequests
-	 *            the maximum number of requests that can be outstanding at any
-	 *            one time
-	 * @param in
-	 *            the InputStream to read from
-	 * @param buffersize
-	 *            the size of the temporary buffer to read from the InputStream.
-	 *            Data is buffered into a temporary buffer so that the number of
-	 *            local filesystem reads is reducted to a minimum. This
-	 *            increases performance and so the buffer size should be as high
-	 *            as possible. The default operation, if buffersize <= 0 is to
-	 *            allocate a buffer the same size as the blocksize, meaning no
-	 *            buffer optimization is performed.
-	 * @param progress
-	 *            provides progress information, may be null.
-	 * @param position
-	 *            the position in the file to start writing to.
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpHandle#performOptimizedWrite(String, int, int, java.io.InputStream, int, FileTransferProgress, long)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void performOptimizedWrite(String filename, byte[] handle, int blocksize,
-			int maxAsyncRequests, java.io.InputStream in, int buffersize,
-			FileTransferProgress progress, long position)
-			throws SftpStatusException, SshException,
-			TransferCancelledException {
-		getBestHandle(handle).performOptimizedWrite(filename, blocksize, maxAsyncRequests, in, buffersize, progress, position);
-	}
-
-	/**
-	 * Performs an optimized read of a file through use of asynchronous
-	 * messages. The total number of outstanding read requests is configurable.
-	 * This should be safe on file objects as the SSH protocol states that file
-	 * read operations should return the exact number of bytes requested in each
-	 * request. However the server is not required to return the exact number of
-	 * bytes on device files and so this method should not be used for device
-	 * files.
-	 * 
-	 * @param handle
-	 *            the open files handle
-	 * @param length
-	 *            the length of the file
-	 * @param blocksize
-	 *            the blocksize to read
-	 * @param out
-	 *            an OutputStream to output the file into
-	 * @param outstandingRequests
-	 *            the maximum number of read requests to
-	 * @param progress
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpHandle#performOptimizedRead(String, long, int, OutputStream, int, FileTransferProgress, long)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void performOptimizedRead(String filename, byte[] handle, long length, int blocksize,
-			java.io.OutputStream out, int outstandingRequests,
-			FileTransferProgress progress) throws SftpStatusException,
-			SshException, TransferCancelledException {
-
-		performOptimizedRead(filename, handle, length, blocksize, out,
-				outstandingRequests, progress, 0);
-	}
-
-	/**
-	 * Performs an optimized read of a file through use of asynchronous
-	 * messages. The total number of outstanding read requests is configurable.
-	 * This should be safe on file objects as the SSH protocol states that file
-	 * read operations should return the exact number of bytes requested in each
-	 * request. However the server is not required to return the exact number of
-	 * bytes on device files and so this method should not be used for device
-	 * files.
-	 * 
-	 * @param handle
-	 *            the open files handle
-	 * @param length
-	 *            the amount of the file file to be read, equal to the file
-	 *            length when reading the whole file
-	 * @param blocksize
-	 *            the blocksize to read
-	 * @param out
-	 *            an OutputStream to output the file into
-	 * @param outstandingRequests
-	 *            the maximum number of read requests to
-	 * @param progress
-	 * @param position
-	 *            the postition from which to start reading the file
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpHandle#performOptimizedRead(String, long, int, OutputStream, int, FileTransferProgress, long)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void performOptimizedRead(String filename, byte[] handle, long length, int blocksize,
-			OutputStream out, int outstandingRequests,
-			FileTransferProgress progress, long position)
-			throws SftpStatusException, SshException,
-			TransferCancelledException {
-		
-		getBestHandle(handle).performOptimizedRead(length, blocksize, out, outstandingRequests, progress, position);
-
-	}
-
-	/**
-	 * Perform a synchronous read of a file from the remote file system. This
-	 * implementation waits for acknowledgement of every data packet before
-	 * requesting additional data.
-	 * 
-	 * @param handle
-	 * @param blocksize
-	 * @param out
-	 * @param progress
-	 * @param position
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 * @throws TransferCancelledException
-	 * @deprecated
-	 * @see SftpHandle#performSynchronousRead(int, OutputStream, FileTransferProgress, long)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void performSynchronousRead(byte[] handle, int blocksize,
-			OutputStream out, FileTransferProgress progress, long position)
-			throws SftpStatusException, SshException,
-			TransferCancelledException {
-		getBestHandle(handle).performSynchronousRead(blocksize, out, progress, position);
-	}
-
-	/**
-	 * Post a read request to the server and return the request id; this is used
-	 * to optimize file downloads. In normal operation the files are transfered
-	 * by using a synchronous set of requests, however this slows the download
-	 * as the client has to wait for the servers response before sending another
-	 * request.
-	 * 
-	 * @param handle
-	 * @param offset
-	 * @param len
-	 * @return UnsignedInteger32
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpHandle#postReadRequest(long, int)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public UnsignedInteger32 postReadRequest(byte[] handle, long offset, int len)
-			throws SftpStatusException, SshException {
-		return getBestHandle(handle).postReadRequest(offset, len);
-	}
-
-	/**
-	 * Read a block of data from an open file.
-	 * 
-	 * @param handle
-	 *            the open file handle
-	 * @param offset
-	 *            the offset to start reading in the file
-	 * @param output
-	 *            a buffer to write the returned data to
-	 * @param off
-	 *            the starting offset in the output buffer
-	 * @param len
-	 *            the length of data to read
-	 * @return int
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpHandle#readFile(UnsignedInteger64, byte[], int, int)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public int readFile(byte[] handle, UnsignedInteger64 offset, byte[] output,
-			int off, int len) throws SftpStatusException, SshException {
-		return getBestHandle(handle).readFile(offset, output, off, len);
-	}
-
-	/**
 	 * Utility method to obtain an {@link SftpFile} instance for a given path.
 	 * 
 	 * @param path
@@ -1029,86 +671,7 @@ public class SftpChannel extends AbstractSubsystem {
 			SshException {
 		return getAbsolutePath(file.getFilename());
 	}
-
-	/**
-	 * Lock file.
-	 * 
-	 * @param handle
-	 * @param offset
-	 * @param length
-	 * @param lockFlags
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpHandle#lock()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void lockFile(byte[] handle, long offset, long length, int lockFlags) throws SftpStatusException, SshException {
-		
-		if(version < 6) {
-			throw new SftpStatusException(
-					SftpStatusException.SSH_FX_OP_UNSUPPORTED,
-					"Locks are not supported by the server SFTP version "
-							+ String.valueOf(version));
-		}
-		try {
-			UnsignedInteger32 requestId = nextRequestId();
-			Packet msg = createPacket();
-			msg.write(SSH_FXP_BLOCK);
-			msg.writeInt(requestId.longValue());
-			msg.writeBinaryString(handle);
-			msg.writeUINT64(offset);
-			msg.writeUINT64(length);
-			msg.writeInt(lockFlags);
-			
-			sendMessage(msg);
-
-			getOKRequestStatus(requestId);
-		} catch (SshIOException ex) {
-			throw ex.getRealException();
-		} catch (IOException ex) {
-			throw new SshException(ex);
-		}
-	}
-
-	/**
-	 * Lock file.
-	 * 
-	 * @param handle
-	 * @param offset
-	 * @param length
-	 * @param lockFlags
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpHandle#lock()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void unlockFile(byte[] handle, long offset, long length) throws SftpStatusException, SshException {
-		if(version < 6) {
-			throw new SftpStatusException(
-					SftpStatusException.SSH_FX_OP_UNSUPPORTED,
-					"Locks are not supported by the server SFTP version "
-							+ String.valueOf(version));
-		}
-		try {
-			UnsignedInteger32 requestId = nextRequestId();
-			Packet msg = createPacket();
-			msg.write(SSH_FXP_UNBLOCK);
-			msg.writeInt(requestId.longValue());
-			msg.writeBinaryString(handle);
-			msg.writeUINT64(offset);
-			msg.writeUINT64(length);
-			
-			sendMessage(msg);
-
-			getOKRequestStatus(requestId);
-		} catch (SshIOException ex) {
-			throw ex.getRealException();
-		} catch (IOException ex) {
-			throw new SshException(ex);
-		}
-	}
+	
 	/**
 	 * Create a symbolic link.
 	 * 
@@ -1328,49 +891,7 @@ public class SftpChannel extends AbstractSubsystem {
 		}
 	}
 
-	/**
-	 * <p>
-	 * List the children of a directory.
-	 * </p>
-	 * <p>
-	 * To use this method first open a directory with the <a
-	 * href="#openDirectory(java.lang.String)"> openDirectory</a> method and
-	 * then create a Vector to store the results. To retrieve the results keep
-	 * calling this method until it returns -1 which indicates no more results
-	 * will be returned. <blockquote>
-	 * 
-	 * <pre>
-	 * SftpFile dir = sftp.openDirectory(&quot;code/foobar&quot;);
-	 * Vector results = new Vector();
-	 * while (sftp.listChildren(dir, results) &gt; -1)
-	 * 	;
-	 * sftp.closeFile(dir);
-	 * </pre>
-	 * 
-	 * </blockquote>
-	 * 
-	 * </p>
-	 * 
-	 * @param file
-	 * @param children
-	 * @return int
-	 * @throws SftpStatusException
-	 *             , SshException
-	 * @deprecated
-	 * @see SftpHandle#listChildren(List)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public int listChildren(SftpFile file, List<SftpFile> children)
-			throws SftpStatusException, SshException {
-		if (file.isDirectory()) {
-			return openDirectory(file.getAbsolutePath()).listChildren(children);
-		} else {
-			throw new SshException("Cannot list children for this file object",
-					SshException.BAD_API_USAGE);
-		}
-	}
-
-	SftpFile[] extractFiles(SftpMessage bar, String parent) throws SshException {
+	private SftpFile[] extractFiles(SftpMessage bar, String parent) throws SshException {
 
 		try {
 
@@ -1676,51 +1197,6 @@ public class SftpChannel extends AbstractSubsystem {
 
 	}
 
-	@Deprecated(since = "3.1.0")
-	public void closeHandle(byte[] handle) throws SftpStatusException, SshException {
-		if (handle == null) {
-			throw new SftpStatusException(SftpStatusException.INVALID_HANDLE,
-					"The handle is invalid!");
-		}
-
-		try {
-			getBestHandle(handle).close();
-		} catch (IOException ex) {
-			if(ex.getCause() instanceof SshException)
-				throw (SshException)ex.getCause();
-			if(ex.getCause() instanceof SftpStatusException)
-				throw (SftpStatusException)ex.getCause();
-			else
-				throw new SshException(ex);
-		}
-	}
-	
-	private SftpHandle getBestHandle(byte[] handle) {
-		synchronized(handles) {
-			var h = handles.get(handle);
-			if(h != null) {
-				return h;
-			}
-		}
-		return new SftpHandle(handle, this, null);
-	}
-
-	/**
-	 * Close a file or directory.
-	 * 
-	 * @param file
-	 * @throws SftpStatusException
-	 *             , SshException
-	 */
-	@Deprecated
-	public void closeFile(SftpHandle file) throws IOException {
-		file.close();
-	}
-
-	private boolean isValidHandle(byte[] handle) {
-		return handle != null;
-	}
-
 	/**
 	 * Remove an empty directory.
 	 * 
@@ -1930,22 +1406,6 @@ public class SftpChannel extends AbstractSubsystem {
 		} catch (IOException ex) {
 			throw new SshException(ex);
 		}
-	}
-
-	/**
-	 * Get the attributes of a file.
-	 * 
-	 * @param file
-	 * @return SftpFileAttributes
-	 * @throws SftpStatusException
-	 *             , SshException
-	 * @deprecated
-	 * @see SftpHandle#setAttributes(byte[], SftpFileAttributes)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SftpFileAttributes getAttributes(SftpFile file)
-			throws SftpStatusException, SshException {
-		return getAttributes(file.getAbsolutePath());
 	}
 
 	/**

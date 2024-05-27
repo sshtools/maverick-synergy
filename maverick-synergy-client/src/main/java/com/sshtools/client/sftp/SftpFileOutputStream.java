@@ -24,22 +24,6 @@ public class SftpFileOutputStream extends OutputStream {
 	/**
 	 * Creates a new SftpFileOutputStream object.
 	 *
-	 * @param file
-	 *
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpClient#getInputStream(String)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SftpFileOutputStream(SftpFile file) throws SftpStatusException, SshException {
-		sftp = file.getSFTPChannel();
-		handle = file.openFile(SftpChannel.OPEN_CREATE | SftpChannel.OPEN_TRUNCATE | SftpChannel.OPEN_WRITE);
-	}
-
-	/**
-	 * Creates a new SftpFileOutputStream object.
-	 *
 	 * @param handle
 	 *
 	 * @throws SftpStatusException

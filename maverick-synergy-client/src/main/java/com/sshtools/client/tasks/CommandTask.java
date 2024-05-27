@@ -5,15 +5,15 @@ import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.util.Optional;
 
-import com.sshtools.client.PseudoTerminalModes;
 import com.sshtools.client.SessionChannelNG;
+import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.SshConnection;
+import com.sshtools.synergy.ssh.TerminalModes;
 
 /**
  * Task for executing commands.
  */
-@SuppressWarnings("deprecation")
-public final class CommandTask extends AbstractCommandTask {
+public final class CommandTask extends AbstractSessionTask<SessionChannelNG> {
 	
 	/**
 	 * Functional interface for tasks run on certain command task events.
@@ -46,7 +46,7 @@ public final class CommandTask extends AbstractCommandTask {
 		private int cols = 80;
 		private int rows = 24;
 		private boolean withPty = true;
-		private Optional<PseudoTerminalModes> modes = Optional.empty();
+		private Optional<TerminalModes> modes = Optional.empty();
 		private boolean autoConsume;
 		
 		private CommandTaskBuilder() {
@@ -128,7 +128,7 @@ public final class CommandTask extends AbstractCommandTask {
 		 * @param modes modes
 		 * @return builder for chaining
 		 */
-		public final CommandTaskBuilder withModes(PseudoTerminalModes modes) {
+		public final CommandTaskBuilder withModes(TerminalModes modes) {
 			this.modes = Optional.of(modes);
 			return this;
 		}
@@ -137,7 +137,7 @@ public final class CommandTask extends AbstractCommandTask {
 		/**
 		 * Set whether or not to allocate a Pty. When set to <code>true</code>, other
 		 * Pty characteristics can be set using builder methods such as {@link #withRows(int)}, 
-		 * {@link #withModes(PseudoTerminalModes)} and others. By default a Pty is allocated.
+		 * {@link #withModes(TerminalModes)} and others. By default a Pty is allocated.
 		 * 
 		 * @param withPty whether to allocate a PTY. 
 		 * @return builder for chaining
@@ -215,11 +215,14 @@ public final class CommandTask extends AbstractCommandTask {
 		}
 
 		/**
-		 * Set a callback to run when the command is closed. 
+		 * Set a callback to run when the command is closed.
+		 * <p>
+		 * Deprecated, use the generic {@link #onClose(java.util.function.Consumer)}. 
 		 * 
 		 * @param onClose on close callback
 		 * @return builder for chaining
 		 */
+		@Deprecated(since = "3.2.0", forRemoval = true)
 		public final CommandTaskBuilder onClose(CommandTaskEvent onClose) {
 			this.onClose = Optional.of(onClose);
 			return this;
@@ -266,14 +269,16 @@ public final class CommandTask extends AbstractCommandTask {
 	private final int rows;
 	private final int cols;
 	private final boolean withPty;
-	private final Optional<PseudoTerminalModes> modes;
+	private final Optional<TerminalModes> modes;
+	private final String command;
+	private final String charset;
+	private final boolean autoConsume;
 	
 	private CommandTask(CommandTaskBuilder builder) {
-		super(builder, 
-			builder.command.orElseThrow(() -> new IllegalArgumentException("Command must be supplied")),
-			builder.encoding.map(Charset::name).orElse("UTF-8"),
-			builder.autoConsume
-		);
+		super(builder);
+		this.command = builder.command.orElseThrow(() -> new IllegalArgumentException("Command must be supplied"));
+		this.charset = builder.encoding.map(Charset::name).orElse("UTF-8");
+		this.autoConsume = builder.autoConsume;
 		this.onClose = builder.onClose;
 		this.onBeforeExecute = builder.onBeforeExecute;
 		this.onTask = builder.onTask;
@@ -286,9 +291,7 @@ public final class CommandTask extends AbstractCommandTask {
 	}
 	
 	@Override
-	@Deprecated(since = "3.1.0", forRemoval = true)
 	protected final void onCloseSession(SessionChannelNG session) {
-		super.onCloseSession(session);
 		onClose.ifPresent(c -> {
 			try {
 				c.commandEvent(this, session);
@@ -302,26 +305,23 @@ public final class CommandTask extends AbstractCommandTask {
 		});
 	}
 
-	@Override
-	public final int getExitCode() {
-		return super.getExitCode();
+	public int getExitCode() {
+		return getSession().getExitCode();
 	}
 
-	@Override
-	public final String getCommand() {
-		return super.getCommand();
+	public String getCommand() {
+		return command;
 	}
 	
-	@SuppressWarnings("removal")
 	@Override
-	protected final SessionChannelNG createSession(SshConnection con) {
-		return super.createSession(con);
-	}
-
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	@Override
-	protected void closeOnTaskComplete() {
-		/* Noop, new style tasks should either be closed manually or in the onExec() handler */
+	protected SessionChannelNG createSession(SshConnection con) {
+		return new SessionChannelNG(
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
+				getChannelFuture(),
+				autoConsume);
 	}
 
 	@Override
@@ -352,7 +352,8 @@ public final class CommandTask extends AbstractCommandTask {
 		});
 	}
 
-	protected final void beforeExecuteCommand(SessionChannelNG session) {
+	@Override
+	protected final void setupSession(SessionChannelNG session) {
 		
 		try {
 			if(withPty) {
@@ -379,7 +380,8 @@ public final class CommandTask extends AbstractCommandTask {
 		} catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
-		
+
+		session.executeCommand(command, charset);
 
 	}
 	

@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import com.sshtools.client.SshClient;
 import com.sshtools.client.sftp.SftpClientTask;
 
 /**
@@ -129,20 +128,6 @@ public class UploadInputStreamTask extends AbstractFileTask {
 		path = builder.remote.orElseThrow(() -> new IllegalStateException("Remote remote must be supplied."));
 		input = builder.input.orElseThrow(() -> new IllegalStateException("InputStream must be supplied."));
 		length = builder.length.orElse(-1l);
-	}
-
-	/**
-	 * Construct a new upload file task. Deprecated since 3.1.0. Use a {@link UploadInputStreamTaskBuilder} instead. 
-	 * 
-	 * @param con connection
-	 * @param localFile local file
-	 * @param remote remote
-	 * @deprecated 
-	 * @see UploadInputStreamTaskBuilder
-	 */
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	public UploadInputStreamTask(SshClient ssh, InputStream input, String path) {
-		this(UploadInputStreamTaskBuilder.create().withClient(ssh).withRemotePath(path).withInputStream(input));
 	}
 	
 	@Override

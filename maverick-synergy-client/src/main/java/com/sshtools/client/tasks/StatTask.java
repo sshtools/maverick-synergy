@@ -5,10 +5,8 @@ import static com.sshtools.common.util.Utils.translatePathString;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.synergy.ssh.Connection;
 
 /**
  * An SFTP {@link Task} that uploads complete files.
@@ -93,19 +91,6 @@ public class StatTask extends AbstractFileTask {
 	private StatTask(StatTaskBuilder builder) {
 		super(builder);
 		remote = builder.remote.orElseThrow(() -> new IllegalStateException("Remote path must be supplied."));
-	}
-
-	/**
-	 * Construct a stat task. Deprecated since 3.1.0. Use a {@link StatTaskBuilder} instead. 
-	 * 
-	 * @param con connection
-	 * @param path path
-	 * @deprecated 
-	 * @see StatTaskBuilder
-	 */
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	public StatTask(Connection<SshClientContext> con, String path) {
-		this(StatTaskBuilder.create().withConnection(con).withRemotePath(path));
 	}
 
 	@Override

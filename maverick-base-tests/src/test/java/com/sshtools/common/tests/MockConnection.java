@@ -85,11 +85,6 @@ public class MockConnection implements SshConnection {
 	}
  
 	@Override
-	public InetAddress getRemoteAddress() {
-		return remoteAddress.getAddress();
-	}
-
-	@Override
 	public InetAddress getLocalAddress() {
 		return localAddress.getAddress();
 	}

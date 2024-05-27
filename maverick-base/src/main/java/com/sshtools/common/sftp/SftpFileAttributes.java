@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -906,35 +905,18 @@ public class SftpFileAttributes {
 	private final Optional<UnsignedInteger32> attributeBitsValid;
 	private final Optional<Integer> linkCount;
 	private final Optional<String> untranslatedName;
-
-	/* TODO: Will be made final at 3.2.0 */
-	private int type;
-	private Optional<Integer> uid;
-	private Optional<Integer> gid;
-	private long flags;
-	private Optional<String> username;
-	private Optional<String> group;
-	private Optional<UnsignedInteger64> size;
-	private Optional<FileTime> lastAccessTime;
-	private Optional<FileTime> createTime;
-	private Optional<FileTime> lastModifiedTime;
-	private Map<String, byte[]> extendedAttributes;
-	private Optional<PosixPermissions> permissions;
-
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SftpFileAttributes(ByteArrayReader bar, int version, String charsetEncoding) throws IOException {
-		this(SftpFileAttributesBuilder.of(bar, version, charsetEncoding));
-	}
-
-	/**
-	 * @param type
-	 * @param charsetEncoding
-	 * @see SftpFileAttributesBuilder#ofType(int, String)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SftpFileAttributes(int type, String charsetEncoding) {
-		this(SftpFileAttributesBuilder.create().withType(type).withCharsetEncoding(charsetEncoding));
-	}
+	private final int type;
+	private final Optional<Integer> uid;
+	private final Optional<Integer> gid;
+	private final long flags;
+	private final Optional<String> username;
+	private final Optional<String> group;
+	private final Optional<UnsignedInteger64> size;
+	private final Optional<FileTime> lastAccessTime;
+	private final Optional<FileTime> createTime;
+	private final Optional<FileTime> lastModifiedTime;
+	private final Map<String, byte[]> extendedAttributes;
+	private final Optional<PosixPermissions> permissions;
 
 	private SftpFileAttributes(SftpFileAttributesBuilder builder) {
 		this.size = builder.size;
@@ -961,12 +943,7 @@ public class SftpFileAttributes {
 		this.attributeBitsValid = builder.attributeBitsValid;
 		this.linkCount = builder.linkCount;
 		this.untranslatedName = builder.untranslatedName;
-
-		/* TODO: Activate this code at 3.2.0 when everything is made final */
-		// this.extendedAttributes = Collections.unmodifiableMap(new HashMap<String,
-		// byte[]>(builder.extendedAttributes));
-		this.extendedAttributes = new HashMap<String, byte[]>(builder.extendedAttributes);
-
+		this.extendedAttributes = Collections.unmodifiableMap(new HashMap<String, byte[]>(builder.extendedAttributes));
 	}
 
 	public List<ACL> acls() {
@@ -1035,144 +1012,6 @@ public class SftpFileAttributes {
 		return flags;
 	}
 
-	/**
-	 * @deprecated
-	 * @see #lastAccessTime()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public Date getAccessedDateTime() {
-		return new Date(lastAccessTime().toMillis());
-	}
-
-	/**
-	 * @deprecated
-	 * @see #lastAccessTime()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public UnsignedInteger64 getAccessedTime() {
-		return new UnsignedInteger64(lastAccessTime().toMillis() / 1000);
-	}
-
-	/**
-	 * @deprecated
-	 * @see #createTime()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public Date getCreationDateTime() {
-		return new Date(createTime().toMillis());
-	}
-
-	/**
-	 * @deprecated
-	 * @see #createTime()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public UnsignedInteger64 getCreationTime() {
-		return new UnsignedInteger64(createTime().toMillis() / 1000);
-	}
-
-	/**
-	 * @deprecated
-	 * @see #extendedAttributes()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public Map<String, byte[]> getExtendedAttributes() {
-		return extendedAttributes();
-	}
-
-	/**
-	 * @deprecated
-	 * @see #uid()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public String getGID() {
-		return group.orElseGet(() -> gid.map(g -> g.toString()).orElse(null));
-	}
-
-	/**
-	 * @deprecated
-	 * @see #toMaskString()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public String getMaskString() {
-		return toMaskString();
-	}
-
-	/**
-	 * @deprecated
-	 * @see #getModeType()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public int getModeType() {
-		return toModeType();
-	}
-
-	/**
-	 * @deprecated
-	 * @see #getModifiedDateTime()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public Date getModifiedDateTime() {
-		return new Date(lastModifiedTime().toMillis());
-	}
-
-	/**
-	 * @deprecated
-	 * @see #getModifiedTime()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public UnsignedInteger64 getModifiedTime() {
-		return new UnsignedInteger64(lastModifiedTime().toMillis() / 1000);
-	}
-
-	/**
-	 * @deprecated
-	 * @see #toPermissionsString()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public String getPermissionsString() {
-		return toPermissionsString();
-	}
-
-	/**
-	 * @deprecated
-	 * @see #permissions()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public PosixPermissions getPosixPermissions() {
-		return permissions();
-	}
-
-	/**
-	 * @deprecated
-	 * @see #size()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public UnsignedInteger64 getSize() {
-		return size();
-	}
-
-	/**
-	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
-	 * immutable.
-	 * 
-	 * @return type
-	 * @see #type()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public int getType() {
-		return type();
-	}
-
-	/**
-	 * @deprecated
-	 * @see #uid()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public String getUID() {
-		return usernameOr().orElse(uid.map(u -> u.toString()).orElse(null));
-	}
-
 	public int gid() {
 		return gid.orElse(0);
 	}
@@ -1187,15 +1026,6 @@ public class SftpFileAttributes {
 
 	public Optional<String> groupOr() {
 		return group;
-	}
-
-	/**
-	 * @deprecated
-	 * @see #hasLastAccessTime()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public boolean hasAccessTime() {
-		return hasLastAccessTime();
 	}
 
 	public boolean hasAclFlags() {
@@ -1222,15 +1052,6 @@ public class SftpFileAttributes {
 		return gid.isPresent();
 	}
 
-	/**
-	 * @deprecated
-	 * @see #hasGid()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public boolean hasGID() {
-		return hasGid();
-	}
-
 	public boolean hasGroup() {
 		return group.isPresent();
 	}
@@ -1245,15 +1066,6 @@ public class SftpFileAttributes {
 
 	public boolean hasLastModifiedTime() {
 		return lastModifiedTime.isPresent();
-	}
-
-	/**
-	 * @deprecated
-	 * @see #hasLastModifiedTime()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public boolean hasModifiedTime() {
-		return hasLastModifiedTime();
 	}
 
 	public boolean hasPermissions() {
@@ -1278,15 +1090,6 @@ public class SftpFileAttributes {
 
 	public boolean hasUid() {
 		return uid.isPresent();
-	}
-
-	/**
-	 * @deprecated
-	 * @see #hasUid()
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public boolean hasUID() {
-		return hasUid();
 	}
 
 	public boolean hasUsername() {
@@ -1424,337 +1227,6 @@ public class SftpFileAttributes {
 
 	public Optional<PosixPermissions> permissionsOr() {
 		return permissions;
-	}
-
-	/**
-	 * Set a single extended attribute value.
-	 * <p>
-	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
-	 * immutable.
-	 * 
-	 * @param attrName attribute name to remove
-	 * @deprecated
-	 * @see SftpFileAttributesBuilder#removeExtendedAttribute(String)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void removeExtendedAttribute(String attrName) {
-		extendedAttributes.remove(attrName);
-	}
-
-	/**
-	 * Set a single extended attribute value.
-	 * <p>
-	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
-	 * immutable.
-	 * 
-	 * @param attrName  attribute name
-	 * @param attrValue attribute value
-	 * @deprecated
-	 * @see SftpFileAttributesBuilder#removeExtendedAttribute(String)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setExtendedAttribute(String attrName, byte[] attrValue) {
-		flags |= SSH_FILEXFER_ATTR_EXTENDED;
-		extendedAttributes.put(attrName, attrValue);
-	}
-
-	/**
-	 * Set all the extended attributes. The keys should be of type String, as should
-	 * the values.
-	 * <p>
-	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
-	 * immutable.
-	 * 
-	 * @param attributes map of all extended attributes
-	 * @deprecated
-	 * @see SftpFileAttributesBuilder#removeExtendedAttribute(String)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setExtendedAttributes(Map<String, byte[]> attributes) {
-		flags |= SSH_FILEXFER_ATTR_EXTENDED;
-		this.extendedAttributes = attributes;
-	}
-
-	/**
-	 * Set the GID of this file.
-	 * <p>
-	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
-	 * immutable.
-	 * 
-	 * @param gid gid
-	 * @see SftpFileAttributesBuilder#withGid(int)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setGID(String gid) {
-		if (gid == null) {
-			throw new IllegalArgumentException("gid cannot be null!");
-		}
-		if (!gid.matches("\\d+")) {
-			throw new IllegalArgumentException("gid must be a group id containing only digits");
-		}
-		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
-		flags |= SSH_FILEXFER_ATTR_UIDGID;
-		this.gid = Optional.of(Integer.parseInt(gid));
-	}
-
-	/**
-	 * Set the group of this file.
-	 * <p>
-	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
-	 * immutable.
-	 * 
-	 * @param group group
-	 * @see SftpFileAttributesBuilder#withGroup(String)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setGroup(String group) {
-		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
-		this.group = Optional.ofNullable(group);
-	}
-
-	/**
-	 * Set the permissions using a {@link PosixPermissions} set, created by a
-	 * {@link PosixPermissionsBuilder}.
-	 * <p>
-	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
-	 * immutable.
-	 * 
-	 * @param newPermissions new permissions
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setPermissions(PosixPermissions newPermissions) {
-		setPermissions(newPermissions.asUInt32());
-	}
-
-	/**
-	 * Set the permissions from a string in the format "rwxr-xr-x"
-	 * <p>
-	 * Deprecated. See {@link #setPermissions(PosixPermissions)} for alternative.
-	 * 
-	 * @param newPermissions new permissions string
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setPermissions(String newPermissions) {
-		int cp = getModeType();
-		cp |= (permissions.map(PosixPermissions::asInt).orElse(0) & 0xfffff000);
-		cp |= PosixPermissionsBuilder.create().fromLaxFileModeString(newPermissions).build().asLong();
-		setPermissions(new UnsignedInteger32(cp));
-	}
-
-	/**
-	 * Set the permissions of the file. This value should be a valid mask of the
-	 * permissions flags defined within this class.
-	 * 
-	 * @param permissions permssions
-	 * @deprecated
-	 * @see #setPermissions(PosixPermissions)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setPermissions(UnsignedInteger32 permissions) {
-		if (permissions != null) {
-			if (type == 0) {
-				if ((permissions.longValue() & SftpFileAttributes.S_IFDIR) == SftpFileAttributes.S_IFDIR) {
-					this.type = SSH_FILEXFER_TYPE_DIRECTORY;
-				} else if ((permissions.longValue() & SftpFileAttributes.S_IFREG) == SftpFileAttributes.S_IFREG) {
-					this.type = SSH_FILEXFER_TYPE_REGULAR;
-				} else if ((permissions.longValue() & SftpFileAttributes.S_IFCHR) == SftpFileAttributes.S_IFCHR) {
-					this.type = SSH_FILEXFER_TYPE_SPECIAL;
-				} else if ((permissions.longValue() & SftpFileAttributes.S_IFBLK) == SftpFileAttributes.S_IFBLK) {
-					this.type = SSH_FILEXFER_TYPE_SPECIAL;
-				} else if ((permissions.longValue() & SftpFileAttributes.S_IFIFO) == SftpFileAttributes.S_IFIFO) {
-					this.type = SSH_FILEXFER_TYPE_SPECIAL;
-				} else if ((permissions.longValue() & SftpFileAttributes.S_IFMT) == SftpFileAttributes.S_IFMT) {
-					this.type = SSH_FILEXFER_TYPE_SPECIAL;
-				} else if ((permissions.longValue() & SftpFileAttributes.S_IFSOCK) == SftpFileAttributes.S_IFSOCK) {
-					this.type = SSH_FILEXFER_TYPE_SPECIAL;
-				} else if ((permissions.longValue() & SftpFileAttributes.S_IFLNK) == SftpFileAttributes.S_IFLNK) {
-					this.type = SSH_FILEXFER_TYPE_SYMLINK;
-				} else {
-					this.type = SSH_FILEXFER_TYPE_UNKNOWN;
-				}
-			}
-			this.permissions = Optional.of(PosixPermissionsBuilder.create().fromBitmask(permissions.longValue()).build());
-			flags |= SSH_FILEXFER_ATTR_PERMISSIONS;
-
-		} else {
-			flags &= ~SSH_FILEXFER_ATTR_PERMISSIONS;
-			this.permissions = Optional.empty();
-		}
-	}
-
-	/**
-	 * Set permissions given a UNIX style mask, for example '0644'
-	 * <p>
-	 * Deprecated. See {@link #setPermissions(PosixPermissions)} for alternative.
-	 * 
-	 * @param mask mask
-	 * 
-	 * @throws IllegalArgumentException if badly formatted string
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setPermissionsFromMaskString(String mask) {
-		setPermissions(PosixPermissionsBuilder.create().fromMaskString(mask).build());
-	}
-
-	/**
-	 * Set the permissions given a UNIX style umask, for example '0022' will result
-	 * in 0022 ^ 0777.
-	 * <p>
-	 * Deprecated. See {@link #setPermissions(PosixPermissions)} for alternative.
-	 * 
-	 * @param umask
-	 * @throws IllegalArgumentException if badly formatted string
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setPermissionsFromUmaskString(String umask) {
-		setPermissions(PosixPermissionsBuilder.create().fromUmaskString(umask).build());
-	}
-
-	/**
-	 * Set the size of the file.
-	 * <p>
-	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
-	 * immutable.
-	 * 
-	 * @param group group
-	 * @deprecated
-	 * @see SftpFileAttributesBuilder#withSize(long)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setSize(UnsignedInteger64 size) {
-		this.size = Optional.ofNullable(size);
-
-		// Set the flag
-		if (this.size.isPresent()) {
-			flags |= SSH_FILEXFER_ATTR_SIZE;
-		} else {
-			flags &= ~SSH_FILEXFER_ATTR_SIZE;
-		}
-	}
-
-	/**
-	 * Sets SFTP v4 time attributes including sub-second times. If you pass a null
-	 * value for any sub-second time it will be defaulted to zero. If you pass null
-	 * value for any time value if will be not be included in the attributes and its
-	 * sub-second value will also not be included.
-	 * <p>
-	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
-	 * immutable.
-	 * 
-	 * @param atime
-	 * @param atime_nano
-	 * @param mtime
-	 * @param mtime_nano
-	 * @param ctime
-	 * @param ctime_nano
-	 * @deprecated
-	 * @see SftpFileAttributesBuilder#withLastAccessTime(FileTime)
-	 * @see SftpFileAttributesBuilder#withLastModifiedTime(FileTime)
-	 * @see SftpFileAttributesBuilder#withCreateTime(FileTime)
-	 */
-	public void setTimes(UnsignedInteger64 atime, UnsignedInteger32 atime_nano, UnsignedInteger64 mtime,
-			UnsignedInteger32 mtime_nano, UnsignedInteger64 ctime, UnsignedInteger32 ctime_nano) {
-
-		setTimes(atime, mtime, ctime);
-
-		flags |= SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
-		
-		lastAccessTime = lastAccessTime.map(ft -> FileTime.from(ft.toInstant().plusNanos(atime_nano == null ? 0l : atime_nano.longValue())));		
-		lastModifiedTime = lastModifiedTime.map(ft -> FileTime.from(ft.toInstant().plusNanos(mtime_nano == null ? 0l : mtime_nano.longValue())));		
-		createTime = createTime.map(ft -> FileTime.from(ft.toInstant().plusNanos(ctime_nano == null ? 0l : ctime_nano.longValue())));
-	}
-
-	/**
-	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
-	 * immutable.
-	 * 
-	 * @param atime atime
-	 * @param mtime mtime
-	 * @deprecated
-	 * @see SftpFileAttributesBuilder#withLastAccessTime(FileTime)
-	 * @see SftpFileAttributesBuilder#withLastModifiedTime(FileTime)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setTimes(UnsignedInteger64 atime, UnsignedInteger64 mtime) {
-		lastAccessTime = atime == null ? Optional.empty() : Optional.of(FileTime.fromMillis(atime.longValue() * 1000));
-		if (lastAccessTime.isPresent())
-			flags |= SSH_FILEXFER_ATTR_ACCESSTIME;
-		else
-			flags &= ~SSH_FILEXFER_ATTR_ACCESSTIME;
-		lastModifiedTime = mtime == null ? Optional.empty()
-				: Optional.of(FileTime.fromMillis(mtime.longValue() * 1000));
-		if (lastModifiedTime.isPresent())
-			flags |= SSH_FILEXFER_ATTR_MODIFYTIME;
-		else
-			flags &= ~SSH_FILEXFER_ATTR_MODIFYTIME;
-		flags &= ~SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
-	}
-
-	/**
-	 * Set SFTP v4 time attributes without any sub-second times.
-	 * <p>
-	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
-	 * immutable.
-	 * 
-	 * @param atime last accessed time
-	 * @param mtime last modified time
-	 * @param ctime creation time
-	 * @deprecated
-	 * @see SftpFileAttributesBuilder#withLastAccessTime(FileTime)
-	 * @see SftpFileAttributesBuilder#withLastModifiedTime(FileTime)
-	 * @see SftpFileAttributesBuilder#withCreateTime(FileTime)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setTimes(UnsignedInteger64 atime, UnsignedInteger64 mtime, UnsignedInteger64 ctime) {
-
-		setTimes(atime, mtime);
-
-		createTime = ctime == null ? Optional.empty()
-				: Optional.of(FileTime.fromMillis(ctime.longValue() * 1000));
-		if (lastModifiedTime.isPresent())
-			flags |= SSH_FILEXFER_ATTR_CREATETIME;
-		else
-			flags &= ~SSH_FILEXFER_ATTR_CREATETIME;
-	}
-
-	/**
-	 * Set the UID of the owner.
-	 * <p>
-	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
-	 * immutable.
-	 * 
-	 * @param uid uid
-	 * @deprecated
-	 * @see SftpFileAttributesBuilder#withUid(int)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setUID(String uid) {
-		if (uid == null) {
-			throw new IllegalArgumentException("uid cannot be null!");
-		}
-		if (!uid.matches("\\d+")) {
-			throw new IllegalArgumentException("uid must be a user id containing only digits");
-		}
-		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
-		flags |= SSH_FILEXFER_ATTR_UIDGID;
-		this.uid = Optional.of(Integer.parseInt(uid));
-	}
-
-	/**
-	 * Set the username of this file.
-	 * <p>
-	 * Deprecated. At 3.2.0, {@link SftpFileAttributes} will become entirely
-	 * immutable.
-	 * 
-	 * @param username usernameuid
-	 * @deprecated
-
-	 * @see SftpFileAttributesBuilder#withUsername(String)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setUsername(String username) {
-		flags |= SSH_FILEXFER_ATTR_OWNERGROUP;
-		this.username = Optional.of(username);
 	}
 
 	public UnsignedInteger64 size() {

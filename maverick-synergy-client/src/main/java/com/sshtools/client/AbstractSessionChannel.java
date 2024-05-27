@@ -90,7 +90,7 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 		return allocatePseudoTerminal(type, cols, rows, 0, 0, (TerminalModes)null);
 	}
 
-	public RequestFuture allocatePseudoTerminal(String type, int cols, int rows, PseudoTerminalModes modes) {
+	public RequestFuture allocatePseudoTerminal(String type, int cols, int rows, TerminalModes modes) {
 		return allocatePseudoTerminal(type, cols, rows, 0, 0, modes);
 	}
 
@@ -152,12 +152,6 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 		} catch (IOException ex) {
 			throw new IllegalStateException(ex.getMessage(), ex);
 		} 
-	}
-
-	@Deprecated(since = "3.1.2", forRemoval = true)
-	public RequestFuture allocatePseudoTerminal(String type, int cols, int rows, int width, int height,
-			PseudoTerminalModes modes) {
-		return allocatePseudoTerminal(type, cols, rows, width, height, TerminalModes.TerminalModesBuilder.create().fromBytes(modes.toByteArray()).build());
 	}
 
 	public RequestFuture allocatePseudoTerminal(String type, int cols, int rows, int width, int height,

@@ -1,6 +1,7 @@
 package com.sshtools.common.sftp.extensions;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.AbstractFileSystem;
@@ -19,6 +20,6 @@ public class FilenameHashingExtension extends FileHashingExtension {
 	protected byte[] getFileHandle(ByteArrayReader msg, SftpSubsystem sftp) throws IOException, PermissionDeniedException {
 		String filename = msg.readString();
 		AbstractFileSystem fs = sftp.getFileSystem();
-		return fs.openFile(filename, new UnsignedInteger32(AbstractFileSystem.OPEN_READ), null);
+		return fs.openFile(filename, new UnsignedInteger32(AbstractFileSystem.OPEN_READ), Optional.empty(), null);
 	}
 }

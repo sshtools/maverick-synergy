@@ -12,6 +12,7 @@ module com.sshtools.synergy.common {
 	exports com.sshtools.synergy.ssh.components;
 	exports com.sshtools.synergy.ssh.components.jce;
 	exports com.sshtools.synergy.util;
+	opens com.sshtools.synergy.ssh;
 	
 	uses SshCompressionFactory;
 }

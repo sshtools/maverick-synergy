@@ -11,6 +11,7 @@ import com.sshtools.client.shell.ShellTimeoutException;
 import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.synergy.ssh.TerminalModes;
 
 /**
  * A {@link Task} that starts a remote shell with an allocated PTY.
@@ -56,7 +57,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		private int cols = 80;
 		private int rows = 24;
 		private boolean withPty = true;
-		private Optional<PseudoTerminalModes> modes = Optional.empty();
+		private Optional<TerminalModes> modes = Optional.empty();
 		private boolean autoConsume;
 
 		private ShellTaskBuilder() {
@@ -147,7 +148,19 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		 * @param modes modes
 		 * @return builder for chaining
 		 */
+		@Deprecated(since = "3.1.2", forRemoval = true)
 		public final ShellTaskBuilder withModes(PseudoTerminalModes modes) {
+			return withModes(TerminalModes.TerminalModesBuilder.create().fromBytes(modes.toByteArray()).build());
+		}
+
+		/**
+		 * Set the terminal modes to use when allocating a PTY. Note, this
+		 * will have no effect if {{@link #withPty} is set to <code>false</code>.
+		 * 
+		 * @param modes modes
+		 * @return builder for chaining
+		 */
+		public final ShellTaskBuilder withModes(TerminalModes modes) {
 			this.modes = Optional.of(modes);
 			return this;
 		}
@@ -250,7 +263,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 	private final int rows;
 	private final int cols;
 	private final boolean withPty;
-	private final Optional<PseudoTerminalModes> modes;
+	private final Optional<TerminalModes> modes;
 	private final boolean autoConsume;
 	
 	private ShellTask(ShellTaskBuilder builder) {

@@ -84,10 +84,10 @@ public class PasswordKeyboardInteractiveProvider implements
 				else
 					instruction = e.getMessage();
 				
-				return true;
 			} catch(IOException ex) {
 				con.disconnect(TransportProtocolSpecification.BY_APPLICATION, ex.getMessage());
 			}
+			return true;
 		case CHANGING_PASSWORD:
 			if(answers.length < 2) {
 				throw new RuntimeException("Not enough answers!");

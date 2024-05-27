@@ -46,6 +46,10 @@ public class VirtualSessionPolicy {
 		return shellEnvironment;
 	}
 
+	public void setShellEnvironment(Map<String, String> shellEnvironment) {
+		this.shellEnvironment = shellEnvironment;
+	}
+
 	public File getShellDirectory() {
 		return shellDirectory;
 	}

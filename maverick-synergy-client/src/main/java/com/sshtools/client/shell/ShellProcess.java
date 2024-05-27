@@ -9,13 +9,16 @@ import com.sshtools.common.ssh.SshIOException;
 
 public class ShellProcess {
 
-	ExpectShell shell;
-	ShellInputStream in;
-	BufferedInputStream bin;
-	ShellProcess(ExpectShell shell, ShellInputStream in) {
+	private final ExpectShell shell;
+	private final ShellInputStream in;
+	private final BufferedInputStream bin;
+	private final OutputStream out;
+	
+	ShellProcess(ExpectShell shell, ShellInputStream in, OutputStream out) {
 		this.shell = shell;
 		this.in = in;
 		this.bin = new BufferedInputStream(in);
+		this.out = out;
 	}
 
 	public void mark(int readlimit) {
@@ -36,7 +39,7 @@ public class ShellProcess {
 	}
 
 	public OutputStream getOutputStream() throws SshIOException {
-		return shell.sessionOut;
+		return out;
 	}
 
 	public int getExitCode() {

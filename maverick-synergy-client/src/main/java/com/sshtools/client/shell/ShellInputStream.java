@@ -23,14 +23,14 @@ class ShellInputStream extends InputStream {
 	private boolean active = true;
 	private boolean matchPromptMarker;
 
-	ShellInputStream(ExpectShell shell, String beginCommandMarker, String endCommandMarker, String cmd, boolean matchPromptMarker, String promptMarker) {
+	ShellInputStream(BufferedInputStream sessionIn, ExpectShell shell, String beginCommandMarker, String endCommandMarker, String cmd, boolean matchPromptMarker, String promptMarker) {
 		this.beginCommandMarker = beginCommandMarker;
 		this.endCommandMarker = endCommandMarker.getBytes();
 		this.matchPromptMarker = matchPromptMarker;
 		this.promptMarker = promptMarker.getBytes();
 		this.shell = shell;
 		this.cmd = cmd;
-		this.sessionIn = shell.sessionIn;
+		this.sessionIn = sessionIn;
 	}
 	
 	public String getCommand() {

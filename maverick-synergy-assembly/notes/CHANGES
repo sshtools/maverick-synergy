@@ -8,7 +8,8 @@ Bug Fixes
   o Incorrect parent mount passed to VirtualMountFile when resolving children.
   o CommandTaskBulder missing withConnection method.
   o Fixes regression found in callback service where `osshell` would fail to send keyboard input.
-
+  o Logging indicates that an IP address will be temporarily banned even if banning has been disabled.
+  
 =================
 =  HISTORY      =
 =================

@@ -28,6 +28,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshCertificate;
@@ -94,6 +95,22 @@ public class SshCertificateAuthority {
 			List<CriticalOption> criticalOptions,
 			List<CertificateExtension> extensions,
 			SshKeyPair signedBy) throws SshException, IOException {
+		return generateCertificate(key, serial, type, keyId, validPrincipals,
+				validityDays, Calendar.DAY_OF_MONTH, TimeZone.getTimeZone("UTC"),
+				criticalOptions, extensions, signedBy);
+	}
+	
+	public static SshCertificate generateCertificate(SshKeyPair key, 
+			long serial, 
+			int type,
+			String keyId,
+			List<String> validPrincipals,
+			int validity,
+			int validityTimeUnit,
+			TimeZone timeZone,
+			List<CriticalOption> criticalOptions,
+			List<CertificateExtension> extensions,
+			SshKeyPair signedBy) throws SshException, IOException {
 		
 		switch(type) {
 		case SshCertificate.SSH_CERT_TYPE_HOST:
@@ -111,9 +128,11 @@ public class SshCertificateAuthority {
 		c.set(Calendar.MINUTE, 0);
 		c.set(Calendar.SECOND, 0);
 		c.set(Calendar.MILLISECOND, 0);
+		c.setTimeZone(timeZone);
+		
 		UnsignedInteger64 validAfter = new UnsignedInteger64(c.getTimeInMillis() / 1000);
 		
-		c.add(Calendar.DAY_OF_MONTH, validityDays);
+		c.add(Calendar.DAY_OF_MONTH, validity);
 		UnsignedInteger64 validBefore = new UnsignedInteger64(c.getTimeInMillis() / 1000);
 
 		@SuppressWarnings("unused")

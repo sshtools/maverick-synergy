@@ -185,32 +185,32 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 											client.getConfig().getServerPort());
 								}
 								
-								onClientStop(client, con);
+//								onClientStop(client, con);
 								con.removeProperty(CALLBACK_CLIENT);
 								clients.remove(client);
-								
-								if(!client.isStopped() && client.getConfig().isReconnect()) {
-									while(getSshEngine().isStarted()) {
-										
-										if(Log.isInfoEnabled()) {
-											Log.info("Will connect again to {}:{} in {} seconds" , 
-													client.getConfig().getServerHost(), 
-													client.getConfig().getServerPort(), 
-													client.getConfig().getReconnectIntervalMs() / 1000);
-										}
-										try {
-											try {
-												Thread.sleep(client.getConfig().getReconnectIntervalMs());
-											} catch (InterruptedException e1) {
-											}
-											client.connect();
-											break;
-										} catch (IOException e) {
-										}
-									}
-								} else {
-									stop();
-								}
+//								
+//								if(!client.isStopped() && client.getConfig().isReconnect()) {
+//									while(getSshEngine().isStarted()) {
+//										
+//										if(Log.isInfoEnabled()) {
+//											Log.info("Will connect again to {}:{} in {} seconds" , 
+//													client.getConfig().getServerHost(), 
+//													client.getConfig().getServerPort(), 
+//													client.getConfig().getReconnectIntervalMs() / 1000);
+//										}
+//										try {
+//											try {
+//												Thread.sleep(client.getConfig().getReconnectIntervalMs());
+//											} catch (InterruptedException e1) {
+//											}
+//											client.connect();
+//											break;
+//										} catch (IOException e) {
+//										}
+//									}
+//								} else {
+//									stop();
+//								}
 							} 
 						}
 					});

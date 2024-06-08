@@ -64,119 +64,100 @@ public class CallbackSession implements Runnable {
 	}
 	
 	public void run() {
-		try {
-			connect();
-		} catch (IOException e) {
-			Log.error("Failed to startup", e);
-		}
+		while(app.getSshEngine().isStarted()) {
+			
+			if(isStopped) {
+				Log.info("Callback to {}:{} has been stopped", hostname, port);
+				break;
+			}
+			
+			try {
+				connect();
+			} catch (IOException | SshException e) {
+				Log.error("Connection failed to {}:{}", hostname, port);
+			}
+			
+			if(Log.isInfoEnabled()) {
+				Log.info("Connection disconnected from {}:{}", hostname, port);
+			}
+			
+			if(!config.isReconnect()) {
+				break;
+			}
+			
+			try {
+				long interval = config.getReconnectIntervalMs();
+
+				if(Log.isInfoEnabled()) {
+					Log.info("Will reconnect to {}:{} in {} seconds", hostname, port, interval / 1000);
+				}
+				Thread.sleep(interval);
+			} catch (InterruptedException e) {
+			}
+		} 
 	}
 
-	public void connect() throws IOException {
-		
-		if(isStopped) {
-			throw new IOException("Client has been stopped");
-		}
+	public void connect() throws IOException, SshException {
 		
 		if(Log.isInfoEnabled()) {
 			Log.info("Connecting to {}:{}", hostname, port);
 		}
 		
-		synchronized(app) {
-			if(!app.getSshEngine().isStarted() && !app.getSshEngine().isStarting()) {
-				if(!app.getSshEngine().startup()) {
-					throw new IOException("SSH Engine failed to start");
+//		synchronized(app) {
+//			if(!app.getSshEngine().isStarted() && !app.getSshEngine().isStarting()) {
+//				if(!app.getSshEngine().startup()) {
+//					throw new IOException("SSH Engine failed to start");
+//				}
+//			}
+//		}
+
+		
+		SshConnection con = null;
+
+		future = app.getSshEngine().connect(
+				hostname, 
+				port, 
+				createContext(config));
+		
+		future.waitFor(30000L);
+		if(future.isDone() && future.isSuccess()) {
+		
+			con = future.getConnection();
+			con.setProperty(CallbackClient.CALLBACK_CLIENT, CallbackSession.this);
+			con.getAuthenticatedFuture().waitFor(30000L);
+			
+			if(con.getAuthenticatedFuture().isDone()
+					&& con.getAuthenticatedFuture().isSuccess()) {
+			
+				if(Log.isInfoEnabled()) {
+					Log.info("Callback {} registering with memo {}", con.getUUID(), config.getMemo());
 				}
+				GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
+						con, ByteArrayWriter.encodeString(config.getMemo()));
+				con.sendGlobalRequest(req, false);
+				app.onClientConnected(this, con);
+				if(Log.isInfoEnabled()) {
+					Log.info("Client is connected to {}:{}", hostname, port);
+				}
+
+				con.getDisconnectFuture().waitForever();
+			} else {
+				if(Log.isInfoEnabled()) {
+					Log.info("Could not authenticate to {}:{}", hostname, port);
+				}
+				con.disconnect();
 			}
+			
+			app.onClientStop(this, con);
+			con.removeProperty(CallbackClient.CALLBACK_CLIENT);
+			app.clients.remove(this);
 		}
 
-		while(app.getSshEngine().isStarted()) {
-			SshConnection currentConnection = null;
-			try {
-				future = app.getSshEngine().connect(
-						hostname, 
-						port, 
-						createContext(config));
-				
-				future.waitFor(30000L);
-				if(future.isDone() && future.isSuccess()) {
-				
-					currentConnection = future.getConnection();
-					currentConnection.getAuthenticatedFuture().waitFor(30000L);
-					
-					if(currentConnection.getAuthenticatedFuture().isDone()
-							&& currentConnection.getAuthenticatedFuture().isSuccess()) {
-					
-						if(Log.isInfoEnabled()) {
-							Log.info("Callback {} registering with memo {}", currentConnection.getUUID(), config.getMemo());
-						}
-						GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
-								currentConnection, ByteArrayWriter.encodeString(config.getMemo()));
-						currentConnection.sendGlobalRequest(req, false);
-						app.onClientConnected(this, currentConnection);
-						if(Log.isInfoEnabled()) {
-							Log.info("Client is connected to {}:{}", hostname, port);
-						}
-						break;
-					} else {
-						if(Log.isInfoEnabled()) {
-							Log.info("Could not authenticate to {}:{}", hostname, port);
-						}
-						currentConnection.disconnect();
-					}
-					
-				}
-				
-				if(Objects.isNull(currentConnection)) {
-					
-					if(Log.isInfoEnabled()) {
-						Log.info("Connection did not complete to {}:{}", hostname, port);
-					}
-					
-					if(!config.isReconnect()) {
-						break;
-					}
-					
-					try {
-						long interval = config.getReconnectIntervalMs();
-	
-						if(Log.isInfoEnabled()) {
-							Log.info("Will reconnect to {}:{} in {} seconds", hostname, port, interval / 1000);
-						}
-						Thread.sleep(interval);
-					} catch (InterruptedException e) {
-					}
-				}
-			} catch(Throwable e) {
-				Log.error("{} on {}:{}", 
-						e,
-						e.getMessage(),
-						config.getServerHost(), 
-						config.getServerPort());
-				
-				if(Objects.nonNull(currentConnection)) {
-					currentConnection.disconnect();
-				}
-				
-				long interval = config.getReconnectIntervalMs();
-				if(Log.isInfoEnabled()) {
-					Log.info("Reconnecting to {}:{} in {} seconds", hostname, port, interval / 1000);
-				}
-				try {
-					Thread.sleep(interval);
-				} catch (InterruptedException e1) {
-				}
-			}
-		}
+		
 	}
 		
 	protected ProtocolContext createContext(CallbackConfiguration config) throws IOException, SshException {
-		SshServerContext ctx = app.createContext(app.getSshEngine().getContext(), config);
-		ctx.addStateListener(new ServerConnectionStateListener() {
-			public void connected(SshConnection con) {
-				con.setProperty(CallbackClient.CALLBACK_CLIENT, CallbackSession.this);
-			}
-		});
-		return ctx;
+		return app.createContext(app.getSshEngine().getContext(), config);
 	}
 
 	public void disconnect() {

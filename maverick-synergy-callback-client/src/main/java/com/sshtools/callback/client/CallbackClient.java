@@ -23,6 +23,7 @@ package com.sshtools.callback.client;
  */
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,6 +71,11 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		executor = getExecutorService();
 		EventServiceImplementation.getInstance().addListener(new DisconnectionListener());
 		channelFactory = new DefaultServerChannelFactory();
+		try {
+			ssh.startup();
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
 	}
 	
 	public SshEngine getSshEngine() {

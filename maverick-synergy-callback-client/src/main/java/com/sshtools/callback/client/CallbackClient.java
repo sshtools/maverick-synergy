@@ -173,50 +173,22 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 
 		@Override
 		public void processEvent(Event evt) {
-			
 			switch(evt.getId()) {
 			case EventCodes.EVENT_DISCONNECTED:
-				
 				final SshConnection con = (SshConnection)evt.getAttribute(EventCodes.ATTRIBUTE_CONNECTION);
-				
 				if(!executor.isShutdown()) {
 					executor.execute(new Runnable() {
 						public void run() {
 							if(con.containsProperty(CALLBACK_CLIENT)) {
 								CallbackSession client = (CallbackSession) con.getProperty(CALLBACK_CLIENT);
-								
-								if(Log.isInfoEnabled()) {
+								if(client != null) {if(Log.isInfoEnabled()) {
 									Log.info("Disconnected from {}:{}" , 
-											client.getConfig().getServerHost(), 
-											client.getConfig().getServerPort());
+										client.getConfig().getServerHost(), 
+										client.getConfig().getServerPort());
+									}
+									con.removeProperty(CALLBACK_CLIENT);
+									clients.remove(client);
 								}
-								
-//								onClientStop(client, con);
-								con.removeProperty(CALLBACK_CLIENT);
-								clients.remove(client);
-//								
-//								if(!client.isStopped() && client.getConfig().isReconnect()) {
-//									while(getSshEngine().isStarted()) {
-//										
-//										if(Log.isInfoEnabled()) {
-//											Log.info("Will connect again to {}:{} in {} seconds" , 
-//													client.getConfig().getServerHost(), 
-//													client.getConfig().getServerPort(), 
-//													client.getConfig().getReconnectIntervalMs() / 1000);
-//										}
-//										try {
-//											try {
-//												Thread.sleep(client.getConfig().getReconnectIntervalMs());
-//											} catch (InterruptedException e1) {
-//											}
-//											client.connect();
-//											break;
-//										} catch (IOException e) {
-//										}
-//									}
-//								} else {
-//									stop();
-//								}
 							} 
 						}
 					});

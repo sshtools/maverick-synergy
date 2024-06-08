@@ -25,15 +25,12 @@ package com.sshtools.callback.client;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayWriter;
-import com.sshtools.server.ServerConnectionStateListener;
-import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.nio.DisconnectRequestFuture;
 import com.sshtools.synergy.nio.ProtocolContext;
@@ -102,15 +99,6 @@ public class CallbackSession implements Runnable {
 		if(Log.isInfoEnabled()) {
 			Log.info("Connecting to {}:{}", hostname, port);
 		}
-		
-//		synchronized(app) {
-//			if(!app.getSshEngine().isStarted() && !app.getSshEngine().isStarting()) {
-//				if(!app.getSshEngine().startup()) {
-//					throw new IOException("SSH Engine failed to start");
-//				}
-//			}
-//		}
-
 		
 		SshConnection con = null;
 

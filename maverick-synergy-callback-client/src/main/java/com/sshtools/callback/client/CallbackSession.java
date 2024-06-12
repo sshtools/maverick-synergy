@@ -52,6 +52,8 @@ public class CallbackSession implements Runnable {
 	int port;
 	Map<String,Object> attributes = new HashMap<String,Object>();
 	int numberOfAuthenticationErrors = 0;
+	long reconnectStartedAt = -1;
+	Throwable exception;
 	
 	public CallbackSession(CallbackConfiguration config, CallbackClient app, String hostname, int port) throws IOException {
 		this.config = config;
@@ -71,6 +73,7 @@ public class CallbackSession implements Runnable {
 			try {
 				connect();
 			} catch (IOException | SshException e) {
+				exception = e;
 				Log.error("Connection failed to {}:{}", hostname, port);
 			}
 			
@@ -81,6 +84,7 @@ public class CallbackSession implements Runnable {
 			if(!config.isReconnect()) {
 				break;
 			}
+			reconnectStartedAt = System.currentTimeMillis();
 			
 			try {
 				long interval = config.getReconnectIntervalMs();
@@ -90,8 +94,22 @@ public class CallbackSession implements Runnable {
 				}
 				Thread.sleep(interval);
 			} catch (InterruptedException e) {
+			} finally {
+				reconnectStartedAt = -1;
 			}
 		} 
+	}
+	
+	public Throwable getLastError() {
+		return exception;
+	}
+	
+	public long getTimeRemainingUntilReconnect() {
+		if(reconnectStartedAt == -1)
+			return -1;
+		else {
+			return Math.min(config.getReconnectIntervalMs(), Math.max(0, config.getReconnectIntervalMs() - ( System.currentTimeMillis() - reconnectStartedAt )));
+		}
 	}
 
 	public void connect() throws IOException, SshException {
@@ -111,6 +129,23 @@ public class CallbackSession implements Runnable {
 		if(future.isDone() && future.isSuccess()) {
 		
 			con = future.getConnection();
+			
+			if(!con.isConnected() || con.isDisconnecting()) {
+				Throwable exception = app.getSshEngine().getLastError();
+				if(exception == null) {
+					throw new IOException("Failed to connect.");
+				}
+				else if(exception instanceof IOException) {
+					throw (IOException)exception;
+				}
+				else if(exception instanceof SshException) {
+					throw (SshException)exception;
+				}
+				else {
+					throw new IOException("Failed to connect.", exception);
+				}
+			}
+			
 			con.setProperty(CallbackClient.CALLBACK_CLIENT, CallbackSession.this);
 			con.getAuthenticatedFuture().waitFor(30000L);
 			
@@ -128,11 +163,15 @@ public class CallbackSession implements Runnable {
 					Log.info("Client is connected to {}:{}", hostname, port);
 				}
 
+				exception = null;
+
 				con.getDisconnectFuture().waitForever();
 			} else {
 				if(Log.isInfoEnabled()) {
 					Log.info("Could not authenticate to {}:{}", hostname, port);
 				}
+
+				exception = new IOException("Authentication failed.");
 				con.disconnect();
 			}
 			

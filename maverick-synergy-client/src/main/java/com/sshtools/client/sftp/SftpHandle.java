@@ -243,6 +243,9 @@ public final class SftpHandle implements Closeable {
 				msg.writeInt(requestId.longValue());
 				msg.writeBinaryString(handle);
 
+				if(Log.isDebugEnabled()) {
+					Log.debug("Sending SSH_FXP_CLOSE for {}", file.getFilename());
+				}
 				sftp.sendMessage(msg);
 
 				sftp.getOKRequestStatus(requestId);

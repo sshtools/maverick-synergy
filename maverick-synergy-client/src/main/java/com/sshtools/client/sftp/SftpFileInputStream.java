@@ -26,10 +26,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Vector;
 
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.UnsignedInteger32;
+import com.sshtools.common.util.UnsignedInteger64;
 
 /**
  * An InputStream to read the contents of a remote file.
@@ -44,6 +46,7 @@ public class SftpFileInputStream extends InputStream {
 	private int currentMessageRemaining;
 	private boolean isEOF = false;
 	private boolean error = false;
+	private UnsignedInteger64 length;
 	
 	/**
 	 * 
@@ -77,6 +80,7 @@ public class SftpFileInputStream extends InputStream {
 		this.sftp = file.getSFTPChannel();
 		this.handle = file.openFile(SftpChannel.OPEN_READ);
 		this.position = position;
+		this.length = handle.getAttributes().size();
 	}
 	
 	/**
@@ -99,10 +103,11 @@ public class SftpFileInputStream extends InputStream {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
-	SftpFileInputStream(SftpHandle handle, long position) {
+	SftpFileInputStream(SftpHandle handle, long position) throws SftpStatusException, SshException {
 		this.handle = handle;
 		this.position = position;
 		this.sftp = handle.getSFTPChannel();
+		this.length = handle.getAttributes().size();
 	}
 
 	/*
@@ -174,18 +179,35 @@ public class SftpFileInputStream extends InputStream {
 			currentMessage = sftp.getResponse(requestid);
 
 			if (currentMessage.getType() == SftpChannel.SSH_FXP_DATA) {
+				if(Log.isDebugEnabled()) {
+					Log.debug("Received SSH_FXP_DATA for {}", handle.getFile().getFilename());
+				}
 				currentMessageRemaining = (int) currentMessage.readInt();
 			} else if (currentMessage.getType() == SftpChannel.SSH_FXP_STATUS) {
 				
 				try {
 					int status = (int) currentMessage.readInt();
 					if (status == SftpStatusException.SSH_FX_EOF) {
+						if(Log.isDebugEnabled()) {
+							Log.debug("Received SSH_FX_EOF for {}", handle.getFile().getFilename());
+						}
 						isEOF = true;
 						return;
 					}
 					if (sftp.getVersion() >= 3) {
 						String desc = currentMessage.readString();
+						if(Log.isDebugEnabled()) {
+							Log.debug("Received SSH_FXP_STATUS {}/{} for {}", 
+									status, 
+									desc,
+									handle.getFile().getFilename());
+						}
+						
 						throw new IOException(desc);
+					}
+					if(Log.isDebugEnabled()) {
+						Log.debug("Received SSH_FXP_STATUS {} for {}", 
+								status, handle.getFile().getFilename());
 					}
 					throw new IOException("Unexpected status " + status);
 				} finally {
@@ -207,7 +229,20 @@ public class SftpFileInputStream extends InputStream {
 	}
 
 	private void bufferMoreData() throws SftpStatusException, SshException {
-		while (outstandingRequests.size() < 100) {
+		
+		/** 
+		 * Read up to length of file
+		 */
+		while (outstandingRequests.size() < 100 && length.longValue() > position) {
+			outstandingRequests.addElement(handle.postReadRequest(position, 32768));
+			position += 32768;
+		}
+		
+		/**
+		 * If there are no requests then add one to ensure we are still reading if file size
+		 * has changed.
+		 */
+		if(outstandingRequests.isEmpty()) {
 			outstandingRequests.addElement(handle.postReadRequest(position, 32768));
 			position += 32768;
 		}

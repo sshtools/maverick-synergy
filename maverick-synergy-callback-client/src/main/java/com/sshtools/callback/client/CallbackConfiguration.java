@@ -32,17 +32,15 @@ public class CallbackConfiguration {
 
 	public static final String DEFAULT_CALLBACK_ID = "CallbackClient";
 	
-	String agentName;
-	String serverHost;
-	int serverPort = 22;
-	String remoteUUID;
-	String localUUID;
-	Long reconnectIntervalMs;
-	SshKeyPair privateKey;
-	SshPublicKey publicKey;
-	String memo;
-	String callbackIdentifier = DEFAULT_CALLBACK_ID;
-	boolean reconnect = true;
+	private String agentName;
+	private String serverHost;
+	private int serverPort = 22;
+	private Long reconnectIntervalMs;
+	private SshKeyPair privateKey;
+	private SshPublicKey publicKey;
+	private String memo;
+	private String callbackIdentifier = DEFAULT_CALLBACK_ID;
+	private boolean reconnect = true;
 	
 	Map<String,Object> properties = new HashMap<>();
 	

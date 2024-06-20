@@ -28,12 +28,12 @@ import java.util.Map;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.GlobalRequest;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 import com.sshtools.synergy.nio.DisconnectRequestFuture;
 import com.sshtools.synergy.nio.ProtocolContext;
+import com.sshtools.synergy.ssh.Connection;
 import com.sshtools.synergy.ssh.TransportProtocol;
 
 /**
@@ -43,17 +43,17 @@ import com.sshtools.synergy.ssh.TransportProtocol;
  */
 public class CallbackSession implements Runnable {
 
-	CallbackConfiguration config;
-	CallbackClient app;
-	ConnectRequestFuture future;
-	
-	boolean isStopped = false;
-	String hostname;
-	int port;
-	Map<String,Object> attributes = new HashMap<String,Object>();
-	int numberOfAuthenticationErrors = 0;
-	long reconnectStartedAt = -1;
-	Throwable exception;
+	private final CallbackClient app;
+	private final String hostname;
+	private final int port;
+
+	private CallbackConfiguration config;
+	private ConnectRequestFuture future;
+	private boolean isStopped = false;
+	private Map<String,Object> attributes = new HashMap<String,Object>();
+	private long reconnectStartedAt = -1;
+	private Throwable exception;
+	private Connection<?> con;
 	
 	public CallbackSession(CallbackConfiguration config, CallbackClient app, String hostname, int port) throws IOException {
 		this.config = config;
@@ -111,6 +111,12 @@ public class CallbackSession implements Runnable {
 			return Math.min(config.getReconnectIntervalMs(), Math.max(0, config.getReconnectIntervalMs() - ( System.currentTimeMillis() - reconnectStartedAt )));
 		}
 	}
+	
+	public void updateMemo(String memo) throws IOException {
+		GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
+				con, ByteArrayWriter.encodeString(config.getMemo()));
+		con.sendGlobalRequest(req, false);
+	}
 
 	public void connect() throws IOException, SshException {
 		
@@ -118,8 +124,6 @@ public class CallbackSession implements Runnable {
 			Log.info("Connecting to {}:{}", hostname, port);
 		}
 		
-		SshConnection con = null;
-
 		future = app.getSshEngine().connect(
 				hostname, 
 				port, 
@@ -155,9 +159,7 @@ public class CallbackSession implements Runnable {
 				if(Log.isInfoEnabled()) {
 					Log.info("Callback {} registering with memo {}", con.getUUID(), config.getMemo());
 				}
-				GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
-						con, ByteArrayWriter.encodeString(config.getMemo()));
-				con.sendGlobalRequest(req, false);
+				updateMemo(config.getMemo());
 				app.onClientConnected(this, con);
 				if(Log.isInfoEnabled()) {
 					Log.info("Client is connected to {}:{}", hostname, port);
@@ -177,7 +179,7 @@ public class CallbackSession implements Runnable {
 			
 			app.onClientStop(this, con);
 			con.removeProperty(CallbackClient.CALLBACK_CLIENT);
-			app.clients.remove(this);
+			app.getClients()	.remove(this);
 		}
 
 		

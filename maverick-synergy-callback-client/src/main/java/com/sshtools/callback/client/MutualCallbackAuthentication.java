@@ -45,10 +45,10 @@ public class MutualCallbackAuthentication<C extends Context> implements Authenti
 
 	public static final int SSH_MSG_USERAUTH_SIGNED_CHALLENGE = 60;
 	
-	AbstractServerTransport<C> transport;
-	AbstractAuthenticationProtocol<C> authentication;
-	SshConnection con;
-	MutualCallbackAuthenticationProvider provider;
+	private AbstractServerTransport<C> transport;
+	private AbstractAuthenticationProtocol<C> authentication;
+	private SshConnection con;
+	private MutualCallbackAuthenticationProvider provider;
 	
 	public static final String AUTHENTICATION_METHOD = "publickey";
 	

@@ -27,6 +27,7 @@ import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,14 +59,13 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 
 	public static final String CALLBACK_CLIENT = "callbackClient";
 	
-	SshEngine ssh = new SshEngine();
-	Set<CallbackSession> clients = new HashSet<CallbackSession>();
-	ExecutorService executor;
-	List<SshKeyPair> hostKeys = new ArrayList<>();
-	ChannelFactory<SshServerContext> channelFactory;
-	List<Object> defaultPolicies = new ArrayList<>();
-	FileFactory fileFactory;
-	String welcomeText = "Callback Client";
+	private SshEngine ssh = new SshEngine();
+	private ExecutorService executor;
+	private List<SshKeyPair> hostKeys = new ArrayList<>();
+	private ChannelFactory<SshServerContext> channelFactory;
+	private List<Object> defaultPolicies = new ArrayList<>();
+	private FileFactory fileFactory;
+	private Set<CallbackSession> clients = Collections.synchronizedSet(new HashSet<CallbackSession>());
 	
 	public CallbackClient() {
 		executor = getExecutorService();
@@ -99,6 +99,22 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		onClientStarting(session);
 		start(session);
 		return session;
+	}
+	
+	public void updateMemo(String memo) throws IOException {
+		synchronized(clients) {
+			IOException exception = null;
+			for(var clnt : clients) {
+				try {
+					clnt.updateMemo(memo);
+				} catch (IOException e) {
+					if(exception == null)
+						exception = e;
+				}
+			}
+			if(exception != null)
+				throw exception;
+		}
 	}
 	
 	public synchronized void start(CallbackSession client) {

@@ -31,7 +31,7 @@ import com.sshtools.common.ssh.components.SshPublicKey;
 
 public class CallbackServerAuthentication extends AbstractPublicKeyAuthenticationProvider {
 
-	Set<SshPublicKey> serverKeys;
+	private Set<SshPublicKey> serverKeys;
 	
 	CallbackServerAuthentication(Set<SshPublicKey> serverKeys) throws IOException {
 		

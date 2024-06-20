@@ -78,9 +78,10 @@ public class SftpFileInputStream extends InputStream {
 	@Deprecated(since = "3.1.0", forRemoval = true)
 	public SftpFileInputStream(SftpFile file, long position) throws SftpStatusException, SshException {
 		this.sftp = file.getSFTPChannel();
+		this.length = file.getAttributes().size();
 		this.handle = file.openFile(SftpChannel.OPEN_READ);
 		this.position = position;
-		this.length = handle.getAttributes().size();
+		
 	}
 	
 	/**
@@ -107,7 +108,7 @@ public class SftpFileInputStream extends InputStream {
 		this.handle = handle;
 		this.position = position;
 		this.sftp = handle.getSFTPChannel();
-		this.length = handle.getAttributes().size();
+		this.length = handle.getFile().getAttributes().size();
 	}
 
 	/*

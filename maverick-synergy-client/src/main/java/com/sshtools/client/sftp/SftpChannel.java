@@ -666,23 +666,14 @@ public class SftpChannel extends AbstractSubsystem {
 	 * @throws SftpStatusException
 	 *             , SshException
 	 */
-	public void getOKRequestStatus(UnsignedInteger32 requestId)
+	public void getOKRequestStatus(UnsignedInteger32 requestId, String path)
 			throws SftpStatusException, SshException {
 
 		SftpMessage bar = getResponse(requestId);
 		try {
 			if (bar.getType() == SSH_FXP_STATUS) {
-				try {
-					throw new SftpStatusException(processStatusResponse(bar));
-				}
-				catch(SftpStatusException sse) {
-					if(sse.getStatus() == SftpStatusException.SSH_FX_OK) {
-						return;
-					}
-					else {
-						throw sse;
-					}
-				}
+				processStatusResponse(bar, path);
+				return;
 			}
 			close();
 			throw new SshException(
@@ -738,9 +729,13 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.writeString(path, CHARSET_ENCODING);
 			msg.write(attrs.toByteArray(getVersion()));
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_SETSTAT for {}", path);
+			}
+			
 			sendMessage(msg);
 
-			getOKRequestStatus(requestId);
+			getOKRequestStatus(requestId, path);
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -810,8 +805,9 @@ public class SftpChannel extends AbstractSubsystem {
 	public void writeFile(byte[] handle, UnsignedInteger64 offset, byte[] data,
 			int off, int len) throws SftpStatusException, SshException {
 
-		getOKRequestStatus(getBestHandle(handle).postWriteRequest(offset.longValue(), data,
-				off, len));
+		SftpHandle h = getBestHandle(handle);
+		getOKRequestStatus(h.postWriteRequest(offset.longValue(), data, off, len),
+				h.getFile().getAbsolutePath());
 	}
 
 	/**
@@ -1075,6 +1071,9 @@ public class SftpChannel extends AbstractSubsystem {
 					"Locks are not supported by the server SFTP version "
 							+ String.valueOf(version));
 		}
+		
+		SftpHandle h = getBestHandle(handle);
+		
 		try {
 			UnsignedInteger32 requestId = nextRequestId();
 			Packet msg = createPacket();
@@ -1085,9 +1084,12 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.writeUINT64(length);
 			msg.writeInt(lockFlags);
 			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_BLOCK for {}", h.getFile().getAbsolutePath());
+			}
 			sendMessage(msg);
 
-			getOKRequestStatus(requestId);
+			getOKRequestStatus(requestId, h.getFile().getAbsolutePath());
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -1115,6 +1117,9 @@ public class SftpChannel extends AbstractSubsystem {
 					"Locks are not supported by the server SFTP version "
 							+ String.valueOf(version));
 		}
+		
+		SftpHandle h = getBestHandle(handle);
+		
 		try {
 			UnsignedInteger32 requestId = nextRequestId();
 			Packet msg = createPacket();
@@ -1124,9 +1129,12 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.writeUINT64(offset);
 			msg.writeUINT64(length);
 			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_UNBLOCK for {}", h.getFile().getAbsolutePath());
+			}
 			sendMessage(msg);
 
-			getOKRequestStatus(requestId);
+			getOKRequestStatus(requestId, h.getFile().getAbsolutePath());
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -1154,6 +1162,7 @@ public class SftpChannel extends AbstractSubsystem {
 					"Symbolic links are not supported by the server SFTP version "
 							+ String.valueOf(version));
 		}
+		
 		try {
 			UnsignedInteger32 requestId = nextRequestId();
 			Packet msg = createPacket();
@@ -1164,10 +1173,16 @@ public class SftpChannel extends AbstractSubsystem {
 			if(version >= 6) {
 				msg.writeBoolean(true);
 			}
+			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_SYMLINK to link {} to {}", 
+						linkpath,
+						targetpath);
+			}
 
 			sendMessage(msg);
 
-			getOKRequestStatus(requestId);
+			getOKRequestStatus(requestId, linkpath);
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -1211,9 +1226,14 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.writeString(targetpath, CHARSET_ENCODING);
 			msg.writeBoolean(symbolic);
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_LINK to link {} to {}", 
+						linkpath,
+						targetpath);
+			}
 			sendMessage(msg);
 
-			getOKRequestStatus(requestId);
+			getOKRequestStatus(requestId, linkpath);
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -1249,18 +1269,23 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.writeInt(requestId.longValue());
 			msg.writeString(linkpath, CHARSET_ENCODING);
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_READLINK for {}", linkpath);
+			}
+			
 			sendMessage(msg);
 
 			SftpMessage fileMsg = getResponse(requestId);
 			if (fileMsg.getType() == SSH_FXP_STATUS) {
-				int status = processStatusResponse(fileMsg);
-				throw new SftpStatusException(status);
-			}
-			try {
-				SftpFile[] files = extractFiles(fileMsg, null);
-				return files[0].getAbsolutePath();
-			} finally {
-				fileMsg.release();
+				processStatusResponse(fileMsg, linkpath);
+				throw new IllegalStateException("Received unexpected SSH_FX_OK in status response!");
+			} else {
+				try {
+					SftpFile[] files = extractFiles(fileMsg, null);
+					return files[0].getAbsolutePath();
+				} finally {
+					fileMsg.release();
+				}
 			}
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
@@ -1296,9 +1321,14 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.write(SSH_FXP_REALPATH);
 			msg.writeInt(requestId.longValue());
 			msg.writeString(path, CHARSET_ENCODING);
+			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_REALPATH for {}", path);
+			}
+			
 			sendMessage(msg);
 
-			return getSingleFileResponse(getResponse(requestId), "SSH_FXP_REALPATH").getAbsolutePath();
+			return getSingleFileResponse(getResponse(requestId), "SSH_FXP_REALPATH", path).getAbsolutePath();
 			
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
@@ -1316,14 +1346,11 @@ public class SftpChannel extends AbstractSubsystem {
 	 * @throws SshException
 	 * @throws SftpStatusException
 	 */
-	public SftpFile getSingleFileResponse(SftpMessage bar, String messageName) throws SshException, SftpStatusException {
+	public SftpFile getSingleFileResponse(SftpMessage bar, String messageName, String path) throws SshException, SftpStatusException {
 		try {
 			if (bar.getType() == SSH_FXP_NAME) {
 				SftpFile[] files = extractFiles(bar, null);
 
-				if(Log.isDebugEnabled()) {
-					Log.debug("Received SSH_FXP_NAME with {} files", files.length);
-				}
 				if (files.length != 1) {
 					close();
 					throw new SshException(
@@ -1332,10 +1359,13 @@ public class SftpChannel extends AbstractSubsystem {
 							SshException.CHANNEL_FAILURE);
 				}
 
+				if(Log.isDebugEnabled()) {
+					Log.debug("Received SSH_FXP_NAME with value {}", files[0].getAbsolutePath());
+				}
 				return files[0];
 			} else if (bar.getType() == SSH_FXP_STATUS) {
-				int status = processStatusResponse(bar);
-				throw new SftpStatusException(status);
+				processStatusResponse(bar, path);
+				throw new IllegalStateException("Received unexpected SSH_FX_OK in status response!");
 			} else {
 				close();
 				throw new SshException(
@@ -1505,14 +1535,14 @@ public class SftpChannel extends AbstractSubsystem {
 	/**
 	 * Open a file.
 	 * 
-	 * @param absolutePath
+	 * @param path
 	 * @param flags
 	 * @param attrs
 	 * @return SftpFile
 	 * @throws SftpStatusException
 	 *             , SshException
 	 */
-	public SftpHandle openFile(String absolutePath, int flags,
+	public SftpHandle openFile(String path, int flags,
 			SftpFileAttributes attrs) throws SftpStatusException, SshException {
 
 		if (version >= 5) {
@@ -1582,7 +1612,7 @@ public class SftpChannel extends AbstractSubsystem {
 				}
 			}
 			
-			return openFileVersion5(absolutePath, newFlags, accessFlags, attrs);
+			return openFileVersion5(path, newFlags, accessFlags, attrs);
 		} else {
 			if (attrs == null) {
 				attrs = SftpFileAttributesBuilder.ofType(
@@ -1595,15 +1625,19 @@ public class SftpChannel extends AbstractSubsystem {
 				Packet msg = createPacket();
 				msg.write(SSH_FXP_OPEN);
 				msg.writeInt(requestId.longValue());
-				msg.writeString(absolutePath, CHARSET_ENCODING);
+				msg.writeString(path, CHARSET_ENCODING);
 				msg.writeInt(flags);
 				msg.write(attrs.toByteArray(getVersion()));
 
+				if(Log.isDebugEnabled()) {
+					Log.debug("Sending SSH_FXP_OPEN for {}", path);
+				}
+				
 				sendMessage(msg);
 
 
-				SftpFile file = new SftpFile(absolutePath, getAttributes(absolutePath), this, null);
-				SftpHandle handle = file.handle(getHandleResponse(requestId));
+				SftpFile file = new SftpFile(path, getAttributes(path), this, null);
+				SftpHandle handle = file.handle(getHandleResponse(requestId, path));
 
 				EventServiceImplementation.getInstance().fireEvent(
 						(new Event(this,
@@ -1620,7 +1654,7 @@ public class SftpChannel extends AbstractSubsystem {
 		}
 	}
 
-	public SftpHandle openFileVersion5(String absolutePath, int flags,
+	public SftpHandle openFileVersion5(String path, int flags,
 			int accessFlags, SftpFileAttributes attrs)
 			throws SftpStatusException, SshException {
 
@@ -1635,15 +1669,19 @@ public class SftpChannel extends AbstractSubsystem {
 			Packet msg = createPacket();
 			msg.write(SSH_FXP_OPEN);
 			msg.writeInt(requestId.longValue());
-			msg.writeString(absolutePath, CHARSET_ENCODING);
+			msg.writeString(path, CHARSET_ENCODING);
 			msg.writeInt(accessFlags);
 			msg.writeInt(flags);
 			msg.write(attrs.toByteArray(getVersion()));
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_OPEN for {}", path);
+			}
+			
 			sendMessage(msg);
 
-			SftpFile file = new SftpFile(absolutePath, getAttributes(absolutePath), this, null);
-			SftpHandle handle = file.handle(getHandleResponse(requestId));
+			SftpFile file = new SftpFile(path, getAttributes(path), this, null);
+			SftpHandle handle = file.handle(getHandleResponse(requestId, path));
 
 			EventServiceImplementation.getInstance().fireEvent(
 					(new Event(this, EventCodes.EVENT_SFTP_FILE_OPENED,
@@ -1684,9 +1722,14 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.write(SSH_FXP_OPENDIR);
 			msg.writeInt(requestId.longValue());
 			msg.writeString(absolutePath, CHARSET_ENCODING);
+			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_OPENDIR for {}", path);
+			}
+			
 			sendMessage(msg);
 			
-			return new SftpFile(absolutePath, attrs, this, null).handle(getHandleResponse(requestId));
+			return new SftpFile(absolutePath, attrs, this, null).handle(getHandleResponse(requestId, path));
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -1714,7 +1757,7 @@ public class SftpChannel extends AbstractSubsystem {
 		}
 	}
 	
-	private SftpHandle getBestHandle(byte[] handle) {
+	SftpHandle getBestHandle(byte[] handle) {
 		synchronized(handles) {
 			var h = handles.get(handle);
 			if(h != null) {
@@ -1756,9 +1799,13 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.writeInt(requestId.longValue());
 			msg.writeString(path, CHARSET_ENCODING);
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_RMDIR for {}", path);
+			}
+			
 			sendMessage(msg);
 
-			getOKRequestStatus(requestId);
+			getOKRequestStatus(requestId, path);
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -1773,22 +1820,26 @@ public class SftpChannel extends AbstractSubsystem {
 	/**
 	 * Remove a file.
 	 * 
-	 * @param filename
+	 * @param path
 	 * @throws SftpStatusException
 	 *             , SshException
 	 */
-	public void removeFile(String filename) throws SftpStatusException,
+	public void removeFile(String path) throws SftpStatusException,
 			SshException {
 		try {
 			UnsignedInteger32 requestId = nextRequestId();
 			Packet msg = createPacket();
 			msg.write(SSH_FXP_REMOVE);
 			msg.writeInt(requestId.longValue());
-			msg.writeString(filename, CHARSET_ENCODING);
+			msg.writeString(path, CHARSET_ENCODING);
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_REMOVE for {}", path);
+			}
+			
 			sendMessage(msg);
 
-			getOKRequestStatus(requestId);
+			getOKRequestStatus(requestId, path);
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -1800,7 +1851,7 @@ public class SftpChannel extends AbstractSubsystem {
 								EventCodes.EVENT_SFTP_FILE_DELETED, true))
 								.addAttribute(
 										EventCodes.ATTRIBUTE_FILE_NAME,
-										filename));
+										path));
 	}
 
 	/**
@@ -1835,9 +1886,13 @@ public class SftpChannel extends AbstractSubsystem {
 			if(version >= 5) {
 				msg.writeInt(flags);
 			}
+			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_RENAME from {} to {}", oldpath, newpath);
+			}
 			sendMessage(msg);
 
-			getOKRequestStatus(requestId);
+			getOKRequestStatus(requestId, newpath);
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -1865,7 +1920,7 @@ public class SftpChannel extends AbstractSubsystem {
 	 */
 	public SftpFileAttributes getAttributes(String path)
 			throws SftpStatusException, SshException {
-		return getAttributes(path, SSH_FXP_STAT);
+		return getAttributes(path, SSH_FXP_STAT, "SSH_FXP_STAT");
 	}
 
 	/**
@@ -1879,10 +1934,10 @@ public class SftpChannel extends AbstractSubsystem {
 	 */
 	public SftpFileAttributes getLinkAttributes(String path)
 			throws SftpStatusException, SshException {
-		return getAttributes(path, SSH_FXP_LSTAT);
+		return getAttributes(path, SSH_FXP_LSTAT, "SSH_FXP_LSTAT");
 	}
 
-	protected SftpFileAttributes getAttributes(String path, int messageId)
+	protected SftpFileAttributes getAttributes(String path, int messageId, String messageName)
 			throws SftpStatusException, SshException {
 		try {
 			UnsignedInteger32 requestId = nextRequestId();
@@ -1908,6 +1963,12 @@ public class SftpChannel extends AbstractSubsystem {
 				
 				msg.writeInt(flags);
 			}
+			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending {} for {}", 
+						messageName,
+						path);
+			}
 
 			sendMessage(msg);
 
@@ -1924,17 +1985,17 @@ public class SftpChannel extends AbstractSubsystem {
 		}
 	}
 
-	SftpFileAttributes extractAttributes(SftpMessage bar, String filename)
+	SftpFileAttributes extractAttributes(SftpMessage bar, String path)
 			throws SftpStatusException, SshException {
 		try {
 			if (bar.getType() == SSH_FXP_ATTRS) {
 				if(Log.isDebugEnabled()) {
-					Log.debug("Received SSH_FXP_ATTRS for {}", filename);
+					Log.debug("Received SSH_FXP_ATTRS for {}", path);
 				}
 				return SftpFileAttributesBuilder.of(bar, getVersion(), getCharsetEncoding()).build();
 			} else if (bar.getType() == SSH_FXP_STATUS) {
-				int status = processStatusResponse(bar);
-				throw new SftpStatusException(status);
+				processStatusResponse(bar, path);
+				throw new IllegalStateException("Received unexpected SSH_FX_OK in status response!");
 			} else {
 				close();
 				throw new SshException(
@@ -1948,10 +2009,20 @@ public class SftpChannel extends AbstractSubsystem {
 		}
 	}
 
-	int processStatusResponse(SftpMessage bar) throws SftpStatusException, IOException {
+	void processStatusResponse(SftpMessage bar, String path) throws SftpStatusException, IOException {
 		
 		int status = (int) bar.readInt();
 
+		if(status == SftpStatusException.SSH_FX_OK) {
+			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Received SSH_FX_OK for {}", 
+						SftpStatusException.getStatusMessage(status),
+						path);
+			}
+			return;
+		}
+		
 		if (version >= 3) {
 			String desc = bar.readString();
 			if(Log.isDebugEnabled()) {
@@ -1965,7 +2036,7 @@ public class SftpChannel extends AbstractSubsystem {
 			Log.debug("Received {}", SftpStatusException.getStatusMessage(status));
 		}
 		
-		return status;
+		throw new SftpStatusException(status);
 	}
 
 	/**
@@ -2019,9 +2090,14 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.writeString(path, CHARSET_ENCODING);
 			msg.write(attrs.toByteArray(getVersion()));
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_MKDIR for {}", 
+						path);
+			}
+			
 			sendMessage(msg);
 
-			getOKRequestStatus(requestId);
+			getOKRequestStatus(requestId, path);
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -2031,15 +2107,15 @@ public class SftpChannel extends AbstractSubsystem {
 	
 	SftpHandle getHandle(SftpMessage bar, SftpFile file) 
 			throws SftpStatusException, SshException {
-		var response = getHandleResponse(bar);
+		var response = getHandleResponse(bar, file.getAbsolutePath());
 		return new SftpHandle(response, this, file);
 	}
 	
-	public SftpMessage getExtendedReply(UnsignedInteger32 requestId) throws SftpStatusException, SshException {
-		return getExtendedReply(getResponse(requestId));
+	public SftpMessage getExtendedReply(UnsignedInteger32 requestId, String path) throws SftpStatusException, SshException {
+		return getExtendedReply(getResponse(requestId), path);
 	}
 	
-	public SftpMessage getExtendedReply(SftpMessage bar) throws SftpStatusException, SshException {
+	public SftpMessage getExtendedReply(SftpMessage bar, String path) throws SftpStatusException, SshException {
 		try {
 			if (bar.getType() == SSH_FXP_EXTENDED_REPLY) {
 				if(Log.isDebugEnabled()) {
@@ -2047,8 +2123,8 @@ public class SftpChannel extends AbstractSubsystem {
 				}
 				return bar;
 			} else if (bar.getType() == SSH_FXP_STATUS) {
-				int status = processStatusResponse(bar);
-				throw new SftpStatusException(status);
+				processStatusResponse(bar, path);
+				throw new IllegalStateException("Received unexpected SSH_FX_OK in status response!");
 			} else {
 				close();
 				throw new SshException(
@@ -2062,17 +2138,17 @@ public class SftpChannel extends AbstractSubsystem {
 		}
 	}
 	
-	public byte[] getHandleResponse(UnsignedInteger32 requestId)
+	public byte[] getHandleResponse(UnsignedInteger32 requestId, String path)
 			throws SftpStatusException, SshException {
-		return getHandleResponse(getResponse(requestId));
+		return getHandleResponse(getResponse(requestId), path);
 	}
 	
 	public SftpHandle getHandle(UnsignedInteger32 requestId, SftpFile file)
 			throws SftpStatusException, SshException {
-		return new SftpHandle(getHandleResponse(getResponse(requestId)), this, file);
+		return new SftpHandle(getHandleResponse(getResponse(requestId), file.getAbsolutePath()), this, file);
 	}
 	
-	public byte[] getHandleResponse(SftpMessage bar)
+	public byte[] getHandleResponse(SftpMessage bar, String path)
 			throws SftpStatusException, SshException {
 
 		try {
@@ -2082,8 +2158,8 @@ public class SftpChannel extends AbstractSubsystem {
 				}
 				return bar.readBinaryString();
 			} else if (bar.getType() == SSH_FXP_STATUS) {
-				int status = processStatusResponse(bar);
-				throw new SftpStatusException(status);
+				processStatusResponse(bar, path);
+				throw new IllegalStateException("Received unexpected SSH_FX_OK in status response!");
 			} else {
 				close();
 				throw new SshException(
@@ -2097,7 +2173,7 @@ public class SftpChannel extends AbstractSubsystem {
 		}
 	}
 
-	SftpMessage getExtensionResponse(UnsignedInteger32 requestId)
+	SftpMessage getExtensionResponse(UnsignedInteger32 requestId, String path)
 			throws SftpStatusException, SshException {
 
 		SftpMessage bar = getResponse(requestId);
@@ -2108,8 +2184,8 @@ public class SftpChannel extends AbstractSubsystem {
 				}
 				return bar;
 			} else if (bar.getType() == SSH_FXP_STATUS) {
-				int status = processStatusResponse(bar);
-				throw new SftpStatusException(status);
+				processStatusResponse(bar, path);
+				throw new IllegalStateException("Received unexpected SSH_FX_OK in status response!");
 			} else {
 				close();
 				throw new SshException(

@@ -162,7 +162,9 @@ public final class SftpHandle implements Closeable {
 			msg.writeBinaryString(destinationHandle.getHandle());
 			msg.writeUINT64(toOffset);
 
-			sftp.getOKRequestStatus(sftp.sendExtensionMessage("copy-data", msg.toByteArray()));
+			sftp.getOKRequestStatus(
+					sftp.sendExtensionMessage("copy-data", msg.toByteArray()), 
+					file.getAbsolutePath());
 
 		}
 	}
@@ -248,7 +250,7 @@ public final class SftpHandle implements Closeable {
 				}
 				sftp.sendMessage(msg);
 
-				sftp.getOKRequestStatus(requestId);
+				sftp.getOKRequestStatus(requestId, file.getAbsolutePath());
 			} catch (SshException | SshIOException | SftpStatusException ex) {
 				throw new IOException("Failed to close handle.", ex);
 			}
@@ -378,7 +380,7 @@ public final class SftpHandle implements Closeable {
 
 			sftp.sendMessage(msg);
 
-			sftp.getOKRequestStatus(requestId);
+			sftp.getOKRequestStatus(requestId, file.getAbsolutePath());
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -545,14 +547,14 @@ public final class SftpHandle implements Closeable {
 					if (requests.size() > maxAsyncRequests) {
 						sftp.requestId = (UnsignedInteger32) requests.elementAt(0);
 						requests.removeElementAt(0);
-						sftp.getOKRequestStatus(sftp.requestId);
+						sftp.getOKRequestStatus(sftp.requestId, file.getAbsolutePath());
 
 					}
 
 				}
 
 				while (requests.size() > 0) {
-					sftp.getOKRequestStatus(requests.remove(0));
+					sftp.getOKRequestStatus(requests.remove(0), file.getAbsolutePath());
 				}
 			}
 
@@ -929,7 +931,8 @@ public final class SftpHandle implements Closeable {
 						baw.writeBinaryString(new byte[0]);
 
 						SftpMessage reply = sftp.getExtensionResponse(
-								sftp.sendExtensionMessage("md5-hash-handle", baw.toByteArray()));
+								sftp.sendExtensionMessage("md5-hash-handle", baw.toByteArray()), 
+								file.getAbsolutePath());
 
 						reply.readString();
 						byte[] remoteDigest = reply.readBinaryString();

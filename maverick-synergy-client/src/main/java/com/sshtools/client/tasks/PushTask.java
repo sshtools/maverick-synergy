@@ -390,7 +390,7 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 				
 				requestId = primarySftpClient.getSubsystemChannel().sendExtensionMessage("create-multipart-file@sshtools.com", msg.toByteArray());
 
-				SftpMessage ext = primarySftpClient.getSubsystemChannel().getExtendedReply(requestId);
+				SftpMessage ext = primarySftpClient.getSubsystemChannel().getExtendedReply(requestId, remotePath);
 				byte[] handle = ext.readBinaryString();
 				var blocksize = ext.readInt();
 				

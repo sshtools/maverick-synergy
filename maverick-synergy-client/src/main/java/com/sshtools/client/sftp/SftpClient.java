@@ -1038,17 +1038,18 @@ public class SftpClient implements Closeable {
 		}
 	}
 	
-	private SftpHandle openDirectoryHandle(String actual, ByteArrayWriter msg) throws SshException, SftpStatusException {
-		SftpFile file = new SftpFile(actual, sftp.getAttributes(actual), sftp, null);
+	private SftpHandle openDirectoryHandle(String path, ByteArrayWriter msg) throws SshException, SftpStatusException {
+		SftpFile file = new SftpFile(path, sftp.getAttributes(path), sftp, null);
 		try {
 			return file.handle(sftp.getHandleResponse(
-					sftp.sendExtensionMessage("open-directory-with-filter@sshtools.com", msg.toByteArray())));
+					sftp.sendExtensionMessage("open-directory-with-filter@sshtools.com", msg.toByteArray()),
+					path));
 		} catch (SftpStatusException e) {
 			if (Boolean.getBoolean("maverick.disableLocalFiltering")) {
 				throw new SshException("Remote server does not support server side filtering",
 						SshException.UNSUPPORTED_OPERATION);
 			}
-			return file.handle(sftp.openDirectory(actual).getHandle());
+			return file.handle(sftp.openDirectory(path).getHandle());
 		}
 	}
 
@@ -2479,7 +2480,9 @@ public class SftpClient implements Closeable {
 				msg.writeString(resolveRemotePath(oldpath));
 				msg.writeString(resolveRemotePath(newpath));
 
-				sftp.getOKRequestStatus(sftp.sendExtensionMessage("posix-rename@openssh.com", msg.toByteArray()));
+				sftp.getOKRequestStatus(
+						sftp.sendExtensionMessage("posix-rename@openssh.com", msg.toByteArray()),
+						newpath);
 
 			} finally {
 				msg.close();
@@ -2499,7 +2502,8 @@ public class SftpClient implements Closeable {
 			msg.writeString(resolveRemotePath(destinationFile));
 			msg.writeBoolean(overwriteDestination);
 
-			sftp.getOKRequestStatus(sftp.sendExtensionMessage("copy-file", msg.toByteArray()));
+			sftp.getOKRequestStatus(sftp.sendExtensionMessage("copy-file", msg.toByteArray()),
+					destinationFile);
 
 		} finally {
 			msg.close();
@@ -2866,7 +2870,9 @@ public class SftpClient implements Closeable {
 			msg.writeUINT64(length);
 			msg.writeBinaryString(quickCheck);
 
-			SftpMessage resp = sftp.getExtensionResponse(sftp.sendExtensionMessage("md5-hash", msg.toByteArray()));
+			SftpMessage resp = sftp.getExtensionResponse(
+					sftp.sendExtensionMessage("md5-hash", msg.toByteArray()),
+					remoteFile);
 
 			resp.readString();
 			return resp.readBinaryString();
@@ -2924,8 +2930,10 @@ public class SftpClient implements Closeable {
 			msg.writeUINT64(length);
 			msg.writeInt(0L);
 
+			SftpHandle h = sftp.getBestHandle(handle);
 			return processCheckFileResponse(
-					sftp.getExtensionResponse(sftp.sendExtensionMessage("check-file-handle", msg.toByteArray())),
+					sftp.getExtensionResponse(sftp.sendExtensionMessage("check-file-handle", msg.toByteArray()),
+							h.getFile().getAbsolutePath()),
 					algorithm);
 
 		} finally {
@@ -2933,20 +2941,21 @@ public class SftpClient implements Closeable {
 		}
 	}
 
-	protected byte[] doCheckFileHandle(String filename, long offset, long length, RemoteHash algorithm)
+	protected byte[] doCheckFileHandle(String path, long offset, long length, RemoteHash algorithm)
 			throws IOException, SftpStatusException, SshException {
 
 		ByteArrayWriter msg = new ByteArrayWriter();
 
 		try {
-			msg.writeString(filename);
+			msg.writeString(path);
 			msg.writeString(algorithm.name());
 			msg.writeUINT64(offset);
 			msg.writeUINT64(length);
 			msg.writeInt(0L);
 
 			return processCheckFileResponse(
-					sftp.getExtensionResponse(sftp.sendExtensionMessage("check-file-name", msg.toByteArray())),
+					sftp.getExtensionResponse(sftp.sendExtensionMessage("check-file-name", msg.toByteArray()),
+							path),
 					algorithm);
 
 		} finally {
@@ -2999,8 +3008,11 @@ public class SftpClient implements Closeable {
 			msg.writeUINT64(length);
 			msg.writeBinaryString(quickCheck);
 
+			SftpHandle h = sftp.getBestHandle(handle);
+			
 			SftpMessage resp = sftp
-					.getExtensionResponse(sftp.sendExtensionMessage("md5-hash-handle", msg.toByteArray()));
+					.getExtensionResponse(sftp.sendExtensionMessage("md5-hash-handle", msg.toByteArray()),
+							h.getFile().getAbsolutePath());
 
 			resp.readString();
 			return resp.readBinaryString();
@@ -3869,7 +3881,7 @@ public class SftpClient implements Closeable {
 			msg.writeString(dst);
 			SftpChannel channel = getSubsystemChannel();
 			UnsignedInteger32 requestId = channel.sendExtensionMessage("hardlink@openssh.com", msg.toByteArray());
-			channel.getOKRequestStatus(requestId);
+			channel.getOKRequestStatus(requestId, dst);
 		} catch (IOException e) {
 			throw new SshException(e);
 		}
@@ -3881,7 +3893,7 @@ public class SftpClient implements Closeable {
 			msg.writeString(username);
 			SftpChannel channel = getSubsystemChannel();
 			UnsignedInteger32 requestId = channel.sendExtensionMessage("home-directory", msg.toByteArray());
-			return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME").getAbsolutePath();
+			return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME", "<username>").getAbsolutePath();
 		} catch (IOException e) {
 			throw new SshException(e);
 		}
@@ -3892,7 +3904,7 @@ public class SftpClient implements Closeable {
 
 		SftpChannel channel = getSubsystemChannel();
 		UnsignedInteger32 requestId = channel.sendExtensionMessage("make-temp-folder", null);
-		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME").getAbsolutePath();
+		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME", "<make-tmp-folder>").getAbsolutePath();
 
 	}
 
@@ -3900,7 +3912,7 @@ public class SftpClient implements Closeable {
 
 		SftpChannel channel = getSubsystemChannel();
 		UnsignedInteger32 requestId = channel.sendExtensionMessage("get-temp-folder", null);
-		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME").getAbsolutePath();
+		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME", "<get-temp-folder>").getAbsolutePath();
 	}
 
 	public StatVfs statVFS(String path) throws SshException, SftpStatusException {
@@ -3911,8 +3923,8 @@ public class SftpClient implements Closeable {
 			UnsignedInteger32 requestId = channel.sendExtensionMessage("statvfs@openssh.com", msg.toByteArray());
 			SftpMessage response = channel.getResponse(requestId);
 			if (response.getType() == SftpChannel.SSH_FXP_STATUS) {
-				int status = sftp.processStatusResponse(response);
-				throw new SftpStatusException(status);
+				sftp.processStatusResponse(response, path);
+				throw new IllegalStateException("Received unexpected SSH_FX_OK in status response!");
 			} else {
 				return new StatVfs(response);
 			}

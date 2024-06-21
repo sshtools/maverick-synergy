@@ -3911,11 +3911,7 @@ public class SftpClient implements Closeable {
 			UnsignedInteger32 requestId = channel.sendExtensionMessage("statvfs@openssh.com", msg.toByteArray());
 			SftpMessage response = channel.getResponse(requestId);
 			if (response.getType() == SftpChannel.SSH_FXP_STATUS) {
-				int status = (int) response.readInt();
-				if (sftp.version >= 3) {
-					String errmsg = response.readString();
-					throw new SftpStatusException(status, errmsg);
-				}
+				int status = sftp.processStatusResponse(response);
 				throw new SftpStatusException(status);
 			} else {
 				return new StatVfs(response);

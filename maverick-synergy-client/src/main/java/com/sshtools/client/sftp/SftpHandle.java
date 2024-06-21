@@ -317,7 +317,7 @@ public final class SftpHandle implements Closeable {
 					SftpFile[] files = sftp.extractFiles(bar, file.getAbsolutePath());
 
 					if (Log.isDebugEnabled()) {
-						Log.debug("THere are {} results in this packet", files.length);
+						Log.debug("There are {} results in this packet", files.length);
 					}
 
 					for (int i = 0; i < files.length; i++) {
@@ -417,7 +417,7 @@ public final class SftpHandle implements Closeable {
 
 			SftpMessage attrMessage = sftp.getResponse(requestId);
 			try {
-				return sftp.extractAttributes(attrMessage);
+				return sftp.extractAttributes(attrMessage, getFile().getFilename());
 			} finally {
 				attrMessage.release();
 			}

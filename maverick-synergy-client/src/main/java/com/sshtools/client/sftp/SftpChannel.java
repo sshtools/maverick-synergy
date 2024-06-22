@@ -1622,7 +1622,6 @@ public class SftpChannel extends AbstractSubsystem {
 
 			try {
 
-				
 				UnsignedInteger32 requestId = nextRequestId();
 				Packet msg = createPacket();
 				msg.write(SSH_FXP_OPEN);
@@ -1638,8 +1637,9 @@ public class SftpChannel extends AbstractSubsystem {
 				sendMessage(msg);
 				byte[] handleResponse = getHandleResponse(requestId, path);
 
-				SftpFileAttributes attributes = getAttributes(path);
-				SftpFile file = new SftpFile(path, attributes, this, null);
+				attrs = getAttributes(path);
+				
+				SftpFile file = new SftpFile(path, attrs, this, null);
 				SftpHandle handle = file.handle(handleResponse);
 
 				EventServiceImplementation.getInstance().fireEvent(

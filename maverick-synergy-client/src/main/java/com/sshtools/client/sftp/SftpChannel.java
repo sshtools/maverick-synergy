@@ -1622,7 +1622,6 @@ public class SftpChannel extends AbstractSubsystem {
 
 			try {
 
-				SftpFileAttributes attributes = getAttributes(path);
 				
 				UnsignedInteger32 requestId = nextRequestId();
 				Packet msg = createPacket();
@@ -1637,10 +1636,11 @@ public class SftpChannel extends AbstractSubsystem {
 				}
 				
 				sendMessage(msg);
+				byte[] handleResponse = getHandleResponse(requestId, path);
 
-
+				SftpFileAttributes attributes = getAttributes(path);
 				SftpFile file = new SftpFile(path, attributes, this, null);
-				SftpHandle handle = file.handle(getHandleResponse(requestId, path));
+				SftpHandle handle = file.handle(handleResponse);
 
 				EventServiceImplementation.getInstance().fireEvent(
 						(new Event(this,

@@ -807,7 +807,7 @@ public class SftpChannel extends AbstractSubsystem {
 
 		SftpHandle h = getBestHandle(handle);
 		getOKRequestStatus(h.postWriteRequest(offset.longValue(), data, off, len),
-				h.getFile().getAbsolutePath());
+				h.getFile() == null ? "<fileless-handle>" : h.getFile().getAbsolutePath());
 	}
 
 	/**

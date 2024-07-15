@@ -434,4 +434,11 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 		this.remoteAddress = remoteAddress;
 	}
 
+	@Override
+	public String toString() {
+		return transport.getUUID();
+	}
+	
+	
+
 }

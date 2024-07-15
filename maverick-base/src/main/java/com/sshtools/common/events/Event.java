@@ -107,6 +107,21 @@ public class Event extends EventObject {
 
         return buff.toString();
     }
+    
+    public String logAttributes() {
+        StringBuffer buff = new StringBuffer();
+        for (String key : eventAttributes.keySet()) {
+            Object value = eventAttributes.get(key);
+            if(buff.length() > 0) {
+            	buff.append(" ");
+            }
+            buff.append(key);
+            buff.append("=");
+            buff.append(String.valueOf(value));
+        }
+
+        return buff.toString();
+    }
 
     /**
      * Add an attribute to the event

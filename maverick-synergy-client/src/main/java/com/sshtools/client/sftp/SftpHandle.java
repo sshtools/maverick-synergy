@@ -43,6 +43,7 @@ import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.Packet;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
+import com.sshtools.common.util.Base64;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.UnsignedInteger32;
@@ -56,7 +57,7 @@ public final class SftpHandle implements Closeable {
 
 	private volatile boolean closed;
 	private volatile boolean performVerification = false;
-
+	
 	SftpHandle(byte[] handle, SftpChannel sftp, SftpFile file) {
 		super();
 		this.handle = handle;
@@ -246,8 +247,9 @@ public final class SftpHandle implements Closeable {
 				msg.writeBinaryString(handle);
 
 				if(Log.isDebugEnabled()) {
-					Log.debug("Sending SSH_FXP_CLOSE for {}", file.getFilename());
+					Log.debug("Sending SSH_FXP_CLOSE for {} requestId={}", file.getFilename(), requestId);
 				}
+				
 				sftp.sendMessage(msg);
 
 				sftp.getOKRequestStatus(requestId, file.getAbsolutePath());
@@ -304,9 +306,10 @@ public final class SftpHandle implements Closeable {
 
 			sftp.sendMessage(msg);
 
-			if (Log.isDebugEnabled()) {
-				Log.debug("Sending list children request");
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_READDIR for {} requestId=", file.getFilename(), requestId);
 			}
+			
 			SftpMessage bar = sftp.getResponse(requestId);
 
 			try {
@@ -378,6 +381,10 @@ public final class SftpHandle implements Closeable {
 			msg.writeBinaryString(handle);
 			msg.write(attrs.toByteArray(sftp.getVersion()));
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_FSETSTAT for {} requestId=", file.getFilename(), requestId);
+			}
+			
 			sftp.sendMessage(msg);
 
 			sftp.getOKRequestStatus(requestId, file.getAbsolutePath());
@@ -415,6 +422,12 @@ public final class SftpHandle implements Closeable {
 						| SftpFileAttributes.SSH_FILEXFER_ATTR_SUBSECOND_TIMES
 						| SftpFileAttributes.SSH_FILEXFER_ATTR_EXTENDED);
 			}
+			
+
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_FSTAT for {} requestId=", file.getFilename(), requestId);
+			}
+			
 			sftp.sendMessage(msg);
 
 			SftpMessage attrMessage = sftp.getResponse(requestId);
@@ -609,6 +622,10 @@ public final class SftpHandle implements Closeable {
 			msg.write(offset.toByteArray());
 			msg.writeInt(len);
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_READ for {} bytes at position {} for {} requestId=", len, offset.toString(), file.getFilename(), requestId);
+			}
+			
 			sftp.sendMessage(msg);
 
 			SftpMessage bar = sftp.getResponse(requestId);
@@ -618,10 +635,10 @@ public final class SftpHandle implements Closeable {
 					byte[] msgdata = bar.readBinaryString();
 					System.arraycopy(msgdata, 0, output, off, msgdata.length);
 
-					if (Log.isDebugEnabled()) {
-						Log.debug("Received SSH_FXP_DATA channel={} requestId={} offset={} blocksize={}",
-								sftp.getSession().getLocalId(), requestId.toString(), offset.toString(), msgdata.length);
+					if(Log.isDebugEnabled()) {
+						Log.debug("Received SSH_FXP_DATA with {} bytes at position {} for {} requestId=", msgdata.length, offset.toString(), file.getFilename(), requestId);
 					}
+					
 					return msgdata.length;
 				} else if (bar.getType() == SftpChannel.SSH_FXP_STATUS) {
 					int status = (int) bar.readInt();
@@ -673,9 +690,8 @@ public final class SftpHandle implements Closeable {
 			msg.writeUINT64(offset);
 			msg.writeInt(len);
 
-			if (Log.isDebugEnabled()) {
-				Log.debug("Sending SSH_FXP_READ channel={} requestId={} offset={} blocksize={}", sftp.getSession().getLocalId(),
-						requestId.toString(), offset, len);
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_READ for {} bytes at position {} for {} requestId=", len, offset, file.getFilename(), requestId);
 			}
 			sftp.sendMessage(msg);
 
@@ -857,6 +873,7 @@ public final class SftpHandle implements Closeable {
 						} catch (IOException e) {
 							throw new TransferCancelledException();
 						}
+						
 						transfered += dataLen;
 						if (progress != null) {
 							progress.progressed(transfered);
@@ -1082,6 +1099,10 @@ public final class SftpHandle implements Closeable {
 			msg.writeUINT64(position);
 			msg.writeBinaryString(data, off, len);
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_WRITE with {} bytes at position {} for {} requestId=", len, position, file.getFilename(), requestId);
+			}
+			
 			sftp.sendMessage(msg);
 
 			return requestId;

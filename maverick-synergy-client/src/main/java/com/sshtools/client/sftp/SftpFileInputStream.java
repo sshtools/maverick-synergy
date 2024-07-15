@@ -44,6 +44,7 @@ public class SftpFileInputStream extends InputStream {
 	private long position;
 	private SftpMessage currentMessage;
 	private int currentMessageRemaining;
+	private long readPosition = 0;
 	private boolean isEOF = false;
 	private boolean error = false;
 	private UnsignedInteger64 length;
@@ -134,6 +135,7 @@ public class SftpFileInputStream extends InputStream {
 				System.arraycopy(currentMessage.array(),
 						currentMessage.getPosition(), buffer, offset, count);
 
+				readPosition += count;
 				currentMessageRemaining -= count;
 				currentMessage.skip(count);
 
@@ -169,10 +171,18 @@ public class SftpFileInputStream extends InputStream {
 			currentMessage = sftp.getResponse(requestid);
 
 			if (currentMessage.getType() == SftpChannel.SSH_FXP_DATA) {
-				if(Log.isDebugEnabled()) {
-					Log.debug("Received SSH_FXP_DATA for {}", handle.getFile().getFilename());
-				}
+				
 				currentMessageRemaining = (int) currentMessage.readInt();
+				
+				if(Log.isDebugEnabled()) {
+					Log.debug("Received SSH_FXP_DATA with {} bytes at position {} for {} requestId={}", 
+							currentMessageRemaining, 
+							readPosition, 
+							handle.getFile().getFilename(),
+							requestid);
+				}
+				
+
 			} else if (currentMessage.getType() == SftpChannel.SSH_FXP_STATUS) {
 				
 				try {
@@ -262,12 +272,18 @@ public class SftpFileInputStream extends InputStream {
 		try {
 			handle.close();
 
-			UnsignedInteger32 requestid;
-			while (!error && outstandingRequests.size() > 0) {
-				requestid = (UnsignedInteger32) outstandingRequests
-						.elementAt(0);
-				outstandingRequests.remove(0);
-				sftp.getResponse(requestid).release();
+			if(!error && outstandingRequests.size() > 0) {
+				if(Log.isWarnEnabled()) {
+					Log.warn("Discarding {} data messages through premature closing of InputStream for file {}", outstandingRequests.size(), handle.getFile().getFilename());
+				}
+				UnsignedInteger32 requestid;
+				while (!error && outstandingRequests.size() > 0) {
+					
+					
+					requestid = (UnsignedInteger32) outstandingRequests.elementAt(0);
+					outstandingRequests.remove(0);
+					sftp.getResponse(requestid).release();
+				}
 			}
 		} catch (SshException ex) {
 			throw new SshIOException(ex);

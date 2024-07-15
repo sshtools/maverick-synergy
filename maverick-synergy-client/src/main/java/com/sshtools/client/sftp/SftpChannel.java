@@ -56,6 +56,7 @@ import com.sshtools.common.ssh.RequestFuture;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
+import com.sshtools.common.util.Base64;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
@@ -2020,7 +2021,6 @@ public class SftpChannel extends AbstractSubsystem {
 			
 			if(Log.isDebugEnabled()) {
 				Log.debug("Received SSH_FX_OK for {}", 
-						SftpStatusException.getStatusMessage(status),
 						path);
 			}
 			return;
@@ -2029,14 +2029,14 @@ public class SftpChannel extends AbstractSubsystem {
 		if (version >= 3) {
 			String desc = bar.readString();
 			if(Log.isDebugEnabled()) {
-				Log.debug("Received {} with message {}", 
-						SftpStatusException.getStatusMessage(status), desc);
+				Log.debug("Received {} with message {} for {}", 
+						SftpStatusException.getStatusMessage(status), desc, path);
 			}
 			throw new SftpStatusException(status, desc);
 		}
 		
 		if(Log.isDebugEnabled()) {
-			Log.debug("Received {}", SftpStatusException.getStatusMessage(status));
+			Log.debug("Received {} for {}", SftpStatusException.getStatusMessage(status), path);
 		}
 		
 		throw new SftpStatusException(status);
@@ -2156,10 +2156,11 @@ public class SftpChannel extends AbstractSubsystem {
 
 		try {
 			if (bar.getType() == SSH_FXP_HANDLE) {
+				byte[] handle = bar.readBinaryString();
 				if(Log.isDebugEnabled()) {
-					Log.debug("Received SSH_FXP_HANDLE");
+					Log.debug("Received SSH_FXP_HANDLE for {} handle={}", path, Base64.encodeBytes(handle, true));
 				}
-				return bar.readBinaryString();
+				return handle;
 			} else if (bar.getType() == SSH_FXP_STATUS) {
 				processStatusResponse(bar, path);
 				throw new IllegalStateException("Received unexpected SSH_FX_OK in status response!");

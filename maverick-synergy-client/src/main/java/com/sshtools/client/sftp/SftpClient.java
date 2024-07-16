@@ -3893,7 +3893,7 @@ public class SftpClient implements Closeable {
 			msg.writeString(username);
 			SftpChannel channel = getSubsystemChannel();
 			UnsignedInteger32 requestId = channel.sendExtensionMessage("home-directory", msg.toByteArray());
-			return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME", "<username>").getAbsolutePath();
+			return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME", "<username>", requestId).getAbsolutePath();
 		} catch (IOException e) {
 			throw new SshException(e);
 		}
@@ -3904,7 +3904,7 @@ public class SftpClient implements Closeable {
 
 		SftpChannel channel = getSubsystemChannel();
 		UnsignedInteger32 requestId = channel.sendExtensionMessage("make-temp-folder", null);
-		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME", "<make-tmp-folder>").getAbsolutePath();
+		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME", "<make-tmp-folder>", requestId).getAbsolutePath();
 
 	}
 
@@ -3912,7 +3912,7 @@ public class SftpClient implements Closeable {
 
 		SftpChannel channel = getSubsystemChannel();
 		UnsignedInteger32 requestId = channel.sendExtensionMessage("get-temp-folder", null);
-		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME", "<get-temp-folder>").getAbsolutePath();
+		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME", "<get-temp-folder>", requestId).getAbsolutePath();
 	}
 
 	public StatVfs statVFS(String path) throws SshException, SftpStatusException {
@@ -3923,7 +3923,7 @@ public class SftpClient implements Closeable {
 			UnsignedInteger32 requestId = channel.sendExtensionMessage("statvfs@openssh.com", msg.toByteArray());
 			SftpMessage response = channel.getResponse(requestId);
 			if (response.getType() == SftpChannel.SSH_FXP_STATUS) {
-				sftp.processStatusResponse(response, path);
+				sftp.processStatusResponse(response, path, requestId);
 				throw new IllegalStateException("Received unexpected SSH_FX_OK in status response!");
 			} else {
 				return new StatVfs(response);

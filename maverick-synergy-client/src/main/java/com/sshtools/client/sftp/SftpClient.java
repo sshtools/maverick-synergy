@@ -1041,9 +1041,9 @@ public class SftpClient implements Closeable {
 	private SftpHandle openDirectoryHandle(String path, ByteArrayWriter msg) throws SshException, SftpStatusException {
 		SftpFile file = new SftpFile(path, sftp.getAttributes(path), sftp, null);
 		try {
-			return file.handle(sftp.getHandleResponse(
+			return sftp.getHandle(
 					sftp.sendExtensionMessage("open-directory-with-filter@sshtools.com", msg.toByteArray()),
-					path));
+					file);
 		} catch (SftpStatusException e) {
 			if (Boolean.getBoolean("maverick.disableLocalFiltering")) {
 				throw new SshException("Remote server does not support server side filtering",

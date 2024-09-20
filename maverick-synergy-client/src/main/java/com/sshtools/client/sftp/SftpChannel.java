@@ -1623,6 +1623,9 @@ public class SftpChannel extends AbstractSubsystem {
 
 			try {
 
+				try {
+					attrs = getAttributes(path);
+				} catch(SftpStatusException e) { }
 				UnsignedInteger32 requestId = nextRequestId();
 				Packet msg = createPacket();
 				msg.write(SSH_FXP_OPEN);
@@ -1636,12 +1639,9 @@ public class SftpChannel extends AbstractSubsystem {
 				}
 				
 				sendMessage(msg);
-				byte[] handleResponse = getHandleResponse(requestId, path);
-
-				attrs = getAttributes(path);
 				
 				SftpFile file = new SftpFile(path, attrs, this, null);
-				SftpHandle handle = file.handle(handleResponse);
+				SftpHandle handle = getHandle(requestId, file);
 
 				EventServiceImplementation.getInstance().fireEvent(
 						(new Event(this,
@@ -1669,6 +1669,11 @@ public class SftpChannel extends AbstractSubsystem {
 		}
 
 		try {
+			
+			try {
+				attrs = getAttributes(path);
+			} catch(SftpStatusException e) { }
+			
 			UnsignedInteger32 requestId = nextRequestId();
 			Packet msg = createPacket();
 			msg.write(SSH_FXP_OPEN);
@@ -1684,8 +1689,8 @@ public class SftpChannel extends AbstractSubsystem {
 			
 			sendMessage(msg);
 
-			SftpFile file = new SftpFile(path, getAttributes(path), this, null);
-			SftpHandle handle = file.handle(getHandleResponse(requestId, path));
+			SftpFile file = new SftpFile(path, attrs, this, null);
+			SftpHandle handle = getHandle(requestId, file);
 
 			EventServiceImplementation.getInstance().fireEvent(
 					(new Event(this, EventCodes.EVENT_SFTP_FILE_OPENED,
@@ -1733,7 +1738,7 @@ public class SftpChannel extends AbstractSubsystem {
 			
 			sendMessage(msg);
 			
-			return new SftpFile(absolutePath, attrs, this, null).handle(getHandleResponse(requestId, path));
+			return getHandle(requestId, new SftpFile(path, attrs, this, ""));
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -2110,7 +2115,7 @@ public class SftpChannel extends AbstractSubsystem {
 	
 	SftpHandle getHandle(SftpMessage bar, SftpFile file, UnsignedInteger32 requestId) 
 			throws SftpStatusException, SshException {
-		var response = getHandleResponse(bar, file.getAbsolutePath(), requestId);
+		var response = getHandleResponse(bar, file, requestId);
 		return new SftpHandle(response, this, file);
 	}
 	
@@ -2141,28 +2146,29 @@ public class SftpChannel extends AbstractSubsystem {
 		}
 	}
 	
-	public byte[] getHandleResponse(UnsignedInteger32 requestId, String path)
-			throws SftpStatusException, SshException {
-		return getHandleResponse(getResponse(requestId), path, requestId);
-	}
-	
+//	public byte[] getHandleResponse(UnsignedInteger32 requestId, String path)
+//			throws SftpStatusException, SshException {
+//		return getHandleResponse(getResponse(requestId), path, requestId);
+//	}
+//	
 	public SftpHandle getHandle(UnsignedInteger32 requestId, SftpFile file)
 			throws SftpStatusException, SshException {
-		return new SftpHandle(getHandleResponse(getResponse(requestId), file.getAbsolutePath(), requestId), this, file);
+		return new SftpHandle(getHandleResponse(getResponse(requestId), file, requestId), this, file);
 	}
 	
-	public byte[] getHandleResponse(SftpMessage bar, String path, UnsignedInteger32 requestId)
+	public byte[] getHandleResponse(SftpMessage bar, SftpFile file, UnsignedInteger32 requestId)
 			throws SftpStatusException, SshException {
 
 		try {
 			if (bar.getType() == SSH_FXP_HANDLE) {
 				byte[] handle = bar.readBinaryString();
 				if(Log.isDebugEnabled()) {
-					Log.debug("Received SSH_FXP_HANDLE for {} handle={}", path, Base64.encodeBytes(handle, true));
+					Log.debug("Received SSH_FXP_HANDLE for {} handle={}", file.getAbsolutePath(), Base64.encodeBytes(handle, true));
 				}
+				handles.put(handle, new SftpHandle(handle, this, file));
 				return handle;
 			} else if (bar.getType() == SSH_FXP_STATUS) {
-				processStatusResponse(bar, path, requestId);
+				processStatusResponse(bar, file.getAbsolutePath(), requestId);
 				throw new IllegalStateException("Received unexpected SSH_FX_OK in status response!");
 			} else {
 				close();

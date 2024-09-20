@@ -1,4 +1,4 @@
-Maverick Synergy 3.1.2 - TBC
+Maverick Synergy 3.1.2 - Sep 20, 2024
 
 Bug Fixes
   o Added strict mode option to SignaturePolicy for clients to require declaration of signature support in SSH_MSG_EXT_INFO when provided.
@@ -10,6 +10,8 @@ Bug Fixes
   o Fixes regression found in callback service where `osshell` would fail to send keyboard input.
   o Logging indicates that an IP address will be temporarily banned even if banning has been disabled.
   o ScpClient and SftpClient have differing strategies for the default sandbox value. By default sandboxing is now turned off for both SFTP and SCP clients.
+  o Client would hang if 'none' authentication succeeded.
+  o Ensure attributes for SftpHandle are requested after file has been opened to maintain messaging strict sequence.
   
 =================
 =  HISTORY      =

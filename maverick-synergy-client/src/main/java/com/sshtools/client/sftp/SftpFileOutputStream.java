@@ -131,7 +131,7 @@ public class SftpFileOutputStream extends OutputStream {
 			// Maybe look for a response
 			if (outstandingRequests.size() > numOutstandingRequests) {
 				UnsignedInteger32 requestid = (UnsignedInteger32) outstandingRequests.elementAt(0);
-				sftp.getOKRequestStatus(requestid);
+				sftp.getOKRequestStatus(requestid, handle.getFile().getAbsolutePath());
 				outstandingRequests.removeElementAt(0);
 			}
 

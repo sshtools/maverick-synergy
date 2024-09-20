@@ -105,13 +105,7 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 					if(Log.isDebugEnabled()) {
 						Log.debug("Upgrading certificate {} to use {} signature", currentKey.getAlgorithm(), signingAlgorithm);
 					}
-				}
-				
-				
-				
-				
-				
-				else if(!policy.getSupportedSignatures().contains(signingAlgorithm)) {
+				} else if(policy.isStrictMode() && !policy.getSupportedSignatures().contains(signingAlgorithm)) {
 					Log.debug("Server does not support {} signature for key {}",
 							currentKey.getSigningAlgorithm(),
 							SshKeyUtils.getOpenSSHFormattedKey(currentKey));

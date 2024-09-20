@@ -31,7 +31,8 @@ import com.sshtools.common.ssh.components.SshPublicKey;
 public class MutualCallbackAuthenticationProvider implements Authenticator {
 
 	public static final String MUTUAL_KEY_AUTHENTICATION = "mutual-key-auth@sshtools.com";
-	MutualKeyAuthenticatonStore authenticationStore;
+	
+	private final MutualKeyAuthenticatonStore authenticationStore;
 	
 	public MutualCallbackAuthenticationProvider(MutualKeyAuthenticatonStore authenticationStore) {
 		this.authenticationStore = authenticationStore;

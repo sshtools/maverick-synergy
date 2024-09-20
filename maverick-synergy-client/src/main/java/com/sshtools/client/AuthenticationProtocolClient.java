@@ -151,6 +151,11 @@ public class AuthenticationProtocolClient implements Service {
 				
 
 				completedAuthentications.add(currentAuthenticator.getName());
+				
+				if(currentAuthenticator.getName().equals("none")) {
+					transport.getConnectFuture().connected(transport, transport.getConnection());
+				} 
+			
 				currentAuthenticator.success();
 
 

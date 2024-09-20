@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.sshtools</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.1.1</version>
+		<version>3.1.2</version>
 	</parent>
 	<artifactId>maverick-bc-fips-tests</artifactId>
 	<name>BouncyCastle FIPS Tests</name>

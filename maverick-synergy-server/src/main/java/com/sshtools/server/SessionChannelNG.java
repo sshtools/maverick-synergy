@@ -50,6 +50,7 @@ import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.ssh.ChannelNG;
 import com.sshtools.synergy.ssh.ChannelOutputStream;
+import com.sshtools.synergy.ssh.TerminalModes;
 
 /**
  * <p>
@@ -109,7 +110,6 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	boolean haltIncomingData = false;
 	long lastActivity = System.currentTimeMillis();
 	boolean agentForwardingRequested;
-	boolean rawMode = false;
 	boolean singleSession = false;
 	ChannelOutputStream stderrOutputStream = new ChannelOutputStream(this, SSH_EXTENDED_DATA_STDERR);
 	
@@ -141,14 +141,6 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		}
 	}
 	
-	public void enableRawMode() {
-		rawMode = true;
-	}
-	
-	public void disableRawMode() {
-		rawMode = false;
-	}
-	
 	public Subsystem getSubsystem() {
 		return subsystem;
 	}
@@ -166,6 +158,13 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		return agentForwardingRequested;
 	}
 	
+	public void pauseDataCaching() {
+		paused = true;
+	}
+	
+	public void resumeDataCaching() {
+		paused = false;
+	}
 	/**
 	 * Implement this method to support agent forwarding.
 	 * 
@@ -173,6 +172,27 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	 */
 	protected boolean requestAgentForwarding(String requestType) {
 		return false;
+	}
+	
+	/**
+	 * If the client requests a pseudo terminal for the session this method will
+	 * be invoked before the shell, exec or subsystem is started.
+	 * <p>
+	 * Deprecated, at version 3.2.0 {@link #allocatePseudoTerminal(String, int, int, int, int, TerminalModes)}.
+	 * will be made abstract and this method will be removed.
+	 * 
+	 * @param term
+	 * @param cols
+	 * @param rows
+	 * @param width
+	 * @param height
+	 * @param modes
+	 * @return boolean
+	 */
+	@Deprecated(forRemoval = true, since = "3.1.2")
+	protected boolean allocatePseudoTerminal(String term, int cols,
+			int rows, int width, int height, byte[] modes) {
+		throw new UnsupportedOperationException("No longer used, instead call allocatePseudoTerminal() with TerminalModes.");
 	}
 	
 	/**
@@ -187,8 +207,10 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	 * @param modes
 	 * @return boolean
 	 */
-	protected abstract boolean allocatePseudoTerminal(String term, int cols,
-			int rows, int width, int height, byte[] modes);
+	protected boolean allocatePseudoTerminal(String term, int cols,
+			int rows, int width, int height, TerminalModes modes) {
+		return allocatePseudoTerminal(term, cols, width, width, height, modes.toByteArray());
+	}
 
 	/**
 	 * When the window (terminal) size changes on the client side, it MAY send
@@ -314,10 +336,10 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 				int rows = (int) bar.readInt();
 				int width = (int) bar.readInt();
 				int height = (int) bar.readInt();
-				byte[] modes = bar.readBinaryString();
 
 				success = allocatePseudoTerminal(term, cols, rows, width,
-						height, modes);
+						height, new TerminalModes.TerminalModesBuilder().fromBytes(bar.readBinaryString()).build());
+				
 				if(Log.isDebugEnabled())
 					Log.debug(term + " pseudo terminal requested");
 				if(Log.isDebugEnabled())

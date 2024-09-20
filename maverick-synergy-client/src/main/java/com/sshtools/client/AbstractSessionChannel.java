@@ -32,6 +32,7 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.synergy.ssh.ChannelNG;
+import com.sshtools.synergy.ssh.TerminalModes;
 
 /**
  * Implements the client side of the SSH Connection protocol session channel
@@ -108,7 +109,7 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 	}
 
 	public RequestFuture allocatePseudoTerminal(String type, int cols, int rows) {
-		return allocatePseudoTerminal(type, cols, rows, 0, 0, null);
+		return allocatePseudoTerminal(type, cols, rows, 0, 0, (TerminalModes)null);
 	}
 
 	public RequestFuture allocatePseudoTerminal(String type, int cols, int rows, PseudoTerminalModes modes) {
@@ -175,8 +176,14 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 		} 
 	}
 
+	@Deprecated(since = "3.1.2", forRemoval = true)
 	public RequestFuture allocatePseudoTerminal(String type, int cols, int rows, int width, int height,
 			PseudoTerminalModes modes) {
+		return allocatePseudoTerminal(type, cols, rows, width, height, TerminalModes.TerminalModesBuilder.create().fromBytes(modes.toByteArray()).build());
+	}
+
+	public RequestFuture allocatePseudoTerminal(String type, int cols, int rows, int width, int height,
+			TerminalModes modes) {
 
 		ByteArrayWriter request = new ByteArrayWriter();
 

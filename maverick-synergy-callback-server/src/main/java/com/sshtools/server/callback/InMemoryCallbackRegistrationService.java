@@ -120,8 +120,8 @@ public class InMemoryCallbackRegistrationService implements CallbackRegistration
 	}
 
 	@Override
-	public void registerCallbackClient(SshConnection con) {
-		callbacks.put(con.getUUID(), new DefaultCallback(con));
+	public void registerCallbackClient(SshConnection con, String memo) {
+		callbacks.put(con.getUUID(), new DefaultCallback(con, memo));
 	}
 
 	@Override

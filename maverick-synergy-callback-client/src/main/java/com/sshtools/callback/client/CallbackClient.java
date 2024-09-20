@@ -23,9 +23,11 @@ package com.sshtools.callback.client;
  */
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,18 +59,23 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 
 	public static final String CALLBACK_CLIENT = "callbackClient";
 	
-	SshEngine ssh = new SshEngine();
-	Set<CallbackSession> clients = new HashSet<CallbackSession>();
-	ExecutorService executor;
-	List<SshKeyPair> hostKeys = new ArrayList<>();
-	ChannelFactory<SshServerContext> channelFactory;
-	List<Object> defaultPolicies = new ArrayList<>();
-	FileFactory fileFactory;
+	private SshEngine ssh = new SshEngine();
+	private ExecutorService executor;
+	private List<SshKeyPair> hostKeys = new ArrayList<>();
+	private ChannelFactory<SshServerContext> channelFactory;
+	private List<Object> defaultPolicies = new ArrayList<>();
+	private FileFactory fileFactory;
+	private Set<CallbackSession> clients = Collections.synchronizedSet(new HashSet<CallbackSession>());
 	
 	public CallbackClient() {
 		executor = getExecutorService();
 		EventServiceImplementation.getInstance().addListener(new DisconnectionListener());
 		channelFactory = new DefaultServerChannelFactory();
+		try {
+			ssh.startup();
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
 	}
 	
 	public SshEngine getSshEngine() {
@@ -92,6 +99,22 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		onClientStarting(session);
 		start(session);
 		return session;
+	}
+	
+	public void updateMemo(String memo) throws IOException {
+		synchronized(clients) {
+			IOException exception = null;
+			for(var clnt : clients) {
+				try {
+					clnt.updateMemo(memo);
+				} catch (IOException e) {
+					if(exception == null)
+						exception = e;
+				}
+			}
+			if(exception != null)
+				throw exception;
+		}
 	}
 	
 	public synchronized void start(CallbackSession client) {
@@ -166,49 +189,21 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 
 		@Override
 		public void processEvent(Event evt) {
-			
 			switch(evt.getId()) {
 			case EventCodes.EVENT_DISCONNECTED:
-				
 				final SshConnection con = (SshConnection)evt.getAttribute(EventCodes.ATTRIBUTE_CONNECTION);
-				
 				if(!executor.isShutdown()) {
 					executor.execute(new Runnable() {
 						public void run() {
 							if(con.containsProperty(CALLBACK_CLIENT)) {
 								CallbackSession client = (CallbackSession) con.getProperty(CALLBACK_CLIENT);
-								
-								if(Log.isInfoEnabled()) {
+								if(client != null) {if(Log.isInfoEnabled()) {
 									Log.info("Disconnected from {}:{}" , 
-											client.getConfig().getServerHost(), 
-											client.getConfig().getServerPort());
-								}
-								
-								onClientStop(client, con);
-								con.removeProperty(CALLBACK_CLIENT);
-								clients.remove(client);
-								
-								if(!client.isStopped() && client.getConfig().isReconnect()) {
-									while(getSshEngine().isStarted()) {
-										
-										if(Log.isInfoEnabled()) {
-											Log.info("Will connect again to {}:{} in {} seconds" , 
-													client.getConfig().getServerHost(), 
-													client.getConfig().getServerPort(), 
-													client.getConfig().getReconnectIntervalMs() / 1000);
-										}
-										try {
-											try {
-												Thread.sleep(client.getConfig().getReconnectIntervalMs());
-											} catch (InterruptedException e1) {
-											}
-											client.connect();
-											break;
-										} catch (IOException e) {
-										}
+										client.getConfig().getServerHost(), 
+										client.getConfig().getServerPort());
 									}
-								} else {
-									stop();
+									con.removeProperty(CALLBACK_CLIENT);
+									clients.remove(client);
 								}
 							} 
 						}
@@ -229,6 +224,7 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		
 		sshContext.setIdleConnectionTimeoutSeconds(0);
 		sshContext.setExtendedIdentificationSanitization(false);
+		
 		for(SshKeyPair key : hostKeys) {
 			sshContext.addHostKey(key);
 		}

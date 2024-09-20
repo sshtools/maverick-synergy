@@ -67,7 +67,9 @@ public class ScpClient extends ScpClientIO {
      * @throws PermissionDeniedException 
      */
     public ScpClient(SshClient ssh) throws PermissionDeniedException, IOException {
-        this(NioFileFactoryBuilder.create().build(), ssh);
+        this(NioFileFactoryBuilder.create()
+        		.withoutSandbox()
+        		.build(), ssh);
     }
 
     /**
@@ -78,7 +80,9 @@ public class ScpClient extends ScpClientIO {
      * @throws IOException
      */
     public ScpClient(File cwd, SshClient ssh) throws PermissionDeniedException, IOException {
-        this(NioFileFactoryBuilder.create().withHome(cwd).build(), ssh);
+        this(NioFileFactoryBuilder.create()
+        		.withoutSandbox()
+        		.withHome(cwd).build(), ssh);
     }
     
     /**

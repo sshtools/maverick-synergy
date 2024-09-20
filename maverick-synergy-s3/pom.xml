@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.sshtools</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.1.1</version>
+		<version>3.1.2</version>
 	</parent>
 	<artifactId>maverick-synergy-s3</artifactId>
 	<name>S3 File System</name>
@@ -12,7 +12,7 @@
 		<dependency>
 			<groupId>com.sshtools</groupId>
 			<artifactId>maverick-base</artifactId>
-			<version>3.1.1</version>
+			<version>3.1.2</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk/s3 -->
 		<dependency>

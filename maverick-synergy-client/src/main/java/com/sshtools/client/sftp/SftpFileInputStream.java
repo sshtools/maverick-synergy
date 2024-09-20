@@ -26,10 +26,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Vector;
 
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.UnsignedInteger32;
+import com.sshtools.common.util.UnsignedInteger64;
 
 /**
  * An InputStream to read the contents of a remote file.
@@ -42,8 +44,10 @@ public class SftpFileInputStream extends InputStream {
 	private long position;
 	private SftpMessage currentMessage;
 	private int currentMessageRemaining;
+	private long readPosition = 0;
 	private boolean isEOF = false;
 	private boolean error = false;
+	private UnsignedInteger64 length;
 	
 	/**
 	 * 
@@ -75,19 +79,10 @@ public class SftpFileInputStream extends InputStream {
 	@Deprecated(since = "3.1.0", forRemoval = true)
 	public SftpFileInputStream(SftpFile file, long position) throws SftpStatusException, SshException {
 		this.sftp = file.getSFTPChannel();
+		this.length = file.attributes().size();
 		this.handle = file.openFile(SftpChannel.OPEN_READ);
 		this.position = position;
-	}
-	
-	/**
-	 * 
-	 * @param handle handle
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 */
-	SftpFileInputStream(SftpHandle handle) throws SftpStatusException,
-			SshException {
-		this(handle, 0);
+		
 	}
 
 	/**
@@ -99,10 +94,11 @@ public class SftpFileInputStream extends InputStream {
 	 * @throws SftpStatusException
 	 * @throws SshException
 	 */
-	SftpFileInputStream(SftpHandle handle, long position) {
+	SftpFileInputStream(SftpHandle handle, long position) throws SftpStatusException, SshException {
 		this.handle = handle;
 		this.position = position;
 		this.sftp = handle.getSFTPChannel();
+		this.length = handle.getFile().attributes().size();
 	}
 
 	/*
@@ -139,6 +135,7 @@ public class SftpFileInputStream extends InputStream {
 				System.arraycopy(currentMessage.array(),
 						currentMessage.getPosition(), buffer, offset, count);
 
+				readPosition += count;
 				currentMessageRemaining -= count;
 				currentMessage.skip(count);
 
@@ -174,18 +171,43 @@ public class SftpFileInputStream extends InputStream {
 			currentMessage = sftp.getResponse(requestid);
 
 			if (currentMessage.getType() == SftpChannel.SSH_FXP_DATA) {
+				
 				currentMessageRemaining = (int) currentMessage.readInt();
+				
+				if(Log.isDebugEnabled()) {
+					Log.debug("Received SSH_FXP_DATA with {} bytes at position {} for {} requestId={}", 
+							currentMessageRemaining, 
+							readPosition, 
+							handle.getFile().getFilename(),
+							requestid);
+				}
+				
+
 			} else if (currentMessage.getType() == SftpChannel.SSH_FXP_STATUS) {
 				
 				try {
 					int status = (int) currentMessage.readInt();
 					if (status == SftpStatusException.SSH_FX_EOF) {
+						if(Log.isDebugEnabled()) {
+							Log.debug("Received SSH_FX_EOF for {}", handle.getFile().getFilename());
+						}
 						isEOF = true;
 						return;
 					}
 					if (sftp.getVersion() >= 3) {
 						String desc = currentMessage.readString();
+						if(Log.isDebugEnabled()) {
+							Log.debug("Received SSH_FXP_STATUS {}/{} for {}", 
+									status, 
+									desc,
+									handle.getFile().getFilename());
+						}
+						
 						throw new IOException(desc);
+					}
+					if(Log.isDebugEnabled()) {
+						Log.debug("Received SSH_FXP_STATUS {} for {}", 
+								status, handle.getFile().getFilename());
 					}
 					throw new IOException("Unexpected status " + status);
 				} finally {
@@ -207,7 +229,20 @@ public class SftpFileInputStream extends InputStream {
 	}
 
 	private void bufferMoreData() throws SftpStatusException, SshException {
-		while (outstandingRequests.size() < 100) {
+		
+		/** 
+		 * Read up to length of file
+		 */
+		while (outstandingRequests.size() < 100 && length.longValue() > position) {
+			outstandingRequests.addElement(handle.postReadRequest(position, 32768));
+			position += 32768;
+		}
+		
+		/**
+		 * If there are no requests then add one to ensure we are still reading if file size
+		 * has changed.
+		 */
+		if(outstandingRequests.isEmpty()) {
 			outstandingRequests.addElement(handle.postReadRequest(position, 32768));
 			position += 32768;
 		}
@@ -237,12 +272,18 @@ public class SftpFileInputStream extends InputStream {
 		try {
 			handle.close();
 
-			UnsignedInteger32 requestid;
-			while (!error && outstandingRequests.size() > 0) {
-				requestid = (UnsignedInteger32) outstandingRequests
-						.elementAt(0);
-				outstandingRequests.remove(0);
-				sftp.getResponse(requestid).release();
+			if(!error && outstandingRequests.size() > 0) {
+				if(Log.isWarnEnabled()) {
+					Log.warn("Discarding {} data messages through premature closing of InputStream for file {}", outstandingRequests.size(), handle.getFile().getFilename());
+				}
+				UnsignedInteger32 requestid;
+				while (!error && outstandingRequests.size() > 0) {
+					
+					
+					requestid = (UnsignedInteger32) outstandingRequests.elementAt(0);
+					outstandingRequests.remove(0);
+					sftp.getResponse(requestid).release();
+				}
 			}
 		} catch (SshException ex) {
 			throw new SshIOException(ex);

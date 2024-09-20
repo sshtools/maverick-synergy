@@ -31,9 +31,8 @@ import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.sshd.AbstractServerTransport;
 
 public class CallbackAuthenticationMechanismFactory<C extends Context> extends DefaultAuthenticationMechanismFactory<C> {
-
 	
-	MutualCallbackAuthenticationProvider provider;
+	private final MutualCallbackAuthenticationProvider provider;
 	
 	public CallbackAuthenticationMechanismFactory(MutualCallbackAuthenticationProvider provider) {
 		this.provider = provider;

@@ -100,7 +100,7 @@ public class AbstractOSCommand extends ShellCommand {
 		if(directory != null)
 			builder.setDirectory(directory.getAbsolutePath());
 		builder.setConsole(false);
-		builder.setEnvironment(env);
+		builder.setEnvironment(penv);
 		pty = builder.start();
 
 		final InputStream in = pty.getInputStream();
@@ -119,13 +119,13 @@ public class AbstractOSCommand extends ShellCommand {
 		
 		shell.addWindowSizeChangeListener(listener);
 
-		console.getSessionChannel().enableRawMode();
+		console.getSessionChannel().pauseDataCaching();
 		
-		console.getSessionChannel().addEventListener(new ChannelEventListener() {
+		ChannelEventListener l = new ChannelEventListener() {
 
 			@Override
 			public void onChannelDataIn(Channel channel, ByteBuffer buffer) {
-				
+
 				byte[] tmp = new byte[buffer.remaining()];
 				buffer.get(tmp);
 
@@ -138,7 +138,8 @@ public class AbstractOSCommand extends ShellCommand {
 					IOUtils.closeStream(in);
 				}
 			}
-		});
+		};
+		console.getSessionChannel().addEventListener(l);
 
 		try {
 			IOUtils.copy(in, console.getSessionChannel().getOutputStream());
@@ -150,7 +151,12 @@ public class AbstractOSCommand extends ShellCommand {
 			}
 		} catch (Exception e) {
 		} finally {
-			console.getSessionChannel().disableRawMode();
+			try {
+				console.getSessionChannel().resumeDataCaching();
+			}
+			finally {
+				console.getSessionChannel().removeEventListener(l);
+			}
 		}
 	}
 

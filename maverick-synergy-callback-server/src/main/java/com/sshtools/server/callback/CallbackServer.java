@@ -37,6 +37,7 @@ import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.server.AbstractSshServer;
+import com.sshtools.server.InMemoryPasswordAuthenticator;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.callback.commands.CallbackCommandFactory;
 import com.sshtools.server.vsession.VirtualChannelFactory;
@@ -57,7 +58,8 @@ public class CallbackServer extends AbstractSshServer {
 	
 	InMemoryMutualKeyAuthenticationStore store = new InMemoryMutualKeyAuthenticationStore();
 	InMemoryCallbackRegistrationService callbacks = new InMemoryCallbackRegistrationService();
-
+	InMemoryPasswordAuthenticator users = new InMemoryPasswordAuthenticator();
+	
 	public CallbackServer() {
 		super();
 	}
@@ -76,6 +78,7 @@ public class CallbackServer extends AbstractSshServer {
 
 	@Override
 	public ProtocolContextFactory<?> getDefaultContextFactory() {
+		addAuthenticator(users);
 		return new CallbackContextFactory(store, callbacks, this);
 	}
 	
@@ -98,8 +101,14 @@ public class CallbackServer extends AbstractSshServer {
 				new SshClientsCommandFactory());
 	}
 	
-	public void addAgentKey(String username, SshKeyPair privateKey, SshPublicKey publicKey) {
+	public CallbackServer addAgentKey(String username, SshKeyPair privateKey, SshPublicKey publicKey) {
 		store.addKey(username, privateKey, publicKey);
+		return this;
+	}
+	
+	public CallbackServer addUser(String username, String password) {
+		users.addUser(username, password.toCharArray());
+		return this;
 	}
 
 }

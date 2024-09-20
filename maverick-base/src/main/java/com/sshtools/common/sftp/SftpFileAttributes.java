@@ -1976,7 +1976,7 @@ public class SftpFileAttributes {
 			str.append('-');
 			break;
 		}
-		str.append(permissions.map(PosixPermissions::asFileModesString).orElse(""));
+		str.append(permissions.map(PosixPermissions::asFileModesString).orElse("---------"));
 		return str.toString();
 	}
 

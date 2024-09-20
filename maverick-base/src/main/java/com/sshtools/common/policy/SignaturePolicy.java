@@ -30,16 +30,34 @@ import java.util.TreeSet;
 public class SignaturePolicy {
 
 	Set<String> supportedSignatures = new TreeSet<>();
-
-	public SignaturePolicy() {
-		
-	}
+	boolean strictMode;
 	
+	public SignaturePolicy() {	
+	}
+		
 	public SignaturePolicy(Collection<String> supportedSignatures) {
 		this.supportedSignatures.addAll(supportedSignatures);
+		this.strictMode = false;
+	}
+	
+	public SignaturePolicy(Collection<String> supportedSignatures, boolean strictMode) {
+		this.supportedSignatures.addAll(supportedSignatures);
+		this.strictMode = strictMode;
 	}
 	
 	public Set<String> getSupportedSignatures() {
 		return Collections.unmodifiableSet(supportedSignatures);
+	}
+	
+	public void setSupportedSignatures(Collection<String> supportedSignatures) {
+		this.supportedSignatures = new TreeSet<>(supportedSignatures);
+	}
+	
+	public boolean isStrictMode() {
+		return strictMode;
+	}
+	
+	public void setStrictMode(boolean strictMode) {
+		this.strictMode = strictMode;
 	}
 }

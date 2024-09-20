@@ -141,7 +141,7 @@ public class EventServiceImplementation implements EventService {
         }
 
         if(Log.isDebugEnabled()) {
-        	Log.debug("Firing {} success={}", getEventName(evt.getId()), evt.getState() ? "true" : "false");
+        	Log.debug("Firing {} success={} {}", getEventName(evt.getId()), evt.getState() ? "true" : "false", evt.logAttributes());
         }
         
         Object obj = (Object) evt.getAttribute(EventCodes.ATTRIBUTE_CONNECTION);
@@ -174,7 +174,7 @@ public class EventServiceImplementation implements EventService {
         }
     }
 
-    public void setProcessAllEventsOnEventException(boolean processAllEventsOnEventException) {
+	public void setProcessAllEventsOnEventException(boolean processAllEventsOnEventException) {
     	this.processAllEventsOnEventException = processAllEventsOnEventException;
     }
 
@@ -186,4 +186,5 @@ public class EventServiceImplementation implements EventService {
 	public void removeListener(EventListener listener) {
 		globalListeners.remove(listener);
 	}
+
 }

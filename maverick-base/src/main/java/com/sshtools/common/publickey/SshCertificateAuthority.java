@@ -1,11 +1,34 @@
 package com.sshtools.common.publickey;
 
+/*-
+ * #%L
+ * Base API
+ * %%
+ * Copyright (C) 2002 - 2024 JADAPTIVE Limited
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Lesser Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * #L%
+ */
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshCertificate;
@@ -72,6 +95,22 @@ public class SshCertificateAuthority {
 			List<CriticalOption> criticalOptions,
 			List<CertificateExtension> extensions,
 			SshKeyPair signedBy) throws SshException, IOException {
+		return generateCertificate(key, serial, type, keyId, validPrincipals,
+				validityDays, Calendar.DAY_OF_MONTH, TimeZone.getTimeZone("UTC"),
+				criticalOptions, extensions, signedBy);
+	}
+	
+	public static SshCertificate generateCertificate(SshKeyPair key, 
+			long serial, 
+			int type,
+			String keyId,
+			List<String> validPrincipals,
+			int validity,
+			int validityTimeUnit,
+			TimeZone timeZone,
+			List<CriticalOption> criticalOptions,
+			List<CertificateExtension> extensions,
+			SshKeyPair signedBy) throws SshException, IOException {
 		
 		switch(type) {
 		case SshCertificate.SSH_CERT_TYPE_HOST:
@@ -89,9 +128,11 @@ public class SshCertificateAuthority {
 		c.set(Calendar.MINUTE, 0);
 		c.set(Calendar.SECOND, 0);
 		c.set(Calendar.MILLISECOND, 0);
+		c.setTimeZone(timeZone);
+		
 		UnsignedInteger64 validAfter = new UnsignedInteger64(c.getTimeInMillis() / 1000);
 		
-		c.add(Calendar.DAY_OF_MONTH, validityDays);
+		c.add(Calendar.DAY_OF_MONTH, validity);
 		UnsignedInteger64 validBefore = new UnsignedInteger64(c.getTimeInMillis() / 1000);
 
 		@SuppressWarnings("unused")

@@ -1,5 +1,27 @@
 package com.sshtools.callback.client;
 
+/*-
+ * #%L
+ * Callback Client API
+ * %%
+ * Copyright (C) 2002 - 2024 JADAPTIVE Limited
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Lesser Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * #L%
+ */
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,17 +32,15 @@ public class CallbackConfiguration {
 
 	public static final String DEFAULT_CALLBACK_ID = "CallbackClient";
 	
-	String agentName;
-	String serverHost;
-	int serverPort = 22;
-	String remoteUUID;
-	String localUUID;
-	Long reconnectIntervalMs;
-	SshKeyPair privateKey;
-	SshPublicKey publicKey;
-	String memo;
-	String callbackIdentifier = DEFAULT_CALLBACK_ID;
-	boolean reconnect = true;
+	private String agentName;
+	private String serverHost;
+	private int serverPort = 22;
+	private Long reconnectIntervalMs;
+	private SshKeyPair privateKey;
+	private SshPublicKey publicKey;
+	private String memo;
+	private String callbackIdentifier = DEFAULT_CALLBACK_ID;
+	private boolean reconnect = true;
 	
 	Map<String,Object> properties = new HashMap<>();
 	

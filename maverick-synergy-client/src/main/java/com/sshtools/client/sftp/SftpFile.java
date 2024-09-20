@@ -1,5 +1,30 @@
 package com.sshtools.client.sftp;
 
+/*-
+ * #%L
+ * Client API
+ * %%
+ * Copyright (C) 2002 - 2024 JADAPTIVE Limited
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Lesser Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * #L%
+ */
+
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import com.sshtools.common.sftp.SftpFileAttributes;
@@ -15,6 +40,7 @@ public final class SftpFile {
   private final SftpChannel sftp;
   private final String absolutePath;
   private final String longname;
+  private final Map<String,Object> properties = new HashMap<>();
   private SftpFileAttributes attrs;
   
   SftpFile(String path, SftpFileAttributes attrs, SftpChannel sftp, String longname) {
@@ -185,12 +211,44 @@ public final class SftpFile {
                              SshException.BAD_API_USAGE);
     }
 
-    if (attrs.isDirectory()) {
+    if (isDirectory()) {
       sftp.removeDirectory(getAbsolutePath());
     }
     else {
       sftp.removeFile(getAbsolutePath());
     }
+  }
+
+  /**
+   * Determine whether the user has write access to the file. This
+   * checks the S_IWUSR flag is set in permissions.
+   *
+   * @return boolean
+   * @throws SftpStatusException
+   * @throws SshException
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
+  public boolean canWrite() throws SftpStatusException, SshException {
+	if(attrs.permissions().has(PosixFilePermission.OWNER_WRITE)) {
+      return true;
+    }
+	return false;
+  }
+
+  /**
+   * Determine whether the user has read access to the file. This
+   * checks the S_IRUSR flag is set in permissions. 
+   *
+   * @return boolean
+   * @throws SftpStatusException
+   * @throws SshException
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
+  public boolean canRead() throws SftpStatusException, SshException {
+    if(attrs.permissions().has(PosixFilePermission.OWNER_READ)) {
+      return true;
+    }
+	return false;
   }
 
   /**
@@ -212,12 +270,144 @@ public final class SftpFile {
   }
 
   /**
+   * Get the files attributes.
+   *
+   * @return SftpFileAttributes
+   * @throws SshException
+   * @throws SftpStatusException
+   * @deprecated 
+   * @see #attributes()
+*/
+  @Deprecated(since = "3.1.0", forRemoval = true)
+  public SftpFileAttributes getAttributes() throws SshException, SftpStatusException {
+    return attrs;
+  }
+
+  /**
    * Get the absolute path
    *
    * @return String
    */
   public String getAbsolutePath() {
     return absolutePath;
+  }
+
+  /**
+   * Determine whether the file object is pointing to a directory. Note,
+   * if the file is a symbolic link pointing to a directory then <code>false</code>
+   * will be returned. Use {@link com.sshtools.sftp.SftpClient#isDirectoryOrLinkedDirectory(SftpFile)} instead if you
+   * wish to follow links.
+   * <p>
+   * Deprecated, see {@link SftpFileAttributes#isDirectory()}.
+   *
+   * @return is directory
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
+  public boolean isDirectory() throws SftpStatusException, SshException {
+    return attrs.isDirectory();
+  }
+
+  /**
+   * Determine whether the file object is pointing to a file.
+   * <p>
+   * Deprecated, see {@link SftpFileAttributes#isDirectory()}.
+   *
+   * @return is file
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
+  */
+  @Deprecated(since = "3.1.0", forRemoval = true)
+  public boolean isFile() throws SftpStatusException, SshException {
+    return attrs.isFile();
+  }
+
+  /**
+   * Determine whether the file object is a symbolic link.
+   *
+   * @return is link
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
+   */
+  public boolean isLink() throws SftpStatusException, SshException {
+    return getAttributes().isLink();
+  }
+
+  /**
+   * Determine whether the file is pointing to a pipe.
+   *
+   * @return is fifo
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
+  public boolean isFifo() throws SftpStatusException, SshException {
+    return getAttributes().isFifo();
+  }
+
+  /**
+   * Determine whether the file is pointing to a block special file.
+   *
+   * @return is block special file
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
+  public boolean isBlock() throws SftpStatusException, SshException {
+    return getAttributes().isBlock();
+  }
+
+  /**
+   * Determine whether the file is pointing to a character mode device.
+   *
+   * @return is character mode device
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
+  public boolean isCharacter() throws SftpStatusException, SshException {
+    return getAttributes().isCharacter();
+  }
+
+  /**
+   * Determine whether the file is pointing to a socket.
+   *
+   * @return is socket file
+   * @throws SshException on SSH error
+   * @throws SftpStatusException on SFTP error
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
+  public boolean isSocket() throws SftpStatusException, SshException {
+	  return getAttributes().isSocket();
+  }
+
+  /** 
+   * Set an arbitrary property in this file object.
+   * <p> 
+   * Deprecated, no replacement.
+   * 
+   * @param key key
+   * @param value vlaue
+   * @deprecated
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
+  public void setProperty(String key, Object value) {
+	  properties.put(key, value);
+  }
+
+  /** 
+   * Get an arbitrary property stored in this file object.
+   * <p> 
+   * Deprecated, no replacement.
+   * 
+   * @param key key
+   * @return value
+   * @deprecated
+   */
+  @Deprecated(since = "3.1.0", forRemoval = true)
+  public Object getProperty(String key) {
+	  return properties.get(key);
   }
   
   SftpHandle openFile(int flags) throws SftpStatusException, SshException {

@@ -1,5 +1,27 @@
 package com.sshtools.client.sftp;
 
+/*-
+ * #%L
+ * Client API
+ * %%
+ * Copyright (C) 2002 - 2024 JADAPTIVE Limited
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Lesser Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * #L%
+ */
+
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
@@ -19,7 +41,6 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -30,12 +51,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
-import java.util.concurrent.TimeUnit;
 
 import com.sshtools.client.SshClient;
 import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
+import com.sshtools.common.files.direct.DirectFileFactory;
 import com.sshtools.common.files.direct.NioFileFactory.NioFileFactoryBuilder;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -44,7 +65,6 @@ import com.sshtools.common.sftp.PosixPermissions;
 import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.RegexSftpFileFilter;
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.sftp.SftpFileFilter;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshConnection;
@@ -56,11 +76,13 @@ import com.sshtools.common.util.EOLProcessor;
 import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.UnsignedInteger32;
+import com.sshtools.common.util.UnsignedInteger64;
 import com.sshtools.common.util.Utils;
 
 /**
  * An abstract task that implements an SFTP client.
  */
+@SuppressWarnings("removal")
 public class SftpClient implements Closeable {
 	/**
 	 * Default buffer size
@@ -329,8 +351,6 @@ public class SftpClient implements Closeable {
 	private boolean stripEOL = false;
 	private boolean forceRemoteEOL;
 	private int transferMode = MODE_BINARY;
-
-	private final Set<String> customRoots;
 	
 	SftpClient(SftpClientBuilder builder) throws SshException, PermissionDeniedException, IOException {
 		var fileFactory = builder.fileFactory.orElseGet(() -> NioFileFactoryBuilder.create().
@@ -343,7 +363,33 @@ public class SftpClient implements Closeable {
 		this.sftp = new SftpChannel(builder.connection.orElseThrow(() -> new IllegalStateException("Either an existing connection or an existing client must be provided.")));
 		this.lcwd = fileFactory.getFile(builder.localPath.orElse(""));
 		this.cwd = builder.remotePath.orElse("");
-		this.customRoots = Collections.unmodifiableSet(builder.customRoots);
+		this.customRoots.addAll(builder.customRoots);
+	}
+
+	@Deprecated(since = "3.1.0", forRemoval =  true)
+	public SftpClient(SshConnection con) throws SshException, PermissionDeniedException, IOException {
+		this(con, new DirectFileFactory(new java.io.File(System.getProperty("user.home"))));
+	}
+
+	@Deprecated(since = "3.1.0", forRemoval =  true)
+	public SftpClient(SshConnection con, AbstractFileFactory<?> fileFactory)
+			throws PermissionDeniedException, IOException, SshException {
+		this.blocksize = this.asyncRequests = -1;
+		this.buffersize = DEFAULT_BUFFER_SIZE;
+		this.lcwd = fileFactory.getFile("");
+		this.cwd = "";
+		this.sftp = new SftpChannel(con);
+	}
+
+	@Deprecated(since = "3.1.0", forRemoval =  true)
+	public SftpClient(SshClient ssh) throws SshException, PermissionDeniedException, IOException {
+		this(ssh.getConnection());
+	}
+
+	@Deprecated(since = "3.1.0", forRemoval =  true)
+	public SftpClient(SshClient ssh, AbstractFileFactory<?> fileFactory)
+			throws SshException, PermissionDeniedException, IOException {
+		this(ssh.getConnection(), fileFactory);
 	}
 
 	/**
@@ -659,6 +705,37 @@ public class SftpClient implements Closeable {
 	}
 
 	/**
+	 * some devices have unusual file system roots such as "flash:", customRoots
+	 * contains these. If a device uses roots like this, and folder traversal on the
+	 * device is required then it must have its root stored in customRoots
+	 * 
+	 * TODO: Make unmodifiable at version 3.2.x.
+	 */
+	private Vector<String> customRoots = new Vector<String>();
+
+	/**
+	 * Add a custom file system root path such as "flash:"
+	 * 
+	 * @param rootPath
+	 * @see SftpClientBuilder#withCustomRoots(String)
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void addCustomRoot(String rootPath) {
+		customRoots.addElement(rootPath);
+	}
+
+	/**
+	 * Remove a custom file system root path such as "flash:"
+	 * 
+	 * @param rootPath
+	 * @see SftpClientBuilder#withCustomRoots(String)
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void removeCustomRoot(String rootPath) {
+		customRoots.removeElement(rootPath);
+	}
+
+	/**
 	 * Tests whether path starts with a custom file system root.
 	 * 
 	 * @param path
@@ -666,7 +743,12 @@ public class SftpClient implements Closeable {
 	 *         <em>false</em> otherwise
 	 */
 	private boolean startsWithCustomRoot(String path) {
-		return customRoots.stream().filter(path::startsWith).findFirst().isPresent();
+		for (Enumeration<String> it = customRoots.elements(); it != null && it.hasMoreElements();) {
+			if (path.startsWith(it.nextElement())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -725,18 +807,14 @@ public class SftpClient implements Closeable {
 		} catch (SftpStatusException ex) {
 			// only create the directory if catch an exception with code file
 			// not found
-			SftpFileAttributesBuilder newattrs = SftpFileAttributesBuilder.create().
-					withCharsetEncoding(sftp.getCharsetEncoding()).
-					withType(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY);
-			
+
+			SftpFileAttributes newattrs = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY,
+					sftp.getCharsetEncoding());
+			;
 			if (applyUmask) {
-				newattrs.withPermissions(PosixPermissionsBuilder.create().
-						fromBitmask(0777 ^ umask).
-						build()
-				);
+				newattrs.setPermissions(PosixPermissionsBuilder.create().fromBitmask(0777 ^ umask).build());
 			}
-			
-			sftp.makeDirectory(actual, newattrs.build());
+			sftp.makeDirectory(actual, newattrs);
 			return;
 		}
 
@@ -788,7 +866,7 @@ public class SftpClient implements Closeable {
 	 * @return boolean
 	 */
 	public boolean isDirectoryOrLinkedDirectory(SftpFile file) throws SftpStatusException, SshException {
-		return file.attributes().isDirectory() || (file.attributes().isLink() && stat(file.getAbsolutePath()).isDirectory());
+		return file.isDirectory() || (file.isLink() && stat(file.getAbsolutePath()).isDirectory());
 	}
 
 	/**
@@ -960,17 +1038,18 @@ public class SftpClient implements Closeable {
 		}
 	}
 	
-	private SftpHandle openDirectoryHandle(String actual, ByteArrayWriter msg) throws SshException, SftpStatusException {
-		SftpFile file = new SftpFile(actual, sftp.getAttributes(actual), sftp, null);
+	private SftpHandle openDirectoryHandle(String path, ByteArrayWriter msg) throws SshException, SftpStatusException {
+		SftpFile file = new SftpFile(path, sftp.getAttributes(path), sftp, null);
 		try {
-			return file.handle(sftp.getHandleResponse(
-					sftp.sendExtensionMessage("open-directory-with-filter@sshtools.com", msg.toByteArray())));
+			return sftp.getHandle(
+					sftp.sendExtensionMessage("open-directory-with-filter@sshtools.com", msg.toByteArray()),
+					file);
 		} catch (SftpStatusException e) {
 			if (Boolean.getBoolean("maverick.disableLocalFiltering")) {
 				throw new SshException("Remote server does not support server side filtering",
 						SshException.UNSUPPORTED_OPERATION);
 			}
-			return file.handle(sftp.openDirectory(actual).getHandle());
+			return file.handle(sftp.openDirectory(path).getHandle());
 		}
 	}
 
@@ -1582,13 +1661,13 @@ public class SftpClient implements Closeable {
 		String remotePath = resolveRemotePath(remote);
 		SftpFileAttributes attrs = sftp.getAttributes(remotePath);
 
-		if (position > attrs.size().longValue()) {
+		if (position > attrs.getSize().longValue()) {
 			throw new SftpStatusException(SftpStatusException.INVALID_RESUME_STATE,
 					"The local file size is greater than the remote file");
 		}
 
 		if (progress != null) {
-			progress.started(attrs.size().longValue() - position, remotePath);
+			progress.started(attrs.getSize().longValue() - position, remotePath);
 		}
 
 		SftpHandle file;
@@ -1627,7 +1706,7 @@ public class SftpClient implements Closeable {
 				local = EOLProcessor.createOutputStream(inputStyle, outputStyle, local);
 			}
 
-			file.performOptimizedRead(attrs.size().longValue(), blocksize, local,
+			file.performOptimizedRead(remotePath, attrs.getSize().longValue(), blocksize, local,
 					asyncRequests, progress, position);
 		} catch (IOException ex) {
 			throw new SftpStatusException(SftpStatusException.SSH_FX_FAILURE,
@@ -1827,6 +1906,12 @@ public class SftpClient implements Closeable {
 		put(in, remote, null, -1, -1);
 	}
 
+	@Deprecated
+	public void append(InputStream in, String remote, FileTransferProgress progress)
+			throws SftpStatusException, SshException, TransferCancelledException {
+		append(in, remote, progress, -1);
+	}
+
 	public void append(InputStream in, String remote, FileTransferProgress progress, long length)
 			throws SftpStatusException, SshException, TransferCancelledException {
 		put(in, remote, progress, -1, length);
@@ -1874,7 +1959,7 @@ public class SftpClient implements Closeable {
 		}
 
 		if (resume) {
-			if (localPath.length() <= attrs.size().longValue()) {
+			if (localPath.length() <= attrs.getSize().longValue()) {
 				try {
 					in.close();
 				} catch (IOException e) {
@@ -1883,7 +1968,7 @@ public class SftpClient implements Closeable {
 						"The remote file size is greater than the local file");
 			}
 			try {
-				position = attrs.size().longValue();
+				position = attrs.getSize().longValue();
 				in.skip(position);
 			} catch (IOException ex) {
 				try {
@@ -1909,7 +1994,13 @@ public class SftpClient implements Closeable {
 
 	public void append(String local, String remote) throws SftpStatusException, SshException,
 			TransferCancelledException, IOException, PermissionDeniedException {
-		append(local, remote, null, -1);
+		append(local, remote, null);
+	}
+
+	@Deprecated
+	public void append(String local, String remote, FileTransferProgress progress) throws SftpStatusException,
+			SshException, TransferCancelledException, IOException, PermissionDeniedException {
+		append(local, remote, progress, - 1);
 	}
 
 	public void append(String local, String remote, FileTransferProgress progress, long length) throws SftpStatusException,
@@ -1990,6 +2081,12 @@ public class SftpClient implements Closeable {
 		put(in, remote, progress, 0, -1);
 	}
 
+	@Deprecated
+	public void put(InputStream in, String remote, FileTransferProgress progress, long position)
+			throws SftpStatusException, SshException, TransferCancelledException {
+		put(in, remote, progress, position, -1);
+	}
+
 	/**
 	 * <p>
 	 * Upload a file to the remote computer reading from the specified <code>
@@ -2011,6 +2108,8 @@ public class SftpClient implements Closeable {
 	public void put(InputStream in, String remote, FileTransferProgress progress, long position, long length)
 			throws SftpStatusException, SshException, TransferCancelledException {
 		String remotePath = resolveRemotePath(remote);
+
+		SftpFileAttributes attrs = null;
 
 		if (transferMode == MODE_TEXT) {
 
@@ -2038,15 +2137,10 @@ public class SftpClient implements Closeable {
 			}
 		}
 
-		SftpFileAttributesBuilder attrs = SftpFileAttributesBuilder.create().
-				withCharsetEncoding(sftp.getCharsetEncoding()).
-				withType(SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR);
+		attrs = new SftpFileAttributes(SftpFileAttributes.SSH_FILEXFER_TYPE_REGULAR, "UTF-8");
 
 		if (applyUmask) {
-			attrs.withPermissions(PosixPermissionsBuilder.create().
-					fromBitmask(0666 ^ umask).
-					build()
-			);
+			attrs.setPermissions(PosixPermissionsBuilder.create().fromBitmask(0666 ^ umask).build());
 		}
 
 		try {
@@ -2057,16 +2151,16 @@ public class SftpClient implements Closeable {
 							"Resume on text mode files is not supported");
 				}
 	
-				internalPut(length, in, remotePath, progress, position, SftpChannel.OPEN_WRITE, attrs.build());
+				internalPut(length, in, remotePath, progress, position, SftpChannel.OPEN_WRITE, attrs);
 			} else {
 	
 				if (position == 0) {
 					if (transferMode == MODE_TEXT && sftp.getVersion() > 3) {
 						internalPut(length, in, remotePath, progress, position, SftpChannel.OPEN_CREATE | SftpChannel.OPEN_TRUNCATE
-								| SftpChannel.OPEN_WRITE | SftpChannel.OPEN_TEXT, attrs.build());
+								| SftpChannel.OPEN_WRITE | SftpChannel.OPEN_TEXT, attrs);
 					} else {
 						internalPut(length, in, remotePath, progress, position,
-								SftpChannel.OPEN_CREATE | SftpChannel.OPEN_TRUNCATE | SftpChannel.OPEN_WRITE, attrs.build());
+								SftpChannel.OPEN_CREATE | SftpChannel.OPEN_TRUNCATE | SftpChannel.OPEN_WRITE, attrs);
 					}
 				} else {
 					/**
@@ -2074,10 +2168,10 @@ public class SftpClient implements Closeable {
 					 */
 					if (transferMode == MODE_TEXT && sftp.getVersion() > 3) {
 						internalPut(length, in, remotePath, progress, position,
-								SftpChannel.OPEN_WRITE | SftpChannel.OPEN_TEXT | SftpChannel.OPEN_APPEND, attrs.build());
+								SftpChannel.OPEN_WRITE | SftpChannel.OPEN_TEXT | SftpChannel.OPEN_APPEND, attrs);
 					} else {
 						internalPut(length, in, remotePath, progress, position, SftpChannel.OPEN_WRITE | SftpChannel.OPEN_APPEND,
-								attrs.build());
+								attrs);
 					}
 				}
 			}
@@ -2183,10 +2277,13 @@ public class SftpClient implements Closeable {
 	public void chown(String uid, String path) throws SftpStatusException, SshException {
 		String actual = resolveRemotePath(path);
 
-		sftp.setAttributes(actual, SftpFileAttributesBuilder.create().
-				withFileAttributes(sftp.getAttributes(actual)).
-				withUidOrUsername(uid).
-				build());
+		SftpFileAttributes attrs = sftp.getAttributes(actual);
+		SftpFileAttributes newAttrs = new SftpFileAttributes(attrs.getType(), sftp.getCharsetEncoding());
+		newAttrs.setUID(uid);
+		if (sftp.getVersion() <= 3) {
+			newAttrs.setGID(attrs.getGID());
+		}
+		sftp.setAttributes(actual, newAttrs);
 
 	}
 
@@ -2219,11 +2316,12 @@ public class SftpClient implements Closeable {
 	public void chown(String uid, String gid, String path) throws SftpStatusException, SshException {
 		String actual = resolveRemotePath(path);
 
-		sftp.setAttributes(actual, SftpFileAttributesBuilder.create().
-				withFileAttributes(sftp.getAttributes(actual)).
-				withUidOrUsername(uid).
-				withGidOrGroup(gid).
-				build());
+		SftpFileAttributes attrs = sftp.getAttributes(actual);
+		SftpFileAttributes newAttrs = new SftpFileAttributes(attrs.getType(), sftp.getCharsetEncoding());
+		newAttrs.setUID(uid);
+		newAttrs.setGID(gid);
+		sftp.setAttributes(actual, newAttrs);
+
 	}
 	
 	/**
@@ -2240,10 +2338,14 @@ public class SftpClient implements Closeable {
 	public void chgrp(String gid, String path) throws SftpStatusException, SshException {
 		String actual = resolveRemotePath(path);
 
-		sftp.setAttributes(actual, SftpFileAttributesBuilder.create().
-				withFileAttributes(sftp.getAttributes(actual)).
-				withGidOrGroup(gid).
-				build());
+		SftpFileAttributes attrs = sftp.getAttributes(actual);
+		SftpFileAttributes newAttrs = new SftpFileAttributes(attrs.getType(), sftp.getCharsetEncoding());
+		newAttrs.setGID(gid);
+		if (sftp.getVersion() <= 3) {
+			newAttrs.setUID(attrs.getUID());
+		}
+		sftp.setAttributes(actual, newAttrs);
+
 	}
 
 	/**
@@ -2264,13 +2366,51 @@ public class SftpClient implements Closeable {
 	 * @throws SshException
 	 */
 	public void chmod(PosixPermissions permissions, String path) throws SftpStatusException, SshException {
-		String actual = resolveRemotePath(path);
+		chmod(permissions.asInt(), path);
+	}
 
-		sftp.setAttributes(actual, SftpFileAttributesBuilder.create().
-				withFileAttributes(sftp.getAttributes(actual)).
-				withPermissions(permissions).
-				build());
-		
+	/**
+	 * <p>
+	 * Changes the access permissions or modes of the specified file or directory.
+	 * </p>
+	 * 
+	 * <p>
+	 * Modes determine who can read, change or execute a file.
+	 * </p>
+	 * <blockquote>
+	 * 
+	 * <pre>
+	 * Absolute modes are octal numbers specifying the complete list of
+	 * attributes for the files; you specify attributes by OR'ing together
+	 * these bits.
+	 * 
+	 * 0400       Individual read
+	 * 0200       Individual write
+	 * 0100       Individual execute (or list directory)
+	 * 0040       Group read
+	 * 0020       Group write
+	 * 0010       Group execute
+	 * 0004       Other read
+	 * 0002       Other write
+	 * 0001       Other execute
+	 * </pre>
+	 * 
+	 * </blockquote>
+	 * <p>
+	 * Now deprecated, it is recommended {@link PosixPermissions} and {@link PosixPermissionsBuilder} be
+	 * used instead.
+	 * </p>
+	 * 
+	 * @param permissions the absolute mode of the file/directory
+	 * @param path        the path to the file/directory on the remote server
+	 * 
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	@Deprecated(since = "3.1.0")
+	public void chmod(int permissions, String path) throws SftpStatusException, SshException {
+		String actual = resolveRemotePath(path);
+		sftp.changePermissions(actual, permissions);
 	}
 
 	/**
@@ -2340,7 +2480,9 @@ public class SftpClient implements Closeable {
 				msg.writeString(resolveRemotePath(oldpath));
 				msg.writeString(resolveRemotePath(newpath));
 
-				sftp.getOKRequestStatus(sftp.sendExtensionMessage("posix-rename@openssh.com", msg.toByteArray()));
+				sftp.getOKRequestStatus(
+						sftp.sendExtensionMessage("posix-rename@openssh.com", msg.toByteArray()),
+						newpath);
 
 			} finally {
 				msg.close();
@@ -2360,10 +2502,36 @@ public class SftpClient implements Closeable {
 			msg.writeString(resolveRemotePath(destinationFile));
 			msg.writeBoolean(overwriteDestination);
 
-			sftp.getOKRequestStatus(sftp.sendExtensionMessage("copy-file", msg.toByteArray()));
+			sftp.getOKRequestStatus(sftp.sendExtensionMessage("copy-file", msg.toByteArray()),
+					destinationFile);
 
 		} finally {
 			msg.close();
+		}
+	}
+
+	/**
+	 * Copy remotely from one file to another (when supported by extension).
+	 * 
+	 * @param sourceFile source file
+	 * @param fromOffset from offset
+	 * @param length length
+	 * @param destinationFile destination file
+	 * @param toOffset to offset 
+	 * @throws SftpStatusException on SFTP error
+	 * @throws SshException on SSH error
+	 * @throws IOException on IO error
+	 * @deprecated
+	 * @see SftpHandle#copyTo(SftpHandle, UnsignedInteger64, UnsignedInteger64, UnsignedInteger64)
+	 */
+	@Deprecated(since = "3.1.0", forRemoval = true)
+	public void copyRemoteData(SftpFile sourceFile, UnsignedInteger64 fromOffset, UnsignedInteger64 length,
+			SftpFile destinationFile, UnsignedInteger64 toOffset)
+			throws SftpStatusException, SshException, IOException {
+		try(var srcHandle = sourceFile.openFile(SftpChannel.OPEN_READ)) {
+			try(var destHandle = destinationFile.openFile(SftpChannel.OPEN_WRITE | SftpChannel.OPEN_CREATE)) {
+				srcHandle.copyTo(destHandle, fromOffset, length, toOffset);		
+			}
 		}
 	}
 
@@ -2469,14 +2637,14 @@ public class SftpClient implements Closeable {
 			for (int i = 0; i < list.length; i++) {
 				file = list[i];
 
-				if (file.attributes().isDirectory() && !file.getFilename().equals(".") && !file.getFilename().equals("..")) {
+				if (file.isDirectory() && !file.getFilename().equals(".") && !file.getFilename().equals("..")) {
 					if (recurse) {
 						rm(file.getAbsolutePath(), force, recurse);
 					} else {
 						throw new SftpStatusException(SftpStatusException.SSH_FX_FAILURE,
 								"Directory has contents, cannot delete without recurse=true");
 					}
-				} else if (file.attributes().isFile() || file.attributes().isLink()) {
+				} else if (file.isFile() || file.isLink()) {
 					sftp.removeFile(file.getAbsolutePath());
 				}
 			}
@@ -2686,6 +2854,46 @@ public class SftpClient implements Closeable {
 		}
 	}
 
+	@Deprecated
+	public byte[] getRemoteHash(String remoteFile) throws IOException, SftpStatusException, SshException {
+		return getRemoteHash(remoteFile, 0, 0, new byte[0]);
+	}
+
+	@Deprecated
+	public byte[] getRemoteHash(String remoteFile, long offset, long length, byte[] quickCheck)
+			throws IOException, SftpStatusException, SshException {
+		ByteArrayWriter msg = new ByteArrayWriter();
+
+		try {
+			msg.writeString(resolveRemotePath(remoteFile));
+			msg.writeUINT64(offset);
+			msg.writeUINT64(length);
+			msg.writeBinaryString(quickCheck);
+
+			SftpMessage resp = sftp.getExtensionResponse(
+					sftp.sendExtensionMessage("md5-hash", msg.toByteArray()),
+					remoteFile);
+
+			resp.readString();
+			return resp.readBinaryString();
+		} finally {
+			msg.close();
+		}
+
+	}
+
+	@Deprecated
+	public byte[] getRemoteHash(byte[] handle) throws IOException, SftpStatusException, SshException {
+		return getRemoteHash(handle, 0, 0, new byte[0]);
+	}
+
+	@Deprecated
+	public byte[] getRemoteHash(byte[] handle, long offset, long length, byte[] quickCheck)
+			throws IOException, SftpStatusException, SshException {
+
+		return doMD5HashHandle(handle, offset, length, quickCheck);
+	}
+
 	public byte[] getRemoteHash(byte[] handle, RemoteHash algorithm)
 			throws IOException, SftpStatusException, SshException {
 		return getRemoteHash(handle, 0, 0, algorithm);
@@ -2722,8 +2930,10 @@ public class SftpClient implements Closeable {
 			msg.writeUINT64(length);
 			msg.writeInt(0L);
 
+			SftpHandle h = sftp.getBestHandle(handle);
 			return processCheckFileResponse(
-					sftp.getExtensionResponse(sftp.sendExtensionMessage("check-file-handle", msg.toByteArray())),
+					sftp.getExtensionResponse(sftp.sendExtensionMessage("check-file-handle", msg.toByteArray()),
+							h.getFile().getAbsolutePath()),
 					algorithm);
 
 		} finally {
@@ -2731,20 +2941,21 @@ public class SftpClient implements Closeable {
 		}
 	}
 
-	protected byte[] doCheckFileHandle(String filename, long offset, long length, RemoteHash algorithm)
+	protected byte[] doCheckFileHandle(String path, long offset, long length, RemoteHash algorithm)
 			throws IOException, SftpStatusException, SshException {
 
 		ByteArrayWriter msg = new ByteArrayWriter();
 
 		try {
-			msg.writeString(filename);
+			msg.writeString(path);
 			msg.writeString(algorithm.name());
 			msg.writeUINT64(offset);
 			msg.writeUINT64(length);
 			msg.writeInt(0L);
 
 			return processCheckFileResponse(
-					sftp.getExtensionResponse(sftp.sendExtensionMessage("check-file-name", msg.toByteArray())),
+					sftp.getExtensionResponse(sftp.sendExtensionMessage("check-file-name", msg.toByteArray()),
+							path),
 					algorithm);
 
 		} finally {
@@ -2797,8 +3008,11 @@ public class SftpClient implements Closeable {
 			msg.writeUINT64(length);
 			msg.writeBinaryString(quickCheck);
 
+			SftpHandle h = sftp.getBestHandle(handle);
+			
 			SftpMessage resp = sftp
-					.getExtensionResponse(sftp.sendExtensionMessage("md5-hash-handle", msg.toByteArray()));
+					.getExtensionResponse(sftp.sendExtensionMessage("md5-hash-handle", msg.toByteArray()),
+							h.getFile().getAbsolutePath());
 
 			resp.readString();
 			return resp.readBinaryString();
@@ -2886,8 +3100,8 @@ public class SftpClient implements Closeable {
 
 				try {
 					SftpFileAttributes attrs = sftp.getAttributes(remotedir + source.getName());
-					unchangedFile = ((source.length() == attrs.size().longValue())
-							&& ((source.lastModified() / 1000) == attrs.lastModifiedTimeOr().map(ft -> ft.to(TimeUnit.SECONDS)).orElse(0l)));
+					unchangedFile = ((source.length() == attrs.getSize().longValue())
+							&& ((source.lastModified() / 1000) == attrs.getModifiedTime().longValue()));
 
 					System.out.println(source.getName() + " is " + (unchangedFile ? "unchanged" : "changed"));
 
@@ -2906,12 +3120,9 @@ public class SftpClient implements Closeable {
 						// unchanged?
 						put(source.getAbsolutePath(), remotedir + source.getName(), progress);
 						SftpFileAttributes attrs = sftp.getAttributes(remotedir + source.getName());
-						sftp.setAttributes(remotedir + source.getName(), 
-								SftpFileAttributesBuilder.create().
-								withFileAttributes(attrs).
-								withLastAccessTime(source.lastModified()).
-								withCreateTime(source.lastModified()).
-								build());
+						attrs.setTimes(new UnsignedInteger64(source.lastModified() / 1000),
+								new UnsignedInteger64(source.lastModified() / 1000));
+						sftp.setAttributes(remotedir + source.getName(), attrs);
 					}
 
 					if (unchangedFile) {
@@ -2947,14 +3158,14 @@ public class SftpClient implements Closeable {
 						op.addDeletedFile(file);
 
 						if (commit) {
-							if (file.attributes().isDirectory()) {
+							if (file.isDirectory()) {
 								// Recurse through the directory, deleting stuff
 								recurseMarkForDeletion(file, op);
 
 								if (commit) {
 									rm(file.getAbsolutePath(), true, true);
 								}
-							} else if (file.attributes().isFile()) {
+							} else if (file.isFile()) {
 								rm(file.getAbsolutePath());
 							}
 						}
@@ -2984,9 +3195,9 @@ public class SftpClient implements Closeable {
 		for (int i = 0; i < list.length; i++) {
 			file = list[i];
 
-			if (file.attributes().isDirectory() && !file.getFilename().equals(".") && !file.getFilename().equals("..")) {
+			if (file.isDirectory() && !file.getFilename().equals(".") && !file.getFilename().equals("..")) {
 				recurseMarkForDeletion(file, op);
-			} else if (file.attributes().isFile()) {
+			} else if (file.isFile()) {
 				op.addDeletedFile(file);
 			}
 		}
@@ -3025,7 +3236,7 @@ public class SftpClient implements Closeable {
 	 * @return String
 	 */
 	public static String formatLongname(SftpFile file) throws SftpStatusException, SshException {
-		return formatLongname(file.attributes(), file.getFilename());
+		return formatLongname(file.getAttributes(), file.getFilename());
 	}
 
 	/**
@@ -3128,17 +3339,17 @@ public class SftpClient implements Closeable {
 		for (int i = 0; i < files.length; i++) {
 			file = files[i];
 
-			if (file.attributes().isDirectory() && !file.getFilename().equals(".") && !file.getFilename().equals("..")) {
+			if (file.isDirectory() && !file.getFilename().equals(".") && !file.getFilename().equals("..")) {
 				if (recurse) {
 					f = local.resolveFile(file.getFilename());
 					op.addDirectoryOperation(getRemoteDirectory(file.getFilename(),
 							local.getAbsolutePath() + "/" + file.getFilename(), recurse, sync, commit, progress), f);
 				}
-			} else if (file.attributes().isFile()) {
+			} else if (file.isFile()) {
 				f = local.resolveFile(file.getFilename());
 
-				if (f.exists() && (f.length() == file.attributes().size().longValue())
-						&& ((f.lastModified() / 1000) == file.attributes().lastModifiedTimeOr().map(lt -> lt.to(TimeUnit.SECONDS)).orElse(0l))) {
+				if (f.exists() && (f.length() == file.getAttributes().getSize().longValue())
+						&& ((f.lastModified() / 1000) == file.getAttributes().getModifiedTime().longValue())) {
 
 					if (commit) {
 						op.addUnchangedFile(f);
@@ -3670,7 +3881,7 @@ public class SftpClient implements Closeable {
 			msg.writeString(dst);
 			SftpChannel channel = getSubsystemChannel();
 			UnsignedInteger32 requestId = channel.sendExtensionMessage("hardlink@openssh.com", msg.toByteArray());
-			channel.getOKRequestStatus(requestId);
+			channel.getOKRequestStatus(requestId, dst);
 		} catch (IOException e) {
 			throw new SshException(e);
 		}
@@ -3682,7 +3893,7 @@ public class SftpClient implements Closeable {
 			msg.writeString(username);
 			SftpChannel channel = getSubsystemChannel();
 			UnsignedInteger32 requestId = channel.sendExtensionMessage("home-directory", msg.toByteArray());
-			return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME").getAbsolutePath();
+			return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME", "<username>", requestId).getAbsolutePath();
 		} catch (IOException e) {
 			throw new SshException(e);
 		}
@@ -3693,7 +3904,7 @@ public class SftpClient implements Closeable {
 
 		SftpChannel channel = getSubsystemChannel();
 		UnsignedInteger32 requestId = channel.sendExtensionMessage("make-temp-folder", null);
-		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME").getAbsolutePath();
+		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME", "<make-tmp-folder>", requestId).getAbsolutePath();
 
 	}
 
@@ -3701,7 +3912,7 @@ public class SftpClient implements Closeable {
 
 		SftpChannel channel = getSubsystemChannel();
 		UnsignedInteger32 requestId = channel.sendExtensionMessage("get-temp-folder", null);
-		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME").getAbsolutePath();
+		return channel.getSingleFileResponse(channel.getResponse(requestId), "SSH_FXP_NAME", "<get-temp-folder>", requestId).getAbsolutePath();
 	}
 
 	public StatVfs statVFS(String path) throws SshException, SftpStatusException {
@@ -3712,12 +3923,8 @@ public class SftpClient implements Closeable {
 			UnsignedInteger32 requestId = channel.sendExtensionMessage("statvfs@openssh.com", msg.toByteArray());
 			SftpMessage response = channel.getResponse(requestId);
 			if (response.getType() == SftpChannel.SSH_FXP_STATUS) {
-				int status = (int) response.readInt();
-				if (sftp.version >= 3) {
-					String errmsg = response.readString();
-					throw new SftpStatusException(status, errmsg);
-				}
-				throw new SftpStatusException(status);
+				sftp.processStatusResponse(response, path, requestId);
+				throw new IllegalStateException("Received unexpected SSH_FX_OK in status response!");
 			} else {
 				return new StatVfs(response);
 			}
@@ -3751,12 +3958,12 @@ public class SftpClient implements Closeable {
 						return preVisitResult;
 
 					for (SftpFile child : ls(path)) {
-						if (child.attributes().isLink() || child.attributes().isFile()) {
+						if (child.isLink() || child.isFile()) {
 							FileVisitResult fileVisitResult = visitor.visitFile(child, fileToBasicAttributes(child));
 							if (fileVisitResult != FileVisitResult.CONTINUE
 									&& fileVisitResult != FileVisitResult.SKIP_SUBTREE)
 								return fileVisitResult;
-						} else if (child.attributes().isDirectory() && !child.getFilename().equals(".")
+						} else if (child.isDirectory() && !child.getFilename().equals(".")
 								&& !child.getFilename().equals("..")) {
 							switch (visit(child.getAbsolutePath(), visitor)) {
 							case SKIP_SIBLINGS:
@@ -3789,7 +3996,7 @@ public class SftpClient implements Closeable {
 	}
 
 	private BasicFileAttributes fileToBasicAttributes(SftpFile file) {
-		var attrs = file.attributes();
+		var attrs = checkAttributes(file);
 		return new BasicFileAttributes() {
 			@Override
 			public FileTime creationTime() {
@@ -3836,5 +4043,13 @@ public class SftpClient implements Closeable {
 				return attrs.size().longValue();
 			}
 		};
+	}
+
+	private SftpFileAttributes checkAttributes(SftpFile file) {
+		try {
+			return file.getAttributes();
+		} catch (SftpStatusException | SshException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		}
 	}
 }

@@ -1,5 +1,27 @@
 package com.sshtools.server;
 
+/*-
+ * #%L
+ * Server API
+ * %%
+ * Copyright (C) 2002 - 2024 JADAPTIVE Limited
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Lesser Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * #L%
+ */
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -155,6 +177,9 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	/**
 	 * If the client requests a pseudo terminal for the session this method will
 	 * be invoked before the shell, exec or subsystem is started.
+	 * <p>
+	 * Deprecated, at version 3.2.0 {@link #allocatePseudoTerminal(String, int, int, int, int, TerminalModes)}.
+	 * will be made abstract and this method will be removed.
 	 * 
 	 * @param term
 	 * @param cols
@@ -164,8 +189,33 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	 * @param modes
 	 * @return boolean
 	 */
+	@Deprecated(forRemoval = true, since = "3.1.2")
+	protected boolean allocatePseudoTerminal(String term, int cols,
+			int rows, int width, int height, byte[] modes) {
+		throw new UnsupportedOperationException("No longer used, instead call allocatePseudoTerminal() with TerminalModes.");
+	}
+	
+	/**
+	 * If the client requests a pseudo terminal for the session this method will
+	 * be invoked before the shell, exec or subsystem is started.
+	 * 
+	 * @param term
+	 * @param cols
+	 * @param rows
+	 * @param width
+	 * @param height
+	 * @param modes
+	 * @return boolean
+	 */
+<<<<<<< HEAD
 	protected abstract boolean allocatePseudoTerminal(String term, int cols,
 			int rows, int width, int height, TerminalModes modes);
+=======
+	protected boolean allocatePseudoTerminal(String term, int cols,
+			int rows, int width, int height, TerminalModes modes) {
+		return allocatePseudoTerminal(term, cols, width, width, height, modes.toByteArray());
+	}
+>>>>>>> develop_3.1.x
 
 	/**
 	 * When the window (terminal) size changes on the client side, it MAY send

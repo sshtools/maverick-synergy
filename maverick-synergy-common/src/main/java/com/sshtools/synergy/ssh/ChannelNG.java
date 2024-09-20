@@ -1,5 +1,27 @@
 package com.sshtools.synergy.ssh;
 
+/*-
+ * #%L
+ * Common API
+ * %%
+ * Copyright (C) 2002 - 2024 JADAPTIVE Limited
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Lesser Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * #L%
+ */
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,6 +101,14 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	private ChannelOutputStream channelOut = new ChannelOutputStream(this);
 	private boolean autoConsume;
 	protected boolean paused;
+<<<<<<< HEAD
+=======
+	
+	@Deprecated(forRemoval = true, since = "3.1.0")
+	public ChannelNG(String channelType,  int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace, ChannelRequestFuture closeFuture, boolean autoConsume) {
+		this(channelType, maximumPacketSize, new UnsignedInteger32(initialWindowSize), new UnsignedInteger32(maximumWindowSpace), new UnsignedInteger32(minimumWindowSpace), closeFuture, autoConsume);
+	}
+>>>>>>> develop_3.1.x
 	
 	/**
 	 * Construct a channel with the specified settings.

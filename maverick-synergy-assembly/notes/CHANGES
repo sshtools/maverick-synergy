@@ -1,3 +1,30 @@
+Maverick Synergy 3.1.2 - Sep 20, 2024
+
+Bug Fixes
+  o Added strict mode option to SignaturePolicy for clients to require declaration of signature support in SSH_MSG_EXT_INFO when provided.
+  o Specifically calculate dates with UTC time zone set to avoid local time zone defaults.
+  o User and group information can now be defaulted on an AbstractMount.
+  o Changed default public key preference from ecdsa to ed25519.
+  o Incorrect parent mount passed to VirtualMountFile when resolving children.
+  o CommandTaskBulder missing withConnection method.
+  o Fixes regression found in callback service where `osshell` would fail to send keyboard input.
+  o Logging indicates that an IP address will be temporarily banned even if banning has been disabled.
+  o ScpClient and SftpClient have differing strategies for the default sandbox value. By default sandboxing is now turned off for both SFTP and SCP clients.
+  o Client would hang if 'none' authentication succeeded.
+  o Ensure attributes for SftpHandle are requested after file has been opened to maintain messaging strict sequence.
+  
+=================
+=  HISTORY      =
+=================
+
+Maverick Synergy 3.1.1 - 3 Apr, 2024
+
+Bug Fixes
+  o SshClient put file throws No connection or client supplied.
+  o Fixed issue with Terrapin strict kex mode and messages after SSH_MSG_NEWKEYS.
+ 
+-----------------
+
 Maverick Synergy 3.1.0 - Feb 20, 2024
 
 Features
@@ -47,9 +74,7 @@ Other
   o DirectFileJava7 has been deprecated and it's features moved to DirectFile. 
   o PuTTY support moved to it's own module, removing the Bouncycastle requirement in the core classes.
   
-=================
-=  HISTORY      =
-=================
+-----------------
 
 Maverick Synergy 3.0.17 - May 3, 2023
 

@@ -1200,11 +1200,6 @@ public class SshEngine {
 				if(!defaultInstance.startup()) {
 					throw new IOException("Failed to start SSH engine");
 				}
-				Runtime.getRuntime().addShutdownHook(new Thread() {
-					public void run() {
-						defaultInstance.shutdownNow(false, 0L);
-					}
-				});
 				return defaultInstance;
 			}
 	

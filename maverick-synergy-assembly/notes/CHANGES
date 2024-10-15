@@ -1,3 +1,13 @@
+Maverick Synergy 3.2.0 - TBC
+
+Bug Fixes
+  o Fixed connection timeout.
+  o Removed duplicate shutdown hook.
+  
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.1.2 - Sep 20, 2024
 
 Bug Fixes
@@ -13,9 +23,7 @@ Bug Fixes
   o Client would hang if 'none' authentication succeeded.
   o Ensure attributes for SftpHandle are requested after file has been opened to maintain messaging strict sequence.
   
-=================
-=  HISTORY      =
-=================
+------------------
 
 Maverick Synergy 3.1.1 - 3 Apr, 2024
 

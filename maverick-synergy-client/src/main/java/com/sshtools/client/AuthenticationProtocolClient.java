@@ -157,8 +157,7 @@ public class AuthenticationProtocolClient implements Service {
 				} 
 			
 				currentAuthenticator.success();
-
-
+				
 				EventServiceImplementation
 						.getInstance()
 						.fireEvent(
@@ -205,6 +204,10 @@ public class AuthenticationProtocolClient implements Service {
 					currentAuthenticator.success(true, auths.split(","));
 				} else {
 					currentAuthenticator.failure();
+				}
+				
+				synchronized (AuthenticationProtocolClient.this) {
+					this.currentAuthenticator = null;
 				}
 				
 				if(!doNextAuthentication()) {
@@ -283,13 +286,7 @@ public class AuthenticationProtocolClient implements Service {
 				Log.debug("Starting {} authentication", currentAuthenticator.getName());
 			}
 			attempts++;
-			currentAuthenticator.addFutureListener(rf -> {
-				if (rf.isDone()) {
-					synchronized (AuthenticationProtocolClient.this) {
-						currentAuthenticator = null;
-					}
-				}
-			});
+
 			currentAuthenticator.authenticate(transport, username);
 			return true;
 		} 

@@ -40,7 +40,6 @@ import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.Authenticator;
 import com.sshtools.common.command.ExecutableCommand.ExecutableCommandFactory;
 import com.sshtools.common.files.AbstractFileFactory;
-import com.sshtools.common.files.direct.DirectFileHomeFactory;
 import com.sshtools.common.files.direct.NioFileFactory.NioFileFactoryBuilder;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
@@ -79,10 +78,11 @@ public abstract class AbstractSshServer implements Closeable {
 			Collections.unmodifiableCollection(
 					Arrays.asList(new NoOpPasswordAuthenticator(),
 							new NoOpPublicKeyAuthenticator()));
+	
 	protected FileFactory fileFactory = new FileFactory() {
 		@Override
 		public AbstractFileFactory<?> getFileFactory(SshConnection con) throws IOException, PermissionDeniedException {
-			return NioFileFactoryBuilder.create().withHome(new File(new DirectFileHomeFactory().getHomeDirectory(con))).build();
+			return NioFileFactoryBuilder.create().withHome(new File("HOME")).build();
 		}	
 	};
 	

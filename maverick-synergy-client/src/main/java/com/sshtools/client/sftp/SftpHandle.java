@@ -154,7 +154,7 @@ public final class SftpHandle implements Closeable {
 			
 			sftp.sendMessage(msg);
 
-			sftp.getOKRequestStatus(requestId);
+			sftp.getOKRequestStatus(requestId, file);
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -175,7 +175,7 @@ public final class SftpHandle implements Closeable {
 					
 					sftp.sendMessage(msg);
 
-					sftp.getOKRequestStatus(requestId);
+					sftp.getOKRequestStatus(requestId, file);
 				} catch (SftpStatusException | SshException e) {
 					throw new IOException(e);
 				}
@@ -1141,12 +1141,12 @@ public final class SftpHandle implements Closeable {
 			String longname = null;
 
 			for (int i = 0; i < files.length; i++) {
-				shortname = bar.readString(SftpChannel.CHARSET_ENCODING); 
+				shortname = bar.readString(sftp.CHARSET_ENCODING); 
 
 				if (sftp.version <= 3) {
 					// read and throw away the longname as don't use it but need
 					// to read it out of the bar to advance the position.
-					longname = bar.readString(SftpChannel.CHARSET_ENCODING);
+					longname = bar.readString(sftp.CHARSET_ENCODING);
 				}
 
 				var bldr = SftpFileAttributesBuilder.of(bar, sftp.getVersion(), sftp.getCharsetEncoding());
@@ -1170,7 +1170,7 @@ public final class SftpHandle implements Closeable {
 				}
 
 				files[i] = new SftpFile(parent != null ? parent + shortname
-						: shortname, bldr.build(), sftp, longname);
+						: shortname, bldr.build(), longname);
 			}
 
 			return files;
@@ -1183,8 +1183,7 @@ public final class SftpHandle implements Closeable {
 	
 	private void writeFile(UnsignedInteger64 offset, byte[] data,
 			int off, int len) throws SftpStatusException, SshException {
-		sftp.getOKRequestStatus(postWriteRequest(offset.longValue(), data,
-				off, len));
+		sftp.getOKRequestStatus(postWriteRequest(offset.longValue(), data, off, len), file);
 	}
 
 	

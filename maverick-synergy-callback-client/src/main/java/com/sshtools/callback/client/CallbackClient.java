@@ -59,7 +59,7 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 
 	public static final String CALLBACK_CLIENT = "callbackClient";
 	
-<<<<<<< HEAD
+
 	SshEngine ssh = new SshEngine();
 	Set<CallbackSession> clients = new HashSet<CallbackSession>();
 	ExecutorService executor;
@@ -68,15 +68,15 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 	List<Object> defaultPolicies = new ArrayList<>();
 	FileFactory fileFactory;
 	String welcomeText = "Callback Client";
-=======
-	private SshEngine ssh = new SshEngine();
-	private ExecutorService executor;
-	private List<SshKeyPair> hostKeys = new ArrayList<>();
-	private ChannelFactory<SshServerContext> channelFactory;
-	private List<Object> defaultPolicies = new ArrayList<>();
-	private FileFactory fileFactory;
-	private Set<CallbackSession> clients = Collections.synchronizedSet(new HashSet<CallbackSession>());
->>>>>>> develop_3.1.x
+//=======
+//	private SshEngine ssh = new SshEngine();
+//	private ExecutorService executor;
+//	private List<SshKeyPair> hostKeys = new ArrayList<>();
+//	private ChannelFactory<SshServerContext> channelFactory;
+//	private List<Object> defaultPolicies = new ArrayList<>();
+//	private FileFactory fileFactory;
+//	private Set<CallbackSession> clients = Collections.synchronizedSet(new HashSet<CallbackSession>());
+//>>>>>>> develop_3.1.x
 	
 	public CallbackClient() {
 		executor = getExecutorService();

@@ -42,7 +42,9 @@ import com.sshtools.common.files.AbstractFileRandomAccess;
 import com.sshtools.common.files.direct.NioFile;
 import com.sshtools.common.files.direct.NioFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
 
@@ -96,7 +98,7 @@ public class PathFile implements AbstractFile {
 
 	public SftpFileAttributes getAttributes() throws IOException {
 		int type = getFileType();
-		SftpFileAttributes attrs = new SftpFileAttributes(type, "UTF-8");
+		SftpFileAttributesBuilder attrs = SftpFileAttributesBuilder.ofType(type, "UTF-8");
 		long len = 0;
 		long mod = 0;
 		if (type != SftpFileAttributes.SSH_FILEXFER_TYPE_UNKNOWN) {
@@ -105,19 +107,19 @@ public class PathFile implements AbstractFile {
 		}
 		// Extended attributes
 		try {
-			attrs.setGID(String.valueOf(Files.getAttribute(path, "unix:gid", LinkOption.NOFOLLOW_LINKS)));
+			attrs.withGidOrGroup(String.valueOf(Files.getAttribute(path, "unix:gid", LinkOption.NOFOLLOW_LINKS)));
 		} catch (UnsupportedOperationException | IllegalArgumentException uoe) {
 		}
 		try {
-			attrs.setGroup(String.valueOf(Files.getAttribute(path, "unix:group", LinkOption.NOFOLLOW_LINKS)));
+			attrs.withGroup(String.valueOf(Files.getAttribute(path, "unix:group", LinkOption.NOFOLLOW_LINKS)));
 		} catch (UnsupportedOperationException | IllegalArgumentException uoe) {
 		}
 		try {
-			attrs.setUID(String.valueOf(Files.getAttribute(path, "unix:uid", LinkOption.NOFOLLOW_LINKS)));
+			attrs.withUidOrUsername(String.valueOf(Files.getAttribute(path, "unix:uid", LinkOption.NOFOLLOW_LINKS)));
 		} catch (UnsupportedOperationException | IllegalArgumentException uoe) {
 		}
 		try {
-			attrs.setUsername(String.valueOf(Files.getAttribute(path, "unix:owner", LinkOption.NOFOLLOW_LINKS)));
+			attrs.withUsername(String.valueOf(Files.getAttribute(path, "unix:owner", LinkOption.NOFOLLOW_LINKS)));
 		} catch (UnsupportedOperationException | IllegalArgumentException uoe) {
 		}
 		// Permissions
@@ -178,10 +180,10 @@ public class PathFile implements AbstractFile {
 		// public static final int S_IFBLK = 0x6000;
 		// public static final int S_IFCHR = 0x2000;
 		// public static final int S_IFIFO = 0x1000;
-		attrs.setPermissions(new UnsignedInteger32(perm));
-		attrs.setSize(new UnsignedInteger64(len));
-		attrs.setTimes(new UnsignedInteger64(mod / 1000), new UnsignedInteger64(mod / 1000));
-		return attrs;
+		attrs.withPermissions(PosixPermissionsBuilder.create().fromBitmask(mod).build());
+		attrs.withSize(new UnsignedInteger64(len));
+		attrs.withLastModifiedTime(mod / 1000);
+		return attrs.build();
 	}
 
 	@Override
@@ -288,18 +290,18 @@ public class PathFile implements AbstractFile {
 
 	@Override
 	public void setAttributes(SftpFileAttributes attrs) throws IOException {
-		if (attrs.hasModifiedTime()) {
-			Files.setLastModifiedTime(path, FileTime.from(attrs.getModifiedTime().longValue(), TimeUnit.SECONDS));
+		if (attrs.hasLastModifiedTime()) {
+			Files.setLastModifiedTime(path, FileTime.from(attrs.lastModifiedTime().toMillis(), TimeUnit.SECONDS));
 		}
-		if(attrs.hasGID()) {
+		if(attrs.hasGid()) {
 			try {
-				Files.setAttribute(path, "unix:gid", attrs.getGID(), LinkOption.NOFOLLOW_LINKS);
+				Files.setAttribute(path, "unix:gid", attrs.gid(), LinkOption.NOFOLLOW_LINKS);
 			} catch (UnsupportedOperationException | IllegalArgumentException uoe) {
 			}
 		}
-		if(attrs.hasUID()) {
+		if(attrs.hasUid()) {
 			try {
-				Files.setAttribute(path, "unix:uid", attrs.getUID(), LinkOption.NOFOLLOW_LINKS);
+				Files.setAttribute(path, "unix:uid", attrs.uid(), LinkOption.NOFOLLOW_LINKS);
 			} catch (UnsupportedOperationException | IllegalArgumentException uoe) {
 			}
 		}

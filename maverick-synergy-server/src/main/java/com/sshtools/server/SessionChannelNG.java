@@ -207,15 +207,10 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	 * @param modes
 	 * @return boolean
 	 */
-<<<<<<< HEAD
-	protected abstract boolean allocatePseudoTerminal(String term, int cols,
-			int rows, int width, int height, TerminalModes modes);
-=======
 	protected boolean allocatePseudoTerminal(String term, int cols,
 			int rows, int width, int height, TerminalModes modes) {
 		return allocatePseudoTerminal(term, cols, width, width, height, modes.toByteArray());
 	}
->>>>>>> develop_3.1.x
 
 	/**
 	 * When the window (terminal) size changes on the client side, it MAY send

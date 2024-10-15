@@ -61,6 +61,10 @@ public class SftpFileAttributes {
 		public static SftpFileAttributesBuilder create() {
 			return new SftpFileAttributesBuilder();
 		}
+		
+		public static SftpFileAttributesBuilder createWith(SftpFileAttributes attrs) {
+			return new SftpFileAttributesBuilder().fromAttributes(attrs);
+		}
 
 		public static SftpFileAttributesBuilder ofType(int type, String charsetEncoding) {
 			return new SftpFileAttributesBuilder().withType(type).withCharsetEncoding(charsetEncoding);
@@ -510,6 +514,40 @@ public class SftpFileAttributes {
 				}
 			}).orElse("ISO-8859-1");
 		}
+		
+		SftpFileAttributesBuilder fromAttributes(SftpFileAttributes attrs) {
+			
+			this.flags = attrs.flags;
+			this.type = attrs.type;
+			this.version = attrs.version;  
+			this.size = attrs.size;
+			this.allocationSize = attrs.allocationSize;
+			this.aclFlags = attrs.aclFlags;
+			this.acls.clear();
+			this.acls.addAll(attrs.acls);
+			this.attributeBits = attrs.attributeBits;
+			this.attributeBitsValid = attrs.attributeBitsValid;
+			this.createTime = attrs.createTime;
+			this.extendedAttributes.clear();
+			this.extendedAttributes.putAll(attrs.extendedAttributes);
+			this.gid = attrs.gid;
+			this.group = attrs.group;
+			this.lastAccessTime = attrs.lastAccessTime;
+			this.lastAttributesModifiedTime = attrs.lastAttributesModifiedTime;
+			this.lastModifiedTime = attrs.lastModifiedTime;
+			this.linkCount = attrs.linkCount;
+			this.mimeType = attrs.mimeType;
+			this.permissions = attrs.permissions;
+			this.supportedAttributeBits = attrs.supportedAttributeBits;
+			this.supportedAttributeMask = attrs.supportedAttributeMask;
+			this.textHint = attrs.textHint;
+			this.uid = attrs.uid;
+			this.username = attrs.username;
+			this.untranslatedName = attrs.untranslatedName;
+			
+			
+			return this;
+		}
 
 		SftpFileAttributesBuilder fromPacket(ByteArrayReader bar) throws IOException {
 
@@ -744,6 +782,7 @@ public class SftpFileAttributes {
 						attributeBits.map(UnsignedInteger32::longValue).orElse(0l) & ~attributeBit));
 			}
 		}
+
 	}
 
 	public static final long SSH_FILEXFER_ATTR_SIZE = 0x00000001;
@@ -928,6 +967,7 @@ public class SftpFileAttributes {
 	private final Optional<Integer> linkCount;
 	private final Optional<String> untranslatedName;
 	private final int type;
+	private final int version;
 	private final Optional<Integer> uid;
 	private final Optional<Integer> gid;
 	private final long flags;
@@ -943,6 +983,7 @@ public class SftpFileAttributes {
 	private SftpFileAttributes(SftpFileAttributesBuilder builder) {
 		this.size = builder.size;
 		this.type = builder.type;
+		this.version = builder.version;
 		this.charsetEncoding = builder.calcCharset();
 		this.supportedAttributeBits = builder.supportedAttributeBits;
 		this.supportedAttributeMask = builder.supportedAttributeMask;

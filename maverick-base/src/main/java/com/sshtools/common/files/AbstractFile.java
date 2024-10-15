@@ -175,4 +175,8 @@ public interface AbstractFile {
 	default FileVolume getVolume() throws IOException {
 		throw new UnsupportedOperationException("File storage information is not available on this file system.");
 	}
+
+	default void symlinkTo(String target) throws IOException, PermissionDeniedException {
+		throw new UnsupportedOperationException("Symbolic linking is not available on this file system.");
+	}
 }

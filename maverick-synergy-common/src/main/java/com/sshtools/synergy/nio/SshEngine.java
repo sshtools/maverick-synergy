@@ -518,38 +518,30 @@ public class SshEngine {
 
 	}
 	
-    public <K extends ProtocolContext> ConnectRequestFuture connect(String hostToConnect, int portToConnect, K protocolContext) throws SshException, IOException {
+    public <K extends ProtocolContext> ConnectRequestFuture connect(String hostToConnect, int portToConnect, K protocolContext, long timeout) throws SshException, IOException {
 		
     	SocketChannel socketChannel = SocketChannel.open();
 		
-	    socketChannel.configureBlocking(true);
+    	socketChannel.configureBlocking(true);
 	    socketChannel.socket().setTcpNoDelay(true);
 
 	    final ConnectRequestFuture future;
-	    boolean connected;
 	    
 	    switch(protocolContext.getProxyType()) {
 	    case NONE:
 	    	future = new ConnectRequestFuture(hostToConnect, portToConnect);
-	    	connected = socketChannel.connect(new InetSocketAddress(hostToConnect, portToConnect));
+	    	socketChannel.socket().connect(new InetSocketAddress(hostToConnect, portToConnect), (int)timeout);
 	    	break;
 	    default:
 	    	future = new ConnectRequestFuture(protocolContext.getProxyHostname(), protocolContext.getProxyPort());
-	    	connected = socketChannel.connect(new InetSocketAddress(protocolContext.getProxyHostname(), protocolContext.getProxyPort()));
+	    	socketChannel.socket().connect(new InetSocketAddress(protocolContext.getProxyHostname(), protocolContext.getProxyPort()), (int)timeout);
 	    }
 	     
-	    if(connected) {
-	       processOpenSocket(socketChannel, protocolContext, hostToConnect, portToConnect);
-	       socketChannel.configureBlocking(false);
-	       registerClientConnection(protocolContext, socketChannel, future);
-	       
-	    } else {
-		
-		    // Register the connector and we will confirm once we have connected
-			registerConnector(new DaemonClientConnector(protocolContext, socketChannel, future, hostToConnect, portToConnect), socketChannel);
-	    }
+       processOpenSocket(socketChannel, protocolContext, hostToConnect, portToConnect);
+       socketChannel.configureBlocking(false);
+       registerClientConnection(protocolContext, socketChannel, future);
 
-	    return future;
+	   return future;
     }
 
     private void sendHTTPProxyRequest(SocketChannel channel, ProtocolContext protocolContext, String hostToConnect, int portToConnect) throws UnsupportedEncodingException, IOException {

@@ -3,6 +3,7 @@ Maverick Synergy 3.2.0 - TBC
 Bug Fixes
   o Fixed connection timeout.
   o Removed duplicate shutdown hook.
+  o Don't pass properties file parent to register to avoid a NullPointerException on /logging.properties
   
 =================
 =  HISTORY      =

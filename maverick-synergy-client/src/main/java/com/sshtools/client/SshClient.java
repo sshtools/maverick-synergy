@@ -1017,7 +1017,7 @@ public class SshClient implements Closeable {
 		if(onConfigure.isPresent())
 			onConfigure.get().accept(sshContext);
 		try {
-			ConnectRequestFuture future = sshContext.getEngine().connect(hostname, port, sshContext);
+			ConnectRequestFuture future = sshContext.getEngine().connect(hostname, port, sshContext, connectTimeout);
 			future.waitFor(connectTimeout);
 			if(!future.isSuccess()) {
 				var lastErr = future.getLastError();

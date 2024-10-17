@@ -132,7 +132,8 @@ public class CallbackSession implements Runnable {
 		future = app.getSshEngine().connect(
 				hostname, 
 				port, 
-				createContext(config));
+				createContext(config),
+				30000L);
 		
 		future.waitFor(30000L);
 		if(future.isDone() && future.isSuccess()) {

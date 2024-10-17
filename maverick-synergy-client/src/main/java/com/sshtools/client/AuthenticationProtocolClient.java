@@ -117,11 +117,6 @@ public class AuthenticationProtocolClient implements Service {
 		ByteArrayReader bar = new ByteArrayReader(msg);
 		
 		try {
-			
-			ClientAuthenticator currentAuthenticator;
-			synchronized (this) {
-				currentAuthenticator = this.currentAuthenticator;
-			}
 	
 			/**
 			 * Try the authenticator first. It may want to handle 
@@ -149,14 +144,17 @@ public class AuthenticationProtocolClient implements Service {
 				transport.setActiveService(con);
 				con.start();
 				
+				synchronized(currentAuthenticator) {
 
-				completedAuthentications.add(currentAuthenticator.getName());
+					completedAuthentications.add(currentAuthenticator.getName());
+					
+					if(currentAuthenticator.getName().equals("none")) {
+						transport.getConnectFuture().connected(transport, transport.getConnection());
+					} 
 				
-				if(currentAuthenticator.getName().equals("none")) {
-					transport.getConnectFuture().connected(transport, transport.getConnection());
-				} 
-			
-				currentAuthenticator.success();
+					currentAuthenticator.success();
+				
+				}
 
 
 				EventServiceImplementation
@@ -195,26 +193,31 @@ public class AuthenticationProtocolClient implements Service {
 				while(t.hasMoreTokens()) {
 					supportedAuths.add(t.nextToken());
 				}
+				
+				synchronized(currentAuthenticator) {
 
-				if(currentAuthenticator.getName().equals("none")) {
-					transport.getConnectFuture().connected(transport, transport.getConnection());
-				} 
-				
-				if(partial) {
-					completedAuthentications.add(currentAuthenticator.getName());
-					currentAuthenticator.success(true, auths.split(","));
-				} else {
-					currentAuthenticator.failure();
-				}
-				
-				if(!doNextAuthentication()) {
-					transport.addTask(ExecutorOperationSupport.EVENTS, new ConnectionTaskWrapper(transport.getConnection(), new Runnable() {
-						public void run() {
-							for (ClientStateListener stateListener : context.getStateListeners()) {
-								stateListener.authenticate(AuthenticationProtocolClient.this, transport.getConnection(), supportedAuths, partial);
+					if(currentAuthenticator.getName().equals("none")) {
+						transport.getConnectFuture().connected(transport, transport.getConnection());
+					} 
+					
+					if(partial) {
+						completedAuthentications.add(currentAuthenticator.getName());
+						currentAuthenticator.success(true, auths.split(","));
+					} else {
+						currentAuthenticator.failure();
+					}
+					
+					
+					if(!doNextAuthentication()) {
+						transport.addTask(ExecutorOperationSupport.EVENTS, new ConnectionTaskWrapper(transport.getConnection(), new Runnable() {
+							public void run() {
+								for (ClientStateListener stateListener : context.getStateListeners()) {
+									stateListener.authenticate(AuthenticationProtocolClient.this, transport.getConnection(), supportedAuths, partial);
+								}
 							}
-						}
-					}));
+						}));
+					}
+				
 				}
 
 				return true;

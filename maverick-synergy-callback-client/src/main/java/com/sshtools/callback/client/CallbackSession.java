@@ -71,6 +71,7 @@ public class CallbackSession implements Runnable {
 			}
 			
 			try {
+				Log.info("Connecting to {}:{}", hostname, port);
 				connect();
 			} catch (IOException | SshException e) {
 				exception = e;
@@ -132,7 +133,8 @@ public class CallbackSession implements Runnable {
 		future = app.getSshEngine().connect(
 				hostname, 
 				port, 
-				createContext(config));
+				createContext(config),
+				config.getConnectTimeout());
 		
 		future.waitFor(30000L);
 		if(future.isDone() && future.isSuccess()) {

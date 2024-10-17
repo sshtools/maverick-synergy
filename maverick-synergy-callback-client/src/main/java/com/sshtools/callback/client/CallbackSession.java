@@ -81,6 +81,11 @@ public class CallbackSession implements Runnable {
 				Log.info("Connection disconnected from {}:{}", hostname, port);
 			}
 			
+			if(isStopped) {
+				Log.info("Callback to {}:{} has been stopped", hostname, port);
+				break;
+			}
+			
 			if(!config.isReconnect()) {
 				break;
 			}

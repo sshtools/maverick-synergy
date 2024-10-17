@@ -71,7 +71,6 @@ public class CallbackSession implements Runnable {
 			}
 			
 			try {
-				Log.info("Connecting to {}:{}", hostname, port);
 				connect();
 			} catch (IOException | SshException e) {
 				exception = e;

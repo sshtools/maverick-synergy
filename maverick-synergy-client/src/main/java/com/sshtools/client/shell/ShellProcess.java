@@ -85,6 +85,12 @@ public class ShellProcess {
 		return shell;
 	}
 	
+	public ShellProcess waitFor() throws IOException {
+		while(in.isActive() && bin.read() > -1 && !shell.isClosed());
+		return this;
+	}
+	
+	@Deprecated(since = "3.1.0", forRemoval = true)
 	public ShellProcess drain() throws IOException {
 		while(in.isActive() && bin.read() > -1 && !shell.isClosed());
 		return this;

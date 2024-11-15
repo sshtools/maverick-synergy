@@ -4,6 +4,7 @@ Bug Fixes
   o Fixed race condition in AuthenticationProtocolClient with more aggressive synchronization.
   o Moved CallbackSession isStopped to before retry interval to ensure it stops immediately after disconnect.
   o Added connect timeout option to CallbackClient.
+  o Fix issues with authenticating with SHA-2 RSA certificates.
   
 =================
 =  HISTORY      =

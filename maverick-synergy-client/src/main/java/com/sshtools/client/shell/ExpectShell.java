@@ -30,6 +30,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClientContext;
@@ -100,7 +101,8 @@ public class ExpectShell {
 	private static int SHELL_INIT_PERIOD = 2000;
 
 	List<Runnable> closeHooks = new ArrayList<Runnable>();
-
+	Optional<String> sudoPassword = Optional.empty();
+	
 	int numCommandsExecuted = 0;
 
 	private static boolean verboseDebug = Boolean
@@ -348,6 +350,11 @@ public class ExpectShell {
 	public ShellProcess sudo(String cmd, String password) throws SshException,
 			ShellTimeoutException, IOException {
 		return sudo(cmd, password, passwordPrompt, new ShellDefaultMatcher());
+	}
+	
+	public ShellProcess sudo(String cmd) throws SshException,
+	ShellTimeoutException, IOException {
+		return sudo(cmd, sudoPassword.orElseThrow(), passwordPrompt, new ShellDefaultMatcher());
 	}
 
 	public ShellProcess sudo(String cmd, String password,
@@ -977,6 +984,10 @@ public class ExpectShell {
 				Log.debug("Shell initialized");
 		}
 
+	}
+
+	public void setSudoPassword(Optional<String> sudoPassword) {
+		this.sudoPassword = sudoPassword;
 	}
 
 }

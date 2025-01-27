@@ -545,6 +545,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		
 		synchronized(ChannelNG.this) {
 
+			long t = System.currentTimeMillis();
+			int to = getContext().getIdleConnectionTimeoutSeconds() > 0 
+					? getContext().getIdleConnectionTimeoutSeconds() : 120;
+			
 			do {
 			
 				if(isLocalEOF.get() || isClosed()) {
@@ -568,10 +572,13 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 						log("Waiting", String.format("for %d bytes of remote window", buf.remaining()));
 					}
 					try {
-						wait(5000);
+						wait(500);
 					} catch (InterruptedException e) {
 					}
 
+					if(System.currentTimeMillis() - t > (to * 1000)) {
+						throw new IOException("Timeout whilst waiting for window space on channel " + getChannelType() + " id=" + getLocalId());
+					}
 					continue;
 				}	
 

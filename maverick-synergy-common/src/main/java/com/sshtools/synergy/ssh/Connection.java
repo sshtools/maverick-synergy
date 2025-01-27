@@ -97,7 +97,7 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
     {
         EventException lastException = null;
         // Process global listeners
-        for(EventListener listener : listeners) {
+        for(EventListener listener : new ArrayList<>(listeners)) {
             try {
                 listener.processEvent(evt);
             } catch(Throwable t) {

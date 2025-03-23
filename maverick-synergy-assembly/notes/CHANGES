@@ -9,6 +9,8 @@ Bug Fixes
   o Moved CallbackSession isStopped to before retry interval to ensure it stops immediately after disconnect.
   o Added connect timeout option to CallbackClient.
   o Fix issues with authenticating with SHA-2 RSA certificates.
+  o Remote unix domain socket tunnels did not work (local was OK).
+  o If IdleConnectionTimeoutSeconds is set to zero (never timeout), and the ping message is never replied to, the connection would be dropped, but disconnection events would not be sent, and the disconnect future would not be released.
   
 =================
 =  HISTORY      =

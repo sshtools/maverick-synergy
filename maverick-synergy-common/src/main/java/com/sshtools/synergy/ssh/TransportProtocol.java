@@ -2804,7 +2804,12 @@ public abstract class TransportProtocol<T extends SshContext>
 	}
 
 	public void kill() {
-		socketConnection.closeConnection();
+		try {
+			socketConnection.closeConnection();
+		}
+		finally {
+			onSocketClose();
+		}
 	}
 
 	public String getHostKeyAlgorithm() {

@@ -129,8 +129,9 @@ public class AbstractFileNIOProviderTests {
 		
 		long count = Files.size(path);
 		
-		InputStream in = Files.newInputStream(path);
-		while(in.read() > -1) count--;
+		try(InputStream in = Files.newInputStream(path)) {
+			while(in.read() > -1) count--;
+		}
 		
 		Assert.assertEquals(0, count);
 	}

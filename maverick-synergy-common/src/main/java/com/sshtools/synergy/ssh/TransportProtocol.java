@@ -1557,7 +1557,10 @@ public abstract class TransportProtocol<T extends SshContext>
 					Log.debug("Performing internal disconnect {}", getUUID());
 				
 				setTransportState(TransportProtocol.DISCONNECTED);
-				disconnectFuture.disconnected();
+				
+				synchronized(disconnectFuture) {
+					disconnectFuture.disconnected();
+				}
 				
 				if (socketConnection != null)
 					socketConnection.getIdleStates().remove(TransportProtocol.this);

@@ -35,7 +35,7 @@ public class Base64 {
 	public final static boolean DECODE = false;
 	private final static int MAX_LINE_LENGTH = 64;
 	private final static byte EQUALS_SIGN = (byte) '=';
-	private final static byte NEW_LINE = (byte) '\n';
+	private final static byte NEW_LINE[] = System.lineSeparator().getBytes();
 	private final static byte[] ALPHABET = { (byte) 'A', (byte) 'B',
 			(byte) 'C', (byte) 'D', (byte) 'E', (byte) 'F', (byte) 'G',
 			(byte) 'H', (byte) 'I', (byte) 'J', (byte) 'K', (byte) 'L',
@@ -220,8 +220,8 @@ public class Base64 {
 
 			if (!ignoreMaxLineLength) {
 				if (lineLength == MAX_LINE_LENGTH) {
-					outBuff[e + 4] = NEW_LINE;
-					e++;
+					System.arraycopy(NEW_LINE, 0, outBuff, e + 4, NEW_LINE.length);
+					e += NEW_LINE.length;
 					lineLength = 0;
 				}
 

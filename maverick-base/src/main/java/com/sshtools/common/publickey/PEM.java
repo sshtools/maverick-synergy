@@ -47,7 +47,7 @@ class PEM {
   protected final static String PEM_END = PEM_BOUNDARY + "END ";
 
   /**  */
-  protected final static int MAX_LINE_LENGTH = 75;
+  protected final static int MAX_LINE_LENGTH = 74 + System.lineSeparator().length();
 
   /**  */
   protected final static char[] HEX_CHARS = "0123456789ABCDEF".toCharArray();

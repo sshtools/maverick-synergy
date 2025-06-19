@@ -23,7 +23,6 @@ package com.sshtools.synergy.ssh;
  */
 
 import java.io.EOFException;
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
@@ -63,52 +62,51 @@ public class CachingDataWindow {
 		}
 	}
 	
-	public synchronized void put(ByteBuffer data) throws EOFException {
+	public void put(ByteBuffer data) throws EOFException {
 		
-		// Do not use isOpen as it checks for remaining too. If its closed, its closed
-		// and should not accept any more data at all.
-		if(!open) {
-			throw new EOFException();
-		}
-		
-		cache.compact();
-		
-		if(blocking) {
-			long start = System.currentTimeMillis();
-			while(cache.remaining() < data.remaining()) {
-				cache.flip();
-				try {
-					wait(1000);
-				} catch (InterruptedException e) {
-					throw new IllegalStateException("Interrupted during cache put wait");
+		while(data.remaining() > 0) {				
+			synchronized(this) {
+				if(!open) {
+					throw new EOFException();
 				}
 				cache.compact();
-				if(System.currentTimeMillis() - start > timeout) {
-					throw new IllegalStateException(String.format("Timeout trying to put %d bytes into cache with %d remaining", 
-							data.remaining(),
-							cache.remaining()));
+				int max = Math.min(cache.remaining(), data.remaining());
+				if(max > 0) {
+					int tmp = data.limit();
+					cache.put((ByteBuffer) data.limit(max));
+					data.limit(tmp);
+
+					cache.flip();
 					
+					if(Log.isTraceEnabled()) {
+						Log.trace("Written {} bytes from cached data window position={} remaining={} limit={}", 
+								max, cache.position(), cache.remaining(), cache.limit());
+					}
+					
+					notifyAll();
+					
+					if(!data.hasRemaining()) {
+						break;
+					}
+				}
+				
+				if(blocking && data.hasRemaining()) {
+					long start = System.currentTimeMillis();
+					try {
+						wait(1000);
+					} catch (InterruptedException e) {
+						throw new IllegalStateException("Interrupted during cache put wait");
+					}
+					
+					if(System.currentTimeMillis() - start > timeout) {
+						throw new IllegalStateException(String.format("Timeout trying to put %d bytes into cache with %d remaining", 
+								data.remaining(),
+								cache.remaining()));
+						
+					}
 				}
 			}
 		}
-		
-		int remaining = data.remaining();
-		
-		if(remaining > cache.remaining()) {
-			throw new BufferOverflowException();
-		}
-		
-		cache.put(data);
-		cache.flip();
-		
-		int count = remaining - data.remaining();
-		if(Log.isTraceEnabled()) {
-			Log.trace("Written {} bytes from cached data window position={} remaining={} limit={}", 
-					count, cache.position(), cache.remaining(), cache.limit());
-		}
-		
-		notifyAll();
-
 	}
 
 	public synchronized int get(byte[] tmp, int offset, int length) throws EOFException {

@@ -23,7 +23,9 @@ package com.sshtools.server;
  */
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.sshtools.common.auth.AbstractPublicKeyAuthenticationProvider;
@@ -40,6 +42,17 @@ public class InMemoryPublicKeyAuthenticator extends AbstractPublicKeyAuthenticat
 
 	public InMemoryPublicKeyAuthenticator addAuthorizedKey(String username, SshPublicKey key) {
 		authorizedKeys.put(username, key);
+		return this;
+	}
+	
+	public InMemoryPublicKeyAuthenticator addAuthorizedKeys(String username, SshPublicKey... keys) {
+		return addAuthorizedKeys(username, Arrays.asList(keys));
+	}
+	
+	public InMemoryPublicKeyAuthenticator addAuthorizedKeys(String username, List<SshPublicKey> keys) {
+		for(SshPublicKey key : keys) {
+			authorizedKeys.put(username, key);
+		}
 		return this;
 	}
 	

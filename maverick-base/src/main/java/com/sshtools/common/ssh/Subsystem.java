@@ -49,7 +49,6 @@ public abstract class Subsystem {
 	ByteBufferPool bufferPool;
 	
 	boolean shutdown = false;
-	long bytesSinceLastWindowIssue = 0;
 	
 	public Subsystem(String name) {
 		this.name = name;
@@ -84,7 +83,7 @@ public abstract class Subsystem {
 		this.context = context;
 
 		// We will manage our own data window
-		session.haltIncomingData();
+//		session.haltIncomingData();
 		
 		session.addEventListener(new ChannelEventListener() {
 
@@ -351,15 +350,12 @@ public abstract class Subsystem {
 		if(maximumPacketSize < msg.length + 4) {
 			maximumPacketSize = msg.length + 4;
 		}
-		
-		bytesSinceLastWindowIssue += msg.length + 4;
-		long threshold = Math.min(session.getMaximumWindowSpace().longValue() - session.getMinimumWindowSpace().longValue(), 
-				session.getMaximumWindowSpace().longValue() - (Math.max(session.getLocalPacket(), maximumPacketSize) * 2));
-		if(bytesSinceLastWindowIssue >= threshold) {
-			session.sendWindowAdjust(new UnsignedInteger32(bytesSinceLastWindowIssue));
-			bytesSinceLastWindowIssue = 0;
+
+		try {
+			session.consumeWindowSpace(msg.length + 4);
+		} catch (IOException e) {
+			throw new IllegalStateException(e.getMessage(), e);
 		}
-		
 	}
 
 }

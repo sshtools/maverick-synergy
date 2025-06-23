@@ -126,6 +126,29 @@ public class VirtualShellNG extends SessionChannelNG {
 	}
 
 	@Override
+	protected void onSessionData(ByteBuffer data) {
+
+		byte[] tmp = new byte[data.remaining()];
+		data.get(tmp);
+		
+		try {
+			if(terminal instanceof AbstractPosixTerminal) {
+				((AbstractPosixTerminal)terminal).getPty().getMasterOutput().write(tmp);
+				((AbstractPosixTerminal)terminal).getPty().getMasterOutput().flush();
+			}
+			else {
+				((ExternalTerminal)terminal).processInputBytes(tmp, 0, tmp.length);
+			}
+			
+			consumeWindowSpace(tmp.length);
+			
+		} catch (Exception e) {
+			Log.error("Failed to send input to terminal.", e);
+			close();
+		}
+		
+	}
+
 	public void onSessionOpen() {
 
 		shell.start();

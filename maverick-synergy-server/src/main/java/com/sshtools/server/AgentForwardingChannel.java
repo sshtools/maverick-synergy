@@ -151,6 +151,8 @@ public class AgentForwardingChannel extends ChannelNG<SshServerContext> implemen
 			byte[] t = new byte[data.remaining()];
 			data.get(t);
 			out.write(t);
+			// We have new data so reduce the available window space
+			session.consumeWindowSpace(t.length);
 		} catch (IOException e) {
 			Log.error("Error passing incoming data to agent InputStream", e);
 			close();

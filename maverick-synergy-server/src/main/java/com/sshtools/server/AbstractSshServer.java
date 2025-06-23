@@ -181,6 +181,11 @@ public abstract class AbstractSshServer implements Closeable {
 	
 	public void stop() {
 		engine.shutdownNow(false, 0L);
+		engine.getContext().removeInterfaces();
+	}
+	
+	public void stop(boolean graceful, long timeout) {
+		engine.shutdownNow(graceful, timeout);
 	}
 	
 	public void addHostKeys(Collection<SshKeyPair> hostKeys) {
@@ -231,6 +236,10 @@ public abstract class AbstractSshServer implements Closeable {
 		return port;
 	}
 	
+	public void setPort(int port) {
+		this.port = port;
+	}
+
 	protected void beforeStart() {
 		
 	}
@@ -321,7 +330,7 @@ public abstract class AbstractSshServer implements Closeable {
 	}
 	
 	protected void configureForwarding(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
-		sshContext.setPolicy(ForwardingPolicy.class, forwardingPolicy);
+		sshContext.getPolicy(ForwardingPolicy.class).allowForwarding();
 	}
 
 	public SshServerContext createServerContext(SshEngineContext daemonContext, SocketChannel sc)

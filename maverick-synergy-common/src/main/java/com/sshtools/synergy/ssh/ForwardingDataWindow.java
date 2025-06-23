@@ -24,22 +24,30 @@ package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
+import java.util.Objects;
 
 public class ForwardingDataWindow extends CachingDataWindow {
 
-	ForwardingDataWindow(int maximumWindowSpace) {
-		super(maximumWindowSpace, true);
+	ForwardingDataWindow(long maximumWindowSpace, ChannelNG<?> channel) {
+		super(maximumWindowSpace, true, channel);
 	}
 
 	public synchronized int write(SocketChannel socketChannel) throws IOException {
 		if(Boolean.getBoolean("maverick.disableMaximumWrite")) {
-			return socketChannel.write(cache);
+			int r = socketChannel.write(cache);
+			if(Objects.nonNull(channel)) {
+				channel.consumeWindowSpace(r);
+			}
+			return r;
 		} else {
 			int c = 0;
 			while(true) {
 				int r = socketChannel.write(cache);
 				if(r<=0) {
 					break;
+				}
+				if(Objects.nonNull(channel)) {
+					channel.consumeWindowSpace(r);
 				}
 				c+=r;
 			}

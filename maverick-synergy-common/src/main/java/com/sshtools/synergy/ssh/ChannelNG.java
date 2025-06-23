@@ -130,8 +130,8 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		}
 	}
 
-	protected CachingDataWindow createCache(int maximumWindowSpace) {
-		return new CachingDataWindow(maximumWindowSpace, true);
+	protected CachingDataWindow createCache(long maximumWindowSpace) {
+		return new CachingDataWindow(maximumWindowSpace, true, this);
 	}
 	
 	protected void disposeCache(CachingDataWindow cachingWindow) {
@@ -427,7 +427,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		return connection;
 	}
 
-	void consumeWindowSpace(int length) throws IOException {
+	public void consumeWindowSpace(long length) throws IOException {
 
 		synchronized (localWindow) {
 
@@ -445,6 +445,8 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 						+ " bytes local window space before=" + localWindow.getWindowSpace() + " after="
 						+ localWindow.getWindowSpace());
 			}
+			
+			evaluateWindowSpace();
 		}
 	}
 
@@ -455,15 +457,11 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		if(!paused && !autoConsume && Objects.nonNull(cache)) {
 			try {
 				cache.put(data);
-			} catch (EOFException e) {
-				Log.error("Attempt to write data to channel cache failed because the cache is closed", e);
+			} catch (IOException e) {
+				Log.error("Attempt to write data to channel cache failed because the cache is closed");
 				close();
 			}
-		} 
-		else {
-			evaluateWindowSpace();
 		}
-		
 	}
 	
 	void processChannelData(ByteBuffer data) throws IOException {
@@ -471,15 +469,9 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 
 		lastActivity = System.currentTimeMillis();
 	
-		
-		// We have new data so reduce the available window space
-		consumeWindowSpace(data.remaining());
-	
 		if(Log.isDebugEnabled()) {
 			log("Received", String.format("SSH_MSG_CHANNEL_DATA len=%d", data.remaining()));
 		}
-		
-		// Process the data
 		
 		onChannelData(data);
 
@@ -1024,6 +1016,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		synchronized (localWindow) {
 			if(Log.isDebugEnabled()) {
 				Log.debug("Checking window space on channel=" + getLocalId() + " window=" + localWindow.getWindowSpace()
+							+ " minimum=" + localWindow.getMinimumWindowSpace()
 							+ (Objects.nonNull(cache) ? " cached=" + cache.remaining() : ""));
 			}
 			if (localWindow.isAdjustRequired() && isOpen() && !haltIncomingData.get() ) {
@@ -1443,12 +1436,6 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		public int read(byte[] b, int off, int len) throws IOException {
 			
 			long start = System.currentTimeMillis();
-			
-			synchronized(localWindow) {
-				if(checkWindowSpace()) {
-					sendWindowAdjust();
-				}
-			}
 			
 			int r;
 			

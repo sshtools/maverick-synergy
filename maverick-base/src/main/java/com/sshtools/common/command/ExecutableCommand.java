@@ -48,7 +48,10 @@ public interface ExecutableCommand extends Component {
 	 * 
 	 * @param session
 	 */
-	void init(SessionChannelServer session);
+	public void init(SessionChannelServer session) {
+		this.session = session;
+//		session.haltIncomingData();
+	}
 
 	SessionChannel getSession();
 

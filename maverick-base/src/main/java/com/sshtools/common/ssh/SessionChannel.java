@@ -1,5 +1,4 @@
 package com.sshtools.common.ssh;
-
 /*-
  * #%L
  * Base API
@@ -22,6 +21,7 @@ package com.sshtools.common.ssh;
  * #L%
  */
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -48,5 +48,7 @@ public interface SessionChannel extends Channel {
 	InputStream getInputStream();
 	
 	OutputStream getOutputStream();
-	
+
+	void consumeWindowSpace(long count) throws IOException;
+
 }

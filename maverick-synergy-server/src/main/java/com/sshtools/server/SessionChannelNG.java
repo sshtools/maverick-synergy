@@ -110,7 +110,6 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	protected Map<String, String> environment = new ConcurrentHashMap<String, String>(8, 0.9f, 1);
 	
 	boolean hasTimedOut = false;
-	boolean haltIncomingData = false;
 	long lastActivity = System.currentTimeMillis();
 	boolean agentForwardingRequested;
 	boolean singleSession = false;
@@ -595,11 +594,31 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 							ex);
 				close();
 			}
+		} else if(command != null) {
+			synchronized (localWindow) {
+				try {
+					cache.put(data);
+				} catch (IOException e) {
+					Log.error("Attempt to write session data to channel cache failed because the cache is closed");
+					close();
+				}
+			}	
 		} else {
 			super.onChannelData(data);
 		}
 	}
-	
+
+	protected void onSessionData(ByteBuffer data) {
+		synchronized (localWindow) {
+			try {
+				cache.put(data);
+			} catch (IOException e) {
+				Log.error("Attempt to write session data to channel cache failed because the cache is closed");
+				close();
+			}
+		}		
+	}
+
 	/**
 	 * Called when extended data arrives on the channel - for a session channel
 	 * this would not normally be called.
@@ -663,9 +682,9 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		return null;
 	}
 
-	public boolean isIncomingDataHalted() {
-		return haltIncomingData;
-	}
+//	public boolean isIncomingDataHalted() {
+//		return haltIncomingData;
+//	}
 	
 	@Override
 	public UnsignedInteger32 getMaximumWindowSpace() {

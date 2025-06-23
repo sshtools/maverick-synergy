@@ -23,6 +23,8 @@ package com.sshtools.synergy.ssh;
  */
 
 import java.io.EOFException;
+import java.io.IOException;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
@@ -34,9 +36,11 @@ public class CachingDataWindow {
 	boolean blocking = false;
 	boolean open = true;
 	long timeout = 30000;
-	public CachingDataWindow(int size, boolean blocking) {
+	ChannelNG<?> channel;
+	public CachingDataWindow(long size, boolean blocking, ChannelNG<?> channel) {
 		this.blocking = blocking;
-		cache = ByteBuffer.allocate(size);
+		this.channel = channel;
+		cache = ByteBuffer.allocate((int)size);
 		cache.flip();
 	}
 
@@ -62,7 +66,7 @@ public class CachingDataWindow {
 		}
 	}
 	
-	public void put(ByteBuffer data) throws EOFException {
+	public void put(ByteBuffer data) throws IOException {
 		
 		while(data.remaining() > 0) {				
 			synchronized(this) {
@@ -70,26 +74,35 @@ public class CachingDataWindow {
 					throw new EOFException();
 				}
 				cache.compact();
-				int max = Math.min(cache.remaining(), data.remaining());
-				if(max > 0) {
-					int tmp = data.limit();
-					cache.put((ByteBuffer) data.limit(max));
-					data.limit(tmp);
-
-					cache.flip();
-					
-					if(Log.isTraceEnabled()) {
-						Log.trace("Written {} bytes from cached data window position={} remaining={} limit={}", 
-								max, cache.position(), cache.remaining(), cache.limit());
+//				if(cache.remaining() > data.remaining()) {
+//					cache.put(data);
+//					cache.flip();
+//					notifyAll();
+//					break;
+//				} else {
+					int max = Math.min(cache.remaining(), data.remaining());
+					if(max > 0) {
+						int tmp = data.limit();
+						cache.put((ByteBuffer) data.limit(data.position() + max));
+						data.limit(tmp);
+	
+						cache.flip();
+						
+						if(Log.isTraceEnabled()) {
+							Log.trace("Written {} bytes from cached data window position={} remaining={} limit={}", 
+									max, cache.position(), cache.remaining(), cache.limit());
+						}
+						
+						notifyAll();
+						
+						
 					}
-					
-					notifyAll();
 					
 					if(!data.hasRemaining()) {
 						break;
 					}
-				}
-				
+//				}
+			
 				if(blocking && data.hasRemaining()) {
 					long start = System.currentTimeMillis();
 					try {
@@ -104,12 +117,14 @@ public class CachingDataWindow {
 								cache.remaining()));
 						
 					}
+				} else if(!blocking && data.hasRemaining()) {
+					throw new BufferOverflowException();
 				}
 			}
 		}
 	}
 
-	public synchronized int get(byte[] tmp, int offset, int length) throws EOFException {
+	public synchronized int get(byte[] tmp, int offset, int length) throws IOException {
 		
 		verifyOpen();
 		
@@ -132,6 +147,10 @@ public class CachingDataWindow {
 					count, cache.position(), cache.remaining(), cache.limit());
 		}
 		
+		if(Objects.nonNull(channel)) {
+			channel.consumeWindowSpace(count);
+		}
+		
 		notifyAll();
 		return count;
 		
@@ -144,7 +163,7 @@ public class CachingDataWindow {
 		}
 	}
 
-	public synchronized int get(ByteBuffer buffer) throws EOFException {
+	public synchronized int get(ByteBuffer buffer) throws IOException {
 		
 		verifyOpen();
 			
@@ -166,7 +185,9 @@ public class CachingDataWindow {
 			Log.trace("Read {} bytes from cached data window position={} remaining={} limit={}", 
 					count, cache.position(), cache.remaining(), cache.limit());
 		}
-		
+		if(Objects.nonNull(channel)) {
+			channel.consumeWindowSpace(count);
+		}
 		notifyAll();
 		return count;
 		

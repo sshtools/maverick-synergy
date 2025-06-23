@@ -80,11 +80,11 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(),
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(), 
 				con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMinWindowSize());
-		toChannel = new ForwardingDataWindow(con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize().intValue());
+		toChannel = new ForwardingDataWindow(con.getContext().getPolicy(ForwardingPolicy.class).getForwardingMaxWindowSize(), null);
 	}
 
-	protected CachingDataWindow createCache(int maximumWindowSpace) {
-		return new ForwardingDataWindow(maximumWindowSpace);
+	protected CachingDataWindow createCache(long maximumWindowSpace) {
+		return new ForwardingDataWindow(maximumWindowSpace, this);
 	}
 	
 	public void setSelectionKey(SelectionKey key) {
@@ -309,11 +309,6 @@ public abstract class SocketForwardingChannel<T extends SshContext> extends Forw
 
 	protected abstract void onChannelOpenConfirmation();
 
-	protected void evaluateWindowSpace(int remaining) {
-		/**
-		 * Handle window space after we have written to the outgoing socket.
-		 */
-	}
 
 	protected abstract byte[] openChannel(byte[] parm1) throws WriteOperationRequest, ChannelOpenException;
 

@@ -23,6 +23,7 @@ package com.sshtools.client;
  */
 
 import java.io.EOFException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -73,8 +74,8 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 	
 	public SessionChannelNG(String channelName, int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace, UnsignedInteger32 minimumWindowSpace,
 			ChannelRequestFuture closeFuture, boolean autoConsume) {
-		super(channelName, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
-		extendedData = new CachingDataWindow(maximumWindowSpace.intValue(), true);
+		super(maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
+		extendedData = new CachingDataWindow(maximumWindowSpace, true, this);
 		stderrInputStream = new ChannelInputStream(extendedData);
 	}
 	
@@ -102,7 +103,7 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 		if(type==SSH_EXTENDED_DATA_STDERR) {
 			try {
 				extendedData.put(data);
-			} catch (EOFException e) {
+			} catch (IOException e) {
 				Log.error("Attempt to write extended data to channel cache failed because the cache is closed");
 				close();
 			}
@@ -113,17 +114,17 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 		return stderrInputStream;
 	}
 
-	protected boolean checkWindowSpace() {
-		if(Log.isTraceEnabled()) {
-			Log.trace("Checking window space on channel=" + getLocalId() + " window=" + localWindow.getWindowSpace()
-						+ (Objects.nonNull(cache) ? " cached=" + cache.remaining() : "")
-						+ (Objects.nonNull(extendedData) ? " extended=" + extendedData.remaining() : ""));
-		}
-		return localWindow.getWindowSpace().longValue()
-				+ (Objects.nonNull(cache) ? cache.remaining() : 0) 
-				+ (Objects.nonNull(extendedData) ? extendedData.remaining() : 0) 
-				<= localWindow.getMinimumWindowSpace().longValue();
-	}
+//	protected boolean checkWindowSpace() {
+//		if(Log.isTraceEnabled()) {
+//			Log.trace("Checking window space on channel=" + getLocalId() + " window=" + localWindow.getWindowSpace()
+//						+ (Objects.nonNull(cache) ? " cached=" + cache.remaining() : "")
+//						+ (Objects.nonNull(extendedData) ? " extended=" + extendedData.remaining() : ""));
+//		}
+//		return localWindow.getWindowSpace() 
+//				+ (Objects.nonNull(cache) ? cache.remaining() : 0) 
+//				+ (Objects.nonNull(extendedData) ? extendedData.remaining() : 0) 
+//				<= localWindow.getMinimumWindowSpace();
+//	}
 	
 	@Override
 	public UnsignedInteger32 getMaximumWindowSpace() {

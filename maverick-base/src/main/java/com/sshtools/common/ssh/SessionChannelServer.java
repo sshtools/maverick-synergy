@@ -22,6 +22,7 @@ package com.sshtools.common.ssh;
  * #L%
  */
 
+import java.io.IOException;
 import java.io.OutputStream;
 
 public interface SessionChannelServer extends SessionChannel {
@@ -33,4 +34,6 @@ public interface SessionChannelServer extends SessionChannel {
 	default void resumeDataCaching() { };
 
 	boolean setEnvironmentVariable(String name, String value);
+
+	void consumeWindowSpace(long length) throws IOException;
 }

@@ -237,6 +237,13 @@ public class SshEngineContext {
 
 	}
 
+	public void removeInterfaces() {
+		interfacesToBind.clear();
+	}
+
+	public void removeInterface(String anInterface, int port) {
+		interfacesToBind.remove(anInterface + ":" + port);
+	}
 	/**
 	 * Remove a listening interface from the daemon at runtime.
 	 * 

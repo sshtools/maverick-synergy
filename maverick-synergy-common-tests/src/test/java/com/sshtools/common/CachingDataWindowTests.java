@@ -49,7 +49,7 @@ public class CachingDataWindowTests extends TestCase {
 	public void testInputIsOutput() throws NoSuchAlgorithmException, InterruptedException, IOException {
 		
 		
-		final CachingDataWindow window = new CachingDataWindow(1024000, true);
+		final CachingDataWindow window = new CachingDataWindow(1024000, true, null);
 
 		byte[] buffer = new byte[256];
 		byte[] buffer2 = new byte[256];
@@ -73,7 +73,7 @@ public class CachingDataWindowTests extends TestCase {
 	
 	public void testClosedCacheOutput() {
 		
-		final CachingDataWindow window = new CachingDataWindow(1024000, true);
+		final CachingDataWindow window = new CachingDataWindow(1024000, true, null);
 
 		byte[] buffer = new byte[256];
 		final Random r = new Random();
@@ -82,7 +82,7 @@ public class CachingDataWindowTests extends TestCase {
 		r.nextBytes(buffer);
 		try {
 			window.put(ByteBuffer.wrap(buffer));
-		} catch (EOFException e1) {
+		} catch (IOException e1) {
 			fail();
 		}
 		
@@ -90,14 +90,14 @@ public class CachingDataWindowTests extends TestCase {
 		
 		try {
 			assertEquals(256, window.get(b));
-		} catch (EOFException e) {
+		} catch (IOException e) {
 			fail();
 		}
 		
 		try {
 			window.get(buffer, 0, buffer.length);
 			fail();
-		} catch(EOFException e) {
+		} catch(IOException e) {
 		}
 		
 		
@@ -107,7 +107,7 @@ public class CachingDataWindowTests extends TestCase {
 	 */
 	public void testRandomRead() throws NoSuchAlgorithmException {
 		
-		final CachingDataWindow window = new CachingDataWindow(1024000, true);
+		final CachingDataWindow window = new CachingDataWindow(1024000, true, null);
 		
 
 		final DigestOutputStream input = new DigestOutputStream(new OutputStream() { 

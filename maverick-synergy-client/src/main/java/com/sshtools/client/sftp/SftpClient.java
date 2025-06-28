@@ -101,6 +101,9 @@ public class SftpClient implements Closeable {
 		private Set<String> customRoots = new LinkedHashSet<>();
 		private Optional<String> localPath = Optional.empty();
 		private Optional<String> remotePath = Optional.empty();
+		private boolean adaptiveBlockSize;
+		private boolean resilientTransfers;
+		private int maxReconnectAttempts = 3;
 		
 		/**
 		 * Create a new {@link SftpClientBuilder}.
@@ -285,6 +288,39 @@ public class SftpClient implements Closeable {
 		}
 		
 		/**
+		 * Enable or disable adaptive block size detection.
+		 *
+		 * @param enabled enable adaptive block sizing
+		 * @return this for chaining
+		 */
+		public SftpClientBuilder withAdaptiveBlockSize(boolean enabled) {
+			this.adaptiveBlockSize = enabled;
+			return this;
+		}
+		
+		/**
+		 * Enable or disable resilient transfer mode.
+		 *
+		 * @param enabled enable resilient transfers
+		 * @return this for chaining
+		 */
+		public SftpClientBuilder withResilientTransfers(boolean enabled) {
+			this.resilientTransfers = enabled;
+			return this;
+		}
+		
+		/**
+		 * Set the maximum number of reconnect attempts when using resilient transfers.
+		 *
+		 * @param attempts max reconnect attempts
+		 * @return this for chaining
+		 */
+		public SftpClientBuilder withMaxReconnectAttempts(int attempts) {
+			this.maxReconnectAttempts = attempts;
+			return this;
+		}
+		
+		/**
 		 * Build a new {@link SftpClient}.
 		 * 
 		 * @return sftp client
@@ -305,11 +341,22 @@ public class SftpClient implements Closeable {
 	private int blocksize;
 	private int asyncRequests;
 	private int buffersize;
-
+	private AdaptiveBlockSizeManager adaptiveManager;
+	private boolean resilientTransfers;
+	private int maxReconnectAttempts;
+	private boolean manualBlockSizeSet;
+	
 	// Default permissions is determined by default_permissions ^ umask
 	int umask = 0022;
 	boolean applyUmask = false;
-
+	
+	private int getBlockSizeForTransfer() {
+		if(adaptiveManager != null && !manualBlockSizeSet) {
+			return adaptiveManager.getCurrentBlockSize();
+		}
+		return blocksize;
+	}
+	
 	/**
 	 * Instructs the client to use a binary transfer mode when used with
 	 * {@link setTransferMode(int)}
@@ -360,6 +407,12 @@ public class SftpClient implements Closeable {
 		this.asyncRequests = builder.asyncRequests.orElse(-1);
 		this.buffersize = builder.bufferSize;
 		this.blocksize = builder.blockSize.orElse(-1);
+		this.manualBlockSizeSet = builder.blockSize.isPresent();
+		if(builder.adaptiveBlockSize && builder.blockSize.isEmpty()) {
+			this.adaptiveManager = new AdaptiveBlockSizeManager(32768);
+		}
+		this.resilientTransfers = builder.resilientTransfers;
+		this.maxReconnectAttempts = builder.maxReconnectAttempts;
 		this.sftp = new SftpChannel(builder.connection.orElseThrow(() -> new IllegalStateException("Either an existing connection or an existing client must be provided.")));
 		this.lcwd = fileFactory.getFile(builder.localPath.orElse(""));
 		this.cwd = builder.remotePath.orElse("");
@@ -404,8 +457,10 @@ public class SftpClient implements Closeable {
 			throw new IllegalArgumentException("Block size must be greater than 512");
 		}
 		this.blocksize = blocksize;
+		this.manualBlockSizeSet = true;
+		this.adaptiveManager = null;
 	}
-
+	
 	/**
 	 * Returns the instance of the AbstractSftpChannel used by this class
 	 * 
@@ -1399,7 +1454,35 @@ public class SftpClient implements Closeable {
 			TransferCancelledException, IOException, PermissionDeniedException {
 		return get(remote, local, false);
 	}
-
+	
+	/**
+	 * Download a file using resilient transfer logic.
+	 * 
+	 * @param remote remote file
+	 * @param local local path
+	 * @param resume resume interrupted transfer
+	 * @param resilient enable resilient logic
+	 * @return downloaded file attributes
+	 */
+	public SftpFileAttributes get(String remote, String local, boolean resume, boolean resilient)
+			throws SftpStatusException, SshException, TransferCancelledException, IOException,
+			PermissionDeniedException {
+		if(!resilient && !resilientTransfers) {
+			return get(remote, local, resume);
+		}
+		int attempt = 0;
+		while(true) {
+			try {
+				return get(remote, local, attempt > 0 || resume);
+			} catch(IOException | SshException | SftpStatusException e) {
+				if(attempt++ >= maxReconnectAttempts)
+					throw e;
+				if(adaptiveManager != null)
+					adaptiveManager.recordFailure();
+			}
+		}
+	}
+	
 	/**
 	 * <p>
 	 * Download the remote file writing it to the specified
@@ -1705,13 +1788,19 @@ public class SftpClient implements Closeable {
 
 				local = EOLProcessor.createOutputStream(inputStyle, outputStyle, local);
 			}
-
-			file.performOptimizedRead(remotePath, attrs.getSize().longValue(), blocksize, local,
+			
+			file.performOptimizedRead(remotePath, attrs.getSize().longValue(), getBlockSizeForTransfer(), local,
 					asyncRequests, progress, position);
+			if(adaptiveManager != null)
+				adaptiveManager.recordSuccess();
 		} catch (IOException ex) {
+			if(adaptiveManager != null)
+				adaptiveManager.recordFailure();
 			throw new SftpStatusException(SftpStatusException.SSH_FX_FAILURE,
 					"Failed to open text conversion outputstream");
 		} catch (TransferCancelledException tce) {
+			if(adaptiveManager != null)
+				adaptiveManager.recordFailure();
 			throw tce;
 		} finally {
 			try {
@@ -2057,7 +2146,37 @@ public class SftpClient implements Closeable {
 			IOException, PermissionDeniedException {
 		put(local, remote, null, false);
 	}
-
+	
+	/**
+	 * Upload a file to the remote computer using resilient transfer logic.
+	 * Adaptive block size and reconnect attempts will only be used if
+	 * configured on the builder.
+	 *
+	 * @param local  local file
+	 * @param remote remote file
+	 */
+	public void put(String local, String remote, boolean resume, boolean resilient)
+			throws SftpStatusException, SshException, TransferCancelledException, IOException,
+			PermissionDeniedException {
+		if(!resilient && !resilientTransfers) {
+			put(local, remote, resume);
+			return;
+		}
+		int attempt = 0;
+		while(true) {
+			try {
+				put(local, remote, null, attempt > 0 || resume);
+				return;
+			}
+			catch(IOException | SshException | SftpStatusException e) {
+				if(attempt++ >= maxReconnectAttempts)
+					throw e;
+				if(adaptiveManager != null)
+					adaptiveManager.recordFailure();
+			}
+		}
+	}
+	
 	/**
 	 * <p>
 	 * Upload a file to the remote computer reading from the specified <code>
@@ -2187,20 +2306,28 @@ public class SftpClient implements Closeable {
 		try(SftpHandle handle = sftp.openFile(remotePath, flags, attrs)) {
 			if (progress != null) {
 				progress.started(length, remotePath);
-			} 
-			handle.performOptimizedWrite(remotePath, blocksize, asyncRequests, in, buffersize, progress,
+			}
+			handle.performOptimizedWrite(remotePath, getBlockSizeForTransfer(), asyncRequests, in, buffersize, progress,
 					position < 0 ? 0 : position);
+			if(adaptiveManager != null)
+				adaptiveManager.recordSuccess();
 		} catch (SftpStatusException e) {
 			Log.error("SFTP status exception during transfer [" + e.getStatus() + "]", e);
+			if(adaptiveManager != null)
+				adaptiveManager.recordFailure();
 			throw e;
 		} catch (SshException e) {
 			Log.error("SSH exception during transfer [" + e.getReason() + "]", e);
 			if (e.getCause() != null) {
 				Log.error("SSH exception cause", e.getCause());
 			}
+			if(adaptiveManager != null)
+				adaptiveManager.recordFailure();
 			throw e;
 		} catch (TransferCancelledException e) {
 			Log.error("Transfer cancelled", e);
+			if(adaptiveManager != null)
+				adaptiveManager.recordFailure();
 			throw e;
 		} finally {
 			try {

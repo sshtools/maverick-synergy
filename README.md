@@ -67,18 +67,30 @@ In the first instance, for a no dependency Java SSH client API simply use the ma
 </repository>
 ```
 We have created a high level API that makes it easy to make calls to SSH servers and perform common tasks. For example, downloading a file over SFTP is as simple as:
-```java	
+```java
 try(SshClient ssh = SshClientBuilder.create()
                     .withHostname("localhost")
-                    .withPort(2222)	  
+                    .withPort(2222)
                     .withUsername("root")
                     .withPassword("xxxxx")
                     .build()) {
    ssh.putFile(new File("package.deb"));
    ssh.executeCommand("dpkg -i package.deb");
-} catch (IOException | SshException e) { 
-     e.printStackTrace();
+} catch (IOException | SshException e) {
+  e.printStackTrace();
 }
+```
+
+### Adaptive block size and resilient transfers
+
+```java
+SftpClient client = SftpClient.SftpClientBuilder.create()
+        .withConnection(connection)
+        .withAdaptiveBlockSize(true)
+        .withResilientTransfers(true)
+        .withMaxReconnectAttempts(5)
+        .build();
+client.put("local.txt", "remote.txt", false, true);
 ```
 
 ## Using the Server API

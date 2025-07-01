@@ -963,13 +963,30 @@ public class SftpClient implements Closeable {
 
 			boolean localFiltering = false;
 
+			
+			Vector<SftpFile> children = new Vector<SftpFile>();
+			Vector<SftpFile> tmp = new Vector<SftpFile>();
+			
+			SftpFile file = new SftpFile(path, sftp.getAttributes(path), sftp, null);
+			SftpHandle handleObject;
+			try {
+				handleObject = sftp.getHandle(
+						sftp.sendExtensionMessage("open-directory-with-filter@sshtools.com", msg.toByteArray()),
+						file);
+				localFiltering = false;
+			} catch (SftpStatusException e) {
+				if (Boolean.getBoolean("maverick.disableLocalFiltering")) {
+					throw new SshException("Remote server does not support server side filtering",
+							SshException.UNSUPPORTED_OPERATION);
+				}
+				handleObject = file.handle(sftp.openDirectory(path).getHandle());
+			}
+			
 			SftpFileFilter f = null;
 			if (localFiltering) {
 				f = regexFilter ? new RegexSftpFileFilter(filter) : new GlobSftpFileFilter(filter);
 			}
-			Vector<SftpFile> children = new Vector<SftpFile>();
-			Vector<SftpFile> tmp = new Vector<SftpFile>();
-			try(SftpHandle handleObject = openDirectoryHandle(actual, msg)) {
+			try {
 				int pageCount;
 				do {
 					pageCount = handleObject.listChildren(tmp);
@@ -977,14 +994,12 @@ public class SftpClient implements Closeable {
 					if (pageCount > -1) {
 						if (!localFiltering) {
 							if (pageCount > -1 && Log.isDebugEnabled()) {
-								Log.debug("Got page of {} files for {} with filter {}", pageCount, actual, filter,
-										localFiltering);
+								Log.debug("Got page of {} files for {} with filter {}", pageCount, actual, filter);
 							}
 							children.addAll(tmp);
 						} else {
 							if (pageCount > -1 && Log.isDebugEnabled()) {
-								Log.debug("Got page of {} files for {} before local filtering", pageCount, actual, filter,
-										localFiltering);
+								Log.debug("Got page of {} files for {} before local filtering for {}", pageCount, actual, filter);
 							}
 							int count = 0;
 							for (SftpFile t : tmp) {
@@ -994,12 +1009,13 @@ public class SftpClient implements Closeable {
 								}
 							}
 							if (pageCount > -1 && Log.isDebugEnabled()) {
-								Log.debug("Got page of {} files for {} after local filtering", count, actual, filter,
-										localFiltering);
+								Log.debug("Got page of {} files for {} after local filtering {}", count, actual, filter);
 							}
 						}
 					}
 				} while (pageCount > -1 && (maximumFiles == 0 || children.size() < maximumFiles));
+			} finally {
+				handleObject.close();
 			}
 
 			SftpFile[] files = new SftpFile[children.size()];

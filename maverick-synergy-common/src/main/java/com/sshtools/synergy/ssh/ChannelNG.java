@@ -455,7 +455,8 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 				Log.error("Attempt to write data to channel cache failed because the cache is closed", e);
 				close();
 			}
-		} else {
+		} 
+		else {
 			evaluateWindowSpace();
 		}
 		

@@ -266,7 +266,11 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 			@Override
 			protected void doTask() throws Throwable {
 				channel.sendChannelDataAndBlock(data);
-				evaluateWindowSpace();
+				
+				/**
+				 * TODO: why? this method deals with incoming data, evaluateWindowSpace is for outgoing data window?
+				 */
+				//evaluateWindowSpace();
 			}
 		});
 	}

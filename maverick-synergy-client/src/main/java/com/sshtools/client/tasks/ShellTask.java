@@ -26,9 +26,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Optional;
 
-import com.sshtools.client.PseudoTerminalModes;
 import com.sshtools.client.SessionChannelNG;
-import com.sshtools.client.SshClient;
 import com.sshtools.client.shell.ShellTimeoutException;
 import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.SshConnection;
@@ -170,18 +168,6 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		 * @param modes modes
 		 * @return builder for chaining
 		 */
-		@Deprecated(since = "3.1.2", forRemoval = true)
-		public final ShellTaskBuilder withModes(PseudoTerminalModes modes) {
-			return withModes(TerminalModes.TerminalModesBuilder.create().fromBytes(modes.toByteArray()).build());
-		}
-
-		/**
-		 * Set the terminal modes to use when allocating a PTY. Note, this
-		 * will have no effect if {{@link #withPty} is set to <code>false</code>.
-		 * 
-		 * @param modes modes
-		 * @return builder for chaining
-		 */
 		public final ShellTaskBuilder withModes(TerminalModes modes) {
 			this.modes = Optional.of(modes);
 			return this;
@@ -202,10 +188,13 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 
 		/**
 		 * Set a callback to run when the shell is closed. 
+		 * <p>
+		 * Deprecated, use the generic {@link #onClose(java.util.function.Consumer)}. 
 		 * 
-		 * @param onBeforeOpen on start shell callback
+		 * @param onClose on close callback
 		 * @return builder for chaining
 		 */
+		@Deprecated(since = "3.2.0", forRemoval = true)
 		public final ShellTaskBuilder onClose(ShellTaskEvent onClose) {
 			this.onClose = Optional.of(onClose);
 			return this;
@@ -239,14 +228,6 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 			return this;
 		}
 
-		/**
-		 * Use {@link #onTask(ShellTaskEvent)}.
-		 */
-		@Deprecated
-		public final ShellTaskBuilder onOpen(ShellTaskEvent onTask) {
-			return onTask(onTask);
-		}
-
 		@Override
 		public ShellTask build() {
 			return new ShellTask(this);
@@ -255,7 +236,7 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		/**
 		 * Set whether or not to allocate a Pty. When set to <code>true</code>, other
 		 * Pty characteristics can be set using builder methods such as {@link #withRows(int)}, 
-		 * {@link #withModes(PseudoTerminalModes)} and others. By default a Pty is allocated.
+		 * {@link #withModes(TerminalModes)} and others. By default a Pty is allocated.
 		 * 
 		 * @param withPty whether to allocate a PTY. 
 		 * @return builder for chaining
@@ -302,36 +283,8 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		this.autoConsume = builder.autoConsume;
 	}
 
-	/**
-	 * Construct a shell task. Deprecated since 3.1.0. Use a {@link ShellTaskBuilder} instead. 
-	 * 
-	 * @param con connection
-	 * @deprecated 
-	 * @see ShellTaskBuilder
-	 */
-	@Deprecated
-	public ShellTask(SshConnection con) {
-		this(ShellTaskBuilder.create().withConnection(con));
-	}
-
-	/**
-	 * Construct a shell task. Deprecated since 3.1.0. Use a {@link ShellTaskBuilder} instead. 
-	 * 
-	 * @param ssh client
-	 * @deprecated 
-	 * @see ShellTaskBuilder
-	 */
-	@Deprecated
-	public ShellTask(SshClient ssh) {
-		this(ShellTaskBuilder.create().withClient(ssh));
-	}
-
-	/**
-	 * Deprecated for overriding, will be made final at 3.2.0.
-	 */
 	@Override
-	@Deprecated(since = "3.1.0")
-	protected void onOpenSession(SessionChannelNG session) throws IOException, SshException, ShellTimeoutException {
+	protected final void onOpenSession(SessionChannelNG session) throws IOException, SshException, ShellTimeoutException {
 		onBeforeTask.ifPresent(c -> {
 			try {
 				c.shellEvent(this, session);
@@ -358,18 +311,8 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		});
 	}
 
-	@Deprecated(since = "3.1.0", forRemoval = true)
 	@Override
-	protected void closeOnTaskComplete() {
-		/* Noop, new style tasks should either be closed manually or in the onExec() handler */
-	}
-
-	/**
-	 * Deprecated for overriding, will be made final at 3.2.0.
-	 */
-	@Override
-	@Deprecated(since = "3.1.0")
-	protected void beforeStartShell(SessionChannelNG session) {
+	protected final void beforeStartShell(SessionChannelNG session) {
 		try {
 			if(withPty) {
 				if(modes.isEmpty())
@@ -389,12 +332,8 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		}
 	}
 
-	/**
-	 * Deprecated for overriding, will be made final at 3.2.0.
-	 */
 	@Override
-	@Deprecated(since = "3.1.0")
-	protected void onCloseSession(SessionChannelNG session) {
+	protected final void onCloseSession(SessionChannelNG session) {
 		if(onClose.isPresent()) {
 			try {
 				onClose.get().shellEvent(this, session);
@@ -406,12 +345,8 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		}
 	}
 
-	/**
-	 * Deprecated for overriding, will be made final at 3.2.0.
-	 */
 	@Override
-	@Deprecated(since = "3.1.0")
-	protected SessionChannelNG createSession(SshConnection con) {
+	protected final SessionChannelNG createSession(SshConnection con) {
 		return new SessionChannelNG(
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),

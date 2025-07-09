@@ -25,7 +25,6 @@ package com.sshtools.client.sftp;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.util.List;
 
 import com.sshtools.client.SshClient;
@@ -34,25 +33,25 @@ import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.client.tasks.Task;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.PosixPermissions;
+import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
-import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 
 /**
  * A task that implements an SFTP client. The actual executable code
  * ({@link SftpRunnable}) should be passed in the constructor. 
+ * 
+ * Deprecated for removal at 3.3.0. There is no need for this call, simply
+ * access the {@link SftpClient} directly, optionally running in a generic
+ * task.
  */
+@Deprecated(forRemoval = true, since = "3.1.3")
 public class SftpClientTask extends Task {
 
 	SftpClient sftp;
 	TaskRunnable<SftpClientTask> runnable;
-
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	public SftpClientTask(SshConnection con) {
-		super(con);
-	}
 
 	public SftpClientTask(SshConnection con, TaskRunnable<SftpClientTask> runnable) {
 		super(con);
@@ -79,35 +78,6 @@ public class SftpClientTask extends Task {
 		if(runnable != null) {
 			runnable.run(this);
 		}
-	}
-
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	protected void doSftp() {
-		try {
-			doSftpTask();
-		}
-		catch(IOException ioe) {
-			throw new UncheckedIOException(ioe.getMessage(), ioe);
-		}
-		catch(RuntimeException re) {
-			throw re;
-		}
-		catch(Throwable e) {
-			throw new IllegalStateException("File operation failed.", e);
-		}
-	}
-
-
-	/**
-	 * Sets the block size used when transferring files, defaults to the
-	 * optimized setting of 32768. You should not increase this value as the
-	 * remote server may not be able to support higher blocksizes.
-	 *
-	 * @param blocksize
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setBlockSize(int blocksize) {
-		sftp.setBlockSize(blocksize);
 	}
 
 	/**
@@ -215,19 +185,6 @@ public class SftpClientTask extends Task {
 	}
 
 	/**
-	 * Set the maximum number of asynchronous requests that are outstanding at
-	 * any one time. This setting is used to optimize the reading and writing of
-	 * files to/from the remote file system when using the get and put methods.
-	 * The default for this setting is 100.
-	 *
-	 * @param asyncRequests
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setMaxAsyncRequests(int asyncRequests) {
-		sftp.setMaxAsyncRequests(asyncRequests);
-	}
-
-	/**
 	 * Sets the umask used by this client. <blockquote>
 	 *
 	 * <pre>
@@ -326,27 +283,6 @@ public class SftpClientTask extends Task {
 	 */
 	public void cdup() throws SftpStatusException, SshException {
 		sftp.cdup();
-	}
-
-
-	/**
-	 * Add a custom file system root path such as "flash:"
-	 *
-	 * @param rootPath
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void addCustomRoot(String rootPath) {
-		sftp.addCustomRoot(rootPath);
-	}
-
-	/**
-	 * Remove a custom file system root path such as "flash:"
-	 *
-	 * @param rootPath
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void removeCustomRoot(String rootPath) {
-		sftp.removeCustomRoot(rootPath);
 	}
 
 	/**
@@ -1037,14 +973,6 @@ public class SftpClientTask extends Task {
 		sftp.put(in, remote, progress);
 	}
 
-	@Deprecated
-	public void put(InputStream in, String remote,
-			FileTransferProgress progress, long position)
-			throws SftpStatusException, SshException,
-			TransferCancelledException {
-		put(in, remote, progress, position, -1);
-	}
-
 	public void put(InputStream in, String remote,
 			FileTransferProgress progress, long position, long length)
 			throws SftpStatusException, SshException,
@@ -1153,53 +1081,6 @@ public class SftpClientTask extends Task {
 	 * @throws SshException
 	 */
 	public void chmod(PosixPermissions permissions, String path) throws SftpStatusException, SshException {
-		chmod(permissions.asInt(), path);
-	}
-
-	/**
-	 * <p>
-	 * Changes the access permissions or modes of the specified file or
-	 * directory.
-	 * </p>
-	 *
-	 * <p>
-	 * Modes determine who can read, change or execute a file.
-	 * </p>
-	 * <blockquote>
-	 *
-	 * <pre>
-	 * Absolute modes are octal numbers specifying the complete list of
-	 * attributes for the files; you specify attributes by OR'ing together
-	 * these bits.
-	 *
-	 * 0400       Individual read
-	 * 0200       Individual write
-	 * 0100       Individual execute (or list directory)
-	 * 0040       Group read
-	 * 0020       Group write
-	 * 0010       Group execute
-	 * 0004       Other read
-	 * 0002       Other write
-	 * 0001       Other execute
-	 * </pre>
-	 * <p>
-	 * Now deprecated, it is recommended {@link PosixPermissions} and {@link PosixPermissionsBuilder} be
-	 * used instead.
-	 * </p>
-	 *
-	 * </blockquote>
-	 *
-	 * @param permissions
-	 *            the absolute mode of the file/directory
-	 * @param path
-	 *            the path to the file/directory on the remote server
-	 *
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 */
-	@Deprecated(since = "3.1.0")
-	public void chmod(int permissions, String path) throws SftpStatusException,
-			SshException {
 		sftp.chmod(permissions, path);
 	}
 

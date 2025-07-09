@@ -28,9 +28,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
-import com.sshtools.synergy.ssh.Connection;
 
 /**
  * An SFTP {@link Task} that uploads complete files.
@@ -143,33 +141,6 @@ public class UploadFileTask extends AbstractFileTask {
 		super(builder);
 		remote = builder.path;
 		local = builder.local.orElseThrow(() -> new IllegalStateException("Local file must be supplied."));
-	}
-
-	/**
-	 * Construct a new upload file task. Deprecated since 3.1.0. Use a {@link UploadFileTaskBuilder} instead. 
-	 * 
-	 * @param con connection
-	 * @param localFile local file
-	 * @param path path
-	 * @deprecated 
-	 * @see UploadFileTaskBuilder
-	 */
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	public UploadFileTask(Connection<SshClientContext> con, File localFile, String path) {
-		this(UploadFileTaskBuilder.create().withConnection(con).withRemotePath(path).withLocalFile(localFile));
-	}
-
-	/**
-	 * Construct a new upload file task. Deprecated since 3.1.0. Use a {@link UploadFileTaskBuilder} instead. 
-	 * 
-	 * @param con
-	 * @param localFile
-	 * @deprecated 
-	 * @see UploadFileTaskBuilder
-	 */
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	public UploadFileTask(Connection<SshClientContext> con, File localFile) {
-		this(con, localFile, null);
 	}
 
 	@Override

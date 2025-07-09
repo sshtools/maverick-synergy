@@ -27,11 +27,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import com.sshtools.client.SshClient;
-import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
 import com.sshtools.client.tasks.UploadInputStreamTask.UploadInputStreamTaskBuilder;
-import com.sshtools.synergy.ssh.Connection;
 
 /**
  * An SFTP {@link Task} that uploads string content to a remote file.
@@ -163,36 +160,6 @@ public class UploadFileContentTask extends AbstractFileTask {
 		remote = builder.remote.orElseThrow(() -> new IllegalStateException("Remote remote must be supplied."));
 		content = String.valueOf(builder.content.orElseThrow(() -> new IllegalStateException("Content must be supplied.")));
 		encoding = builder.encoding.orElse(Charset.defaultCharset());
-	}
-
-	/**
-	 * Construct a new upload content task. Deprecated since 3.1.0. Use a {@link UploadFileContentTaskBuilder} instead. 
-	 * 
-	 * @param con connection
-	 * @param localFile local file
-	 * @param remote remote
-	 * @deprecated 
-	 * @see UploadFileContentTaskBuilder
-	 */
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	public UploadFileContentTask(SshClient ssh, String content, String encoding, String path) {
-		this(ssh.getConnection(), content, encoding, path);
-	}
-
-
-	/**
-	 * Construct a new upload content task. Deprecated since 3.1.0. Use a {@link UploadFileContentTaskBuilder} instead. 
-	 * 
-	 * @param con connection
-	 * @param content content
-	 * @param encoding encoding
-	 * @param remote remote
-	 * @deprecated 
-	 * @see UploadFileContentTaskBuilder
-	 */
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	public UploadFileContentTask(Connection<SshClientContext> con, String content, String encoding, String path) {
-		this(UploadFileContentTaskBuilder.create().withConnection(con).withContent(content).withEncoding(encoding).withRemotePath(path));
 	}
 
 	@Override

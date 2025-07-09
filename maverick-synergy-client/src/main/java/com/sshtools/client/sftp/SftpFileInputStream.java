@@ -48,42 +48,7 @@ public class SftpFileInputStream extends InputStream {
 	private boolean isEOF = false;
 	private boolean error = false;
 	private UnsignedInteger64 length;
-	
-	/**
-	 * 
-	 * Creates a new SftpFileInputStream object.
-	 * 
-	 * @param file file
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpClient#getInputStream(String)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SftpFileInputStream(SftpFile file) throws SftpStatusException,
-			SshException {
-		this(file, 0);
-	}
 
-	/**
-	 * Creates a new SftpFileInputStream object.
-	 * 
-	 * @param file file
-	 * @param position
-	 *            at which to start reading
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpClient#getInputStream(String)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SftpFileInputStream(SftpFile file, long position) throws SftpStatusException, SshException {
-		this.sftp = file.getSFTPChannel();
-		this.length = file.attributes().size();
-		this.handle = file.openFile(SftpChannel.OPEN_READ);
-		this.position = position;
-		
-	}
 
 	/**
 	 * Creates a new SftpFileInputStream object.

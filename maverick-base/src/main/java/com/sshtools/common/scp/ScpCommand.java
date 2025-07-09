@@ -32,6 +32,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 
 import com.sshtools.common.command.AbstractExecutableCommand;
 import com.sshtools.common.command.ExecutableCommand;
@@ -648,7 +649,9 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 
 			try {
 				handle = nfs.openFile(path, new UnsignedInteger32(
-						AbstractFileSystem.OPEN_READ), attr);
+						AbstractFileSystem.OPEN_READ),
+						Optional.empty(),
+						attr);
 
 				if(Log.isDebugEnabled())
 					Log.debug("Sending file");
@@ -1051,6 +1054,7 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 							AbstractFileSystem.OPEN_CREATE
 									| AbstractFileSystem.OPEN_WRITE
 									| AbstractFileSystem.OPEN_TRUNCATE),
+							Optional.empty(),
 							attrs3);
 					if(Log.isDebugEnabled())
 						Log.debug("NFS file opened");

@@ -345,57 +345,6 @@ public class IOUtils {
 		}
 	}
 
-  /**
-   * Deprecated and unsafe (follows symbolic links), use {@link #recursiveDelete(File, FileVisitOption...)}. 
-   * 
-   * @param file file or directory to completely remove.
-   * @return success
-   */
-  @Deprecated(since = "3.1.0", forRemoval = true)
-  public static boolean delTree(File file) {
-    if (file.isFile()) {
-      return file.delete();
-    }
-	String[] list = file.list();
-	if(list!=null) {
-      for (int i = 0; i < list.length; i++) {
-        if (!delTree(new File(file, list[i]))) {
-          return false;
-        }
-      }
-	}
-    return true;
-  }
-  
-  /**
-   * Deprecated and unsafe (follows symbolic links), use {@link #recursiveContentsDelete(Path, FileVisitOption...)}. 
-   * 
-   * @param dir directory of contents to remove.
-   * @return success
-   */
-  @Deprecated(since = "3.1.0", forRemoval = true)
-  public static void recurseDeleteDirectory(File dir) {
-
-    String[] files = dir.list();
-
-    if (files == null) {
-      return; // Directory could not be read
-    }
-
-    for (int i = 0; i < files.length; i++) {
-      File f = new File(dir, files[i]);
-
-      if (f.isDirectory()) {
-        recurseDeleteDirectory(f);
-
-      }
-      f.delete();
-    }
-
-    dir.delete();
-
-  }
-
   public static void copyFile(File from, File to) throws IOException {
 
     if (from.isDirectory()) {

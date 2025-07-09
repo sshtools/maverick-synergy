@@ -228,11 +228,6 @@ public class FileSystemPolicy extends Permissions {
 		return sftpMaxWindowSize;
 	}
 	
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	public void setSftpMaxWindowSize(int sftpMaxWindowSize) {
-		setSftpMaxWindowSize(new UnsignedInteger32(Integer.toUnsignedLong(sftpMaxWindowSize)));
-	}
-	
 	public void setSftpMaxWindowSize(UnsignedInteger32 sftpMaxWindowSize) {
 		this.sftpMaxWindowSize = sftpMaxWindowSize;
 	}
@@ -245,11 +240,6 @@ public class FileSystemPolicy extends Permissions {
 		this.sftpMinWindowSize = sftpMinWindowSize;
 	}
 	
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	public void setSftpMinWindowSize(int sftpMinWindowSize) {
-		setSftpMinWindowSize(new UnsignedInteger32(Integer.toUnsignedLong(sftpMinWindowSize)));
-	}
-
 	class CachingFileFactory implements FileFactory {
 
 		private static final String CACHED_FILE_FACTORY = "cachedFileFactory";

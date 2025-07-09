@@ -133,9 +133,10 @@ public class CallbackSession implements Runnable {
 				hostname, 
 				port, 
 				createContext(config),
-				30000L);
+				config.getConnectTimeout());
 		
-		future.waitFor(30000L);
+		future.waitFor(config.getConnectTimeout());
+
 		if(future.isDone() && future.isSuccess()) {
 		
 			con = future.getConnection();

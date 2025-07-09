@@ -102,11 +102,6 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	private boolean autoConsume;
 	protected boolean paused;
 	
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	public ChannelNG(String channelType,  int maximumPacketSize, int initialWindowSize, int maximumWindowSpace, int minimumWindowSpace, ChannelRequestFuture closeFuture, boolean autoConsume) {
-		this(channelType, maximumPacketSize, new UnsignedInteger32(initialWindowSize), new UnsignedInteger32(maximumWindowSpace), new UnsignedInteger32(minimumWindowSpace), closeFuture, autoConsume);
-	}
-	
 	/**
 	 * Construct a channel with the specified settings.
 	 * 
@@ -162,16 +157,6 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	
 	public OutputStream getOutputStream() {
 		return channelOut;
-	}
-	
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	public ChannelNG(String channelType, int maximumPacketSize,
-			int initialWindowSize,
-			int maximumWindowSpace, 
-			int minimumWindowSpace) {
-		this(channelType, maximumPacketSize,
-				new UnsignedInteger32(initialWindowSize), new UnsignedInteger32(maximumWindowSpace), 
-				new UnsignedInteger32(minimumWindowSpace));
 	}
 	
 	public ChannelNG(String channelType, int maximumPacketSize,

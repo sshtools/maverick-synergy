@@ -27,6 +27,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.AbstractFileSystem;
@@ -58,7 +59,7 @@ public abstract class AbstractDigestExtension extends AbstractSftpExtension {
 	protected byte[] doHash(String algorithm, String filename, long startOffset, long length,SftpSubsystem sftp) throws FileNotFoundException, PermissionDeniedException, IOException, SshException, InvalidHandleException {
 		
 		AbstractFileSystem fs = sftp.getFileSystem();
-		byte[] handle = fs.openFile(filename, new UnsignedInteger32(AbstractFileSystem.OPEN_READ), null);
+		byte[] handle = fs.openFile(filename, new UnsignedInteger32(AbstractFileSystem.OPEN_READ), Optional.empty(), null);
 		try {
 			return doHash(algorithm, handle, startOffset, length, sftp);
 		} finally {

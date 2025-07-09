@@ -144,8 +144,9 @@ public class AuthenticationProtocolClient implements Service {
 				transport.setActiveService(con);
 				con.start();
 				
-				synchronized(currentAuthenticator) {
 
+				synchronized(currentAuthenticator) {
+				
 					completedAuthentications.add(currentAuthenticator.getName());
 					
 					if(currentAuthenticator.getName().equals("none")) {
@@ -153,30 +154,29 @@ public class AuthenticationProtocolClient implements Service {
 					} 
 				
 					currentAuthenticator.success();
+	
+	
+					EventServiceImplementation
+							.getInstance()
+							.fireEvent(
+									new Event(
+											this,
+											EventCodes.EVENT_AUTHENTICATION_COMPLETE,
+											true)
+											.addAttribute(
+													EventCodes.ATTRIBUTE_CONNECTION,
+													transport.getConnection())
+											.addAttribute(
+													EventCodes.ATTRIBUTE_AUTHENTICATION_METHODS,
+													completedAuthentications)
+											.addAttribute(
+													EventCodes.ATTRIBUTE_OPERATION_STARTED,
+													authenticationStarted)
+											.addAttribute(
+													EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+													new Date()));
 				
 				}
-
-
-				EventServiceImplementation
-						.getInstance()
-						.fireEvent(
-								new Event(
-										this,
-										EventCodes.EVENT_AUTHENTICATION_COMPLETE,
-										true)
-										.addAttribute(
-												EventCodes.ATTRIBUTE_CONNECTION,
-												transport.getConnection())
-										.addAttribute(
-												EventCodes.ATTRIBUTE_AUTHENTICATION_METHODS,
-												completedAuthentications)
-										.addAttribute(
-												EventCodes.ATTRIBUTE_OPERATION_STARTED,
-												authenticationStarted)
-										.addAttribute(
-												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-												new Date()));
-				
 				return true;
 			case SSH_MSG_USERAUTH_FAILURE:
 	
@@ -207,6 +207,9 @@ public class AuthenticationProtocolClient implements Service {
 						currentAuthenticator.failure();
 					}
 					
+					synchronized (AuthenticationProtocolClient.this) {
+						this.currentAuthenticator = null;
+					}
 					
 					if(!doNextAuthentication()) {
 						transport.addTask(ExecutorOperationSupport.EVENTS, new ConnectionTaskWrapper(transport.getConnection(), new Runnable() {
@@ -286,13 +289,7 @@ public class AuthenticationProtocolClient implements Service {
 				Log.debug("Starting {} authentication", currentAuthenticator.getName());
 			}
 			attempts++;
-			currentAuthenticator.addFutureListener(rf -> {
-				if (rf.isDone()) {
-					synchronized (AuthenticationProtocolClient.this) {
-						currentAuthenticator = null;
-					}
-				}
-			});
+
 			currentAuthenticator.authenticate(transport, username);
 			return true;
 		} 

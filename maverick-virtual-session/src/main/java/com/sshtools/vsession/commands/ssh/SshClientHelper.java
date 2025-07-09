@@ -158,12 +158,12 @@ public class SshClientHelper {
 		}
 
 		if(!sshClient.isAuthenticated() && Utils.isNotBlank(arguments.getPassword())) {
-			sshClient.authenticate(new PasswordAuthenticator(arguments.getPassword()), 30000);
+			sshClient.authenticate(PasswordAuthenticator.forPassword(arguments.getPassword()), 30000);
 		}
 
 		if(!sshClient.isAuthenticated()) {
 			do {
-				auth = new PasswordAuthenticator(console.getLineReader().readLine("Password :", '*'));
+				auth = PasswordAuthenticator.forPassword(console.getLineReader().readLine("Password :", '*'));
 				if (sshClient.authenticate(auth, 30000)) {
 					break;
 				}

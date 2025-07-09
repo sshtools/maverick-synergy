@@ -28,54 +28,492 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.sshtools.client.SessionChannelNG;
-import com.sshtools.client.SshClientContext;
 import com.sshtools.client.tasks.AbstractSessionTask;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
-import com.sshtools.synergy.ssh.Connection;
 
+/**
+ * Execute commands within a shell, capturing the output of just the command
+ * itself. 
+ */
 public class ExpectShell {
+	
+	private static final String PASSWORD_ERROR_TEXT = "Sorry, try again.";
+	private static final String DEFAULT_PASSWORD_PROMPT = "Password:";
+
+	/**
+	 * Enumeration of operating systems, that also encapsulates 
+	 * some operating specific information
+	 */
+	public enum OS {
+		WINDOWS, LINUX, SOLARIS, AIX, DARWIN, FREEBSD, OPENBSD, NETBSD, HPUX, UNIX, OPENVMS, POWERSHELL, UNKNOWN;
+		
+		/**
+		 * Get the legacy operating system code for this operating system.
+		 * 
+		 * @return code 
+		 */
+		@Deprecated(forRemoval = true, since = "3.1.3")
+		public int code() {
+			switch(this) {
+			case WINDOWS:
+				return 1;
+			case LINUX:
+				return 2;
+			case SOLARIS:
+				return 3;
+			case AIX:
+				return 4;
+			case DARWIN:
+				return 5;
+			case FREEBSD:
+				return 6;
+			case OPENBSD:
+				return 7;
+			case NETBSD:
+				return 8;
+			case HPUX:
+				return 9;
+			case UNIX:
+				return 20;
+			case OPENVMS:
+				return 21;
+			case POWERSHELL:
+				return 22;
+			default:
+				return 99;
+			}
+		}
+		
+		/**
+		 * Get an {@link OS} given the legacy code (see the constants in {@link ExpectShell}.
+		 * @param code legacy code
+		 * @return operating system constant
+		 */
+		@Deprecated(forRemoval = true, since = "3.1.3")
+		public static OS code(int code) {
+			switch(code) {
+			case 1:
+				return WINDOWS;
+			case 2:
+				return LINUX;
+			case 3:
+				return SOLARIS;
+			case 4:
+				return AIX;
+			case 5:
+				return DARWIN;
+			case 6:
+				return FREEBSD;
+			case 7:
+				return OPENBSD;
+			case 8:
+				return NETBSD;
+			case 9:
+				return HPUX;
+			case 20:
+				return UNIX;
+			case 21:
+				return OPENVMS;
+			case 22:
+				return POWERSHELL;
+			default:
+				return UNKNOWN;
+			}
+		}
+		
+		/**
+		 * Get a description of the operating system.
+		 * 
+		 * @return description
+		 */
+		public String description() {
+			switch(this) {
+			case WINDOWS:
+				return "Windows";
+			case LINUX:
+				return "Linux";
+			case SOLARIS:
+				return "Solaris";
+			case AIX:
+				return "AIX";
+			case DARWIN:
+				return "Darwin";
+			case FREEBSD:
+				return "FreeBSD";
+			case OPENBSD:
+				return "OpenBSD";
+			case NETBSD:
+				return "NetBSD";
+			case HPUX:
+				return "HP-UX";
+			case UNIX:
+				return "UNIX";
+			case OPENVMS:
+				return "OpenVMS";
+			case POWERSHELL:
+				return "Windows PowerShell";
+			default:
+				return "Unknown";
+			}
+		}
+
+		/**
+		 * Get the exit code variable this operating system uses.
+		 * 
+		 * @return exit code variable
+		 */
+		public String exitCodeVariable() {
+			switch(this) {
+			case WINDOWS:
+				return "%errorlevel%";
+			case OPENVMS:
+		        return "$SEVERITY";
+			default:
+				return "$?";
+			}
+		}
+		
+		/**
+		 * Get the command this operating system uses to echo content
+		 * back to the terminal.
+		 * 
+		 * @return echo command
+		 */
+		public String echoCommand() {
+			switch(this) {
+			case WINDOWS:
+				return "\r\n";
+			case OPENVMS:
+				return "WRITE SYS$OUTPUT";
+			default:
+				return "echo";
+			}
+		}
+		
+		/**
+		 * Get the pipe command, if this OS has one.
+		 * 
+		 * @return pipe command
+		 */
+		public String pipeCommand() {
+			switch(this) {
+			case OPENVMS:
+				return "PIPE";
+			default:
+				return "";
+			}
+		}
+		
+		/**
+		 * Get the end of line sequence.
+		 * 
+		 * @return
+		 */
+		public String eol() {
+			switch(this) {
+			case WINDOWS:
+				return "\r\n";
+			default:
+				return "\r";
+			}
+		}
+	}
+	
+	/**
+	 * Builder that creates an {@link ExpectShell}.
+	 * 
+	 */
+	public final static class ExpectShellBuilder {
+		private Optional<OS> os = Optional.empty();
+		private Duration startupTimeout = Duration.ofSeconds(30);
+		private Optional<InputStream> input = Optional.empty();
+		private Optional<OutputStream> output = Optional.empty();
+		private Optional<SessionChannelNG> session = Optional.empty();
+		private Optional<String> remoteIdentification = Optional.empty();
+		private Optional<Charset> encoding = Optional.empty();
+		private Optional<String> passwordPrompt = Optional.empty();
+		private Optional<String> passwordErrorText = Optional.empty();
+		private Optional<ShellStartupTrigger> trigger = Optional.empty();
+		private boolean detectSettings = true;
+		
+		/**
+		 * Create a new builder.
+		 * 
+		 * @return builder
+		 */
+		public static ExpectShellBuilder create() {
+			return new ExpectShellBuilder();
+		}
+		
+		/**
+		 * Prevent operating system and it's settings being  
+		 * detected by examining the stream.
+		 * 
+		 * @return builder for chaining
+		 */
+		public ExpectShellBuilder withoutDetectSettings() {
+			return withDetectSettings(false);
+		}
+		
+		/**
+		 * Set whether the operating system and it's settings should be 
+		 * detected by examining the stream.
+		 * 
+		 * @param detectSettings detect settings
+		 * @return builder for chaining
+		 */
+		public ExpectShellBuilder withDetectSettings(boolean detectSettings) {
+			this.detectSettings = detectSettings;
+			return this;
+		}
+	
+		/** 
+		 * Set a callback that is invoked to query if a command line would allow a shell
+		 * to start.
+		 * 
+		 * @param trigger shell startup trigger
+		 * @return builder for chaining
+		 */
+		public ExpectShellBuilder withTrigger(ShellStartupTrigger trigger) {
+			this.trigger = Optional.of(trigger);
+			return this;
+		}
+	
+		/** 
+		 * Set the pattern to look for to indicate failure of a password when
+		 * prompted. Defaults to {@link ExpectShell#PASSWORD_ERROR_TEXT}. 
+		 * This may be a regular expression.
+		 * 
+		 * @param passwordErrorText password error text
+		 * @return builder for chaining
+		 */
+		public ExpectShellBuilder withPasswordErrorText(String passwordErrorText) {
+			this.passwordErrorText = Optional.of(passwordErrorText);
+			return this;
+		}
+	
+		/** 
+		 * Set the pattern to look for for elevated commands using {@link ExpectShell#su(String)} and friends
+		 * that require a password. Defaults to {@link ExpectShell#DEFAULT_PASSWORD_PROMPT}. This may be
+		 * a regular expression.
+		 * 
+		 * @param password prompt
+		 * @return builder for chaining
+		 */
+		public ExpectShellBuilder withPasswordPrompt(String passwordPrompt) {
+			this.passwordPrompt = Optional.of(passwordPrompt);
+			return this;
+		}
+	
+		/** 
+		 * Set the character encoding to use for transferring string content.
+		 * 
+		 * @param encoding encoding 
+		 * @return builder for chaining
+		 */
+		public ExpectShellBuilder withEncoding(String encoding) {
+			if(encoding == null) {
+				this.encoding = Optional.empty();
+				return this;
+			}
+			return withEncoding(Charset.forName(encoding));
+		}
+		
+		/** 
+		 * Set the character encoding to use for transferring string content.
+		 * 
+		 * @param encoding encoding 
+		 * @return builder for chaining
+		 */
+		public ExpectShellBuilder withEncoding(Charset encoding) {
+			this.encoding = Optional.of(encoding);
+			return this;
+		} 
+		
+		/**
+		 * Select the {@link InputStream} to read input from. You would either 
+		 * manually set the {@link InputStream} and {@link OutputStream}, or alternatively
+		 * provide a {@link SessionChannelNG} from which to derive the streams.
+		 */
+		public ExpectShellBuilder withInput(InputStream input) {
+			this.input = Optional.of(input);
+			return this;
+		}
+		
+		/**
+		 * Select the {@link OutputStream} to write output to. You would either 
+		 * manually set the {@link InputStream} and {@link OutputStream}, or alternatively
+		 * provide a {@link SessionChannelNG} from which to derive the streams.
+		 */
+		public ExpectShellBuilder withOutput(OutputStream output) {
+			this.output = Optional.of(output);
+			return this;
+		}
+		
+		/**
+		 * Specify the session to use, from which the {@link InputStream} and
+		 * {@link OutputStream} can be derived. You may alternatively specify
+		 * the streams yourself.
+		 * <p>
+		 * Providing the session will also allow the remote server identification
+		 * to be automatically queries.
+		 * 
+		 * @param session session
+		 * @return this for chaining 
+		 */
+		public ExpectShellBuilder withSession(SessionChannelNG session) {
+			this.session = Optional.of(session);
+			return this;
+		}
+		
+		/**
+		 * Specify the task from which to derive the session to use, 
+		 * from which the {@link InputStream} and
+		 * {@link OutputStream} can be derived. You may alternatively specify
+		 * the streams yourself.
+		 * 
+		 * @param task task
+		 * @return this for chaining
+		 */
+		public ExpectShellBuilder withTask(AbstractSessionTask<SessionChannelNG> task) {
+			return withSession(task.getSession());
+		}
+		
+		/**
+		 * Specify the remote server identification, which may be used as part 
+		 * of operating system detection. When not provided, and either a {@link SessionChannelNG}
+		 * or a {@link AbstractSessionTask} has been provided, the remote identification can be
+		 * obtain automatically.
+		 * 
+		 * @param remoteIdentification remote identification
+		 * @return this for chaining
+		 */
+		public ExpectShellBuilder withSession(AbstractSessionTask<SessionChannelNG> session) {
+			return withSession(session.getSession());
+		}
+		
+		/**
+		 * Specify the operating system for this shell. This will determine various
+		 * parameters such as the commands to run, exit code variables, newline sequences
+		 * and more.
+		 * <p>
+		 * When not specified, the default will be determined by examining the output and
+		 * environment.
+		 * 
+		 * @param os operating system
+		 * @return this for chaining
+		 */
+		public ExpectShellBuilder withOS(OS os) {
+			this.os = Optional.of(os);
+			return this;
+		}
+
+		/**
+		 * Specify the operating system for this shell. This will determine various
+		 * parameters such as the commands to run, exit code variables, newline sequences
+		 * and more.
+		 * <p>
+		 * When not specified, the default will be determined by examining the output and
+		 * environment.
+		 * 
+		 * @param os operating system legacy code
+		 * @return this for chaining
+		 */
+		@Deprecated(forRemoval = true, since = "3.1.3")
+		public ExpectShellBuilder withOS(int os) {
+			return withOS(OS.code(os));
+		}
+		
+		/**
+		 * How long to wait for the shells first prompt before giving up and failing.
+		 *  
+		 * @param startupTimeout startup timeout
+		 * @return this for chaining
+		 */
+		public ExpectShellBuilder withStartupTimeout(Duration startupTimeout) {
+			this.startupTimeout  = startupTimeout;
+			return this;
+		}
+		
+		/**
+		 * How long to wait in seconds for the shells first prompt before giving up and failing.
+		 *  
+		 * @param startupTimeout startup timeout in seconds
+		 * @return this for chaining
+		 */
+		public ExpectShellBuilder withStartupTimeoutSec(int startupTimeout) {
+			return withStartupTimeout(Duration.ofSeconds(startupTimeout));
+		}
+		
+		/**
+		 * Build the shell.
+		 * 
+		 * @return shell
+		 * @throws SshException on SSH error
+		 * @throws IOException on IO error
+		 * @throws ShellTimeoutException on timeout
+		 */
+		public ExpectShell build() throws SshException, IOException, ShellTimeoutException {
+			return new ExpectShell(this);
+		}
+	}
 
 	/** Windows operating system **/
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_WINDOWS = 1;
 	/** Linux operating system **/
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_LINUX = 2;
 	/** Solaris operating system **/
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_SOLARIS = 3;
 	/** AIX operating system **/
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_AIX = 4;
 	/** Darwin (MAC) operating system **/
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_DARWIN = 5;
 	/** FreeBSD operating system **/
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_FREEBSD = 6;
 	/** OpenBSD operating system **/
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_OPENBSD = 7;
 	/** NetBSD operating system **/
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_NETBSD = 8;
 	/** HP-UX operating system **/
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_HPUX = 9;
 	
 	/** Unix OS if less than this value. **/
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_UNIX = 20;
 	
 	/** OpenVMS operating system **/
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_OPENVMS = 21;
 
 	/** Linux operating system **/
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_POWERSHELL = 22;
 	
 	/** The operating system is unknown **/
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_UNKNOWN = 99;
 
-	private int osType = OS_UNKNOWN;
-	private String osDescription = "Unknown";
-	private String passwordErrorText = "Sorry, try again.";
-	private String passwordPrompt = "Password:";
+	private final OS osType;
+	
 	// These are markers for the beginning and end of the command
 	static final String BEGIN_COMMAND_MARKER = "---BEGIN---";
 	static final String END_COMMAND_MARKER = "---END---";
@@ -86,104 +524,104 @@ public class ExpectShell {
 	static final int WAITING_FOR_COMMAND = 1;
 	static final int PROCESSING_COMMAND = 2;
 	static final int CLOSED = 3;
-
-	BufferedInputStream sessionIn;
-	OutputStream sessionOut;
+	
 	int state = WAITING_FOR_COMMAND;
-	boolean inStartup;
-
-	// Variables that change change according to operating system
-	private String PIPE_CMD = "";
-	private String ECHO_COMMAND = "echo";
-	private String EOL = "\r\n";
-	private String EXIT_CODE_VARIABLE = "$?";
+	
+	@Deprecated
 	private static int SHELL_INIT_PERIOD = 2000;
 
 	List<Runnable> closeHooks = new ArrayList<Runnable>();
-
+	Optional<String> sudoPassword = Optional.empty();
+	
 	int numCommandsExecuted = 0;
 
-	private static boolean verboseDebug = Boolean
-			.getBoolean("maverick.shell.verbose");
+	private final static boolean verboseDebug = Boolean.getBoolean("maverick.shell.verbose");
 
-	private StartupInputStream startupIn;
-	private ShellController startupController;
-	private boolean childShell = false;
+	private final StartupInputStream startupIn;
+	private final boolean childShell;
 
 	public static final int EXIT_CODE_PROCESS_ACTIVE = Integer.MIN_VALUE;
 	public static final int EXIT_CODE_UNKNOWN = Integer.MIN_VALUE + 1;
 
-	long startupTimeout;
-	long startupStarted;
+	private final Duration startupTimeout;
 	
-	SessionChannelNG session;
-	String characterEncoding = "UTF-8";
-	
+	/* TODO: Will be made final at 3.3.0, and associated setters removed */
+	private String passwordErrorText;
+	private String passwordPrompt;
+	private Charset characterEncoding;
+
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public ExpectShell(AbstractSessionTask<SessionChannelNG> session) throws SshException, IOException, ShellTimeoutException {
-		this(session, null, 30000, "dumb", 1024, 80);
-	}
-	
-	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, int osType) throws SshException, IOException, ShellTimeoutException {
-		this(session, null, 30000, "dumb", 1024, 80, osType);
+		this(session, null, 30000);
 	}
 
+	@Deprecated(since = "3.2.0", forRemoval = true)
+	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, int osType) throws SshException, IOException, ShellTimeoutException {
+		this(session, OS.code(osType));
+	}
+
+	@Deprecated(since = "3.2.0", forRemoval = true)
+	private ExpectShell(AbstractSessionTask<SessionChannelNG> session, OS osType) throws SshException, IOException, ShellTimeoutException {
+		this(session, null, 30000, osType);
+	}
+
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger)
 			throws SshException,
 			IOException, ShellTimeoutException {
-		this(session, trigger, 30000, "dumb", 1024, 80);
+		this(session, trigger, 30000);
 	}
 
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger, long startupTimeout)
 			throws SshException,
 			IOException, ShellTimeoutException {
-		this(session, trigger, startupTimeout, "dumb", 1024, 80);
-	}
-
-	@Deprecated
-	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
-			long startupTimeout, String termtype) throws SshException, IOException,
-			ShellTimeoutException {
-		this(session, trigger, startupTimeout, termtype, 1024, 80);
-	}
-
-	@Deprecated
-	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
-			long startupTimeout, String termtype, int cols, int rows)
-			throws SshException,
-			IOException, ShellTimeoutException {
-		this(session, trigger, startupTimeout, termtype, cols, rows, OS_UNKNOWN);
+		this(session, trigger, startupTimeout, OS.UNKNOWN);
 	}
 	
-	@Deprecated
+	@Deprecated(forRemoval = true)
 	public ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
-			long startupTimeout, String termtype, int cols, int rows, int osType)
+			long startupTimeout, int osType)
 			throws SshException,
 			IOException, ShellTimeoutException {
-		this(session.getSession(), trigger, startupTimeout, termtype, cols, rows, osType);
+		this(session, trigger, startupTimeout, OS.code(osType));
 	}
 	
+	@Deprecated(forRemoval = true)
+	private ExpectShell(AbstractSessionTask<SessionChannelNG> session, ShellStartupTrigger trigger,
+			long startupTimeout, OS osType)
+			throws SshException,
+			IOException, ShellTimeoutException {
+		this(session.getSession(), trigger, startupTimeout, osType);
+	}
+
+	@Deprecated(since = "3.2.0", forRemoval = true)	
 	public ExpectShell(SessionChannelNG session, int osType) throws SshException, IOException, ShellTimeoutException {
-		this(session, null, 30000, "dumb", 1024, 80, osType);
+		this(session, OS.code(osType));
 	}
-	
+
+	@Deprecated(since = "3.2.0", forRemoval = true)	
+	private ExpectShell(SessionChannelNG session, OS osType) throws SshException, IOException, ShellTimeoutException {
+		this(session, null, 30000, osType);
+	}
+
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public ExpectShell(SessionChannelNG session, ShellStartupTrigger trigger,
-			long startupTimeout, String termtype, int cols, int rows, int osType)
+			long startupTimeout, OS osType)
 			throws SshException,
 			IOException, ShellTimeoutException {
 
-		this.startupTimeout = startupTimeout;
-		this.startupStarted = System.currentTimeMillis();
-		this.session = session; 
-		this.osType = osType;
+		this.startupTimeout = Duration.ofMillis(startupTimeout);
+		this.childShell = false;
+		this.characterEncoding = defaultEncoding();
+		this.passwordPrompt = DEFAULT_PASSWORD_PROMPT;
+		this.passwordErrorText = PASSWORD_ERROR_TEXT;
 		
 		if(Log.isDebugEnabled())
 			Log.debug("Creating session for interactive shell");
 
-		closeHooks.add(new Runnable() {
-			public void run() {
-				ExpectShell.this.session.close();
-			}
-		});
+		closeHooks.add(() -> session.close());
+		
 		// Allow the shell to initialize before we start sending data
 		if(SHELL_INIT_PERIOD > 0) {
 			try {
@@ -192,51 +630,105 @@ public class ExpectShell {
 			}
 		}
 		
-		if(osType == OS_UNKNOWN) {
-			determineServerType(session.getConnection());
+		if(osType == OS.UNKNOWN) {
+			osType = determineServerType(session.getConnection().getRemoteIdentification());
 		}
 
-		init(session.getInputStream(), session.getOutputStream(), // true, trigger);
-		        (osType != OS_OPENVMS), trigger );
+		startupIn = new StartupInputStream(osType, BEGIN_COMMAND_MARKER,
+				osType != OS.OPENVMS, trigger, this, session.getInputStream(), session.getOutputStream());
+		this.osType = startupIn.osType;
 	}
 
-	
-	ExpectShell(InputStream in, OutputStream out, String eol, String echoCmd,
-			String exitCodeVar, int osType, String osDescription, ExpectShell parentShell)
+	@Deprecated(since = "3.2.0", forRemoval = true)
+	ExpectShell(InputStream in, OutputStream out, 
+			OS osType, ExpectShell parentShell)
 			throws SshIOException, SshException, IOException,
 			ShellTimeoutException {
-		this.EOL = eol;
-		this.ECHO_COMMAND = echoCmd;
-		this.EXIT_CODE_VARIABLE = exitCodeVar;
-		this.osType = osType;
-		this.osDescription = osDescription;
+		this.characterEncoding = parentShell.characterEncoding;
 		this.childShell = true;
-		init(in, out, true, null);
+		this.passwordPrompt = parentShell.passwordPrompt;
+		this.passwordErrorText = parentShell.passwordErrorText;
+		this.startupTimeout = parentShell.startupTimeout;
+
+		startupIn = new StartupInputStream(osType, BEGIN_COMMAND_MARKER,
+				true, null, this, in, out);
+		this.osType = startupIn.osType;
 	}
-	
+
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public ExpectShell(InputStream in, OutputStream out, ExpectShell parentShell)
 			throws SshIOException, SshException, IOException,
 			ShellTimeoutException {
-		this(in, out, parentShell, parentShell.getOsType());
+		this(in, out, parentShell, parentShell.osType);
 	}
-	
-	public ExpectShell(InputStream in, OutputStream out, ExpectShell parentShell, int osType)
+
+	/**
+	 * Deprecated. Will be made private at 3.3.0.
+	 * 
+	 * @param in in 
+	 * @param out out 
+	 * @param parentShell parentShell
+	 * @param osType os type
+	 * @throws SshIOException on SSH IO error
+	 * @throws SshException on SSH errror
+	 * @throws IOException on IO error
+	 * @throws ShellTimeoutException on timeout
+	 */
+	@Deprecated(since = "3.2.0")
+	public ExpectShell(InputStream in, OutputStream out, ExpectShell parentShell, OS osType)
 			throws SshIOException, SshException, IOException,
 			ShellTimeoutException {
-		this.osType = osType;
 		this.childShell = true;
-		init(in, out, false, null);
+		this.characterEncoding = parentShell.characterEncoding;
+		this.startupTimeout = parentShell.startupTimeout;
+		this.passwordPrompt = parentShell.passwordPrompt;
+		this.passwordErrorText = parentShell.passwordErrorText;
+
+		startupIn = new StartupInputStream(osType, BEGIN_COMMAND_MARKER,
+				false, null, this, in, out);
+		this.osType = startupIn.osType;
+	}
+	
+	private ExpectShell(ExpectShellBuilder bldr) throws SshException, IOException, ShellTimeoutException {
+		this.childShell = false;
+		this.startupTimeout = bldr.startupTimeout;
+		this.characterEncoding = bldr.encoding.orElseGet(() -> defaultEncoding());
+		this.passwordPrompt = bldr.passwordPrompt.orElse(DEFAULT_PASSWORD_PROMPT);
+		this.passwordErrorText = bldr.passwordErrorText.orElse(PASSWORD_ERROR_TEXT);
+		
+		startupIn = new StartupInputStream(
+			bldr.os.orElseGet(() -> 
+				bldr.remoteIdentification.or(
+						() -> bldr.session.map(sesh -> sesh.getConnection().getRemoteIdentification())).map(this::determineServerType).orElse(OS.UNKNOWN) 
+			), 
+			BEGIN_COMMAND_MARKER,
+			bldr.detectSettings, 
+			bldr.trigger.orElse(null), 
+			this, 
+			bldr.input.or(() -> bldr.session.map(sesh -> sesh.getInputStream())).orElseThrow(() -> new IllegalStateException("InputStream could not be determined.")), 
+			bldr.output.or(() -> bldr.session.map(sesh -> sesh.getOutputStream())).orElseThrow(() -> new IllegalStateException("OutputStream could not be determined.")));
+		this.osType = startupIn.osType;
 	}
 
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public String getCharacterEncoding() {
-		return characterEncoding;
+		return characterEncoding.name();
 	}
 
+	/**
+	 * Set the default character encoding.
+	 * <p>
+	 * Deprecated for removal. Character encoding will become final,
+	 * use the builder option instead.
+	 * 
+	 * @param characterEncoding character encoding. 
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setCharacterEncoding(String characterEncoding) {
-		this.characterEncoding = characterEncoding;
+		this.characterEncoding = Charset.forName(characterEncoding);
 	}
 
-
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static void setShellInitTimeout(int timeout) {
 		SHELL_INIT_PERIOD = timeout;
 	}
@@ -245,53 +737,53 @@ public class ExpectShell {
 		return startupIn;
 	}
 	
-	void determineServerType(Connection<SshClientContext> con )
+	OS determineServerType(String remoteID)
 	{
-	    String remoteID = con.getRemoteIdentification();
-	    
 	    if ( remoteID.indexOf( "OpenVMS" ) > 0 )
 	    {
-	        osType = OS_OPENVMS;
-	        PIPE_CMD = "PIPE ";
-	        ECHO_COMMAND = "WRITE SYS$OUTPUT";
-	        EXIT_CODE_VARIABLE = "$SEVERITY";
+	        return OS.OPENVMS;
 	    }
 	    
 	    if(remoteID.indexOf("Windows") > 0) {
-	    	osType = OS_WINDOWS;
-	    	EXIT_CODE_VARIABLE = "%errorlevel%";
+	    	return OS.WINDOWS;
 	    }
-	}
-
-	void init(InputStream in, OutputStream out, boolean detectSettings,
-			ShellStartupTrigger trigger) throws SshIOException, SshException,
-			IOException, ShellTimeoutException {
-
-		sessionIn = new BufferedInputStream(in);
-		sessionOut = out;
-
-		startupIn = new StartupInputStream(BEGIN_COMMAND_MARKER,
-				detectSettings, trigger);
-
-		if(Log.isDebugEnabled())
-			Log.debug("Session creation complete");
-
+	    
+	    return OS.UNKNOWN;
 	}
 
 	public boolean inStartup() {
-		return inStartup;
+		return startupIn.inStartup;
 	}
-	
+
+
+	/**
+	 * Set the password error text string.
+	 * <p>
+	 * Deprecated for removal. Password error text will become final,
+	 * use the builder option instead.
+	 * 
+	 * @param passwordErrorText password error text 
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setPasswordErrorText(String passwordErrorText) {
 		this.passwordErrorText = passwordErrorText;
 	}
-	
+
+	/**
+	 * Set the password prompt string.
+	 * <p>
+	 * Deprecated for removal. Password prompt will become final,
+	 * use the builder option instead.
+	 * 
+	 * @param passwordPrompt password prompt 
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setPasswordPrompt(String passwordPrompt) {
 		this.passwordPrompt = passwordPrompt;
 	}
 	
 	public ShellReader getStartupReader() {
-		return startupController;
+		return startupIn.startupController;
 	}
 
 	public ExpectShell su(String cmd, String password) throws SshIOException,
@@ -299,27 +791,27 @@ public class ExpectShell {
 		return su(cmd, password, passwordPrompt, new ShellDefaultMatcher());
 	}
 
-	public ExpectShell su(String cmd, String password, String promptExpression)
+	public ExpectShell su(String cmd, String password, String passwordPrompt)
 			throws SshException, SshIOException, IOException,
 			ShellTimeoutException {
-		return su(cmd, password, promptExpression, new ShellDefaultMatcher());
+		return su(cmd, password, passwordPrompt, new ShellDefaultMatcher());
 	}
 
 	public ExpectShell su(String cmd) throws SshException, SshIOException,
 			IOException, ShellTimeoutException {
 		ShellProcess process = executeCommand(cmd, false, false);
 		return new ExpectShell(process.getInputStream(), process.getOutputStream(),
-				EOL, ECHO_COMMAND, EXIT_CODE_VARIABLE, osType, osDescription, this);
+				osType, this);
 	}
 
-	public ExpectShell su(String cmd, String password, String promptExpression,
+	public ExpectShell su(String cmd, String password, String passwordPrompt,
 			ShellMatcher matcher) throws SshException, SshIOException,
 			IOException, ShellTimeoutException {
 		ShellProcess process = executeCommand(cmd, false, false);
 		ShellProcessController contr = new ShellProcessController(process,
 				matcher);
 		process.mark(1024);
-		if (contr.expectNextLine(promptExpression)) {
+		if (contr.expectNextLine(passwordPrompt)) {
 			if(Log.isDebugEnabled())
 				Log.debug("su password expression matched");
 			contr.typeAndReturn(password);
@@ -337,8 +829,7 @@ public class ExpectShell {
 
 		if (process.isActive()) {
 			return new ExpectShell(process.getInputStream(),
-					process.getOutputStream(), EOL, ECHO_COMMAND,
-					EXIT_CODE_VARIABLE, osType, osDescription, this);
+					process.getOutputStream(), osType, this);
 		} else {
 			throw new SshException("The command failed: " + cmd,
 					SshException.SHELL_ERROR);
@@ -348,6 +839,11 @@ public class ExpectShell {
 	public ShellProcess sudo(String cmd, String password) throws SshException,
 			ShellTimeoutException, IOException {
 		return sudo(cmd, password, passwordPrompt, new ShellDefaultMatcher());
+	}
+	
+	public ShellProcess sudo(String cmd) throws SshException,
+	ShellTimeoutException, IOException {
+		return sudo(cmd, sudoPassword.orElseThrow(), passwordPrompt, new ShellDefaultMatcher());
 	}
 
 	public ShellProcess sudo(String cmd, String password,
@@ -389,39 +885,10 @@ public class ExpectShell {
 		return state == CLOSED;
 	}
 
-	private void updateDescription() {
-
-		if (osType == OS_SOLARIS) {
-			osDescription = "Solaris";
-		} else if (osType == OS_AIX) {
-			osDescription = "AIX";
-		} else if (osType == OS_WINDOWS) {
-			osDescription = "Windows";
-		} else if (osType == OS_DARWIN) {
-			osDescription = "Darwin";
-		} else if (osType == OS_FREEBSD) {
-			osDescription = "FreeBSD";
-		} else if (osType == OS_OPENBSD) {
-			osDescription = "OpenBSD";
-		} else if (osType == OS_NETBSD) {
-			osDescription = "NetBSD";
-		} else if (osType == OS_LINUX) {
-			osDescription = "Linux";
-		} else if (osType == OS_HPUX) {
-			osDescription = "HP-UX";
-		} else if (osType == OS_OPENVMS) {
-		    osDescription = "OpenVMS";
-		} else if (osType == OS_POWERSHELL) {
-			osDescription = "Windows PowerShell";
-		} else {
-			osDescription = "Unknown";
-		}
-	}
-
 	public void exit() throws IOException, SshException {
-		sessionOut.write(("exit" + EOL).getBytes());
+		startupIn.sessionOut.write(("exit" + osType.eol()).getBytes());
 		if (childShell) {
-			while (sessionIn.read() > -1)
+			while (startupIn.sessionIn.read() > -1)
 				;
 		}
 		close();
@@ -432,11 +899,7 @@ public class ExpectShell {
 	}
 
 	public String getNewline() {
-		if (osType == OS_WINDOWS) {
-			return "\r\n";
-		} else {
-			return "\r";
-		}
+		return osType.eol();
 	}
 
 	public synchronized String executeWithOutput(String cmd) throws SshException {
@@ -453,12 +916,12 @@ public class ExpectShell {
 	
 	public synchronized ShellProcess executeCommand(String origCmd)
 			throws SshException {
-		return executeCommand(origCmd, false, false, "UTF-8");
+		return executeCommand(origCmd, false, false, null);
 	}
 
 	public synchronized ShellProcess executeCommand(String origCmd,
 			boolean consume) throws SshException {
-		return executeCommand(origCmd, false, consume, "UTF-8");
+		return executeCommand(origCmd, false, consume, null);
 	}
 
 	public synchronized ShellProcess executeCommand(String origCmd,
@@ -473,15 +936,15 @@ public class ExpectShell {
 
 	public synchronized ShellProcess executeCommand(String origCmd,
 			boolean matchPromptMarker, boolean consume) throws SshException {
-		return executeCommand(origCmd, matchPromptMarker, consume, "UTF-8");
+		return executeCommand(origCmd, matchPromptMarker, consume, null);
 	}
 
 	public synchronized ShellProcess executeCommand(String origCmd,
-			boolean matchPromptMarker, boolean consume, String charset)
+			boolean matchPromptMarker, boolean consume, String charsetName)
 			throws SshException {
 
 		try {
-			
+			Charset charset = charsetName == null ? characterEncoding : Charset.forName(charsetName);
 			String cmd = origCmd;
 
 			if (state == PROCESSING_COMMAND)
@@ -499,19 +962,19 @@ public class ExpectShell {
 
 			// Override matchPromptMarker if using . on HP-UX
 			matchPromptMarker = matchPromptMarker
-					| ((origCmd.startsWith(".") || origCmd.startsWith("source")) && osType == OS_HPUX);
+					| ((origCmd.startsWith(".") || origCmd.startsWith("source")) && osType == OS.HPUX);
 
 			if (matchPromptMarker) {
 
 				// Get the prompt value
-				sessionOut.write(EOL.getBytes());
-				sessionOut.write(EOL.getBytes());
+				startupIn.sessionOut.write(osType.eol().getBytes());
+				startupIn.sessionOut.write(osType.eol().getBytes());
 
 				int ch;
-				while ((ch = sessionIn.read()) > -1 && ch != '\n')
+				while ((ch = startupIn.sessionIn.read()) > -1 && ch != '\n')
 					;
 
-				while ((ch = sessionIn.read()) > -1 && ch != '\n')
+				while ((ch = startupIn.sessionIn.read()) > -1 && ch != '\n')
 					prompt.append((char) ch);
 
 				if(Log.isDebugEnabled())
@@ -538,42 +1001,43 @@ public class ExpectShell {
 
 			String endCommand = nextEndMarker();
 
-			if (osType == OS_WINDOWS) {
+			if (osType == OS.WINDOWS) {
 				// %errorlevel% doesnt work properly on multiple command line so
 				// we fix it to 0 and 1 for good or bad result
-			    echoCmd = ECHO_COMMAND + " " + BEGIN_COMMAND_MARKER + " && " + cmd
-		                		+ " && " + ECHO_COMMAND + " " + endCommand + "0"
-						+ " || " + ECHO_COMMAND + " " + endCommand + "1" + EOL;
-			} else if ( osType == OS_OPENVMS ) {
+			    echoCmd = osType.echoCommand() + " " + BEGIN_COMMAND_MARKER + " && " + cmd
+		                		+ " && " + osType.echoCommand() + " " + endCommand + "0"
+						+ " || " + osType.echoCommand() + " " + endCommand + "1" + osType.eol();
+			} else if ( osType == OS.OPENVMS ) {
 			    // Do same trick with end marker for OpenVMS via its PIPE command.
-				echoCmd = PIPE_CMD + ECHO_COMMAND + " \"" + BEGIN_COMMAND_MARKER + "\" && " + cmd
-		                		+ " && " + ECHO_COMMAND + " \"" + endCommand + "0\" || "
-		                		+ ECHO_COMMAND + "\"" + endCommand + "1\"" + EOL;
-			} else if(osType == OS_POWERSHELL) {
+				echoCmd = osType.pipeCommand() + osType.echoCommand() + " \"" + BEGIN_COMMAND_MARKER + "\" && " + cmd
+		                		+ " && " + osType.echoCommand() + " \"" + endCommand + "0\" || "
+		                		+ osType.echoCommand() + "\"" + endCommand + "1\"" + osType.eol();
+			} else if(osType == OS.POWERSHELL) {
 			    // Force powershell format
                 echoCmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; " + cmd
-                        + "; echo \"" + endCommand + EXIT_CODE_VARIABLE + "\"" + EOL;
+                        + "; echo \"" + endCommand + osType.exitCodeVariable() + "\"" + osType.eol();
 			} else {
 			    // Assume it's a Unix system and 'echo' works.
                 echoCmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; " + cmd
-                        + "; echo \"" + endCommand + EXIT_CODE_VARIABLE + "\"" + EOL;
+                        + "; echo \"" + endCommand + osType.exitCodeVariable() + "\"" + osType.eol();
 			}
 			
 			if(Log.isDebugEnabled()) {
 				Log.debug("Executing raw command: {}", echoCmd);
 			}
 			
-			sessionOut.write(echoCmd.getBytes(charset));
+			startupIn.sessionOut.write(echoCmd.getBytes(charset));
 
 			numCommandsExecuted++;
 
 			ShellInputStream in  = new ShellInputStream(
+					startupIn.sessionIn,
 					this, BEGIN_COMMAND_MARKER, endCommand, origCmd,
 					matchPromptMarker, prompt.toString().trim());
-			ShellProcess process = new ShellProcess(this, in);
+			ShellProcess process = new ShellProcess(this, in, startupIn.sessionOut);
 
 			if (consume) {
-				process.drain();
+				process.waitFor();
 			}
 			return process;
 		} catch (SshIOException ex) {
@@ -610,11 +1074,11 @@ public class ExpectShell {
 	}
 
 	public int getOsType() {
-		return osType;
+		return osType.code();
 	}
 
 	public String getOsDescription() {
-		return osDescription;
+		return osType.description();
 	}
 
 	/**
@@ -625,7 +1089,7 @@ public class ExpectShell {
 	 * @throws IOException
 	 */
 	void type(String string) throws IOException {
-		write(string.getBytes());
+		write(string.getBytes(characterEncoding));
 	}
 
 	/**
@@ -635,7 +1099,7 @@ public class ExpectShell {
 	 * @throws IOException
 	 */
 	void write(byte[] bytes) throws IOException {
-		sessionOut.write(bytes);
+		startupIn.sessionOut.write(bytes);
 	}
 
 	/**
@@ -654,7 +1118,7 @@ public class ExpectShell {
 	 * @throws IOException
 	 */
 	void carriageReturn() throws IOException {
-		write(EOL.getBytes());
+		write(osType.eol().getBytes(characterEncoding));
 	}
 
 	/**
@@ -665,7 +1129,7 @@ public class ExpectShell {
 	 * @throws IOException
 	 */
 	void typeAndReturn(String string) throws IOException {
-		write((string + EOL).getBytes());
+		write((string + osType.eol()).getBytes(characterEncoding));
 	}
 
 	void internalClose() {
@@ -679,20 +1143,38 @@ public class ExpectShell {
 		}
 	}
 
-	class StartupInputStream extends InputStream {
+	static class StartupInputStream extends InputStream {
 
-		char[] marker1;
+		final char[] marker1;
 		int markerPos;
-		StringBuffer currentLine = new StringBuffer();
-		boolean detectSettings;
+		final StringBuilder currentLine = new StringBuilder();
+		final boolean detectSettings;
+		final ShellController startupController;
+		final BufferedInputStream sessionIn;
+		final OutputStream sessionOut;
+		final ExpectShell shell;
+		final Instant startupStarted = Instant.now();
 
-		StartupInputStream(String marker1str, boolean detectSettings,
-				ShellStartupTrigger trigger) throws SshException, IOException,
+		OS osType;
+		boolean inStartup;
+
+		StartupInputStream(
+				OS osType,
+				String marker1str, boolean detectSettings,
+				ShellStartupTrigger trigger, ExpectShell shell,
+				InputStream in, OutputStream out) throws SshException, IOException,
 				ShellTimeoutException {
+			
+			this.osType = osType;
+			this.shell = shell;
+			
+			sessionIn = new BufferedInputStream(in);
+			sessionOut = out;
+			
 			this.detectSettings = detectSettings;
 			this.marker1 = marker1str.toCharArray();
 
-			startupController = new ShellController(ExpectShell.this,
+			startupController = new ShellController(shell,
 					new ShellDefaultMatcher(), this);
 
 			// As we are attempting to detect settings we don't use an END
@@ -719,20 +1201,20 @@ public class ExpectShell {
 
 			    String cmd;
 
-			    if (osType == OS_WINDOWS) {
+			    if (osType == OS.WINDOWS) {
 					// %errorlevel% doesnt work properly on multiple command line so
 					// we fix it to 0 and 1 for good or bad result
-				    cmd = ECHO_COMMAND + " " + BEGIN_COMMAND_MARKER + "&& " + ECHO_COMMAND + " " + EXIT_CODE_VARIABLE + EOL;
-				} else if ( osType == OS_OPENVMS ) {
+				    cmd = osType.echoCommand() + " " + BEGIN_COMMAND_MARKER + "&& " + osType.echoCommand() + " " + osType.exitCodeVariable() + osType.eol();
+				} else if ( osType == OS.OPENVMS ) {
 				    // Do same trick with end marker for OpenVMS via its PIPE command.
-					cmd = PIPE_CMD + ECHO_COMMAND + " \"" + BEGIN_COMMAND_MARKER + "\" && " + ECHO_COMMAND + " $?" + EOL;
-				} else if(osType == OS_POWERSHELL) {
+					cmd = osType.pipeCommand() + osType.echoCommand() + " \"" + BEGIN_COMMAND_MARKER + "\" && " + osType.echoCommand() + " $?" + osType.eol();
+				} else if(osType == OS.POWERSHELL) {
 				    // Force powershell format
 	                cmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; "
-	                        + "; echo \"" + EXIT_CODE_VARIABLE + "\"" + EOL;
+	                        + "; echo \"" + osType.exitCodeVariable() + "\"" + osType.eol();
 				} else {
 				    // Assume it's a Unix system and 'echo' works.
-	                cmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; " + "echo \"$?\"" + EOL;
+	                cmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; " + "echo \"$?\"" + osType.eol();
 				}			    
 			    
 				if(Log.isDebugEnabled())
@@ -756,7 +1238,7 @@ public class ExpectShell {
 					return in.read();
 				} catch (SshIOException e) {
 					if (e.getRealException().getReason() == SshException.MESSAGE_TIMEOUT) {
-						if (System.currentTimeMillis() - startupStarted > startupTimeout)
+						if (System.currentTimeMillis() - startupStarted.toEpochMilli() > shell.startupTimeout.toMillis())
 							throw new SshIOException(new SshException("",
 									SshException.PROMPT_TIMEOUT));
 					} else
@@ -801,7 +1283,7 @@ public class ExpectShell {
 						break;
 					} catch (SshIOException e) {
 						if (e.getRealException().getReason() == SshException.MESSAGE_TIMEOUT) {
-							if (System.currentTimeMillis() - startupStarted > startupTimeout)
+							if (System.currentTimeMillis() - startupStarted.toEpochMilli() > shell.startupTimeout.toMillis())
 								throw new SshIOException(new SshException("",
 										SshException.PROMPT_TIMEOUT));
 						} else
@@ -853,7 +1335,7 @@ public class ExpectShell {
 						Log.debug("Shell startup (read): "
 								+ currentLine.toString());
 					// End of a line
-					currentLine = new StringBuffer();
+					currentLine.setLength(0);
 				}
 
 				if (verboseDebug && Log.isDebugEnabled())
@@ -885,14 +1367,12 @@ public class ExpectShell {
 
 			// Validate the output, if it has been processed correctly then it
 			// should be a *nix type shell
-			if (line.equals("0") && osType == OS_UNKNOWN) {
+			if (line.equals("0") && osType == OS.UNKNOWN) {
 			    if(Log.isDebugEnabled())
 					Log.debug("This looks like a *nix type machine, setting EOL to CR only and exit code variable to $?");
-				EOL = "\r";
-				EXIT_CODE_VARIABLE = "$?";
 
 				// Attempt to execute uname for some information
-				ShellProcess proc = executeCommand("uname");
+				ShellProcess proc = shell.executeCommand("uname");
 				BufferedReader r2 = new BufferedReader(new InputStreamReader(
 						proc.getInputStream()));
 
@@ -908,23 +1388,23 @@ public class ExpectShell {
 
 					line = line.toLowerCase();
 					if (line.startsWith("Sun")) {
-						osType = OS_SOLARIS;
+						osType = OS.SOLARIS;
 					} else if (line.startsWith("aix")) {
-						osType = OS_AIX;
+						osType = OS.AIX;
 					} else if (line.startsWith("darwin")) {
-						osType = OS_DARWIN;
+						osType = OS.DARWIN;
 					} else if (line.startsWith("freebsd")) {
-						osType = OS_FREEBSD;
+						osType = OS.FREEBSD;
 					} else if (line.startsWith("openbsd")) {
-						osType = OS_OPENBSD;
+						osType = OS.OPENBSD;
 					} else if (line.startsWith("netbsd")) {
-						osType = OS_NETBSD;
+						osType = OS.NETBSD;
 					} else if (line.startsWith("linux")) {
-						osType = OS_LINUX;
+						osType = OS.LINUX;
 					} else if (line.startsWith("hp-ux")) {
-						osType = OS_HPUX;
+						osType = OS.HPUX;
 					} else {
-						osType = OS_UNKNOWN;
+						osType = OS.UNKNOWN;
 					}
 					break;
 				case 127:
@@ -934,7 +1414,7 @@ public class ExpectShell {
 					Log.debug("uname returned error code " + proc.getExitCode());
 				}
 
-			} else if (osType == OS_UNKNOWN) {
+			} else if (osType == OS.UNKNOWN) {
 				String cmd = "echo " + BEGIN_COMMAND_MARKER
 						+ " && echo %errorlevel%\r\n";
 				sessionOut.write(cmd.getBytes());
@@ -951,24 +1431,20 @@ public class ExpectShell {
 				if (line.equals("0")) {
 					if(Log.isDebugEnabled())
 						Log.debug("This looks like a Windows machine, setting EOL to CRLF and exit code variable to %errorlevel%");
-					EOL = "\r\n";
-					EXIT_CODE_VARIABLE = "%errorlevel%";
-					osType = OS_WINDOWS;
+					osType = OS.WINDOWS;
 				}
 			}
 
-			updateDescription();
-
 			switch(osType) {
-			case OS_WINDOWS:
-			case OS_OPENVMS:
-			case OS_POWERSHELL:
+			case WINDOWS:
+			case OPENVMS:
+			case POWERSHELL:
 				break;
 			default:
 				if(Log.isDebugEnabled())
 					Log.debug("Setting default sudo prompt");
 				
-				executeCommand("export SUDO_PROMPT=Password:", true);
+				shell.executeCommand("export SUDO_PROMPT=Password:", true);
 				break;
 			}
 
@@ -977,6 +1453,14 @@ public class ExpectShell {
 				Log.debug("Shell initialized");
 		}
 
+	}
+
+	private static Charset defaultEncoding() {
+		return Charset.forName("UTF-8");
+	}
+	
+	public void setSudoPassword(Optional<String> sudoPassword) {
+		this.sudoPassword = sudoPassword;
 	}
 
 }

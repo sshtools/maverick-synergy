@@ -41,37 +41,39 @@ public class UnixDomainSocketGlobalRequestHandler implements GlobalRequestHandle
 			boolean wantreply, ByteArrayWriter response) throws GlobalRequestHandlerException, IOException {
 		if (UnixDomainSockets.STREAM_LOCAL_FORWARD_REQUEST.equals(request.getName())) {
 			boolean success = false;
-			var bar = new ByteArrayReader(request.getData());
-			var path = bar.readString();
-
-			if (connection.getContext().getForwardingPolicy().checkInterfacePermitted(connection.getConnection(), path,
-					0)) {
-				success = true;
-				if (Log.isDebugEnabled())
-					Log.debug("Forwarding Policy has " + (success ? "authorized" : "denied") + " "
-							+ connection.getUsername() + " remote domain socket forwarding access for " + path);
-			}
-
-			if (success) {
-				success = connection.getContext().getForwardingManager() != null;
+			try(var bar = new ByteArrayReader(request.getData())) {
+				var path = bar.readString();
+	
+				if (connection.getContext().getForwardingPolicy().checkInterfacePermitted(connection.getConnection(), path,
+						0)) {
+					success = true;
+					if (Log.isDebugEnabled())
+						Log.debug("Forwarding Policy has " + (success ? "authorized" : "denied") + " "
+								+ connection.getUsername() + " remote domain socket forwarding access for " + path);
+				}
+	
 				if (success) {
-					try {
-						connection.getContext().getForwardingManager().startListening(path, 0,
-								connection.getConnection(), null, 0);
-						return true;
-					} catch (SshException e) {
+					success = connection.getContext().getForwardingManager() != null;
+					if (success) {
+						try {
+							connection.getContext().getForwardingManager().startListening(path, 0,
+									connection.getConnection(), null, 0);
+							return true;
+						} catch (SshException e) {
+						}
 					}
 				}
+				return false;
 			}
-			return false;
 		} else if (UnixDomainSockets.CANCEL_STREAM_LOCAL_FORWARD_REQUEST.equals(request.getName())) {
-			var bar = new ByteArrayReader(request.getData());
-			var path = bar.readString();
-			if (connection.getContext().getForwardingManager().stopListening(path, 0,
-					connection.getContext().getRemoteForwardingCancelKillsTunnels(), connection.getConnection())) {
-				return true;
+			try(var bar = new ByteArrayReader(request.getData())) {
+				var path = bar.readString();
+				if (connection.getContext().getForwardingManager().stopListening(path, 0,
+						connection.getContext().getRemoteForwardingCancelKillsTunnels(), connection.getConnection())) {
+					return true;
+				}
+				return false;
 			}
-			return false;
 		}
 		throw new GlobalRequestHandlerException();
 	}

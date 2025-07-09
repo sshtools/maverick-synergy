@@ -54,12 +54,11 @@ import com.sshtools.common.auth.PasswordAuthentication;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
+import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.permissions.UnauthorizedException;
-import com.sshtools.common.publickey.InvalidPassphraseException;
-import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.SshConnection;
@@ -119,6 +118,8 @@ public class SshClient implements Closeable {
 		private Set<ClientAuthenticator> authenticators = new LinkedHashSet<>();
 		private Set<SshKeyPair> identities = new LinkedHashSet<>();
 		private Optional<OnConfiguration> onConfigure = Optional.empty();
+		private Optional<ClientStateListener> stateListener = Optional.empty();
+		private Optional<EventListener> eventListener = Optional.empty();
 		
 		/**
 		 * Set a {@link Consumer} that receives a {@link SshClientContext} when the connection
@@ -374,6 +375,11 @@ public class SshClient implements Closeable {
 			return addAuthenticators(authenticators);
 		}
 		
+		public SshClientBuilder withListener(ClientStateListener listener) {
+			this.stateListener = Optional.of(listener);
+			return this;
+		}
+		
 		/**
 		 * Set the connection timeout in milliseconds.
 		 * 
@@ -537,6 +543,11 @@ public class SshClient implements Closeable {
 		public SshClient build() throws IOException, SshException {
 			return new SshClient(this);
 		}
+
+		public SshClientBuilder withEventListener(EventListener eventListener) {
+			this.eventListener = Optional.of(eventListener);
+			return this;
+		}
 	}
 
 	private final SshClientContext sshContext;
@@ -555,6 +566,14 @@ public class SshClient implements Closeable {
 		this.onConfigure = builder.onConfigure;
 		
 		sshContext.setUsername(builder.username.orElseGet(() -> GUEST_USERNAME));
+		
+		if(builder.stateListener.isPresent()) {
+			sshContext.addStateListener(builder.stateListener.get());
+		}
+		
+		if(builder.eventListener.isPresent()) {
+			sshContext.setEventListener(builder.eventListener.get());
+		}
 		
 		var keys = new ArrayList<String>();
 		con = doConnect(hostname, port, sshContext, builder.connectTimeout.map(Duration::toMillis).orElse(DEFAULT_CONNECT_TIMEOUT), keys);
@@ -577,387 +596,14 @@ public class SshClient implements Closeable {
 			}
 		}
 	}
-
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param connectTimeout timeout
-	 * @param password password
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username, long connectTimeout, char[] password) throws IOException, SshException {
-		this(hostname, port, username, new SshClientContext(), connectTimeout, password);
-	}
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param password password
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username, char[] password) throws IOException, SshException {
-		this(hostname, port, username, new SshClientContext(), DEFAULT_CONNECT_TIMEOUT, password);
-	}
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param password password
-	 * @param sshContext context
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username, char[] password, SshClientContext context) throws IOException, SshException {
-		this(hostname, port, username, context, DEFAULT_CONNECT_TIMEOUT, password);
-	}
-
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param connectTimeout timeout
-	 * @param key key file
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username, long connectTimeout, File key) throws IOException, SshException, InvalidPassphraseException {
-		this(hostname, port, username, connectTimeout, key, null);
-	}
-
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param key key file
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username, File key) throws IOException, SshException, InvalidPassphraseException {
-		this(hostname, port, username, DEFAULT_CONNECT_TIMEOUT, key, null);
-	}
-
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param connectTimeout timeout
-	 * @param key key file
-	 * @param passphrase key passphrase
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username, long connectTimeout, File key, String passphrase) throws IOException, SshException, InvalidPassphraseException {
-		this(hostname, port, username, connectTimeout, SshKeyUtils.getPrivateKey(key, passphrase));
-	}
-
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param key key file
-	 * @param passphrase key passphrase
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username,  File key, String passphrase) throws IOException, SshException, InvalidPassphraseException {
-		this(hostname, port, username, DEFAULT_CONNECT_TIMEOUT, SshKeyUtils.getPrivateKey(key, passphrase));
-	}
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param connectTimeout timeout
-	 * @param identities identities
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username, long connectTimeout, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
-		this(hostname, port, username, new SshClientContext(), connectTimeout, identities);
-	}
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param identities identities
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username, SshKeyPair... identities) throws IOException, SshException, InvalidPassphraseException {
-		this(hostname, port, username, new SshClientContext(), DEFAULT_CONNECT_TIMEOUT, identities);
-	}
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param sshContext context
-	 * @param connectTimeout timeout
-	 * @param identities identities
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username, SshClientContext sshContext, long connectTimeout, SshKeyPair... identities) throws IOException, SshException {
-		this(hostname, port, username, sshContext, connectTimeout, null, identities);
-	}
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param sshContext context
-	 * @param identities identities
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username, SshClientContext sshContext, SshKeyPair... identities) throws IOException, SshException {
-		this(hostname, port, username, sshContext, DEFAULT_CONNECT_TIMEOUT, null, identities);
-	}
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param connectTimeout timeout
-	 * @param password password
-	 * @param identities identities
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username, long connectTimeout, char[] password, SshKeyPair... identities) throws IOException, SshException {
-		this(hostname, port, username, new SshClientContext(), connectTimeout, password, identities);
-	}
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param password password
-	 * @param identities identities
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username, char[] password, SshKeyPair... identities) throws IOException, SshException {
-		this(hostname, port, username, new SshClientContext(), DEFAULT_CONNECT_TIMEOUT, password, identities);
-	}
-
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param connectTimeout timeout
-	 * @param password password
-	 * @param key key file
-	 * @param passphrase key passphrase
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, Integer port, String username, long connectTimeout, char[] password, File key, String passphrase) throws IOException, SshException, InvalidPassphraseException {
-		this(hostname, port, username, connectTimeout, password, SshKeyUtils.getPrivateKey(key, passphrase));
-	}
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param password password
-	 * @param key key
-	 * @param passphrase passphrase
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, Integer port, String username, char[] password, File key, String passphrase) throws IOException, SshException, InvalidPassphraseException {
-		this(hostname, port, username, DEFAULT_CONNECT_TIMEOUT, password, SshKeyUtils.getPrivateKey(key, passphrase));
-	}
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param connectTimeout timeout
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, Integer port, String username, long connectTimeout) throws IOException, SshException {
-		this(hostname, port, username, new SshClientContext(), connectTimeout);
-	}
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, Integer port, String username) throws IOException, SshException {
-		this(hostname, port, username, new SshClientContext(), DEFAULT_CONNECT_TIMEOUT);
-	}
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param sshContext context
-	 * @param connectTimeout timeout
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, Integer port, String username, SshClientContext sshContext, long connectTimeout) throws IOException, SshException {
-		this(hostname, port, username, sshContext, connectTimeout, (char[])null);
-	}
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param sshContext context
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, Integer port, String username, SshClientContext sshContext) throws IOException, SshException {
-		this(hostname, port, username, sshContext, DEFAULT_CONNECT_TIMEOUT, (char[])null);
-	}
-
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param sshContext context
-	 * @param connectTimeout timeout
-	 * @param password password
-	 * @param identities identities
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(SshConnection con) {
-		this(con, true);
-	}
 	
 	@SuppressWarnings("unchecked")
-	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param sshContext context
-	 * @param connectTimeout timeout
-	 * @param password password
-	 * @param identities identities
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(SshConnection con, boolean closeConnection) {
+	private SshClient(SshConnection con, boolean closeConnection) {
+		/* TODO This is not great. Would like to remove this cast, but 
+		 * this classes uses a number of specialised methods that the 
+		 * MockConnection does not implement. Really, you cannot use a
+		 * mock connection with this class fully.
+		 */
 		this.con = (Connection<SshClientContext>) con;
 		this.closeConnection = closeConnection;
 		this.onConfigure = Optional.empty();
@@ -967,53 +613,8 @@ public class SshClient implements Closeable {
 		this.remotePublicKeys = con.getRemotePublicKeys();
 	}
 	
-	/**
-	 * Create a new client.
-	 * 
-	 * @param hostname host
-	 * @param port port
-	 * @param username user
-	 * @param sshContext context
-	 * @param connectTimeout timeout
-	 * @param password password
-	 * @param identities identities
-	 * @throws IOException on I/O error
-	 * @throws SshException on general SSH error
-	 * @deprecated 
-	 * @see SshClientBuilder
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public SshClient(String hostname, int port, String username, SshClientContext sshContext, long connectTimeout, char[] password, SshKeyPair... identities) throws IOException, SshException {
-		this.sshContext = sshContext;
-		this.hostname = hostname;
-		this.port = port;
-		this.onConfigure = Optional.empty();
-		this.closeConnection = true;
-		sshContext.setUsername(username);
-		var keys = new ArrayList<String>();
-		con = doConnect(hostname, port, sshContext, connectTimeout, keys);
-		this.remotePublicKeys = keys.toArray(new String[0]);
-		boolean attempted = false;
-
-		if(!isAuthenticated() && identities.length > 0) {
-			attempted = true;
-			authenticate(new KeyPairAuthenticator(identities), 30000);
-		}
-		
-		if(!isAuthenticated() && Objects.nonNull(password) && password.length > 0) {
-			attempted = true;
-			authenticate(new PasswordAuthenticator(password), 30000);
-		}
-		
-		if(attempted && !isAuthenticated()) {
-			close();
-			throw new IOException("Authentication failed");
-		}
-	}
-	
 	@SuppressWarnings("unchecked")
 	protected final Connection<SshClientContext> doConnect(String hostname, int port, SshClientContext sshContext, long connectTimeout, List<String> keys) throws SshException, IOException {
-		configure(sshContext);
 		if(onConfigure.isPresent())
 			onConfigure.get().accept(sshContext);
 		try {
@@ -1060,20 +661,6 @@ public class SshClient implements Closeable {
 			uhe.initCause(uae);
 			throw uhe;
 		}
-	}
-	
-	/**
-	 * Further configuration the client context.
-	 * 
-	 * @deprecated
-	 * @see SshClientBuilder#onConfigure(Consumer)}.
-	 * @param sshContext
-	 * @throws SshException
-	 * @throws IOException
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	protected void configure(SshClientContext sshContext) throws SshException, IOException {
-		
 	}
 
 	public synchronized Task addTask(Task task) throws IOException {
@@ -1369,7 +956,11 @@ public class SshClient implements Closeable {
 		
 		int localPort = startLocalForwarding("127.0.0.1", 0, hostname, port);
 		try {
-			return new SshClient("127.0.0.1", localPort, username);
+			return SshClientBuilder.create().
+					withHostname("127.0.0.1").
+					withPort(localPort).
+					withUsername(username).
+					build();
 		} finally {
 			stopLocalForwarding("127.0.0.1", localPort);
 		}

@@ -51,13 +51,6 @@ public interface SshConnection extends EventTrigger {
 	void disconnect(String message);
 	
 	void disconnect(int reason, String message);
-	
-	/**
-	 * @deprectated use getRemoteIPAddress instead
-	 * @return
-	 */
-	@Deprecated
-	InetAddress getRemoteAddress();
 
 	InetAddress getLocalAddress();
 

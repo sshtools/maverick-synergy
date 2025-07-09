@@ -58,7 +58,7 @@ public class DefaultLoggerContext implements RootLoggerContext {
 		}
 		try {
 			Path propertiesPath = propertiesFile.getAbsoluteFile().toPath();
-			FileWatchingService.getInstance().register(propertiesPath.getParent(), (path)->{
+			FileWatchingService.getInstance().register(propertiesPath, (path)->{
 				if(path.equals(propertiesPath))
 					loadFile();
 			});

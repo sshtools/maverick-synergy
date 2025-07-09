@@ -25,7 +25,6 @@ package com.sshtools.synergy.ssh;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -168,12 +167,8 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 		return transport.outgoingBytes;
 	}
 	
-	@Deprecated
-	/**
-	 * @deprecated Use getRemoteIPAddress and getRemotePort instead.
-	 */
-	public InetAddress getRemoteAddress() {
-   		return remoteAddress.getAddress();
+	public InetAddress getLocalAddress() {
+		return localAddress.getAddress();
 	}
 	
 	public String getRemoteIPAddress() {
@@ -182,30 +177,6 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	
 	public int getRemotePort() {
 		return remoteAddress.getPort();
-	}
-	
-	@Deprecated
-	/**
-	 * @deprecated Use getRemoteIPAddress and getRemotePort instead.
-	 */
-	public SocketAddress getRemoteSocketAddress(){ 
-		return remoteAddress;
-	}
-	
-	@Deprecated
-	/**
-	 * @deprecated Use getLocalIPAddress and getLocalPort instead.
-	 */
-	public SocketAddress getLocalSocketAddress() {
-		return localAddress;
-	}
-	
-	@Deprecated
-	/**
-	 * @deprecated Use getLocalIPAddress and getLocalPort instead.
-	 */
-	public InetAddress getLocalAddress() {
-		return localAddress.getAddress();
 	}
 	
 	public String getLocalIPAddress() {

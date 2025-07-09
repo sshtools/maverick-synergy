@@ -42,31 +42,40 @@ public class PasswordAuthenticator extends SimpleClientAuthenticator {
 	}
 
 	public static PasswordAuthenticator of(PasswordPrompt password) {
-		var pa = new PasswordAuthenticator();
-		pa.password = password;
-		return pa;
+		return new PasswordAuthenticator(password);
 	}
 
-	private PasswordPrompt password;
+	public static PasswordAuthenticator forPassword(String password) {
+		return new PasswordAuthenticator(() -> password);
+	}
+
+	public static PasswordAuthenticator forPassword(char[] password) {
+		return new PasswordAuthenticator(() -> new String(password));
+	}
+
+	private final PasswordPrompt password;
 	private String lastPassword;
 	
-	public PasswordAuthenticator() {
+	PasswordAuthenticator(PasswordPrompt password) {
+		this.password = password;
 	}
 
-	@Deprecated(since="3.1.0")
-	public PasswordAuthenticator(Supplier<String> supplier) {
-		this.password = new PasswordPrompt() {
-			@Override
-			public String get() {
-				return supplier.get();
-			}
-		};
-	}
-	
+	/**
+	 * Deprecated. Use {@link #forPassword(String)}.
+	 * 
+	 * @param password
+	 */
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public PasswordAuthenticator(String password) {
 		this.password = () -> password;
 	}
-	
+
+	/**
+	 * Deprecated. Use {@link #forPassword(char[])}.
+	 * 
+	 * @param password
+	 */
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public PasswordAuthenticator(char[] password) {
 		this.password = () -> new String(password);
 	}

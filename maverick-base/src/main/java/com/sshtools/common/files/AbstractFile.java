@@ -111,17 +111,7 @@ public interface AbstractFile {
 	
 	AbstractFileFactory<? extends AbstractFile> getFileFactory();
 	
-	@Deprecated(since = "3.1.0",  forRemoval = true)
-	default void symlinkTo(String target) throws IOException, PermissionDeniedException {
-		throw new UnsupportedOperationException();
-	}
-	
 	default void symlinkFrom(String target) throws IOException, PermissionDeniedException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Deprecated(since = "3.1.0",  forRemoval = true)
-	default void linkTo(String target) throws IOException, PermissionDeniedException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -184,5 +174,9 @@ public interface AbstractFile {
 	
 	default FileVolume getVolume() throws IOException {
 		throw new UnsupportedOperationException("File storage information is not available on this file system.");
+	}
+
+	default void symlinkTo(String target) throws IOException, PermissionDeniedException {
+		throw new UnsupportedOperationException("Symbolic linking is not available on this file system.");
 	}
 }

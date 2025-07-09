@@ -278,7 +278,7 @@ public class VirtualMountFile extends VirtualFileObject {
 	}
 
 	@Override
-	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
+	public void symlinkFrom(String target) throws IOException, PermissionDeniedException {
 		throw new PermissionDeniedException("Cannot symlink a mount");
 	}
 

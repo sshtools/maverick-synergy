@@ -61,7 +61,7 @@ public class UnixDomainSocketRemoteForwardingChannel<T extends SshContext> exten
 			Map<String,RemoteForward> remoteForwards = (Map<String,RemoteForward>) 
 					getConnectionProtocol().getConnection().getProperty("remoteForwards");
 			
-			RemoteForward remoteForward = remoteForwards.get(pathToBind);
+			RemoteForward remoteForward = remoteForwards.get(pathToBind + ":0");
 
 			if(remoteForward==null) {
 				throw new ChannelOpenException("Remote forwarding not available",

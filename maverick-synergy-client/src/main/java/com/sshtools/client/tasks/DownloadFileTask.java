@@ -28,9 +28,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import com.sshtools.client.SshClientContext;
 import com.sshtools.client.sftp.SftpClientTask;
-import com.sshtools.synergy.ssh.Connection;
 
 /**
  * An SFTP {@link Task} that downloads complete files.
@@ -161,33 +159,6 @@ public class DownloadFileTask extends AbstractFileTask {
 		super(builder);
 		remote = builder.remote.orElseThrow(() -> new IllegalStateException("Remote path must be supplied."));
 		local = builder.local;
-	}
-
-	/**
-	 * Construct a new download local task. Deprecated since 3.1.0. Use a {@link DownloadFileTaskBuilder} instead. 
-	 * 
-	 * @param con connection
-	 * @param path path
-	 * @param localFile local local
-	 * @deprecated 
-	 * @see DownloadFileTaskBuilder
-	 */
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	public DownloadFileTask(Connection<SshClientContext> con, String path, File localFile) {
-		this(DownloadFileTaskBuilder.create().withConnection(con).withRemotePath(path).withLocalFile(localFile));
-	}
-
-	/**
-	 * Construct a new download local task. Deprecated since 3.1.0. Use a {@link DownloadFileTaskBuilder} instead. 
-	 * 
-	 * @param con connection
-	 * @param path path
-	 * @deprecated 
-	 * @see DownloadFileTaskBuilder
-	 */
-	@Deprecated(forRemoval = true, since = "3.1.0")
-	public DownloadFileTask(Connection<SshClientContext> con, String path) {
-		this(con, path, null);
 	}
 
 	@Override

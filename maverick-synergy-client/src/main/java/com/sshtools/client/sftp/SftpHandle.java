@@ -32,6 +32,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.Vector;
 
 import com.sshtools.client.tasks.FileTransferProgress;
@@ -40,6 +41,7 @@ import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.sftp.SftpFileAttributes;
+import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.Packet;
 import com.sshtools.common.ssh.SshException;
@@ -132,14 +134,48 @@ public final class SftpHandle implements Closeable {
 	 * @throws SshException 
 	 * @throws SftpStatusException 
 	 */
-	@SuppressWarnings("removal")
 	public Closeable lock(long offset, long length, int lockflags) throws SftpStatusException, SshException {
-		sftp.lockFile(handle, offset, length, lockflags);
+		
+		if(sftp.version < 6) {
+			throw new SftpStatusException(
+					SftpStatusException.SSH_FX_OP_UNSUPPORTED,
+					"Locks are not supported by the server SFTP version "
+							+ String.valueOf(sftp.version));
+		}
+		try {
+			UnsignedInteger32 requestId = sftp.nextRequestId();
+			Packet msg = sftp.createPacket();
+			msg.write(SftpChannel.SSH_FXP_BLOCK);
+			msg.writeInt(requestId.longValue());
+			msg.writeBinaryString(handle);
+			msg.writeUINT64(offset);
+			msg.writeUINT64(length);
+			msg.writeInt(lockflags);
+			
+			sftp.sendMessage(msg);
+
+			sftp.getOKRequestStatus(requestId, file);
+		} catch (SshIOException ex) {
+			throw ex.getRealException();
+		} catch (IOException ex) {
+			throw new SshException(ex);
+		}
+		
 		return new Closeable() {
 			@Override
 			public void close() throws IOException {
 				try {
-					sftp.unlockFile(handle, offset, length);
+					UnsignedInteger32 requestId = sftp.nextRequestId();
+					Packet msg = sftp.createPacket();
+					msg.write(SftpChannel.SSH_FXP_UNBLOCK);
+					msg.writeInt(requestId.longValue());
+					msg.writeBinaryString(handle);
+					msg.writeUINT64(offset);
+					msg.writeUINT64(length);
+					
+					sftp.sendMessage(msg);
+
+					sftp.getOKRequestStatus(requestId, file);
 				} catch (SftpStatusException | SshException e) {
 					throw new IOException(e);
 				}
@@ -208,7 +244,7 @@ public final class SftpHandle implements Closeable {
 	 */
 	public void write(long offset, byte[] input, int inputOffset, int len) throws SftpStatusException, SshException {
 		checkValidHandle();
-		sftp.writeFile(handle, new UnsignedInteger64(offset), input, inputOffset, len);
+		writeFile(new UnsignedInteger64(offset), input, inputOffset, len);
 	}
 
 	/**
@@ -255,9 +291,6 @@ public final class SftpHandle implements Closeable {
 				sftp.getOKRequestStatus(requestId, file.getAbsolutePath());
 			} catch (SshException | SshIOException | SftpStatusException ex) {
 				throw new IOException("Failed to close handle.", ex);
-			}
-			finally {
-				sftp.handles.remove(handle);
 			}
 			EventServiceImplementation.getInstance()
 					.fireEvent((new Event(this, EventCodes.EVENT_SFTP_FILE_CLOSED, true))
@@ -319,7 +352,7 @@ public final class SftpHandle implements Closeable {
 						Log.debug("Received results");
 					}
 
-					SftpFile[] files = sftp.extractFiles(bar, file.getAbsolutePath());
+					SftpFile[] files = extractFiles(bar, file.getAbsolutePath());
 
 					if (Log.isDebugEnabled()) {
 						Log.debug("There are {} results in this packet", files.length);
@@ -520,7 +553,7 @@ public final class SftpHandle implements Closeable {
 			if (buffered != -1) {
 
 				long time = System.currentTimeMillis();
-				sftp.writeFile(handle, new UnsignedInteger64(position), buf, 0, buffered);
+				writeFile(new UnsignedInteger64(position), buf, 0, buffered);
 				time = System.currentTimeMillis() - time;
 
 				System.setProperty("maverick.write.blockRoundtrip", String.valueOf(time));
@@ -979,35 +1012,6 @@ public final class SftpHandle implements Closeable {
 	}
 
 	/**
-	 * Performs an optimized read of a file through use of asynchronous messages.
-	 * The total number of outstanding read requests is configurable. This should be
-	 * safe on file objects as the SSH protocol states that file read operations
-	 * should return the exact number of bytes requested in each request. However
-	 * the server is not required to return the exact number of bytes on device
-	 * files and so this method should not be used for device files.
-	 * <p>
-	 * Deprecated. Filename argument irrelevant.
-	 * 
-	 * @param handle              the open files handle
-	 * @param length              the amount of the file file to be read, equal to
-	 *                            the file length when reading the whole file
-	 * @param blocksize           the blocksize to read
-	 * @param out                 an OutputStream to output the file into
-	 * @param outstandingRequests the maximum number of read requests to
-	 * @param progress
-	 * @param position            the postition from which to start reading the file
-	 * @throws SshException
-	 * @deprecated
-	 * @see #performOptimizedRead(long, int, OutputStream, int, FileTransferProgress, long)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void performOptimizedRead(String filename, long length, int blocksize, OutputStream out,
-			int outstandingRequests, FileTransferProgress progress, long position)
-			throws SftpStatusException, SshException, TransferCancelledException {
-		performOptimizedRead(length, blocksize, out, outstandingRequests, progress, position);
-	}
-
-	/**
 	 * Perform a synchronous read of a file from the remote file system. This
 	 * implementation waits for acknowledgement of every data packet before
 	 * requesting additional data.
@@ -1120,6 +1124,66 @@ public final class SftpHandle implements Closeable {
 			throw new SftpStatusException(SftpStatusException.INVALID_HANDLE,
 					"The handle is not an open file handle!");
 		}	
+	}
+	
+	private SftpFile[] extractFiles(SftpMessage bar, String parent) throws SshException {
+
+		try {
+
+			if (parent != null && !parent.endsWith("/")) {
+				parent += "/";
+			}
+
+			int count = (int) bar.readInt();
+			SftpFile[] files = new SftpFile[count];
+
+			String shortname;
+			String longname = null;
+
+			for (int i = 0; i < files.length; i++) {
+				shortname = bar.readString(sftp.CHARSET_ENCODING); 
+
+				if (sftp.version <= 3) {
+					// read and throw away the longname as don't use it but need
+					// to read it out of the bar to advance the position.
+					longname = bar.readString(sftp.CHARSET_ENCODING);
+				}
+
+				var bldr = SftpFileAttributesBuilder.of(bar, sftp.getVersion(), sftp.getCharsetEncoding());
+
+				// Work out username/group from long name
+				if (longname != null && sftp.version <= 3) {
+					try {
+						StringTokenizer t = new StringTokenizer(longname);
+						t.nextToken();
+						t.nextToken();
+						String username = t.nextToken();
+						String group = t.nextToken();
+
+						bldr.withUsername(username);
+						bldr.withGroup(group);
+
+					} catch (Exception e) {
+
+					}
+
+				}
+
+				files[i] = new SftpFile(parent != null ? parent + shortname
+						: shortname, bldr.build(), longname);
+			}
+
+			return files;
+		} catch (SshIOException ex) {
+			throw ex.getRealException();
+		} catch (IOException ex) {
+			throw new SshException(ex);
+		}
+	}
+	
+	private void writeFile(UnsignedInteger64 offset, byte[] data,
+			int off, int len) throws SftpStatusException, SshException {
+		sftp.getOKRequestStatus(postWriteRequest(offset.longValue(), data, off, len), file);
 	}
 
 	

@@ -397,7 +397,7 @@ public final class PushTask extends AbstractOptimisedTask<String, AbstractFile> 
 				@SuppressWarnings("unused")
 				int method = ext.read();
 
-				SftpHandle transaction = primarySftpClient.getSubsystemChannel().getFile(remotePath).handle(handle);
+				SftpHandle transaction = primarySftpClient.getSubsystemChannel().createHandle(handle, remotePath);
 				
 				verboseMessage("Remote server supports multipart extensions with minimum part size of {0} bytes", blocksize);
 				

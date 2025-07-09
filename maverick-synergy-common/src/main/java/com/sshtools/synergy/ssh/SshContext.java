@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
+import com.sshtools.common.events.EventListener;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.Context;
@@ -267,7 +268,8 @@ public abstract class SshContext extends ProtocolContext implements
 	String httpRedirectUrl;
 	
 	Map<Class<?>,Object> policies = new HashMap<>();
-
+	EventListener eventListener;
+	
 	private boolean sha1SignaturesSupported = true;
 	
 	/** Constructs a default context but does not set the daemon 
@@ -1425,5 +1427,13 @@ public abstract class SshContext extends ProtocolContext implements
 	
 	public void setSHA1SignaturesSupported(boolean sha1SignaturesSupported) {
 		this.sha1SignaturesSupported = sha1SignaturesSupported;
+	}
+
+	public EventListener getEventListener() {
+		return eventListener;
+	}
+
+	public void setEventListener(EventListener eventListener) {
+		this.eventListener = eventListener;
 	}
 }

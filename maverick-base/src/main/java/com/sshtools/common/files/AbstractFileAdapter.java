@@ -168,12 +168,6 @@ public abstract class AbstractFileAdapter implements AbstractFile {
 	public abstract AbstractFileFactory<? extends AbstractFile> getFileFactory();
 
 	@Override
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void symlinkTo(String target) throws IOException, PermissionDeniedException {
-		file.symlinkTo(target);
-	}
-
-	@Override
 	public void symlinkFrom(String target) throws IOException, PermissionDeniedException {
 		file.symlinkFrom(target);
 	}
@@ -181,12 +175,6 @@ public abstract class AbstractFileAdapter implements AbstractFile {
 	@Override
 	public void linkFrom(String target) throws IOException, PermissionDeniedException {
 		file.linkFrom(target);
-	}
-
-	@Override
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void linkTo(String target) throws IOException, PermissionDeniedException {
-		file.linkTo(target);
 	}
 
 	@Override

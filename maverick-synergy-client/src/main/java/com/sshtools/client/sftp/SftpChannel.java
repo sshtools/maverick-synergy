@@ -68,8 +68,9 @@ import com.sshtools.synergy.ssh.PacketPool;
  */
 public class SftpChannel extends AbstractSubsystem {
 
+	public static final String DEFAULT_CHARSET_ENCODING = "UTF-8";
 	
-	private String CHARSET_ENCODING = "UTF-8";
+	String CHARSET_ENCODING = "UTF-8";
 	
 	/**
 	 * File open flag, opens the file for reading.
@@ -660,6 +661,11 @@ public class SftpChannel extends AbstractSubsystem {
 
 	}
 
+	public void getOKRequestStatus(UnsignedInteger32 requestId, SftpFile file)
+			throws SftpStatusException, SshException {
+		getOKRequestStatus(requestId, file.getAbsolutePath());
+	}
+	
 	/**
 	 * Verify that an OK status has been returned for a request id.
 	 * 
@@ -690,21 +696,6 @@ public class SftpChannel extends AbstractSubsystem {
 
 	}
 
-	/**
-	 * Set the attributes of a file.
-	 * 
-	 * @param path the path to the file
-	 * @param attrs the file attributes
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 * @deprecated
-	 * @see SftpFile#attributes(SftpFileAttributes)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void setAttributes(SftpFile path, SftpFileAttributes attrs)
-			throws SftpStatusException, SshException {
-		path.attributes(attrs);
-	}
 
 	/**
 	 * Sets the attributes of a file.
@@ -715,10 +706,7 @@ public class SftpChannel extends AbstractSubsystem {
 	 *            the file attributes.
 	 * @throws SftpStatusException
 	 *             , SshException
-//	 * @deprecated
-	 * @see SftpFile#attributes(SftpFileAttributes)
 	 */
-//	@Deprecated(since = "3.1.0", forRemoval = true)
 	public void setAttributes(String path, SftpFileAttributes attrs)
 			throws SftpStatusException, SshException {
 		try {
@@ -807,8 +795,7 @@ public class SftpChannel extends AbstractSubsystem {
 			int off, int len) throws SftpStatusException, SshException {
 
 		SftpHandle h = getBestHandle(handle);
-		getOKRequestStatus(h.postWriteRequest(offset.longValue(), data, off, len),
-				h.getFile() == null ? "<fileless-handle>" : h.getFile().getAbsolutePath());
+		getOKRequestStatus(h.postWriteRequest(offset.longValue(), data, off, len), h.getFile().getAbsolutePath());
 	}
 
 	/**
@@ -1036,7 +1023,7 @@ public class SftpChannel extends AbstractSubsystem {
 	public SftpFile getFile(String path) throws SftpStatusException,
 			SshException {
 		String absolute = getAbsolutePath(path);
-		return new SftpFile(absolute, getAttributes(absolute), this, null);
+		return new SftpFile(absolute, getAttributes(absolute), null);
 	}
 
 	/**
@@ -1412,7 +1399,7 @@ public class SftpChannel extends AbstractSubsystem {
 	@Deprecated(since = "3.1.0", forRemoval = true)
 	public int listChildren(SftpFile file, List<SftpFile> children)
 			throws SftpStatusException, SshException {
-		if (file.isDirectory()) {
+		if (file.attributes().isDirectory()) {
 			return openDirectory(file.getAbsolutePath()).listChildren(children);
 		} else {
 			throw new SshException("Cannot list children for this file object",
@@ -1464,7 +1451,7 @@ public class SftpChannel extends AbstractSubsystem {
 				}
 
 				files[i] = new SftpFile(parent != null ? parent + shortname
-						: shortname, bldr.build(), this, longname);
+						: shortname, bldr.build(), longname);
 			}
 
 			return files;
@@ -1640,7 +1627,7 @@ public class SftpChannel extends AbstractSubsystem {
 				
 				sendMessage(msg);
 				
-				SftpFile file = new SftpFile(path, attrs, this, null);
+				SftpFile file = new SftpFile(path, attrs, null);
 				SftpHandle handle = getHandle(requestId, file);
 
 				EventServiceImplementation.getInstance().fireEvent(
@@ -1689,7 +1676,7 @@ public class SftpChannel extends AbstractSubsystem {
 			
 			sendMessage(msg);
 
-			SftpFile file = new SftpFile(path, attrs, this, null);
+			SftpFile file = new SftpFile(path, attrs, null);
 			SftpHandle handle = getHandle(requestId, file);
 
 			EventServiceImplementation.getInstance().fireEvent(
@@ -1738,7 +1725,7 @@ public class SftpChannel extends AbstractSubsystem {
 			
 			sendMessage(msg);
 			
-			return getHandle(requestId, new SftpFile(path, attrs, this, ""));
+			return getHandle(requestId, new SftpFile(path, attrs, ""));
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -1875,6 +1862,7 @@ public class SftpChannel extends AbstractSubsystem {
 			throws SftpStatusException, SshException {
 		renameFile(oldpath, newpath, 0);
 	}
+	
 	public void renameFile(String oldpath, String newpath, int flags)
 			throws SftpStatusException, SshException {
 
@@ -1984,6 +1972,54 @@ public class SftpChannel extends AbstractSubsystem {
 			SftpMessage bar = getResponse(requestId);
 			try {
 				return extractAttributes(bar, path, requestId);
+			} finally {
+				bar.release();
+			}
+		} catch (SshIOException ex) {
+			throw ex.getRealException();
+		} catch (IOException ex) {
+			throw new SshException(ex);
+		}
+	}
+	
+	protected SftpFileAttributes getAttributes(byte[] handle)
+			throws SftpStatusException, SshException {
+		try {
+			UnsignedInteger32 requestId = nextRequestId();
+			Packet msg = createPacket();
+			msg.write(SSH_FXP_FSTAT);
+			msg.writeInt(requestId.longValue());
+			msg.writeBinaryString(handle);
+
+			if (version > 3) {
+				
+				long flags = SftpFileAttributes.SSH_FILEXFER_ATTR_SIZE
+						| SftpFileAttributes.SSH_FILEXFER_ATTR_PERMISSIONS
+						| SftpFileAttributes.SSH_FILEXFER_ATTR_ACCESSTIME
+						| SftpFileAttributes.SSH_FILEXFER_ATTR_CREATETIME
+						| SftpFileAttributes.SSH_FILEXFER_ATTR_MODIFYTIME
+						| SftpFileAttributes.SSH_FILEXFER_ATTR_ACL
+						| SftpFileAttributes.SSH_FILEXFER_ATTR_OWNERGROUP
+						| SftpFileAttributes.SSH_FILEXFER_ATTR_SUBSECOND_TIMES;
+				
+				if(version > 4) {
+					flags |= SftpFileAttributes.SSH_FILEXFER_ATTR_BITS;
+				}
+				
+				msg.writeInt(flags);
+			}
+			
+			String debug = "handle:" + Base64.encodeBytes(handle, true);
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_SXP_FSTAT for {}", 
+						debug);
+			}
+
+			sendMessage(msg);
+
+			SftpMessage bar = getResponse(requestId);
+			try {
+				return extractAttributes(bar, debug, requestId);
 			} finally {
 				bar.release();
 			}
@@ -2305,5 +2341,9 @@ public class SftpChannel extends AbstractSubsystem {
 
 	public SshClientContext getContext() {
 		return (SshClientContext) con.getContext();
+	}
+
+	public SftpHandle createHandle(byte[] handle, String path) throws SftpStatusException, SshException {
+		return new SftpHandle(handle, this, new SftpFile(path, getAttributes(handle), null));
 	}
 }

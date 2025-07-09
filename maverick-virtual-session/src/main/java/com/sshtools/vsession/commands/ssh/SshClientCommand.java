@@ -28,7 +28,6 @@ import java.nio.ByteBuffer;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
-import com.sshtools.client.PseudoTerminalModes.PseudoTerminalModesBuilder;
 import com.sshtools.client.SessionChannelNG;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClientContext;
@@ -55,7 +54,6 @@ public class SshClientCommand extends AbstractSshClientCommand {
 			this.options.addOption(option);
 		}
 	}
-	
 
 	@Override
 	public void runCommand(SshClient sshClient, SshClientArguments arguments, VirtualConsole console) {
@@ -71,7 +69,7 @@ public class SshClientCommand extends AbstractSshClientCommand {
 			
 			if (CommandUtil.isNotEmpty(arguments.getCommand())) {
 				String command = arguments.getCommand();
-				var builder = CommandTaskBuilder.create()
+				CommandTaskBuilder builder = CommandTaskBuilder.create()
 						.withConnection(connection)
 						.withCommand(command)
 						.withTermType(console.getTerminal().getType())
@@ -88,10 +86,7 @@ public class SshClientCommand extends AbstractSshClientCommand {
 						})
 						.onClose((t, session) -> ((VirtualShellNG)console.getSessionChannel()).removeWindowSizeChangeListener(listener));
 				if(console.getPseudoTerminalModes() != null) {
-					try {
-						builder.withModes(PseudoTerminalModesBuilder.create().build());
-					} catch (IOException e) {
-					}
+					builder.withModes(console.getPseudoTerminalModes());
 				}
 				task = builder.build();
 				

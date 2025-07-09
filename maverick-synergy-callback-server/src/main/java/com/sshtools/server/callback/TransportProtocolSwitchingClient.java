@@ -23,8 +23,8 @@ package com.sshtools.server.callback;
  */
 
 
-
 import java.util.Date;
+import java.io.IOException;
 
 import com.sshtools.client.SshClientContext;
 import com.sshtools.client.TransportProtocolClient;
@@ -32,10 +32,10 @@ import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.ssh.SshException;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.TransportProtocolServer;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
-import com.sshtools.synergy.nio.LicenseException;
 import com.sshtools.synergy.nio.ProtocolContextFactory;
 
 class TransportProtocolSwitchingClient extends TransportProtocolClient {
@@ -47,7 +47,7 @@ class TransportProtocolSwitchingClient extends TransportProtocolClient {
 	public TransportProtocolSwitchingClient(SshClientContext sshContext, 
 			String callbackIdentifier,
 			ProtocolContextFactory<SshServerContext> serverFactory,
-			ConnectRequestFuture connectFuture) throws LicenseException {
+			ConnectRequestFuture connectFuture) throws IOException, SshException {
 		super(sshContext, connectFuture);
 		this.serverFactory = serverFactory;
 		this.callbackIdentifier = callbackIdentifier;

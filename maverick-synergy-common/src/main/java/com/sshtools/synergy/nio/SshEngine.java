@@ -148,7 +148,7 @@ public class SshEngine {
 	 * @returns the release date of the current version.
 	 */
 	public static Date getReleaseDate() {
-		return new Date(/* RELEASE_DATE */);
+		return new Date(1751328000000L);
 	}
 
 	public boolean isStarting() {
@@ -834,7 +834,7 @@ public class SshEngine {
 		this.startupRequiresListeningInterfaces = startupRequiresListeningInterfaces;
 	}
 
-	private <K extends ProtocolContext> ProtocolEngine registerClientConnection(K protocolContext, SocketChannel socketChannel, ConnectRequestFuture connectFuture) throws IOException {
+	private <K extends ProtocolContext> ProtocolEngine registerClientConnection(K protocolContext, SocketChannel socketChannel, ConnectRequestFuture connectFuture) throws IOException, SshException {
 		SocketHandler connection = protocolContext.getSocketConnectionFactory().createSocketConnection(
 				context, 
 				socketChannel.socket().getLocalSocketAddress(), 

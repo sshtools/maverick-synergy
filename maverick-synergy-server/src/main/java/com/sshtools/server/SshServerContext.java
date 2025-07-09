@@ -122,7 +122,7 @@ public class SshServerContext extends SshContext {
 		this.connectionManager = connectionManager;
 	}
 
-	public ProtocolEngine createEngine(ConnectRequestFuture connectFuture) throws IOException {
+	public ProtocolEngine createEngine(ConnectRequestFuture connectFuture) throws IOException, SshException {
 		return new TransportProtocolServer(this, connectFuture);
     }
 	
@@ -628,19 +628,17 @@ public class SshServerContext extends SshContext {
 		}
 		
 		verifiedKeyExchanges = new ComponentFactory<SshKeyExchange<SshServerContext>>(componentManager);
+
 		for(var kex : ServiceLoader.load(SshKeyExchangeServerFactory.class, SshKeyExchangeServerFactory.class.getClassLoader())) {
 			if(testServerKeyExchangeAlgorithm(kex))
 				verifiedKeyExchanges.add(kex);
-		}
+    }
 		
 		keyExchanges = (ComponentFactory<SshKeyExchange<? extends SshContext>>)verifiedKeyExchanges.clone();
-		
+
 	}
-
-	private boolean testServerKeyExchangeAlgorithm(SshKeyExchangeServerFactory<? extends SshKeyExchangeServer> cls) {
-
-		var name  = cls.getKeys() [0];
-		
+	
+	private boolean testServerKeyExchangeAlgorithm(String name, Class<? extends SshKeyExchange<? extends SshContext>> cls) {
 		SshKeyExchange<? extends SshContext> c = null;
 		try {
 
@@ -699,5 +697,10 @@ public class SshServerContext extends SshContext {
 	 */
 	public void setForceServerPreferences(boolean serverControlledKeyExchange) {
 		this.forceServerPreferences = serverControlledKeyExchange;
+	}
+	
+	@Override
+	protected String getConfigName() {
+		return System.getProperty("maverick.configName", "sshd.cfg");
 	}
 }

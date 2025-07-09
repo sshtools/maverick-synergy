@@ -23,7 +23,6 @@ package com.sshtools.server.components;
  */
 
 import java.io.IOException;
-import java.math.BigInteger;
 
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
@@ -46,7 +45,7 @@ public abstract class SshKeyExchangeServer implements SshKeyExchange<SshServerCo
 	/**
      * The secret value produced during key exchange.
      */
-    protected BigInteger secret;
+    protected byte[] secret;
 
     /**
      * The exchange hash produced during key exchange.
@@ -79,7 +78,7 @@ public abstract class SshKeyExchangeServer implements SshKeyExchange<SshServerCo
      */
     protected SshTransport<SshServerContext> transport;
 
-    String hashAlgorithm;
+    protected String hashAlgorithm;
     private final SecurityLevel securityLevel;
     final int priority;
     /**
@@ -146,7 +145,7 @@ public abstract class SshKeyExchangeServer implements SshKeyExchange<SshServerCo
     /* (non-Javadoc)
 	 * @see com.maverick.sshd.components.SshKeyExchangeServer#getSecret()
 	 */
-    public BigInteger getSecret() {
+    public byte[] getSecret() {
         return secret;
     }
 

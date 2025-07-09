@@ -188,7 +188,7 @@ public class Rsa1024SHA1KeyExchange extends SshKeyExchangeServer implements Abst
 				byte[] tmp = cipher.doFinal(encryptedSecret);
 				try(ByteArrayReader r = new ByteArrayReader(tmp)) {
 					tmp = r.readBinaryString();
-					secret = new BigInteger(tmp);
+					secret = new BigInteger(tmp).toByteArray();
 				}
 			} catch (Throwable t) {
 				Rsa1024SHA1KeyExchange.this.transport.disconnect(
@@ -312,7 +312,8 @@ public class Rsa1024SHA1KeyExchange extends SshKeyExchangeServer implements Abst
     hash.putBytes(encryptedSecret);
     
     // The diffie hellman k value
-    hash.putBigInteger(secret);
+	hash.putInt(secret.length);
+	hash.putBytes(secret);
 
     // Do the final output
     exchangeHash = hash.doFinal();

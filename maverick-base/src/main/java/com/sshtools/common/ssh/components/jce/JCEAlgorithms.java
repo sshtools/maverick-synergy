@@ -117,5 +117,5 @@ public interface JCEAlgorithms {
 	public static final String EdDSA = "EdDSA";
 	public static final String ED25519 = "Ed25519";
 	public static final String ED448 = "Ed448";
-	
+	public static final String JCE_X25519 = "X25519";
 }

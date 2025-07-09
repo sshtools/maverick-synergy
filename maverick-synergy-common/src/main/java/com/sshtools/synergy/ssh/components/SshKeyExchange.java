@@ -23,7 +23,6 @@ package com.sshtools.synergy.ssh.components;
  */
 
 import java.io.IOException;
-import java.math.BigInteger;
 
 import com.sshtools.common.ssh.SecureComponent;
 import com.sshtools.common.ssh.SshException;
@@ -60,7 +59,7 @@ public interface SshKeyExchange<T extends SshContext> extends SshComponent, Secu
 
 	public boolean hasSentNewKeys();
 
-	public BigInteger getSecret();
+	public byte[] getSecret();
 
 	public String getAlgorithm();
 

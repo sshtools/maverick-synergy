@@ -40,7 +40,7 @@ public abstract class SshKeyExchangeClient implements SshKeyExchange<SshClientCo
 	/**
      * The secret value produced during key exchange.
      */
-    protected BigInteger secret;
+    protected byte[] secret;
 
     /**
      * The exchange hash produced during key exchange.
@@ -77,7 +77,7 @@ public abstract class SshKeyExchangeClient implements SshKeyExchange<SshClientCo
      */
     protected SshTransport<SshClientContext> transport;
     
-    String hashAlgorithm;
+    protected final String hashAlgorithm;
     
     /**
      * Contruct an uninitialized key exchange
@@ -136,7 +136,7 @@ public abstract class SshKeyExchangeClient implements SshKeyExchange<SshClientCo
      * 
      * @return The secret value produced during key exchange
      */
-    public BigInteger getSecret() {
+    public byte[] getSecret() {
         return secret;
     }
 
@@ -220,7 +220,8 @@ public abstract class SshKeyExchangeClient implements SshKeyExchange<SshClientCo
       hash.putBigInteger(f);
 
       // The diffie hellman k value
-      hash.putBigInteger(secret);
+      hash.putInt(secret.length);
+      hash.putBytes(secret);
 
       // Do the final output
       exchangeHash = hash.doFinal();

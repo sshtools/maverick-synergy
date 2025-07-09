@@ -487,12 +487,6 @@ public abstract class ComponentManager {
 		setMinimumSecurityLevel(securityLevel, hmacsCS, "Client->Server Macs");
 		setMinimumSecurityLevel(securityLevel, hmacsSC, "Server->Client Macs");
 		setMinimumSecurityLevel(securityLevel, publickeys, "Public Keys");
-//		if (clientKeyexchanges.hasComponents()) {
-//			setMinimumSecurityLevel(securityLevel, clientKeyexchanges, "Client->Server KEX");
-//		}
-//		if (serverKeyexchanges.hasComponents()) {
-//			setMinimumSecurityLevel(securityLevel, serverKeyexchanges, "Server->Client KEX");
-//		}
 		
 	}
 

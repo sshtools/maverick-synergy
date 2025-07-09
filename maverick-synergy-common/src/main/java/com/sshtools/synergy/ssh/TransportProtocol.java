@@ -24,6 +24,7 @@ package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
@@ -37,6 +38,7 @@ import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.Vector;
 
+import com.sshtools.common.config.AdaptiveConfiguration;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventServiceImplementation;
@@ -142,6 +144,8 @@ public abstract class TransportProtocol<T extends SshContext>
 	private static final String STRICT_KEX_SERVER = "kex-strict-s-v00@openssh.com";
 	boolean isKexStrict = false;
 	boolean hasFirstNewKeys = false;
+	
+	protected final AdaptiveConfiguration config;
 	
 	protected void transferState(TransportProtocol<? extends SshContext> transport) {
 		
@@ -300,16 +304,18 @@ public abstract class TransportProtocol<T extends SshContext>
 	
 	/**
 	 * Create a default transport protocol instance in CLIENT_MODE.
+	 * @throws SshException 
 	 * 
 	 * @throws IOException
 	 */
-	public TransportProtocol(T sshContext, ConnectRequestFuture connectFuture) {
+	public TransportProtocol(T sshContext, ConnectRequestFuture connectFuture) throws IOException, SshException {
 		super("transport-protocol");
 		this.sshContext = sshContext;
 		this.ignoreMessage = new IgnoreMessage();
 		this.connectFuture = connectFuture;
 		this.uuid = UUID.randomUUID();
 		this.incomingSwap = new byte[sshContext.getMaximumPacketLength()];
+		this.config = AdaptiveConfiguration.getConfiguration(sshContext.getConfigName());
 	}
 
 	public SocketConnection getSocketConnection() {
@@ -1506,7 +1512,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	}
 
 	public String getRemoteIdentification() {
-		return remoteIdentification.toString();
+		return remoteIdentification.toString().trim();
 	}
 
 	public String getUUID() {
@@ -2537,6 +2543,20 @@ public abstract class TransportProtocol<T extends SshContext>
 
 	}
 	
+	protected String getLocalIPAddress() {
+		if(getLocalAddress() instanceof InetSocketAddress) {
+			return ((InetSocketAddress)getLocalAddress()).getAddress().getHostAddress();
+		}
+		return getLocalAddress().toString();
+	}
+
+	protected String getRemoteIPAddress() {
+		if(getRemoteAddress() instanceof InetSocketAddress) {
+			return ((InetSocketAddress)getRemoteAddress()).getAddress().getHostAddress();
+		}
+		return getRemoteAddress().toString();
+	}
+
 	protected abstract boolean isServerMode();
 
 	private void processExtensionInfo(byte[] msg) throws IOException {
@@ -2676,7 +2696,9 @@ public abstract class TransportProtocol<T extends SshContext>
 					.getInstance(keyExchange.getHashAlgorithm());
 
 			// Put the dh k value
-			hash.putBigInteger(keyExchange.getSecret());
+			byte[] secret = keyExchange.getSecret();
+			hash.putInt(secret.length);
+			hash.putBytes(secret);
 
 			// Put in the exchange hash
 			hash.putBytes(keyExchange.getExchangeHash());
@@ -2697,7 +2719,8 @@ public abstract class TransportProtocol<T extends SshContext>
 				hash.reset();
 	
 				// Put the dh k value in again
-				hash.putBigInteger(keyExchange.getSecret());
+				hash.putInt(secret.length);
+				hash.putBytes(secret);
 	
 				// And the exchange hash
 				hash.putBytes(keyExchange.getExchangeHash());

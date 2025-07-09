@@ -26,8 +26,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Objects;
-
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.shell.ShellPolicy;
 import com.sshtools.common.ssh.ChannelRequestFuture;

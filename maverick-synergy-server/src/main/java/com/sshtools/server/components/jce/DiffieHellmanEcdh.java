@@ -23,7 +23,6 @@ package com.sshtools.server.components.jce;
  */
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -32,6 +31,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
+import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.KeyAgreement;
 
@@ -64,8 +64,8 @@ public abstract class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 	String name;
 	String curve;
 
-	byte[] Q_S;
-	byte[] Q_C;
+	protected byte[] Q_S;
+	protected byte[] Q_C;
 
 	String clientId;
 	String serverId;
@@ -73,8 +73,8 @@ public abstract class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 	byte[] serverKexInit;
 
 	KeyPairGenerator keyGen;
-	KeyAgreement keyAgreement;
-	KeyPair keyPair;
+	protected KeyAgreement keyAgreement;
+	protected KeyPair keyPair;
 	
 	protected DiffieHellmanEcdh(String name, String curve, String hashAlgorithm, SecurityLevel securityLevel, int priority) {
 		super(hashAlgorithm, securityLevel, priority);
@@ -116,7 +116,8 @@ public abstract class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 		hash.putBytes(Q_S);
 
 		// The diffie hellman k value
-		hash.putBigInteger(secret);
+		hash.putInt(secret.length);
+		hash.putBytes(secret);
 
 		// Do the final output
 		exchangeHash = hash.doFinal();
@@ -168,23 +169,10 @@ public abstract class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 			
 			initCrypto();
 			
-			Q_C = reply.readBinaryString();
+			Q_C = decodeQC(reply.readBinaryString());
+			Q_S = encodeQS();
+			secret = generateSecret();
 			
-			ECPublicKey ec = (ECPublicKey) keyPair.getPublic();
-			
-			Q_S = ECUtils.toByteArray(ec.getW(), ec.getParams().getCurve());
-
-			keyAgreement.doPhase(ECUtils.decodeKey(Q_C, curve), true);
-
-			byte[] tmp = keyAgreement.generateSecret();
-			if ((tmp[0] & 0x80) == 0x80) {
-				byte[] tmp2 = new byte[tmp.length + 1];
-				System.arraycopy(tmp, 0, tmp2, 1, tmp.length);
-				tmp = tmp2;
-			}
-
-			// Calculate diffe hellman k value
-			secret = new BigInteger(tmp);
 		} catch (Exception e) {
 			throw new SshException(SshException.KEY_EXCHANGE_FAILED, e);
 		} finally {
@@ -261,18 +249,55 @@ public abstract class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 		return keyGen.getProvider().getName();
 	}
 	
-	private void initCrypto() throws InvalidKeyException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, SshException {
-		ComponentManager.getInstance().supportedDigests().getInstance(getHashAlgorithm());
-		
-		keyGen = JCEProvider.getProviderForAlgorithm(JCEProvider.getECDSAAlgorithmName())==null ? 
-				KeyPairGenerator.getInstance(JCEProvider.getECDSAAlgorithmName()) : 
-					KeyPairGenerator.getInstance(JCEProvider.getECDSAAlgorithmName(), 
-							JCEProvider.getProviderForAlgorithm(JCEProvider.getECDSAAlgorithmName()));
-		keyAgreement = JCEProvider.getProviderForAlgorithm(JCEAlgorithms.JCE_ECDH)==null ? 
-				KeyAgreement.getInstance(JCEAlgorithms.JCE_ECDH) : 
-					KeyAgreement.getInstance(JCEAlgorithms.JCE_ECDH, 
-							JCEProvider.getProviderForAlgorithm(JCEAlgorithms.JCE_ECDH));
+	protected String getKeyAgreementAlgorithm() {
+		return JCEAlgorithms.JCE_ECDH;
+	}
+	
+	protected KeyAgreement getKeyAgreement() throws NoSuchAlgorithmException {
+		return JCEProvider.getProviderForAlgorithm(getKeyAgreementAlgorithm())==null ? 
+				KeyAgreement.getInstance(getKeyAgreementAlgorithm()) : 
+					KeyAgreement.getInstance(getKeyAgreementAlgorithm(), 
+							JCEProvider.getProviderForAlgorithm(getKeyAgreementAlgorithm()));
+	}
+	
+	protected String getKeyPairGeneratorAlgorithm() {
+		return JCEProvider.getECDSAAlgorithmName();
+	}
+	
+	protected KeyPairGenerator getKeyPairGenerator() throws NoSuchAlgorithmException {
+		return JCEProvider.getProviderForAlgorithm(getKeyPairGeneratorAlgorithm())==null ? 
+				KeyPairGenerator.getInstance(getKeyPairGeneratorAlgorithm()) : 
+					KeyPairGenerator.getInstance(getKeyPairGeneratorAlgorithm(), 
+							JCEProvider.getProviderForAlgorithm(getKeyPairGeneratorAlgorithm()));
+	}
+	
+	protected byte[] encodeQS() {
+		ECPublicKey ec = (ECPublicKey) keyPair.getPublic();
+		return ECUtils.toByteArray(ec.getW(), ec.getParams().getCurve());
+	}
+	
+	protected byte[] decodeQC(byte[] q_c) {
+		return q_c;
+	}
+	
+	protected byte[] generateSecret() throws InvalidKeyException, IllegalStateException, InvalidKeySpecException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, IOException {
+		keyAgreement.doPhase(ECUtils.decodeKey(Q_C, curve), true);
 
+		byte[] tmp = keyAgreement.generateSecret();
+		if ((tmp[0] & 0x80) == 0x80) {
+			byte[] tmp2 = new byte[tmp.length + 1];
+			System.arraycopy(tmp, 0, tmp2, 1, tmp.length);
+			tmp = tmp2;
+		}
+		
+		return tmp;
+	}
+	
+	protected void initCrypto() throws InvalidKeyException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, SshException {
+		ComponentManager.getInstance().supportedDigests().getInstance(getHashAlgorithm());		
+		
+		keyGen = getKeyPairGenerator();
+		keyAgreement = getKeyAgreement();
 		
 		ECGenParameterSpec namedSpec = new ECGenParameterSpec(curve);
 		keyGen.initialize(namedSpec);

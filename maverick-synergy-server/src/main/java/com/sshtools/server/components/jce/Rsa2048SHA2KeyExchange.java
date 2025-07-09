@@ -190,7 +190,7 @@ public class Rsa2048SHA2KeyExchange extends SshKeyExchangeServer implements Abst
 					byte[] tmp = cipher.doFinal(encryptedSecret);
 					try (ByteArrayReader r = new ByteArrayReader(tmp)) {
 						tmp = r.readBinaryString();
-						secret = new BigInteger(tmp);
+						secret = new BigInteger(tmp).toByteArray();
 					}
 				} catch (Throwable t) {
 					Rsa2048SHA2KeyExchange.this.transport.disconnect(TransportProtocol.KEY_EXCHANGE_FAILED,
@@ -319,7 +319,8 @@ public class Rsa2048SHA2KeyExchange extends SshKeyExchangeServer implements Abst
 		hash.putBytes(encryptedSecret);
 
 		// The diffie hellman k value
-		hash.putBigInteger(secret);
+		hash.putInt(secret.length);
+		hash.putBytes(secret);
 
 		// Do the final output
 		exchangeHash = hash.doFinal();

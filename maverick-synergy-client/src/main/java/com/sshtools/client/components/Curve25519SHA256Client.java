@@ -160,7 +160,7 @@ public class Curve25519SHA256Client extends SshKeyExchangeClient {
 
 			byte[] k = new byte[32];
 			Curve25519.curve(k, privateKey, f);
-			secret = new BigInteger(1, k);
+			secret = new BigInteger(1, k).toByteArray();
 
 			calculateExchangeHash();
 
@@ -202,7 +202,8 @@ public class Curve25519SHA256Client extends SshKeyExchangeClient {
 		hash.putBytes(f);
 
 		// The diffie hellman k value
-		hash.putBigInteger(secret);
+		hash.putInt(secret.length);
+		hash.putBytes(secret);
 
 		// Do the final output
 		exchangeHash = hash.doFinal();

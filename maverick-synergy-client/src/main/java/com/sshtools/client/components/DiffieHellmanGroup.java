@@ -197,7 +197,7 @@ public abstract class DiffieHellmanGroup extends SshKeyExchangeClient {
 						tmp = tmp2;
 					}
 					// Calculate diffe hellman k value
-					secret = new BigInteger(tmp);
+					secret = new BigInteger(tmp).toByteArray();
 	
 					// Calculate the exchange hash
 					calculateExchangeHash();

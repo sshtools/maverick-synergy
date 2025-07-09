@@ -34,7 +34,6 @@ import com.sshtools.common.publickey.SshPublicKeyFileFactory;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
-import com.sshtools.synergy.nio.LicenseException;
 import com.sshtools.synergy.nio.SocketConnection;
 import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
 import com.sshtools.synergy.ssh.Service;
@@ -52,7 +51,7 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 	//#ifdef LICENSE
 	//static final LicenseVerification license = new LicenseVerification();
 	//#endif
-	public TransportProtocolClient(SshClientContext sshContext, ConnectRequestFuture connectFuture) throws LicenseException {
+	public TransportProtocolClient(SshClientContext sshContext, ConnectRequestFuture connectFuture) throws IOException, SshException {
 		super(sshContext,connectFuture);
 	}
 

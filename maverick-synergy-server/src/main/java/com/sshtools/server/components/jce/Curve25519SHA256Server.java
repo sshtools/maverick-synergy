@@ -44,6 +44,6 @@ public class Curve25519SHA256Server extends Curve25519SHA256LibSshServer {
 	}
 	
 	public Curve25519SHA256Server() {
-		super(CURVE25519_SHA2);
+		super(CURVE25519_SHA2, 5001);
 	}	
 }

@@ -206,6 +206,10 @@ public abstract class SshContext extends ProtocolContext implements
 
 	public static final String KEYBOARD_INTERACTIVE_AUTHENTICATION = "keyboard-interactive";
 
+	public static final String KEX_SNTRUP761_25519_SHA512 = "sntrup761x25519-sha512";
+	public static final String KEX_MLKEM768_X25519_SHA256 = "mlkem768x25519-sha256";
+	public static final String KEX_SNTRUP761_25519_SHA512_OPENSSH = "sntrup761x25519-sha512@openssh.com";
+
 	protected int maximumSocketsBacklogPerRemotelyForwardedConnection = 50;
 	protected SocketConnectionFactory socketConnectionFactory = new DefaultSocketConnectionFactory();
 	
@@ -228,9 +232,8 @@ public abstract class SshContext extends ProtocolContext implements
 	protected String prefCompressionCS = COMPRESSION_NONE;
 	protected String prefCompressionSC = COMPRESSION_NONE;
 
-	protected String prefKeyExchange = KEX_DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA256;
-	
 	protected String prefPublicKey = PUBLIC_KEY_ED25519;
+	protected String prefKeyExchange = KEX_SNTRUP761_25519_SHA512;
 
 	protected int maxChannels = 100;
 
@@ -340,7 +343,7 @@ public abstract class SshContext extends ProtocolContext implements
 	
 	public abstract ConnectionManager<? extends SshContext> getConnectionManager();
 	
-	public abstract ProtocolEngine createEngine(ConnectRequestFuture connectFuture) throws IOException;
+	public abstract ProtocolEngine createEngine(ConnectRequestFuture connectFuture) throws IOException, SshException;
 
 	public abstract String getSupportedPublicKeys();
 	
@@ -1453,4 +1456,6 @@ public abstract class SshContext extends ProtocolContext implements
 	public void setEventListener(EventListener eventListener) {
 		this.eventListener = eventListener;
 	}
+
+	protected abstract String getConfigName();
 }

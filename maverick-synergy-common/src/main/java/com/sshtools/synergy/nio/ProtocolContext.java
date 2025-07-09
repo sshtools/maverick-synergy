@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.sshtools.common.net.ProxyType;
+import com.sshtools.common.ssh.SshException;
 
 /**
  * A protocol context defines the behavior for a listening interface.
@@ -54,8 +55,9 @@ public abstract class ProtocolContext {
      *
      * @return ProtocolEngine
      * @throws IOException
+     * @throws SshException 
      */
-    protected abstract ProtocolEngine createEngine(ConnectRequestFuture connectFuture) throws IOException;
+    protected abstract ProtocolEngine createEngine(ConnectRequestFuture connectFuture) throws IOException, SshException;
 
     /**
      * Indicates whether the SO_KEEPALIVE socket option is set on connected

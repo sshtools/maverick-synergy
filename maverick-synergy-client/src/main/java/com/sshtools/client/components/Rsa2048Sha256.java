@@ -204,7 +204,7 @@ public class Rsa2048Sha256 extends SshKeyExchangeClient implements AbstractKeyEx
 
 			try {
 				signature = bar.readBinaryString();
-				secret = new BigInteger(s);
+				secret = new BigInteger(s).toByteArray();
 
 				// Calculate the exchange hash
 				calculateExchangeHash();
@@ -275,7 +275,8 @@ public class Rsa2048Sha256 extends SshKeyExchangeClient implements AbstractKeyEx
 	    hash.putBytes(encryptedSecret);
 	    
 	    // The diffie hellman k value
-	    hash.putBigInteger(secret);
+		hash.putInt(secret.length);
+		hash.putBytes(secret);
 
 		// Do the final output
 		exchangeHash = hash.doFinal();

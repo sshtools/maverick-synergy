@@ -82,10 +82,10 @@ public class Curve25519SHA256LibSshServer extends SshKeyExchangeServer implement
 
 	
 	public Curve25519SHA256LibSshServer() {
-		this(CURVE25519_SHA2_AT_LIBSSH_ORG);
+		this(CURVE25519_SHA2_AT_LIBSSH_ORG, 5000);
 	}
-	protected Curve25519SHA256LibSshServer(String name) {
-		super("SHA-256", SecurityLevel.PARANOID, 5000);
+	protected Curve25519SHA256LibSshServer(String name, int priority) {
+		super("SHA-256", SecurityLevel.PARANOID, priority);
 		this.name = name;
 	}
 
@@ -127,7 +127,8 @@ public class Curve25519SHA256LibSshServer extends SshKeyExchangeServer implement
 		hash.putBytes(f);
 
 		// The diffie hellman k value
-		hash.putBigInteger(secret);
+		hash.putInt(secret.length);
+		hash.putBytes(secret);
 
 		// Do the final output
 		exchangeHash = hash.doFinal();
@@ -197,7 +198,7 @@ public class Curve25519SHA256LibSshServer extends SshKeyExchangeServer implement
 
 			byte[] k = new byte[32];
 			Curve25519.curve(k, privateKey, e);
-			secret = new BigInteger(1, k);
+			secret = new BigInteger(1, k).toByteArray();
 		} catch (Exception e) {
 			throw new SshException(SshException.KEY_EXCHANGE_FAILED, e);
 		} finally {

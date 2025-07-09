@@ -58,7 +58,7 @@ public class SwitchingSshContext extends SshClientContext {
 	}
 
 	@Override
-	public ProtocolEngine createEngine(ConnectRequestFuture connectFuture) throws IOException {
+	public ProtocolEngine createEngine(ConnectRequestFuture connectFuture) throws IOException, SshException {
 		return transport = new TransportProtocolSwitchingClient(this, clientIdentifier, serverFactory, connectFuture);
 	}
 

@@ -446,4 +446,8 @@ public class ComponentFactory<T extends Component> implements Cloneable {
 		return Utils.csv(newOrder);
 		
 	}
+
+	public Class<?> getInstanceClass(String name) {
+		return supported.get(name);
+	}
 }

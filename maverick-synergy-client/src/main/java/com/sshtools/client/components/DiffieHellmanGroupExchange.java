@@ -323,11 +323,11 @@ public abstract class DiffieHellmanGroupExchange extends SshKeyExchangeClient
 			tmp = tmp2;
 		}
 		// Calculate diffe hellman k value
-		secret = new BigInteger(tmp);
+		secret = new BigInteger(tmp).toByteArray();
 	}
 
 	private void calculateK() {
-		secret = f.modPow(x, p);
+		secret = f.modPow(x, p).toByteArray();
 	}
 
 	private void calculateEwithJCE() throws SshException, InvalidKeyException {
@@ -545,7 +545,8 @@ public abstract class DiffieHellmanGroupExchange extends SshKeyExchangeClient
 		hash.putBigInteger(f);
 
 		// The diffie hellman k value
-		hash.putBigInteger(secret);
+		hash.putInt(secret.length);
+		hash.putBytes(secret);
 
 		// Do the final output
 		exchangeHash = hash.doFinal();

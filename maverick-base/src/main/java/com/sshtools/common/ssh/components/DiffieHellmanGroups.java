@@ -303,6 +303,11 @@ public class DiffieHellmanGroups {
 		});
 	}
 	
+	public static boolean verifyParameters(byte[] shared, BigInteger p) {
+		BigInteger tmp = new BigInteger(1, shared);
+		return verifyParameters(tmp, p);
+	}
+	
 	public static boolean verifyParameters(BigInteger shared, BigInteger p) {
 		
 		if(shared.compareTo(BigInteger.ONE) <= 0 

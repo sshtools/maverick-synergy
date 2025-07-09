@@ -38,7 +38,6 @@ import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
-import com.sshtools.synergy.nio.LicenseException;
 import com.sshtools.synergy.nio.SocketConnection;
 import com.sshtools.synergy.ssh.ConnectionStateListener;
 import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
@@ -53,8 +52,7 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	String disconnectText;
 	boolean denyConnection = false;
 	
-	
-	public TransportProtocolServer(SshServerContext sshContext, ConnectRequestFuture connectFuture) throws LicenseException {
+	public TransportProtocolServer(SshServerContext sshContext, ConnectRequestFuture connectFuture) throws IOException, SshException {
 		super(sshContext, connectFuture);
 	}
 	
@@ -216,11 +214,11 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	}
 	
 	private void sendExtensionInfo() {
-		
-//		if(AdaptiveConfiguration.getBoolean("disableExtensionInfo", false, con.getRemoteAddress(), con.getIdent())) {
-//			return;
-//		}
-		
+
+		if(config.getBoolean("disableExtensionInfo", false, con.getRemoteIPAddress(), AdaptiveConfiguration.getIdent(con.getRemoteIdentification()))) {
+			return;
+		}
+	
 		final ByteArrayWriter msg = new ByteArrayWriter();
 		
 		try {
@@ -254,8 +252,6 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 			} catch (IOException e) {
 			}
 		}
-		
-		
 	}
 
 	protected void keyExchangeInitialized() {

@@ -116,7 +116,7 @@ public class SshClientContext extends SshContext {
 		this(SshEngine.getDefaultInstance(), securityLevel);
 	}
 
-	public ProtocolEngine createEngine(ConnectRequestFuture connectFuture) throws IOException {
+	public ProtocolEngine createEngine(ConnectRequestFuture connectFuture) throws IOException, SshException {
 		return transport = new TransportProtocolClient(this, connectFuture);
 	}
 	
@@ -357,4 +357,10 @@ public class SshClientContext extends SshContext {
 	public void setPreferKeyboardInteractiveOverPassword(boolean preferKeyboardInteractiveOverPassword) {
 		this.preferKeyboardInteractiveOverPassword = preferKeyboardInteractiveOverPassword;
 	}
+
+	@Override
+	protected String getConfigName() {
+		return System.getProperty("maverick.configName", "ssh.cfg");
+	}
+
 }

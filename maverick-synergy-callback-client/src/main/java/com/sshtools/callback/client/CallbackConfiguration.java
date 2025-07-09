@@ -41,6 +41,7 @@ public class CallbackConfiguration {
 	private String memo;
 	private String callbackIdentifier = DEFAULT_CALLBACK_ID;
 	private boolean reconnect = true;
+	private long connectTimeout = 5000L;
 	
 	Map<String,Object> properties = new HashMap<>();
 	
@@ -48,6 +49,7 @@ public class CallbackConfiguration {
 			String serverHost, 
 			int serverPort, 
 			Long reconnectIntervalMs, 
+			Long connectTimeoutMs,
 			SshKeyPair privateKey,
 			SshPublicKey publicKey, 
 			String memo) {
@@ -58,6 +60,8 @@ public class CallbackConfiguration {
 		this.privateKey = privateKey;
 		this.publicKey = publicKey;
 		this.memo = memo;
+		this.connectTimeout = connectTimeoutMs;
+		this.reconnectIntervalMs = reconnectIntervalMs;
 	}
 	
 	protected CallbackConfiguration() {
@@ -135,6 +139,14 @@ public class CallbackConfiguration {
 
 	public void setReconnect(boolean reconnect) {
 		this.reconnect = reconnect;
+	}
+
+	public long getConnectTimeout() {
+		return connectTimeout;
+	}
+	
+	public void setConnectTimeout(long connectTimeout) {
+		this.connectTimeout = connectTimeout;
 	}
 	
 	

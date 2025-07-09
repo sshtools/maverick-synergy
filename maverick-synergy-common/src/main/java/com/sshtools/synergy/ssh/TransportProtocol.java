@@ -1557,7 +1557,10 @@ public abstract class TransportProtocol<T extends SshContext>
 					Log.debug("Performing internal disconnect {}", getUUID());
 				
 				setTransportState(TransportProtocol.DISCONNECTED);
-				disconnectFuture.disconnected();
+				
+				synchronized(disconnectFuture) {
+					disconnectFuture.disconnected();
+				}
 				
 				if (socketConnection != null)
 					socketConnection.getIdleStates().remove(TransportProtocol.this);
@@ -2804,7 +2807,12 @@ public abstract class TransportProtocol<T extends SshContext>
 	}
 
 	public void kill() {
-		socketConnection.closeConnection();
+		try {
+			socketConnection.closeConnection();
+		}
+		finally {
+			onSocketClose();
+		}
 	}
 
 	public String getHostKeyAlgorithm() {

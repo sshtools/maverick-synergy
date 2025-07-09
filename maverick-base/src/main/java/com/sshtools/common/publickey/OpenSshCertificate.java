@@ -108,7 +108,7 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 			// Extract the key information
 			String header = bar.readString();
 
-			if (!header.equals(getAlgorithm())) {
+			if (!header.equals(getEncodingAlgorithm())) {
 				throw new SshException("The encoded key is not DSA",
 						SshException.INTERNAL_ERROR);
 			}

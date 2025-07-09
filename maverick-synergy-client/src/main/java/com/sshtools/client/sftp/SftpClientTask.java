@@ -47,7 +47,7 @@ import com.sshtools.common.ssh.SshException;
  * access the {@link SftpClient} directly, optionally running in a generic
  * task.
  */
-@Deprecated(forRemoval = true, since = "3.2.0")
+@Deprecated(forRemoval = true, since = "3.1.3")
 public class SftpClientTask extends Task {
 
 	SftpClient sftp;

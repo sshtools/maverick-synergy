@@ -58,7 +58,6 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.Base64;
 import com.sshtools.common.util.ByteArrayReader;
-import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
 import com.sshtools.synergy.ssh.ByteArrays;

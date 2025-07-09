@@ -65,7 +65,7 @@ public class PasswordAuthenticator extends SimpleClientAuthenticator {
 	 * 
 	 * @param password
 	 */
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public PasswordAuthenticator(String password) {
 		this.password = () -> password;
 	}
@@ -75,7 +75,7 @@ public class PasswordAuthenticator extends SimpleClientAuthenticator {
 	 * 
 	 * @param password
 	 */
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public PasswordAuthenticator(char[] password) {
 		this.password = () -> new String(password);
 	}

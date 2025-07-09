@@ -45,7 +45,6 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.PosixPermissions.PosixPermissionsBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
-import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
 
 /**

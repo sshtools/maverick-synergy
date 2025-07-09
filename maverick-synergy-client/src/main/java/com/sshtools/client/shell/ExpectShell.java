@@ -62,7 +62,7 @@ public class ExpectShell {
 		 * 
 		 * @return code 
 		 */
-		@Deprecated(forRemoval = true, since = "3.2.0")
+		@Deprecated(forRemoval = true, since = "3.1.3")
 		public int code() {
 			switch(this) {
 			case WINDOWS:
@@ -99,7 +99,7 @@ public class ExpectShell {
 		 * @param code legacy code
 		 * @return operating system constant
 		 */
-		@Deprecated(forRemoval = true, since = "3.2.0")
+		@Deprecated(forRemoval = true, since = "3.1.3")
 		public static OS code(int code) {
 			switch(code) {
 			case 1:
@@ -429,7 +429,7 @@ public class ExpectShell {
 		 * @param os operating system legacy code
 		 * @return this for chaining
 		 */
-		@Deprecated(forRemoval = true, since = "3.2.0")
+		@Deprecated(forRemoval = true, since = "3.1.3")
 		public ExpectShellBuilder withOS(int os) {
 			return withOS(OS.code(os));
 		}
@@ -469,47 +469,47 @@ public class ExpectShell {
 	}
 
 	/** Windows operating system **/
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_WINDOWS = 1;
 	/** Linux operating system **/
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_LINUX = 2;
 	/** Solaris operating system **/
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_SOLARIS = 3;
 	/** AIX operating system **/
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_AIX = 4;
 	/** Darwin (MAC) operating system **/
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_DARWIN = 5;
 	/** FreeBSD operating system **/
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_FREEBSD = 6;
 	/** OpenBSD operating system **/
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_OPENBSD = 7;
 	/** NetBSD operating system **/
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_NETBSD = 8;
 	/** HP-UX operating system **/
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_HPUX = 9;
 	
 	/** Unix OS if less than this value. **/
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_UNIX = 20;
 	
 	/** OpenVMS operating system **/
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_OPENVMS = 21;
 
 	/** Linux operating system **/
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_POWERSHELL = 22;
 	
 	/** The operating system is unknown **/
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static final int OS_UNKNOWN = 99;
 
 	private final OS osType;
@@ -530,9 +530,10 @@ public class ExpectShell {
 	@Deprecated
 	private static int SHELL_INIT_PERIOD = 2000;
 
-	private final List<Runnable> closeHooks = new ArrayList<Runnable>();
-
-	private int numCommandsExecuted = 0;
+	List<Runnable> closeHooks = new ArrayList<Runnable>();
+	Optional<String> sudoPassword = Optional.empty();
+	
+	int numCommandsExecuted = 0;
 
 	private final static boolean verboseDebug = Boolean.getBoolean("maverick.shell.verbose");
 
@@ -727,7 +728,7 @@ public class ExpectShell {
 		this.characterEncoding = Charset.forName(characterEncoding);
 	}
 
-	@Deprecated(forRemoval = true, since = "3.2.0")
+	@Deprecated(forRemoval = true, since = "3.1.3")
 	public static void setShellInitTimeout(int timeout) {
 		SHELL_INIT_PERIOD = timeout;
 	}
@@ -838,6 +839,11 @@ public class ExpectShell {
 	public ShellProcess sudo(String cmd, String password) throws SshException,
 			ShellTimeoutException, IOException {
 		return sudo(cmd, password, passwordPrompt, new ShellDefaultMatcher());
+	}
+	
+	public ShellProcess sudo(String cmd) throws SshException,
+	ShellTimeoutException, IOException {
+		return sudo(cmd, sudoPassword.orElseThrow(), passwordPrompt, new ShellDefaultMatcher());
 	}
 
 	public ShellProcess sudo(String cmd, String password,
@@ -1031,7 +1037,7 @@ public class ExpectShell {
 			ShellProcess process = new ShellProcess(this, in, startupIn.sessionOut);
 
 			if (consume) {
-				process.drain();
+				process.waitFor();
 			}
 			return process;
 		} catch (SshIOException ex) {
@@ -1451,6 +1457,10 @@ public class ExpectShell {
 
 	private static Charset defaultEncoding() {
 		return Charset.forName("UTF-8");
+	}
+	
+	public void setSudoPassword(Optional<String> sudoPassword) {
+		this.sudoPassword = sudoPassword;
 	}
 
 }

@@ -45,7 +45,6 @@ import com.sshtools.server.vsession.VirtualShellNG;
 import com.sshtools.server.vsession.VirtualShellNG.WindowSizeChangeListener;
 import com.sshtools.server.vsession.commands.sftp.SftpClientOptions;
 import com.sshtools.synergy.ssh.Connection;
-import com.sshtools.synergy.ssh.TerminalModes.TerminalModesBuilder;
 
 public class SshClientCommand extends AbstractSshClientCommand {
 

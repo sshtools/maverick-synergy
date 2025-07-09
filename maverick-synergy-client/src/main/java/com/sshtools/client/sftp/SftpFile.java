@@ -1,12 +1,8 @@
 package com.sshtools.client.sftp;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 import com.sshtools.common.sftp.SftpFileAttributes;
-import com.sshtools.common.sftp.SftpStatusException;
-import com.sshtools.common.ssh.SshException;
 
 /**
  * Represents an SFTP file object.

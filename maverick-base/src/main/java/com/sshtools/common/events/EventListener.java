@@ -29,6 +29,7 @@ package com.sshtools.common.events;
  * Listeners should be registered by using
  * EventService#addListener(EventListener).
  */
+@FunctionalInterface
 public interface EventListener {
 
     /**

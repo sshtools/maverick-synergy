@@ -76,13 +76,11 @@ import com.sshtools.common.util.EOLProcessor;
 import com.sshtools.common.util.FileUtils;
 import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.UnsignedInteger32;
-import com.sshtools.common.util.UnsignedInteger64;
 import com.sshtools.common.util.Utils;
 
 /**
  * An abstract task that implements an SFTP client.
  */
-@SuppressWarnings("removal")
 public class SftpClient implements Closeable {
 	/**
 	 * Default buffer size
@@ -101,6 +99,7 @@ public class SftpClient implements Closeable {
 		private Set<String> customRoots = new LinkedHashSet<>();
 		private Optional<String> localPath = Optional.empty();
 		private Optional<String> remotePath = Optional.empty();
+		private Optional<String> charset = Optional.empty();
 		
 		/**
 		 * Create a new {@link SftpClientBuilder}.
@@ -122,6 +121,11 @@ public class SftpClient implements Closeable {
 		 */
 		public SftpClientBuilder withCustomRoots(String... rootPaths) {
 			customRoots.addAll(Arrays.asList(rootPaths));
+			return this;
+		}
+		
+		public SftpClientBuilder withCharset(String charset) {
+			this.charset = Optional.of(charset);
 			return this;
 		}
 		
@@ -364,6 +368,9 @@ public class SftpClient implements Closeable {
 		this.lcwd = fileFactory.getFile(builder.localPath.orElse(""));
 		this.cwd = builder.remotePath.orElse("");
 		this.customRoots.addAll(builder.customRoots);
+		if(builder.charset.isPresent()) {
+			this.sftp.setCharsetEncoding(builder.charset.get());
+		}
 	}
 
 	/**

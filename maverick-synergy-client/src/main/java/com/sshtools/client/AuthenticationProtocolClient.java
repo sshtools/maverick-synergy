@@ -117,11 +117,6 @@ public class AuthenticationProtocolClient implements Service {
 		ByteArrayReader bar = new ByteArrayReader(msg);
 		
 		try {
-			
-			ClientAuthenticator currentAuthenticator;
-			synchronized (this) {
-				currentAuthenticator = this.currentAuthenticator;
-			}
 	
 			/**
 			 * Try the authenticator first. It may want to handle 
@@ -150,34 +145,38 @@ public class AuthenticationProtocolClient implements Service {
 				con.start();
 				
 
-				completedAuthentications.add(currentAuthenticator.getName());
+				synchronized(currentAuthenticator) {
 				
-				if(currentAuthenticator.getName().equals("none")) {
-					transport.getConnectFuture().connected(transport, transport.getConnection());
-				} 
-			
-				currentAuthenticator.success();
+					completedAuthentications.add(currentAuthenticator.getName());
+					
+					if(currentAuthenticator.getName().equals("none")) {
+						transport.getConnectFuture().connected(transport, transport.getConnection());
+					} 
 				
-				EventServiceImplementation
-						.getInstance()
-						.fireEvent(
-								new Event(
-										this,
-										EventCodes.EVENT_AUTHENTICATION_COMPLETE,
-										true)
-										.addAttribute(
-												EventCodes.ATTRIBUTE_CONNECTION,
-												transport.getConnection())
-										.addAttribute(
-												EventCodes.ATTRIBUTE_AUTHENTICATION_METHODS,
-												completedAuthentications)
-										.addAttribute(
-												EventCodes.ATTRIBUTE_OPERATION_STARTED,
-												authenticationStarted)
-										.addAttribute(
-												EventCodes.ATTRIBUTE_OPERATION_FINISHED,
-												new Date()));
+					currentAuthenticator.success();
+	
+	
+					EventServiceImplementation
+							.getInstance()
+							.fireEvent(
+									new Event(
+											this,
+											EventCodes.EVENT_AUTHENTICATION_COMPLETE,
+											true)
+											.addAttribute(
+													EventCodes.ATTRIBUTE_CONNECTION,
+													transport.getConnection())
+											.addAttribute(
+													EventCodes.ATTRIBUTE_AUTHENTICATION_METHODS,
+													completedAuthentications)
+											.addAttribute(
+													EventCodes.ATTRIBUTE_OPERATION_STARTED,
+													authenticationStarted)
+											.addAttribute(
+													EventCodes.ATTRIBUTE_OPERATION_FINISHED,
+													new Date()));
 				
+				}
 				return true;
 			case SSH_MSG_USERAUTH_FAILURE:
 	
@@ -194,30 +193,34 @@ public class AuthenticationProtocolClient implements Service {
 				while(t.hasMoreTokens()) {
 					supportedAuths.add(t.nextToken());
 				}
+				
+				synchronized(currentAuthenticator) {
 
-				if(currentAuthenticator.getName().equals("none")) {
-					transport.getConnectFuture().connected(transport, transport.getConnection());
-				} 
-				
-				if(partial) {
-					completedAuthentications.add(currentAuthenticator.getName());
-					currentAuthenticator.success(true, auths.split(","));
-				} else {
-					currentAuthenticator.failure();
-				}
-				
-				synchronized (AuthenticationProtocolClient.this) {
-					this.currentAuthenticator = null;
-				}
-				
-				if(!doNextAuthentication()) {
-					transport.addTask(ExecutorOperationSupport.EVENTS, new ConnectionTaskWrapper(transport.getConnection(), new Runnable() {
-						public void run() {
-							for (ClientStateListener stateListener : context.getStateListeners()) {
-								stateListener.authenticate(AuthenticationProtocolClient.this, transport.getConnection(), supportedAuths, partial);
+					if(currentAuthenticator.getName().equals("none")) {
+						transport.getConnectFuture().connected(transport, transport.getConnection());
+					} 
+					
+					if(partial) {
+						completedAuthentications.add(currentAuthenticator.getName());
+						currentAuthenticator.success(true, auths.split(","));
+					} else {
+						currentAuthenticator.failure();
+					}
+					
+					synchronized (AuthenticationProtocolClient.this) {
+						this.currentAuthenticator = null;
+					}
+					
+					if(!doNextAuthentication()) {
+						transport.addTask(ExecutorOperationSupport.EVENTS, new ConnectionTaskWrapper(transport.getConnection(), new Runnable() {
+							public void run() {
+								for (ClientStateListener stateListener : context.getStateListeners()) {
+									stateListener.authenticate(AuthenticationProtocolClient.this, transport.getConnection(), supportedAuths, partial);
+								}
 							}
-						}
-					}));
+						}));
+					}
+				
 				}
 
 				return true;

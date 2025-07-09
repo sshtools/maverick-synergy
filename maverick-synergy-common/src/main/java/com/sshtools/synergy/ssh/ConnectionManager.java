@@ -148,6 +148,7 @@ public class ConnectionManager<T extends SshContext> implements SshConnectionMan
     	con.transport = transport;
     	con.remoteAddress = (InetSocketAddress)transport.getRemoteAddress();
     	con.localAddress = (InetSocketAddress)transport.getLocalAddress();
+    	con.addEventListener(sshContext.getEventListener());
         activeConnections.put(con.getSessionId(), con);
        
 		if(Log.isDebugEnabled()) {

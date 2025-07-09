@@ -1,6 +1,16 @@
-Maverick Synergy 3.2.0 - TBC
+Maverick Synergy 3.1.3 - TBC
 
+Features
+  o New Optional<String> for setting the sudo password once.
+  o Renamed drain method in ShellProcess to waitFor and deprecated old name.
+  
 Bug Fixes
+  o Fixed race condition in AuthenticationProtocolClient with more aggressive synchronization.
+  o Moved CallbackSession isStopped to before retry interval to ensure it stops immediately after disconnect.
+  o Added connect timeout option to CallbackClient.
+  o Fix issues with authenticating with SHA-2 RSA certificates.
+  o Remote unix domain socket tunnels did not work (local was OK).
+  o If IdleConnectionTimeoutSeconds is set to zero (never timeout), and the ping message is never replied to, the connection would be dropped, but disconnection events would not be sent, and the disconnect future would not be released.
   o Fixed connection timeout.
   o Removed duplicate shutdown hook.
   o Don't pass properties file parent to register to avoid a NullPointerException on /logging.properties
@@ -24,7 +34,7 @@ Bug Fixes
   o Client would hang if 'none' authentication succeeded.
   o Ensure attributes for SftpHandle are requested after file has been opened to maintain messaging strict sequence.
   
-------------------
+-----------------
 
 Maverick Synergy 3.1.1 - 3 Apr, 2024
 

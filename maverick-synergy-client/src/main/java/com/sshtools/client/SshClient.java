@@ -54,12 +54,11 @@ import com.sshtools.common.auth.PasswordAuthentication;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
+import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.permissions.UnauthorizedException;
-import com.sshtools.common.publickey.InvalidPassphraseException;
-import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.SshConnection;
@@ -119,6 +118,8 @@ public class SshClient implements Closeable {
 		private Set<ClientAuthenticator> authenticators = new LinkedHashSet<>();
 		private Set<SshKeyPair> identities = new LinkedHashSet<>();
 		private Optional<OnConfiguration> onConfigure = Optional.empty();
+		private Optional<ClientStateListener> stateListener = Optional.empty();
+		private Optional<EventListener> eventListener = Optional.empty();
 		
 		/**
 		 * Set a {@link Consumer} that receives a {@link SshClientContext} when the connection
@@ -374,6 +375,11 @@ public class SshClient implements Closeable {
 			return addAuthenticators(authenticators);
 		}
 		
+		public SshClientBuilder withListener(ClientStateListener listener) {
+			this.stateListener = Optional.of(listener);
+			return this;
+		}
+		
 		/**
 		 * Set the connection timeout in milliseconds.
 		 * 
@@ -537,6 +543,11 @@ public class SshClient implements Closeable {
 		public SshClient build() throws IOException, SshException {
 			return new SshClient(this);
 		}
+
+		public SshClientBuilder withEventListener(EventListener eventListener) {
+			this.eventListener = Optional.of(eventListener);
+			return this;
+		}
 	}
 
 	private final SshClientContext sshContext;
@@ -555,6 +566,14 @@ public class SshClient implements Closeable {
 		this.onConfigure = builder.onConfigure;
 		
 		sshContext.setUsername(builder.username.orElseGet(() -> GUEST_USERNAME));
+		
+		if(builder.stateListener.isPresent()) {
+			sshContext.addStateListener(builder.stateListener.get());
+		}
+		
+		if(builder.eventListener.isPresent()) {
+			sshContext.setEventListener(builder.eventListener.get());
+		}
 		
 		var keys = new ArrayList<String>();
 		con = doConnect(hostname, port, sshContext, builder.connectTimeout.map(Duration::toMillis).orElse(DEFAULT_CONNECT_TIMEOUT), keys);

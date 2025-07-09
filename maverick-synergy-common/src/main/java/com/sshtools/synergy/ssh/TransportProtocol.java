@@ -1583,8 +1583,6 @@ public abstract class TransportProtocol<T extends SshContext>
 					Log.debug("Submitting transport cleanup to executor service");
 				}
 
-				
-				
 				if(connection != null) {
 					/* Connection may be null if a socket connection was made by the protocol never started */
 					addTask(EVENTS, new ConnectionTaskWrapper(connection, new Runnable() {

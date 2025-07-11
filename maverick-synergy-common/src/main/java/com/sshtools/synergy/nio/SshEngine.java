@@ -562,7 +562,7 @@ public class SshEngine {
         request.setHeaderField("Host", protocolContext.getProxyHostname());
         request.setHeaderField("Proxy-Connection", "Keep-Alive");
         
-        if(Utils.isNotBlank(protocolContext.getProxyUsername()) && !Utils.isNotBlank(protocolContext.getProxyPassword())) {
+        if(Utils.isNotBlank(protocolContext.getProxyUsername()) && Utils.isNotBlank(protocolContext.getProxyPassword())) {
         	request.setBasicAuthentication(protocolContext.getProxyUsername(), protocolContext.getProxyPassword());
         }
         

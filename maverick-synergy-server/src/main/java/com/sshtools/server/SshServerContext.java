@@ -92,7 +92,7 @@ public class SshServerContext extends SshContext {
 
 	private boolean forceServerPreferences = false;
 	
-	private static ComponentFactory<SshKeyExchange<SshServerContext>> verifiedKeyExchanges;
+	private static ComponentFactory<SshKeyExchange<? extends SshContext>> verifiedKeyExchanges;
 	
 	public SshServerContext(SshEngine engine) throws IOException, SshException {
 		this(engine, SecurityLevel.STRONG);
@@ -632,7 +632,7 @@ public class SshServerContext extends SshContext {
 		for(var kex : ServiceLoader.load(SshKeyExchangeServerFactory.class, SshKeyExchangeServerFactory.class.getClassLoader())) {
 			if(testServerKeyExchangeAlgorithm(kex))
 				verifiedKeyExchanges.add(kex);
-    }
+		}
 		
 		keyExchanges = (ComponentFactory<SshKeyExchange<? extends SshContext>>)verifiedKeyExchanges.clone();
 

@@ -109,7 +109,7 @@ public abstract class AbstractSubsystem {
 	            throw new SshException("Invalid message length in SFTP protocol [" + len + "]",
 	                                   SshException.PROTOCOL_VIOLATION);
 
-	        byte[] msg = ByteArrays.getInstance().getByteArray(con.getContext().getMaximumPacketLength());
+	        byte[] msg = new byte[len];
 	        in.readFully(msg, 0, len);
 
 	        return msg;

@@ -25,6 +25,7 @@ package com.sshtools.synergy.ssh;
 import java.io.IOException;
 import java.util.Vector;
 
+@Deprecated
 public class ByteArrays{
 
 	Vector<byte[]> packets = new Vector<byte[]>();

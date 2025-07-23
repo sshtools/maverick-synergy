@@ -59,7 +59,6 @@ import com.sshtools.common.util.Base64;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.UnsignedInteger32;
 import com.sshtools.common.util.UnsignedInteger64;
-import com.sshtools.synergy.ssh.ByteArrays;
 import com.sshtools.synergy.ssh.PacketPool;
 
 /**
@@ -247,89 +246,94 @@ public class SftpChannel extends AbstractSubsystem {
 
 			byte[] msg = nextMessage();
 
-			try {
-				if (msg[0] != SSH_FXP_VERSION) {
-					session.close();
-					throw new SshException(
-							"Unexpected response from SFTP subsystem.",
-							SshException.CHANNEL_FAILURE);
-				}
-	
-				ByteArrayReader bar = new ByteArrayReader(msg);
-	
-				try {
-					bar.skip(1);
-	
-					int serverVersion = (int) bar.readInt();
-					int requestedVersion = MAX_VERSION;
-					version = Math.min(serverVersion, requestedVersion);
-	
-					if(Log.isTraceEnabled()) {
-						Log.trace("Version is " + version + " [Server="
-								+ serverVersion + " Client=" + requestedVersion
-								+ "]");
-					}
-					try {
-						while (bar.available() > 0) {
-							String name = bar.readString();
-							byte[] data = bar.readBinaryString();
-	
-							extensions.put(name, data);
-	
-							if(Log.isTraceEnabled()) {
-								Log.trace("Processed extension '" + name + "'");
-							}
-						}
-					} catch (Throwable t) {
-					}
-	
-					if (version == 5) {
-						if (extensions.containsKey("supported")) {
-							processSupported(extensions.get("supported"));
-						}
-					} else if (version >= 6) {
-						if (extensions.containsKey("supported2")) {
-							processSupported2(extensions.get("supported2"));
-						}
-					}
-					if (version <= 3) {
-						setCharsetEncoding("ISO-8859-1");
-					} else {
-						if (extensions.containsKey("filename-charset")) {
-	
-							String newCharset = new String(
-									extensions.get("filename-charset"), "UTF-8");
-							try {
-								setCharsetEncoding(newCharset);
-								sendExtensionMessage(
-										"filename-translation-control",
-										new byte[] { 0 });
-							} catch (Exception e) {
-								setCharsetEncoding("UTF8");
-								sendExtensionMessage(
-										"filename-translation-control",
-										new byte[] { 1 });
-							}
-						} else {
-							setCharsetEncoding("UTF8");
-						}
-					}
-	
-					con.setProperty("sftpExtensions", extensions);
-	
-					return version;
-				} finally {
-					bar.close();
-				}
-			} finally {
-				ByteArrays.getInstance().releaseByteArray(msg);
+			if (msg[0] != SSH_FXP_VERSION) {
+				session.close();
+				throw new SshException(
+						"Unexpected response from SFTP subsystem.",
+						SshException.CHANNEL_FAILURE);
 			}
+
+			ByteArrayReader bar = new ByteArrayReader(msg);
+
+			return processVersionMessage(bar);
+				
+			
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
 			throw new SshException(SshException.CHANNEL_FAILURE, ex);
 		} catch (Throwable t) {
 			throw new SshException(SshException.CHANNEL_FAILURE, t);
+		}
+	}
+	
+	public int processVersionMessage(ByteArrayReader bar) throws IOException, SshException, SftpStatusException {
+		
+		try {
+			bar.skip(1);
+
+			int serverVersion = (int) bar.readInt();
+			int requestedVersion = MAX_VERSION;
+			version = Math.min(serverVersion, requestedVersion);
+
+			Map<String, byte[]> extensions = new HashMap<String, byte[]>();
+
+			if(Log.isTraceEnabled()) {
+				Log.trace("Version is " + version + " [Server="
+						+ serverVersion + " Client=" + requestedVersion
+						+ "]");
+			}
+			try {
+				while (bar.available() > 0) {
+					String name = bar.readString();
+					byte[] data = bar.readBinaryString();
+
+					extensions.put(name, data);
+
+					if(Log.isTraceEnabled()) {
+						Log.trace("Processed extension '" + name + "'");
+					}
+				}
+			} catch (Throwable t) {
+			}
+
+			if (version == 5) {
+				if (extensions.containsKey("supported")) {
+					processSupported(extensions.get("supported"));
+				}
+			} else if (version >= 6) {
+				if (extensions.containsKey("supported2")) {
+					processSupported2(extensions.get("supported2"));
+				}
+			}
+			if (version <= 3) {
+				setCharsetEncoding("ISO-8859-1");
+			} else {
+				if (extensions.containsKey("filename-charset")) {
+
+					String newCharset = new String(
+							extensions.get("filename-charset"), "UTF-8");
+					try {
+						setCharsetEncoding(newCharset);
+						sendExtensionMessage(
+								"filename-translation-control",
+								new byte[] { 0 });
+					} catch (Exception e) {
+						setCharsetEncoding("UTF8");
+						sendExtensionMessage(
+								"filename-translation-control",
+								new byte[] { 1 });
+					}
+				} else {
+					setCharsetEncoding("UTF8");
+				}
+			}
+
+			con.setProperty("sftpExtensions", extensions);
+
+			return version;
+		} finally {
+			bar.close();
 		}
 	}
 	

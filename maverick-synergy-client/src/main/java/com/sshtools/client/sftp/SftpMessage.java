@@ -26,7 +26,6 @@ import java.io.IOException;
 
 import com.sshtools.client.tasks.Message;
 import com.sshtools.common.util.ByteArrayReader;
-import com.sshtools.synergy.ssh.ByteArrays;
 
 public class SftpMessage extends ByteArrayReader implements Message {
 
@@ -48,7 +47,6 @@ public class SftpMessage extends ByteArrayReader implements Message {
       }
 
       public void release() {
-    	  ByteArrays.getInstance().releaseByteArray(super.buf);
     	  close();
       }
   }

@@ -340,9 +340,9 @@ public class SshEngineContext {
 	 * @param permanentAcceptThreads
 	 */
 	public void setPermanentAcceptThreads(int permanentAcceptThreads) {
-		if (permanentAcceptThreads < 1)
+		if (permanentAcceptThreads < 0)
 			throw new IllegalArgumentException(
-					"There must be at least one permanent ACCEPT thread");
+					"You cannot have negative ACCEPT threads");
 
 		this.permanentAcceptThreads = permanentAcceptThreads;
 	}
@@ -366,9 +366,9 @@ public class SshEngineContext {
 	 * @param permanentConnectThreads
 	 */
 	public void setPermanentConnectThreads(int permanentConnectThreads) {
-		if (permanentConnectThreads < 1)
+		if (permanentConnectThreads < 0)
 			throw new IllegalArgumentException(
-					"There must be at least one permanent CONNECT thread");
+					"You cannot have negative CONNECT threads");
 
 		this.permanentConnectThreads = permanentConnectThreads;
 	}

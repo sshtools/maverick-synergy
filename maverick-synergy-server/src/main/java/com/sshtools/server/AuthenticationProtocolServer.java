@@ -321,6 +321,10 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 
 		completedAuthentications.add(currentAuthentication.getMethod());
 
+		if(Boolean.getBoolean("maverick.flagIPonSuccess")) {
+			getContext().getPolicy(IPPolicy.class).flagAddress(transport.getConnection().getRemoteIPAddress());
+		}
+		
 		boolean completed = true;
 
 		for (int i = 0; i < requiredAuthentications.length; i++) {

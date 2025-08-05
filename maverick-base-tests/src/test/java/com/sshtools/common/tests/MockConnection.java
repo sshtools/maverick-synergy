@@ -366,6 +366,18 @@ public class MockConnection implements SshConnection {
 	public boolean isDisconnecting() {
 		return false;
 	}
+
+	@Override
+	public void sendGlobalRequest(GlobalRequest request) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void sendGlobalRequestAndWait(GlobalRequest request, long timeout) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 
 }

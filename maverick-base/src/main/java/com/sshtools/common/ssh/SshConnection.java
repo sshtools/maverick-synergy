@@ -142,4 +142,8 @@ public interface SshConnection extends EventTrigger {
 
 	String getRemoteIPAddress();
 
+	void sendGlobalRequest(GlobalRequest request);
+
+	void sendGlobalRequestAndWait(GlobalRequest request, long timeout);
+
 }

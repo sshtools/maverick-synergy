@@ -966,8 +966,8 @@ public class SftpClient implements Closeable {
 			
 			Vector<SftpFile> children = new Vector<SftpFile>();
 			Vector<SftpFile> tmp = new Vector<SftpFile>();
-			
-			SftpFile file = new SftpFile(path, sftp.getAttributes(path), sftp, null);
+			SftpFileAttributes attrs = sftp.getAttributes(path);
+			SftpFile file = new SftpFile(path, attrs, formatLongname(attrs, FileUtils.getFilename(path)));
 			SftpHandle handleObject;
 			try {
 				handleObject = sftp.getHandle(
@@ -979,7 +979,7 @@ public class SftpClient implements Closeable {
 					throw new SshException("Remote server does not support server side filtering",
 							SshException.UNSUPPORTED_OPERATION);
 				}
-				handleObject = file.handle(sftp.openDirectory(path).getHandle());
+				handleObject = new SftpHandle(sftp.openDirectory(path).getHandle(), sftp, file);
 			}
 			
 			SftpFileFilter f = null;

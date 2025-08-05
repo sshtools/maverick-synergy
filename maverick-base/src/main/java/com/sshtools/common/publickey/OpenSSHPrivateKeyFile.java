@@ -365,7 +365,9 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 					byte[] iv = new byte[cipher.getBlockSize()];
 					byte[] key = new byte[cipher.getKeyLength()];
 
-					byte[] keydata = BCryptKDF.bcrypt_pbkdf(passphrase.getBytes("UTF-8"), salt, iv.length + key.length,
+					byte[] keydata = BCryptKDF.bcrypt_pbkdf(passphrase.getBytes("UTF-8"), 
+							salt, 
+							iv.length + key.length,
 							rounds);
 
 					System.arraycopy(keydata, 0, key, 0, key.length);

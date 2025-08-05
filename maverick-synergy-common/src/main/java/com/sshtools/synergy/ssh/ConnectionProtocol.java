@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -84,9 +85,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 	Set<Integer> channeIdPool = new HashSet<Integer>();
 	Map<Integer,ChannelNG<T>> activeChannels = new ConcurrentHashMap<Integer, ChannelNG<T>>(8, 0.9f, 1);
 	Map<String, GlobalRequestHandler<T>> globalRequestHandlers = new ConcurrentHashMap<String, GlobalRequestHandler<T>>(8, 0.9f, 1);
-	
-	protected LinkedList<GlobalRequest> outstandingRequests = new LinkedList<GlobalRequest>();
-	
+	GlobalRequest currentRequest = null;
 	protected String username;
 	protected Connection<T> con;
 	
@@ -325,23 +324,33 @@ public abstract class ConnectionProtocol<T extends SshContext>
 		ByteArrayReader msg = new ByteArrayReader(m);
 		msg.skip(1);
 		try {
-			GlobalRequest request = outstandingRequests.removeFirst();
-			if(Log.isDebugEnabled()) {
-				Log.debug("Received SSH_MSG_GLOBAL_REQUEST_SUCCESS for " + request.getName());
-			}
-			if (msg.available() > 0) {
-				byte[] tmp = new byte[msg.available()];
-				try {
-					msg.readFully(tmp);
-					request.setData(tmp);
-				} catch (IOException e) {
-					Log.error("Unexpected error reading global request " + request.getName() + " response");
+			if(Objects.nonNull(currentRequest)) {
+				synchronized (currentRequest) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("Received SSH_MSG_GLOBAL_REQUEST_SUCCESS for " + currentRequest.getName());
+					}
+					if (msg.available() > 0) {
+						byte[] tmp = new byte[msg.available()];
+						try {
+							msg.readFully(tmp);
+							currentRequest.setData(tmp);
+						} catch (IOException e) {
+							Log.error("Unexpected error reading global request " + currentRequest.getName() + " response");
+						}
+			
+					} else {
+						currentRequest.setData(new byte[0]);
+					}
+					currentRequest.complete(true);
 				}
-	
+				
 			} else {
-				request.setData(new byte[0]);
+				if(Log.isDebugEnabled()) {
+					Log.warn("Received SSH_MSG_GLOBAL_REQUEST_SUCCESS but there was no request object waiting. Did the request timeout?");
+				}
 			}
-			request.complete(true);
+			
+			
 		} finally {
 			msg.close();
 		}
@@ -351,11 +360,25 @@ public abstract class ConnectionProtocol<T extends SshContext>
 	 * Process a global request failure
 	 */
 	protected void processGlobalRequestFailure(byte[] msg) {
-		GlobalRequest request = outstandingRequests.removeFirst();
-		if(Log.isDebugEnabled()) {
-			Log.debug("Received SSH_MSG_GLOBAL_REQUEST_FAILURE for " + request.getName());
+		
+		if(Objects.nonNull(currentRequest)) {
+			synchronized (currentRequest) {
+				try {
+				if(Log.isDebugEnabled()) {
+					Log.debug("Received SSH_MSG_GLOBAL_REQUEST_FAILURE for " + this.currentRequest.getName());
+				}
+				this.currentRequest.complete(false);
+				} finally {
+					this.currentRequest = null;
+				}
+			}
+		} else {
+			if(Log.isDebugEnabled()) {
+				Log.warn("Received SSH_MSG_GLOBAL_REQUEST_FAILURE but there was no request object waiting. Did the request timeout?");
+			}
 		}
-		request.complete(false);
+		
+		
 	}
 
 	private void processChannelRequestResponse(boolean success, byte[] msg) {
@@ -757,15 +780,44 @@ public abstract class ConnectionProtocol<T extends SshContext>
 
 	protected abstract ChannelNG<T> createChannel(String channeltype, Connection<T> con) throws UnsupportedChannelException, PermissionDeniedException, ChannelOpenException;
 
-	public void sendGlobalRequest(GlobalRequest request, boolean wantReply) {
+	public void sendGlobalRequest(GlobalRequest request) {
 		if(Log.isDebugEnabled()) {
-			Log.debug("Sending SSH_MSG_GLOBAL_REQUEST request={} wantReply={}", request.getName(), String.valueOf(wantReply));
+			Log.debug("Sending SSH_MSG_GLOBAL_REQUEST request={} wantReply=false", request.getName());
 		}
-		if(wantReply) {
-			outstandingRequests.addLast(request);
-		}
-		transport.postMessage(new GlobalRequestMessage(request, wantReply));
+		
+		transport.postMessage(new GlobalRequestMessage(request, false));
+		
 	}
+	
+	public synchronized void sendGlobalRequestAndWait(GlobalRequest request, long timeout) {
+		
+		/**
+		 * Connection protocol is synchronized to ensure only one thread ever accesses this
+		 * method at a time.
+		 */
+		synchronized(request) {
+			
+			try {
+				if(Objects.nonNull(currentRequest)) {
+					Log.warn("Request to send {} will override an existing request {}!", request.getName(), currentRequest.getName());
+				}
+				this.currentRequest = request;
+				
+				if(Log.isDebugEnabled()) {
+					Log.debug("Sending SSH_MSG_GLOBAL_REQUEST request={} wantReply=true", request.getName());
+				}
+				
+				transport.postMessage( new GlobalRequestMessage(request, true));
+				
+				request.waitFor(timeout);
+			} finally {
+				this.currentRequest = null;
+			}
+		}
+		
+	}
+	
+	
 
 	class GlobalRequestMessage implements SshMessage {
 		GlobalRequest request;
@@ -1070,13 +1122,17 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					GlobalRequest global = new GlobalRequest(
 							"ping@sshtools.com", 
 							con, null);
-					sendGlobalRequest(global, true);
-					global.waitFor(30000L);
+					long timeout = Long.parseLong(System.getProperty("maverick.pingTimeout", "60000"));
+					sendGlobalRequestAndWait(global, timeout);
 					if(!global.isDone()) {
 						if(Log.isInfoEnabled()) {
-							Log.error("Remote node is unresponsive");
+							Log.error("Remote node did not respond to the ping within the timeout period {}ms!", timeout);
 						}
 						getTransport().kill();
+					} else {
+						if(Log.isDebugEnabled()) {
+							Log.debug("Remote node successfully responded to the ping.");
+						}
 					}
 				}
 			}));

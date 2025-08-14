@@ -23,6 +23,8 @@ package com.sshtools.server.vsession.commands.os;
  */
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,10 +37,18 @@ import com.sshtools.server.vsession.VirtualSessionPolicy;
 
 public class Shell extends AbstractOSCommand {
 
+	String commandProgram = "$SYSTEMROOT\\System32\\cmd.exe";
+	String powershellProgram = "$SYSTEMROOT\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
+	String powershellEncoding = "ISO-8859-1";
+	
 	public Shell() {
 		super("osshell", ShellCommand.SUBSYSTEM_SYSTEM, "osshell", "Run a native shell");
-		setDescription("The current operating systems shell");
+		setDescription("The current operating systems shell.");
 		setBuiltIn(false);
+	}
+	
+	private String generateWindowsPath(String path) {
+		return path.replace("$SYSTEMROOT", StringUtils.defaultIfBlank(System.getenv("SystemRoot"), "C:\\Windows"));
 	}
 
 	protected List<String> configureCommand(String cmd, List<String> cmdArgs, VirtualConsole console) throws IOException {
@@ -47,7 +57,12 @@ public class Shell extends AbstractOSCommand {
 		String shellCommand = console.getContext().getPolicy(VirtualSessionPolicy.class).getShellCommand();
 		if (SystemUtils.IS_OS_WINDOWS) {
 			if(StringUtils.isBlank(shellCommand)) {
-				args.add("C:\\Windows\\System32\\cmd.exe");
+				String path = generateWindowsPath(powershellProgram);
+				if(Files.exists(Path.of(path))) {
+					args.add(path);
+				} else {
+					args.add(generateWindowsPath(commandProgram));
+				}
 			} else {
 				args.add(shellCommand);
 				args.addAll(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellArguments());

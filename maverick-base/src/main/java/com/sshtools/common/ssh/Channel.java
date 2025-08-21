@@ -26,7 +26,7 @@ import java.io.IOException;
 
 import com.sshtools.common.util.UnsignedInteger32;
 
-public interface Channel {
+public interface Channel extends AutoCloseable {
 
 	UnsignedInteger32 getLocalWindow();
 

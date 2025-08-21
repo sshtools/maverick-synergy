@@ -107,6 +107,15 @@ public class VirtualConsole {
 		terminal.writer().flush();
 	}
 	
+	public void printf(String str, Object... args) {
+		terminal.writer().format(str, args);
+	}
+	
+	public void printfln(String str, Object... args) {
+		printf(str, args);
+		println();
+	}
+	
 	public void println() {
 		terminal.writer().print("\r\n");
 		terminal.writer().flush();

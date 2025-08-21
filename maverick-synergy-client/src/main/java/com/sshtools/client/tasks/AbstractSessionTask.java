@@ -44,7 +44,7 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 	/**
 	 * Builder for {@link AbstractSessionTask}.
 	 */
-	protected static abstract class AbstractSessionTaskBuilder<
+	public static abstract class AbstractSessionTaskBuilder<
 			B extends AbstractSessionTaskBuilder<B, SC, TT>,
 			SC extends AbstractSessionChannel,
 			TT extends AbstractSessionTask<SC>> extends AbstractConnectionTaskBuilder<B, TT> { 

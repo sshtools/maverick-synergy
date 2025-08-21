@@ -43,6 +43,7 @@ public abstract class AsyncSessionTask implements Runnable {
 	long timeout = 10000;
 	SessionChannelNG session;
 	ChannelRequestFuture future;
+	String channelName = "session";
 	
 	public AsyncSessionTask(Connection<SshClientContext> con, ChannelRequestFuture future) {
 		this.con = con;
@@ -69,6 +70,7 @@ public abstract class AsyncSessionTask implements Runnable {
 	public void run() {
 
 		session = new SessionChannelNG(
+				channelName, 
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(), 
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),

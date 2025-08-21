@@ -50,13 +50,18 @@ public abstract  class AbstractSessionChannel extends ChannelNG<SshClientContext
 
 	public AbstractSessionChannel(int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace,
 			UnsignedInteger32 minimumWindowSpace, boolean autoConsume) {
-		super("session", maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace,
+		this("session", maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace,
 				new ChannelRequestFuture(), autoConsume);
 	}
 
 	public AbstractSessionChannel(int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace,
 			UnsignedInteger32 minimumWindowSpace, ChannelRequestFuture closeFuture, boolean autoConsume) {
-		super("session", maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
+		this("session", maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
+	}
+	
+	public AbstractSessionChannel(String channelName, int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace,
+			UnsignedInteger32 minimumWindowSpace, ChannelRequestFuture closeFuture, boolean autoConsume) {
+		super(channelName, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
 	}
 
 	public boolean isSingleSession() {

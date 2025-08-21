@@ -48,28 +48,49 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 	}
 
 	public SessionChannelNG(SshConnection con, boolean autoConsume) {
-		this(con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(),
+		this("session", con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
 				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
 				null, autoConsume);
 	}
 	
-	public SessionChannelNG(int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace, UnsignedInteger32 minimumWindowSpace,
+	public SessionChannelNG(SshConnection con, String channelName, boolean autoConsume) {
+		this("session", con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
+				null, autoConsume);
+	}
+	
+	public SessionChannelNG(String channelName, SshConnection con, boolean autoConsume) {
+		this(channelName, con.getContext().getPolicy(ShellPolicy.class).getSessionMaxPacketSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMaxWindowSize(),
+				con.getContext().getPolicy(ShellPolicy.class).getSessionMinWindowSize(),
+				null, autoConsume);
+	}
+	
+	public SessionChannelNG(String channelName, int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace, UnsignedInteger32 minimumWindowSpace,
 			ChannelRequestFuture closeFuture, boolean autoConsume) {
-		super(maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
+		super(channelName, maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
 		extendedData = new CachingDataWindow(maximumWindowSpace.intValue(), true);
 		stderrInputStream = new ChannelInputStream(extendedData);
+	}
+	
+	public SessionChannelNG(int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace, UnsignedInteger32 minimumWindowSpace,
+			ChannelRequestFuture closeFuture, boolean autoConsume) {
+		this("session", maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
 	}
 
 	public SessionChannelNG(int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace,
 			UnsignedInteger32 minimumWindowSpace, boolean autoConsume) {
-		this(maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, null, autoConsume);
+		this("session", maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, null, autoConsume);
 	}
 
 	public SessionChannelNG(int maximumPacketSize,
 			UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace, UnsignedInteger32 minimumWindowSpace) {
-		this(maximumPacketSize, initialWindowSize,
+		this("session", maximumPacketSize, initialWindowSize,
 				maximumWindowSpace, minimumWindowSpace, null, false);
 	}
 

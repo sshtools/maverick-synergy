@@ -9,7 +9,6 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,8 +26,6 @@ import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.IOUtils;
 import com.sshtools.server.SessionChannelNG;
-import com.sshtools.server.vsession.VirtualConsole;
-import com.sshtools.server.vsession.VirtualSessionPolicy;
 import com.sshtools.synergy.ssh.TerminalModes;
 
 public class NativeSessionChannel extends SessionChannelNG {

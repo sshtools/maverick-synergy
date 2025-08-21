@@ -677,7 +677,7 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 		sendStderrData(data, 0, data.length);
 	}
 
-	final protected byte[] openChannel(byte[] data)
+	protected byte[] openChannel(byte[] data)
 			throws WriteOperationRequest, ChannelOpenException {
 		registerExtendedDataType(SSH_EXTENDED_DATA_STDERR);
 		return null;

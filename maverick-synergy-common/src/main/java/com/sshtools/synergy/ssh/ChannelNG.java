@@ -30,6 +30,8 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -63,6 +65,8 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 
 	long lastActivity = System.currentTimeMillis();
 	int timeout = 0;
+	
+	Map<String,Object> attributes = new HashMap<>();
 	
 	/**
 	 * The Connection Protocol instance managing this session, use this instance
@@ -933,8 +937,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		}
 		
 		this.cache = null;
-
+		
 		onChannelFree();
+		
+		attributes.clear();
 	}
 
 	byte[] create(int channelid) throws IOException {
@@ -1477,5 +1483,14 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 
 	protected void onChannelError(Throwable e) {
 		
+	}
+	
+	public void setAttribute(String name, Object val) {
+		attributes.put(name, val);
+	}
+	
+	@SuppressWarnings({ "unchecked", "hiding" })
+	public <T> T getAttribute(String name, Class<T> clz) {
+		return (T) attributes.get(name);
 	}
 }

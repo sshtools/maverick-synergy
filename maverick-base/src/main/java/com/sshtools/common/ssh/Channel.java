@@ -60,4 +60,8 @@ public interface Channel extends AutoCloseable {
 	boolean isLocalEOF();
 
 	String getChannelType();
+	
+	void setAttribute(String name, Object val);
+	
+	<T> T getAttribute(String name, Class<T> clz);
 }

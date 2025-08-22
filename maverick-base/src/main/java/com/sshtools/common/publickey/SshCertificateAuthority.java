@@ -39,6 +39,7 @@ import com.sshtools.common.ssh.components.jce.OpenSshEcdsaSha2Nist521Certificate
 import com.sshtools.common.ssh.components.jce.OpenSshEd25519Certificate;
 import com.sshtools.common.ssh.components.jce.OpenSshRsaCertificate;
 import com.sshtools.common.util.UnsignedInteger64;
+import com.sshtools.common.util.Utils;
 
 public class SshCertificateAuthority {
 
@@ -48,7 +49,7 @@ public class SshCertificateAuthority {
 			int validityDays,
 			SshKeyPair signedBy) throws SshException, IOException {
 		return generateCertificate(key, serial, SshCertificate.SSH_CERT_TYPE_USER,
-				principalName, principalName, validityDays, signedBy);
+				Utils.randomAlphaNumericString(8).toUpperCase(), principalName, validityDays, signedBy);
 	}
 	
 	public static SshCertificate generateHostCertificate(SshKeyPair key,

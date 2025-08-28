@@ -30,11 +30,13 @@ import java.util.Map;
 
 public class VirtualSessionPolicy {
 
-	private String welcomeText = "Maverick Synergy\r\nVirtual Shell ${version}";
+	private String welcomeText = "Maverick Synergy ${version}\r\nVirtual Shell for ${os.name} ${os.version}\r\n";
 	private String shellCommand = null;
 	private List<String> shellArguments = new ArrayList<>();
 	private Map<String, String> shellEnvironment;
 	private File shellDirectory;
+	private boolean disableBanner;
+	private String bannerText;
 	
 	public VirtualSessionPolicy() {
 		
@@ -80,5 +82,23 @@ public class VirtualSessionPolicy {
 		this.shellDirectory = shellDirectory;
 	}
 
-	
+	public boolean isDisableBanner() {
+		return disableBanner;
+	}
+
+	public void setDisableBanner(boolean disableBanner) {
+		this.disableBanner = disableBanner;
+	}
+
+	public void setShellArguments(List<String> shellArguments) {
+		this.shellArguments = shellArguments;
+	}
+
+	public String getBannerText() {
+		return bannerText;
+	}
+
+	public void setBannerText(String bannerText) {
+		this.bannerText = bannerText;
+	}
 }

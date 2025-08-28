@@ -20,6 +20,9 @@ import org.apache.commons.lang3.SystemUtils;
 import com.pty4j.PtyProcess;
 import com.pty4j.PtyProcessBuilder;
 import com.pty4j.WinSize;
+import com.sshtools.common.events.Event;
+import com.sshtools.common.events.EventCodes;
+import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
@@ -142,7 +145,7 @@ public class NativeSessionChannel extends SessionChannelNG {
 					}
 				}
 			});
-
+			
 			return true;
 
 		} catch (IOException e) {

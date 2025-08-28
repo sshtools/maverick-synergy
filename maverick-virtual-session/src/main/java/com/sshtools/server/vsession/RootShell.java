@@ -49,7 +49,7 @@ public class RootShell extends Msh {
 
 	private List<CmdLine> commands;
 	private VirtualConsole console;
-
+	private boolean showWelcomeText = true;
 	public RootShell(CommandFactory<ShellCommand> commandFactory,
 			SshConnection con) throws PermissionDeniedException,
 			IOException {
@@ -61,6 +61,13 @@ public class RootShell extends Msh {
 		
 		this.console = console;
 		VirtualConsole.setCurrentConsole(console);
+		
+		if(!console.getContext().getPolicy(VirtualSessionPolicy.class).isDisableBanner()) {
+			writeWelcome(console.getContext().getPolicy(VirtualSessionPolicy.class).getBannerText());
+		}
+		
+		String welcomeText = console.getContext().getPolicy(VirtualSessionPolicy.class).getWelcomeText();
+		writeWelcome(welcomeText);
 		
 		try {
 			if (commands != null) {
@@ -75,7 +82,12 @@ public class RootShell extends Msh {
 
 	protected void promptForCommands(String[] args, VirtualConsole console) throws IOException, PermissionDeniedException {
 		
-		writeWelcome();
+		if(!console.getContext().getPolicy(VirtualSessionPolicy.class).isDisableBanner()) {
+			writeWelcome(console.getContext().getPolicy(VirtualSessionPolicy.class).getBannerText());
+		}
+		
+		String welcomeText = console.getContext().getPolicy(VirtualSessionPolicy.class).getWelcomeText();
+		writeWelcome(welcomeText);
 		
 		super.run(args, console);
 		
@@ -83,9 +95,7 @@ public class RootShell extends Msh {
 	}
 	
 
-	private void writeWelcome() {
-		
-		String welcomeText = console.getContext().getPolicy(VirtualSessionPolicy.class).getWelcomeText();
+	private void writeWelcome(String welcomeText) {
 		
 		if(Utils.isNotBlank(welcomeText)) {
 			try {
@@ -98,7 +108,8 @@ public class RootShell extends Msh {
 			// Just in case its not set in the configuration we set it
 			welcomeText = welcomeText.replace("${productName}", "Virtual SSHD");
 			welcomeText = welcomeText.replace("${username}", console.getConnection().getUsername());
-			
+			welcomeText = welcomeText.replace("${os.name}", System.getProperty("os.name"));
+			welcomeText = welcomeText.replace("${os.version}", System.getProperty("os.version"));
 			
 			if(welcomeText.contains("${remote")) {
 				welcomeText = welcomeText.replace("${remoteAddress}",

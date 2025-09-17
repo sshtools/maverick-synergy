@@ -84,7 +84,6 @@ public class S3AbstractFile implements S3File {
 	S3Object file;
 	S3BucketFile bucket;
 	S3AbstractFileFactory factory;
-	MultipartCompletionCallback completeCallback;
 	
 	S3AbstractFile(S3AbstractFileFactory factory, 
 			S3Client s3, S3BucketFile bucket, String path) {
@@ -386,6 +385,7 @@ public class S3AbstractFile implements S3File {
 		boolean exists;
 		AbstractFile file;
 		boolean cancelled;
+		MultipartCompletionCallback completeCallback;
 		
 		public S3MultipartTransfer(String path, AbstractFile file, String uploadId, Collection<Multipart> multiparts, boolean exists) {
 			this.uploadId = uploadId;
@@ -513,12 +513,7 @@ public class S3AbstractFile implements S3File {
 				throw e;
 			}
 		}
-		
-//		@Override
-//		public MultipartTransfer onComplete(MultipartCompletionCallback transfer) {
-//			// TODO Auto-generated method stub
-//			return null;
-//		}
+
 
 		@Override
 		public String getPath() {
@@ -542,6 +537,12 @@ public class S3AbstractFile implements S3File {
 		@Override
 		public Long getMinimumPartSize() {
 			return IOUtils.fromByteSize("5mb");
+		}
+
+		@Override
+		public MultipartTransfer onComplete(MultipartCompletionCallback completeCallback) {
+			this.completeCallback = completeCallback;
+			return this;
 		}
 	}
 	

@@ -71,7 +71,7 @@ public abstract class AbstractSshServer implements Closeable {
 	int port;
 	boolean enableScp;
 	ServerShutdownFuture shutdownFuture = new ServerShutdownFuture();
-
+	List<Object> defaultPolicies = new ArrayList<>();
 	Collection<SshKeyPair> hostKeys = new ArrayList<>();
 	Collection<Authenticator> providers = new ArrayList<>();
 	Collection<Authenticator> defaultProviders = 
@@ -337,6 +337,10 @@ public abstract class AbstractSshServer implements Closeable {
 		
 		sshContext.setPolicy(IPPolicy.class, ipPolicy);
 		
+		for(Object policy : defaultPolicies) {
+			sshContext.setPolicy(policy.getClass(), policy);
+		}
+		
 		for(GlobalRequestHandler<SshServerContext> globalRequestHandler : globalRequestHandlers) {
 			sshContext.addGlobalRequestHandler(globalRequestHandler);
 		}
@@ -370,5 +374,9 @@ public abstract class AbstractSshServer implements Closeable {
 
 	public ForwardingPolicy getForwardingPolicy() {
 		return forwardingPolicy;
+	}
+	
+	public void setDefaultPolicies(Object...policies) {
+		defaultPolicies.addAll(Arrays.asList(policies));
 	}
 }

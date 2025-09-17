@@ -37,12 +37,21 @@ import com.sshtools.server.vsession.VirtualSessionPolicy;
 
 public class Shell extends AbstractOSCommand {
 
+	public static final String USER_HOME = "HOME";
+	
 	String commandProgram = "$SYSTEMROOT\\System32\\cmd.exe";
 	String powershellProgram = "$SYSTEMROOT\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
 	String powershellEncoding = "ISO-8859-1";
+	String shellCommand = null;
 	
 	public Shell() {
 		super("osshell", ShellCommand.SUBSYSTEM_SYSTEM, "osshell", "Run a native shell");
+		setDescription("The current operating systems shell.");
+		setBuiltIn(false);
+	}
+	
+	public Shell(String name) {
+		super(name, ShellCommand.SUBSYSTEM_SYSTEM, name, "Run a native shell");
 		setDescription("The current operating systems shell.");
 		setBuiltIn(false);
 	}
@@ -53,8 +62,13 @@ public class Shell extends AbstractOSCommand {
 
 	protected List<String> configureCommand(String cmd, List<String> cmdArgs, VirtualConsole console) throws IOException {
 		
+		
+		
 		List<String> args = new ArrayList<>();
-		String shellCommand = console.getContext().getPolicy(VirtualSessionPolicy.class).getShellCommand();
+		
+		beforeShellCommand(args, console);
+		
+		shellCommand = console.getContext().getPolicy(VirtualSessionPolicy.class).getShellCommand();
 		if (SystemUtils.IS_OS_WINDOWS) {
 			if(StringUtils.isBlank(shellCommand)) {
 				String path = generateWindowsPath(powershellProgram);
@@ -72,13 +86,13 @@ public class Shell extends AbstractOSCommand {
 			
 			if(SystemUtils.IS_OS_MAC_OSX) {
 				if(StringUtils.isBlank(shellCommand)) {
-					shellCommand = findCommand("zsh", "/bin/zsh", "bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh");
+					shellCommand = ShellUtils.findCommand("/bin/zsh", "zsh", "bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh");
 					if(shellCommand == null)
 						throw new IOException("Cannot find OSX shell.");
 				}
 			} else {
 				if(StringUtils.isBlank(shellCommand)) {
-					shellCommand = findCommand("bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh");
+					shellCommand = ShellUtils.findCommand("bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh");
 					if(shellCommand == null)
 						throw new IOException("Cannot find shell.");
 				}
@@ -92,6 +106,14 @@ public class Shell extends AbstractOSCommand {
 		setDirectory(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellDirectory());
 		
 		return args;
+	}
+
+	protected void beforeShellCommand(List<String> args, VirtualConsole console) throws IOException {
+		
+	}
+	
+	public String getShellCommand() {
+		return shellCommand;
 	}
 
 }

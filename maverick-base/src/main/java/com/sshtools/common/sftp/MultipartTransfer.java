@@ -30,7 +30,7 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 
 public interface MultipartTransfer {
 	
-	int getMinimumPartSize();
+	Long getMinimumPartSize();
 	
 	String getPath();
 	

@@ -38,6 +38,7 @@ public class VirtualSessionPolicy {
 	private boolean disableBanner;
 	private String bannerText;
 	
+	
 	public VirtualSessionPolicy() {
 		
 	}

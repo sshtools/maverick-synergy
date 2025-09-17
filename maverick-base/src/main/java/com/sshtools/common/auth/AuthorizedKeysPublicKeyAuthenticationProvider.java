@@ -4,7 +4,7 @@ package com.sshtools.common.auth;
  * #%L
  * Base API
  * %%
- * Copyright (C) 2002 - 2024 JADAPTIVE Limited
+ * Copyright (C) 2002 - 2025 JADAPTIVE Limited
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -22,29 +22,21 @@ package com.sshtools.common.auth;
  * #L%
  */
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.publickey.SshPublicKeyFile;
-import com.sshtools.common.publickey.SshPublicKeyFileFactory;
+import com.sshtools.common.publickey.authorized.AuthorizedKeyFile;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 
 /**
  * 
@@ -96,137 +88,63 @@ public class AuthorizedKeysPublicKeyAuthenticationProvider extends
 	public boolean isAuthorizedKey(SshPublicKey key,
 			SshConnection con) {
 
-		try {
-			AbstractFile file = getFile(con);
-
-			InputStream in = file.getInputStream();
-
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			int read;
-			byte[] buf = new byte[4096];
-
-			try {
-				while ((read = in.read(buf, 0, buf.length)) > 0) {
-					out.write(buf, 0, read);
-				}
-			} catch (EOFException ex) {
-			}
-
-			in.close();
-
-			/**
-			 * Process the authorized keys
-			 */
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					new ByteArrayInputStream(out.toByteArray())));
-			String line;
-			SshPublicKeyFile pubfile;
-
-			while ((line = reader.readLine()) != null) {
-            	if(line.trim().equals("") || line.startsWith("#")) {
-            		continue;
-            	}
-				/**
-				 * Split up line and only reconstruct with key type as first token
-				 * ignoring any other tokens before hand.
-				 */
-				String[] tokens = line.split(" ");
-            	StringBuffer keyline = new StringBuffer();
-            	boolean skip = true;
-            	for(String t : tokens) {
-            		if(skip) {
-            			if(JCEComponentManager.getInstance().supportedPublicKeys().contains(t)) {
-            				skip = false;
-            			}
-            		}
-            		if(!skip) {
-            			if(keyline.length() > 0) {
-            				keyline.append(" ");
-            			}
-            			keyline.append(t);
-            		}
-            	}
-                pubfile = SshPublicKeyFileFactory.parse(keyline.toString().getBytes("US-ASCII"));
-                if (pubfile.toPublicKey().equals(key)) {
-                    return true;
-                }
-			}
-
+		try(InputStream in = getAuthorizedKeysInputStream(con)) {
+			AuthorizedKeyFile file = new AuthorizedKeyFile();
+			file.load(in);
+			return file.isAuthorizedKey(key);
+		} catch (IOException | PermissionDeniedException e) {
 			return false;
-		} catch (Throwable ex) {
-			return false;
-		}
+		} 
+	}
+
+	protected InputStream getAuthorizedKeysInputStream(SshConnection con) throws PermissionDeniedException, IOException {
+		AbstractFile file = getFile(con);
+		return file.getInputStream();
+	}
+	
+	protected OutputStream getAuthorizedKeysOutputStream(SshConnection con) throws PermissionDeniedException, IOException {
+		AbstractFile file = getFile(con);
+		return file.getOutputStream();
 	}
 
 	public void add(SshPublicKey key, String comment,
 			SshConnection con) throws IOException,
 			PermissionDeniedException, SshException {
 
-		AbstractFile file = getFile(con);
-
-		SshPublicKeyFile keyFile = null;
-		keyFile = SshPublicKeyFileFactory.create(key, comment,
-				SshPublicKeyFileFactory.OPENSSH_FORMAT);
-
-		OutputStream out = file.getOutputStream(file.exists());
-		try {
-			out.write((keyFile.toString() + "\n").getBytes("US-ASCII"));
-		} finally {
-			out.close();
-		}
+		try(InputStream in = getAuthorizedKeysInputStream(con)) {
+			AuthorizedKeyFile file = new AuthorizedKeyFile();
+			file.load(in);
+			if(!file.isAuthorizedKey(key)) {
+				file.addKey(key, comment);
+				try(OutputStream out = getAuthorizedKeysOutputStream(con)) {
+					file.save(out);
+				}
+			}
+		} 
 	}
 
 	public void remove(SshPublicKey key, SshConnection con)
 			throws IOException, PermissionDeniedException, SshException {
 
-		AbstractFile file = getFile(con);
-		SshPublicKeyFile pubfile;
-		ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
-		PrintWriter outWriter = new PrintWriter(outBuffer);
-
-		BufferedReader reader = new BufferedReader(new InputStreamReader(
-				file.getInputStream()));
-		try {
-			String line;
-			while ((line = reader.readLine()) != null) {
-				pubfile = SshPublicKeyFileFactory.parse(line
-						.getBytes("US-ASCII"));
-				SshPublicKey spk = pubfile.toPublicKey();
-				if (!spk.getFingerprint().equals(key.getFingerprint())) {
-					outWriter.println(line);
+		try(InputStream in = getAuthorizedKeysInputStream(con)) {
+			AuthorizedKeyFile file = new AuthorizedKeyFile();
+			file.load(in);
+			if(file.isAuthorizedKey(key)) {
+				file.removeKeys(key);
+				try(OutputStream out = getAuthorizedKeysOutputStream(con)) {
+					file.save(out);
 				}
 			}
-		} finally {
-			reader.close();
-			outWriter.close();
-		}
-		OutputStream out = file.getOutputStream();
-		try {
-			out.write(outBuffer.toByteArray());
-		} finally {
-			out.close();
-		}
-
+		} 
 	}
 
 	public Iterator<SshPublicKeyFile> getKeys(SshConnection con)
 			throws PermissionDeniedException, IOException {
-		AbstractFile file = getFile(con);
-		BufferedReader reader = new BufferedReader(new InputStreamReader(
-				file.getInputStream()));
-		SshPublicKeyFile pubfile;
-		List<SshPublicKeyFile> keyFiles = new ArrayList<SshPublicKeyFile>();
-		try {
-			String line;
-			while ((line = reader.readLine()) != null) {
-				pubfile = SshPublicKeyFileFactory.parse(line
-						.getBytes("US-ASCII"));
-				keyFiles.add(pubfile);
-			}
-		} finally {
-			reader.close();
+		try(InputStream in = getAuthorizedKeysInputStream(con)) {
+			AuthorizedKeyFile file = new AuthorizedKeyFile();
+			file.load(in);
+			return new KeysIterator(new ArrayList<>(file.getKeys()));
 		}
-		return keyFiles.iterator();
 	}
 
 	protected AbstractFile getFile(SshConnection con)

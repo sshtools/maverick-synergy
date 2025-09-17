@@ -38,6 +38,7 @@ public final class NioFileFactory implements AbstractFileFactory<NioFile> {
 
 		private Optional<Path> home = Optional.empty();
 		private boolean sandbox = true;
+		public boolean mapOwnership;
 		
 		/**
 		 * Create a new {@link NioFileFactoryBuilder}.
@@ -61,6 +62,11 @@ public final class NioFileFactory implements AbstractFileFactory<NioFile> {
 		 */
 		public NioFileFactoryBuilder withSandbox(boolean sandbox) {
 			this.sandbox = sandbox;
+			return this;
+		}
+		
+		public NioFileFactoryBuilder withMapOwnership() {
+			this.mapOwnership = true;
 			return this;
 		}
 		
@@ -121,7 +127,8 @@ public final class NioFileFactory implements AbstractFileFactory<NioFile> {
 
 	private final Path home;
 	private final boolean sandbox;
-
+	private final String username = null;
+	private final String group = null;
 
 	private NioFileFactory(NioFileFactoryBuilder nioFileFactoryBuilder) {
 		this.home = nioFileFactoryBuilder.home.orElseGet(() -> Paths.get(System.getProperty("user.home")));

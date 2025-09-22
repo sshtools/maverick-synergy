@@ -63,5 +63,13 @@ public interface Channel extends AutoCloseable {
 	
 	void setAttribute(String name, Object val);
 	
-	<T> T getAttribute(String name, Class<T> clz);
+	<T> T getAttribute(String name);
+
+	/**
+	 * TODO speak to @ludup, I believe this is unnecessary.
+	 */	
+	@Deprecated
+	default <T> T getAttribute(String name, Class<T> clazz) {
+		return getAttribute(name);
+	}
 }

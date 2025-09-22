@@ -1490,7 +1490,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	}
 	
 	@SuppressWarnings({ "unchecked", "hiding" })
-	public <T> T getAttribute(String name, Class<T> clz) {
+	public <T> T getAttribute(String name) {
 		return (T) attributes.get(name);
 	}
 }

@@ -35,8 +35,10 @@ import com.sshtools.common.ssh.components.SshPublicKey;
 public interface SshConnection extends EventTrigger {
 
 	String getUsername();
-
+	
 	<O> O getProperty(String key);
+	
+	<O> O getProperty(String key, O defaultVale);
 
 	void setProperty(String key, Object value);
 

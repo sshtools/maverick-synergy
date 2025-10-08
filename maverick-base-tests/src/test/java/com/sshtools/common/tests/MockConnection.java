@@ -379,6 +379,10 @@ public class MockConnection implements SshConnection {
 		// TODO Auto-generated method stub
 		
 	}
-	
+
+	public <T> T getProperty(String key, T defaultVale) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

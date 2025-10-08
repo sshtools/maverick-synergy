@@ -229,6 +229,15 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	}
 
 	@Override
+	@SuppressWarnings({ "unchecked", "hiding" })
+	public <O> O getProperty(String name, O defaultValue) {
+		Object val = properties.get(name);
+		if(Objects.nonNull(val)) {
+			return (O) val;
+		}
+		return defaultValue;
+	}
+	
 	public void setProperty(String name, Object val) {
 		properties.put(name, val);
 	}

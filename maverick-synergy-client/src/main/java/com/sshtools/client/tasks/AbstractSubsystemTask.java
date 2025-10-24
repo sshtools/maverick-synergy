@@ -122,7 +122,7 @@ public abstract class AbstractSubsystemTask extends ConnectionAwareTask {
 	            throw new SshException("Invalid message length in SFTP protocol [" + len + "]",
 	                                   SshException.PROTOCOL_VIOLATION);
 
-	        byte[] msg = ByteArrays.getInstance().getByteArray();
+	        byte[] msg = ByteArrays.getInstance().getByteArray(con.getContext().getMaximumPacketLength());
 	        in.readFully(msg, 0, len);
 
 	        return msg;

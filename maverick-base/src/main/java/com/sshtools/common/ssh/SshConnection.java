@@ -126,8 +126,9 @@ public interface SshConnection extends EventTrigger {
 
 	String getCompressionInUseSC();
 
+	@Deprecated
 	void sendGlobalRequest(GlobalRequest request, boolean wantReply);
-
+	
 	AbstractRequestFuture getAuthenticatedFuture();
 
 	AbstractRequestFuture getDisconnectFuture();
@@ -141,5 +142,9 @@ public interface SshConnection extends EventTrigger {
 	long getTotalBytesOut();
 
 	String getRemoteIPAddress();
+
+	void sendGlobalRequest(GlobalRequest request);
+
+	void sendGlobalRequestAndWait(GlobalRequest request, long timeout);
 
 }

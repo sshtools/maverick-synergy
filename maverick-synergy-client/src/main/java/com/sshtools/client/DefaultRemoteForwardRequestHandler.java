@@ -53,8 +53,7 @@ public class DefaultRemoteForwardRequestHandler implements RemoteForwardRequestH
 
 			var request = new GlobalRequest("tcpip-forward", conn.getConnection(), msg.toByteArray());
 
-			conn.sendGlobalRequest(request, true);
-			request.waitForever();
+			conn.sendGlobalRequestAndWait(request, 60000L);
 
 			if (request.isSuccess()) {
 
@@ -89,8 +88,7 @@ public class DefaultRemoteForwardRequestHandler implements RemoteForwardRequestH
 
 			var request = new GlobalRequest("cancel-tcpip-forward", conn.getConnection(), msg.toByteArray());
 
-			conn.sendGlobalRequest(request, true);
-			request.waitForever();
+			conn.sendGlobalRequestAndWait(request, 60000L);
 
 			if (request.isSuccess()) {
 

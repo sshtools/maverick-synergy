@@ -298,4 +298,8 @@ public class PublicKeyEntry extends Entry<SshPublicKey> {
 		}
 	}
 
+	public String getComment() {
+		return comment;
+	}
+
 }

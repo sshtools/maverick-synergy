@@ -27,6 +27,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,6 +49,7 @@ import com.sshtools.common.util.Base64;
 import com.sshtools.common.util.BlankLineEntry;
 import com.sshtools.common.util.CommentEntry;
 import com.sshtools.common.util.Entry;
+import com.sshtools.common.util.IOUtils;
 
 public class AuthorizedKeyFile {
 
@@ -570,5 +573,9 @@ public class AuthorizedKeyFile {
 		}
 		
 		// Support PATTERNS * ? !
+	}
+
+	public void save(OutputStream out) throws UnsupportedEncodingException, IOException {
+		IOUtils.writeStringToStream(out, getFormattedFile(), "UTF-8");
 	}
 }

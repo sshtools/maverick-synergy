@@ -4,7 +4,7 @@ package com.sshtools.server.vsession.commands.os;
  * #%L
  * Virtual Sessions
  * %%
- * Copyright (C) 2002 - 2024 JADAPTIVE Limited
+ * Copyright (C) 2002 - 2025 JADAPTIVE Limited
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -22,11 +22,11 @@ package com.sshtools.server.vsession.commands.os;
  * #L%
  */
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,6 +42,7 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.util.IOUtils;
+import com.sshtools.common.util.Utils;
 import com.sshtools.server.vsession.ShellCommand;
 import com.sshtools.server.vsession.UsageException;
 import com.sshtools.server.vsession.VirtualConsole;
@@ -57,7 +58,7 @@ public class AbstractOSCommand extends ShellCommand {
 	private PtyProcess pty;
 	private Map<String, String> env;
 	private File directory;
-	
+	private VirtualConsole console;
 	@Override
 	public void run(String[] args, VirtualConsole console)
 			throws IOException, PermissionDeniedException, UsageException {
@@ -79,10 +80,15 @@ public class AbstractOSCommand extends ShellCommand {
 	public void setDirectory(File directory) {
 		this.directory = directory;
 	}
+	
+	protected VirtualConsole getConsole() {
+		return console;
+	}
 
 	private void runCommand(String cmd, List<String> cmdArgs,
 			VirtualConsole console) throws IOException {
 		
+		this.console = console;
 		List<String> args = configureCommand(cmd, cmdArgs, console);
 		
 		if (cmd == null) {
@@ -93,16 +99,9 @@ public class AbstractOSCommand extends ShellCommand {
 			}
 		}
 
-		Map<String, String> penv = this.env == null ? new HashMap<String, String>(System.getenv()) : new HashMap<String, String>(this.env);
-		penv.put("TERM", console.getTerminal().getType());
+		pty = startPtyProcess(args);
 
-		var builder = new PtyProcessBuilder(args.toArray(new String[0]));
-		if(directory != null)
-			builder.setDirectory(directory.getAbsolutePath());
-		builder.setConsole(false);
-		builder.setEnvironment(penv);
-		pty = builder.start();
-
+		
 		final InputStream in = pty.getInputStream();
 		final OutputStream out = pty.getOutputStream();
 
@@ -125,13 +124,8 @@ public class AbstractOSCommand extends ShellCommand {
 
 			@Override
 			public void onChannelDataIn(Channel channel, ByteBuffer buffer) {
-
-				byte[] tmp = new byte[buffer.remaining()];
-				buffer.get(tmp);
-
 				try {
-					out.write(tmp);
-					out.flush();
+					writeToCommand(out, buffer);
 				} catch (IOException e) {
 					Log.error("Error writing data to pty", e);
 					IOUtils.closeStream(out);
@@ -142,15 +136,15 @@ public class AbstractOSCommand extends ShellCommand {
 		console.getSessionChannel().addEventListener(l);
 
 		try {
-			IOUtils.copy(in, console.getSessionChannel().getOutputStream());
-			out.close();
-
+			runInput(in, console.getSessionChannel().getOutputStream());
 			int result = pty.waitFor();
 			if (result > 0) {
 				throw new IOException("System command exited with error " + result);
 			}
 		} catch (Exception e) {
+			Log.error("Captured error during shell input read", e);
 		} finally {
+			IOUtils.closeStream(out);
 			try {
 				console.getSessionChannel().resumeDataCaching();
 			}
@@ -159,11 +153,46 @@ public class AbstractOSCommand extends ShellCommand {
 			}
 		}
 	}
+	
+	protected PtyProcess startPtyProcess(List<String> args) throws IOException {
+		return createPtyProcess(args).start();
+	}
+
+	protected PtyProcessBuilder createPtyProcess(List<String> args) {
+		
+		if(Log.isInfoEnabled()) {
+			Log.info("Executing {}", Utils.csv(" ", args));
+		}
+		Map<String, String> penv = this.env == null ? new HashMap<String, String>(System.getenv()) : new HashMap<String, String>(this.env);
+		penv.put("TERM", console.getTerminal().getType());
+		configureEnvironment(penv);
+		var builder = new PtyProcessBuilder(args.toArray(new String[0]));
+		if(directory != null)
+			builder.setDirectory(directory.getAbsolutePath());
+		builder.setConsole(false);
+		builder.setEnvironment(penv);
+		return builder;
+	}
+
+	protected void configureEnvironment(Map<String, String> penv) {
+		
+	}
+
+	protected void runInput(InputStream in, OutputStream out) throws IOException {
+		IOUtils.copy(in, console.getSessionChannel().getOutputStream());
+	}
+
+	protected void writeToCommand(OutputStream out, ByteBuffer buffer) throws IOException {
+		byte[] tmp = new byte[buffer.remaining()];
+		buffer.get(tmp);
+		out.write(tmp);
+		out.flush();
+	}
 
 	protected List<String> configureCommand(String cmd, List<String> cmdArgs, VirtualConsole console) throws IOException {
 		
 		List<String> args = new ArrayList<>();
-		String shellCommand = findCommand(getName());
+		String shellCommand = ShellUtils.findCommand(getName());
 		if(shellCommand == null)
 			throw new IOException("Cannot find command " + getName());
 
@@ -175,26 +204,8 @@ public class AbstractOSCommand extends ShellCommand {
 		return args;
 	}
 
-	protected String findCommand(String command, String... places) {
-		String stdbuf = execAndCapture("which", command);
-		if (stdbuf == null) {
-			for (String place : places) {
-				File f = new File(place);
-				if (f.exists()) {
-					stdbuf = f.getAbsolutePath();
-					break;
-				}
-			}
-		}
-		if (stdbuf != null) {
-			while (stdbuf.endsWith("\n")) {
-				stdbuf = stdbuf.substring(0, stdbuf.length() - 1);
-			}
-		}
-		return stdbuf;
-	}
 
-	private void setScreenSize(int width, int height) {
+	protected void setScreenSize(int width, int height) {
 		try {
 			pty.setWinSize(new WinSize(width, height));
 		} catch (Exception e) {
@@ -203,21 +214,5 @@ public class AbstractOSCommand extends ShellCommand {
 		}
 	}
 
-	private final static String execAndCapture(String... args) {
-		try {
-			ProcessBuilder builder = new ProcessBuilder(args);
-			builder.redirectErrorStream();
-			Process process = builder.start();
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			IOUtils.copy(process.getInputStream(), out);
-			int ret = process.waitFor();
-			if (ret == 0) {
-				return new String(out.toByteArray());
-			}
-			throw new IOException("Got non-zero return status.");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
+
 }

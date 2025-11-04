@@ -53,8 +53,7 @@ public class UnixDomainSocketRemoteForwardRequestHandler implements RemoteForwar
 			
 			var request = new GlobalRequest(UnixDomainSockets.STREAM_LOCAL_FORWARD_REQUEST, conn.getConnection(), msg.toByteArray());
 
-			conn.sendGlobalRequest(request, true);
-			request.waitForever();
+			conn.sendGlobalRequestAndWait(request, 60000L);
 			
 			if(request.isSuccess()) {
 				if(Log.isInfoEnabled()) {
@@ -81,8 +80,7 @@ public class UnixDomainSocketRemoteForwardRequestHandler implements RemoteForwar
 
 			var request = new GlobalRequest(UnixDomainSockets.CANCEL_STREAM_LOCAL_FORWARD_REQUEST, conn.getConnection(), msg.toByteArray());
 
-			conn.sendGlobalRequest(request, true);
-			request.waitForever();
+			conn.sendGlobalRequestAndWait(request, 60000L);
 
 			if (request.isSuccess()) {
 

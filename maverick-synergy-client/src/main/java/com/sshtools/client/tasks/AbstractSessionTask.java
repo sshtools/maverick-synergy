@@ -59,9 +59,10 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 		 * @param session session function
 		 * @return builder for chaining
 		 */
-		public final AbstractSessionTaskBuilder<B, SC, TT> withSession(Function<SshConnection, SC> session) {
+		@SuppressWarnings("unchecked")
+		public final B withSession(Function<SshConnection, SC> session) {
 			this.session = Optional.of(session);
-			return this;
+			return (B)this;
 		}
 
 		/**
@@ -70,9 +71,10 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 		 * @param future future
 		 * @return builder for chaining
 		 */
-		public final AbstractSessionTaskBuilder<B, SC, TT> withFuture(ChannelRequestFuture future) {
+		@SuppressWarnings("unchecked")
+		public final B withFuture(ChannelRequestFuture future) {
 			this.future  = Optional.of(future);
-			return this;
+			return (B)this;
 		}
 
 		/**

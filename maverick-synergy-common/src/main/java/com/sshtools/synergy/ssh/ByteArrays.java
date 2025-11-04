@@ -35,10 +35,10 @@ public class ByteArrays{
 		return (instance == null ? instance = new ByteArrays() : instance);
 	}
 
-	public byte[] getByteArray() throws IOException {
+	public byte[] getByteArray(int length) throws IOException {
 		synchronized (packets) {
 			if (packets.size() == 0)
-				return new byte[131072];
+				return new byte[length];
 			return packets.remove(0);
 		}
 	}
@@ -48,4 +48,5 @@ public class ByteArrays{
 			packets.add(p);
 		}
 	}
+
 }

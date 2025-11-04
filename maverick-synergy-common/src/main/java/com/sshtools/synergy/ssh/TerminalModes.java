@@ -29,8 +29,10 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.sshtools.common.logger.Log;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.Utils;
 
 /**
  * <p>When a client requests a pseudo terminal it informs the server of
@@ -675,6 +677,9 @@ public final class TerminalModes {
 		 * @return this for chaining
 		 */
 		public TerminalModesBuilder withMode(Mode mode, int value) {
+			if(Log.isDebugEnabled()) {
+				Log.debug(String.format("%s: 0x%s", Utils.rightPad(mode.name(), 13), Integer.toHexString(value)));
+			}
 			codes.put(mode, value);
 			return this;
 		}
@@ -724,7 +729,6 @@ public final class TerminalModes {
 
 		public TerminalModesBuilder read(ByteArrayReader reader) {
 			while(true) {
-				/* Hrm why does ByteArrayWriter throw IOExceptions? */
 				try {
 					var mode = reader.read();
 					if(mode < 1)

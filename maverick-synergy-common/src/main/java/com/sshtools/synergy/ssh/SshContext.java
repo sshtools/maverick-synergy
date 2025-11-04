@@ -440,6 +440,12 @@ public abstract class SshContext extends ProtocolContext implements
 	}
 
 
+	@Deprecated(since = "3.1.4")
+	/**
+	 * @deprecated use {@link supportedSignatures()} instead.
+	 * @return
+	 * 
+	 */
 	public ComponentFactory<SshPublicKey> getSupportedSignatures() {
 		return signatures;
 	}
@@ -621,6 +627,10 @@ public abstract class SshContext extends ProtocolContext implements
 
 	public ComponentFactory<SshHmac> supportedMacsSC() {
 		return macSC;
+	}
+	
+	public ComponentFactory<SshPublicKey> supportedSignatures() {
+		return getSupportedSignatures();
 	}
 
 	/**

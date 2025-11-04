@@ -591,6 +591,12 @@ public class IOUtils {
 		}
 	}
 	
+	public static String readStringFromFile(Path path, String charset) throws UnsupportedEncodingException, IOException {
+		try(InputStream in = Files.newInputStream(path)) {
+			return readStringFromStream(in, charset);
+		}
+	}
+	
 	public static String readStringFromStream(InputStream in, String charset) throws IOException {
 		try(ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 			IOUtils.copy(in, out);

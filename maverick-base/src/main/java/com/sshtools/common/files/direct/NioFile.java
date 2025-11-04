@@ -79,9 +79,13 @@ public final class NioFile implements AbstractFile {
 
 	NioFile(Path path, NioFileFactory fileFactory, Path home, boolean sandbox)
 			throws IOException, PermissionDeniedException {
+		
+		this.path = path.toAbsolutePath().normalize();
+		this.home = home.toAbsolutePath().normalize();
+
 		if (sandbox) {
-			if ((Files.exists(path) && !path.toRealPath().startsWith(home.toRealPath()))
-					|| (!Files.exists(path) && !path.startsWith(home.toRealPath()))) {
+			if ((Files.exists(path) && !path.startsWith(home))
+					|| (!Files.exists(path) && !path.startsWith(home))) {
 				throw new PermissionDeniedException(
 						MessageFormat.format("You cannot access paths outside of the sandbox path {0}. The path {1} was requested.", home.toRealPath(), path));
 			}
@@ -89,7 +93,7 @@ public final class NioFile implements AbstractFile {
 
 		this.home = home;
 		this.fileFactory = fileFactory;
-		this.path = path;
+		
 		this.sandbox = sandbox;
 		if (Files.exists(this.path)) {
 			getAttributes();

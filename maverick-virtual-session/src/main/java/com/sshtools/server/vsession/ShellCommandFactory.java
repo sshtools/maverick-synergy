@@ -58,6 +58,9 @@ public class ShellCommandFactory extends CommandFactory<ShellCommand> {
 		factories.addAll(Arrays.asList(commandFactories));
 	}
 	
+	public ShellCommandFactory() {
+		installShellCommands();
+	}
 	
 	protected void installShellCommands() {
 		
@@ -82,6 +85,7 @@ public class ShellCommandFactory extends CommandFactory<ShellCommand> {
 		commands.put("clear", Clear.class);
 		commands.put("sleep", Sleep.class);
 		commands.put("catch", Catch.class);
+		commands.put("term", Term.class);
 		
 	}
 	

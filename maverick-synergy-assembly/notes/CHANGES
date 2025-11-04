@@ -14,6 +14,7 @@ Bug Fixes
   o Fixed connection timeout.
   o Removed duplicate shutdown hook.
   o Don't pass properties file parent to register to avoid a NullPointerException on /logging.properties
+  o Local filtering in SftpClient not activated if remote filtering extension not available.
   
 =================
 =  HISTORY      =

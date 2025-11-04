@@ -26,7 +26,7 @@ import java.io.IOException;
 
 import com.sshtools.common.util.UnsignedInteger32;
 
-public interface Channel {
+public interface Channel extends AutoCloseable {
 
 	UnsignedInteger32 getLocalWindow();
 
@@ -60,4 +60,16 @@ public interface Channel {
 	boolean isLocalEOF();
 
 	String getChannelType();
+	
+	void setAttribute(String name, Object val);
+	
+	<T> T getAttribute(String name);
+
+	/**
+	 * TODO speak to @ludup, I believe this is unnecessary.
+	 */	
+	@Deprecated
+	default <T> T getAttribute(String name, Class<T> clazz) {
+		return getAttribute(name);
+	}
 }

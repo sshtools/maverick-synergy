@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.sshtools</groupId>
     <artifactId>maverick-synergy-group</artifactId>
-    <version>3.1.3-SNAPSHOT</version>
+    <version>3.1.4-SNAPSHOT</version>
   </parent>
   <artifactId>maverick-synergy-callback-server</artifactId>
   <name>Callback Server API</name>
@@ -46,10 +46,15 @@
   
   <repositories>
        <repository>
-         <id>snapshots-repo</id>
-         <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-         <releases><enabled>false</enabled></releases>
-         <snapshots><enabled>true</enabled></snapshots>
-       </repository>
+	    <name>Central Portal Snapshots</name>
+	    <id>central-portal-snapshots</id>
+	    <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+	    <releases>
+	      <enabled>false</enabled>
+	    </releases>
+	    <snapshots>
+	      <enabled>true</enabled>
+	    </snapshots>
+	  </repository>
      </repositories>
 </project>

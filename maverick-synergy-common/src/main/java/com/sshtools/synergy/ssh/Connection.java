@@ -393,8 +393,19 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	}
 
 	@Override
+	public void sendGlobalRequest(GlobalRequest request) {
+		connection.sendGlobalRequest(request);
+	}
+	
+	@Override
+	public void sendGlobalRequestAndWait(GlobalRequest request, long timeout) {
+		connection.sendGlobalRequestAndWait(request, timeout);
+	}
+	
+	@Override
+	@Deprecated
 	public void sendGlobalRequest(GlobalRequest request, boolean wantReply) {
-		connection.sendGlobalRequest(request, wantReply);;
+		connection.sendGlobalRequest(request);
 	}
 
 	public void setLocalAddress(InetSocketAddress localAddress) {

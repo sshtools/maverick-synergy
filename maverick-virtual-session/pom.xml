@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>com.sshtools</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
-		<version>3.1.3-SNAPSHOT</version>
+		<version>3.1.4-SNAPSHOT</version>
 	</parent>
 	<artifactId>maverick-virtual-session</artifactId>
 	<name>Virtual Sessions</name>
@@ -24,19 +24,14 @@
 		<dependency>
 			<groupId>org.jetbrains.pty4j</groupId>
 			<artifactId>pty4j</artifactId>
-			<version>0.12.11</version>
+			<version>0.13.10-1</version>
 			<exclusions>
 				<exclusion>
 					<groupId>net.java.dev.jna</groupId>
 					<artifactId>jna</artifactId>
 				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-api</artifactId>
-				</exclusion>
 			</exclusions>
 		</dependency>
-
 
 		<!-- https://mvnrepository.com/artifact/org.jetbrains.pty4j/purejavacomm -->
 		<dependency>
@@ -108,5 +103,10 @@
 			<name>artifactory.jadaptive.com-releases</name>
 			<url>https://artifactory.jadaptive.com/ext-releases-local</url>
 		</repository>
+        <repository>
+            <id>jetbrains-public</id>
+            <name>JetBrains Public Repo</name>
+            <url>https://packages.jetbrains.team/maven/p/jb/public</url>
+        </repository>
 	</repositories>
 </project>

@@ -61,6 +61,5 @@ public class SshServer extends AbstractSshServer implements ProtocolContextFacto
 			throws IOException, SshException {
 		return createServerContext(daemonContext, sc);
 	}
-	
-	
+
 }

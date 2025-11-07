@@ -8,7 +8,7 @@ Features
   o Port forwarding re-factored to support multiple forwarding types. It is activated by creating `ForwardingRequest` using its `Builder` or one of the convenience methods. Use `ForwardingHandle` returned to close the forward and other methods instead of the `stop*` methods.
   o UNIX Domain Socket forwarding now first-class citizen and supported directly.
   o Removed all deprecated methods and classes that were marked for removal at 3.1.0. Deprecated classes removed include `DefaultSftpExtensionFactory`, `PathFile`, `PathFileFactory`, `SupportedSftpExtensions`. The methods removed were mainly those in `SftpChannel` and `SftpClient`.
-  o Forwarding tests are not protocol independent. 
+  o Forwarding tests are now protocol independent. 
  
 Bug Fixes
   o Fixed connection timeout.

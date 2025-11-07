@@ -231,8 +231,8 @@
 		<module>maverick-bc-fips-tests</module>
 		<module>maverick-sshagent</module>
 		<module>maverick-sshagent-named-pipes</module>		
+		<module>maverick-synergy-fuse-drive</module>
 		<module>maverick-synergy</module>
 		<module>maverick-synergy-assembly</module>
-		<module>maverick-synergy-fuse-drive</module>
 	</modules>
 </project>

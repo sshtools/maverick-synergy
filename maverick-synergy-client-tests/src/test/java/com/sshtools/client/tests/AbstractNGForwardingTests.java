@@ -58,7 +58,8 @@ public abstract class AbstractNGForwardingTests extends AbstractForwardingTests<
 			
 			@Override
 			public String startForwarding(SshClient client, String targetPath) throws UnauthorizedException, SshException {
-				return client.bindLocal(ForwardingRequest.ofDomainSocketDestination(targetPath)).boundPath().get();
+		        var tmp = UnixDomainSockets.createTemporayAddress().getPath().toString();
+				return client.bindLocal(ForwardingRequest.ofDomainSocket(tmp, targetPath)).boundPath().get();
 			}
 
 			@Override

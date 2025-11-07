@@ -4,7 +4,7 @@ package com.sshtools.synergy.ssh;
  * #%L
  * Common API
  * %%
- * Copyright (C) 2002 - 2024 JADAPTIVE Limited
+ * Copyright (C) 2002 - 2025 JADAPTIVE Limited
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -22,7 +22,19 @@ package com.sshtools.synergy.ssh;
  * #L%
  */
 
+import com.sshtools.common.forwarding.ForwardingRequest;
+import com.sshtools.common.forwarding.ForwardingRequest.Protocol;
+
 public interface ForwardingFactory<C extends SshContext, F extends ForwardingChannelFactory<C>> {
 
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	F createChannelFactory(String hostToConnect, int portToConnect);
+
+	default F createChannelFactory(ForwardingRequest request) {
+		return createChannelFactory(request.destinationAddress(), request.destinationPort());
+	}
+	
+	default boolean isHandled(ForwardingRequest request) {
+		return request.protocol() == Protocol.TCP;
+	}
 }

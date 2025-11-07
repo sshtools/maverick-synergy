@@ -26,7 +26,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.sshtools.common.command.ExecutableCommand;
@@ -39,6 +41,7 @@ import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
 import com.sshtools.common.shell.ShellPolicy;
+import com.sshtools.common.shell.ShellPolicy.ShellPermission;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.SessionChannelHelper;
 import com.sshtools.common.ssh.SessionChannelServer;
@@ -177,9 +180,6 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	/**
 	 * If the client requests a pseudo terminal for the session this method will
 	 * be invoked before the shell, exec or subsystem is started.
-	 * <p>
-	 * Deprecated, at version 3.2.0 {@link #allocatePseudoTerminal(String, int, int, int, int, TerminalModes)}.
-	 * will be made abstract and this method will be removed.
 	 * 
 	 * @param term
 	 * @param cols
@@ -189,28 +189,8 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	 * @param modes
 	 * @return boolean
 	 */
-	@Deprecated(forRemoval = true, since = "3.1.2")
-	protected boolean allocatePseudoTerminal(String term, int cols,
-			int rows, int width, int height, byte[] modes) {
-		throw new UnsupportedOperationException("No longer used, instead call allocatePseudoTerminal() with TerminalModes.");
-	}
-	
-	/**
-	 * If the client requests a pseudo terminal for the session this method will
-	 * be invoked before the shell, exec or subsystem is started.
-	 * 
-	 * @param term
-	 * @param cols
-	 * @param rows
-	 * @param width
-	 * @param height
-	 * @param modes
-	 * @return boolean
-	 */
-	protected boolean allocatePseudoTerminal(String term, int cols,
-			int rows, int width, int height, TerminalModes modes) {
-		return allocatePseudoTerminal(term, cols, width, width, height, modes.toByteArray());
-	}
+	protected abstract boolean allocatePseudoTerminal(String term, int cols,
+			int rows, int width, int height, TerminalModes modes);
 
 	/**
 	 * When the window (terminal) size changes on the client side, it MAY send
@@ -280,17 +260,17 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	 * Called once the channel has been opened.
 	 */
 	protected void onChannelOpen() {
-		if (getContext().getPolicy(ShellPolicy.class).getSessionTimeout() > 0)
-			getConnectionProtocol().getTransport().getSocketConnection().getIdleStates()
-					.register(this);
+		if(getContext().getPolicy(ShellPolicy.class).sessionTimeout().isPresent()) {
+			getConnectionProtocol().getTransport().getSocketConnection().getIdleStates().register(this);
+		}
 	}
 
 	public boolean idle() {
-
-		if (getContext().getPolicy(ShellPolicy.class).getSessionTimeout() > 0) {
+		Optional<Duration> to = getContext().getPolicy(ShellPolicy.class).sessionTimeout();
+		if (to.isPresent()) {
 			long idleTimeSeconds = (System.currentTimeMillis() - lastActivity) / 1000;
 
-			if (getContext().getPolicy(ShellPolicy.class).getSessionTimeout() < idleTimeSeconds) {
+			if (to.get().toSeconds() < idleTimeSeconds) {
 
 				if(Log.isDebugEnabled())
 					Log.debug("Session has timed out!");
@@ -372,9 +352,9 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 				if(Log.isDebugEnabled())
 					Log.debug(name + "=" + value + " environment variable set");
 			} else if (type.equals("shell")) {
-				boolean shellSuccess = connection.getContext().getPolicy(ShellPolicy.class).checkPermission(
+				boolean shellSuccess = connection.getContext().getPolicy(ShellPolicy.class).check(
 								getConnection(), 
-								ShellPolicy.SHELL);
+								ShellPermission.SHELL);
 
 				if (shellSuccess) {
 					success = startShell();
@@ -396,9 +376,9 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 
 				String cmd = bar.readString();
 
-				success = connection.getContext().getPolicy(ShellPolicy.class).checkPermission(
+				success = connection.getContext().getPolicy(ShellPolicy.class).check(
 						getConnection(), 
-						ShellPolicy.EXEC, cmd);
+						ShellPermission.EXEC, cmd);
 					
 
 				if(success) {
@@ -422,9 +402,9 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 
 				String name = bar.readString();
 
-				success =  connection.getContext().getPolicy(ShellPolicy.class).checkPermission(
+				success =  connection.getContext().getPolicy(ShellPolicy.class).check(
 										getConnection(), 
-										ShellPolicy.SUBSYSTEM, name);
+										ShellPermission.SUBSYSTEM, name);
 							
 				if (success) {
 					success = startSubsystem(name);
@@ -574,7 +554,7 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	 */
 	protected void onChannelClosing() {
 
-		if (getContext().getPolicy(ShellPolicy.class).getSessionTimeout() > 0 && !hasTimedOut)
+		if (getContext().getPolicy(ShellPolicy.class).sessionTimeout().isPresent() && !hasTimedOut)
 			getConnectionProtocol().getTransport().getSocketConnection().getIdleStates()
 					.remove(this);
 
@@ -590,7 +570,7 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 
 	private void resetIdleState() {
 		lastActivity = System.currentTimeMillis();
-		if (getContext().getPolicy(ShellPolicy.class).getSessionTimeout() > 0)
+		if (getContext().getPolicy(ShellPolicy.class).sessionTimeout().isPresent())
 			getConnectionProtocol().getTransport().getSocketConnection().getIdleStates()
 					.reset(this);
 	}

@@ -45,6 +45,7 @@ import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.nio.IdleStateListener;
 import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.policy.SignaturePolicy;
+import com.sshtools.common.policy.SignaturePolicy.SignaturePolicyBuilder;
 import com.sshtools.common.ssh.ConnectionAwareTask;
 import com.sshtools.common.ssh.ExecutorOperationQueues;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
@@ -2556,7 +2557,10 @@ public abstract class TransportProtocol<T extends SshContext>
 				 
 				 switch(name) {
 				 case "server-sig-algs":
-					 getContext().setPolicy(SignaturePolicy.class, new SignaturePolicy(Arrays.asList(value.split(","))));
+					 getContext().setPolicy(SignaturePolicy.class, SignaturePolicyBuilder.create().
+							 fromPolicy(getContext().getPolicy(SignaturePolicy.class)).
+							 withSupportedSignatures(Arrays.asList(value.split(","))).
+							 build());
 					 if(Log.isDebugEnabled()) {
 						 Log.debug("Remote side supports the signature algorithms {}", value);
 					 }

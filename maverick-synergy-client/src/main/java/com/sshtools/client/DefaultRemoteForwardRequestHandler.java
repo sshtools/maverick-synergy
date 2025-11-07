@@ -24,7 +24,12 @@ package com.sshtools.client;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Optional;
 
+import com.sshtools.common.forwarding.ForwardingHandle;
+import com.sshtools.common.forwarding.ForwardingRequest;
+import com.sshtools.common.forwarding.ForwardingRequest.ForwardingRequestBuilder;
+import com.sshtools.common.forwarding.ForwardingRequest.Protocol;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.SshException;
@@ -36,6 +41,7 @@ import com.sshtools.synergy.ssh.RemoteForwardRequestHandler;
 public class DefaultRemoteForwardRequestHandler implements RemoteForwardRequestHandler<SshClientContext> {
 
 	@Override
+	@Deprecated
 	public boolean isHandled(String hostToBind, int portToBind, String destinationHost, int destinationPort,
 			ConnectionProtocol<SshClientContext> conn) {
 		/* Avoid unix domain socket paths. Both ports will also both be zero */
@@ -45,9 +51,19 @@ public class DefaultRemoteForwardRequestHandler implements RemoteForwardRequestH
 	}
 
 	@Override
-	public int startRemoteForward(String hostToBind, int portToBind, String destinationHost, int destinationPort,
-			ConnectionProtocol<SshClientContext> conn) throws SshException {
+	public boolean isHandled(ForwardingRequest request, ConnectionProtocol<SshClientContext> conn) {
+		return request.protocol() == Protocol.TCP;
+	}
+
+	@Override
+	public ForwardingHandle startRemoteForward(ForwardingRequest fwdreq, ConnectionProtocol<SshClientContext> conn)
+			throws SshException {
 		try (var msg = new ByteArrayWriter()) {
+			var hostToBind = fwdreq.bindAddress();
+			var portToBind = fwdreq.bindPort();
+			var destinationHost = fwdreq.destinationAddress();
+			var destinationPort = fwdreq.destinationPort();
+			
 			msg.writeString(hostToBind);
 			msg.writeInt(portToBind);
 
@@ -57,18 +73,56 @@ public class DefaultRemoteForwardRequestHandler implements RemoteForwardRequestH
 
 			if (request.isSuccess()) {
 
+				int boundPort;
 				if (request.getData().length > 0) {
 					try (ByteArrayReader r = new ByteArrayReader(request.getData())) {
-						portToBind = (int) r.readInt();
+						boundPort = (int) r.readInt();
 					}
 				}
+				else
+					boundPort = portToBind;
 
 				if (Log.isInfoEnabled()) {
-					Log.info("Remote forwarding is now active on remote interface " + hostToBind + ":" + portToBind
-							+ " forwarding to " + destinationHost + ":" + destinationPort);
+					Log.info("Remote forwarding is now active on remote interface {}", fwdreq);
 				}
 
-				return portToBind;
+				
+				return new ForwardingHandle() {
+					
+					@Override					
+					public String toString() {
+						return "{" + type().name() + "} : " + fwdreq + " = " + boundPort().orElse(0);
+					}
+					
+					@Override
+					public void close(boolean killActiveTunnels) throws IOException {
+						try {
+							stopRemoteForward(hostToBind, boundPort, destinationHost, destinationPort, conn);
+						} catch (SshException e) {
+							throw new IOException("Failed to close remote forward.", e);
+						}
+					}
+
+					@Override
+					public Optional<Integer> boundPort() {
+						return Optional.of(boundPort);
+					}
+
+					@Override
+					public ForwardingRequest request() {
+						return fwdreq;
+					}
+
+					@Override
+					public ForwardingRequest.ForwardingType type() {
+						return ForwardingRequest.ForwardingType.REMOTE;
+					}
+
+					@Override
+					public Optional<String> boundPath() {
+						return Optional.empty();
+					}
+				};
 			} else {
 				throw new SshException("Remote forwarding on interface " + hostToBind + ":" + portToBind + " failed",
 						SshException.FORWARDING_ERROR);
@@ -79,6 +133,21 @@ public class DefaultRemoteForwardRequestHandler implements RemoteForwardRequestH
 	}
 
 	@Override
+	@Deprecated
+	public int startRemoteForward(String hostToBind, int portToBind, String destinationHost, int destinationPort,
+			ConnectionProtocol<SshClientContext> conn) throws SshException {
+		
+		return startRemoteForward(ForwardingRequestBuilder.create().
+				withProtocol(Protocol.TCP).
+				withBind(hostToBind).
+				withBindPort(portToBind).
+				withDestinationAddress(destinationHost).
+				withDestinationPort(destinationPort).
+				build(), conn).boundPort().orElse(0);
+	}
+
+	@Override
+	@Deprecated
 	public void stopRemoteForward(String hostToBind, int portToBind, String destinationHost, int destinationPort,
 			ConnectionProtocol<SshClientContext> conn) throws SshException {
 

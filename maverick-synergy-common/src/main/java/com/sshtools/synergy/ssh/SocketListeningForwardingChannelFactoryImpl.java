@@ -23,9 +23,8 @@ package com.sshtools.synergy.ssh;
  */
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
@@ -33,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.sshtools.common.forwarding.ForwardingHandle;
+import com.sshtools.common.forwarding.ForwardingRequest;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
@@ -46,16 +47,15 @@ import com.sshtools.synergy.nio.ListeningInterface;
 /**
  * This class implements the standard socket based forwarding for the SSHD.
  */
-public abstract class SocketListeningForwardingChannelFactoryImpl<T extends SshContext>
+public abstract class SocketListeningForwardingChannelFactoryImpl<T extends SshContext, ADDR extends SocketAddress>
       extends ClientAcceptor implements ForwardingChannelFactory<T> {
 
-    protected String addressToBind;
-    protected int portToBind;
     protected ServerSocketChannel socketChannel;
     protected ConnectionProtocol<T> connection;
-    protected SocketAddress addr;
+    protected ADDR addr;
     protected String channelType;
     protected ActiveTunnelManager<T> activeRemoteForwardings = new ActiveTunnelManager<T>();
+    protected ForwardingRequest request;
 
     public SocketListeningForwardingChannelFactoryImpl() {
       super(null);
@@ -68,71 +68,52 @@ public abstract class SocketListeningForwardingChannelFactoryImpl<T extends SshC
     public boolean belongsTo(ConnectionProtocol<T> connection) {
         return this.connection!=null && this.connection.equals(connection);
     }
-
-    public int bindInterface(String addressToBind, int portToBind, ConnectionProtocol<T> connection) throws IOException {
-    	return bindInterface(addressToBind, portToBind, connection, getChannelType());
-    }
+    
+    protected abstract ADDR createAddress(ForwardingRequest request);
     
     @SuppressWarnings("unchecked")
-	public int bindInterface(String addressToBind, int portToBind, ConnectionProtocol<?> connection, String channelType) throws IOException {
-
-        this.addressToBind = addressToBind;
-        this.portToBind = portToBind;
+	@Override
+	public ForwardingHandle bindInterface(ForwardingRequest request, ConnectionProtocol<?> connection,
+			String channelType) throws IOException {
+    	this.request = request;;
         this.connection = (ConnectionProtocol<T>) connection;
         this.channelType = channelType;
         
-        addr = new InetSocketAddress(addressToBind, portToBind);
+        addr = createAddress(request);
 
-        this.socketChannel = ServerSocketChannel.open();
+        this.socketChannel = createSocketChannel();
         
         try {
 	        socketChannel.configureBlocking(false);
-	        socketChannel.socket().setReuseAddress(true);
-	        if(connection.getContext().getReceiveBufferSize() > 0) {
-	        	socketChannel.socket().setReceiveBufferSize(
-	        			connection.getContext().getReceiveBufferSize());
-	        }
-	        ServerSocket socket = socketChannel.socket();
-	        socket.bind(addr, connection.getContext().getMaximumSocketsBacklogPerRemotelyForwardedConnection());
+	        socketChannel.bind(addr, connection.getContext().getMaximumSocketsBacklogPerRemotelyForwardedConnection());
 	
 	        connection.getContext().getEngine().registerAcceptor(this, socketChannel);
 	        
-	        return this.portToBind = socketChannel.socket().getLocalPort();
+	        return createHandle();
         
         } catch(IOException e) {
 			IOUtils.closeStream(socketChannel);
 			throw e;
         }
-    }
+	}
 
-    public boolean finishAccept(SelectionKey key, ListeningInterface li) {
+    protected abstract ServerSocketChannel createSocketChannel() throws IOException;
+
+	protected abstract ForwardingHandle createHandle();
+
+	public boolean finishAccept(SelectionKey key, ListeningInterface li) {
       try {
         final SocketChannel sc = socketChannel.accept();
         
         if(sc!=null) {
 
-            if(Log.isDebugEnabled()) { 
-            	Log.debug(channelType + " forwarding socket accepted from "
-		              + ((InetSocketAddress)sc.socket().getRemoteSocketAddress()).getAddress().getHostAddress()
-		              + "/"
-		              + ((InetSocketAddress)sc.socket().getRemoteSocketAddress()).getAddress().getHostAddress()
-		              + ":"
-		              + ((InetSocketAddress)sc.socket().getRemoteSocketAddress()).getPort());
-            }
+           
             sc.configureBlocking(false);
-            if(connection.getContext().getReceiveBufferSize() > 0) {
-            	sc.socket().setReceiveBufferSize(connection.getContext().getReceiveBufferSize());
-            }
-            if(connection.getContext().getSendBufferSize() > 0) {
-            	sc.socket().setSendBufferSize(connection.getContext().getSendBufferSize());
-            }
-            sc.socket().setKeepAlive(connection.getContext().getSocketOptionKeepAlive());
-            sc.socket().setTcpNoDelay(connection.getContext().getSocketOptionTcpNoDelay());
+            onAccept(sc);
 
             ForwardingChannel<T> channel = createChannel(channelType,
             		connection.getTransport().getConnection(),
-                    addressToBind,
-                    portToBind,
+                    request,
                     sc,
                     connection.getContext());
 
@@ -162,15 +143,17 @@ public abstract class SocketListeningForwardingChannelFactoryImpl<T extends SshC
       }
       catch (IOException ex) {
         if(Log.isDebugEnabled()) {
-        	Log.debug("Accept operation failed on " + addressToBind + ":" + portToBind, ex);
+        	Log.debug("Accept operation failed on " + request.bindName(), ex);
         }
       }
 
       return !socketChannel.isOpen();
     }
 
+	protected abstract void onAccept(final SocketChannel sc) throws SocketException;
+
     protected abstract ForwardingChannel<T> createChannel(String channelType,
-    		SshConnection con, 	String addressToBind, int portToBind, SocketChannel sc, T context);
+    		SshConnection con, 	ForwardingRequest request, SocketChannel sc, T context);
 
 	public void stopListening(boolean dropActiveTunnels) {
      
@@ -247,5 +230,6 @@ public abstract class SocketListeningForwardingChannelFactoryImpl<T extends SshC
 		}
 	}
 
+	protected abstract ForwardingRequest.ForwardingType type();
 
 }

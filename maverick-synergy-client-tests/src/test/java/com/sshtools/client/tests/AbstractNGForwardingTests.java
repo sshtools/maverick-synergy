@@ -26,6 +26,9 @@ import java.io.IOException;
 
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClient.SshClientBuilder;
+import com.sshtools.common.forwarding.ForwardingPolicy;
+import com.sshtools.common.forwarding.ForwardingPolicy.ForwardingPolicyBuilder;
+import com.sshtools.common.forwarding.ForwardingRequest;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.permissions.UnauthorizedException;
@@ -35,6 +38,7 @@ import com.sshtools.common.tests.AbstractForwardingTests;
 import com.sshtools.common.tests.ForwardingConfiguration;
 import com.sshtools.common.tests.ForwardingTestTemplate;
 import com.sshtools.common.tests.TestConfiguration;
+import com.sshtools.synergy.ssh.UnixDomainSockets;
 
 public abstract class AbstractNGForwardingTests extends AbstractForwardingTests<SshClient> {
 
@@ -49,25 +53,50 @@ public abstract class AbstractNGForwardingTests extends AbstractForwardingTests<
 	}
 
 	@Override
-	protected ForwardingTestTemplate<SshClient> createLocalForwardingTemplate() {
-		return new ForwardingTestTemplate<SshClient>() {
+	protected ForwardingTestTemplate<SshClient, String> createLocalDomainSocketForwardingTemplate() {
+		return new ForwardingTestTemplate<SshClient, String>() {
 			
 			@Override
-			public int startForwarding(SshClient client, int targetPort) throws UnauthorizedException, SshException {
-				return client.startLocalForwarding("127.0.0.1", 0, "127.0.0.1", targetPort);
+			public String startForwarding(SshClient client, String targetPath) throws UnauthorizedException, SshException {
+				return client.bindLocal(ForwardingRequest.ofDomainSocketDestination(targetPath)).boundPath().get();
 			}
 
 			@Override
 			public SshClient createClient(TestConfiguration config) throws IOException, SshException, InvalidPassphraseException {
-				return SshClientBuilder.create().
-						withTarget(config.getHostname(), config.getPort()).
-						withUsername(config.getUsername()).
-						withConnectTimeout(5000L).
-						withPassword(config.getPassword()).
-						withIdentities(config.getIdentities()).
+				return createBuilder(config).
 						onConfigure(ctx -> {
 							ctx.setKeyExchangeTransferLimit(config.getKeyExchangeLimit());
-							ctx.getForwardingPolicy().allowForwarding();			
+							ctx.setPolicy(ForwardingPolicy.class, ForwardingPolicyBuilder.create().
+									allowUnixDomainSocketForwarding().
+									build());			
+						}).
+						build();
+			}
+
+			@Override
+			public void disconnect(SshClient client) {
+				client.disconnect();
+			}
+		};
+	}
+
+	@Override
+	protected ForwardingTestTemplate<SshClient, Integer> createLocalForwardingTemplate() {
+		return new ForwardingTestTemplate<SshClient, Integer>() {
+			
+			@Override
+			public Integer startForwarding(SshClient client, Integer targetPort) throws UnauthorizedException, SshException {
+				return client.bindLocal(ForwardingRequest.ofTcp("127.0.0.1", 0, "127.0.0.1", targetPort)).boundPort().orElse(0);
+			}
+
+			@Override
+			public SshClient createClient(TestConfiguration config) throws IOException, SshException, InvalidPassphraseException {
+				return createBuilder(config).
+						onConfigure(ctx -> {
+							ctx.setKeyExchangeTransferLimit(config.getKeyExchangeLimit());
+							ctx.setPolicy(ForwardingPolicy.class, ForwardingPolicyBuilder.create().
+									allowTCPForwarding().
+									build());			
 						}).
 						build();
 			}
@@ -80,25 +109,22 @@ public abstract class AbstractNGForwardingTests extends AbstractForwardingTests<
 	}
 	
 	@Override
-	protected ForwardingTestTemplate<SshClient> createRemoteForwardingTemplate() {
-		return new ForwardingTestTemplate<SshClient>() {
+	protected ForwardingTestTemplate<SshClient, Integer> createRemoteForwardingTemplate() {
+		return new ForwardingTestTemplate<SshClient, Integer>() {
 			
 			@Override
-			public int startForwarding(SshClient client, int targetPort) throws UnauthorizedException, SshException {
-				return client.startRemoteForwarding("127.0.0.1", 0, "127.0.0.1", targetPort);
+			public Integer startForwarding(SshClient client, Integer targetPort) throws UnauthorizedException, SshException {
+				return client.bindRemote(ForwardingRequest.ofTcp("127.0.0.1", 0, "127.0.0.1", targetPort)).boundPort().orElse(0);
 			}
 			
 			@Override
 			public SshClient createClient(TestConfiguration config) throws IOException, SshException, InvalidPassphraseException {
-				return SshClientBuilder.create().
-						withTarget(config.getHostname(), config.getPort()).
-						withUsername(config.getUsername()).
-						withConnectTimeout(5000L).
-						withPassword(config.getPassword()).
-						withIdentities(config.getIdentities()).
+				return createBuilder(config).
 						onConfigure(ctx -> {
 							ctx.setKeyExchangeTransferLimit(config.getKeyExchangeLimit());
-							ctx.getForwardingPolicy().allowForwarding();			
+							ctx.setPolicy(ForwardingPolicy.class, ForwardingPolicyBuilder.create().
+									allowTCPForwarding().
+									build());						
 						}).
 						build();
 			}
@@ -108,6 +134,45 @@ public abstract class AbstractNGForwardingTests extends AbstractForwardingTests<
 				client.disconnect();
 			}
 		};
+	}
+	
+	@Override
+	protected ForwardingTestTemplate<SshClient, String> createRemoteDomainSocketForwardingTemplate() {
+		return new ForwardingTestTemplate<SshClient, String>() {
+			
+			@Override
+			public String startForwarding(SshClient client, String targetPath) throws UnauthorizedException, SshException {
+		        var tmp = UnixDomainSockets.createTemporayAddress().getPath().toString();
+				return client.bindRemote(ForwardingRequest.ofDomainSocket(tmp, targetPath)).request().bindPath();
+			}
+			
+			@Override
+			public SshClient createClient(TestConfiguration config) throws IOException, SshException, InvalidPassphraseException {
+				return createBuilder(config).
+						onConfigure(ctx -> {
+							ctx.setKeyExchangeTransferLimit(config.getKeyExchangeLimit());
+							ctx.setPolicy(ForwardingPolicy.class, ForwardingPolicyBuilder.create().
+									allowUnixDomainSocketForwarding().
+									build());						
+						}).
+						build();
+			}
+			
+			@Override
+			public void disconnect(SshClient client) {
+				client.disconnect();
+			}
+		};
+	}
+
+	private SshClientBuilder createBuilder(TestConfiguration config)
+			throws IOException, InvalidPassphraseException {
+		return SshClientBuilder.create().
+				withTarget(config.getHostname(), config.getPort()).
+				withUsername(config.getUsername()).
+				withConnectTimeout(5000L).
+				withPassword(config.getPassword()).
+				withIdentities(config.getIdentities());
 	}
 
 }

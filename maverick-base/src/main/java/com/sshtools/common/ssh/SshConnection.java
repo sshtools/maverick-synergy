@@ -36,7 +36,7 @@ public interface SshConnection extends EventTrigger {
 
 	String getUsername();
 
-	Object getProperty(String key);
+	<O> O getProperty(String key);
 
 	void setProperty(String key, Object value);
 

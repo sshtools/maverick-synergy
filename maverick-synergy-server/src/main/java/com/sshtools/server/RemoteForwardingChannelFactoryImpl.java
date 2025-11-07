@@ -25,14 +25,15 @@ package com.sshtools.server;
 import java.nio.channels.SocketChannel;
 
 import com.sshtools.common.events.EventCodes;
+import com.sshtools.common.forwarding.ForwardingRequest;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.synergy.ssh.ForwardingChannel;
 import com.sshtools.synergy.ssh.LocalForwardingChannel;
 import com.sshtools.synergy.ssh.RemoteForwardingChannel;
-import com.sshtools.synergy.ssh.SocketListeningForwardingChannelFactoryImpl;
+import com.sshtools.synergy.ssh.TCPSocketListeningForwardingChannelFactoryImpl;
 
 public class RemoteForwardingChannelFactoryImpl extends
-		SocketListeningForwardingChannelFactoryImpl<SshServerContext> {
+	TCPSocketListeningForwardingChannelFactoryImpl<SshServerContext> {
 
 	public static final RemoteForwardingChannelFactoryImpl INSTANCE = new RemoteForwardingChannelFactoryImpl();
 	
@@ -55,8 +56,13 @@ public class RemoteForwardingChannelFactoryImpl extends
 	@Override
 	protected ForwardingChannel<SshServerContext> createChannel(String channelType,
 			SshConnection con, 
-			String addressToBind, int portToBind, SocketChannel sc, SshServerContext context) {
-		return new RemoteForwardingChannel<SshServerContext>(con, addressToBind, portToBind, sc);
+			ForwardingRequest request, SocketChannel sc, SshServerContext context) {
+		return new RemoteForwardingChannel<SshServerContext>(con, request.bindAddress(), request.bindPort(), sc);
+	}
+
+	@Override
+	protected ForwardingRequest.ForwardingType type() {
+		return ForwardingRequest.ForwardingType.REMOTE;
 	}
 
 }

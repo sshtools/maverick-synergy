@@ -1,5 +1,9 @@
 package com.sshtools.server.vsession.commands.os;
 
+import static com.sshtools.server.vsession.commands.os.ShellUtils.findCommand;
+import static java.util.Optional.ofNullable;
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
+
 /*-
  * #%L
  * Virtual Sessions
@@ -27,8 +31,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.sshtools.server.vsession.ShellCommand;
@@ -57,7 +61,7 @@ public class Shell extends AbstractOSCommand {
 	}
 	
 	private String generateWindowsPath(String path) {
-		return path.replace("$SYSTEMROOT", StringUtils.defaultIfBlank(System.getenv("SystemRoot"), "C:\\Windows"));
+		return path.replace("$SYSTEMROOT", defaultIfBlank(System.getenv("SystemRoot"), "C:\\Windows"));
 	}
 
 	protected List<String> configureCommand(String cmd, List<String> cmdArgs, VirtualConsole console) throws IOException {
@@ -65,45 +69,39 @@ public class Shell extends AbstractOSCommand {
 		
 		
 		List<String> args = new ArrayList<>();
-		
-		beforeShellCommand(args, console);
-		
-		shellCommand = console.getContext().getPolicy(VirtualSessionPolicy.class).getShellCommand();
+		VirtualSessionPolicy policy = console.getContext().getPolicy(VirtualSessionPolicy.class);
+		Optional<String> shellCommand = policy.shellCommand();
 		if (SystemUtils.IS_OS_WINDOWS) {
-			if(StringUtils.isBlank(shellCommand)) {
+			shellCommand.ifPresentOrElse(c -> {
+				args.add(c);
+				args.addAll(policy.getShellArguments());
+			}, () -> {
 				String path = generateWindowsPath(powershellProgram);
 				if(Files.exists(Path.of(path))) {
 					args.add(path);
 				} else {
 					args.add(generateWindowsPath(commandProgram));
 				}
-			} else {
-				args.add(shellCommand);
-				args.addAll(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellArguments());
-			}
+			});
 		}
 		else {
 			
 			if(SystemUtils.IS_OS_MAC_OSX) {
-				if(StringUtils.isBlank(shellCommand)) {
-					shellCommand = ShellUtils.findCommand("/bin/zsh", "zsh", "bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh");
-					if(shellCommand == null)
-						throw new IOException("Cannot find OSX shell.");
+				if(shellCommand.isEmpty()) {
+					shellCommand = ofNullable(findCommand("zsh", "/bin/zsh", "bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh"));
 				}
 			} else {
-				if(StringUtils.isBlank(shellCommand)) {
-					shellCommand = ShellUtils.findCommand("bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh");
-					if(shellCommand == null)
-						throw new IOException("Cannot find shell.");
+				if(shellCommand.isEmpty()) {
+					shellCommand = ofNullable(findCommand("bash", "/usr/bin/bash", "/bin/bash", "sh", "/usr/bin/sh", "/bin/sh"));
 				}
 			}
 		
-			args.add(shellCommand);
-			args.addAll(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellArguments());
+			args.add(shellCommand.orElseThrow(() -> new IOException("Cannot find shell.")));
+			args.addAll(policy.getShellArguments());
 		}
 		
-		setEnv(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellEnvironment());
-		setDirectory(console.getContext().getPolicy(VirtualSessionPolicy.class).getShellDirectory());
+		setEnv(policy.getShellEnvironment());
+		policy.shellDirectory().ifPresent(d -> setDirectory(d.toFile()));
 		
 		return args;
 	}

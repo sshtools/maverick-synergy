@@ -968,7 +968,7 @@ public class ScpCommand extends AbstractExecutableCommand implements Runnable {
 					}
 
 					builder.withType(SftpFileAttributes.SSH_FILEXFER_TYPE_DIRECTORY);
-					builder.withCharsetEncoding(getSession().getConnection().getContext().getPolicy(ScpPolicy.class).getSCPCharsetEncoding());
+					builder.withCharsetEncoding(getSession().getConnection().getContext().getPolicy(ScpPolicy.class).scpCharsetEncoding());
 
 					if (!found) {
 						try {

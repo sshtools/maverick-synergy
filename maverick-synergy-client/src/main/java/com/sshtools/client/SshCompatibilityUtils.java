@@ -84,7 +84,7 @@ public class SshCompatibilityUtils {
 				onConfigure(ctx -> ctx.setSocketOptionTcpNoDelay(tcpNoDelay)).
 				build();
 		
-		ssh.authenticate(new PasswordAuthenticator(password), 30000L);
+		ssh.authenticate(PasswordAuthenticator.forPassword(password), 30000L);
 		
 		if(!ssh.isAuthenticated()) {
 			throw new IOException("Bas username or password");

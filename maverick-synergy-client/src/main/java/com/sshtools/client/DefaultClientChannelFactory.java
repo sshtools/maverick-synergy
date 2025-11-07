@@ -33,6 +33,7 @@ import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.ssh.components.ComponentFactory;
 import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.ChannelNG;
+import com.sshtools.synergy.ssh.UnixDomainSockets;
 
 /**
  * Implements a default ChannelFactory for an SSH client.
@@ -51,6 +52,8 @@ public class DefaultClientChannelFactory implements ChannelFactory<SshClientCont
 		
 		if(channeltype.equals(RemoteForwardingClientChannel.REMOTE_FORWARDING_CHANNEL_TYPE)) {
 			return new RemoteForwardingClientChannel(con);
+		} else if (channeltype.equals(UnixDomainSockets.FORWARDED_STREAM_LOCAL_CHANNEL)) {
+			return new UnixDomainSocketRemoteForwardingClientChannel(con);
 		}
 		
 		return onCreateChannel(channeltype, con);

@@ -24,6 +24,8 @@ package com.sshtools.synergy.ssh;
 
 import java.io.IOException;
 
+import com.sshtools.common.forwarding.ForwardingHandle;
+import com.sshtools.common.forwarding.ForwardingRequest;
 import com.sshtools.synergy.ssh.SocketListeningForwardingChannelFactoryImpl.ActiveTunnelManager;
 
 /**
@@ -37,22 +39,55 @@ public interface ForwardingChannelFactory<T extends SshContext> {
      * A client has requested that the server start listening and forward
      * any subsequent connections to the client.
      *
-     * @param addressToBind String
-     * @param portToBind int
-     * @param connection ConnectionProtocol
-     * @throws IOException
+     * @param addressToBind address to bind
+     * @param portToBind port to bind
+     * @param connection connection
+     * @return port
+     * @throws IOException on IO error
      */
-    int bindInterface(String addressToBind, int portToBind, ConnectionProtocol<T> connection) throws IOException;
+	@Deprecated(forRemoval = true, since = "3.2.0")
+    default int bindInterface(String addressToBind, int portToBind, ConnectionProtocol<T> connection) throws IOException {
+		return bindInterface(addressToBind, portToBind, connection, getChannelType());
+	}
 
     /**
+     * A client has requested that the server start listening and forward
+     * any subsequent connections to the client.
      * 
-     * @param addressToBind
-     * @param portToBind
-     * @param connection
-     * @param channelType
-     * @throws IOException
+     * @param addressToBind address to bind
+     * @param portToBind port to bind
+     * @param connection connection
+     * @param channelType channel type
+     * @return port
+     * @throws IOException on IO error
      */
+	@Deprecated(forRemoval = true, since = "3.2.0")
     int bindInterface(String addressToBind, int portToBind, ConnectionProtocol<?> connection, String channelType) throws IOException;
+
+    /**
+     * A client has requested that the server start listening and forward
+     * any subsequent connections to the client.
+     * @param request request
+     * @param channelType channel type
+     * @return handle
+     * 
+     * @throws IOException on IO error
+     */
+    default ForwardingHandle bindInterface(ForwardingRequest request, ConnectionProtocol<?> connection) throws IOException {
+    	return bindInterface(request, connection, getChannelType());
+    }
+    
+    /**
+     * A client has requested that the server start listening and forward
+     * any subsequent connections to the client.
+     * @param request request
+     * @param connection connection
+     * @param channelType channel type
+     * @return handle
+     * 
+     * @throws IOException on IO error
+     */
+    ForwardingHandle bindInterface(ForwardingRequest request, ConnectionProtocol<?> connection, String channelType) throws IOException;
     
     /**
      * Does this factory belong to the connection provided?

@@ -22,6 +22,7 @@
 
 import com.sshtools.agent.AgentProvider;
 import com.sshtools.agent.provider.tcp.TCPAgentProvider;
+import com.sshtools.agent.provider.uds.UnixDomainSocketAgentProvider;
 
 open module com.sshtools.agent {
 	requires transitive com.sshtools.maverick.base;
@@ -34,5 +35,5 @@ open module com.sshtools.agent {
 	exports com.sshtools.agent.server;
 	exports com.sshtools.agent.openssh;
 	uses AgentProvider;
-	provides AgentProvider with TCPAgentProvider;
+	provides AgentProvider with TCPAgentProvider, UnixDomainSocketAgentProvider;
 }

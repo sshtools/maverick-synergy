@@ -1,5 +1,7 @@
 package com.sshtools.common.scp;
 
+import java.nio.charset.Charset;
+
 /*-
  * #%L
  * Base API
@@ -24,24 +26,159 @@ package com.sshtools.common.scp;
 
 import com.sshtools.common.permissions.Permissions;
 
-public class ScpPolicy extends Permissions {
 
-	boolean scpReadWriteEvents;
-	String scpCharsetEncoding = "UTF-8";
+/**
+ * Represents various SCP related policy.
+ * 
+ * Note, will be made <code>final</code> at version 3.3.0, and will only be able to
+ * be constructed using the {@link ScpPolicyBuilder}.
+ * 
+ * TODO make final at 3.3.0+
+ */
+public class ScpPolicy extends Permissions {
 	
+	/**
+	 * Build a new {@link ScpPolicy}.
+	 */
+	public final static class ScpPolicyBuilder extends AbstractPermissionBuilder<Permission, ScpPolicyBuilder> {
+		
+		private boolean readWriteEvents;
+		private Charset charsetEncoding = Charset.forName("UTF-8");
+
+		private ScpPolicyBuilder() { }
+		
+		/**
+		 * Create a new {@link ScpPolicyBuilder} that will be used to configure
+		 * and create a {@link ScpPolicy}.
+		 * 
+		 * @return builder
+		 */
+		public static ScpPolicyBuilder create() {
+			return new ScpPolicyBuilder(); 
+		}
+		
+		/**
+		 * Enable read / write events for SCP file transfers
+		 * 
+		 * @param readWriteEvents enable read / write events
+		 * @return this for chaining
+		 */
+		public ScpPolicyBuilder withReadWriteEvents() {
+			return withReadWriteEvents(true);
+		}
+		
+		/**
+		 * Set whether read / write events are enabled for SCP file transfers
+		 * 
+		 * @param readWriteEvents enable read / write events
+		 * @return this for chaining
+		 */
+		public ScpPolicyBuilder withReadWriteEvents(boolean readWriteEvents) {
+			this.readWriteEvents = readWriteEvents;
+			return this;
+		}
+		
+		/**
+		 * Set the character set encoding used for SCP (filenames etc)
+		 * 
+		 * @param charsetEncoding character set encoding
+		 * @return this for chaining
+		 */
+		public ScpPolicyBuilder withCharsetEncoding(Charset charsetEncoding) {
+			this.charsetEncoding  = charsetEncoding;
+			return this;
+		}
+		
+		/**
+		 * Set the character set encoding used for SCP (filenames etc)
+		 * 
+		 * @param charsetEncoding character set encoding
+		 * @return this for chaining
+		 */
+		public ScpPolicyBuilder withCharsetEncoding(String charsetEncoding) {
+			return withCharsetEncoding(Charset.forName(charsetEncoding));
+		}
+		
+		/**
+		 * Build a new {@link ScpPolicy} given the configuration of this builder.
+		 * 
+		 * @return policy
+		 */
+		public ScpPolicy build() {
+			return new ScpPolicy(this);
+		}
+	}
+
+	/* TODO make all of these private + final, remove all deprecated setters at 3.3.x+ */
+	private boolean scpReadWriteEvents;
+	private Charset scpCharsetEncoding;
+
+	/**
+	 * Construct a new policy
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
+	public ScpPolicy() {
+		scpReadWriteEvents = false;
+		scpCharsetEncoding = Charset.forName("UTF-8");
+	}
+
+
+	private ScpPolicy(ScpPolicyBuilder bldr) {
+		super(bldr);
+		scpReadWriteEvents = bldr.readWriteEvents; 
+		scpCharsetEncoding = bldr.charsetEncoding;
+	}
+
+
+	/**
+	 * Get whether to fire read/write events for SCP transfers.
+	 * 
+	 * @return read / write events
+	 */
 	public boolean isSCPReadWriteEvents() {
 		return scpReadWriteEvents;
 	}
 
+	/**
+	 * Sets whether to fire read/write events for SCP transfers.
+	 * 
+	 * @param scpReadWriteEvents read / write events
+	 * @deprecated will become immutable, use {@link ScpPolicyBuilder}.
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setSCPReadWriteEvents(boolean scpReadWriteEvents) {
 		this.scpReadWriteEvents = scpReadWriteEvents;
 	}
 
+	/**
+	 * Get the SCP character set encoding.
+	 * 
+	 * @return character set encoding
+	 * @deprecated see {@link #scpCharsetEncoding()}
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public String getSCPCharsetEncoding() {
+		return scpCharsetEncoding.name();
+	}
+
+
+	/**
+	 * Get the SCP character set encoding.
+	 * 
+	 * @return character set encoding
+	 */
+	public Charset scpCharsetEncoding() {
 		return scpCharsetEncoding;
 	}
 
+	/**
+	 * Sets SCP character set encoding
+	 * 
+	 * @param scpCharsetEncoding character set encoding
+	 * @deprecated will become immutable, use {@link ScpPolicyBuilder}.
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setSCPCharsetEncoding(String scpCharsetEncoding) {
-		this.scpCharsetEncoding = scpCharsetEncoding;
+		this.scpCharsetEncoding = Charset.forName(scpCharsetEncoding);
 	}
 }

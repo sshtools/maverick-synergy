@@ -24,6 +24,10 @@ package com.sshtools.client;
 
 import java.io.IOException;
 
+import com.sshtools.common.forwarding.ForwardingHandle;
+import com.sshtools.common.forwarding.ForwardingRequest;
+import com.sshtools.common.forwarding.ForwardingRequest.ForwardingRole;
+import com.sshtools.common.forwarding.ForwardingRequest.Protocol;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.permissions.UnauthorizedException;
@@ -41,7 +45,7 @@ import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
 import com.sshtools.synergy.ssh.TransportProtocol;
 
 /**
- * Implements the client side of the SSH connection prototocol
+ * Implements the client side of the SSH connection protocol
  */
 public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContext> {
 
@@ -74,6 +78,7 @@ public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContex
 	protected void onStop() {
 		
 	}
+	
 	/**
 	 * Start local port forwarding. Listening on a local interface and forwarding the data to a host on the remote network.
 	 * 
@@ -85,48 +90,113 @@ public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContex
 	 * @throws UnauthorizedException
 	 * @throws SshException
 	 */
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public int startLocalForwarding(String addressToBind, int portToBind, String destinationHost, int destinationPort)
 			throws UnauthorizedException, SshException {
 
+		return bindLocal(ForwardingRequest.ofTcp(addressToBind, portToBind, destinationHost, destinationPort)).boundPort().orElse(portToBind);
+	}
+	
+	/**
+	 * Start local port forwarding. Listening on a local interface and forwarding the data to a host on the remote network.
+	 * 
+	 * @param request local port forwarding
+	 * @return handle
+	 * @throws UnauthorizedException
+	 * @throws SshException
+	 */
+	public ForwardingHandle bindLocal(ForwardingRequest request)
+			throws UnauthorizedException, SshException {
+
 		if(Log.isInfoEnabled()) {
-			Log.info("Requesting local forwarding on " + addressToBind + ":" + portToBind + " to " + destinationHost
-					+ ":" + destinationPort);
+			Log.info("Requesting local forwarding on " + request);
 		}
 
-		if (!getContext().getForwardingPolicy().checkInterfacePermitted(con, addressToBind, portToBind)) {
+		if (!getContext().getForwardingPolicy().validate(con, ForwardingRole.BIND, ForwardingRequest.ForwardingType.LOCAL, request)) {
 			if(Log.isInfoEnabled()) {
-				Log.info("User not permitted to forward on " + addressToBind + ":" + portToBind);
+				Log.info("User not permitted to forward on " + request);
 			}
 			throw new UnauthorizedException();
 		}
 
-		int port = getContext().getForwardingManager().startListening(addressToBind, portToBind, con, destinationHost, destinationPort);
+		ForwardingHandle hndl = getContext().getForwardingManager().bindLocal(request, con);
 		
 		if(Log.isInfoEnabled()) {
-			Log.info("Local forwarding is now active on local interface " + addressToBind + ":" + portToBind 
-					+ " forwarding to remote " + destinationHost + ":" + destinationPort);
+			Log.info("Local forwarding is now active on local interface " + hndl);
 		}
 		
-		return port;
+		return hndl;
 	}
 	
-	
+	/**
+	 * Start remote port forwarding. Listening on a remote interface and forwarding to this host.
+	 * 
+	 * @param request request
+	 * @return handle
+	 * @throws UnauthorizedException
+	 * @throws SshException
+	 */
+	public ForwardingHandle bindRemote(ForwardingRequest request)
+			throws UnauthorizedException, SshException {
+
+		if(Log.isInfoEnabled()) {
+			Log.info("Requesting remote forwarding on " + request);
+		}
+
+		if (!getContext().getForwardingPolicy().validate(con, ForwardingRole.BIND, ForwardingRequest.ForwardingType.REMOTE, request)) {
+			if(Log.isInfoEnabled()) {
+				Log.info("User not permitted to forward on " + request);
+			}
+			throw new UnauthorizedException();
+		}
+
+		ForwardingHandle hndl = getContext().getForwardingManager().bindRemote(request, getConnection().getConnectionProtocol());
+		if(Log.isInfoEnabled()) {
+			Log.info("Remote forwarding is now active on local interface " + hndl);
+		}
+		
+		return hndl;
+	}
+
+	/**
+	 * Stop all bound local port forwards.
+	 * 
+	 * @throws IOException on any error.
+	 */
+	public void closeAllLocal() throws IOException {
+		getContext().getForwardingManager().closeAllLocal(getConnection());
+	}
+
+	/**
+	 * Stop all bound remote port forwards.
+	 * 
+	 * @throws IOException on any error.
+	 */
+	public void closeAllRemote() throws IOException {
+		getContext().getForwardingManager().closeAllRemote(getConnection().getConnectionProtocol());
+	}
+
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public void stopLocalForwarding() {
 		getContext().getForwardingManager().stopForwarding(getConnection());
 	}
-	
+
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public void stopLocalForwarding(String addressToBind, int portToBind) {
 		stopLocalForwarding(addressToBind + ":" + portToBind);
 	}
-	
+
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public void stopLocalForwarding(String key) {
 		getContext().getForwardingManager().stopForwarding(key, getConnection());
 	}
-	
+
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public void stopRemoteForwarding(String addressToBind, int portToBind) throws SshException {
 		getContext().getForwardingManager().stopRemoteForwarding(addressToBind, portToBind, this);
 	}
 
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public void stopRemoteForwarding() throws SshException {
 		getContext().getForwardingManager().stopRemoteForwarding(this);
 	}
@@ -141,9 +211,14 @@ public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContex
 	 * @return actual destination port
 	 * @throws SshException
 	 */
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public int startRemoteForwarding(String addressToBind,
 			int portToBind, String destinationHost, int destinationPort) throws SshException {
-		return getContext().getForwardingManager().startRemoteForwarding(addressToBind, portToBind, destinationHost, destinationPort, this);
+		try {
+			return bindRemote(ForwardingRequest.ofTcp(addressToBind, portToBind, destinationHost, destinationPort)).boundPort().orElse(portToBind);
+		} catch (UnauthorizedException e) {
+			throw new SshException(e);
+		}
 	}
 
 	@Override
@@ -156,7 +231,7 @@ public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContex
 	 * of remote forwarding channels.
 	 */
 	@Override
-	protected boolean processTCPIPCancel(ByteArrayReader bar, ByteArrayWriter msg) throws IOException {
+	protected boolean processForwardCancel(Protocol protocol, ByteArrayReader bar, ByteArrayWriter msg) throws IOException {
 		return false;
 	}
 
@@ -165,7 +240,7 @@ public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContex
 	 * of remote forwarding channels.
 	 */
 	@Override
-	protected boolean processTCPIPForward(ByteArrayReader bar, ByteArrayWriter response) throws IOException {
+	protected boolean processForward(Protocol protocol, ByteArrayReader bar, ByteArrayWriter response) throws IOException {
 		return false;
 	}
 

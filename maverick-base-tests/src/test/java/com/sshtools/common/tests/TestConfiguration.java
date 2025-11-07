@@ -24,6 +24,7 @@ package com.sshtools.common.tests;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -40,8 +41,25 @@ public class TestConfiguration {
 	
 	protected void load() throws IOException {
 		properties = new Properties();
-		try(InputStream in = new FileInputStream(new File(getFilename()))) {
-			properties.load(in);
+		String filename = getFilename();
+		File file = new File(filename);
+		if(file.exists()) {
+			try(InputStream in = new FileInputStream(file)) {
+				properties.load(in);
+			}
+		}
+		else {
+			InputStream in = getClass().getClassLoader().getResourceAsStream(filename);
+			if(in == null)
+				throw new FileNotFoundException(filename);
+			else {
+				try {
+					properties.load(in);
+				}
+				finally {
+					in.close();
+				}
+			}
 		}
 	}
 
@@ -50,7 +68,7 @@ public class TestConfiguration {
 	}
 
 	public String getUsername() {
-		return properties.getProperty("username", "root");
+		return properties.getProperty("username", System.getProperty("user.name"));
 	}
 
 	public String getHostname() {

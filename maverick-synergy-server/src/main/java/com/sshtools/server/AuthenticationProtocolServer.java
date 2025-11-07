@@ -46,7 +46,6 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.UnsupportedChannelException;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
-import com.sshtools.common.util.Utils;
 import com.sshtools.synergy.ssh.Connection;
 import com.sshtools.synergy.ssh.ConnectionProtocol;
 import com.sshtools.synergy.ssh.Service;
@@ -118,12 +117,11 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 		/**
 		 * Send a banner message if we have one configured
 		 */
-		if (Utils.isNotBlank(transport.getSshContext().getPolicy(AuthenticationPolicy.class).getBannerMessage())) {
+		transport.getSshContext().getPolicy(AuthenticationPolicy.class).bannerMessage().ifPresent(msg -> {
 			transport.postMessage(new SshMessage() {
 				public boolean writeMessageIntoBuffer(ByteBuffer buf) {
 					buf.put((byte) SSH_MSG_USERAUTH_BANNER);
-					byte[] tmp = transport.getSshContext().getPolicy(AuthenticationPolicy.class).getBannerMessage()
-							.getBytes();
+					byte[] tmp = msg.get().getBytes();
 					buf.putInt(tmp.length);
 					buf.put(tmp);
 					buf.putInt(0);
@@ -136,7 +134,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 					}
 				}
 			});
-		}
+		});
 
 	}
 

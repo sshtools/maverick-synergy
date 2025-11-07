@@ -41,6 +41,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -355,6 +356,15 @@ public class SftpClient implements Closeable {
 	private boolean stripEOL = false;
 	private boolean forceRemoteEOL;
 	private int transferMode = MODE_BINARY;
+
+	/**
+	 * some devices have unusual file system roots such as "flash:", customRoots
+	 * contains these. If a device uses roots like this, and folder traversal on the
+	 * device is required then it must have its root stored in customRoots
+	 * 
+	 * TODO: Make unmodifiable at version 3.2.x.
+	 */
+	private final Set<String> customRoots;
 	
 	SftpClient(SftpClientBuilder builder) throws SshException, PermissionDeniedException, IOException {
 		var fileFactory = builder.fileFactory.orElseGet(() -> NioFileFactoryBuilder.create().
@@ -367,7 +377,7 @@ public class SftpClient implements Closeable {
 		this.sftp = new SftpChannel(builder.connection.orElseThrow(() -> new IllegalStateException("Either an existing connection or an existing client must be provided.")));
 		this.lcwd = fileFactory.getFile(builder.localPath.orElse(""));
 		this.cwd = builder.remotePath.orElse("");
-		this.customRoots.addAll(builder.customRoots);
+		this.customRoots = Collections.unmodifiableSet(new LinkedHashSet<>(builder.customRoots));
 		if(builder.charset.isPresent()) {
 			this.sftp.setCharsetEncoding(builder.charset.get());
 		}
@@ -684,37 +694,6 @@ public class SftpClient implements Closeable {
 	}
 
 	/**
-	 * some devices have unusual file system roots such as "flash:", customRoots
-	 * contains these. If a device uses roots like this, and folder traversal on the
-	 * device is required then it must have its root stored in customRoots
-	 * 
-	 * TODO: Make unmodifiable at version 3.2.x.
-	 */
-	private Vector<String> customRoots = new Vector<String>();
-
-	/**
-	 * Add a custom file system root path such as "flash:"
-	 * 
-	 * @param rootPath
-	 * @see SftpClientBuilder#withCustomRoots(String)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void addCustomRoot(String rootPath) {
-		customRoots.addElement(rootPath);
-	}
-
-	/**
-	 * Remove a custom file system root path such as "flash:"
-	 * 
-	 * @param rootPath
-	 * @see SftpClientBuilder#withCustomRoots(String)
-	 */
-	@Deprecated(since = "3.1.0", forRemoval = true)
-	public void removeCustomRoot(String rootPath) {
-		customRoots.removeElement(rootPath);
-	}
-
-	/**
 	 * Tests whether path starts with a custom file system root.
 	 * 
 	 * @param path
@@ -722,12 +701,7 @@ public class SftpClient implements Closeable {
 	 *         <em>false</em> otherwise
 	 */
 	private boolean startsWithCustomRoot(String path) {
-		for (Enumeration<String> it = customRoots.elements(); it != null && it.hasMoreElements();) {
-			if (path.startsWith(it.nextElement())) {
-				return true;
-			}
-		}
-		return false;
+		return customRoots.stream().filter(p -> path.startsWith(p)).findFirst().isPresent();
 	}
 
 	/**
@@ -1032,21 +1006,6 @@ public class SftpClient implements Closeable {
 				msg.close();
 			} catch (IOException e) {
 			}
-		}
-	}
-	
-	private SftpHandle openDirectoryHandle(String path, ByteArrayWriter msg) throws SshException, SftpStatusException {
-		SftpFile file = new SftpFile(path, sftp.getAttributes(path), null);
-		try {
-			return sftp.getHandle(
-					sftp.sendExtensionMessage("open-directory-with-filter@sshtools.com", msg.toByteArray()),
-					file);
-		} catch (SftpStatusException e) {
-			if (Boolean.getBoolean("maverick.disableLocalFiltering")) {
-				throw new SshException("Remote server does not support server side filtering",
-						SshException.UNSUPPORTED_OPERATION);
-			}
-			return sftp.openDirectory(path);
 		}
 	}
 
@@ -2366,49 +2325,6 @@ public class SftpClient implements Closeable {
 	 * @throws SshException
 	 */
 	public void chmod(PosixPermissions permissions, String path) throws SftpStatusException, SshException {
-		chmod(permissions.asInt(), path);
-	}
-
-	/**
-	 * <p>
-	 * Changes the access permissions or modes of the specified file or directory.
-	 * </p>
-	 * 
-	 * <p>
-	 * Modes determine who can read, change or execute a file.
-	 * </p>
-	 * <blockquote>
-	 * 
-	 * <pre>
-	 * Absolute modes are octal numbers specifying the complete list of
-	 * attributes for the files; you specify attributes by OR'ing together
-	 * these bits.
-	 * 
-	 * 0400       Individual read
-	 * 0200       Individual write
-	 * 0100       Individual execute (or list directory)
-	 * 0040       Group read
-	 * 0020       Group write
-	 * 0010       Group execute
-	 * 0004       Other read
-	 * 0002       Other write
-	 * 0001       Other execute
-	 * </pre>
-	 * 
-	 * </blockquote>
-	 * <p>
-	 * Now deprecated, it is recommended {@link PosixPermissions} and {@link PosixPermissionsBuilder} be
-	 * used instead.
-	 * </p>
-	 * 
-	 * @param permissions the absolute mode of the file/directory
-	 * @param path        the path to the file/directory on the remote server
-	 * 
-	 * @throws SftpStatusException
-	 * @throws SshException
-	 */
-	@Deprecated(since = "3.1.0")
-	public void chmod(int permissions, String path) throws SftpStatusException, SshException {
 		String actual = resolveRemotePath(path);
 		sftp.changePermissions(actual, permissions);
 	}

@@ -25,7 +25,7 @@ package com.sshtools.common.sftp;
 import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.attribute.FileTime;
 import java.text.SimpleDateFormat;
@@ -48,6 +48,7 @@ import com.sshtools.common.files.FileExistsException;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.policy.FileSystemPolicy;
+import com.sshtools.common.policy.FileSystemPolicy.FileSystemPolicyBuilder;
 import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
@@ -91,8 +92,8 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 	
 	int version;
 
-	private String CHARSET_ENCODING;
-	private FileSystemPolicy filePolicy = new FileSystemPolicy();
+	private Charset charsetEncoding;
+	private FileSystemPolicy filePolicy = FileSystemPolicyBuilder.create().build();
 	private Map<String, TransferEvent> openFileHandles = new ConcurrentHashMap<String, TransferEvent>(8, 0.9f, 1);
 	private Map<String, TransferEvent> openFolderHandles = new ConcurrentHashMap<String, TransferEvent>(8, 0.9f, 1);
 	private Map<Context, Set<String>> openFilesByContext = new ConcurrentHashMap<Context, Set<String>>(8, 0.9f, 1);
@@ -109,17 +110,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 		
 		this.filePolicy = context.getPolicy(FileSystemPolicy.class);
 		this.con = session.getConnection();
-		
-		// Check charset encoding
-		try {
-			"1234567890".getBytes(filePolicy.getSFTPCharsetEncoding());
-			this.CHARSET_ENCODING = filePolicy.getSFTPCharsetEncoding();
-		} catch (UnsupportedEncodingException ex) {
-			if(Log.isDebugEnabled())
-				Log.debug(filePolicy.getSFTPCharsetEncoding()
-						+ " is not a supported character set encoding. Defaulting to ISO-8859-1");
-			CHARSET_ENCODING = "ISO-8859-1";
-		}
+		this.charsetEncoding = filePolicy.sftpCharsetEncoding();
 
 		try {
 			AbstractFileFactory<?> ff = filePolicy.getFileFactory().getFileFactory(session.getConnection());
@@ -427,16 +418,12 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				
 				int id = (int) bar.readInt();
 				String requestName = bar.readString();
-				
-				SftpExtension ext = getContext().getPolicy(FileSystemPolicy.class).getSFTPExtension(requestName);
-				
-				if(ext!=null) {
-					ext.processMessage(bar, id, SftpSubsystem.this);
-				} else {
+				getContext().getPolicy(FileSystemPolicy.class).sftpExtension(requestName).ifPresentOrElse(ext->
+					ext.processMessage(bar, id, SftpSubsystem.this)
+				, () ->
 					sendStatusMessage(id,
 							STATUS_FX_OP_UNSUPPORTED,
-							"Extensions not currently supported");
-				}
+							"Extensions not currently supported"));;				
 			} catch (IOException ex) {
 			} finally {
 				bar.close();
@@ -475,12 +462,12 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 
 			try {
 				id = (int) bar.readInt();
-				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
+				path = checkDefaultPath(bar.readString(charsetEncoding));
 
 				old = nfs.getFileAttributes(path);
 
 				// The next few bytes are file attributes
-				attrs = SftpFileAttributesBuilder.of(bar, version, CHARSET_ENCODING).build();
+				attrs = SftpFileAttributesBuilder.of(bar, version, charsetEncoding).build();
 				
 				nfs.setFileAttributes(path, attrs);
 
@@ -587,7 +574,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				path = nfs.getPathForHandle(handle);
 
 				// The next few bytes are file attributes
-				attrs = SftpFileAttributesBuilder.of(bar, version, CHARSET_ENCODING).build();
+				attrs = SftpFileAttributesBuilder.of(bar, version, charsetEncoding).build();
 				nfs.setFileAttributes(handle, attrs);
 
 				try {
@@ -635,7 +622,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				id = (int) bar.readInt();
 				SftpFile[] files = new SftpFile[1]; 
 				files[0] = nfs.readSymbolicLink(checkDefaultPath(bar
-						.readString(CHARSET_ENCODING)));
+						.readString(charsetEncoding)));
 				sendFilenameMessage(id, files, false, true);
 
 			} catch (FileNotFoundException ioe) {
@@ -680,8 +667,8 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 
 			try {
 				id = (int) bar.readInt();
-				linkpath = bar.readString(CHARSET_ENCODING);
-				targetpath = bar.readString(CHARSET_ENCODING);
+				linkpath = bar.readString(charsetEncoding);
+				targetpath = bar.readString(charsetEncoding);
 				nfs.createSymbolicLink(checkDefaultPath(linkpath),
 						checkDefaultPath(targetpath));
 
@@ -756,7 +743,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			int id = -1;
 			try {
 				id = (int) bar.readInt();
-				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
+				path = checkDefaultPath(bar.readString(charsetEncoding));
 				nfs.removeDirectory(path);
 
 				try {
@@ -825,8 +812,8 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			int id = -1;
 			try {
 				id = (int) bar.readInt();
-				oldpath = bar.readString(CHARSET_ENCODING);
-				newpath = bar.readString(CHARSET_ENCODING);
+				oldpath = bar.readString(charsetEncoding);
+				newpath = bar.readString(charsetEncoding);
 				nfs.renameFile(checkDefaultPath(oldpath),
 						checkDefaultPath(newpath));
 
@@ -896,7 +883,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			try {
 				id = (int) bar.readInt();
 
-				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
+				path = checkDefaultPath(bar.readString(charsetEncoding));
 				nfs.removeFile(path);
 
 				try {
@@ -970,12 +957,12 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			
 			try {
 				id = (int) bar.readInt();
-				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
+				path = checkDefaultPath(bar.readString(charsetEncoding));
 				if (version > 4) {
 					accessFlags = Optional.of(new UnsignedInteger32(bar.readInt())); 
 				}
 				flags = new UnsignedInteger32(bar.readInt());
-				attrs = SftpFileAttributesBuilder.of(bar, version, CHARSET_ENCODING).build();
+				attrs = SftpFileAttributesBuilder.of(bar, version, charsetEncoding).build();
 				
 				if(getContext().getPolicy(FileSystemPolicy.class).getMaxConcurrentTransfers() > -1 && openFilesByContext.containsKey(getContext())) {
 					
@@ -1265,7 +1252,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 						reply.setPosition(position + count);
 	
 						try {
-							if(context.getPolicy(FileSystemPolicy.class).isSFTPReadWriteEvents()) {
+							if(context.getPolicy(FileSystemPolicy.class).isSftpReadWriteEvents()) {
 								fireEvent(new Event(
 										SftpSubsystem.this,
 										EventCodes.EVENT_SFTP_FILE_READ,
@@ -1335,7 +1322,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				bar.close();
 			}
 			
-			if(evt!=null && evt.error && context.getPolicy(FileSystemPolicy.class).isSFTPReadWriteEvents()) {
+			if(evt!=null && evt.error && context.getPolicy(FileSystemPolicy.class).isSftpReadWriteEvents()) {
 				fireEvent(	new Event(
 						SftpSubsystem.this,
 						EventCodes.EVENT_SFTP_FILE_READ,
@@ -1414,7 +1401,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 					evt.bytesWritten += count;
 
 
-					if(context.getPolicy(FileSystemPolicy.class).isSFTPReadWriteEvents()) {
+					if(context.getPolicy(FileSystemPolicy.class).isSftpReadWriteEvents()) {
 						fireEvent(	new Event(
 								SftpSubsystem.this,
 								EventCodes.EVENT_SFTP_FILE_WRITE,
@@ -1473,7 +1460,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				bar.close();
 			}
 			
-			if(evt!=null && evt.error && context.getPolicy(FileSystemPolicy.class).isSFTPReadWriteEvents()) {
+			if(evt!=null && evt.error && context.getPolicy(FileSystemPolicy.class).isSftpReadWriteEvents()) {
 				fireEvent(	new Event(
 						SftpSubsystem.this,
 						EventCodes.EVENT_SFTP_FILE_WRITE,
@@ -1616,7 +1603,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 
 			boolean closed = false;
 			
-			if(evt.error && getContext().getPolicy(FileSystemPolicy.class).isSFTPCloseFileBeforeFailedTransferEvents()) {
+			if(evt.error && getContext().getPolicy(FileSystemPolicy.class).isCloseFileBeforeFailedTransferEvents()) {
 				try {
 					nfs.closeFile(evt.handle);
 				} catch (InvalidHandleException e) {
@@ -1899,7 +1886,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			String path = null;
 			try {
 				id = (int) bar.readInt();
-				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
+				path = checkDefaultPath(bar.readString(charsetEncoding));
 
 				if (nfs.fileExists(path)) {
 					SftpFileAttributes attrs = nfs.getFileAttributes(path);
@@ -1948,7 +1935,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			
 			try {
 				id = (int) bar.readInt();
-				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
+				path = checkDefaultPath(bar.readString(charsetEncoding));
 
 				if (nfs.fileExists(path, false)) {
 					SftpFileAttributes attrs = nfs.getFileAttributes(path, false);
@@ -2056,7 +2043,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 
 			try {
 				id = (int) bar.readInt();
-				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
+				path = checkDefaultPath(bar.readString(charsetEncoding));
 
 				TransferEvent evt = new TransferEvent();
 				evt.nfs = nfs;
@@ -2125,7 +2112,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			baw.writeInt(reason);
 
 			if (version > 2) {
-				baw.writeString(description, CHARSET_ENCODING);
+				baw.writeString(description, charsetEncoding);
 				baw.writeString("");
 			}
 
@@ -2155,7 +2142,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				// skip the messagetype byte
 				bar.skip(1);
 				int id = (int) bar.readInt();
-				String path = bar.readString(CHARSET_ENCODING);
+				String path = bar.readString(charsetEncoding);
 				// path="";
 				try {
 					String realpath = nfs.getRealPath(checkDefaultPath(path));
@@ -2257,11 +2244,11 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 		for (int i = 0; i < files.length; i++) {
 			baw.writeString(
 					isAbsolute ? files[i].getAbsolutePath() : files[i]
-							.getFilename(), CHARSET_ENCODING);
+							.getFilename(), charsetEncoding);
 			if(version <= 3) {
 				baw.writeString(isRealPath ? files[i].getAbsolutePath()
 						: formatLongnameInContext(files[i], con.getLocale()),
-						CHARSET_ENCODING);
+						charsetEncoding);
 			}
 			baw.write(files[i].getAttributes().toByteArray(version));
 		}
@@ -2294,9 +2281,9 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			SftpFileAttributes attrs = null;
 			try {
 				id = (int) bar.readInt();
-				path = checkDefaultPath(bar.readString(CHARSET_ENCODING));
+				path = checkDefaultPath(bar.readString(charsetEncoding));
 				if(bar.available() > 0) {
-					attrs = SftpFileAttributesBuilder.of(bar, version, CHARSET_ENCODING).build();
+					attrs = SftpFileAttributesBuilder.of(bar, version, charsetEncoding).build();
 				}
 				
 				boolean exists = nfs.fileExists(path);
@@ -2373,7 +2360,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 	private void onInitialize(byte[] msg) throws IOException {
 		try {
 			int theirVersion = (int) ByteArrayReader.readInt(msg, 1);
-			int ourVersion = context.getPolicy(FileSystemPolicy.class).getSFTPVersion();
+			int ourVersion = context.getPolicy(FileSystemPolicy.class).getSftpVersion();
 			version = Math.min(theirVersion, ourVersion);
 			Packet packet = new Packet(5);
 			packet.write(SSH_FXP_VERSION);
@@ -2515,7 +2502,11 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 	}
 
 	public String getCharsetEncoding() {
-		return CHARSET_ENCODING;
+		return charsetEncoding.name();
+	}
+
+	public Charset charsetEncoding() {
+		return charsetEncoding;
 	}
 	
 	public void addTransferEvent(String handle, TransferEvent evt) {

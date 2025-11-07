@@ -27,26 +27,15 @@ import com.sshtools.common.util.UnsignedInteger32;
 
 /**
  * <p>An abstract forwarding channel implementation for use with both local
- * and remote forwarding operations.</p>
+ * and remote forwarding operations of both TCP and UDS types.</p>
  *
  * A forwarding channel acts as a tunnel, connections are listened for at the tunnel start point and any data is forwarded from the start point through the ssh connection and then onto the end point.
  * 
  *  Local forwards have the tunnel start point on the client, and the data flows from the start point through the client, along the ssh connection to the server, out to the endpoint which can be anywhere.
  *  Remote forwards have the tunnel start point on the Server, and the data flows from the start point through the server, along the ssh connection to the client, out to the endpoint which can be anywhere.
- *  
- * 
  */
 public abstract class ForwardingChannel<T extends SshContext>
     extends ChannelNG<T> {
-
-	/**Tunnel endpoint hostname*/
-    protected String hostToConnect;
-    /**Tunnel endpoint port number*/
-    protected int portToConnect;
-    /**Tunnel startpoint hostname*/
-    protected String originatingHost;
-    /**Tunnel startpoint port number*/
-    protected int originatingPort;
 
     /**
      * Construct the forwarding channel.
@@ -66,33 +55,58 @@ public abstract class ForwardingChannel<T extends SshContext>
     /**
      * The hostname of the endpoint of tunnel.
      * @return String
+     * @deprecated cast to {@link TCPForwardingChannel} or {@link UnixDomainSocketForwardingChannel} if you need access to this.
      */
+    @Deprecated(since = "3.2.0", forRemoval = true)
     public String getHost() {
-        return hostToConnect;
+    	if(this instanceof TCPForwardingChannel tcpf)
+    		return tcpf.getHost();
+    	else if(this instanceof UnixDomainSocketForwardingChannel udsf)
+       		return udsf.getPath();
+    	else
+    		throw new IllegalStateException("Unknown channel type.");
     }
 
     /**
      * The port number of the endpoint of tunnel.
      * @return int
+     * @deprecated cast to {@link TCPForwardingChannel} or {@link UnixDomainSocketForwardingChannel} if you need access to this.
      */
+    @Deprecated(since = "3.2.0", forRemoval = true)
     public int getPort() {
-        return portToConnect;
+    	if(this instanceof TCPForwardingChannel tcpf)
+    		return tcpf.getPort();
+    	else if(this instanceof UnixDomainSocketForwardingChannel)
+       		return 0;
+    	else
+    		throw new IllegalStateException("Unknown channel type.");
     }
 
     /**
      * The hostname of the startpoint of tunnel.
      * @return String
+     * @deprecated cast to {@link TCPForwardingChannel} if you need access to this.
      */
+    @Deprecated(since = "3.2.0", forRemoval = true)
     public String getOriginatingHost() {
-        return originatingHost;
+    	if(this instanceof TCPForwardingChannel tcpf)
+    		return tcpf.getOriginatingHost();
+    	else
+    		throw new IllegalStateException("Unknown channel type.");
     }
-
+    
     /**
      * The port number of the startpoint of tunnel.
      * @return int
+     * 
+     * @deprecated cast to {@link TCPForwardingChannel} if you need access to this.
      */
+    @Deprecated(since = "3.2.0", forRemoval = true)
     public int getOriginatingPort() {
-        return originatingPort;
+    	if(this instanceof TCPForwardingChannel tcpf)
+    		return tcpf.getOriginatingPort();
+    	else
+    		throw new IllegalStateException("Unknown channel type.");
     }
 
 }

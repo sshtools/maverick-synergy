@@ -25,6 +25,7 @@ package com.sshtools.server;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.function.Supplier;
 
 import com.sshtools.common.auth.AuthenticationMechanismFactory;
 import com.sshtools.common.auth.Authenticator;
@@ -172,7 +173,7 @@ public class PublicKeySubsystem extends Subsystem {
 			Log.debug("Client publickey subsystem version " + clientVersion);
 		}
 		Packet packet = new Packet();
-		packet.writeString(getContext().getPolicy(AuthenticationPolicy.class).getBannerMessage());
+		packet.writeString(getContext().getPolicy(AuthenticationPolicy.class).bannerMessage().map(Supplier::get).orElse(""));
 		packet.writeInt(1);
 		sendMessage(packet);
 	}

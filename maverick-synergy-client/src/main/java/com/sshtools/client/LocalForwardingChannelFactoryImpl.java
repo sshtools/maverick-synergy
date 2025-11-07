@@ -25,23 +25,29 @@ package com.sshtools.client;
 import java.nio.channels.SocketChannel;
 
 import com.sshtools.common.events.EventCodes;
+import com.sshtools.common.forwarding.ForwardingRequest;
+import com.sshtools.common.forwarding.ForwardingRequest.ForwardingRequestBuilder;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.synergy.ssh.ForwardingChannel;
 import com.sshtools.synergy.ssh.LocalForwardingChannel;
-import com.sshtools.synergy.ssh.SocketListeningForwardingChannelFactoryImpl;
+import com.sshtools.synergy.ssh.TCPSocketListeningForwardingChannelFactoryImpl;
 
 /**
  *  Implements the configuration of a local forwarding listening socket.
  */
 public class LocalForwardingChannelFactoryImpl extends
-		SocketListeningForwardingChannelFactoryImpl<SshClientContext> {
+		TCPSocketListeningForwardingChannelFactoryImpl<SshClientContext> {
 
-	String hostToConnect;
-	int portToConnect;
-
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public LocalForwardingChannelFactoryImpl(String hostToConnect, int portToConnect) {
-		this.hostToConnect = hostToConnect;
-		this.portToConnect = portToConnect;
+		this(ForwardingRequestBuilder.create().
+				withDestinationAddress(hostToConnect).
+				withDestinationPort(portToConnect).
+				build());
+	}
+
+	public LocalForwardingChannelFactoryImpl(ForwardingRequest request) {
+		this.request = request;
 	}
 	
 	@Override
@@ -62,8 +68,13 @@ public class LocalForwardingChannelFactoryImpl extends
 	@Override
 	protected ForwardingChannel<SshClientContext> createChannel(String channelType,
 			SshConnection con, 
-			String addressToBind, int portToBind, SocketChannel sc, SshClientContext context) {
-		return new LocalForwardingChannel<SshClientContext>(getChannelType(), con, hostToConnect, portToConnect, sc);
+			ForwardingRequest request, SocketChannel sc, SshClientContext context) {
+		return new LocalForwardingChannel<SshClientContext>(getChannelType(), con, request.destinationAddress(), request.destinationPort(), sc);
+	}
+
+	@Override
+	protected ForwardingRequest.ForwardingType type() {
+		return ForwardingRequest.ForwardingType.LOCAL;
 	}
 
 }

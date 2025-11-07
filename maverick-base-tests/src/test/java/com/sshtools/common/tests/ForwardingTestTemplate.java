@@ -29,11 +29,11 @@ import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.ssh.SshException;
 
-public interface ForwardingTestTemplate<T extends Closeable> {
+public interface ForwardingTestTemplate<T extends Closeable, INPUT> {
 
 	T createClient(TestConfiguration config) throws IOException, SshException, InvalidPassphraseException;
 	
-	int startForwarding(T client, int targetPort) throws UnauthorizedException, SshException;
+	INPUT startForwarding(T client, INPUT input) throws UnauthorizedException, SshException;
 
 	void disconnect(T client);
 }

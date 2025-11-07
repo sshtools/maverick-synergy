@@ -53,24 +53,24 @@ import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.synergy.nio.SshEngine;
 
 public class Connection<T extends SshContext> implements EventTrigger, SshConnection {
-	
+
 	TransportProtocol<? extends Context> transport;
 	ConnectionProtocol<T> connection;
 	String username;
 	boolean closed = false;
 	Date startTime = new Date();
-	HashMap<String,Object> properties = new HashMap<String,Object>();
+	HashMap<String,Object> properties = new HashMap<>();
 	InetSocketAddress remoteAddress;
 	InetSocketAddress localAddress;
 	T context;
-	
-	List<EventListener> listeners = new ArrayList<EventListener>();
+
+	List<EventListener> listeners = new ArrayList<>();
 	Locale locale;
-	
+
 	public Connection(T context) {
 		this.context = context;
 		listeners.add(new EventListener() {
-			
+
 			@Override
 			public void processEvent(Event evt) {
 				if(evt.getId()==EventCodes.EVENT_DISCONNECTED) {
@@ -81,18 +81,19 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 			}
 		});
 	}
-	
+
 	@Override
 	public synchronized void addEventListener(EventListener listener) {
 		listeners.add(listener);
 	}
-	
+
 	@Override
 	public synchronized void removeEventListener(EventListener listener) {
 		listeners.remove(listener);
 	}
 
-    public synchronized void fireEvent(Event evt)
+    @Override
+	public synchronized void fireEvent(Event evt)
     {
         EventException lastException = null;
         // Process global listeners
@@ -111,123 +112,147 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
             }
         }
 
-        if (lastException != null)
-            throw lastException;
+        if (lastException != null) {
+			throw lastException;
+		}
     }
-    
+
+	@Override
 	public AuthenticatedFuture getAuthenticatedFuture() {
 		return transport.getAuthenticatedFuture();
 	}
-	
+
+	@Override
 	public String getSessionId() {
 		return transport.getUUID();
 	}
-	
+
+	@Override
 	public String getRemoteIdentification() {
 		return transport.getRemoteIdentification();
 	}
-	
+
 	@Override
 	public ConnectionAwareTask addTask(ConnectionAwareTask r) {
 		context.getExecutorService().execute(r);
 		return r;
 	}
-	
+
 	public ConnectionAwareTask addTask(Runnable r) {
 		var t = new ConnectionTaskWrapper(this, r);
 		context.getExecutorService().execute(t);
 		return t;
 	}
-	
+
 	public <R> Future<R> executeTask(Callable<R> task) {
 		return context.getExecutorService().submit(task);
 	}
-	
+
+	@Override
 	public void executeTask(Runnable r) {
 		context.getExecutorService().submit(r);
 	}
-	
+
+	@Override
 	public String getUUID() {
 		return transport.getUUID();
 	}
-	
+
+	@Override
 	public String getUsername() {
 		return username;
 	}
-	
+
 	public Date getStartTime() {
 		return startTime;
 	}
-	
+
+	@Override
 	public long getTotalBytesIn() {
 		return transport.incomingBytes;
 	}
-	
+
+	@Override
 	public long getTotalBytesOut() {
 		return transport.outgoingBytes;
 	}
-	
+
+	@Override
 	public InetAddress getLocalAddress() {
 		return localAddress.getAddress();
 	}
-	
+
+	@Override
 	public String getRemoteIPAddress() {
 		return remoteAddress.getHostString();
 	}
-	
+
+	@Override
 	public int getRemotePort() {
 		return remoteAddress.getPort();
 	}
-	
+
 	public String getLocalIPAddress() {
 		return localAddress.getHostString();
 	}
-	
+
+	@Override
 	public int getLocalPort() {
-		return localAddress.getPort();	
+		return localAddress.getPort();
 	}
-	
+
 	public boolean isDisconnected() {
 		return getDisconnectFuture().isDone();
 	}
-	
+
+	@Override
 	public boolean isDisconnecting() {
 		return transport.isDisonnecting();
 	}
-	
+
+	@Override
 	public void disconnect() {
 		disconnect("By Application");
 	}
-	
+
+	@Override
 	public void disconnect(String reason) {
-		if(!closed)
+		if(!closed) {
 			transport.disconnect(TransportProtocol.BY_APPLICATION, reason);
+		}
 	}
-	
-	public Object getProperty(String name) {
-		return properties.get(name);
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <O> O getProperty(String name) {
+		return (O)properties.get(name);
 	}
-	
+
+	@Override
 	public void setProperty(String name, Object val) {
 		properties.put(name, val);
 	}
-	
+
 	public Set<String> getPropertyNames() {
 		return properties.keySet();
 	}
-	
+
+	@Override
 	public boolean isAuthenticated() {
 		return connection!=null;
 	}
-	
+
+	@Override
 	public T getContext() {
 		return context;
 	}
 
+	@Override
 	public boolean containsProperty(String name) {
 		return properties.containsKey(name);
 	}
 
+	@Override
 	public void setUsername(String username) {
 		this.username = username;
 	}
@@ -236,34 +261,41 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 		return connection;
 	}
 
+	@Override
 	public void removeProperty(String name) {
 		properties.remove(name);
 	}
-	
+
 	public String getHostKeyAlgorithm() {
 		return transport.getHostKeyAlgorithm();
 	}
-	
+
+	@Override
 	public String getCipherInUseCS() {
 		return transport.getCipherCS();
 	}
-	
+
+	@Override
 	public String getCipherInUseSC() {
 		return transport.getCipherSC();
 	}
-	
+
+	@Override
 	public String getMacInUseCS() {
 		return transport.getMacCS();
 	}
-	
+
+	@Override
 	public String getMacInUseSC() {
 		return transport.getMacSC();
 	}
-	
+
+	@Override
 	public String getCompressionInUseCS() {
 		return transport.getCompressionCS();
 	}
-	
+
+	@Override
 	public String getCompressionInUseSC() {
 		return transport.getCompressionSC();
 	}
@@ -292,7 +324,7 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	public void addTask(Integer queue, ConnectionAwareTask r) {
 		transport.addTask(queue, r);
 	}
-	
+
 	@Override
 	public int getSessionCount() {
 		int count = 0;
@@ -317,23 +349,28 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	@SuppressWarnings("unchecked")
 	@Override
 	public void openChannel(Channel channel) {
-		if(connection == null)
+		if(connection == null) {
 			throw new IllegalStateException("Not connected.");
+		}
 		connection.openChannel((ChannelNG<T>)channel);
 	}
-	
+
+	@Override
 	public void startLogging(Level level) throws IOException {
 		context.getConnectionManager().startLogging(this, level);
 	}
-	
+
+	@Override
 	public void startLogging() throws IOException {
 		context.getConnectionManager().startLogging(this);
 	}
 
+	@Override
 	public AbstractRequestFuture getDisconnectFuture() {
 		return transport.disconnectFuture;
 	}
 
+	@Override
 	public SshPublicKey getHostKey() {
 		return transport.getHostKey();
 	}
@@ -354,7 +391,7 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	}
 
 	@Override
-	public String[] getRemoteCompressionsSC() {	
+	public String[] getRemoteCompressionsSC() {
 		return transport.getRemoteCompressionsSC();
 	}
 
@@ -411,7 +448,7 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	public void setLocalAddress(InetSocketAddress localAddress) {
 		this.localAddress = localAddress;
 	}
-	
+
 	public void setRemoteAddress(InetSocketAddress remoteAddress) {
 		this.remoteAddress = remoteAddress;
 	}

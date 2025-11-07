@@ -1,3 +1,28 @@
+Maverick Synergy 3.2.0 - TBC
+
+Features
+
+  o Minimum Java version is now Java 17.
+  o All `*-jdk16` modules merged into the core.
+  o All `Policy` objects should now be created using the `Builder` in each. Direct construction deprecated as policies move to becoming immutable.
+  o Port forwarding re-factored to support multiple forwarding types. It is activated by creating `ForwardingRequest` using its `Builder` or one of the convenience methods. Use `ForwardingHandle` returned to close the forward and other methods instead of the `stop*` methods.
+  o UNIX Domain Socket forwarding now first-class citizen and supported directly.
+  o Removed all deprecated methods and classes that were marked for removal at 3.1.0. Deprecated classes removed include `DefaultSftpExtensionFactory`, `PathFile`, `PathFileFactory`, `SupportedSftpExtensions`. The methods removed were mainly those in `SftpChannel` and `SftpClient`.
+  o Forwarding tests are not protocol independent. 
+ 
+Bug Fixes
+  o Fixed connection timeout.
+  o Removed duplicate shutdown hook.
+  o Don't pass properties file parent to register to avoid a NullPointerException on /logging.properties
+  o Minimum requirement is now Java 17.
+  o All `jdk16` specific modules have been merged into the core (Unix Domain Sockets for forwarding and the agent)
+  o All deprecated API scheduled for removal has been removed.
+  o `ExpectShell` should now be created with `ExpectShellBuilder`. Constructors and setters deprecated.
+
+=================
+=  HISTORY      =
+=================
+  
 Maverick Synergy 3.1.3 - TBC
 
 Features
@@ -16,9 +41,7 @@ Bug Fixes
   o Don't pass properties file parent to register to avoid a NullPointerException on /logging.properties
   o Local filtering in SftpClient not activated if remote filtering extension not available.
   
-=================
-=  HISTORY      =
-=================
+-----------------
 
 Maverick Synergy 3.1.2 - Sep 20, 2024
 

@@ -246,6 +246,9 @@ public class ExpectShell {
 		private Optional<ShellStartupTrigger> trigger = Optional.empty();
 		private boolean detectSettings = true;
 		
+		private ExpectShellBuilder() {
+		}
+		
 		/**
 		 * Create a new builder.
 		 * 

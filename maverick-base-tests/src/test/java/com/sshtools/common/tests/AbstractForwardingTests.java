@@ -24,23 +24,27 @@ package com.sshtools.common.tests;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.security.DigestInputStream;
-import java.security.DigestOutputStream;
-import java.security.MessageDigest;
+import java.io.UncheckedIOException;
+import java.net.InetSocketAddress;
+import java.net.StandardProtocolFamily;
+import java.net.UnixDomainSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.SocketChannel;
+import java.nio.channels.WritableByteChannel;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.junit.Ignore;
 
-import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.tests.RandomSocketServer.Mode;
 import com.sshtools.common.util.Arrays;
 import com.sshtools.common.util.IOUtils;
 
@@ -49,6 +53,10 @@ import junit.framework.TestCase;
 public abstract class AbstractForwardingTests<T extends Closeable> extends TestCase {
 
 	ForwardingConfiguration config;
+	
+	public interface Starter<T, RTYPE> {
+		RTYPE start(T t, RandomSocketServer r) throws SshException, UnauthorizedException;
+	}
 	
 	@Override
 	protected void setUp()  {
@@ -82,10 +90,10 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 		
 		log("Starting sanity check");
 		
-		testTemplate(new ForwardingTestTemplate<T>() {
+		testTemplate(new ForwardingTestTemplate<T, Integer>() {
 			
 			@Override
-			public int startForwarding(T client, int targetPort) throws UnauthorizedException, SshException {
+			public Integer startForwarding(T client, Integer targetPort) throws UnauthorizedException, SshException {
 				return targetPort;
 			}
 			
@@ -99,12 +107,15 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 			public void disconnect(T client) {
 				
 			}
-		});
+		}, 
+			RandomSocketServer::getPort, 
+			totalTests -> new RandomSocketServer(totalTests, config.getForwardingDataAmount()),
+			this::createTCPClient
+		);
 	}
 	
-	
 	/**
-	 * Test LOCAL forwarding with randomised data.
+	 * Test LOCAL TCP forwarding with randomised data.
 	 * 
 	 * This test creates a client/server environment that sends random data to the server and receives the
 	 * same data back from the server. The server side will create a digest of the data as well as the client
@@ -112,15 +123,40 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 	 */
 	public void testLocalForwarding() throws IOException, SshException, InvalidPassphraseException, UnauthorizedException {
 		
-		log("Starting LOCAL forwarding test");
+		log("Starting LOCAL TCP forwarding test");
 		
-		testTemplate(createLocalForwardingTemplate());
+		testTemplate(
+			createLocalForwardingTemplate(), 
+			RandomSocketServer::getPort,
+			totalTests -> new RandomSocketServer(totalTests, config.getForwardingDataAmount()),
+			this::createTCPClient
+		);
 	}
 	
-	protected abstract ForwardingTestTemplate<T> createLocalForwardingTemplate();
+	protected abstract ForwardingTestTemplate<T, Integer> createLocalForwardingTemplate();
 
 	/**
-	 * Test REMOTE forwarding with randomised data.
+	 * Test LOCAL Unix Domain Socket forwarding with randomised data.
+	 * 
+	 * This test creates a client/server environment that sends random data to the server and receives the
+	 * same data back from the server. The server side will create a digest of the data as well as the client
+	 * side to ensure the integrity of the data is not compromised during the forwarding operation.
+	 */
+	public void testLocalUnixDomainSocketForwarding() throws IOException, SshException, InvalidPassphraseException, UnauthorizedException {
+		
+		log("Starting LOCAL Unix Domain Socket forwarding test");
+		testTemplate(
+			createLocalDomainSocketForwardingTemplate(), 
+			RandomSocketServer::getPath,
+			totalTests -> new RandomSocketServer(Mode.UDS, null, 0, totalTests, config.getForwardingDataAmount()),
+			this::createUnixDomainSocketClient
+		);
+	}
+	
+	protected abstract ForwardingTestTemplate<T, String> createLocalDomainSocketForwardingTemplate();
+
+	/**
+	 * Test REMOTE TCP forwarding with randomised data.
 	 * 
 	 * This test creates a client/server environment that sends random data to the server and receives the
 	 * same data back from the server. The server side will create a digest of the data as well as the client
@@ -128,15 +164,83 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 	 */
 	public void testRemoteForwarding() throws IOException, SshException, InvalidPassphraseException, UnauthorizedException {
 		
-		log("Starting REMOTE forwarding test");
-		
-		testTemplate(createRemoteForwardingTemplate());
+		log("Starting REMOTE TCP forwarding test");
+		testTemplate(
+			createRemoteForwardingTemplate(), 
+			RandomSocketServer::getPort, 
+			totalTests -> new RandomSocketServer(totalTests, config.getForwardingDataAmount()),
+			this::createTCPClient
+		);
 	}
 	
-	protected abstract ForwardingTestTemplate<T> createRemoteForwardingTemplate();
+	protected abstract ForwardingTestTemplate<T, Integer> createRemoteForwardingTemplate();
+	
+	/**
+	 * Test REMOTE Unix Domain Socket forwarding with randomised data.
+	 * 
+	 * This test creates a client/server environment that sends random data to the server and receives the
+	 * same data back from the server. The server side will create a digest of the data as well as the client
+	 * side to ensure the integrity of the data is not compromised during the forwarding operation.
+	 */
+	public void testRemoteDomainSocketForwarding() throws IOException, SshException, InvalidPassphraseException, UnauthorizedException {
+		
+		log("Starting REMOTE Unix Domain Socket forwarding test");
+		testTemplate(
+			createRemoteDomainSocketForwardingTemplate(), 
+			RandomSocketServer::getPath,
+			totalTests -> new RandomSocketServer(Mode.UDS, null, 0, totalTests, config.getForwardingDataAmount()),
+			this::createUnixDomainSocketClient
+		);
+	}
+	
+	protected RandomClient createTCPClient(int localPort, List<RandomClient> clients) {
+		try {
+			InetSocketAddress addr = new InetSocketAddress("127.0.0.1", localPort);
+			log("Opening TCP socket to " + addr);
+			return new RandomClient(SocketChannel.open(addr),
+					config.getForwardingDataAmount(),
+					config.getForwardingDataBlock(),
+					config.getRandomBlockSize()) {
+				@Override
+				protected void report(RandomClient c) {
+					clients.add(c);
+				}
+			};
+		}
+		catch(IOException ioe) {
+			throw new UncheckedIOException(ioe);
+		}
+	}
+	
+	protected RandomClient createUnixDomainSocketClient(String path, List<RandomClient> clients) {
+		try {
+			SocketChannel ch = SocketChannel.open(StandardProtocolFamily.UNIX);
+			UnixDomainSocketAddress addr = UnixDomainSocketAddress.of(Path.of(path));
+			ch.connect(addr);
+			log("Opening UDS socket at " + addr);
+			return new RandomClient(ch,
+					config.getForwardingDataAmount(),
+					config.getForwardingDataBlock(),
+					config.getRandomBlockSize()) {
+				@Override
+				protected void report(RandomClient c) {
+					clients.add(c);
+				}
+			};
+		}
+		catch(IOException ioe) {
+			throw new UncheckedIOException(ioe);
+		}
+	}
+	
+	protected abstract ForwardingTestTemplate<T, String> createRemoteDomainSocketForwardingTemplate();
 
 	@Ignore
-	protected void testTemplate(ForwardingTestTemplate<T> test) throws IOException, SshException, InvalidPassphraseException, UnauthorizedException {
+	protected <INPUT> void testTemplate(
+			ForwardingTestTemplate<T, INPUT> test, 
+			Function<RandomSocketServer, INPUT> starter,  
+			Function<Integer, RandomSocketServer> randomCreator,
+			BiFunction<INPUT, List<RandomClient>, RandomClient> clientCreator) throws IOException, SshException, InvalidPassphraseException, UnauthorizedException {
 		
 			
 			int clientCount = config.getForwardingClientCount();
@@ -146,67 +250,65 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 			int channelInterval = config.getForwardingChannelInterval();
 			int totalTests = clientCount * clientChannels;
 			AtomicInteger currentTests = new AtomicInteger(0);
-			
-			RandomSocketServer rss = new RandomSocketServer(totalTests, config.getForwardingDataAmount());
-			
-			long start = System.currentTimeMillis();
-			long last = start;
 			final List<RandomClient> clients = new ArrayList<>();
 			final List<T> sshClients = new ArrayList<>();
-			int numClients = 0;
-			do {
-
-				if(numClients++ < clientCount) {
-					T client = test.createClient(config);
-					sshClients.add(client);
-					int localPort = test.startForwarding(client, rss.getPort());
-					
-					new Thread() {
-						public void run() {
-							
-							for(int i=0;i<clientChannels; i++) {
-								try {
-									new RandomClient(new Socket("127.0.0.1", localPort),
-											config.getForwardingDataAmount(),
-											config.getForwardingDataBlock(),
-											config.getRandomBlockSize()) {
-										@Override
-										protected void report(RandomClient c) {
-											clients.add(c);
-										}
-									};
-									
-									currentTests.incrementAndGet();
-									try {
-										Thread.sleep(channelInterval);
-									} catch (InterruptedException e) {
-									}
+			
+			RandomSocketServer rss;
+			try {
+				rss = randomCreator.apply(totalTests);
+				
+				long start = System.currentTimeMillis();
+				long last = start;
+				int numClients = 0;
+				do {
+	
+					if(numClients++ < clientCount) {
+						T client = test.createClient(config);
+						sshClients.add(client);
+						INPUT localPort = test.startForwarding(client, starter.apply(rss));
+						
+						new Thread() {
+							public void run() {
 								
-								} catch(IOException ex) {
-									ex.printStackTrace();
-									System.exit(1);
+								for(int i=0;i<clientChannels; i++) {
+									try {
+										clientCreator.apply(localPort, clients);
+										
+										currentTests.incrementAndGet();
+										try {
+											Thread.sleep(channelInterval);
+										} catch (InterruptedException e) {
+										}
+									
+									} catch(UncheckedIOException ex) {
+										ex.printStackTrace();
+										System.exit(1);
+									}
 								}
 							}
-						}
-					}.start();
-				}
+						}.start();
+					}
+					
+					try {
+						Thread.sleep(clientInterval);
+					} catch (InterruptedException e) {
+					}
+					
+					if(System.currentTimeMillis() - last >= 5000) {
+						last = System.currentTimeMillis();
+						log(String.format("The server is %s and there are still %d clients active with %d still to be created",
+									rss.isComplete() ? "complete" : "incomplete", currentTests.get() - clients.size(), totalTests - currentTests.get()));
+					}
+				} while(System.currentTimeMillis() - start < maximumTime 
+						&& (!rss.isComplete() || clients.size() < totalTests));
 				
-				try {
-					Thread.sleep(clientInterval);
-				} catch (InterruptedException e) {
-				}
 				
-				if(System.currentTimeMillis() - last >= 5000) {
-					last = System.currentTimeMillis();
-					log(String.format("The server is %s and there are still %d clients active with %d still to be created",
-								rss.isComplete() ? "complete" : "incomplete", currentTests.get() - clients.size(), totalTests - currentTests.get()));
+				for(T t : sshClients) {
+					test.disconnect(t);
 				}
-			} while(System.currentTimeMillis() - start < maximumTime 
-					&& (!rss.isComplete() || clients.size() < totalTests));
-			
-			
-			for(T t : sshClients) {
-				test.disconnect(t);
+			}
+			catch(UncheckedIOException ioe) {
+				throw ioe.getCause();
 			}
 			
 			assertTrue("The test did not complete within the given timeout threshold", rss.isComplete());
@@ -225,7 +327,7 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 	abstract class RandomClient extends Thread {
 		
 		
-		Socket s;
+		SocketChannel ch;
 		long totalDataAmount;
 		int maximumBlockSize;
 		boolean checksumMatches = false;
@@ -234,8 +336,8 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 		String name;
 		boolean randomBlock;
 		
-		RandomClient(Socket s, long totalDataAmount, int maximumBlockSize, boolean randomBlock) {
-			this.s = s;
+		RandomClient(SocketChannel ch, long totalDataAmount, int maximumBlockSize, boolean randomBlock) {
+			this.ch = ch;
 			this.totalDataAmount = totalDataAmount;
 			this.maximumBlockSize = maximumBlockSize;
 			this.name = String.format("client-%s", count.getAndAdd(1));
@@ -249,51 +351,55 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 		
 		public void run() {
 			
-			try {
+			try(var in = new RandomReadableChannel(
+						maximumBlockSize, totalDataAmount, randomBlock)) {
 				
-				log(String.format("Random client %s is starting", name));
+				log(String.format("Random client %s is starting. Local address is %s, Remote is %s", name, ch.getLocalAddress(), ch.getRemoteAddress()));
 				
-				final RandomInputStream in = new RandomInputStream(
-						maximumBlockSize, totalDataAmount, randomBlock);
-				final OutputStream out = s.getOutputStream();
-				new Thread(String.format(name + "_output")) {
-					public void run() {
+				try (var din = new DigestReadableChannel(ch)) {
+
+					var thread = new Thread(() -> {
 						try {
-							IOUtils.copy(in, out);
+							long t = 0;
+							var tmp = ByteBuffer.allocate(32768);
+							int r;
+							int m = 0;
+							while ((r = din.read(tmp)) > -1) {
+								t += r;
+								m += r;
+								if (m > 1000000) {
+									m = 0;
+									log(String.format("Random client %s has received %s of data of %s", name,
+											IOUtils.toByteSize(t), IOUtils.toByteSize(totalDataAmount)));
+								}
+								tmp.clear();
+							}
 						} catch (Throwable e) {
 							e.printStackTrace();
-							writeError = e;
+							readError = e;
 						} finally {
-							log(String.format("Random client %s has completed %s output", name, IOUtils.toByteSize(totalDataAmount)));
+							log(String.format("Random client %s has completed %s input", name,
+									IOUtils.toByteSize(totalDataAmount)));
 						}
-					}
-				}.start();
-				
-				DigestInputStream din = new DigestInputStream(s.getInputStream(), MessageDigest.getInstance("MD5"));
-				long t = 0;
-				byte[] tmp = new byte[32768];
-				int r;
-				int m = 0;
-				while((r = din.read(tmp)) > -1) {
-					t += r;
-					m += r;
-					if(m > 1000000) {
-						m = 0;
-						log(String.format("Random client %s has received %s of data of %s",
-									name, IOUtils.toByteSize(t), IOUtils.toByteSize(totalDataAmount)));
+					}, String.format(name + "_output"));
+
+					try {
+						thread.start();
+						copy(in, ch);
+					} finally {
+						thread.join();
+						checksumMatches = Arrays.areEqual(din.digest(), in.digest());
 					}
 				}
+					
+			} catch (Throwable e) {
+				e.printStackTrace();
+				writeError = e;
+			} finally {
 
-				s.close();
-				checksumMatches = Arrays.areEqual(din.getMessageDigest().digest(), in.digest.digest());
-				
 				log(String.format("Random client %s has completed and received %s with checksums %s",
 						name, IOUtils.toByteSize(totalDataAmount), checksumMatches ? "matching" : "NOT matching"));
 				
-			} catch (Throwable e) {
-				e.printStackTrace();
-				readError = e;
-			} finally {
 				report(this);
 			}
 		}
@@ -301,124 +407,12 @@ public abstract class AbstractForwardingTests<T extends Closeable> extends TestC
 		protected abstract void report(RandomClient client);
 	}
 	
-	
-	
-	class RandomSocketServer extends Thread {
-		
-		ServerSocket sock;
-		Throwable lastError;
-		int count;
-		long totalAmount;
-		List<RandomSocketClient> completed = new ArrayList<RandomSocketClient>();
-		List<RandomSocketClient> fatalErrors = new ArrayList<RandomSocketClient>();
-		List<RandomSocketClient> checksumErrors = new ArrayList<RandomSocketClient>();
-		
-		RandomSocketServer(int count, long totalAmount) throws IOException {
-			super("RandomSocketServer");
-			this.count = count;
-			this.totalAmount = totalAmount;
-			sock = new ServerSocket(0);
-			start();
-		}
-		
-		public int getFinishedCount() {
-			return completed.size() + fatalErrors.size() + checksumErrors.size();
-		}
-
-		public int getPort() {
-			return sock.getLocalPort();
-		}
-		
-		public void report(RandomSocketClient client) {
-			if(client.hasError()) {
-				fatalErrors.add(client);
-			} if(!client.hasMatchingChecksums()) { 
-			    checksumErrors.add(client);	
-			} else {
-				completed.add(client);
-			}
-		}
-		
-		public boolean isComplete() {
-			return getFinishedCount() == count;
-		}
-		
-		public int getChecksumErrorCount() {
-			return checksumErrors.size();
-		}
-		
-		public int getFatalErrorCount() {
-			return fatalErrors.size();
-		}
-		
-		public void run() {
-			
-			Socket s;
-			try {
-				int index = 0;
-				while(index < count && (s = sock.accept()) != null) {
-					new RandomSocketClient(this, s, index++, totalAmount).start();
-				}
-			} catch (Throwable e) {
-				e.printStackTrace();
-				lastError = e;
-			}
-		}
-	}
-	
-	class RandomSocketClient extends Thread {
-		
-		Socket s;
-		Throwable lastError;
-		RandomSocketServer server;
-		Boolean matchingChecksums = false;
-		long totalAmount;
-		RandomSocketClient(RandomSocketServer server, Socket s, int index, long totalAmount) {
-			super("RandomSocketClient_" + index);
-			this.server = server;
-			this.s = s;
-			this.totalAmount = totalAmount;
-		}
-		
-		public boolean hasError() {
-			return !Objects.isNull(lastError);
-		}
-		
-		public boolean hasMatchingChecksums() {
-			return matchingChecksums;
-		}
-		
-		public void run() {
-			
-			Log.info("Server client has started");
-			
-			try {
-				DigestInputStream in = new DigestInputStream(s.getInputStream(), MessageDigest.getInstance("MD5"));
-				DigestOutputStream out = new DigestOutputStream(s.getOutputStream(), MessageDigest.getInstance("MD5"));
-				
-				long total = 0;
-				byte[] tmp = new byte[32768];
-				while(total < totalAmount) {
-					int r = in.read(tmp);
-					if(r==-1) {
-						break;
-					}
-					out.write(tmp, 0, r);
-					total += r;
-				}
-				
-				IOUtils.closeStream(in);
-				IOUtils.closeStream(out);
-				s.close();
-				
-				matchingChecksums = Arrays.areEqual(in.getMessageDigest().digest(), out.getMessageDigest().digest());
-			} catch (Throwable e) {
-				e.printStackTrace();
-				lastError = e;
-			} finally {
-				Log.info("Server client has completed");
-				server.report(this);
-			}
+	static void copy(ReadableByteChannel in, WritableByteChannel out) throws IOException {
+		var buf = ByteBuffer.allocate(32768);
+		while ( in.read(buf) != -1) {
+			buf.flip();
+			out.write(buf);
+			buf.clear();
 		}
 	}
 }

@@ -27,6 +27,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 
 /**
  *
@@ -230,6 +231,26 @@ public class ByteArrayReader
    * @throws IOException
    */
   public String readString(String charset) throws IOException {
+    long len = readInt();
+
+   checkLength(len);
+
+    byte[] raw = new byte[ (int) len];
+    readFully(raw);
+    if (encode) {
+      return new String(raw, charset);
+    }
+	return new String(raw);
+
+  }
+
+  /**
+   * Read a String from the array converting using the given character set.
+   * @param charset
+   * @return
+   * @throws IOException
+   */
+  public String readString(Charset charset) throws IOException {
     long len = readInt();
 
    checkLength(len);

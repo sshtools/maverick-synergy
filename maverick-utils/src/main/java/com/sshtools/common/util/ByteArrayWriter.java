@@ -25,6 +25,7 @@ package com.sshtools.common.util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 
 /**
  *
@@ -282,6 +283,31 @@ public class ByteArrayWriter
       write(tmp);
     }
   }
+
+  /**
+   * Write a String to the byte array converting the bytes using the
+   * given character set.
+   * @param str
+   * @param charset
+   * @throws IOException
+   */
+  public void writeString(String str, Charset charset) throws IOException {
+
+  if (str == null) {
+    writeInt(0);
+  }
+  else {
+    byte[] tmp;
+
+    if(ByteArrayReader.encode)
+      tmp = str.getBytes(charset);
+    else
+      tmp = str.getBytes();
+
+    writeInt(tmp.length);
+    write(tmp);
+  }
+}
   
   public void silentClose() {
 	  try {

@@ -66,9 +66,10 @@ public class MockConnection implements SshConnection {
 		return username;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public Object getProperty(String key) {
-		return properties.get(key);
+	public <O> O getProperty(String key) {
+		return (O)properties.get(key);
 	}
 
 	@Override

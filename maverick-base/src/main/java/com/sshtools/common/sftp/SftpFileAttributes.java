@@ -76,6 +76,12 @@ public class SftpFileAttributes {
 					.fromPacket(bar);
 		}
 
+		public static SftpFileAttributesBuilder of(ByteArrayReader bar, int version, Charset charsetEncoding)
+				throws IOException {
+			return new SftpFileAttributesBuilder().asVersion(version).withCharsetEncoding(charsetEncoding)
+					.fromPacket(bar);
+		}
+
 		private Optional<FileTime> lastAccessTime = Optional.empty();
 		private Optional<FileTime> createTime = Optional.empty();
 		private Optional<FileTime> lastModifiedTime = Optional.empty();

@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sshtools</groupId>
 	<artifactId>maverick-synergy-group</artifactId>
-	<version>3.1.4-SNAPSHOT</version>
+	<version>3.2.0-SNAPSHOT</version>
 	<name>Maverick Synergy</name>
 	<description>Open source Java SSH API</description>
 	<url>http://www.jadaptive.com</url>
@@ -12,8 +12,6 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.target>11</maven.compiler.target>
-		<maven.compiler.source>11</maven.compiler.source>
 		<build.projectProperties>${basedir}/jadaptive.build.properties</build.projectProperties>
 		<build.userProperties>${user.home}/.jadaptive.build.properties</build.userProperties>
 	</properties>
@@ -41,31 +39,6 @@
 	</developers>
 
 	<profiles>
-		<profile>
-			<activation>
-				<jdk>[9,)</jdk>
-			</activation>
-			<build>
-				<pluginManagement>
-					<plugins>
-						<plugin>
-							<groupId>org.apache.maven.plugins</groupId>
-							<artifactId>maven-javadoc-plugin</artifactId>
-							<configuration>
-								<!-- TODO: Why is this STILL broken! -->
-								<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
-								<excludePackageNames>**.impl.*</excludePackageNames>
-								<!--
-								https://bugs.openjdk.java.net/browse/JDK-8212233 -->
-								<detectJavaApiLink>false</detectJavaApiLink>
-								<source>8</source>
-								<doclint>none</doclint>
-							</configuration>
-						</plugin>
-					</plugins>
-				</pluginManagement>
-			</build>
-		</profile>
 		<profile>
 			<id>sign</id>
 			<build>
@@ -115,8 +88,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.11.0</version>
 				<configuration>
-					<source>11</source>
-					<target>11</target>
+					<release>17</release>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -139,7 +111,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.12.0</version>
 				<executions>
 					<execution>
 						<id>javadoc-jar</id>
@@ -147,19 +119,21 @@
 						<goals>
 							<goal>jar</goal>
 						</goals>
-						<configuration>
-							<!-- switch on dependency-driven aggregation -->
-							<includeDependencySources>false</includeDependencySources>
-							<dependencySourceIncludes>
-								<!-- include ONLY dependencies I control -->
-								<dependencySourceInclude>com.sshtools:*</dependencySourceInclude>
-							</dependencySourceIncludes>
+	                    <configuration>
+	       					<!--<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>-->
+	                        <encoding>UTF-8</encoding>
+							<!-- https://bugs.openjdk.java.net/browse/JDK-8212233 -->
+	                        <detectJavaApiLink>false</detectJavaApiLink>
+							<!--<additionalparam>-Xdoclint:none</additionalparam>-->
+	                        <source>17</source>
+	                        <doclint>none</doclint>
+	                        <sourcepath>src/main/java</sourcepath>
+	                        <includeDependencySources>false</includeDependencySources>
 							<excludePackageNames>**.impl.*</excludePackageNames>
-							<additionalparam>-Xdoclint:none</additionalparam>
-							<detectJavaApiLink>false</detectJavaApiLink>
-							<doclint>none</doclint>
-							<source>8</source>
-						</configuration>
+	                        <dependencySourceIncludes>
+	                            <dependencySourceInclude>com.sshtools:*</dependencySourceInclude>
+	                        </dependencySourceIncludes>
+	                    </configuration>
 					</execution>
 				</executions>
 			</plugin>
@@ -239,14 +213,11 @@
 		<module>maverick-base-tests</module>
 		<module>maverick-synergy-common</module>
 		<module>maverick-synergy-common-tests</module>
-		<module>maverick-synergy-jdk16-common</module>
 		<module>maverick-synergy-client</module>
-		<module>maverick-synergy-jdk16-client</module>
 		<module>maverick-synergy-client-tests</module>
 		<module>maverick-synergy-server</module>
 		<module>maverick-synergy-callback-client</module>
 		<module>maverick-synergy-callback-server</module>
-		<module>maverick-synergy-jdk16-server</module>
 		<module>maverick-virtual-filesystem</module>
 		<module>maverick-virtual-filesystem-tests</module>
 		<module>maverick-synergy-s3</module>
@@ -259,10 +230,9 @@
 		<module>maverick-bc-fips</module>
 		<module>maverick-bc-fips-tests</module>
 		<module>maverick-sshagent</module>
-		<module>maverick-sshagent-jni-sockets</module>
-		<module>maverick-sshagent-jdk16-sockets</module>
 		<module>maverick-sshagent-named-pipes</module>		
 		<module>maverick-synergy</module>
 		<module>maverick-synergy-assembly</module>
+		<module>maverick-synergy-fuse-drive</module>
 	</modules>
 </project>

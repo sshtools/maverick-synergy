@@ -1,5 +1,7 @@
 package com.sshtools.common.policy;
 
+import com.sshtools.common.policy.FileSystemPolicy.FileSystemPolicyBuilder;
+
 /*-
  * #%L
  * Base API
@@ -22,14 +24,83 @@ package com.sshtools.common.policy;
  * #L%
  */
 
+/**
+ * Represents various class loader related policy.
+ * 
+ * Note, will be made <code>final</code> at version 3.3.0, and will only be able to
+ * be constructed using the {@link ClassLoaderPolicyBuilder}.
+ * 
+ * TODO make final at 3.3.0+
+ */
 public class ClassLoaderPolicy {
 
-	ClassLoader classLoader = null;
-	
-	public ClassLoader getClassLoader() {
-		return getClass().getClassLoader();
+	private ClassLoader classLoader = null;
+	/**
+	 * Build a new {@link ClassLoaderPolicy}.
+	 */
+	public final static class ClassLoaderPolicyBuilder {
+		private ClassLoader classLoader = ClassLoaderPolicy.class.getClassLoader();
+
+		private ClassLoaderPolicyBuilder() { }
+		
+		/**
+		 * Create a new {@link ClassLoaderPolicyBuilder} that will be used to configure
+		 * and create a {@link ClassLoaderPolicy}.
+		 * 
+		 * @return builder
+		 */
+		public static ClassLoaderPolicyBuilder create() {
+			return new ClassLoaderPolicyBuilder(); 
+		}
+		
+		/**
+		 * Set a custom class loader
+		 * 
+		 * @param classLoader class loader
+		 */
+		public ClassLoaderPolicyBuilder withClassLoader(ClassLoader classLoader) {
+			this.classLoader = classLoader;
+			return this;
+		}
+		
+		/**
+		 * Build a new {@link KeyExchangePolicy} given the configuration of this builder.
+		 * 
+		 * @return policy
+		 */
+		public ClassLoaderPolicy build() {
+			return new ClassLoaderPolicy(this);
+		}
 	}
-	
+
+	/**
+	 * Construct a new policy
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
+	public ClassLoaderPolicy() {
+		this.classLoader = ClassLoaderPolicy.class.getClassLoader();
+	}
+
+	private ClassLoaderPolicy(ClassLoaderPolicyBuilder bldr) {
+		this.classLoader = bldr.classLoader;
+	}
+
+	/**
+	 * Get the class loader
+	 * 
+	 * @return class loader
+	 */
+	public ClassLoader getClassLoader() {
+		return classLoader;
+	}
+
+	/**
+	 * Set the class loader
+	 * 
+	 * @param classLoader class loader
+	 * @deprecated will become immutable, use {@link KeyExchangePolicy}.
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setClassLoader(ClassLoader classLoader) {
 		this.classLoader = classLoader;
 	}

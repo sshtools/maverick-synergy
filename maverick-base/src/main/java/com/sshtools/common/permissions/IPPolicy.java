@@ -24,37 +24,190 @@ package com.sshtools.common.permissions;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.net.CIDRNetwork;
+import com.sshtools.common.shell.ShellPolicy;
+import com.sshtools.common.shell.ShellPolicy.ShellPolicyBuilder;
 import com.sshtools.common.util.ExpiringConcurrentHashMap;
 
+/**
+ * Represents various IP related policy.
+ * 
+ * Note, will be made <code>final</code> at version 3.3.0, and will only be able to
+ * be constructed using the {@link ShellPolicyBuilder}.
+ * 
+ * TODO make final at 3.3.0+
+ */
 public class IPPolicy extends Permissions {
+	
+	/**
+	 * IP permissions
+	 */
+	public enum IPPermission implements Permission {
+		ALLOW_CONNECT,
+		DISABLE_BAN;
 
-	static final int ALLOW_CONNECT = 0x01;
-	static final int DISABLE_BAN = 0x02;
+		@Override
+		public int nativeMask() {
+			switch(this) {
+			case ALLOW_CONNECT:
+				return IPPolicy.ALLOW_CONNECT;
+			default:
+				return IPPolicy.DISABLE_BAN;
+			}
+		}
+	}
+
+	/**
+	 * @deprecated See {@link IPPermission#ALLOW_CONNECT}.
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
+	public static final int ALLOW_CONNECT = 0x01;
+
+	/**
+	 * @deprecated See {@link IPPermission#ALLOW_CONNECT}.
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
+	public static final int DISABLE_BAN = 0x02;
+
 	
-	IPStore blacklist = new IPStore();
-	IPStore whitelist = new IPStore();
+	/**
+	 * Build a new {@link IPPolicy}.
+	 */
+	public final static class IPPolicyBuilder extends AbstractPermissionBuilder<IPPermission, IPPolicyBuilder> {
+
+		private int failedAuthenticationThreshold = 15;
+		private Duration failedAuthenticationThresholdPeriod = Duration.ofMinutes(5);
+		private Duration temporaryBanTime = Duration.ofHours(5);
+		
+		private IPPolicyBuilder() { }
+		
+		/**
+		 * Create a new {@link IPPolicyBuilder} that will be used to configure
+		 * and create an {@link IPPolicy}.
+		 * 
+		 * @return builder
+		 */
+		public static IPPolicyBuilder create() {
+			return new IPPolicyBuilder(); 
+		}
+		/**
+		 * Set the maximum number of failed authentication attempts before an address is
+		 * temporarily banned.
+		 * 
+		 *  @param failedAuthenticationThreshold failed authentication attempts
+		 *  @return this for chaining
+		 */
+		public IPPolicyBuilder withFailedAuthenticationThreshold(int failedAuthenticationThreshold) {
+			this.failedAuthenticationThreshold = failedAuthenticationThreshold;
+			return this;
+		}
+		
+		/**
+		 * Set the amount of time in milliseconds failed authentication attempts are remembered.
+		 * 
+		 *  @param failedAuthenticationThresholdPeriod failed authentication threshold period in milliseconds 
+		 *  @return this for chaining
+		 */
+		public IPPolicyBuilder withFailedAuthenticationThresholdPeriod(long failedAuthenticationThresholdPeriod) {
+			return withFailedAuthenticationThresholdPeriod(Duration.ofMillis(failedAuthenticationThresholdPeriod));
+		}
+		
+		/**
+		 * Set the amount of time failed authentication attempts are remembered.
+		 * 
+		 *  @param failedAuthenticationThresholdPeriod failed authentication threshold period
+		 *  @return this for chaining
+		 */
+		public IPPolicyBuilder withFailedAuthenticationThresholdPeriod(Duration failedAuthenticationThresholdPeriod) {
+			this.failedAuthenticationThresholdPeriod = failedAuthenticationThresholdPeriod;
+			return this;
+		}
+		
+		/**
+		 * Set the amount of time an address is banned in milliseconds
+		 * 
+		 *  @param temporaryBanTime temporary ban time in milliseconds 
+		 *  @return this for chaining
+		 */
+		public IPPolicyBuilder withTemporaryBanTime(long temporaryBanTime) {
+			return withTemporaryBanTime(Duration.ofMillis(temporaryBanTime));
+		}
+		
+		/**
+		 * Set the amount of time an address is banned for when it reaches the failed authentication
+		 * attempt threshold.
+		 * 
+		 *  @param temporaryBanTime temporary ban time
+		 *  @return this for chaining
+		 */
+		public IPPolicyBuilder withTemporaryBanTime(Duration temporaryBanTime) {
+			this.temporaryBanTime = temporaryBanTime;
+			return this;
+		}
+		
+		/**
+		 * Build a new {@link ShellPolicy} given the configuration of this builder.
+		 * 
+		 * @return policy
+		 */
+		public IPPolicy build() {
+			return new IPPolicy(this);
+		}
+	}
+	/* TODO make all of these private + final, remove all deprecated setters at 3.3.x+ */
+	private int failedAuthenticationThreshold;
+	private IPStore blacklist = new IPStore();
+	private IPStore whitelist = new IPStore();
 	
-	ExpiringConcurrentHashMap<InetAddress, Integer> flaggedAddressCounts;
-	int failedAuthenticationThreshold = 15;
-	ExpiringConcurrentHashMap<InetAddress, Boolean> temporaryBans = new ExpiringConcurrentHashMap<InetAddress, Boolean>(TimeUnit.HOURS.toMillis(5));
-	
+	private ExpiringConcurrentHashMap<InetAddress, Integer> flaggedAddressCounts;
+	private ExpiringConcurrentHashMap<InetAddress, Boolean> temporaryBans;
+
+	/**
+	 * Construct a new policy
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public IPPolicy() {
 		add(ALLOW_CONNECT);
+		failedAuthenticationThreshold = 15;
 		setFailedAuthenticationThresholdPeriod(5, TimeUnit.MINUTES);
+		temporaryBans = new ExpiringConcurrentHashMap<InetAddress, Boolean>(TimeUnit.HOURS.toMillis(5));
 	}
 	
+	private IPPolicy(IPPolicyBuilder bldr) {
+		super(bldr);
+		failedAuthenticationThreshold = bldr.failedAuthenticationThreshold;
+		flaggedAddressCounts = new ExpiringConcurrentHashMap<InetAddress, Integer>(bldr.failedAuthenticationThresholdPeriod.toMillis());
+		temporaryBans = new ExpiringConcurrentHashMap<InetAddress, Boolean>(bldr.temporaryBanTime.toMillis());
+	}
+
+	/**
+	 * Set the maximum number of failed authentication attempts from a particular address before
+	 * an address will be temporarily banned. 
+	 * 
+	 * @param failedAuthenticationThreshold failed authentication threshold
+	 * @deprecated will become immutable, use {@link IPPolicyBuilder}.
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setFailedAuthenticationCountThreshold(int failedAuthenticationThreshold) {
 		this.failedAuthenticationThreshold = failedAuthenticationThreshold;
 	}
 	
+	/**
+	 * @deprecated will become immutable, use {@link IPPolicyBuilder}.
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setFailedAuthenticationThresholdPeriod(long failedAuthenticationThresholdPeriod, TimeUnit timeUnit) {
 		flaggedAddressCounts = new ExpiringConcurrentHashMap<InetAddress, Integer>(timeUnit.toMillis(failedAuthenticationThresholdPeriod));
 	}
 	
+	/**
+	 * @deprecated will become immutable, use {@link IPPolicyBuilder}.
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setTemporaryBanTime(long minutes) {
 		if(minutes <= 0) {
 			throw new IllegalArgumentException("Temporary ban period must be more than zero");

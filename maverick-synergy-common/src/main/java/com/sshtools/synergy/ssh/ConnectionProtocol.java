@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.sshtools.common.forwarding.ForwardingRequest.Protocol;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -422,12 +423,21 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			}
 			
 			if (name.equals("tcpip-forward")) {
-				if(processTCPIPForward(bar, response)) {
+				if(processForward(Protocol.TCP, bar, response)) {
 					success = true;
 				} 
 
 			} else if (name.equals("cancel-tcpip-forward")) {
-				if(processTCPIPCancel(bar, response)) {
+				if(processForwardCancel(Protocol.TCP, bar, response)) {
+					success = true;
+				} 
+			} else if (name.equals(UnixDomainSockets.STREAM_LOCAL_FORWARD_REQUEST)) {
+				if(processForward(Protocol.DOMAIN_SOCKETS, bar, response)) {
+					success = true;
+				} 
+
+			} else if (name.equals(UnixDomainSockets.CANCEL_STREAM_LOCAL_FORWARD_REQUEST)) {
+				if(processForwardCancel(Protocol.DOMAIN_SOCKETS, bar, response)) {
 					success = true;
 				} 
 			} else if (name.equals("ping@sshtools.com")) {
@@ -470,9 +480,9 @@ public abstract class ConnectionProtocol<T extends SshContext>
 		}
 	}
 
-	protected abstract boolean processTCPIPCancel(ByteArrayReader bar, ByteArrayWriter msg) throws IOException;
+	protected abstract boolean processForwardCancel(Protocol protocol, ByteArrayReader bar, ByteArrayWriter msg) throws IOException;
 
-	protected abstract boolean processTCPIPForward(ByteArrayReader bar, ByteArrayWriter response) throws IOException;
+	protected abstract boolean processForward(Protocol protocol, ByteArrayReader bar, ByteArrayWriter response) throws IOException;
 	
 	void processChannelData(byte[] msg) throws IOException {
 		ByteArrayReader bar = new ByteArrayReader(msg);

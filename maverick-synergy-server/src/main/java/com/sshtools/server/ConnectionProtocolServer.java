@@ -23,7 +23,13 @@ package com.sshtools.server;
  */
 
 import java.io.IOException;
+import java.util.function.Predicate;
 
+import com.sshtools.common.forwarding.ForwardingHandle;
+import com.sshtools.common.forwarding.ForwardingRequest;
+import com.sshtools.common.forwarding.ForwardingRequest.ForwardingRole;
+import com.sshtools.common.forwarding.ForwardingRequest.ForwardingType;
+import com.sshtools.common.forwarding.ForwardingRequest.Protocol;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.ChannelOpenException;
@@ -39,8 +45,6 @@ import com.sshtools.synergy.ssh.ConnectionStateListener;
 import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
 
 public class ConnectionProtocolServer extends ConnectionProtocol<SshServerContext> {
-
-	
 	
 	TransportProtocolServer transport;
 
@@ -81,21 +85,36 @@ public class ConnectionProtocolServer extends ConnectionProtocol<SshServerContex
 	}
 
 	@Override
-	protected boolean processTCPIPForward(ByteArrayReader bar, ByteArrayWriter response) throws IOException {
+	protected boolean processForward(Protocol protocol, ByteArrayReader bar, ByteArrayWriter response) throws IOException {
 		
 		boolean success = false;
-		String addressToBind = bar.readString();
-		int portToBind = (int) bar.readInt();
+		ForwardingRequest request;
+		boolean responseRequired;
+		
+		if(protocol == Protocol.TCP) {
+			String addressToBind = bar.readString();
+			int portToBind = (int) bar.readInt();
+			request = ForwardingRequest.ofTcpBind(addressToBind, portToBind);;
+			responseRequired = portToBind == 0;
+		}
+		else if(protocol == Protocol.DOMAIN_SOCKETS) {
+			String path = bar.readString();
+			request = ForwardingRequest.ofDomainSocketBind(path);
+			responseRequired = false;
+		}
+		else {
+			throw new UnsupportedOperationException(protocol.name());
+		}
 
-		if (getContext().getForwardingPolicy().checkInterfacePermitted(
-				transport.getConnection(), addressToBind, portToBind)) {
+		if (getContext().getForwardingPolicy().validate(
+				transport.getConnection(), ForwardingRole.BIND, ForwardingType.REMOTE, request)) {
 
 			success = true;
 			if(Log.isDebugEnabled())
 				Log.debug("Forwarding Policy has "
 						+ (success ? "authorized" : "denied") + " "
 						+ username + " remote forwarding access for "
-						+ addressToBind + ":" + portToBind);
+						+ request.bindName());
 		}
 
 		
@@ -104,18 +123,17 @@ public class ConnectionProtocolServer extends ConnectionProtocol<SshServerContex
 			success = getContext().getForwardingManager()!=null;
 			
 			if(success) {
-				boolean responseRequired = portToBind == 0;
-
+				ForwardingHandle hndl;
 				try {
-					portToBind = getContext().getForwardingManager().startListening(
-							addressToBind, portToBind, con, null, 0);
+					hndl = getContext().getForwardingManager().bindLocal(request, con);
 					success = true;
 				} catch (SshException e) {
 					success = false;
+					hndl = null;
 				}
 
 				if (responseRequired) {
-					response.writeInt(portToBind);
+					response.writeInt(hndl == null ? 0 : hndl.boundPort().orElse(0));
 				}
 			}
 		}
@@ -124,15 +142,36 @@ public class ConnectionProtocolServer extends ConnectionProtocol<SshServerContex
 	}
 
 	@Override
-	protected boolean processTCPIPCancel(ByteArrayReader bar, ByteArrayWriter msg) throws IOException {
+	protected boolean processForwardCancel(Protocol protocol, ByteArrayReader bar, ByteArrayWriter msg) throws IOException {
+		Predicate<ForwardingHandle> filter;
+		if(protocol == Protocol.TCP) {
+			String addressToBind = bar.readString();
+			int portToBind = (int) bar.readInt();
+			filter = h -> portToBind == h.request().bindPort() &&
+					      addressToBind.equals(h.request().bindPathOr().orElse(null));			
+		}
+		else if(protocol == Protocol.DOMAIN_SOCKETS) {
+			String path = bar.readString();
+			filter = h -> path.equals(h.request().bindPathOr().orElse(null));
+		}
+		else {
+			throw new UnsupportedOperationException(protocol.name());
+		}
 		
-		String addressToBind = bar.readString();
-		int portToBind = (int) bar.readInt();
+		var hndl = getContext().getForwardingManager().getLocalBinds(con.getConnectionProtocol()).
+			stream().
+			filter(filter).
+			findFirst();
+		
+		if(hndl.isPresent()) {
+			hndl.get().close(getContext().getRemoteForwardingCancelKillsTunnels());
+			if(protocol == Protocol.TCP) {
+				msg.writeInt(hndl.get().boundPort().orElse(0));
+			}	
+			return true;
+		}
 
-		boolean success = getContext().getForwardingManager().stopListening(
-				addressToBind, portToBind, getContext().getRemoteForwardingCancelKillsTunnels(), con);
-		msg.writeInt(portToBind);
-		return success;
+		return false;
 	}
 	
 	@Override

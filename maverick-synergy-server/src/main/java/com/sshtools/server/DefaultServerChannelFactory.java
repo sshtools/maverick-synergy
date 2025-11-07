@@ -41,6 +41,8 @@ import com.sshtools.common.ssh.components.ComponentFactory;
 import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.ChannelFactoryListener;
 import com.sshtools.synergy.ssh.ChannelNG;
+import com.sshtools.synergy.ssh.UnixDomainSocketLocalForwardingChannel;
+import com.sshtools.synergy.ssh.UnixDomainSockets;
 
 public class DefaultServerChannelFactory implements ChannelFactory<SshServerContext> {
 
@@ -78,6 +80,10 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 			return onChannelCreated(createLocalForwardingChannel(con));
 		}
 		
+		if(channeltype.equals(UnixDomainSockets.DIRECT_STREAM_LOCAL_CHANNEL)) {
+			return onChannelCreated(createDirectStreamLocalForwardingChannel(con));
+		}
+		
 		return onChannelCreated(onCreateChannel(channeltype, con));
 	}
 
@@ -92,6 +98,10 @@ public class DefaultServerChannelFactory implements ChannelFactory<SshServerCont
 		return new com.sshtools.synergy.ssh.LocalForwardingChannel<SshServerContext>(
 				LOCAL_FORWARDING_CHANNEL_TYPE,
 				con);
+	}
+
+	protected ChannelNG<SshServerContext> createDirectStreamLocalForwardingChannel(SshConnection con) {
+		return new UnixDomainSocketLocalForwardingChannel<SshServerContext>(UnixDomainSockets.DIRECT_STREAM_LOCAL_CHANNEL, con);
 	}
 
 	protected ChannelNG<SshServerContext> onCreateChannel(String channeltype, SshConnection con) 

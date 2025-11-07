@@ -28,6 +28,9 @@ import java.util.Objects;
 
 import com.sshtools.client.SshClientContext;
 import com.sshtools.common.forwarding.ForwardingPolicy;
+import com.sshtools.common.forwarding.ForwardingRequest;
+import com.sshtools.common.forwarding.ForwardingRequest.ForwardingRole;
+import com.sshtools.common.forwarding.ForwardingRequest.ForwardingType;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.ssh.ChannelOpenException;
@@ -40,12 +43,18 @@ import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.synergy.ssh.ForwardingChannel;
 import com.sshtools.synergy.ssh.LocalForwardingChannel;
 import com.sshtools.synergy.ssh.SshContext;
+import com.sshtools.synergy.ssh.TCPForwardingChannel;
 
-public class CallbackForwardingChannel<T extends SshContext> extends ForwardingChannel<T> {
+public class CallbackForwardingChannel<T extends SshContext> extends ForwardingChannel<T> implements TCPForwardingChannel {
 
 	static final String DIRECT_STREAM_LOCAL_CHANNEL = "direct-streamlocal@openssh.com";
 	CallbackForwardingChannel<?> channel;
 	SshConnection callbackClient;
+	String hostToConnect;
+	int portToConnect;
+	String originatingHost;
+	int originatingPort;
+	
 	final static Integer CHANNEL_QUEUE = ExecutorOperationQueues.generateUniqueQueue("callbackDataQueue");
 	
 	public CallbackForwardingChannel(Context ctx, SshConnection callbackClient) {
@@ -235,9 +244,9 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 	}
 
 	protected boolean checkPermissions() {
-		return getContext().getForwardingPolicy().checkHostPermitted(
-				getConnectionProtocol().getTransport().getConnection(), hostToConnect,
-				portToConnect);
+		return getContext().getForwardingPolicy().validate(
+				getConnectionProtocol().getTransport().getConnection(), 
+				ForwardingRole.BIND, ForwardingType.LOCAL, ForwardingRequest.ofTcpDestination(hostToConnect, portToConnect));
 	}
 
 	/**
@@ -318,6 +327,26 @@ public class CallbackForwardingChannel<T extends SshContext> extends ForwardingC
 	@Override
 	protected void onLocalEOF() {
 		
+	}
+
+	@Override
+	public String getHost() {
+		return hostToConnect;
+	}
+
+	@Override
+	public int getPort() {
+		return portToConnect;
+	}
+
+	@Override
+	public String getOriginatingHost() {
+		return originatingHost;
+	}
+
+	@Override
+	public int getOriginatingPort() {
+		return originatingPort;
 	}
 
 

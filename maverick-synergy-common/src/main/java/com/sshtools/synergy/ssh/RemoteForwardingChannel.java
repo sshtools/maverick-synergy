@@ -10,12 +10,12 @@ package com.sshtools.synergy.ssh;
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Lesser Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/lgpl-3.0.html>.
@@ -25,11 +25,12 @@ package com.sshtools.synergy.ssh;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.nio.channels.SelectableChannel;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.Map;
 
+import com.sshtools.common.forwarding.ForwardingHandle;
+import com.sshtools.common.forwarding.ForwardingRequest;
+import com.sshtools.common.forwarding.ForwardingRequest.ForwardingRole;
+import com.sshtools.common.forwarding.ForwardingRequest.ForwardingType;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.WriteOperationRequest;
 import com.sshtools.common.ssh.ChannelOpenException;
@@ -38,21 +39,28 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.IOUtils;
 import com.sshtools.synergy.nio.ClientConnector;
-import com.sshtools.synergy.nio.ProtocolEngine;
-import com.sshtools.synergy.nio.SshEngine;
 
 /**
  * Implements a Remote forwarding channel for use with forwarding sockets from
  * the server machine through the client to some endpoint reachable from the
  * client machine.
+ * <p>
+ * This base class is used by both client and server specialised implementations.
  */
-public class RemoteForwardingChannel<T extends SshContext> extends SocketForwardingChannel<T> implements ClientConnector {
+public class RemoteForwardingChannel<T extends SshContext> extends AbstractRemoteSocketForwardingChannel<T> implements ClientConnector, TCPForwardingChannel {
 
-	protected boolean hasConnected = false;
-	
+	/**Tunnel endpoint hostname*/
+    protected String hostToConnect;
+    /**Tunnel endpoint port number*/
+    protected int portToConnect;
+    /**Tunnel startpoint hostname*/
+    protected String originatingHost;
+    /**Tunnel startpoint port number*/
+    protected int originatingPort;
+
 	/**
 	 * Constructs a forwarding channel of the type "forwarded-tcpip"
-	 * 
+	 *
 	 * @param addressToBind
 	 *            String
 	 * @param portToBind
@@ -72,7 +80,7 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 	}
 
 	/**
-	 * 
+	 *
 	 * @param name
 	 * @param addressToBind
 	 * @param portToBind
@@ -85,20 +93,43 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 		this.portToConnect = portToBind;
 	}
 
+    @Override
+	public String getHost() {
+        return hostToConnect;
+    }
+
+    @Override
+	public int getPort() {
+        return portToConnect;
+    }
+
+    @Override
+	public String getOriginatingHost() {
+        return originatingHost;
+    }
+
+    @Override
+	public int getOriginatingPort() {
+        return originatingPort;
+    }
+
 	/**
 	 * Creates the end of the channel open message string address that was
 	 * connected uint32 port that was connected string originator IP address
 	 * uint32 originator port
-	 * 
+	 *
 	 * @return byte[], the end of the channelopenmessage
 	 * @throws IOException
 	 */
+	@Override
 	protected byte[] createChannel() throws IOException {
 
 		boolean success = true;
 
-		if (!getContext().getForwardingPolicy().checkHostPermitted(
-				getConnectionProtocol().getTransport().getConnection(), hostToConnect, portToConnect)) {
+		if (!getContext().getForwardingPolicy().validate(
+				getConnectionProtocol().getTransport().getConnection(),
+				ForwardingRole.CONNECT,
+				ForwardingType.REMOTE, ForwardingRequest.ofTcpDestination(hostToConnect, portToConnect))) {
 			success = false;
 
 			if(Log.isDebugEnabled()) {
@@ -113,8 +144,9 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 			try {
 				socketChannel.close();
 			} catch (Throwable t) {
-				if(Log.isTraceEnabled())
+				if(Log.isTraceEnabled()) {
 					Log.trace("Failed to close socket channel", t);
+				}
 			}
 
 			throw new IOException("Cannot create channel because access has been denied by forwarding policy");
@@ -139,24 +171,10 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 		}
 	}
 
-	protected void onRegistrationComplete() {
-		if(Log.isTraceEnabled())
-			Log.trace("Registration Complete channel={}", getLocalId());
-	}
-
-	protected void onChannelOpenConfirmation() {
-		// Register the handler
-		try {
-			getContext().getEngine().registerHandler(this, socketChannel);
-		} catch (IOException ex) {
-			if(Log.isTraceEnabled())
-				Log.trace("Failed to register channel with a selector", ex);
-		}
-	}
-
+	@Override
 	protected byte[] openChannel(byte[] requestdata)
 			throws WriteOperationRequest, ChannelOpenException {
-		
+
 		ByteArrayReader bar = new ByteArrayReader(requestdata);
 		try {
 
@@ -166,22 +184,36 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 			originatingPort = (int) bar.readInt();
 
 			@SuppressWarnings("unchecked")
-			Map<String,RemoteForward> remoteForwards = (Map<String,RemoteForward>) 
-					getConnectionProtocol().getConnection().getProperty("remoteForwards");
-			
-			RemoteForward remoteForward = remoteForwards.get(addressToBind + ":" + portToBind);
+			ForwardingManager<T> forwardingManager = (ForwardingManager<T>) getContext().getForwardingManager();
+			ForwardingHandle remoteForward = forwardingManager.getRemoteBinds(getConnectionProtocol()).
+					stream().
+					peek(hndl -> {
+						if(Log.isDebugEnabled()) {
+							Log.debug("Matching forward:  {} against {}:{}",
+									hndl.request().bindName(),
+									hndl.boundPort().orElse(0), portToBind);
+						}
+					}).
+					filter(hndl ->
+						hndl.request().bindAddress().equals(addressToBind) &&
+						hndl.boundPort().orElse(0) == portToBind
+					).
+					findFirst().orElseThrow(() -> new ChannelOpenException("Remote forwarding not available",
+						ChannelOpenException.ADMINISTRATIVIVELY_PROHIBITED));
 
-			if(remoteForward==null) {
-				throw new ChannelOpenException("Remote forwarding not available",
-						ChannelOpenException.ADMINISTRATIVIVELY_PROHIBITED);
-			}
-			hostToConnect = remoteForward.getHostToConnect();
-			portToConnect = remoteForward.getPortToConnect();
-			
-			boolean success = getContext().getForwardingPolicy().checkHostPermitted(
-					getConnectionProtocol().getTransport().getConnection(), hostToConnect,
-					portToConnect);
-			
+			ForwardingRequest request = remoteForward.request();
+
+			hostToConnect = request.destinationAddress();
+			portToConnect = request.destinationPort();
+
+			boolean success = getContext().getForwardingPolicy().validate(
+					getConnectionProtocol().getTransport().getConnection(),
+					ForwardingRole.CONNECT,
+					ForwardingType.REMOTE, ForwardingRequest.ofTcpDestination(
+						hostToConnect,
+						portToConnect)
+					);
+
 			if(Log.isDebugEnabled()) {
 				Log.debug("Forwarding policy has "
 						+ (success ? "authorized" : "denied") + " "
@@ -197,7 +229,7 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 			}
 
 
-			
+
 			// Create a non-blocking socket channel
 			createSocketChannel();
 
@@ -214,7 +246,7 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 				hasConnected = true;
 				return null;
 			}
-			
+
 			// Register the connector and we will confirm once weve connected
 			connection.getContext().getEngine().registerConnector(this, socketChannel);
 
@@ -234,85 +266,22 @@ public class RemoteForwardingChannel<T extends SshContext> extends SocketForward
 		throw new WriteOperationRequest();
 	}
 
+	@Override
 	protected SocketAddress createSocketAddress() {
 		return new InetSocketAddress(hostToConnect,
 				portToConnect);
 	}
 
+	@Override
 	protected void createSocketChannel() throws IOException {
 		socketChannel = SocketChannel.open();
 		socketChannel.configureBlocking(false);
 		socketChannel.socket().setTcpNoDelay(true);
 	}
 
-	/**
-	 * Called when the forwarded socket has been connected.
-	 * 
-	 * @param key
-	 *            SelectionKey
-	 * @return boolean
-	 */
-	public synchronized boolean finishConnect(SelectionKey key) {
-
-		if (socketChannel == null)
-			return true;
-
-		if(hasConnected) {
-			if(Log.isWarnEnabled()) {
-				Log.warn("Duplicate finishConnect call to {}:{} channel={}", hostToConnect, 
-					portToConnect, getLocalId());
-			}
-			return true;
-		}
-		
-		hasConnected = true;
-		
-		try {
-			while (!socketChannel.finishConnect()) {
-				// Wait for the connection to complete
-			}
-			if(Log.isInfoEnabled()) {
-				if(Log.isInfoEnabled()) {
-					Log.info("Remote forwarding socket to {}:{} has connected [asynchronously] channel={} remote={}",
-							hostToConnect,
-							portToConnect,
-							getLocalId(),
-							getRemoteId());
-				}
-			}
-
-			connection.sendChannelOpenConfirmation(this, null);
-
-		} catch (IOException ex) {
-			if(Log.isInfoEnabled()) {
-				Log.info("Remote forwarding socket to {}:{} has failed \"{}\" channel={} remote={}",
-							hostToConnect,
-								portToConnect, 
-								ex.getMessage(),
-								getLocalId(),
-								getRemoteId());
-			}
-			connection.sendChannelOpenFailure(this,
-					ChannelOpenException.CONNECT_FAILED, "Connection failed.");
-		}
-
-		return true;
-	}
-	/**
-	 * Either nothing was listening on the clients end of the tunnel, or the
-	 * connection was rejected. Now we close the connection from the server to
-	 * the start of the tunnel.
-	 */
-	protected void onChannelOpenFailure() {
-		try {
-			socketChannel.close();
-		} catch (IOException e) {
-		}
-	}
-
 	@Override
-	public void initialize(ProtocolEngine engine, SshEngine daemon, SelectableChannel channel) {
-
+	protected String targetToConnect() {
+		return hostToConnect + ":" + portToConnect;
 	}
 
 }

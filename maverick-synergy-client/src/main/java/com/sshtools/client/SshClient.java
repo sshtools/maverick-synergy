@@ -54,8 +54,9 @@ import com.sshtools.common.auth.PasswordAuthentication;
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
 import com.sshtools.common.events.EventListener;
-import com.sshtools.common.events.EventServiceImplementation;
+import com.sshtools.common.forwarding.ForwardingHandle;
 import com.sshtools.common.forwarding.ForwardingPolicy;
+import com.sshtools.common.forwarding.ForwardingRequest;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.permissions.UnauthorizedException;
@@ -690,42 +691,82 @@ public class SshClient implements Closeable {
 		return con.getContext().getForwardingPolicy();
 	}
 	
+	public ForwardingHandle bindLocal(ForwardingRequest request) throws UnauthorizedException, SshException {
+		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
+		return client.bindLocal(request);
+	}
+	
+	public ForwardingHandle bindRemote(ForwardingRequest request) throws UnauthorizedException, SshException {
+		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
+		return client.bindRemote(request);
+	}
+	
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public int startLocalForwarding(String addressToBind, String destinationHost) throws UnauthorizedException, SshException {
 		return startLocalForwarding(addressToBind, 0, destinationHost, 0);
 	}
-	
+
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public int startLocalForwarding(String addressToBind, int portToBind, String destinationHost, int destinationPort) throws UnauthorizedException, SshException {
 		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
 		return client.startLocalForwarding(addressToBind, portToBind, destinationHost, destinationPort);
 	}
-	
+
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public void stopLocalForwarding(String addressToBind, int portToBind) {
 		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
 		client.stopLocalForwarding(addressToBind, portToBind);
 	}
-	
+
+	/**
+	 * Stop all local forwards. 
+	 * 
+	 * @throws SshException
+	 * @deprecated use {@link #closeAllLocal()}.
+	 */
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public void stopLocalForwarding() {
 		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
 		client.stopLocalForwarding();
 	}
-	
+
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public int startRemoteForwarding(String addressToBind, int portToBind, String destinationHost, int destinationPort) throws SshException {
 		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
 		return client.startRemoteForwarding(addressToBind, portToBind, destinationHost, destinationPort);
 	}
 
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public int startRemoteForwarding(String addressToBind, String destinationHost) throws SshException {
 		return startRemoteForwarding(addressToBind, 0, destinationHost, 0);
 	}
-	
+
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public void stopRemoteForwarding(String addressToBind, int portToBind) throws SshException {
 		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
 		client.stopRemoteForwarding(addressToBind, portToBind);
 	}
-	
+
+	/**
+	 * Stop all remote forwards. 
+	 * 
+	 * @throws SshException
+	 * @deprecated use {@link #closeAllRemote()}.
+	 */
+	@Deprecated(forRemoval = true, since = "3.2.0")
 	public void stopRemoteForwarding() throws SshException {
 		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
 		client.stopRemoteForwarding();
+	}
+
+	public void closeAllRemote() throws IOException {
+		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
+		client.closeAllRemote();
+	}
+
+	public void closeAllLocal() throws IOException {
+		ConnectionProtocolClient client = (ConnectionProtocolClient) con.getConnectionProtocol();
+		client.closeAllLocal();
 	}
 
 	public boolean isConnected() {

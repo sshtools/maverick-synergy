@@ -25,6 +25,7 @@ package com.sshtools.common.util;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
@@ -387,22 +388,47 @@ public class Utils {
         }
 	}
 	
+	/**
+	 * Prompt for input from the console.   
+	 * 
+	 * @param reader reader
+	 * @param message prompt text
+	 * @return text or <code>null</code>
+	 * @throws IOException on any error
+	 * @deprecated see {@link ConsoleInput#promptText(String)}
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public static String prompt(BufferedReader reader, String message) throws IOException {
-		
-		System.out.print(String.format("%s: ", message));
-		return reader.readLine();
+		try {
+			return new ConsoleInput(null, reader).readLine("%s: ", message);
+		}
+		catch(UncheckedIOException ioe) {
+			throw ioe.getCause();
+		}
 		
 	}
 	
+	/**
+	 * Prompt for input from the console.   
+	 * 
+	 * @param reader reader
+	 * @param message prompt text
+	 * @return text or <code>null</code>
+	 * @throws IOException on any error
+	 * @deprecated see {@link ConsoleInput#promptText(String, String)}
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public static String prompt(BufferedReader reader, String message, String defaultValue) throws IOException {
-		
-		System.out.print(String.format("%s [%s]: ", message, defaultValue));
-		String line = reader.readLine();
-		if(isBlank(line)) {
-			return defaultValue;
+		try {
+			String line = new ConsoleInput(null, reader).readLine("%s [%s]: ", message, defaultValue);
+			if(isBlank(line)) {
+				return defaultValue;
+			}
+			return line;
 		}
-		return line;
-		
+		catch(UncheckedIOException ioe) {
+			throw ioe.getCause();
+		}
 	}
 
 	public static boolean hasPort(String hostname) {

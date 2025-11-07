@@ -91,18 +91,18 @@ public abstract class AbstractSessionTask<T extends AbstractSessionChannel> exte
 	
 	private long timeout = 10000;
 	private final ChannelRequestFuture future;
-	private final Optional<T> session;
+	private final T session;
 	private final Optional<Consumer<T>> onClose;
 	
 	public AbstractSessionTask(AbstractSessionTaskBuilder<?, T, ?> builder) {
 		super(builder);
-		session = builder.session.map(f -> f.apply(con));
+		session = builder.session.map(f -> f.apply(con)).orElseGet(() -> createSession(con));
 		future = builder.future.orElseGet(() -> new ChannelRequestFuture());
 		onClose = builder.onClose;
 	}
 
 	public T getSession() {
-		return session.get();
+		return session;
 	}
 	
 	public void disconnect() {

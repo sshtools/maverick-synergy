@@ -40,7 +40,6 @@ import com.sshtools.common.forwarding.ForwardingRequest.Protocol;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.Permissions;
 import com.sshtools.common.scp.ScpPolicy;
-import com.sshtools.common.scp.ScpPolicy.ScpPolicyBuilder;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.UnsignedInteger32;
 
@@ -781,7 +780,7 @@ public class ForwardingPolicy extends Permissions {
 	 * Set the minimum forwarding window size.
 	 * 
 	 * @param forwardingMinWindowSize minimum forwarding window size 
-	 * @deprecated will become immutable, use {@link ScpPolicyBuilder}.
+	 * @deprecated will become immutable, use {@link ForwardingPolicyBuilder}.
 	 */
 	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setForwardingMinWindowSize(UnsignedInteger32 forwardingMinWindowSize) {

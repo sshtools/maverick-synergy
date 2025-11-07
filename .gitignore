@@ -4,3 +4,4 @@
 /target/
 /maverick-virtual-shell/
 *.DS_Store
+/maverick-synergy-client-tests/test.properties

@@ -24,7 +24,6 @@ package com.sshtools.common.tests;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -41,30 +40,46 @@ public class TestConfiguration {
 	
 	protected void load() throws IOException {
 		properties = new Properties();
+		
 		String filename = getFilename();
-		File file = new File(filename);
-		if(file.exists()) {
-			try(InputStream in = new FileInputStream(file)) {
+		InputStream in = getClass().getClassLoader().getResourceAsStream(filename);
+		if(in != null) {
+			try {
 				properties.load(in);
 			}
+			finally {
+				in.close();
+			}
 		}
-		else {
-			InputStream in = getClass().getClassLoader().getResourceAsStream(filename);
-			if(in == null)
-				throw new FileNotFoundException(filename);
-			else {
-				try {
-					properties.load(in);
-				}
-				finally {
-					in.close();
+		
+		File file = new File(filename);
+		if(file.exists()) {
+			try(InputStream fin = new FileInputStream(file)) {
+				properties.load(fin);
+			}
+		}
+
+		if(!filename.equals("test.properties")) {
+			/* Always load test.properties (for username and password in one place in dev environment) */
+			file = new File("test.properties");
+			if(file.exists()) {
+				try(InputStream fin = new FileInputStream(file)) {
+					properties.load(fin);
 				}
 			}
 		}
+		
+		/* Allow properties to be supplied or overriden externally (e.g. Jenkins) */ 
+		System.getProperties().forEach((k,v) -> {
+			var ks = (String)k;
+			if(ks.startsWith("maverick.test.")) {
+				properties.put(ks.substring(14), v);
+			}
+		});
 	}
 
 	protected String getFilename() {
-		return "test.properties";
+		return "forwarding.properties";
 	}
 
 	public String getUsername() {

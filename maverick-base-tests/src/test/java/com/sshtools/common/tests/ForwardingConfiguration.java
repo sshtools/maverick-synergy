@@ -10,12 +10,12 @@ package com.sshtools.common.tests;
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Lesser Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/lgpl-3.0.html>.
@@ -31,15 +31,16 @@ public abstract class ForwardingConfiguration extends TestConfiguration {
 	public ForwardingConfiguration() throws IOException {
 		load();
 	}
-	
+
+	@Override
 	protected String getFilename() {
 		return "forwarding.properties";
 	}
-	
+
 	public int getForwardingClientCount() {
 		return Integer.parseInt(properties.getProperty("forwardingClientCount", "1"));
 	}
-	
+
 	public long getForwardingTimeout() {
 		return Long.parseLong(properties.getProperty("forwardingTestTimeout", "5")) * 60000 * 1000;
 	}
@@ -51,7 +52,7 @@ public abstract class ForwardingConfiguration extends TestConfiguration {
 	public int getForwardingDataBlock() {
 		return Integer.parseInt(properties.getProperty("forwardingDataBlock", "33768"));
 	}
-	
+
 	public long getForwardingDataAmount() {
 		return IOUtils.fromByteSize(properties.getProperty("forwardingDataAmount", "100mb"));
 	}

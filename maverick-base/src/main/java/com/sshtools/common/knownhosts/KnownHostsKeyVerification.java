@@ -517,7 +517,10 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 		}
 
 // Recheck ans return the result
-		return verifyHost(host, pk, false);
+		if(validateUnknown)
+			return verifyHost(host, pk, false);
+		
+		return false;
 
 	}
 

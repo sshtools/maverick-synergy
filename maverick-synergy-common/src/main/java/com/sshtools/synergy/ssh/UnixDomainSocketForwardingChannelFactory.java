@@ -74,7 +74,7 @@ public abstract class UnixDomainSocketForwardingChannelFactory<C extends SshCont
 
 	@Override
 	protected ForwardingHandle createHandle() {
-		boolean deleteOnClose = this.deleteOnClose.get();
+		boolean deleteOnClose = Boolean.TRUE.equals(this.deleteOnClose.get());
 		this.deleteOnClose.remove();
 		
         return new ForwardingHandle() {

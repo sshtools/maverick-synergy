@@ -26,7 +26,6 @@ import java.io.IOException;
 
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClient.SshClientBuilder;
-import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.forwarding.ForwardingPolicy.ForwardingPolicyBuilder;
 import com.sshtools.common.forwarding.ForwardingRequest;
 import com.sshtools.common.logger.Log;
@@ -67,7 +66,7 @@ public abstract class AbstractNGForwardingTests extends AbstractForwardingTests<
 				return createBuilder(config).
 						onConfigure(ctx -> {
 							ctx.setKeyExchangeTransferLimit(config.getKeyExchangeLimit());
-							ctx.setPolicy(ForwardingPolicy.class, ForwardingPolicyBuilder.create().
+							ctx.setPolicy(ForwardingPolicyBuilder.create().
 									allowUnixDomainSocketForwarding().
 									build());			
 						}).
@@ -95,7 +94,7 @@ public abstract class AbstractNGForwardingTests extends AbstractForwardingTests<
 				return createBuilder(config).
 						onConfigure(ctx -> {
 							ctx.setKeyExchangeTransferLimit(config.getKeyExchangeLimit());
-							ctx.setPolicy(ForwardingPolicy.class, ForwardingPolicyBuilder.create().
+							ctx.setPolicy(ForwardingPolicyBuilder.create().
 									allowTCPForwarding().
 									build());			
 						}).
@@ -123,7 +122,7 @@ public abstract class AbstractNGForwardingTests extends AbstractForwardingTests<
 				return createBuilder(config).
 						onConfigure(ctx -> {
 							ctx.setKeyExchangeTransferLimit(config.getKeyExchangeLimit());
-							ctx.setPolicy(ForwardingPolicy.class, ForwardingPolicyBuilder.create().
+							ctx.setPolicy(ForwardingPolicyBuilder.create().
 									allowTCPForwarding().
 									build());						
 						}).
@@ -152,7 +151,7 @@ public abstract class AbstractNGForwardingTests extends AbstractForwardingTests<
 				return createBuilder(config).
 						onConfigure(ctx -> {
 							ctx.setKeyExchangeTransferLimit(config.getKeyExchangeLimit());
-							ctx.setPolicy(ForwardingPolicy.class, ForwardingPolicyBuilder.create().
+							ctx.setPolicy(ForwardingPolicyBuilder.create().
 									allowUnixDomainSocketForwarding().
 									build());						
 						}).

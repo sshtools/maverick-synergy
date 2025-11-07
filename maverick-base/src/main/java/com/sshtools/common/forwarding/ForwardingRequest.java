@@ -361,6 +361,22 @@ public final class ForwardingRequest {
 	}
 
 	/**
+	 * Convenience method create a request a for TCP socket bound to a particular address and a random
+	 * with a destination of a particular host and port.
+	 * 
+	 * @param addressToBind address to bind
+	 * @param destinationHost destination host
+	 * @param destinationPort destination port
+	 * @return
+	 */
+	public static ForwardingRequest ofTcp(String addressToBind, String destinationHost, int destinationPort) {
+		return new ForwardingRequestBuilder().
+				withBind(addressToBind).
+				withDestination(destinationHost, destinationPort).
+				build();
+	}
+
+	/**
 	 * Convenience method create a request a for TCP socket bound to a particular address and a port
 	 * with a destination of a particular host and port.
 	 * 

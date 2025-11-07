@@ -39,6 +39,7 @@ import java.util.concurrent.ThreadFactory;
 import com.sshtools.common.events.EventListener;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.permissions.Permissions;
 import com.sshtools.common.ssh.Context;
 import com.sshtools.common.ssh.ExecutorOperationListener;
 import com.sshtools.common.ssh.ExecutorServiceProvider;
@@ -374,6 +375,12 @@ public abstract class SshContext extends ProtocolContext implements
 	}
 		
 	@Override
+	public <P extends Permissions> void setPolicy(P policy) {
+		setPolicy(policy.type(), policy);
+	}
+
+	@Override
+	@Deprecated
 	public void setPolicy(Class<?> clz, Object policy) {
 		policies.put(clz, policy);
 	}

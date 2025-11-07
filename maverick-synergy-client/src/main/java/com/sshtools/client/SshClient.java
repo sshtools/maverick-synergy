@@ -37,6 +37,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -59,6 +60,7 @@ import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.forwarding.ForwardingRequest;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
+import com.sshtools.common.permissions.Permissions;
 import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
@@ -121,6 +123,7 @@ public class SshClient implements Closeable {
 		private Optional<OnConfiguration> onConfigure = Optional.empty();
 		private Optional<ClientStateListener> stateListener = Optional.empty();
 		private Optional<EventListener> eventListener = Optional.empty();
+		private Set<Permissions> policies = new HashSet<>(); 
 		
 		/**
 		 * Set a {@link Consumer} that receives a {@link SshClientContext} when the connection
@@ -131,6 +134,50 @@ public class SshClient implements Closeable {
 		 */
 		public SshClientBuilder onConfigure(OnConfiguration onConfigure) {
 			this.onConfigure = Optional.of(onConfigure);
+			return this;
+		}
+		
+		/**
+		 * Set the policies that should be attached to this connection. Any existing 
+		 * policies in this builder will be cleared.
+		 * 
+		 * @param policies policies
+		 * @return this for chaining
+		 */
+		public SshClientBuilder withPolicies(Permissions... policies) {
+			return withPolicies(Set.of(policies));
+		}
+		
+		/**
+		 * Set the policies that should be attached to this connection. Any existing 
+		 * policies in this builder will be cleared.
+		 * 
+		 * @param policies policies
+		 * @return this for chaining
+		 */
+		public SshClientBuilder withPolicies(Collection<Permissions> policies) {
+			this.policies.clear();
+			return addPolicies(policies);
+		}
+		
+		/**
+		 * Add policies that should be attached to this connection. 
+		 * 
+		 * @param policies policies
+		 * @return this for chaining
+		 */
+		public SshClientBuilder addPolicies(Permissions... policies) {
+			return addPolicies(Set.of(policies));
+		}
+		
+		/**
+		 * Add policies that should be attached to this connection.
+		 * 
+		 * @param policies policies
+		 * @return this for chaining
+		 */
+		public SshClientBuilder addPolicies(Collection<Permissions> policies) {
+			this.policies.addAll(policies);
 			return this;
 		}
 		
@@ -467,11 +514,48 @@ public class SshClient implements Closeable {
 		}
 		
 		/**
+		 * Set the <strong>hostname</strong> and optionally the <strong>port</strong> to
+		 * use from a string. This must be either a valid hostname or IP address, and
+		 * may optionally have the port suffix. For IPv4 and DNS hostnames, this will be
+		 * <code>address:1234</code> for example. If it is an IPv6 address, then the
+		 * notation will be <code>[...address...]:1234</code>. If not provided,
+		 * <code>localhost</code> will be used.
+		 * 
+		 * @param hostSpec host specifier string
+		 * 
+		 * @return this for chaining
+		 * @see #withHost(InetAddress)
+		 * @see #withHostname(String)
+		 */
+		public SshClientBuilder withHost(String hostSpec) {
+			var lastSep = hostSpec.lastIndexOf(':');
+			if (hostSpec.startsWith("[")) {
+				var end = hostSpec.lastIndexOf(']');
+				if (end == -1) {
+					throw new IllegalArgumentException("Address introduced as IPv6 is invalid.");
+				}
+				withHostname(hostSpec.substring(1, end));
+			} else {
+				if (lastSep == -1) {
+					withHostname(hostSpec);
+				} else {
+					withHostname(hostSpec.substring(0, lastSep));
+				}
+			}
+			if (lastSep != -1) {
+				withPort(Integer.parseInt(hostSpec.substring(lastSep + 1)));
+			}
+			return this;
+		}
+		
+		/**
 		 * Set the <strong>hostname</strong> to use. This must be either a valid hostname or IP address.
 		 * If not provided, <code>localhost</code> will be used.
 		 * 
-		 * @param SshClientContext sshContext
+		 * @param host hostname
 		 * @return this for chaining
+		 * @see #withHost(String)
+		 * @see #withHost(InetAddress)
 		 */
 		public SshClientBuilder withHostname(String hostname) {
 			this.hostname = Optional.of(hostname);
@@ -567,6 +651,7 @@ public class SshClient implements Closeable {
 		this.onConfigure = builder.onConfigure;
 		
 		sshContext.setUsername(builder.username.orElseGet(() -> GUEST_USERNAME));
+		builder.policies.forEach(pol -> sshContext.setPolicy(pol.type(), pol));
 		
 		if(builder.stateListener.isPresent()) {
 			sshContext.addStateListener(builder.stateListener.get());

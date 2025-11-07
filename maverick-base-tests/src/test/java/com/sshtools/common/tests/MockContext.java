@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
+import com.sshtools.common.permissions.Permissions;
 import com.sshtools.common.ssh.Context;
 import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
@@ -60,6 +61,12 @@ public class MockContext implements Context {
 	}
 
 	@Override
+	public <P extends Permissions> void setPolicy(P policy) {
+		setPolicy(policy.type(), policy);
+	}
+
+	@Override
+	@Deprecated
 	public void setPolicy(Class<?> clz, Object p) {
 		policy.put(clz, policy);
 	}

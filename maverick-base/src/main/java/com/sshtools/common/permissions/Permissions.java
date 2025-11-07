@@ -216,5 +216,14 @@ public class Permissions {
 		else
 			return (permissions & permission.nativeMask()) != 0;
 	}
+	
+	/**
+	 * The type this permission set will be registered as.
+	 * 
+	 * @return type
+	 */
+	public Class<? extends Permissions> type() {
+		return getClass();
+	}
 
 }

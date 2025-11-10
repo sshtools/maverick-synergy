@@ -27,25 +27,9 @@ import java.io.IOException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.publickey.SshKeyPairGenerator;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.ComponentManager;
-import com.sshtools.common.ssh.components.jce.JCEProvider;
 
 public class OpenSSHED25519CertificateAuthorityTests extends AbstractCertificateAuthorityTests {
 
-	public void setUp() {
-		JCEProvider.enableBouncyCastle(true);
-		ComponentManager.reset();
-	}
-	
-	public void tearDown() {
-		JCEProvider.disableBouncyCastle();
-		ComponentManager.reset();
-	}
-	
-	@Override
-	protected String getTestingJCE() {
-		return "BC";
-	}
 	
 	protected boolean isJCETested() {
 		return false;

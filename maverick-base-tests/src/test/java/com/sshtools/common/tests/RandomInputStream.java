@@ -28,7 +28,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 
-@Deprecated
 public class RandomInputStream extends InputStream {
 
 		long totalDataAmount;

@@ -57,7 +57,6 @@ public class DirectFileTests extends AbstractFileTest {
  	}
 	
 	protected void setup() throws IOException {
-		baseFolder = Files.createTempDirectory("direct-file").toFile();
 	}
 	
 	protected void clean() throws IOException {

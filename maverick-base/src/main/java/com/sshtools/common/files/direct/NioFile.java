@@ -217,10 +217,12 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public boolean createFolder() throws PermissionDeniedException, IOException {
-		try {
-			Files.createDirectories(path);
-			return true;
-		} catch (IOException ioe) {
+		if(!Files.exists(path)) {
+			try {
+				Files.createDirectories(path);
+				return true;
+			} catch (IOException ioe) {
+			}
 		}
 		return false;
 	}

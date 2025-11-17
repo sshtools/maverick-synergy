@@ -2557,7 +2557,7 @@ public abstract class TransportProtocol<T extends SshContext>
 				 
 				 switch(name) {
 				 case "server-sig-algs":
-					 getContext().setPolicy(SignaturePolicy.class, SignaturePolicyBuilder.create().
+					 getContext().setPolicy(SignaturePolicyBuilder.create().
 							 fromPolicy(getContext().getPolicy(SignaturePolicy.class)).
 							 withSupportedSignatures(Arrays.asList(value.split(","))).
 							 build());

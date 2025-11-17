@@ -31,7 +31,7 @@ import java.util.Set;
 /**
  * TODO make abstract at 3.3.0+
  */
-public class Permissions {
+public class Permissions implements Policy {
 	
 	@FunctionalInterface
 	public interface PermissionCheck {
@@ -217,12 +217,9 @@ public class Permissions {
 			return (permissions & permission.nativeMask()) != 0;
 	}
 	
-	/**
-	 * The type this permission set will be registered as.
-	 * 
-	 * @return type
-	 */
+	@Override
 	public Class<? extends Permissions> type() {
+		/* NOTE: This can be made final when all sub-classes are final at 3.3.0 */
 		return getClass();
 	}
 

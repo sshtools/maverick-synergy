@@ -29,6 +29,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.sshtools.common.permissions.Policy;
+
 /**
  * Represents various signature related policy.
  * 
@@ -37,7 +39,7 @@ import java.util.TreeSet;
  * 
  * TODO make final at 3.3.0+
  */
-public class SignaturePolicy {
+public class SignaturePolicy implements Policy {
 	
 	/**
 	 * Build a new {@link SignaturePolicy}.
@@ -234,5 +236,10 @@ public class SignaturePolicy {
 	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setStrictMode(boolean strictMode) {
 		this.strictMode = strictMode;
+	}
+
+	@Override
+	public final Class<? extends Policy> type() {
+		return SignaturePolicy.class;
 	}
 }

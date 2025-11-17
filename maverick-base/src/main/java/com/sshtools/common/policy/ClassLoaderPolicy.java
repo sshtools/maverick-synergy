@@ -1,6 +1,6 @@
 package com.sshtools.common.policy;
 
-import com.sshtools.common.policy.FileSystemPolicy.FileSystemPolicyBuilder;
+import com.sshtools.common.permissions.Policy;
 
 /*-
  * #%L
@@ -32,7 +32,7 @@ import com.sshtools.common.policy.FileSystemPolicy.FileSystemPolicyBuilder;
  * 
  * TODO make final at 3.3.0+
  */
-public class ClassLoaderPolicy {
+public class ClassLoaderPolicy implements Policy {
 
 	private ClassLoader classLoader = null;
 	/**
@@ -103,5 +103,10 @@ public class ClassLoaderPolicy {
 	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setClassLoader(ClassLoader classLoader) {
 		this.classLoader = classLoader;
+	}
+
+	@Override
+	public final Class<? extends Policy> type() {
+		return ClassLoaderPolicy.class;
 	}
 }

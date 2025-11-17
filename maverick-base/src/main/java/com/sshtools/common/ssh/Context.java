@@ -24,7 +24,7 @@ package com.sshtools.common.ssh;
 
 import java.util.concurrent.ExecutorService;
 
-import com.sshtools.common.permissions.Permissions;
+import com.sshtools.common.permissions.Policy;
 import com.sshtools.common.ssh.components.ComponentManager;
 import com.sshtools.common.util.ByteBufferPool;
 
@@ -45,6 +45,6 @@ public interface Context {
 	@Deprecated(since = "3.2.0", forRemoval = true)
 	void setPolicy(Class<?> clz, Object policy);
 
-	<P extends Permissions> void setPolicy(P policy);
+	<P extends Policy> void setPolicy(P policy);
 
 }

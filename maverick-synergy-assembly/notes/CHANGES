@@ -1,4 +1,15 @@
-Maverick Synergy 3.1.3 - TBC
+Maverick Synergy 3.1.5 - TBC
+
+Features
+  o None
+  
+Bug Fixes
+  o None
+  
+=================
+=  HISTORY      =
+=================
+Maverick Synergy 3.1.4 - 18 Nov, 2025
 
 Features
   o New Optional<String> for setting the sudo password once.
@@ -16,9 +27,9 @@ Bug Fixes
   o Don't pass properties file parent to register to avoid a NullPointerException on /logging.properties
   o Local filtering in SftpClient not activated if remote filtering extension not available.
   
-=================
-=  HISTORY      =
-=================
+
+Maverick Synergy 3.1.3 - Never Released
+  o Never officially released due to problems publishing to Maven Central. 
 
 Maverick Synergy 3.1.2 - Sep 20, 2024
 

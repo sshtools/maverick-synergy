@@ -325,12 +325,16 @@ public class IPPolicy extends Permissions {
 	 */
 	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setTemporaryBanTime(long minutes) {
-		if(minutes <= 0) {
+		setTemporaryBanTime(minutes, TimeUnit.MINUTES);
+	}
+	
+	public void setTemporaryBanTime(long duration, TimeUnit timeUnit) {
+		if(duration <= 0) {
 			throw new IllegalArgumentException("Temporary ban period must be more than zero");
 		}
-		ExpiringConcurrentHashMap<InetAddress, Boolean> temporaryBans = new ExpiringConcurrentHashMap<InetAddress, Boolean>(TimeUnit.MINUTES.toMillis(minutes));
-		temporaryBans.putAll(this.temporaryBans);
-		this.temporaryBans = temporaryBans;
+		ExpiringConcurrentHashMap<InetAddress, Boolean> newTemporaryBans = new ExpiringConcurrentHashMap<>(timeUnit.toMillis(duration));
+		newTemporaryBans.putAll(this.temporaryBans);
+		this.temporaryBans = newTemporaryBans;
 	}
 	
 	public void disableTemporaryBanning() {
@@ -417,6 +421,7 @@ public class IPPolicy extends Permissions {
 					addr.getHostAddress(), count);
 			}
 			temporaryBans.put(addr, true);
+			flaggedAddressCounts.remove(addr);
 			return;
 		}
 		

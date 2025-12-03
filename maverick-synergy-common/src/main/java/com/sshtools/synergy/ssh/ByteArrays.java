@@ -29,18 +29,22 @@ import java.util.Vector;
 public class ByteArrays{
 
 	Vector<byte[]> packets = new Vector<byte[]>();
-
+	final int size;
 	static ByteArrays instance;
 
-	public static ByteArrays getInstance() {
-		return (instance == null ? instance = new ByteArrays() : instance);
+	public static ByteArrays getInstance(int size) {
+		return (instance == null ? instance = new ByteArrays(size) : instance);
+	}
+	
+	public ByteArrays(int size) {
+		this.size = size;
 	}
 
-	public byte[] getByteArray(int length) throws IOException {
+	public byte[] getByteArray() throws IOException {
 		synchronized (packets) {
 			if (packets.size() == 0)
-				return new byte[length];
-			return packets.remove(0);
+				return new byte[size];
+		return packets.remove(0);
 		}
 	}
 	

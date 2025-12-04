@@ -58,8 +58,8 @@ public class ExpiringConcurrentHashMap<K,V> extends ConcurrentHashMap<K,V> {
         return doPut(key, value);
     }
 
-    private V doPut(K key, V value) {
-    	Long date = entryTime.getOrDefault(key, Long.valueOf(System.currentTimeMillis()));
+    private synchronized V doPut(K key, V value) {
+    	Long date = entryTime.getOrDefault(key, new Long(System.currentTimeMillis()));
         entryTime.put(key, date);
         V returnVal = super.put(key, value);
         return returnVal;
@@ -89,7 +89,7 @@ public class ExpiringConcurrentHashMap<K,V> extends ConcurrentHashMap<K,V> {
 		return super.get(key);
 	}
 
-	private void purgeEntries() {
+	private synchronized void purgeEntries() {
         long currentTime = new Date().getTime();
         for (K key : entryTime.keySet()) {
             if (currentTime > (entryTime.get(key) + expiryConfig.expiresInMillis())) {

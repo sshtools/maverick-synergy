@@ -616,26 +616,29 @@ public class SshServerContext extends SshContext {
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	protected synchronized void configureKeyExchanges() {
-		
-		if(Objects.nonNull(verifiedKeyExchanges)) {
+	protected void configureKeyExchanges() {
+
+		synchronized (kexLock) {
+			
+			if(Objects.nonNull(verifiedKeyExchanges)) {
+				keyExchanges = (ComponentFactory<SshKeyExchange<? extends SshContext>>)verifiedKeyExchanges.clone();
+				return;
+			}
+			
+			if(Log.isInfoEnabled()) {
+				Log.info("Initializing server key exchanges");
+			}
+			
+			verifiedKeyExchanges = new ComponentFactory<SshKeyExchange<SshServerContext>>(componentManager);
+
+			for(var kex : ServiceLoader.load(SshKeyExchangeServerFactory.class, SshKeyExchangeServerFactory.class.getClassLoader())) {
+				if(testServerKeyExchangeAlgorithm(kex))
+					verifiedKeyExchanges.add(kex);
+			}
+			
 			keyExchanges = (ComponentFactory<SshKeyExchange<? extends SshContext>>)verifiedKeyExchanges.clone();
-			return;
-		}
-		
-		if(Log.isInfoEnabled()) {
-			Log.info("Initializing server key exchanges");
-		}
-		
-		verifiedKeyExchanges = new ComponentFactory<SshKeyExchange<SshServerContext>>(componentManager);
 
-		for(var kex : ServiceLoader.load(SshKeyExchangeServerFactory.class, SshKeyExchangeServerFactory.class.getClassLoader())) {
-			if(testServerKeyExchangeAlgorithm(kex))
-				verifiedKeyExchanges.add(kex);
 		}
-		
-		keyExchanges = (ComponentFactory<SshKeyExchange<? extends SshContext>>)verifiedKeyExchanges.clone();
-
 	}
 	
 	private boolean testServerKeyExchangeAlgorithm(String name, Class<? extends SshKeyExchange<? extends SshContext>> cls) {

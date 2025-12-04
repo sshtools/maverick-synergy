@@ -276,6 +276,8 @@ public abstract class SshContext extends ProtocolContext implements
 	
 	private boolean sha1SignaturesSupported = true;
 	
+	protected static Object kexLock = new Object();
+	
 	/** Constructs a default context but does not set the daemon 
 	 * @param componentManager 
 	 * @throws SshException */

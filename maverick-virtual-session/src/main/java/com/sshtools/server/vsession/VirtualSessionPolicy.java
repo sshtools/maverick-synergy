@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import com.sshtools.common.permissions.Policy;
 import com.sshtools.common.policy.KeyExchangePolicy;
 import com.sshtools.common.policy.KeyExchangePolicy.KeyExchangePolicyBuilder;
 /**
@@ -45,7 +46,7 @@ import com.sshtools.common.policy.KeyExchangePolicy.KeyExchangePolicyBuilder;
  * 
  * TODO make final at 3.3.0+
  */
-public class VirtualSessionPolicy {
+public class VirtualSessionPolicy implements Policy {
 	
 	/**
 	 * Build a new {@link VirtualSessionPolicy}.
@@ -466,5 +467,10 @@ public class VirtualSessionPolicy {
 	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setBannerText(String bannerText) {
 		this.bannerText = Optional.of(() ->bannerText);
+	}
+
+	@Override
+	public Class<? extends Policy> type() {
+		return VirtualSessionPolicy.class;
 	}
 }

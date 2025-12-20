@@ -47,8 +47,10 @@ import com.sshtools.synergy.nio.SshEngine;
 import com.sshtools.synergy.nio.SshEngineContext;
 import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.ConnectionManager;
+import com.sshtools.synergy.ssh.ForwardingFactory;
 import com.sshtools.synergy.ssh.ForwardingManager;
 import com.sshtools.synergy.ssh.GlobalRequestHandler;
+import com.sshtools.synergy.ssh.RemoteForwardRequestHandler;
 import com.sshtools.synergy.ssh.SshContext;
 import com.sshtools.synergy.ssh.components.SshKeyExchange;
 
@@ -56,7 +58,7 @@ import com.sshtools.synergy.ssh.components.SshKeyExchange;
  * Holds the configuration for an SSH connection.
  */
 public class SshClientContext extends SshContext {
-
+	
 	List<ClientAuthenticator> authenticators = new ArrayList<ClientAuthenticator>();
 
 	BannerDisplay bannerDisplay;
@@ -79,24 +81,12 @@ public class SshClientContext extends SshContext {
 	
 	private HostKeyVerification hkv = null;
 	
-//	private String remoteHostname;
-//	private int remotePort;
-	
 	ForwardingManager<SshClientContext> forwardingManager;
 	ConnectionManager<SshClientContext> connectionManager;
 	
-	static ForwardingManager<SshClientContext> defaultForwardingManager 
-				= new ForwardingManager<SshClientContext>();
 	static ConnectionManager<SshClientContext> defaultConnectionManager 
 				= new ConnectionManager<SshClientContext>("client");
 	
-	static {
-		defaultForwardingManager.addForwardingFactory(new LocalClientForwardingFactory()); 
-		defaultForwardingManager.addForwardingFactory(new UnixDomainSocketClientForwardingFactory());
-		defaultForwardingManager.addRemoteForwardRequestHandler(new DefaultRemoteForwardRequestHandler());
-		defaultForwardingManager.addRemoteForwardRequestHandler(new UnixDomainSocketRemoteForwardRequestHandler());
-	}
-
 	private boolean preferKeyboardInteractiveOverPassword = true;
 	
 	private static ComponentFactory<SshKeyExchange<SshClientContext>> verifiedKeyExchanges;
@@ -108,6 +98,10 @@ public class SshClientContext extends SshContext {
 	public SshClientContext(SshEngine daemon, ComponentManager componentManager, SecurityLevel securityLevel) throws IOException, SshException {
 		super(componentManager, securityLevel);
 		this.daemon = daemon;
+
+		forwardingManager = new ForwardingManager<>();
+		ServiceLoader.load(ForwardingFactory.class).forEach(forwardingManager::addForwardingFactory);
+		ServiceLoader.load(RemoteForwardRequestHandler.class).forEach(forwardingManager::addRemoteForwardRequestHandler);
 	}
 	
 	public SshClientContext(SshEngine daemon) throws IOException, SshException {
@@ -156,9 +150,21 @@ public class SshClientContext extends SshContext {
 		return stateListeners;
 	}
 	
+	/**
+	 * Get the forwarding manager. If a customer forwarding manager has not been set,
+	 * the default will be created (and cached) using all {@link ForwardingFactory} and
+	 * {@link RemoteForwardRequestHandler} implementations that have declared themselves
+	 * available via {@link ServiceLoader}.
+	 * <p>
+	 * This behaviour has changed from version 3.1.0, which used to return a static
+	 * default instance. However, forwarding managers are not immutable, and it was too easy
+	 * to accidentally affect global behaviour.
+	 * 
+	 * @return  forwarding manager
+	 */
 	@Override
 	public ForwardingManager<SshClientContext> getForwardingManager() {
-		return forwardingManager == null ? defaultForwardingManager : forwardingManager;
+		return forwardingManager;
 	}
 	
 	public SshClientContext setForwardingManager(ForwardingManager<SshClientContext> forwardingManager) {

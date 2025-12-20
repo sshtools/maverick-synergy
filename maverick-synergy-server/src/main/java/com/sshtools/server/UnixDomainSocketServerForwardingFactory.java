@@ -1,8 +1,8 @@
-package com.sshtools.common.permissions;
+package com.sshtools.server;
 
 /*-
  * #%L
- * Base API
+ * Server API
  * %%
  * Copyright (C) 2002 - 2025 JADAPTIVE Limited
  * %%
@@ -22,13 +22,15 @@ package com.sshtools.common.permissions;
  * #L%
  */
 
-public interface Policy {
+import com.sshtools.synergy.ssh.ForwardingFactory;
+import com.sshtools.synergy.ssh.UnixDomainSocketForwardingChannelFactory;
 
-	/**
-	 * The type this permission set will be registered as.
-	 * 
-	 * @return type
-	 */
-	Class<? extends Policy> type();
+public class UnixDomainSocketServerForwardingFactory implements ForwardingFactory<SshServerContext, UnixDomainSocketForwardingChannelFactory<SshServerContext>> {
+
+	@Override
+	public UnixDomainSocketForwardingChannelFactory<SshServerContext> createChannelFactory(String hostToConnect,
+			int portToConnect) {
+		return UnixDomainSocketServerRemoteForwardingChannelFactoryImpl.INSTANCE;
+	}
 
 }

@@ -1,8 +1,8 @@
-package com.sshtools.common.permissions;
+package com.sshtools.callback.client;
 
 /*-
  * #%L
- * Base API
+ * Callback Client API
  * %%
  * Copyright (C) 2002 - 2025 JADAPTIVE Limited
  * %%
@@ -22,13 +22,15 @@ package com.sshtools.common.permissions;
  * #L%
  */
 
-public interface Policy {
+import java.time.Duration;
 
-	/**
-	 * The type this permission set will be registered as.
-	 * 
-	 * @return type
-	 */
-	Class<? extends Policy> type();
+public interface ICallbackSession {
 
+	String getName();
+
+	ICallbackClient getClient();
+
+	CallbackConfiguration getConfig();
+
+	boolean stop(Duration waitTime) throws InterruptedException;
 }

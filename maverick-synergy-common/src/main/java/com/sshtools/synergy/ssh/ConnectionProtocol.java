@@ -421,51 +421,53 @@ public abstract class ConnectionProtocol<T extends SshContext>
 				Log.debug("Received SSH_MSG_GLOBAL_REQUEST request="
 						+ name + " wantReply=" + wantreply); 
 			}
+
+
+			@SuppressWarnings("unchecked")
+			GlobalRequestHandler<T> handler 
+				= (GlobalRequestHandler<T>) getContext().getGlobalRequestHandler(name);
+
+			if (handler == null) {
+				handler = globalRequestHandlers.get(name);
+			}
+			if (handler != null) {
+				byte[] requestdata = new byte[bar.available()];
+				bar.read(requestdata);
+				GlobalRequest request = new GlobalRequest(name, con, requestdata);
+				
+				try {
+					success = handler.processGlobalRequest(request, this, wantreply, response);
+				} catch (GlobalRequestHandlerException e) {
+				}
+			}
+			else {
 			
-			if (name.equals("tcpip-forward")) {
-				if(processForward(Protocol.TCP, bar, response)) {
+				if (name.equals("tcpip-forward")) {
+					if(processForward(Protocol.TCP, bar, response)) {
+						success = true;
+					} 
+	
+				} else if (name.equals("cancel-tcpip-forward")) {
+					if(processForwardCancel(Protocol.TCP, bar, response)) {
+						success = true;
+					} 
+				} else if (name.equals(UnixDomainSockets.STREAM_LOCAL_FORWARD_REQUEST)) {
+					if(processForward(Protocol.DOMAIN_SOCKETS, bar, response)) {
+						success = true;
+					} 
+	
+				} else if (name.equals(UnixDomainSockets.CANCEL_STREAM_LOCAL_FORWARD_REQUEST)) {
+					if(processForwardCancel(Protocol.DOMAIN_SOCKETS, bar, response)) {
+						success = true;
+					} 
+				} else if (name.equals("ping@sshtools.com")) {
+					/**
+					 * Only for show; the remote side only cares if it gets a response
+					 * not what the actual value is, but we are positive so send a success
+					 * message rather than the default failure message.
+					 */
 					success = true;
 				} 
-
-			} else if (name.equals("cancel-tcpip-forward")) {
-				if(processForwardCancel(Protocol.TCP, bar, response)) {
-					success = true;
-				} 
-			} else if (name.equals(UnixDomainSockets.STREAM_LOCAL_FORWARD_REQUEST)) {
-				if(processForward(Protocol.DOMAIN_SOCKETS, bar, response)) {
-					success = true;
-				} 
-
-			} else if (name.equals(UnixDomainSockets.CANCEL_STREAM_LOCAL_FORWARD_REQUEST)) {
-				if(processForwardCancel(Protocol.DOMAIN_SOCKETS, bar, response)) {
-					success = true;
-				} 
-			} else if (name.equals("ping@sshtools.com")) {
-				/**
-				 * Only for show; the remote side only cares if it gets a response
-				 * not what the actual value is, but we are positive so send a success
-				 * message rather than the default failure message.
-				 */
-				success = true;
-			} else {
-
-				@SuppressWarnings("unchecked")
-				GlobalRequestHandler<T> handler 
-					= (GlobalRequestHandler<T>) getContext().getGlobalRequestHandler(name);
-
-				if (handler == null) {
-					handler = globalRequestHandlers.get(name);
-				}
-				if (handler != null) {
-					byte[] requestdata = new byte[bar.available()];
-					bar.read(requestdata);
-					GlobalRequest request = new GlobalRequest(name, con, requestdata);
-					
-					try {
-						success = handler.processGlobalRequest(request, this, wantreply, response);
-					} catch (GlobalRequestHandlerException e) {
-					}
-				}
 			}
 
 			if (wantreply) {

@@ -31,7 +31,13 @@ import com.sshtools.common.net.CIDRNetwork;
 
 public class IPStore {
 
-	ConcurrentLinkedQueue<CIDRNetwork> entries = new ConcurrentLinkedQueue<>();
+	private final ConcurrentLinkedQueue<CIDRNetwork> entries = new ConcurrentLinkedQueue<>();
+	
+	public IPStore() {}
+	
+	IPStore(IPStore other) {
+		this.entries.addAll(other.entries);
+	}
 	
 	public boolean isEmpty() {
 		return entries.isEmpty();
@@ -39,6 +45,12 @@ public class IPStore {
 
 	public Collection<CIDRNetwork> getIPs() {
 		return entries;
+	}
+
+	public void addAll(Collection<String> ips) throws UnknownHostException {
+		for(var ip : ips) {
+			entries.add(new CIDRNetwork(ip));
+		}
 	}
 
 	public void add(String ip) throws UnknownHostException {

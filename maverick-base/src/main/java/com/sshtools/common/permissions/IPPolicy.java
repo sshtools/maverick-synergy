@@ -25,19 +25,20 @@ package com.sshtools.common.permissions;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.net.CIDRNetwork;
 import com.sshtools.common.shell.ShellPolicy;
-import com.sshtools.common.shell.ShellPolicy.ShellPolicyBuilder;
 import com.sshtools.common.util.ExpiringConcurrentHashMap;
 
 /**
  * Represents various IP related policy.
  * 
  * Note, will be made <code>final</code> at version 3.3.0, and will only be able to
- * be constructed using the {@link ShellPolicyBuilder}.
+ * be constructed using the {@link IPPolicyBuilder}.
  * 
  * TODO make final at 3.3.0+
  */
@@ -82,6 +83,8 @@ public class IPPolicy extends Permissions {
 		private int failedAuthenticationThreshold = 15;
 		private Duration failedAuthenticationThresholdPeriod = Duration.ofMinutes(5);
 		private Duration temporaryBanTime = Duration.ofHours(5);
+		private IPStore allowedIps = new IPStore();
+		private IPStore blockedIps = new IPStore();
 		
 		private IPPolicyBuilder() { }
 		
@@ -94,6 +97,99 @@ public class IPPolicy extends Permissions {
 		public static IPPolicyBuilder create() {
 			return new IPPolicyBuilder(); 
 		}
+		
+		/**
+		 * Set the list of allowed IP addresses.
+		 * 
+		 * @param allowedIps allowed addresses
+		 * @return this for chaining
+		 * @throws UnknownHostException 
+		 */
+		public IPPolicyBuilder withAllowedIPAddresses(String... allowedIps) throws UnknownHostException {
+			return withAllowedIPAddresses(Arrays.asList(allowedIps));
+		} 
+		
+		/**
+		 * Set the list of allowed IP addresses.
+		 * 
+		 * @param allowedIps allowed addresses
+		 * @return this for chaining
+		 * @throws UnknownHostException 
+		 */
+		public IPPolicyBuilder withAllowedIPAddresses(Collection<String> allowedIps) throws UnknownHostException {
+			this.allowedIps.getIPs().clear();
+			return addAllowedIPAddresses(allowedIps);
+		}
+		
+		/**
+		 * Add to the list of allowed IP addresses.
+		 * 
+		 * @param allowedIps allowed addresses
+		 * @return this for chaining
+		 * @throws UnknownHostException 
+		 */
+		public IPPolicyBuilder addAllowedIPAddresses(String... allowedIps) throws UnknownHostException {
+			return addAllowedIPAddresses(Arrays.asList(allowedIps));
+		}
+		
+		/**
+		 * Add to the list of allowed IP addresses.
+		 * 
+		 * @param allowedIps allowed addresses
+		 * @return this for chaining
+		 * @throws UnknownHostException 
+		 */
+		public IPPolicyBuilder addAllowedIPAddresses(Collection<String> allowedIps) throws UnknownHostException {
+			this.allowedIps.addAll(allowedIps);
+			return this;
+		}
+		
+		/**
+		 * Set the list of blocked IP addresses.
+		 * 
+		 * @param blockedIps blocked addresses
+		 * @return this for chaining
+		 * @throws UnknownHostException 
+		 */
+		public IPPolicyBuilder withBlockedIPAddresses(String... blockedIps) throws UnknownHostException {
+			return withBlockedIPAddresses(Arrays.asList(blockedIps));
+		} 
+		
+		/**
+		 * Set the list of blocked IP addresses.
+		 * 
+		 * @param blockedIps blocked addresses
+		 * @return this for chaining
+		 * @throws UnknownHostException 
+		 */
+		public IPPolicyBuilder withBlockedIPAddresses(Collection<String> blockedIps) throws UnknownHostException {
+			this.blockedIps.getIPs().clear();
+			return addBlockedIPAddresses(blockedIps);
+		}
+		
+		/**
+		 * Add to the list of blocked IP addresses.
+		 * 
+		 * @param blockedIps blocked addresses
+		 * @return this for chaining
+		 * @throws UnknownHostException 
+		 */
+		public IPPolicyBuilder addBlockedIPAddresses(String... blockedIps) throws UnknownHostException {
+			return addBlockedIPAddresses(Arrays.asList(blockedIps));
+		}
+		
+		/**
+		 * Add to the list of blocked IP addresses.
+		 * 
+		 * @param blockedIps blocked addresses
+		 * @return this for chaining
+		 * @throws UnknownHostException 
+		 */
+		public IPPolicyBuilder addBlockedIPAddresses(Collection<String> blockedIps) throws UnknownHostException {
+			this.blockedIps.addAll(blockedIps);
+			return this;
+		}
+		
 		/**
 		 * Set the maximum number of failed authentication attempts before an address is
 		 * temporarily banned.
@@ -138,6 +234,22 @@ public class IPPolicy extends Permissions {
 		}
 		
 		/**
+		 * Set whether to enable temporary banning or not. By default it is enabled.
+		 * 
+		 *  @param temporaryBanning enabled temporary banning
+		 *  @return this for chaining
+		 */
+		public IPPolicyBuilder withTemporaryBanning(boolean temporaryBanning) {
+			if(temporaryBanning) {
+				permissions.remove(IPPermission.DISABLE_BAN);			
+			}
+			else {
+				permissions.add(IPPermission.DISABLE_BAN);
+			}
+			return this;
+		}
+		
+		/**
 		 * Set the amount of time an address is banned for when it reaches the failed authentication
 		 * attempt threshold.
 		 * 
@@ -160,8 +272,8 @@ public class IPPolicy extends Permissions {
 	}
 	/* TODO make all of these private + final, remove all deprecated setters at 3.3.x+ */
 	private int failedAuthenticationThreshold;
-	private IPStore blacklist = new IPStore();
-	private IPStore whitelist = new IPStore();
+	private IPStore blockedIps;
+	private IPStore allowedIps;
 	
 	private ExpiringConcurrentHashMap<InetAddress, Integer> flaggedAddressCounts;
 	private ExpiringConcurrentHashMap<InetAddress, Boolean> temporaryBans;
@@ -175,6 +287,8 @@ public class IPPolicy extends Permissions {
 		failedAuthenticationThreshold = 15;
 		setFailedAuthenticationThresholdPeriod(5, TimeUnit.MINUTES);
 		temporaryBans = new ExpiringConcurrentHashMap<InetAddress, Boolean>(TimeUnit.HOURS.toMillis(5));
+		blockedIps = new IPStore();
+		allowedIps = new IPStore();
 	}
 	
 	private IPPolicy(IPPolicyBuilder bldr) {
@@ -182,6 +296,8 @@ public class IPPolicy extends Permissions {
 		failedAuthenticationThreshold = bldr.failedAuthenticationThreshold;
 		flaggedAddressCounts = new ExpiringConcurrentHashMap<InetAddress, Integer>(bldr.failedAuthenticationThresholdPeriod.toMillis());
 		temporaryBans = new ExpiringConcurrentHashMap<InetAddress, Boolean>(bldr.temporaryBanTime.toMillis());
+		blockedIps = new IPStore(bldr.blockedIps);
+		allowedIps = new IPStore(bldr.allowedIps);
 	}
 
 	/**
@@ -254,11 +370,11 @@ public class IPPolicy extends Permissions {
 			}
 			addr = remoteAddress.getHostAddress();
 			
-			if(!whitelist.isEmpty()) {
-				allowed = isListed(addr, whitelist);
+			if(!allowedIps.isEmpty()) {
+				allowed = isListed(addr, allowedIps);
 			}
 			
-			boolean rejected = isListed(addr, blacklist);
+			boolean rejected = isListed(addr, blockedIps);
 			
 			if(Log.isTraceEnabled()) {
 				Log.trace("{} is {} by IP policy", remoteAddress.toString(), (allowed && !rejected) ? "allowed" : "denied");
@@ -346,31 +462,45 @@ public class IPPolicy extends Permissions {
 		}
 		add(ALLOW_CONNECT);
 	}
-	
+
+	public IPStore getBlockedIps() {
+		return blockedIps;
+	}
+
+	public IPStore getAllowedIps() {
+		return allowedIps;
+	}
+
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void blacklist(String addr) throws UnknownHostException {
 		Log.info("Blacklisting IP address {}", addr);
-		blacklist.add(addr);
+		blockedIps.add(addr);
 	}
-	
+
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void whitelist(String addr) throws UnknownHostException {
 		Log.info("Whitelisting IP address {}", addr);
-		whitelist.add(addr);
+		allowedIps.add(addr);
 	}
 
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public IPStore getBlacklist() {
-		return blacklist;
+		return blockedIps;
 	}
 
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setBlacklist(IPStore blacklist) {
-		this.blacklist = blacklist;
+		this.blockedIps = blacklist;
 	}
 
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public IPStore getWhitelist() {
-		return whitelist;
+		return allowedIps;
 	}
 
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setWhitelist(IPStore whitelist) {
-		this.whitelist = whitelist;
+		this.allowedIps = whitelist;
 	}
 
 }

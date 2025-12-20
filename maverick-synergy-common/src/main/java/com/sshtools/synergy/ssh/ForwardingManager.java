@@ -135,24 +135,19 @@ public class ForwardingManager<T extends SshContext> {
 	}
 
 	/**
-	 * Get the forwarding factory.
-	 * <p>
-	 * Deprecated, there may now be multiple {@link ForwardingFactory} registered.
+	 * Get the forwarding factories.
 	 * 
-	 * @return forwarding factory.
+	 * @return forwarding factories.
 	 */
 	public List<ForwardingFactory<T, ForwardingChannelFactory<T>>> getForwardingFactories() {
 		return Collections.unmodifiableList(forwardingFactories);
 	}
 
 	/**
-	 * Set the forwarding factory.
-	 * <p>
-	 * Deprecated, there may now be multiple {@link ForwardingFactory} registered.
+	 * Set the forwarding factory. Note, will replace ALL other forwarding factories.
 	 * 
 	 * @param forwardingFactory forwarding factory.
 	 */
-	@Deprecated(forRemoval = true, since = "3.2.0")
 	public void setForwardingFactory(
 			ForwardingFactory<T, ForwardingChannelFactory<T>> forwardingFactory) {
 		forwardingFactories.clear();
@@ -405,12 +400,19 @@ public class ForwardingManager<T extends SshContext> {
 	@Deprecated(forRemoval = true, since = "3.2.0")
 	public int startRemoteForwarding(String addressToBind, int portToBind, String destinationHost,
 			int destinationPort, ConnectionProtocol<T> con) throws SshException {
-		return bindRemote(ForwardingRequestBuilder.create().
-				withProtocol(Protocol.TCP).
-				withBind(addressToBind).
-				withBindPort(portToBind).
-				withDestinationAddress(destinationHost).
-				withDestinationPort(destinationPort).
+		var bldr = ForwardingRequestBuilder.create().
+				withProtocol(Protocol.TCP);
+		if(addressToBind != null) {
+			bldr.withBind(addressToBind).
+				withBindPort(portToBind);
+		}
+		
+		if(destinationHost != null) {
+			bldr.withDestinationAddress(destinationHost).
+				withDestinationPort(destinationPort);
+		}
+		
+		return bindRemote(bldr.
 				build(), con).boundPort().orElse(0);
 	}
 
@@ -454,12 +456,21 @@ public class ForwardingManager<T extends SshContext> {
 	 */
 	@Deprecated(forRemoval = true, since = "3.2.0")
 	public synchronized int startListening(String addressToBind, int portToBind, Connection<T> con, String destinationHost, int destinationPort) throws SshException {
-		return bindLocal(ForwardingRequestBuilder.create().
-				withProtocol(Protocol.TCP).
-				withBind(addressToBind).
-				withBindPort(portToBind).
-				withDestinationAddress(destinationHost).
-				withDestinationPort(destinationPort).
+		
+		var bldr = ForwardingRequestBuilder.create().
+				withProtocol(Protocol.TCP);
+		
+		if(addressToBind != null) {
+			bldr.withBind(addressToBind).
+				withBindPort(portToBind);
+		}
+		
+		if(destinationHost != null) {
+			bldr.withDestinationAddress(destinationHost).
+				withDestinationPort(destinationPort);
+		}
+		
+		return bindLocal(bldr.
 				build(), con).boundPort().orElse(0);
 
 	}

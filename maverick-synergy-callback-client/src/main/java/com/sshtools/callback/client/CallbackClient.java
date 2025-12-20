@@ -55,32 +55,28 @@ import com.sshtools.synergy.nio.SshEngine;
 import com.sshtools.synergy.nio.SshEngineContext;
 import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.ChannelFactoryListener;
+import com.sshtools.synergy.ssh.Connection;
 
-public class CallbackClient implements ChannelFactoryListener<SshServerContext> {
+public final class CallbackClient implements ChannelFactoryListener<SshServerContext>, ICallbackClient {
+	
 
 	public static final String CALLBACK_CLIENT = "callbackClient";
 
-
-	SshEngine ssh = new SshEngine();
-	Set<CallbackSession> clients = new HashSet<>();
-	ExecutorService executor;
-	List<SshKeyPair> hostKeys = new ArrayList<>();
-	ChannelFactory<SshServerContext> channelFactory;
-	List<Object> defaultPolicies = new ArrayList<>();
-	FileFactory fileFactory;
-	String welcomeText = "Callback Client";
-//=======
-//	private SshEngine ssh = new SshEngine();
-//	private ExecutorService executor;
-//	private List<SshKeyPair> hostKeys = new ArrayList<>();
-//	private ChannelFactory<SshServerContext> channelFactory;
-//	private List<Object> defaultPolicies = new ArrayList<>();
-//	private FileFactory fileFactory;
-//	private Set<CallbackSession> clients = Collections.synchronizedSet(new HashSet<CallbackSession>());
-//>>>>>>> develop_3.1.x
+	private SshEngine ssh = new SshEngine();
+	private ChannelFactory<SshServerContext> channelFactory;
+	private FileFactory fileFactory;
+	private final Set<CallbackSession> clients = new HashSet<>();
+	private final ExecutorService executor;
+	private final List<SshKeyPair> hostKeys = new ArrayList<>();
+	private final List<Object> defaultPolicies = new ArrayList<>();
+	private final List<CallbackClientListener> listeners = new ArrayList<>();
 
 	public CallbackClient() {
-		executor = getExecutorService();
+		this(Executors.newCachedThreadPool());
+	}
+
+	public CallbackClient(ExecutorService executor) {
+		this.executor = executor;
 		EventServiceImplementation.getInstance().addListener(new DisconnectionListener());
 		channelFactory = new DefaultServerChannelFactory();
 		try {
@@ -89,13 +85,24 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 			throw new UncheckedIOException(e);
 		}
 	}
+	
+	@Override
+	public int getConnections() {
+		return isConnected() ? 1 : 0;
+	}
+
+	@Override
+	public void addListener(CallbackClientListener listener) {
+		this.listeners.add(listener);
+	}
+
+	@Override
+	public void removeListener(CallbackClientListener listener) {
+		this.listeners.add(listener);
+	}
 
 	public SshEngine getSshEngine() {
 		return ssh;
-	}
-
-	protected ExecutorService getExecutorService() {
-		 return Executors.newCachedThreadPool();
 	}
 
 	/**
@@ -107,16 +114,21 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		defaultPolicies.addAll(Arrays.asList(policies));
 	}
 
+	@Override
 	public void setPolicyDefaults(Policy... policies) {
 		defaultPolicies.addAll(Arrays.asList(policies));
 	}
 
-	public synchronized CallbackSession start(CallbackConfiguration config) throws IOException {
+	@Override
+	public synchronized ICallbackSession start(CallbackConfiguration config) throws IOException {
 		return start(config, config.getServerHost(), config.getServerPort());
 	}
 
-	public synchronized CallbackSession start(CallbackConfiguration config, String hostname, int port) throws IOException {
+	public synchronized ICallbackSession start(CallbackConfiguration config, String hostname, int port) throws IOException {
 		CallbackSession session = new CallbackSession(config, this, hostname, port);
+		for(var i = listeners.size() - 1 ; i >= 0; i--) {
+			listeners.get(i).onClientStarting(session);
+		}
 		onClientStarting(session);
 		start(session);
 		return session;
@@ -150,9 +162,13 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 
 	void onClientConnected(CallbackSession client, SshConnection connection) {
 		clients.add(client);
+		for(var i = listeners.size() - 1 ; i >= 0; i--) {
+			listeners.get(i).onClientStart(client, connection);
+		}
 		onClientStart(client, connection);
 	}
 
+	@Override
 	public boolean isConnected() {
 		return ssh.isStarted() && !clients.isEmpty();
 	}
@@ -161,25 +177,44 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		return clients;
 	}
 
-	protected void onClientStarting(CallbackSession client) {
+
+	@Deprecated(since ="3.2.0", forRemoval = true)
+	protected void onClientStarting(ICallbackSession client) {
 
 	}
 
-	protected void onClientStopping(CallbackSession client) {
+	@Deprecated(since ="3.2.0", forRemoval = true)
+	protected void onClientStopping(ICallbackSession client) {
 
 	}
 
-	protected void onClientStart(CallbackSession client, SshConnection connection) {
+	@Deprecated(since ="3.2.0", forRemoval = true)
+	protected void onClientStart(ICallbackSession client, SshConnection connection) {
 
 	}
 
-	protected void onClientStop(CallbackSession client, SshConnection connection) {
+	@Deprecated(since ="3.2.0", forRemoval = true)
+	protected void onClientStop(ICallbackSession client, SshConnection connection) {
 
+	}
+
+	@Override
+	public void waitForShutdown() {
+		getSshEngine().getShutdownFuture().waitForever();
+		
+	}
+
+	@Override
+	public Throwable getLastError() {
+		return getSshEngine().getLastError();
 	}
 
 	public synchronized void stop(CallbackSession client) {
 
 		onClientStopping(client);
+		for(var i = listeners.size() - 1 ; i >= 0; i--) {
+			listeners.get(i).onClientStopping(client);
+		}
 
 		if(Log.isInfoEnabled()) {
 			Log.info("Stopping callback client");
@@ -192,6 +227,7 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		}
 	}
 
+	@Override
 	public void stop() {
 		for(CallbackSession client : new ArrayList<>(clients)) {
 			stop(client);
@@ -242,6 +278,7 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 
 	}
 
+	@SuppressWarnings("deprecation")
 	public SshServerContext createContext(SshEngineContext daemonContext, CallbackConfiguration config) throws IOException, SshException {
 
 		SshServerContext sshContext = new SshServerContext(getSshEngine(), JCEComponentManager.getDefaultInstance());
@@ -279,10 +316,14 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 		configureFilesystem(sshContext, config);
 
 		configureContext(sshContext, config);
+		for(var i = listeners.size() - 1 ; i >= 0; i--) {
+			listeners.get(i).onConfigureContext(sshContext, config);
+		}
 
 		return sshContext;
 	}
 
+	@Deprecated(since ="3.2.0", forRemoval = true)
 	protected void configureContext(SshServerContext sshContext, CallbackConfiguration config) {
 	}
 
@@ -300,16 +341,26 @@ public class CallbackClient implements ChannelFactoryListener<SshServerContext> 
 				build());
 	}
 
+	@Override
 	public void addHostKey(SshKeyPair pair) {
 		this.hostKeys.add(pair);
 	}
 
+	@Override
 	public void setChannelFactory(ChannelFactory<SshServerContext> channelFactory) {
 		this.channelFactory = channelFactory;
 	}
 
+	@Override
 	public void setFileFactory(FileFactory fileFactory) {
 		this.fileFactory = fileFactory;
+	}
+
+	void doClientStop(CallbackSession callbackSession, Connection<?> con) {
+		onClientStop(callbackSession, con);
+		for(var i = listeners.size() - 1 ; i >= 0; i--) {
+			listeners.get(i).onClientStop(callbackSession, con);
+		}
 	}
 
 }

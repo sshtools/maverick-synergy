@@ -23,6 +23,7 @@ package com.sshtools.callback.client;
  */
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,7 +42,7 @@ import com.sshtools.synergy.ssh.TransportProtocol;
  * on the SSH port to act as a client to any incoming connections. The connection is authenticated by a public
  * key held by the CallbackClient.
  */
-public class CallbackSession implements Runnable {
+public class CallbackSession implements Runnable, ICallbackSession {
 
 	private final CallbackClient app;
 	private final String hostname;
@@ -120,7 +121,7 @@ public class CallbackSession implements Runnable {
 	public void updateMemo(String memo) throws IOException {
 		GlobalRequest req = new GlobalRequest("memo@jadaptive.com", 
 				con, ByteArrayWriter.encodeString(config.getMemo()));
-		con.sendGlobalRequest(req, false);
+		con.sendGlobalRequest(req);
 	}
 
 	public void connect() throws IOException, SshException {
@@ -184,7 +185,7 @@ public class CallbackSession implements Runnable {
 				con.disconnect();
 			}
 			
-			app.onClientStop(this, con);
+			app.doClientStop(this, con);
 			con.removeProperty(CallbackClient.CALLBACK_CLIENT);
 			app.getClients()	.remove(this);
 		}
@@ -202,16 +203,28 @@ public class CallbackSession implements Runnable {
 		}
 	}
 	
+	@Override
+	public boolean stop(Duration waitTime) throws InterruptedException {
+		return stop().waitFor(waitTime.toMillis()).isDone();
+	}
+
 	public DisconnectRequestFuture stop() {
 		isStopped = true;
 		disconnect();
 		return future.getTransport().getDisconnectFuture();
 	}
 
+	@Override
+	public ICallbackClient getClient() {
+		return app;
+	}
+
+	@Override
 	public String getName() {
 		return config.getAgentName() + "@" + config.getServerHost();
 	}
 
+	@Override
 	public CallbackConfiguration getConfig() {
 		return config;
 	}

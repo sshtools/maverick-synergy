@@ -21,6 +21,8 @@
  */
 
 import com.sshtools.common.command.ExecutableCommand.ExecutableCommandFactory;
+import com.sshtools.server.RemoteForwardingFactory;
+import com.sshtools.server.UnixDomainSocketServerForwardingFactory;
 import com.sshtools.server.components.SshKeyExchangeServerFactory;
 import com.sshtools.server.components.jce.Curve25519SHA256LibSshServer;
 import com.sshtools.server.components.jce.Curve25519SHA256Server;
@@ -38,12 +40,19 @@ import com.sshtools.server.components.jce.DiffieHellmanGroupExchangeSha1JCE;
 import com.sshtools.server.components.jce.DiffieHellmanGroupExchangeSha256JCE;
 import com.sshtools.server.components.jce.Rsa1024SHA1KeyExchange;
 import com.sshtools.server.components.jce.Rsa2048SHA2KeyExchange;
+import com.sshtools.synergy.ssh.ForwardingFactory;
 
 @SuppressWarnings("rawtypes")
-module com.sshtools.synergy.server {
+open module com.sshtools.synergy.server {
 	requires transitive com.sshtools.maverick.base;
 	requires transitive com.sshtools.synergy.common;
 	exports com.sshtools.server;
+	
+	uses ForwardingFactory;
+	
+	provides ForwardingFactory with
+		UnixDomainSocketServerForwardingFactory,
+		RemoteForwardingFactory;
 	
 	uses ExecutableCommandFactory;
 	uses SshKeyExchangeServerFactory;

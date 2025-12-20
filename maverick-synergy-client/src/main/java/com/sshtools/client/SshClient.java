@@ -643,6 +643,7 @@ public class SshClient implements Closeable {
 	private final String[] remotePublicKeys; 
 	private final Connection<SshClientContext> con;
 	
+	@SuppressWarnings("deprecation")
 	private SshClient(SshClientBuilder builder) throws IOException, SshException {
 		this.sshContext = builder.sshContext.isPresent() ? builder.sshContext.get() :new SshClientContext();
 		this.hostname = builder.hostname.orElse("localhost");

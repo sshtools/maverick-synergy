@@ -66,6 +66,7 @@ import com.sshtools.synergy.nio.ProtocolEngine;
 import com.sshtools.synergy.nio.SshEngine;
 import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.ConnectionManager;
+import com.sshtools.synergy.ssh.ForwardingFactory;
 import com.sshtools.synergy.ssh.ForwardingManager;
 import com.sshtools.synergy.ssh.GlobalRequestHandler;
 import com.sshtools.synergy.ssh.SshContext;
@@ -79,7 +80,6 @@ public class SshServerContext extends SshContext {
 
 	ForwardingManager<SshServerContext> forwardingManager;
 	ConnectionManager<SshServerContext> connectionManager;
-	static ForwardingManager<SshServerContext> globalForwardingManager = new ForwardingManager<>();
 	static ConnectionManager<SshServerContext> globalConnectionManager = new ConnectionManager<>("server");
 		
 	Collection<ServerConnectionStateListener> stateListeners = new ArrayList<>();
@@ -95,11 +95,6 @@ public class SshServerContext extends SshContext {
 	
 	private static ComponentFactory<SshKeyExchange<SshServerContext>> verifiedKeyExchanges;
 	
-	static {
-		globalForwardingManager.addForwardingFactory((h, p) -> RemoteForwardingChannelFactoryImpl.INSTANCE);
-		globalForwardingManager.addForwardingFactory((h, p) -> UnixDomainSocketServerRemoteForwardingChannelFactoryImpl.INSTANCE);
-	}
-	
 	public SshServerContext(SshEngine engine) throws IOException, SshException {
 		this(engine, SecurityLevel.STRONG);
 	}
@@ -110,6 +105,8 @@ public class SshServerContext extends SshContext {
 	
 	public SshServerContext(SshEngine engine, ComponentManager componentManager, SecurityLevel securityLevel) throws IOException, SshException {
 		super(engine, componentManager, securityLevel);
+		forwardingManager = new ForwardingManager<>();
+		ServiceLoader.load(ForwardingFactory.class, getClass().getClassLoader()).forEach(forwardingManager::addForwardingFactory);
 		setAuthenicationMechanismFactory(new DefaultAuthenticationMechanismFactory<>());
 		setPolicy(PublicKeyAuthenticationVerifier.class, new DefaultPublicKeyAuthenticationVerifier());
 	}
@@ -354,7 +351,7 @@ public class SshServerContext extends SshContext {
 	}
 	
 	public ForwardingManager<SshServerContext> getForwardingManager() {
-		return forwardingManager == null ? globalForwardingManager : forwardingManager;
+		return forwardingManager;
 	}
 	
 	public void setForwardingManager(ForwardingManager<SshServerContext> forwardingManager) {

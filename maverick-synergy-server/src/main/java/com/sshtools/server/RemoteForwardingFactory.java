@@ -22,10 +22,9 @@ package com.sshtools.server;
  * #L%
  */
 
-import com.sshtools.synergy.ssh.ForwardingFactory;
 import com.sshtools.synergy.ssh.TCPSocketListeningForwardingChannelFactoryImpl;
 
-public class RemoteForwardingFactory implements ForwardingFactory<SshServerContext, TCPSocketListeningForwardingChannelFactoryImpl<SshServerContext>> {
+public class RemoteForwardingFactory implements ServerForwardingFactory<SshServerContext, TCPSocketListeningForwardingChannelFactoryImpl<SshServerContext>> {
 
 	@Override
 	public TCPSocketListeningForwardingChannelFactoryImpl<SshServerContext> createChannelFactory(String hostToConnect,

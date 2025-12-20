@@ -26,10 +26,9 @@ import com.sshtools.common.forwarding.ForwardingRequest;
 import com.sshtools.common.forwarding.ForwardingRequest.ForwardingRequestBuilder;
 import com.sshtools.common.forwarding.ForwardingRequest.Protocol;
 import com.sshtools.synergy.ssh.ForwardingChannelFactory;
-import com.sshtools.synergy.ssh.ForwardingFactory;
 
 public final class UnixDomainSocketClientForwardingFactory
-		implements ForwardingFactory<SshClientContext, ForwardingChannelFactory<SshClientContext>> {
+		implements ClientForwardingFactory<SshClientContext, ForwardingChannelFactory<SshClientContext>> {
 	
 	@Override
 	@Deprecated

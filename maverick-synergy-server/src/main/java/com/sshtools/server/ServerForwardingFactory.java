@@ -1,11 +1,8 @@
 package com.sshtools.server;
 
-import com.sshtools.common.forwarding.ForwardingRequest;
-import com.sshtools.common.forwarding.ForwardingRequest.Protocol;
-
 /*-
  * #%L
- * Server API
+ * Common API
  * %%
  * Copyright (C) 2002 - 2025 JADAPTIVE Limited
  * %%
@@ -25,19 +22,9 @@ import com.sshtools.common.forwarding.ForwardingRequest.Protocol;
  * #L%
  */
 
-import com.sshtools.synergy.ssh.UnixDomainSocketForwardingChannelFactory;
+import com.sshtools.synergy.ssh.ForwardingChannelFactory;
+import com.sshtools.synergy.ssh.ForwardingFactory;
 
-public class UnixDomainSocketServerForwardingFactory implements ServerForwardingFactory<SshServerContext, UnixDomainSocketForwardingChannelFactory<SshServerContext>> {
-
-	@Override
-	public UnixDomainSocketForwardingChannelFactory<SshServerContext> createChannelFactory(String hostToConnect,
-			int portToConnect) {
-		return UnixDomainSocketServerRemoteForwardingChannelFactoryImpl.INSTANCE;
-	}
-
-	@Override
-	public boolean isHandled(ForwardingRequest request) {
-		return request.protocol() == Protocol.DOMAIN_SOCKETS;
-	}
+public interface ServerForwardingFactory<C extends SshServerContext, F extends ForwardingChannelFactory<C>> extends ForwardingFactory<C, F> {
 
 }

@@ -37,4 +37,5 @@ public interface ForwardingFactory<C extends SshContext, F extends ForwardingCha
 	default boolean isHandled(ForwardingRequest request) {
 		return request.protocol() == Protocol.TCP;
 	}
+	
 }

@@ -161,7 +161,7 @@ public class ForwardingManager<T extends SshContext> {
 	 */
 	public void addForwardingFactory(
 			ForwardingFactory<T, ForwardingChannelFactory<T>> forwardingFactory) {
-		forwardingFactories.add(forwardingFactory);
+		forwardingFactories.add(0, forwardingFactory);
 	}
 
 	/**

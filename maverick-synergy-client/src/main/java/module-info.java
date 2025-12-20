@@ -20,6 +20,7 @@
  * #L%
  */
 
+import com.sshtools.client.ClientForwardingFactory;
 import com.sshtools.client.DefaultRemoteForwardRequestHandler;
 import com.sshtools.client.LocalClientForwardingFactory;
 import com.sshtools.client.SshKeyExchangeClientFactory;
@@ -41,7 +42,6 @@ import com.sshtools.client.components.DiffieHellmanGroupExchangeSha1JCE;
 import com.sshtools.client.components.DiffieHellmanGroupExchangeSha256JCE;
 import com.sshtools.client.components.Rsa1024Sha1;
 import com.sshtools.client.components.Rsa2048Sha256;
-import com.sshtools.synergy.ssh.ForwardingFactory;
 import com.sshtools.synergy.ssh.RemoteForwardRequestHandler;
 
 @SuppressWarnings("rawtypes")
@@ -58,10 +58,10 @@ module com.sshtools.synergy.client {
 	exports com.sshtools.client.tasks;
 	
 	uses SshKeyExchangeClientFactory;
-	uses ForwardingFactory;
+	uses ClientForwardingFactory;
 	uses RemoteForwardRequestHandler;
 	
-	provides ForwardingFactory with
+	provides ClientForwardingFactory with
 		LocalClientForwardingFactory,
 		UnixDomainSocketClientForwardingFactory;
 	

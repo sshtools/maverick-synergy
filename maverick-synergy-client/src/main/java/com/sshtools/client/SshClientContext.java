@@ -100,7 +100,7 @@ public class SshClientContext extends SshContext {
 		this.daemon = daemon;
 
 		forwardingManager = new ForwardingManager<>();
-		ServiceLoader.load(ForwardingFactory.class).forEach(forwardingManager::addForwardingFactory);
+		ServiceLoader.load(ClientForwardingFactory.class).forEach(forwardingManager::addForwardingFactory);
 		ServiceLoader.load(RemoteForwardRequestHandler.class).forEach(forwardingManager::addRemoteForwardRequestHandler);
 	}
 	

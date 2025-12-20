@@ -106,7 +106,7 @@ public class SshServerContext extends SshContext {
 	public SshServerContext(SshEngine engine, ComponentManager componentManager, SecurityLevel securityLevel) throws IOException, SshException {
 		super(engine, componentManager, securityLevel);
 		forwardingManager = new ForwardingManager<>();
-		ServiceLoader.load(ForwardingFactory.class, getClass().getClassLoader()).forEach(forwardingManager::addForwardingFactory);
+		ServiceLoader.load(ServerForwardingFactory.class, getClass().getClassLoader()).forEach(forwardingManager::addForwardingFactory);
 		setAuthenicationMechanismFactory(new DefaultAuthenticationMechanismFactory<>());
 		setPolicy(PublicKeyAuthenticationVerifier.class, new DefaultPublicKeyAuthenticationVerifier());
 	}

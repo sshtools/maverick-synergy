@@ -25,10 +25,9 @@ package com.sshtools.client;
 import com.sshtools.common.forwarding.ForwardingRequest;
 import com.sshtools.common.forwarding.ForwardingRequest.Protocol;
 import com.sshtools.synergy.ssh.ForwardingChannelFactory;
-import com.sshtools.synergy.ssh.ForwardingFactory;
 
 public final class LocalClientForwardingFactory
-		implements ForwardingFactory<SshClientContext, ForwardingChannelFactory<SshClientContext>> {
+		implements ClientForwardingFactory<SshClientContext, ForwardingChannelFactory<SshClientContext>> {
 	@SuppressWarnings("removal")
 	@Override
 	public ForwardingChannelFactory<SshClientContext> createChannelFactory(String hostToConnect, int portToConnect) {

@@ -22,15 +22,9 @@ package com.sshtools.callback.client;
  * #L%
  */
 
-import java.time.Duration;
+import com.sshtools.callback.client.ClusteredCallbackClient.ClusterProvider;
 
-public interface ICallbackSession {
+public interface IClusteredCallbackConfiguration extends ICallbackConfiguration {
 
-	String getName();
-
-	ICallbackClient<?, ?> getClient();
-
-	ICallbackConfiguration getConfig();
-
-	boolean stop(Duration waitTime) throws InterruptedException;
+	ClusterProvider getProvider();
 }

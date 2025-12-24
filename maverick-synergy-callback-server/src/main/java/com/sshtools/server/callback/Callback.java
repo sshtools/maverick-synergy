@@ -4,7 +4,7 @@ package com.sshtools.server.callback;
  * #%L
  * Callback Server API
  * %%
- * Copyright (C) 2002 - 2024 JADAPTIVE Limited
+ * Copyright (C) 2002 - 2025 JADAPTIVE Limited
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -22,7 +22,6 @@ package com.sshtools.server.callback;
  * #L%
  */
 
-import com.sshtools.client.tasks.Task;
 import com.sshtools.common.ssh.SshConnection;
 
 public interface Callback {
@@ -36,8 +35,6 @@ public interface Callback {
 	String getRemoteAddress();
 
 	String getMemo();
-
-	Task addTask(Task task);
 
 	void setMemo(String memo);
 

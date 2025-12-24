@@ -62,7 +62,7 @@ public class CallbackShell extends CallbackCommand {
 		
 		var listener = new WindowSizeChange();
 		
-		con.addTask(ShellTaskBuilder.create().
+		con.getConnection().addTask(ShellTaskBuilder.create().
 				withConnection(con.getConnection()).
 				withTermType(console.getTerminal().getType()).
 				withColumns(console.getTerminal().getWidth()).
@@ -71,7 +71,7 @@ public class CallbackShell extends CallbackCommand {
 					console.getSessionChannel().pauseDataCaching();
 					listener.session = session;
 					((VirtualShellNG)console.getSessionChannel()).addWindowSizeChangeListener(listener);
-					con.addTask(Task.ofRunnable(con.getConnection(), (c) -> IOUtils.copy(console.getSessionChannel().getInputStream(), session.getOutputStream())));
+					con.getConnection().addTask(Task.ofRunnable(con.getConnection(), (c) -> IOUtils.copy(console.getSessionChannel().getInputStream(), session.getOutputStream())));
 					IOUtils.copy(session.getInputStream(), console.getSessionChannel().getOutputStream());
 				}).
 				onClose((task, session) -> ((VirtualShellNG)console.getSessionChannel()).removeWindowSizeChangeListener(listener)).

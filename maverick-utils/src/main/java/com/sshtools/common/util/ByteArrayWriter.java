@@ -24,6 +24,7 @@ package com.sshtools.common.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 
@@ -320,11 +321,21 @@ public class ByteArrayWriter
 	  super.buf = null;
   }
 
+  @Deprecated
   public static byte[] encodeString(String memo) throws IOException {
 	try(ByteArrayWriter w = new ByteArrayWriter()) {
 		w.writeString(memo);
 		return w.toByteArray();
 	}
   }	
+
+  public static byte[] encode(String memo) {
+	try{
+		return encodeString(memo);
+	}
+	catch(IOException ioe) {
+		throw new UncheckedIOException(ioe);
+	}
+  }
 
 }

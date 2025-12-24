@@ -48,7 +48,7 @@ public class CallbackSession implements Runnable, ICallbackSession {
 	private final String hostname;
 	private final int port;
 
-	private CallbackConfiguration config;
+	private ICallbackConfiguration config;
 	private ConnectRequestFuture future;
 	private boolean isStopped = false;
 	private Map<String,Object> attributes = new HashMap<String,Object>();
@@ -56,7 +56,7 @@ public class CallbackSession implements Runnable, ICallbackSession {
 	private Throwable exception;
 	private Connection<?> con;
 	
-	public CallbackSession(CallbackConfiguration config, CallbackClient app, String hostname, int port) throws IOException {
+	public CallbackSession(ICallbackConfiguration config, CallbackClient app, String hostname, int port) throws IOException {
 		this.config = config;
 		this.app = app;
 		this.hostname = hostname;
@@ -73,9 +73,12 @@ public class CallbackSession implements Runnable, ICallbackSession {
 			
 			try {
 				connect();
-			} catch (IOException | SshException e) {
+			} catch (Exception e) {
 				exception = e;
-				Log.error("Connection failed to {}:{}", hostname, port);
+				if(Log.isDebugEnabled())
+					Log.error("Connection failed to {}:{}.", hostname, port, e);
+				else
+					Log.error("Connection failed to {}:{}. {}", hostname, port, e.getMessage());
 			}
 			
 			if(Log.isInfoEnabled()) {
@@ -193,7 +196,7 @@ public class CallbackSession implements Runnable, ICallbackSession {
 		
 	}
 		
-	protected ProtocolContext createContext(CallbackConfiguration config) throws IOException, SshException {
+	protected ProtocolContext createContext(ICallbackConfiguration config) throws IOException, SshException {
 		return app.createContext(app.getSshEngine().getContext(), config);
 	}
 
@@ -215,7 +218,7 @@ public class CallbackSession implements Runnable, ICallbackSession {
 	}
 
 	@Override
-	public ICallbackClient getClient() {
+	public ICallbackClient<?, ?> getClient() {
 		return app;
 	}
 
@@ -225,7 +228,7 @@ public class CallbackSession implements Runnable, ICallbackSession {
 	}
 
 	@Override
-	public CallbackConfiguration getConfig() {
+	public ICallbackConfiguration getConfig() {
 		return config;
 	}
 
@@ -233,7 +236,7 @@ public class CallbackSession implements Runnable, ICallbackSession {
 		return isStopped;
 	}
 
-	public void setConfig(CallbackConfiguration config) {
+	public void setConfig(ICallbackConfiguration config) {
 		this.config = config;
 	}
 	

@@ -1,5 +1,7 @@
 package com.sshtools.callback.client;
 
+import java.io.Closeable;
+
 /*-
  * #%L
  * Callback Client API
@@ -44,6 +46,7 @@ import com.sshtools.common.permissions.Policy;
 import com.sshtools.common.policy.AuthenticationPolicy.AuthenticationPolicyBuilder;
 import com.sshtools.common.policy.FileFactory;
 import com.sshtools.common.policy.FileSystemPolicy;
+import com.sshtools.common.publickey.SshKeyUtils;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
@@ -57,26 +60,21 @@ import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.ChannelFactoryListener;
 import com.sshtools.synergy.ssh.Connection;
 
-public final class CallbackClient implements ChannelFactoryListener<SshServerContext>, ICallbackClient {
+public final class CallbackClient implements ChannelFactoryListener<SshServerContext>, ICallbackClient<CallbackSession, CallbackConfiguration>, Closeable {
 	
-
 	public static final String CALLBACK_CLIENT = "callbackClient";
 
 	private SshEngine ssh = new SshEngine();
 	private ChannelFactory<SshServerContext> channelFactory;
 	private FileFactory fileFactory;
 	private final Set<CallbackSession> clients = new HashSet<>();
-	private final ExecutorService executor;
 	private final List<SshKeyPair> hostKeys = new ArrayList<>();
 	private final List<Object> defaultPolicies = new ArrayList<>();
 	private final List<CallbackClientListener> listeners = new ArrayList<>();
+	private final ExecutorService executor;
 
 	public CallbackClient() {
-		this(Executors.newCachedThreadPool());
-	}
-
-	public CallbackClient(ExecutorService executor) {
-		this.executor = executor;
+		executor = Executors.newSingleThreadExecutor();
 		EventServiceImplementation.getInstance().addListener(new DisconnectionListener());
 		channelFactory = new DefaultServerChannelFactory();
 		try {
@@ -120,11 +118,11 @@ public final class CallbackClient implements ChannelFactoryListener<SshServerCon
 	}
 
 	@Override
-	public synchronized ICallbackSession start(CallbackConfiguration config) throws IOException {
+	public synchronized CallbackSession start(CallbackConfiguration config) throws IOException {
 		return start(config, config.getServerHost(), config.getServerPort());
 	}
 
-	public synchronized ICallbackSession start(CallbackConfiguration config, String hostname, int port) throws IOException {
+	public synchronized CallbackSession start(CallbackConfiguration config, String hostname, int port) throws IOException {
 		CallbackSession session = new CallbackSession(config, this, hostname, port);
 		for(var i = listeners.size() - 1 ; i >= 0; i--) {
 			listeners.get(i).onClientStarting(session);
@@ -155,7 +153,10 @@ public final class CallbackClient implements ChannelFactoryListener<SshServerCon
 	public synchronized void start(CallbackSession client) {
 
 		if(Log.isInfoEnabled()) {
-			Log.info("Starting client " + client.getConfig().getAgentName());
+			try {
+				Log.info("Starting client " + client.getConfig().getAgentName() + " to connect to " + SshKeyUtils.getFormattedKey(client.getConfig().getPublicKey(), ""));
+			} catch (IOException e) {
+			}
 		}
 		executor.execute(client);
 	}
@@ -234,12 +235,9 @@ public final class CallbackClient implements ChannelFactoryListener<SshServerCon
 		}
 	}
 
-	public void shutdown() {
-
-		for(CallbackSession client : new ArrayList<>(clients)) {
-			stop(client);
-		}
-
+	@Override
+	public void close() {
+		stop();
 		ssh.shutdownAndExit();
 		executor.shutdownNow();
 	}
@@ -279,7 +277,7 @@ public final class CallbackClient implements ChannelFactoryListener<SshServerCon
 	}
 
 	@SuppressWarnings("deprecation")
-	public SshServerContext createContext(SshEngineContext daemonContext, CallbackConfiguration config) throws IOException, SshException {
+	public SshServerContext createContext(SshEngineContext daemonContext, ICallbackConfiguration config) throws IOException, SshException {
 
 		SshServerContext sshContext = new SshServerContext(getSshEngine(), JCEComponentManager.getDefaultInstance());
 
@@ -324,18 +322,18 @@ public final class CallbackClient implements ChannelFactoryListener<SshServerCon
 	}
 
 	@Deprecated(since ="3.2.0", forRemoval = true)
-	protected void configureContext(SshServerContext sshContext, CallbackConfiguration config) {
+	protected void configureContext(SshServerContext sshContext, ICallbackConfiguration config) {
 	}
 
-	protected void configureFilesystem(SshServerContext sshContext, CallbackConfiguration config) {
+	protected void configureFilesystem(SshServerContext sshContext, ICallbackConfiguration config) {
 		sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(fileFactory);
 	}
 
-	protected void configureChannels(SshServerContext sshContext, CallbackConfiguration config) {
+	protected void configureChannels(SshServerContext sshContext, ICallbackConfiguration config) {
 		sshContext.setChannelFactory(channelFactory);
 	}
 
-	protected void configureForwarding(SshServerContext sshContext, CallbackConfiguration config) {
+	protected void configureForwarding(SshServerContext sshContext, ICallbackConfiguration config) {
 		sshContext.setPolicy(ForwardingPolicyBuilder.create().
 				allowAll().
 				build());

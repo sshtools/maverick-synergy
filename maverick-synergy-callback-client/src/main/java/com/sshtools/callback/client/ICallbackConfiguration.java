@@ -22,15 +22,31 @@ package com.sshtools.callback.client;
  * #L%
  */
 
-import java.time.Duration;
+import com.sshtools.common.ssh.components.SshKeyPair;
+import com.sshtools.common.ssh.components.SshPublicKey;
 
-public interface ICallbackSession {
+public interface ICallbackConfiguration {
 
-	String getName();
+	Object getProperty(String name);
 
-	ICallbackClient<?, ?> getClient();
+	String getAgentName();
 
-	ICallbackConfiguration getConfig();
+	String getServerHost();
 
-	boolean stop(Duration waitTime) throws InterruptedException;
+	int getServerPort();
+
+	Long getReconnectIntervalMs();
+
+	SshKeyPair getPrivateKey();
+
+	SshPublicKey getPublicKey();
+
+	String getMemo();
+
+	String getCallbackIdentifier();
+
+	boolean isReconnect();
+
+	long getConnectTimeout();
+
 }

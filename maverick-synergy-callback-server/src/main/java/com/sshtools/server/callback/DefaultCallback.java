@@ -4,7 +4,7 @@ package com.sshtools.server.callback;
  * #%L
  * Callback Server API
  * %%
- * Copyright (C) 2002 - 2024 JADAPTIVE Limited
+ * Copyright (C) 2002 - 2025 JADAPTIVE Limited
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -21,7 +21,7 @@ package com.sshtools.server.callback;
  * <http://www.gnu.org/licenses/lgpl-3.0.html>.
  * #L%
  */
-import com.sshtools.client.tasks.Task;
+
 import com.sshtools.common.ssh.SshConnection;
 
 public class DefaultCallback implements Callback {
@@ -57,12 +57,6 @@ public class DefaultCallback implements Callback {
 	@Override
 	public String getMemo() {
 		return memo;
-	}
-
-	@Override
-	public Task addTask(Task task) {
-		con.addTask(task);
-		return task;
 	}
 
 	@Override

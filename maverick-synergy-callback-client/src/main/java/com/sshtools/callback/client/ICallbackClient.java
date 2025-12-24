@@ -1,5 +1,7 @@
 package com.sshtools.callback.client;
 
+import java.io.Closeable;
+
 /*-
  * #%L
  * Callback Client API
@@ -32,7 +34,7 @@ import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.Connection;
 
-public interface ICallbackClient {
+public interface ICallbackClient<SESH extends ICallbackSession, CFG extends ICallbackConfiguration> extends Closeable {
 
 	public interface CallbackClientListener {
 
@@ -44,16 +46,21 @@ public interface ICallbackClient {
 
 		default void onClientStop(ICallbackSession client, Connection<?> con) {}
 
-		default void onConfigureContext(SshServerContext sshContext, CallbackConfiguration config) {}
+		default void onConfigureContext(SshServerContext sshContext, ICallbackConfiguration config) {}
 	}
 
-	ICallbackSession start(CallbackConfiguration config) throws IOException;
+	SESH start(CFG config) throws IOException;
 
 	boolean isConnected();
 	
 	int getConnections();
 
 	void stop();
+
+	@Deprecated(since = "3.2.0", forRemoval = true)
+	default void shutdown() {
+		close();
+	}
 
 	void addHostKey(SshKeyPair pair);
 
@@ -71,4 +78,6 @@ public interface ICallbackClient {
 
 	void removeListener(CallbackClientListener listener);
 
+	@Override
+	void close();
 }

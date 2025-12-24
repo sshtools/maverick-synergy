@@ -31,7 +31,7 @@ public interface CallbackRegistrationService extends SshOptionsResolver {
 
 	Collection<? extends Callback> getCallbacks();
 
-	Callback getCallbackByUUID(String uuid);
+	<P extends Callback> P getCallbackByUUID(String uuid);
 
 	void registerCallbackClient(SshConnection con, String memo);
 

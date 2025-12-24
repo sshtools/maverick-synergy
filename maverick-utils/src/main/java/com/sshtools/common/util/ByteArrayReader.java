@@ -25,6 +25,7 @@ package com.sshtools.common.util;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
@@ -330,10 +331,26 @@ public class ByteArrayReader
 	  } catch(IOException e) { }
   }
 
+  /**
+ * @param data
+ * @return
+ * @throws IOException
+ * @deprecated use {@link #decode(byte[])} (exceptions will never be thrown)
+ */
+@Deprecated
   public static String decodeString(byte[] data) throws IOException {
 	
 	try(ByteArrayReader r = new ByteArrayReader(data)) {
 		return r.readString();
 	}
+  }
+
+  public static String decode(byte[] data) {
+	  try {
+		  return decodeString(data);
+	  }
+	  catch(IOException ioe) {
+		  throw new UncheckedIOException(ioe);
+	  }
   }
 }

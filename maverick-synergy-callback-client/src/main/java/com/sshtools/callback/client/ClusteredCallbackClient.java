@@ -23,14 +23,11 @@ package com.sshtools.callback.client;
  */
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import com.sshtools.common.permissions.Policy;
@@ -40,29 +37,57 @@ import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.Connection;
 
-public class ClusteredCallbackClient implements ICallbackClient {
+public class ClusteredCallbackClient implements ICallbackClient<ClusteredCallbackClient.ClusteredCallbackSession, IClusteredCallbackConfiguration> {
 	
-	public interface ClusterProvider {
-		List<InetSocketAddress> expand(CallbackConfiguration config) throws IOException;
+	public static final class ClusteredCallbackSession implements ICallbackSession {
+		private final ICallbackConfiguration config;
+		private final ArrayList<ICallbackSession> sessions;
+		private final ICallbackClient<?, ?> client;
+
+		private ClusteredCallbackSession(ICallbackClient<?, ?> client, ICallbackConfiguration config, ArrayList<ICallbackSession> sessions) {
+			this.config = config;
+			this.sessions = sessions;
+			this.client = client;
+		}
+
+		@Override
+		public String getName() {
+			return String.join(", ", sessions.stream().map(ICallbackSession::getName).toList());
+		}
+
+		@Override
+		public ICallbackClient<?, ?> getClient() {
+			return client;
+		}
+
+		@Override
+		public ICallbackConfiguration getConfig() {
+			return config;
+		}
+
+		@Override
+		public boolean stop(Duration waitTime) throws InterruptedException {
+			var done = true;
+			for(var sesh : sessions) {
+				done &= sesh.stop(waitTime);
+			}
+			return done;
+		}
 	}
 
-	private final ClusterProvider provider;
-	private final List<ICallbackClient> activeClients = new CopyOnWriteArrayList<>();
+	public interface ClusterProvider {
+		List<CallbackConfiguration> expand(ICallbackConfiguration config) throws IOException;
+	}
+
+	private final List<CallbackClient> activeClients = new CopyOnWriteArrayList<>();
 	private final List<SshKeyPair> keyPairs = new ArrayList<>();
-	private final ExecutorService executorService;
 	private final List<CallbackClientListener> listeners = new ArrayList<>();
 
 	private ChannelFactory<SshServerContext> channelFactory;
 	private Policy[] policies;
 	private FileFactory fileFactory;
 	
-	public ClusteredCallbackClient(ClusterProvider provider) {
-		this(provider, Executors.newSingleThreadExecutor());
-	}
-	
-	public ClusteredCallbackClient(ClusterProvider provider, ExecutorService executorService) {
-		this.provider = provider;
-		this.executorService = executorService;
+	public ClusteredCallbackClient() {
 	}
 
 	@Override
@@ -83,10 +108,15 @@ public class ClusteredCallbackClient implements ICallbackClient {
 	}
 
 	@Override
-	public ICallbackSession start(CallbackConfiguration config) throws IOException {
+	public ClusteredCallbackSession start(IClusteredCallbackConfiguration config) throws IOException {
 		var sessions = new ArrayList<ICallbackSession>();
-		for(var addr : provider.expand(config)) {
-			var nodeCb = new CallbackClient(executorService);
+		startClient(config, sessions);
+		return new ClusteredCallbackSession(this, config, sessions);
+	}
+
+	private void startClient(IClusteredCallbackConfiguration config, ArrayList<ICallbackSession> sessions) throws IOException {
+		for(CallbackConfiguration addr : config.getProvider().expand(config)) {
+			var nodeCb = new CallbackClient();
 			
 			if(channelFactory != null) {
 				nodeCb.setChannelFactory(channelFactory);
@@ -108,36 +138,10 @@ public class ClusteredCallbackClient implements ICallbackClient {
 				}
 			});
 			listeners.forEach(lnstr -> nodeCb.addListener(lnstr));
-
-			activeClients.add(nodeCb);
-			sessions.add(nodeCb.start(config, addr.getHostName(), addr.getPort()));
-		}
-		return new ICallbackSession() {
 			
-			@Override
-			public String getName() {
-				return String.join(", ", sessions.stream().map(ICallbackSession::getName).toList());
-			}
-
-			@Override
-			public ICallbackClient getClient() {
-				return ClusteredCallbackClient.this;
-			}
-
-			@Override
-			public CallbackConfiguration getConfig() {
-				return config;
-			}
-
-			@Override
-			public boolean stop(Duration waitTime) throws InterruptedException {
-				var done = true;
-				for(var sesh : sessions) {
-					done &= sesh.stop(waitTime);
-				}
-				return done;
-			}
-		};
+			activeClients.add(nodeCb);
+			sessions.add(nodeCb.start(addr));
+		}
 	}
 
 	@Override
@@ -198,6 +202,11 @@ public class ClusteredCallbackClient implements ICallbackClient {
 			this.channelFactory = channelFactory;
 			activeClients.forEach(clnt -> clnt.setChannelFactory(channelFactory));
 		}
+	}
+
+	@Override
+	public void close() {
+		activeClients.forEach(ICallbackClient::close);
 	}
 
 }

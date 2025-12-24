@@ -28,7 +28,7 @@ import java.util.Map;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
 
-public class CallbackConfiguration {
+public class CallbackConfiguration implements ICallbackConfiguration {
 
 	public static final String DEFAULT_CALLBACK_ID = "CallbackClient";
 	
@@ -64,19 +64,36 @@ public class CallbackConfiguration {
 		this.reconnectIntervalMs = reconnectIntervalMs;
 	}
 	
+	public CallbackConfiguration(ICallbackConfiguration other, String hostname, int port, SshPublicKey publicKey) {
+		
+		this.serverHost = hostname;
+		this.serverPort = port;
+		this.publicKey = publicKey;
+		
+		this.callbackIdentifier = other.getCallbackIdentifier();
+		this.reconnect = other.isReconnect();
+		this.agentName = other.getAgentName();
+		this.privateKey = other.getPrivateKey();
+		this.memo = other.getMemo();
+		this.connectTimeout = other.getConnectTimeout();
+		this.reconnectIntervalMs = other.getReconnectIntervalMs();
+	}
+	
 	protected CallbackConfiguration() {
 		
 	}
-	
-	public CallbackConfiguration setProperty(String name, Object value) {
+
+	public ICallbackConfiguration setProperty(String name, Object value) {
 		properties.put(name, value);
 		return this;
 	}
 	
+	@Override
 	public Object getProperty(String name) {
 		return properties.get(name);
 	}
 	
+	@Override
 	public String getAgentName() {
 		return agentName;
 	}
@@ -85,6 +102,7 @@ public class CallbackConfiguration {
 		this.agentName = agentName;
 	}
 	
+	@Override
 	public String getServerHost() {
 		return serverHost;
 	}
@@ -93,6 +111,7 @@ public class CallbackConfiguration {
 		this.serverHost = serverHost;
 	}
 	
+	@Override
 	public int getServerPort() {
 		return serverPort;
 	}
@@ -101,6 +120,7 @@ public class CallbackConfiguration {
 		this.serverPort = serverPort;
 	}
 
+	@Override
 	public Long getReconnectIntervalMs() {
 		return reconnectIntervalMs==null ? 5000L : reconnectIntervalMs;
 	}
@@ -109,14 +129,17 @@ public class CallbackConfiguration {
 		this.reconnectIntervalMs = reconnectIntervalMs;
 	}
 
+	@Override
 	public SshKeyPair getPrivateKey() {
 		return privateKey;
 	}
 
+	@Override
 	public SshPublicKey getPublicKey() {
 		return publicKey;
 	}
 
+	@Override
 	public String getMemo() {
 		return memo;
 	}
@@ -125,6 +148,7 @@ public class CallbackConfiguration {
 		this.memo = memo;
 	}
 
+	@Override
 	public String getCallbackIdentifier() {
 		return callbackIdentifier;
 	}
@@ -133,6 +157,7 @@ public class CallbackConfiguration {
 		this.callbackIdentifier = callbackIdentifier;
 	}
 
+	@Override
 	public boolean isReconnect() {
 		return reconnect;
 	}
@@ -141,6 +166,7 @@ public class CallbackConfiguration {
 		this.reconnect = reconnect;
 	}
 
+	@Override
 	public long getConnectTimeout() {
 		return connectTimeout;
 	}

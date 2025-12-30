@@ -34,7 +34,7 @@ import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.Connection;
 
-public interface ICallbackClient<SESH extends ICallbackSession, CFG extends ICallbackConfiguration> extends Closeable {
+public interface ICallbackClient<SESH extends ICallbackSession> extends Closeable {
 
 	public interface CallbackClientListener {
 
@@ -49,7 +49,7 @@ public interface ICallbackClient<SESH extends ICallbackSession, CFG extends ICal
 		default void onConfigureContext(SshServerContext sshContext, ICallbackConfiguration config) {}
 	}
 
-	SESH start(CFG config) throws IOException;
+	SESH start(ICallbackConfiguration config) throws IOException;
 
 	boolean isConnected();
 	

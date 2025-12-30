@@ -33,7 +33,7 @@ public interface CallbackRegistrationService extends SshOptionsResolver {
 
 	<P extends Callback> P getCallbackByUUID(String uuid);
 
-	void registerCallbackClient(SshConnection con, String memo);
+	<P extends Callback> P registerCallbackClient(SshConnection con, String memo);
 
 	void unregisterCallbackClient(String uuid);
 

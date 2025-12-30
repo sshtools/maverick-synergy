@@ -218,7 +218,7 @@ public class CallbackSession implements Runnable, ICallbackSession {
 	}
 
 	@Override
-	public ICallbackClient<?, ?> getClient() {
+	public ICallbackClient<?> getClient() {
 		return app;
 	}
 

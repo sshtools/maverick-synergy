@@ -114,14 +114,18 @@ public class InMemoryCallbackRegistrationService implements CallbackRegistration
 		return new ArrayList<>(callbacks.values());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public Callback getCallbackByUUID(String uuid) {
-		return callbacks.get(uuid);
+	public <CB extends Callback> CB getCallbackByUUID(String uuid) {
+		return (CB)callbacks.get(uuid);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public void registerCallbackClient(SshConnection con, String memo) {
-		callbacks.put(con.getUUID(), new DefaultCallback(con, memo));
+	public <CB extends Callback> CB registerCallbackClient(SshConnection con, String memo) {
+		var cb = new DefaultCallback(con, memo);
+		callbacks.put(con.getUUID(), cb);
+		return (CB)cb;
 	}
 
 	@Override

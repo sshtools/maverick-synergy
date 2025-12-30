@@ -37,14 +37,14 @@ import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.Connection;
 
-public class ClusteredCallbackClient implements ICallbackClient<ClusteredCallbackClient.ClusteredCallbackSession, IClusteredCallbackConfiguration> {
+public class ClusteredCallbackClient implements ICallbackClient<ClusteredCallbackClient.ClusteredCallbackSession> {
 	
 	public static final class ClusteredCallbackSession implements ICallbackSession {
 		private final ICallbackConfiguration config;
 		private final ArrayList<ICallbackSession> sessions;
-		private final ICallbackClient<?, ?> client;
+		private final ICallbackClient<?> client;
 
-		private ClusteredCallbackSession(ICallbackClient<?, ?> client, ICallbackConfiguration config, ArrayList<ICallbackSession> sessions) {
+		private ClusteredCallbackSession(ICallbackClient<?> client, ICallbackConfiguration config, ArrayList<ICallbackSession> sessions) {
 			this.config = config;
 			this.sessions = sessions;
 			this.client = client;
@@ -56,7 +56,7 @@ public class ClusteredCallbackClient implements ICallbackClient<ClusteredCallbac
 		}
 
 		@Override
-		public ICallbackClient<?, ?> getClient() {
+		public ICallbackClient<?> getClient() {
 			return client;
 		}
 
@@ -108,9 +108,9 @@ public class ClusteredCallbackClient implements ICallbackClient<ClusteredCallbac
 	}
 
 	@Override
-	public ClusteredCallbackSession start(IClusteredCallbackConfiguration config) throws IOException {
+	public ClusteredCallbackSession start(ICallbackConfiguration config) throws IOException {
 		var sessions = new ArrayList<ICallbackSession>();
-		startClient(config, sessions);
+		startClient((IClusteredCallbackConfiguration) config, sessions);
 		return new ClusteredCallbackSession(this, config, sessions);
 	}
 

@@ -28,7 +28,7 @@ public interface ICallbackSession {
 
 	String getName();
 
-	ICallbackClient<?, ?> getClient();
+	ICallbackClient<?> getClient();
 
 	ICallbackConfiguration getConfig();
 

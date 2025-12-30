@@ -60,7 +60,7 @@ import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.ChannelFactoryListener;
 import com.sshtools.synergy.ssh.Connection;
 
-public final class CallbackClient implements ChannelFactoryListener<SshServerContext>, ICallbackClient<CallbackSession, CallbackConfiguration>, Closeable {
+public final class CallbackClient implements ChannelFactoryListener<SshServerContext>, ICallbackClient<CallbackSession>, Closeable {
 	
 	public static final String CALLBACK_CLIENT = "callbackClient";
 
@@ -118,11 +118,11 @@ public final class CallbackClient implements ChannelFactoryListener<SshServerCon
 	}
 
 	@Override
-	public synchronized CallbackSession start(CallbackConfiguration config) throws IOException {
+	public synchronized CallbackSession start(ICallbackConfiguration config) throws IOException {
 		return start(config, config.getServerHost(), config.getServerPort());
 	}
 
-	public synchronized CallbackSession start(CallbackConfiguration config, String hostname, int port) throws IOException {
+	public synchronized CallbackSession start(ICallbackConfiguration config, String hostname, int port) throws IOException {
 		CallbackSession session = new CallbackSession(config, this, hostname, port);
 		for(var i = listeners.size() - 1 ; i >= 0; i--) {
 			listeners.get(i).onClientStarting(session);

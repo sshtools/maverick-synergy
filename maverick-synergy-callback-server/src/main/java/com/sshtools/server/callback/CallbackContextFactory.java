@@ -45,8 +45,6 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 
 	public static final String CALLBACK_IDENTIFIER = "CallbackClient";
 	
-	public static final String CALLBACK_MEMO = "MEMO";
-	
 	String callbackIdentifier = CALLBACK_IDENTIFIER;
 	
 	MutualKeyAuthenticatonStore store;
@@ -107,18 +105,11 @@ public class CallbackContextFactory implements ProtocolContextFactory<SshClientC
 			public boolean processGlobalRequest(GlobalRequest request, ConnectionProtocol<SshClientContext> connection, 
 					boolean wantreply, ByteArrayWriter out) throws GlobalRequestHandlerException {
 				if("memo@jadaptive.com".equals(request.getName())) {
-					try {
-						String memo = ByteArrayReader.decodeString(request.getData());
-						if(Log.isInfoEnabled()) {
-							Log.info("Callback client {} registered with memo {}", connection.getUUID(), memo);
-						}
-						callbacks.registerCallbackClient(connection.getConnection(), memo);
-						Callback c = callbacks.getCallbackByUUID(connection.getUUID());
-						connection.getConnection().setProperty(CALLBACK_MEMO, memo);
-						c.setMemo(memo);
-					} catch (IOException e) {
+					String memo = ByteArrayReader.decode(request.getData());
+					if(Log.isInfoEnabled()) {
+						Log.info("Callback client {} registered with memo {}", connection.getUUID(), memo);
 					}
-					return false;
+					callbacks.registerCallbackClient(connection.getConnection(), memo);
 				}
 				return false;
 			}

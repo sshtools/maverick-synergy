@@ -194,7 +194,6 @@ public class ShellTask extends AbstractShellTask<SessionChannelNG> {
 		 * @param onClose on close callback
 		 * @return builder for chaining
 		 */
-		@Deprecated(since = "3.2.0", forRemoval = true)
 		public final ShellTaskBuilder onClose(ShellTaskEvent onClose) {
 			this.onClose = Optional.of(onClose);
 			return this;

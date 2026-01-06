@@ -961,8 +961,7 @@ public class SftpClient implements Closeable {
 			msg.writeString(filter);
 			msg.writeBoolean(regexFilter);
 
-			boolean localFiltering = false;
-
+			boolean localFiltering = filter != null && !filter.isEmpty();
 			
 			Vector<SftpFile> children = new Vector<SftpFile>();
 			Vector<SftpFile> tmp = new Vector<SftpFile>();
@@ -973,7 +972,6 @@ public class SftpClient implements Closeable {
 				handleObject = sftp.getHandle(
 						sftp.sendExtensionMessage("open-directory-with-filter@sshtools.com", msg.toByteArray()),
 						file);
-				localFiltering = false;
 			} catch (SftpStatusException e) {
 				if (Boolean.getBoolean("maverick.disableLocalFiltering")) {
 					throw new SshException("Remote server does not support server side filtering",

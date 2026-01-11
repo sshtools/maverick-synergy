@@ -33,6 +33,7 @@ import java.util.TimeZone;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshCertificate;
 import com.sshtools.common.ssh.components.SshKeyPair;
+import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.jce.OpenSshEcdsaSha2Nist256Certificate;
 import com.sshtools.common.ssh.components.jce.OpenSshEcdsaSha2Nist384Certificate;
 import com.sshtools.common.ssh.components.jce.OpenSshEcdsaSha2Nist521Certificate;
@@ -113,6 +114,31 @@ public class SshCertificateAuthority {
 			List<CertificateExtension> extensions,
 			SshKeyPair signedBy) throws SshException, IOException {
 		
+		return new SshCertificate(key, generateCertificate(key.getPublicKey(), 
+				serial, 
+				type, 
+				keyId, 
+				validPrincipals, 
+				validity, 
+				validityTimeUnit, 
+				timeZone, 
+				criticalOptions, 
+				extensions, 
+				signedBy));
+	}
+	
+	public static OpenSshCertificate generateCertificate(SshPublicKey key, 
+			long serial, 
+			int type,
+			String keyId,
+			List<String> validPrincipals,
+			int validity,
+			int validityTimeUnit,
+			TimeZone timeZone,
+			List<CriticalOption> criticalOptions,
+			List<CertificateExtension> extensions,
+			SshKeyPair signedBy) throws SshException, IOException {
+		
 		switch(type) {
 		case SshCertificate.SSH_CERT_TYPE_HOST:
 		case SshCertificate.SSH_CERT_TYPE_USER:
@@ -124,23 +150,18 @@ public class SshCertificateAuthority {
 		}
 		
 		Calendar c = Calendar.getInstance();
-		c.setTime(new Date());
-		c.set(Calendar.HOUR, 0);
-		c.set(Calendar.MINUTE, 0);
-		c.set(Calendar.SECOND, 0);
-		c.set(Calendar.MILLISECOND, 0);
 		c.setTimeZone(timeZone);
 		
 		UnsignedInteger64 validAfter = new UnsignedInteger64(c.getTimeInMillis() / 1000);
 		
-		c.add(Calendar.DAY_OF_MONTH, validity);
+		c.add(validityTimeUnit, validity);
 		UnsignedInteger64 validBefore = new UnsignedInteger64(c.getTimeInMillis() / 1000);
 
 		@SuppressWarnings("unused")
 		String reserved = "";
 
 		OpenSshCertificate cert;
-		switch(key.getPublicKey().getAlgorithm()) {
+		switch(key.getAlgorithm()) {
 		case "ssh-rsa":
 		case "rsa-sha2-256":
 		case "rsa-sha2-512":
@@ -160,12 +181,12 @@ public class SshCertificateAuthority {
 			break;
 		default:
 			throw new SshException(SshException.BAD_API_USAGE, 
-					String.format("Unsupported certificate type %s", key.getPublicKey().getAlgorithm()));
+					String.format("Unsupported certificate type %s", key.getAlgorithm()));
 		}
 		
-		cert.sign(key.getPublicKey(), new UnsignedInteger64(serial), type, keyId, validPrincipals,
+		cert.sign(key, new UnsignedInteger64(serial), type, keyId, validPrincipals,
 				validAfter, validBefore, criticalOptions, extensions, signedBy);
 		
-		return new SshCertificate(key, cert);
+		return cert;
 	}
 }

@@ -27,12 +27,12 @@ import java.util.List;
 
 public abstract class CertificateExtension extends EncodedExtension {
 
-	final static CertificateExtension NO_PRESENCE_REQUIRED =  new NamedCertificateExtension("no-presence-required", true);
-	final static CertificateExtension PERMIT_X11_FORWARDING = new NamedCertificateExtension("permit-X11-forwarding", true);
-	final static CertificateExtension PERMIT_AGENT_FORWARDING = new NamedCertificateExtension("permit-agent-forwarding", true);
-	final static CertificateExtension PERMIT_PORT_FORWARDING = new NamedCertificateExtension("permit-port-forwarding", true);
-	final static CertificateExtension PERMIT_PTY = new NamedCertificateExtension("permit-pty", true);
-	final static CertificateExtension PERMIT_USER_RC = new NamedCertificateExtension("permit-user-rc", true);
+	public final static CertificateExtension NO_PRESENCE_REQUIRED =  new NamedCertificateExtension("no-presence-required", true);
+	public final static CertificateExtension PERMIT_X11_FORWARDING = new NamedCertificateExtension("permit-X11-forwarding", true);
+	public final static CertificateExtension PERMIT_AGENT_FORWARDING = new NamedCertificateExtension("permit-agent-forwarding", true);
+	public final static CertificateExtension PERMIT_PORT_FORWARDING = new NamedCertificateExtension("permit-port-forwarding", true);
+	public final static CertificateExtension PERMIT_PTY = new NamedCertificateExtension("permit-pty", true);
+	public final static CertificateExtension PERMIT_USER_RC = new NamedCertificateExtension("permit-user-rc", true);
 	
 
 	

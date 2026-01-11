@@ -26,13 +26,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.util.List;
-import java.util.Optional;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.sshtools.common.logger.Log;
-import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.util.IOUtils;
 
 public class ShellUtils {

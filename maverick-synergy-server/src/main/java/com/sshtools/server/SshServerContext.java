@@ -66,7 +66,6 @@ import com.sshtools.synergy.nio.ProtocolEngine;
 import com.sshtools.synergy.nio.SshEngine;
 import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.ConnectionManager;
-import com.sshtools.synergy.ssh.ForwardingFactory;
 import com.sshtools.synergy.ssh.ForwardingManager;
 import com.sshtools.synergy.ssh.GlobalRequestHandler;
 import com.sshtools.synergy.ssh.SshContext;

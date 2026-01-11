@@ -48,7 +48,6 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.AbstractFileSystem;
 import com.sshtools.common.sftp.Multipart;
 import com.sshtools.common.sftp.MultipartTransfer;
-import com.sshtools.common.sftp.MultipartTransfer.MultipartCompletionCallback;
 import com.sshtools.common.sftp.OpenFile;
 import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.util.FileUtils;

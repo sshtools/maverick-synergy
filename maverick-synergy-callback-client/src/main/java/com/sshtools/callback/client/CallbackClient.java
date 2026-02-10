@@ -74,7 +74,11 @@ public final class CallbackClient implements ChannelFactoryListener<SshServerCon
 	private final ExecutorService executor;
 
 	public CallbackClient() {
-		executor = Executors.newSingleThreadExecutor();
+		this(1);
+	}
+
+	public CallbackClient(int maxClients) {
+		executor = Executors.newFixedThreadPool(maxClients);
 		EventServiceImplementation.getInstance().addListener(new DisconnectionListener());
 		channelFactory = new DefaultServerChannelFactory();
 		try {
@@ -86,7 +90,7 @@ public final class CallbackClient implements ChannelFactoryListener<SshServerCon
 	
 	@Override
 	public int getConnections() {
-		return isConnected() ? 1 : 0;
+		return clients.size();
 	}
 
 	@Override
@@ -249,24 +253,24 @@ public final class CallbackClient implements ChannelFactoryListener<SshServerCon
 			switch(evt.getId()) {
 			case EventCodes.EVENT_DISCONNECTED:
 				final SshConnection con = (SshConnection)evt.getAttribute(EventCodes.ATTRIBUTE_CONNECTION);
-				if(!executor.isShutdown()) {
-					executor.execute(new Runnable() {
-						@Override
-						public void run() {
-							if(con.containsProperty(CALLBACK_CLIENT)) {
-								CallbackSession client = (CallbackSession) con.getProperty(CALLBACK_CLIENT);
-								if(client != null) {if(Log.isInfoEnabled()) {
+				CallbackSession client = (CallbackSession) con.getProperty(CALLBACK_CLIENT);
+				if(client != null) {
+					if(!executor.isShutdown()) {
+						executor.execute(new Runnable() {
+							@Override
+							public void run() {
+								if(Log.isInfoEnabled()) {
 									Log.info("Disconnected from {}:{}" ,
 										client.getConfig().getServerHost(),
 										client.getConfig().getServerPort());
-									}
-									con.removeProperty(CALLBACK_CLIENT);
-									clients.remove(client);
 								}
+								con.removeProperty(CALLBACK_CLIENT);
+								clients.remove(client);
 							}
-						}
-					});
+						});
+					}	
 				}
+				
 
 				break;
 			default:

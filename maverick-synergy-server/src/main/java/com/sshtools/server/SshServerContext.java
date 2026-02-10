@@ -563,9 +563,20 @@ public class SshServerContext extends SshContext {
 	 * Set the {@link AuthenticationMechanismFactory} for this context.
 	 * @param authFactory
 	 */
-	public void setAuthenicationMechanismFactory(
+	public void setAuthenticationMechanismFactory(
 			AuthenticationMechanismFactory<SshServerContext> authFactory) {
 		setPolicy(AuthenticationMechanismFactory.class, authFactory);
+	}
+
+	/**
+	 * Set the {@link AuthenticationMechanismFactory} for this context.
+	 * @param authFactory
+	 * @deprecated typo in name, see {@link #setAuthenticationMechanismFactory(AuthenticationMechanismFactory)}.
+	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
+	public void setAuthenicationMechanismFactory(
+			AuthenticationMechanismFactory<SshServerContext> authFactory) {
+		setAuthenticationMechanismFactory(authFactory);
 	}
 	
 	/**

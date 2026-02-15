@@ -1394,7 +1394,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		}
 		
 	    public int available() throws IOException {
-			if(streamClosed || isClosed() || isRemoteEOF()) {
+	    	if(isRemoteEOF()) {
+	    		return 0;
+	    	}
+			if(streamClosed || isClosed()) {
 				throw new EOFException();
 			}
 	        return streamCache.remaining();

@@ -240,8 +240,8 @@ public class Ssh2EcdsaSha2NistPublicKey implements SshPublicKey {
 			KeyPair tmp = gen.generateKeyPair();
 			return ((ECPublicKey) tmp.getPublic()).getParams();
 		} catch (Throwable t) {
+			throw new IllegalStateException("Failed to get curve parameters for " + curve, t);
 		}
-		return null;
 	}
 
 

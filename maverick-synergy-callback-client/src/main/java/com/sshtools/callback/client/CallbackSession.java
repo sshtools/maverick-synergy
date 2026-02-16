@@ -170,7 +170,12 @@ public class CallbackSession implements Runnable, ICallbackSession {
 				if(Log.isInfoEnabled()) {
 					Log.info("Callback {} registering with memo {}", con.getUUID(), config.getMemo());
 				}
-				updateMemo(config.getMemo());
+				try {
+					updateMemo(config.getMemo());
+				}
+				catch(Exception e) {
+					Log.warn("Failed to update memo for {}:{}. {}", hostname, port, e.getMessage());
+				}
 				app.onClientConnected(this, con);
 				if(Log.isInfoEnabled()) {
 					Log.info("Client is connected to {}:{}", hostname, port);

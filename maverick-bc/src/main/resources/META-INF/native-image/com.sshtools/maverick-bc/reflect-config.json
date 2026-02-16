@@ -1,0 +1,22 @@
+[
+{
+    "name" : "org.bouncycastle.jcajce.provider.asymmetric.rsa.KeyFactorySpi",
+    "allPublicConstructors" : true,
+    "allPublicMethods" : true
+},
+{
+    "name" : "org.bouncycastle.jcajce.provider.asymmetric.RSA$Mappings",
+    "allPublicConstructors" : true,
+    "allPublicMethods" : true
+},
+{
+    "name" : "org.bouncycastle.jcajce.provider.asymmetric.ec.KeyPairGeneratorSpi$ECDSA",
+    "allPublicConstructors" : true,
+    "allPublicMethods" : true
+},
+{
+    "name" : "org.bouncycastle.jcajce.provider.asymmetric.ec.KeyFactorySpi$ECDSA",
+    "allPublicConstructors" : true,
+    "allPublicMethods" : true
+}
+]

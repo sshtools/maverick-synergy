@@ -73,13 +73,16 @@ public final class CallbackClient implements ChannelFactoryListener<SshServerCon
 	private final List<CallbackClientListener> listeners = new ArrayList<>();
 	private final ExecutorService executor;
 
+	private DisconnectionListener listener;
+
 	public CallbackClient() {
 		this(1);
 	}
 
 	public CallbackClient(int maxClients) {
 		executor = Executors.newFixedThreadPool(maxClients);
-		EventServiceImplementation.getInstance().addListener(new DisconnectionListener());
+		listener = new DisconnectionListener();
+		EventServiceImplementation.getInstance().addListener(listener);
 		channelFactory = new DefaultServerChannelFactory();
 		try {
 			ssh.startup();
@@ -100,7 +103,7 @@ public final class CallbackClient implements ChannelFactoryListener<SshServerCon
 
 	@Override
 	public void removeListener(CallbackClientListener listener) {
-		this.listeners.add(listener);
+		this.listeners.remove(listener);
 	}
 
 	public SshEngine getSshEngine() {
@@ -241,6 +244,7 @@ public final class CallbackClient implements ChannelFactoryListener<SshServerCon
 
 	@Override
 	public void close() {
+		EventServiceImplementation.getInstance().removeListener(listener);
 		stop();
 		ssh.shutdownAndExit();
 		executor.shutdownNow();

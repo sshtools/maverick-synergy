@@ -18,6 +18,7 @@ Bug Fixes
   o All `jdk16` specific modules have been merged into the core (Unix Domain Sockets for forwarding and the agent)
   o All deprecated API scheduled for removal has been removed.
   o `ExpectShell` should now be created with `ExpectShellBuilder`. Constructors and setters deprecated.
+  o Channel InputStream.available() now returns zero when at EOF, not throw an Exception. If the channel is closed, an IOException is thrown.
 
 =================
 =  HISTORY      =

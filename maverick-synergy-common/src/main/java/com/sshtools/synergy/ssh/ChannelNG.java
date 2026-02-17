@@ -1398,7 +1398,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	    		return 0;
 	    	}
 			if(streamClosed || isClosed()) {
-				throw new EOFException();
+				throw new IOException("Stream closed.");
 			}
 	        return streamCache.remaining();
 	    }

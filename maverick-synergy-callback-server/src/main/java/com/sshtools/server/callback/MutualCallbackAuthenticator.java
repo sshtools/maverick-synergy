@@ -102,7 +102,16 @@ public class MutualCallbackAuthenticator extends SimpleClientAuthenticator {
 				writer.writeString(username);
 				writer.writeBinaryString(transport.getSessionKey());
 				
-				SshPublicKey remotePublicKey = authenticationStore.getPublicKey(con);
+				SshPublicKey remotePublicKey;
+				try {
+					remotePublicKey = authenticationStore.getPublicKey(con);
+				}
+				catch(UnsupportedOperationException e) {
+					if(Log.isDebugEnabled()) {
+						Log.warn("Callback not found, and no fallback is allowed.");
+					}
+					remotePublicKey = null;
+				}
 
 				if(Log.isDebugEnabled()) {
 					Log.debug("Mutual authentication is using the remote key {}", SshKeyUtils.getOpenSSHFormattedKey(remotePublicKey));

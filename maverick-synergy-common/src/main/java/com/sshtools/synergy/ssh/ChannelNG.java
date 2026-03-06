@@ -551,6 +551,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 					throw new IOException("Channel has been closed");
 				}
 				
+				if(!buf.hasRemaining()) {
+					return;
+				}
+				
 				long window = remoteWindow.getWindowSpace().longValue();
 				UnsignedInteger32 count;
 				if(remoteWindow.getMaximumPacketSize() > buf.remaining()) {

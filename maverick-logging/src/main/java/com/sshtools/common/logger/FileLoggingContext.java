@@ -82,7 +82,6 @@ public class FileLoggingContext extends AbstractLoggingContext {
 		currentFile.seek(currentFile.length());
 		currentWriter = new BufferedWriter(new OutputStreamWriter(new RandomAccessOutputStream(currentFile)), 65536);
 		currentFileKey = readFileKey();
-		log(Level.INFO, String.format("Logging file %s", logFile.getAbsolutePath()), null);
 	}
 
 	private Object readFileKey() {

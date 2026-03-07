@@ -1,5 +1,7 @@
 package com.sshtools.common.ssh;
 
+import java.time.Duration;
+
 /*-
  * #%L
  * Base API
@@ -27,9 +29,9 @@ import java.util.List;
 
 public abstract class AbstractRequestFuture implements RequestFuture {
 
-	volatile boolean done = false;
-	volatile boolean success = false;
-	List<RequestFutureListener> listeners = new ArrayList<RequestFutureListener>();
+	private volatile boolean done = false;
+	private volatile boolean success = false;
+	private List<RequestFutureListener> listeners = new ArrayList<RequestFutureListener>();
 	
 	@Override
 	public boolean isDone() {
@@ -54,33 +56,29 @@ public abstract class AbstractRequestFuture implements RequestFuture {
 	}
 	
 	@Override
-	public synchronized RequestFuture waitForever() {
-		
-		try {
-			while(!done) {
-				wait(100);
-			}
-		} catch (InterruptedException e) {
+	public synchronized RequestFuture waitIndefinitely() throws InterruptedException {
+		while(!done) {
+			wait(100);
 		}
 		return this;
 	}
 
-	public synchronized RequestFuture waitFor(long timeout) {
+	@Override
+	public synchronized RequestFuture waitFor(Duration timeout)  throws InterruptedException {
 		
 		if(done) {
 			return this;
 		}
-		try {
-			long current = System.currentTimeMillis();
-			long expected = current + timeout - 10l;
-			do {
-				wait(timeout <= 0l ? 10l : timeout);
-				long c = System.currentTimeMillis();
-				timeout -= (c - current);
-				current = c;
-			} while (!done && current < expected);
-		} catch (InterruptedException e) {
-		}
+		
+		long timeoutMs = timeout.toMillis();
+		long current = System.currentTimeMillis();
+		long expected = current + timeoutMs - 10l;
+		do {
+			wait(timeoutMs <= 0l ? 10l : timeoutMs);
+			long c = System.currentTimeMillis();
+			timeoutMs -= (c - current);
+			current = c;
+		} while (!done && current < expected);
 		return this;
 	}
 	
@@ -92,5 +90,10 @@ public abstract class AbstractRequestFuture implements RequestFuture {
 			listeners.add(listener);
 		}
 		
+	}
+
+	@Override
+	public void removeFutureListener(RequestFutureListener listener) {
+		listeners.remove(listener);
 	}
 }

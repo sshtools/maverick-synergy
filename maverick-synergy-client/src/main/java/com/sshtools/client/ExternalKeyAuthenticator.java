@@ -45,6 +45,15 @@ public class ExternalKeyAuthenticator extends PublicKeyAuthenticator {
 	public ExternalKeyAuthenticator(SignatureGenerator signatureGenerator) throws IOException {
 		this.signatureGenerator = signatureGenerator;
 		this.publickeys = new ArrayList<>(signatureGenerator.getPublicKeys());
+		for(var publickey : publickeys) {
+			if(Log.isDebugEnabled()) {
+				try {
+					Log.debug("Loaded public key {}", SshKeyUtils.getOpenSSHFormattedKey(publickey));
+				} catch (IOException e) {
+					throw new IllegalStateException(e.getMessage(), e);
+				}
+			}
+		}
 	}
 
 	@Override

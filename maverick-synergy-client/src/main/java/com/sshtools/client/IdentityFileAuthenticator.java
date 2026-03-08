@@ -49,8 +49,9 @@ public class IdentityFileAuthenticator extends PublicKeyAuthenticator {
 	private PassphrasePrompt passphrase;
 	
 	private Path currentPath;
-	private SshPublicKey currentKey;
 	private String lastPassphrase;
+
+	private SshPublicKey currentKey;
 	
 	public IdentityFileAuthenticator(Collection<Path> identities, PassphrasePrompt passphrase) {
 		this.identities = new ArrayList<>(identities);
@@ -60,6 +61,10 @@ public class IdentityFileAuthenticator extends PublicKeyAuthenticator {
 	public IdentityFileAuthenticator(PassphrasePrompt passphrase) throws IOException {
 		this.identities = collectIdentities(true);
 		this.passphrase = passphrase;
+	}
+	
+	public void addIdentity(Path identity) {
+		this.identities.add(identity);
 	}
 	
 	public String getPassphrase(String keyinfo) {
@@ -88,7 +93,7 @@ public class IdentityFileAuthenticator extends PublicKeyAuthenticator {
 			
 			var filter = dir.getFileSystem().getPathMatcher("glob:**/*.pub");
 			try (var stream = Files.list(dir)) {
-			    return stream.filter(filter::matches).collect(Collectors.toList());
+			    return new ArrayList<>(stream.filter(filter::matches).collect(Collectors.toList()));
 			}
 		}
 	}
@@ -151,6 +156,14 @@ public class IdentityFileAuthenticator extends PublicKeyAuthenticator {
 		}
 		
 		return false;
+	}
+
+	protected List<Path> getIdentities() {
+		return identities;
+	}
+
+	protected void setCurrentKey(SshPublicKey currentKey) {
+		this.currentKey = currentKey;
 	}
 
 }

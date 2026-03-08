@@ -23,8 +23,8 @@ package com.sshtools.agent.rfc;
  */
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.sshtools.agent.AgentMessage;
@@ -57,7 +57,7 @@ public class SshAgentKeyList extends AgentMessage {
      */
     public SshAgentKeyList() {
         super(RFCAgentMessages.SSH_AGENT_KEY_LIST);
-        this.keys = new HashMap<SshPublicKey,String>();
+        this.keys = new LinkedHashMap<SshPublicKey,String>();
     }
 
     /**

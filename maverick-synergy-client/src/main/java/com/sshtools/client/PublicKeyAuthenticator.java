@@ -53,13 +53,12 @@ public abstract class PublicKeyAuthenticator extends SimpleClientAuthenticator i
 
 	public final static int SSH_MSG_USERAUTH_PK_OK = 60;
 	
-	boolean isAuthenticating = false;
-	TransportProtocolClient transport;
-	String username;
+	private boolean isAuthenticating = false;
+	private TransportProtocolClient transport;
+	private String username;
 	
-	SignatureGenerator signatureGenerator;
-	SshPublicKey currentKey;
-	String signingAlgorithm;
+	private SshPublicKey currentKey;
+	private String signingAlgorithm;
 	
 	public PublicKeyAuthenticator() {
 

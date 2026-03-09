@@ -26,6 +26,7 @@ import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -34,6 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.function.Consumer;
 
 import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.common.events.Event;
@@ -248,6 +250,26 @@ public final class SftpHandle implements Closeable {
 	}
 
 	/**
+	 * <p>
+	 * Write bytes directly to this file. This is a low-level operation, you may
+	 * only need to use {@link SftpClientTask#put(String)} methods instead if you
+	 * just want to upload files.
+	 * </p>
+	 * 
+	 * @param offset      offset in remote file to write to
+	 * @param input       input buffer to retrieve bytes from to write
+	 * @param inputOffset offset in output buffer to write bytes to
+	 * @param len         number of bytes to write
+	 * 
+	 * @throws SftpStatusException
+	 * @throws SshException
+	 */
+	public void write(long offset, ByteBuffer input, int inputOffset, int len) throws SftpStatusException, SshException {
+		checkValidHandle();
+		writeFile(new UnsignedInteger64(offset), input, inputOffset, len);
+	}
+
+	/**
 	 * Determine whether the file is open.
 	 *
 	 * @return boolean
@@ -327,6 +349,38 @@ public final class SftpHandle implements Closeable {
 	 * @throws SftpStatusException , SshException
 	 */
 	public int listChildren(List<SftpFile> children) throws SftpStatusException, SshException {
+		return listChildren(f -> children.add(f));
+	}
+
+	/**
+	 * <p>
+	 * List the children of a directory.
+	 * </p>
+	 * <p>
+	 * To use this method first open a directory with the
+	 * <a href="#openDirectory(java.lang.String)"> openDirectory</a> method and then
+	 * create a provide a {@link Consumer} to accept the results. To retrieve the results keep calling
+	 * this method until it returns -1 which indicates no more results will be
+	 * returned. <blockquote>
+	 * 
+	 * <pre>
+	 * SftpFile dir = sftp.openDirectory(&quot;code/foobar&quot;);
+	 * Vector results = new Vector();
+	 * while (sftp.listChildren(dir, results) &gt; -1)
+	 * 	;
+	 * sftp.closeFile(dir);
+	 * </pre>
+	 * 
+	 * </blockquote>
+	 * 
+	 * </p>
+	 * 
+	 * @param handle
+	 * @param children
+	 * @return int
+	 * @throws SftpStatusException , SshException
+	 */
+	public int listChildren(Consumer<SftpFile> children) throws SftpStatusException, SshException {
 
 		checkValidHandle();
 		
@@ -351,17 +405,14 @@ public final class SftpHandle implements Closeable {
 					if (Log.isDebugEnabled()) {
 						Log.debug("Received results");
 					}
-
-					SftpFile[] files = extractFiles(bar, file.getAbsolutePath());
+					
+					var count  = extractFiles(bar, file.getAbsolutePath(), children);
 
 					if (Log.isDebugEnabled()) {
-						Log.debug("There are {} results in this packet", files.length);
+						Log.debug("There are {} results in this packet", count);
 					}
 
-					for (int i = 0; i < files.length; i++) {
-						children.add(files[i]);
-					}
-					return files.length;
+					return count;
 				} else if (bar.getType() == SftpChannel.SSH_FXP_STATUS) {
 					int status = (int) bar.readInt();
 
@@ -620,6 +671,78 @@ public final class SftpHandle implements Closeable {
 					Log.info("Optimized write did not transfer any data");
 				}
 			}
+		}
+
+	}
+
+	/**
+	 * Read a block of data from an open file.
+	 * 
+	 * @param handle the open file handle
+	 * @param offset the offset to start reading in the file
+	 * @param output a buffer to write the returned data to
+	 * @param off    the starting offset in the output buffer
+	 * @param len    the length of data to read
+	 * @return int
+	 * @throws SshException
+	 */
+	public int readFile(UnsignedInteger64 offset, ByteBuffer output, int off, int len)
+			throws SftpStatusException, SshException {
+
+		checkValidHandle();
+		
+		try {
+			if ((output.remaining() - off) < len) {
+				throw new IndexOutOfBoundsException("Output array size is smaller than read length!");
+			}
+
+			UnsignedInteger32 requestId = sftp.nextRequestId();
+			Packet msg = sftp.createPacket();
+			msg.write(SftpChannel.SSH_FXP_READ);
+			msg.writeInt(requestId.longValue());
+			msg.writeBinaryString(handle);
+			msg.write(offset.toByteArray());
+			msg.writeInt(len);
+
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_READ for {} bytes at position {} for {} requestId={}", len, offset.toString(), file.getFilename(), requestId);
+			}
+			
+			sftp.sendMessage(msg);
+
+			SftpMessage bar = sftp.getResponse(requestId);
+
+			try {
+				if (bar.getType() == SftpChannel.SSH_FXP_DATA) {
+					byte[] msgdata = bar.readBinaryString();
+					output.put(msgdata, off, msgdata.length);
+					output.position(off + msgdata.length);
+					if(Log.isDebugEnabled()) {
+						Log.debug("Received SSH_FXP_DATA with {} bytes at position {} for {} requestId={}", msgdata.length, offset.toString(), file.getFilename(), requestId);
+					}
+					
+					return msgdata.length;
+				} else if (bar.getType() == SftpChannel.SSH_FXP_STATUS) {
+					int status = (int) bar.readInt();
+					if (status == SftpStatusException.SSH_FX_EOF)
+						return -1;
+					if (sftp.getVersion() >= 3) {
+						String desc = bar.readString();
+						throw new SftpStatusException(status, desc);
+					}
+					throw new SftpStatusException(status);
+				} else {
+					close();
+					throw new SshException("The server responded with an unexpected message",
+							SshException.CHANNEL_FAILURE);
+				}
+			} finally {
+				bar.release();
+			}
+		} catch (SshIOException ex) {
+			throw ex.getRealException();
+		} catch (IOException ex) {
+			throw new SshException(ex);
 		}
 
 	}
@@ -1115,6 +1238,49 @@ public final class SftpHandle implements Closeable {
 		}
 	}
 
+	/**
+	 * Send a write request for an open file but do not wait for the response from
+	 * the server.
+	 * 
+	 * @param handle
+	 * @param position
+	 * @param data
+	 * @param off
+	 * @param len
+	 * @return UnsignedInteger32
+	 * @throws SshException
+	 */
+	public UnsignedInteger32 postWriteRequest(long position, ByteBuffer data, int off, int len)
+			throws SftpStatusException, SshException {
+		checkValidHandle();
+		
+		if ((data.remaining() - off) < len) {
+			throw new IndexOutOfBoundsException("Incorrect data array size!");
+		}
+
+		try {
+			UnsignedInteger32 requestId = sftp.nextRequestId();
+			Packet msg = sftp.createPacket();
+			msg.write(SftpChannel.SSH_FXP_WRITE);
+			msg.writeInt(requestId.longValue());
+			msg.writeBinaryString(handle);
+			msg.writeUINT64(position);
+			msg.writeBinaryString(data, off, len);
+
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_WRITE with {} bytes at position {} for {} requestId={}", len, position, file.getFilename(), requestId);
+			}
+			
+			sftp.sendMessage(msg);
+
+			return requestId;
+		} catch (SshIOException ex) {
+			throw ex.getRealException();
+		} catch (IOException ex) {
+			throw new SshException(ex);
+		}
+	}
+
 	SftpChannel getSFTPChannel() {
 		return sftp;
 	}
@@ -1126,7 +1292,7 @@ public final class SftpHandle implements Closeable {
 		}	
 	}
 	
-	private SftpFile[] extractFiles(SftpMessage bar, String parent) throws SshException {
+	private int extractFiles(SftpMessage bar, String parent, Consumer<SftpFile> consumer) throws SshException {
 
 		try {
 
@@ -1135,12 +1301,11 @@ public final class SftpHandle implements Closeable {
 			}
 
 			int count = (int) bar.readInt();
-			SftpFile[] files = new SftpFile[count];
 
 			String shortname;
 			String longname = null;
 
-			for (int i = 0; i < files.length; i++) {
+			for (int i = 0; i < count; i++) {
 				shortname = bar.readString(sftp.CHARSET_ENCODING); 
 
 				if (sftp.version <= 3) {
@@ -1169,11 +1334,11 @@ public final class SftpHandle implements Closeable {
 
 				}
 
-				files[i] = new SftpFile(parent != null ? parent + shortname
-						: shortname, bldr.build(), longname);
+				consumer.accept(new SftpFile(parent != null ? parent + shortname
+						: shortname, bldr.build(), longname));
 			}
 
-			return files;
+			return count;
 		} catch (SshIOException ex) {
 			throw ex.getRealException();
 		} catch (IOException ex) {
@@ -1182,6 +1347,11 @@ public final class SftpHandle implements Closeable {
 	}
 	
 	private void writeFile(UnsignedInteger64 offset, byte[] data,
+			int off, int len) throws SftpStatusException, SshException {
+		sftp.getOKRequestStatus(postWriteRequest(offset.longValue(), data, off, len), file);
+	}
+
+	private void writeFile(UnsignedInteger64 offset, ByteBuffer data,
 			int off, int len) throws SftpStatusException, SshException {
 		sftp.getOKRequestStatus(postWriteRequest(offset.longValue(), data, off, len), file);
 	}

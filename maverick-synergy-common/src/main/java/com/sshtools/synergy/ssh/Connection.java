@@ -25,7 +25,6 @@ package com.sshtools.synergy.ssh;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +32,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 
 import com.sshtools.common.events.Event;
@@ -64,7 +64,7 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 	InetSocketAddress localAddress;
 	T context;
 
-	List<EventListener> listeners = new ArrayList<>();
+	List<EventListener> listeners = new CopyOnWriteArrayList<>();
 	Locale locale;
 
 	public Connection(T context) {

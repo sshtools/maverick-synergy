@@ -24,6 +24,8 @@ package com.sshtools.client.sftp;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.OpenOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1890,5 +1892,38 @@ public class SftpChannel extends AbstractSubsystem {
 
 	public SftpHandle createHandle(byte[] handle, String path) throws SftpStatusException, SshException {
 		return new SftpHandle(handle, this, new SftpFile(path, getAttributes(handle), null));
+	}
+
+	public static int toFlags(OpenOption... flags) {
+		var result = 0;
+		for(var flag : flags) {
+			if(flag instanceof StandardOpenOption stdFlag) {
+				switch(stdFlag) {
+				case READ:
+					result |= OPEN_READ;
+					break;
+				case WRITE:
+					result |= OPEN_WRITE;
+					break;
+				case APPEND:
+					result |= OPEN_APPEND;
+					break;
+				case CREATE:
+					result |= OPEN_CREATE;
+					break;
+				case TRUNCATE_EXISTING:
+					result |= OPEN_TRUNCATE;
+					break;
+				case CREATE_NEW:
+					result |= OPEN_CREATE | OPEN_EXCLUSIVE;
+					break;
+				default:
+					throw new IllegalArgumentException("Unsupported open option " + flag);
+				}
+			} else {
+				throw new IllegalArgumentException("Unsupported open option " + flag);
+			}
+		}
+		return result;
 	}
 }

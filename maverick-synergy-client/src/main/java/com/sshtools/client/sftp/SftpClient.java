@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -46,12 +47,14 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.function.Consumer;
 
 import com.sshtools.client.SshClient;
 import com.sshtools.client.tasks.FileTransferProgress;
@@ -594,6 +597,14 @@ public class SftpClient implements Closeable {
 		return openFile(fileName, SftpChannel.OPEN_READ);
 	}
 
+	public SftpHandle openFile(String fileName, Set<? extends OpenOption> flags) throws SftpStatusException, SshException {
+		return openFile(fileName, flags.toArray(new OpenOption[flags.size()]));
+	}
+
+	public SftpHandle openFile(String fileName, OpenOption... flags) throws SftpStatusException, SshException {
+		 return openFile(fileName, SftpChannel.toFlags(flags));
+	}
+
 	public SftpHandle openFile(String fileName, int flags) throws SftpStatusException, SshException {
 		if (transferMode == MODE_TEXT && sftp.getVersion() > 3) {
 			return sftp.openFile(resolveRemotePath(fileName), flags | SftpChannel.OPEN_TEXT);
@@ -878,7 +889,7 @@ public class SftpClient implements Closeable {
 
 	/**
 	 * <p>
-	 * List the contents remote directory.
+	 * List the entire contents of a remote directory.
 	 * </p>
 	 * 
 	 * <p>
@@ -900,7 +911,7 @@ public class SftpClient implements Closeable {
 		if (Log.isDebugEnabled())
 			Log.debug("Listing files for " + actual);
 
-		Vector<SftpFile> children = new Vector<SftpFile>();
+		List<SftpFile> children = new LinkedList<SftpFile>();
 		try(SftpHandle file = sftp.openDirectory(actual)) {
 			while (file.listChildren(children) > -1) {
 				;
@@ -908,12 +919,7 @@ public class SftpClient implements Closeable {
 		} catch (IOException e) {
 			throw new SshException(SshException.INTERNAL_ERROR, e);
 		}
-		SftpFile[] files = new SftpFile[children.size()];
-		int index = 0;
-		for (Enumeration<SftpFile> e = children.elements(); e.hasMoreElements();) {
-			files[index++] = e.nextElement();
-		}
-		return files;
+		return children.toArray(new SftpFile[children.size()]);
 	}
 
 	public SftpFile[] ls(String filter, boolean regexFilter, int maximumFiles)
@@ -3691,7 +3697,7 @@ public class SftpClient implements Closeable {
 	class DirectoryIterator implements Iterator<SftpFile> {
 
 		SftpHandle currentFolder;
-		Vector<SftpFile> currentPage = new Vector<SftpFile>();
+		List<SftpFile> currentPage = new LinkedList<SftpFile>();
 		Iterator<SftpFile> currentIterator;
 
 		DirectoryIterator(String path) throws SftpStatusException, SshException {

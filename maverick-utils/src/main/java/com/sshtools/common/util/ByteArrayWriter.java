@@ -26,7 +26,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.Objects;
 
 /**
  *
@@ -115,6 +117,34 @@ public class ByteArrayWriter
 	    writeInt(len);
 	    write(data, offset, len);
 	}
+  }
+
+  /**
+   * Write a binary string to the array.
+   * @param data
+   * @param offset
+   * @param len
+   * @throws IOException
+   */
+  public void writeBinaryString(ByteBuffer data, int offset, int len) throws
+      IOException {
+	if(data==null || data.remaining() == 0)
+		writeInt(0);
+	else {
+	    writeInt(len);
+	    write(data, offset, len);
+	}
+  }
+  
+  public synchronized void write(ByteBuffer b, int off, int len) {
+      Objects.checkFromIndexSize(off, len, b.remaining());
+      int oldCapacity = buf.length;
+      int minGrowth = count + len  - oldCapacity;
+      if (minGrowth > 0) {
+    	  write(new byte[minGrowth], 0, minGrowth); // Ensure capacity
+      }
+      b.get(off, buf, count, len);
+      count += len;
   }
 
   public void writeMPINT(BigInteger b) {

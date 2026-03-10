@@ -83,14 +83,24 @@ public final class ForwardingRequest {
 
 		/**
 		 * Set the bind address and optionally the bind port from a string specification.
-		 * The format is either {@code "host:port"} or just {@code "host"}.
+		 * The format is either {@code "host:port"} or just {@code "host"}  or {@code "port"} .
 		 *
 		 * @param bindSpec the bind specification string
 		 * @return this builder
 		 */
 		public ForwardingRequestBuilder withBind(String bindSpec) {
 			var parts = bindSpec.split(":");
-			return parts.length > 1 ? withBindAddress(parts[0]).withBindPort(Integer.parseInt(parts[1])) : withBindAddress(parts[0]);
+			if(parts.length > 1) {
+				return withBindAddress(parts[0]).withBindPort(Integer.parseInt(parts[1]));
+			}
+			else {
+				try {
+					return withBindPort(Integer.parseInt(bindSpec));
+				}
+				catch(NumberFormatException e) {
+					return withBindAddress(bindSpec);
+				}
+			}
 		}
 
 		/**
@@ -149,14 +159,24 @@ public final class ForwardingRequest {
 
 		/**
 		 * Set the destination from a string specification. The format is either
-		 * {@code "host:port"} or just {@code "host"}.
+		 * {@code "host:port"} or just {@code "host"} or {@code "port"}.
 		 *
 		 * @param destinationSpec the destination specification string
 		 * @return this builder
 		 */
 		public ForwardingRequestBuilder withDestination(String destinationSpec) {
 			var parts = destinationSpec.split(":");
-			return parts.length > 1 ? withBindAddress(parts[0]).withBindPort(Integer.parseInt(parts[1])) : withBindAddress(parts[0]);
+			if(parts.length > 1) {
+				return withDestinationAddress(parts[0]).withDestinationPort(Integer.parseInt(parts[1]));
+			}
+			else {
+				try {
+					return withDestinationPort(Integer.parseInt(destinationSpec));
+				}
+				catch(NumberFormatException e) {
+					return withDestinationAddress(destinationSpec);
+				}
+			}
 		}
 
 		/**

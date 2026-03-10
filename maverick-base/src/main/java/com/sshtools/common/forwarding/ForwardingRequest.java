@@ -26,12 +26,29 @@ import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Optional;
 
+/**
+ * Represents a port or domain socket forwarding request, encapsulating the bind
+ * and destination addresses (or paths for UNIX domain sockets) used to set up
+ * SSH forwarding channels. Instances are immutable and should be created using
+ * the {@link ForwardingRequestBuilder}.
+ */
 public final class ForwardingRequest {
 
+	/**
+	 * The transport protocol used for a forwarding request.
+	 */
 	public enum Protocol {
-		TCP, DOMAIN_SOCKETS
+		/** TCP/IP based forwarding. */
+		TCP,
+		/** UNIX domain socket based forwarding. */
+		DOMAIN_SOCKETS
 	}
 	
+	/**
+	 * A builder for creating {@link ForwardingRequest} instances. Use {@link #create()} to
+	 * obtain a new builder, configure it using the {@code with*} methods, and call
+	 * {@link #build()} to produce an immutable {@link ForwardingRequest}.
+	 */
 	public final static class ForwardingRequestBuilder {
 		private Optional<Protocol> protocol = Optional.empty();
 		private Optional<String> bindPath = Optional.empty();
@@ -44,77 +61,205 @@ public final class ForwardingRequest {
 		private ForwardingRequestBuilder() {
 		}
 
+		/**
+		 * Set both the bind port and destination port to the same value.
+		 *
+		 * @param port the port number to use for both bind and destination
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withPort(int port) {
 			return withBindPort(port).withDestinationPort(port);
 		}
 
+		/**
+		 * Set the bind address and port from an {@link InetSocketAddress}.
+		 *
+		 * @param addr the socket address to bind to
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withBind(InetSocketAddress addr) {
-			return withBind(addr.getHostString()).withBindPort(addr.getPort());
+			return withBindAddress(addr.getHostString()).withBindPort(addr.getPort());
 		}
 
-		public ForwardingRequestBuilder withBind(String addressToBind) {
+		/**
+		 * Set the bind address and optionally the bind port from a string specification.
+		 * The format is either {@code "host:port"} or just {@code "host"}.
+		 *
+		 * @param bindSpec the bind specification string
+		 * @return this builder
+		 */
+		public ForwardingRequestBuilder withBind(String bindSpec) {
+			var parts = bindSpec.split(":");
+			return parts.length > 1 ? withBindAddress(parts[0]).withBindPort(Integer.parseInt(parts[1])) : withBindAddress(parts[0]);
+		}
+
+		/**
+		 * Set the address to bind to.
+		 *
+		 * @param addressToBind the bind address
+		 * @return this builder
+		 */
+		public ForwardingRequestBuilder withBindAddress(String addressToBind) {
 			this.bindAddress = Optional.of(addressToBind);
 			return this;
 		}
 
+		/**
+		 * Set both the bind address and bind port.
+		 *
+		 * @param addressToBind the address to bind to
+		 * @param portToBind the port to bind to
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withBind(String addressToBind, int portToBind) {
-			return withBind(addressToBind).withBindPort(portToBind);
+			return withBindAddress(addressToBind).withBindPort(portToBind);
 		}
 
+		/**
+		 * Configure the request to bind on all interfaces ({@code "::"}).
+		 *
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withBindAll() {
-			return withBind("::");
+			return withBindAddress("::");
 		}
 
+		/**
+		 * Set the port to bind to. A value of {@code 0} indicates a random port
+		 * and will clear any previously set bind port.
+		 *
+		 * @param portToBind the port to bind to, or {@code 0} for a random port
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withBindPort(int portToBind) {
 			this.bindPort = portToBind == 0 ? Optional.empty() : Optional.of(portToBind);
 			return this;
 		}
 
+		/**
+		 * Set the destination address and port.
+		 *
+		 * @param destinationAddress the destination host address
+		 * @param destinationPort the destination port
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withDestination(String destinationAddress, int destinationPort) {
 			return withDestinationAddress(destinationAddress).withDestinationPort(destinationPort);
 		}
 
+		/**
+		 * Set the destination from a string specification. The format is either
+		 * {@code "host:port"} or just {@code "host"}.
+		 *
+		 * @param destinationSpec the destination specification string
+		 * @return this builder
+		 */
+		public ForwardingRequestBuilder withDestination(String destinationSpec) {
+			var parts = destinationSpec.split(":");
+			return parts.length > 1 ? withBindAddress(parts[0]).withBindPort(Integer.parseInt(parts[1])) : withBindAddress(parts[0]);
+		}
+
+		/**
+		 * Set the destination port.
+		 *
+		 * @param destinationPort the destination port number
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withDestinationPort(int destinationPort) {
 			this.destinationPort = Optional.of(destinationPort);
 			return this;
 		}
 
+		/**
+		 * Set the destination address.
+		 *
+		 * @param destinationAddress the destination host address
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withDestinationAddress(String destinationAddress) {
 			this.destinationAddress = Optional.of(destinationAddress);
 			return this;
 		}
 
+		/**
+		 * Set the destination address and port from an {@link InetSocketAddress}.
+		 *
+		 * @param addr the destination socket address
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withDestination(InetSocketAddress addr) {
 			return withDestinationAddress(addr.getHostString()).withDestinationPort(addr.getPort());
 		}
 
+		/**
+		 * Set both the bind path and destination path to the same UNIX domain socket path.
+		 *
+		 * @param path the UNIX domain socket path
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withPath(String path) {
 			return withBindPath(path).withDestinationPath(path);
 		}
 
+		/**
+		 * Set the UNIX domain socket path to bind to.
+		 *
+		 * @param bindPath the bind path
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withBindPath(String bindPath) {
 			this.bindPath = Optional.of(bindPath);
 			return this;
 		}
 		
+		/**
+		 * Set the UNIX domain socket path to bind to from a {@link Path}.
+		 *
+		 * @param boundPath the bind path
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withBindPath(Path boundPath) {
 			return withBindPath(boundPath.toString());
 		}
 
+		/**
+		 * Set the UNIX domain socket destination path.
+		 *
+		 * @param destinationPath the destination path
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withDestinationPath(String destinationPath) {
 			this.destinationPath = Optional.of(destinationPath);
 			return this;
 		}
 		
+		/**
+		 * Explicitly set the transport protocol. If not set, the protocol will be
+		 * derived from the configured addresses or paths.
+		 *
+		 * @param protocol the protocol to use
+		 * @return this builder
+		 */
 		public ForwardingRequestBuilder withProtocol(Protocol protocol) {
 			this.protocol = Optional.of(protocol);
 			return this;
 		}
 		
+		/**
+		 * Build an immutable {@link ForwardingRequest} from the current builder state.
+		 *
+		 * @return a new {@link ForwardingRequest}
+		 * @throws IllegalStateException if no protocol can be set or derived
+		 */
 		public ForwardingRequest build() {
 			return new ForwardingRequest(this);
 		}
 		
+		/**
+		 * Create a new {@link ForwardingRequestBuilder} instance.
+		 *
+		 * @return a new builder
+		 */
 		public static ForwardingRequestBuilder create() {
 			return new ForwardingRequestBuilder();
 		}
@@ -198,6 +343,13 @@ public final class ForwardingRequest {
 		
 	}
 	
+	/**
+	 * Determine whether this request binds on all interfaces. For UNIX domain
+	 * sockets this always returns {@code true}. For TCP, it returns {@code true}
+	 * when the bind address is {@code "0.0.0.0"} or {@code "::"}.
+	 *
+	 * @return {@code true} if the request binds on all interfaces
+	 */
 	public boolean bindAll() {
 		switch(protocol) {
 		case DOMAIN_SOCKETS:
@@ -207,58 +359,136 @@ public final class ForwardingRequest {
 		}
 	}
 	
+	/**
+	 * Get the port to bind to.
+	 *
+	 * @return the bind port
+	 * @throws IllegalStateException if no bind port is set (e.g. for domain sockets)
+	 */
 	public int bindPort() {
 		return bindPort.orElseThrow(() -> new IllegalStateException("This forward has no port to bind."));
 	}
 	
+	/**
+	 * Get the bind port as an {@link Optional}.
+	 *
+	 * @return an {@link Optional} containing the bind port, or empty if not set
+	 */
 	public Optional<Integer> bindPortOr() {
 		return bindPort;
 	}
 	
+	/**
+	 * Get the destination port.
+	 *
+	 * @return the destination port
+	 * @throws IllegalStateException if no destination port is set (e.g. for domain sockets)
+	 */
 	public int destinationPort() {
 		return destinationPort.orElseThrow(() -> new IllegalStateException("This forward has no destination port."));
 	}
 	
+	/**
+	 * Get the destination port as an {@link Optional}.
+	 *
+	 * @return an {@link Optional} containing the destination port, or empty if not set
+	 */
 	public Optional<Integer> destinationPortOr() {
 		return destinationPort;
 	}
 	
+	/**
+	 * Get the address to bind to.
+	 *
+	 * @return the bind address
+	 * @throws IllegalStateException if no bind address is set (e.g. for domain sockets)
+	 */
 	public String bindAddress() {
 		return bindAddress.orElseThrow(() -> new IllegalStateException("This forward has no address to bind."));
 	}
 	
+	/**
+	 * Get the bind address as an {@link Optional}.
+	 *
+	 * @return an {@link Optional} containing the bind address, or empty if not set
+	 */
 	public Optional<String> bindAddressOr() {
 		return bindAddress;
 	}
 
+	/**
+	 * Get the destination address.
+	 *
+	 * @return the destination address
+	 * @throws IllegalStateException if no destination address is set (e.g. for domain sockets)
+	 */
 	public String destinationAddress() {
 		return destinationAddress.orElseThrow(() -> new IllegalStateException("This forward has no local address."));
 	}
 
+	/**
+	 * Get the destination address as an {@link Optional}.
+	 *
+	 * @return an {@link Optional} containing the destination address, or empty if not set
+	 */
 	public Optional<String> destinationAddressOr() {
 		return destinationAddress;
 	}
 	
+	/**
+	 * Get the transport protocol for this forwarding request.
+	 *
+	 * @return the protocol
+	 */
 	public Protocol protocol() {
 		return protocol;
 	}
 
+	/**
+	 * Get the UNIX domain socket bind path as an {@link Optional}.
+	 *
+	 * @return an {@link Optional} containing the bind path, or empty if not set
+	 */
 	public Optional<String> bindPathOr() {
 		return bindPath;
 	}
 	
+	/**
+	 * Get the UNIX domain socket path to bind to.
+	 *
+	 * @return the bind path
+	 * @throws IllegalStateException if no bind path is set (e.g. for TCP)
+	 */
 	public String bindPath() {
 		return bindPath.orElseThrow(() -> new IllegalStateException("This forward has no local path."));
 	}
 	
+	/**
+	 * Get the UNIX domain socket destination path.
+	 *
+	 * @return the destination path
+	 * @throws IllegalStateException if no destination path is set (e.g. for TCP)
+	 */
 	public String destinationPath() {
 		return destinationPath.orElseThrow(() -> new IllegalStateException("This forward has no remote path."));
 	}
 
+	/**
+	 * Get the UNIX domain socket destination path as an {@link Optional}.
+	 *
+	 * @return an {@link Optional} containing the destination path, or empty if not set
+	 */
 	public Optional<String> destinationPathOr() {
 		return destinationPath;
 	}
 	
+	/**
+	 * Get a human-readable name for the bind side of this forwarding request.
+	 * For domain sockets, this is the bind path. For TCP, this is the bind
+	 * address and port formatted as {@code "address:port"}.
+	 *
+	 * @return the bind name
+	 */
 	public String bindName() {
 		switch(protocol) {
 		case DOMAIN_SOCKETS:
@@ -268,6 +498,13 @@ public final class ForwardingRequest {
 		}
 	}
 	
+	/**
+	 * Get a human-readable name for the destination side of this forwarding request.
+	 * For domain sockets, this is the destination path. For TCP, this is the destination
+	 * address and port formatted as {@code "address:port"}.
+	 *
+	 * @return the destination name
+	 */
 	public String destinationName() {
 		switch(protocol) {
 		case DOMAIN_SOCKETS:
@@ -277,14 +514,27 @@ public final class ForwardingRequest {
 		}
 	}
 	
+	/**
+	 * Determine whether this request has a bind address or bind path configured.
+	 *
+	 * @return {@code true} if a bind address or bind path is present
+	 */
 	public boolean hasBind() {
 		return bindAddress.isPresent() || bindPath.isPresent();
 	}
 	
+	/**
+	 * Determine whether this request has a destination address or destination path configured.
+	 *
+	 * @return {@code true} if a destination address or destination path is present
+	 */
 	public boolean hasDestination() {
 		return destinationAddress.isPresent() || destinationPath.isPresent();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String toString() {
 		switch(protocol) {
@@ -351,7 +601,8 @@ public final class ForwardingRequest {
 	/**
 	 * Convenience method to create a request for a TCP socket bind.
 	 * 
-	 * @param path bind path
+	 * @param addressToBind the address to bind to
+	 * @param portToBind the port to bind to
 	 * @return request
 	 */
 	public static ForwardingRequest ofTcpBind(String addressToBind, int portToBind) {
@@ -367,11 +618,11 @@ public final class ForwardingRequest {
 	 * @param addressToBind address to bind
 	 * @param destinationHost destination host
 	 * @param destinationPort destination port
-	 * @return
+	 * @return request
 	 */
 	public static ForwardingRequest ofTcp(String addressToBind, String destinationHost, int destinationPort) {
 		return new ForwardingRequestBuilder().
-				withBind(addressToBind).
+				withBindAddress(addressToBind).
 				withDestination(destinationHost, destinationPort).
 				build();
 	}
@@ -384,7 +635,7 @@ public final class ForwardingRequest {
 	 * @param portToBind port to bind or zero
 	 * @param destinationHost destination host
 	 * @param destinationPort destination port
-	 * @return
+	 * @return request
 	 */
 	public static ForwardingRequest ofTcp(String addressToBind, int portToBind, String destinationHost, int destinationPort) {
 		return new ForwardingRequestBuilder().

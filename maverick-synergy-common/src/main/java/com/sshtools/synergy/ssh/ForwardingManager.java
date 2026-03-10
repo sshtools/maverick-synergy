@@ -403,7 +403,7 @@ public class ForwardingManager<T extends SshContext> {
 		var bldr = ForwardingRequestBuilder.create().
 				withProtocol(Protocol.TCP);
 		if(addressToBind != null) {
-			bldr.withBind(addressToBind).
+			bldr.withBindAddress(addressToBind).
 				withBindPort(portToBind);
 		}
 		
@@ -461,7 +461,7 @@ public class ForwardingManager<T extends SshContext> {
 				withProtocol(Protocol.TCP);
 		
 		if(addressToBind != null) {
-			bldr.withBind(addressToBind).
+			bldr.withBindAddress(addressToBind).
 				withBindPort(portToBind);
 		}
 		

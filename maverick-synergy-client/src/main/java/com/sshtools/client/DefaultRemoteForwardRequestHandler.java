@@ -139,7 +139,7 @@ public class DefaultRemoteForwardRequestHandler implements RemoteForwardRequestH
 		
 		return startRemoteForward(ForwardingRequestBuilder.create().
 				withProtocol(Protocol.TCP).
-				withBind(hostToBind).
+				withBindAddress(hostToBind).
 				withBindPort(portToBind).
 				withDestinationAddress(destinationHost).
 				withDestinationPort(destinationPort).

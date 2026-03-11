@@ -1,2 +1,2 @@
 com.sshtools.agent.provider.tcp.TCPAgentProvider
-com.sshtools.agent.provider.usd.UnixDomainSocketAgentProvider
+com.sshtools.agent.provider.uds.UnixDomainSocketAgentProvider

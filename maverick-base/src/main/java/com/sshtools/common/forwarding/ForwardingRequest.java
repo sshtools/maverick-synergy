@@ -663,4 +663,42 @@ public final class ForwardingRequest {
 				withDestination(destinationHost, destinationPort).
 				build();
 	}
+
+	/**
+	 * Return a string representation of the bind specification for this request,
+	 * which is either [<address>:]<port> for TCP forwarding or <socketPath> for
+	 * domain socket forwarding. If the bind address is not specified, it defaults
+	 * to an empty string.
+	 * 
+	 * @return bind specification string
+	 */
+	public String bindSpec() {
+		switch(protocol) {
+		case DOMAIN_SOCKETS:
+			return bindPath.orElse("");
+		case TCP:
+			return bindAddress.orElse("") + (bindPort.isPresent() ? ":" + bindPort.get() : "");
+		default:
+			return "";
+		}
+	}
+	
+	/**
+	 * Return a string representation of the destination specification for this
+	 * request, which is either [<address>:]<port> for TCP forwarding or
+	 * <socketPath> for domain socket forwarding. If the destination address is not
+	 * specified, it defaults to an empty string.
+	 * 
+	 * @return destination specification string
+	 */
+	public String destinationSpec() {
+		switch(protocol) {
+		case DOMAIN_SOCKETS:
+			return destinationPath.orElse("");
+		case TCP:
+			return destinationAddress.orElse("") + (destinationPort.isPresent() ? ":" + destinationPort.get() : "");
+		default:
+			return "";
+		}
+	}
 }

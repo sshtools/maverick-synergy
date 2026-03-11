@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
+import com.sshtools.common.events.EventListener;
 import com.sshtools.common.events.EventServiceImplementation;
 import com.sshtools.common.forwarding.ForwardingHandle;
 import com.sshtools.common.forwarding.ForwardingRequest;
@@ -58,7 +59,22 @@ public class ForwardingManager<T extends SshContext> {
 		List<ForwardingHandle> hndls = conn.getProperty(handle.type().key());
 		if(hndls == null) {
 			hndls = Collections.synchronizedList(new ArrayList<>());
+			
+			var fhndls = hndls;
+			EventListener listener = (evt) -> {
+				if(evt.getId() == EventCodes.EVENT_DISCONNECTED) {
+					new ArrayList<>(fhndls).forEach(h -> {
+						try {
+							h.close();
+						} catch (IOException e) {
+						}
+					});
+				}
+			};
+			
+			conn.setProperty(handle.type().key() + "-listener", listener);
 			conn.setProperty(handle.type().key(), hndls);
+			conn.addEventListener(listener);
 		}
 		hndls.add(handle);
 		return handle;
@@ -76,8 +92,11 @@ public class ForwardingManager<T extends SshContext> {
 		List<ForwardingHandle> hndls = conn.getProperty(handle.type().key());
 		if(hndls != null) {
 			var removed = hndls.remove(handle);
-			if(hndls.isEmpty())
+			if(hndls.isEmpty()) {
 				conn.removeProperty(handle.type().key());
+				conn.removeEventListener(conn.getProperty(handle.type().key() + "-listener"));
+				conn.removeProperty(handle.type().key() + "-listener");
+			}
 			return removed;
 		}
 		return false;

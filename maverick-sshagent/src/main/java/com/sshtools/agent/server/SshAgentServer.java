@@ -1,5 +1,7 @@
 package com.sshtools.agent.server;
 
+import java.io.Closeable;
+
 /*-
  * #%L
  * Key Agent
@@ -33,7 +35,7 @@ import com.sshtools.agent.openssh.OpenSSHConnectionFactory;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 
-public class SshAgentServer {
+public class SshAgentServer implements Closeable {
 
 	KeyStore keystore;
 	SshAgentConnectionFactory connectionFactory;
@@ -76,6 +78,7 @@ public class SshAgentServer {
 		startListener(location, AgentSocketType.UNIX_DOMAIN);
 	}
 	
+	@Override
 	public void close() throws IOException {
 		Log.info("Agent server is closing down");
 		if(acceptor!=null) {

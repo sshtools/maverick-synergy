@@ -137,7 +137,7 @@ public class OpenSSHAgentConnection implements Runnable, SshAgentConnection {
      *
      * @throws IOException if an IO error occurs
      */
-    protected void onAddKey(SshAgentAddKey msg) throws IOException {
+    protected void onAddKey(OpenSshAgentAddKey msg) throws IOException {
     	if(!keystore.isLocked()){
     		if (keystore.addKey(msg.getPrivateKey(), msg.getPublicKey(),
                     msg.getDescription(), msg.getKeyConstraints())) {
@@ -244,7 +244,7 @@ public class OpenSSHAgentConnection implements Runnable, SshAgentConnection {
      *
      * @throws IOException if an IO error occurs
      */
-    protected void onDeleteKey(SshAgentDeleteKey msg) throws IOException {
+    protected void onDeleteKey(OpenSshAgentDeleteKey msg) throws IOException {
         if (keystore.deleteKey(msg.getPublicKey())) {
             sendAgentSuccess();
         } else {
@@ -363,7 +363,7 @@ public class OpenSSHAgentConnection implements Runnable, SshAgentConnection {
         case OpenSSHAgentMessages.SSH2_AGENTC_ADD_IDENTITY: {
             Log.info("Adding key to agent");
 
-            SshAgentAddKey msg = new SshAgentAddKey();
+            OpenSshAgentAddKey msg = new OpenSshAgentAddKey();
             msg.fromByteArray(msgdata);
 			onAddKey(msg);
 
@@ -388,7 +388,7 @@ public class OpenSSHAgentConnection implements Runnable, SshAgentConnection {
         case OpenSSHAgentMessages.SSH2_AGENTC_REMOVE_IDENTITY: {
             Log.info("Deleting key from agent");
 
-            SshAgentDeleteKey msg = new SshAgentDeleteKey();
+            OpenSshAgentDeleteKey msg = new OpenSshAgentDeleteKey();
             msg.fromByteArray(msgdata);
             onDeleteKey(msg);
 

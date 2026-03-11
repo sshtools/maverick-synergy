@@ -22,6 +22,8 @@ Bug Fixes
   o `ExpectShell` should now be created with `ExpectShellBuilder`. Constructors and setters deprecated.
   o Channel InputStream.available() now returns zero when at EOF, not throw an Exception. If the channel is closed, an IOException is thrown.
   o ChannelNG will sendChannelDataAndBlock will hang if a zero length buffer is passed.
+  o SSH agent when in OpenSSH mode not correctly signing RSA keys mean authentication failures.
+  o SSH agent when in OpenSSH mode would not accept add and delete key requests.
 
 =================
 =  HISTORY      =

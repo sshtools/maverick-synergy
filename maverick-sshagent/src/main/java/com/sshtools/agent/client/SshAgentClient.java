@@ -35,11 +35,13 @@ import java.util.Map;
 import java.util.ServiceLoader;
 
 import com.sshtools.agent.AgentMessage;
-import com.sshtools.agent.KeyConstraints;
 import com.sshtools.agent.AgentProvider;
+import com.sshtools.agent.KeyConstraints;
 import com.sshtools.agent.exceptions.AgentNotAvailableException;
 import com.sshtools.agent.exceptions.InvalidMessageException;
 import com.sshtools.agent.openssh.OpenSSHAgentMessages;
+import com.sshtools.agent.openssh.OpenSshAgentAddKey;
+import com.sshtools.agent.openssh.OpenSshAgentDeleteKey;
 import com.sshtools.agent.openssh.OpenSshSignRequest;
 import com.sshtools.agent.rfc.RFCAgentMessages;
 import com.sshtools.agent.rfc.SshAgentAddKey;
@@ -442,8 +444,9 @@ public class SshAgentClient implements SignatureGenerator, Closeable {
 	 */
 	public void addKey(SshPrivateKey prvkey, SshPublicKey pubkey,
 			String description, KeyConstraints constraints) throws IOException {
-		AgentMessage msg = new SshAgentAddKey(prvkey, pubkey, description,
-				constraints);
+		AgentMessage msg =  isRFCAgent 
+				? new SshAgentAddKey(prvkey, pubkey, description, constraints) 
+				: new OpenSshAgentAddKey(prvkey, pubkey, description, constraints);
 		sendMessage(msg);
 		try {
 			msg = readMessage();
@@ -566,7 +569,9 @@ public class SshAgentClient implements SignatureGenerator, Closeable {
 	public void deleteKey(SshPublicKey key, String description)
 			throws IOException {
 		try {
-			AgentMessage msg = new SshAgentDeleteKey(key, description);
+			AgentMessage msg = isRFCAgent 
+					? new SshAgentDeleteKey(key, description)
+					: new OpenSshAgentDeleteKey(key, description);
 			sendMessage(msg);
 			msg = readMessage();
 

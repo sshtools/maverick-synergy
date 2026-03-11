@@ -42,7 +42,7 @@ public class OpenSshSignRequest extends AgentMessage {
    
     SshPublicKey pubkey;
     byte[] data;
-    int flags;
+    int flags = 0;
     
     /**
      * Creates a new SshAgentPrivateKeyOp object.
@@ -62,9 +62,21 @@ public class OpenSshSignRequest extends AgentMessage {
         super(OpenSSHAgentMessages.SSH2_AGENTC_SIGN_REQUEST);
         this.pubkey = pubkey;
         this.data = data;
+        
+        var signingAlgorithm = pubkey.getSigningAlgorithm();
+		if(signingAlgorithm.equals("rsa-sha2-512")) {
+        	flags = OpenSSHAgentMessages.SSH_AGENT_RSA_SHA2_512;
+        }
+		else if(signingAlgorithm.equals("rsa-sha2-256")) {
+        	flags = OpenSSHAgentMessages.SSH_AGENT_RSA_SHA2_256;
+        }
     }
+    
+    public int getFlags() {
+		return flags;
+	}
 
-    /**
+	/**
      *
      *
      * @return

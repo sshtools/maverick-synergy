@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 
@@ -49,7 +50,7 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 
 
-public class SshAgentAddKey extends AgentMessage {
+public class OpenSshAgentAddKey extends AgentMessage {
    
     SshPrivateKey prvkey;
     SshPublicKey pubkey;
@@ -59,7 +60,7 @@ public class SshAgentAddKey extends AgentMessage {
     /**
      * Creates a new SshAgentAddKey object.
      */
-    public SshAgentAddKey() {
+    public OpenSshAgentAddKey() {
         super(OpenSSHAgentMessages.SSH2_AGENTC_ADD_IDENTITY);
     }
 
@@ -71,7 +72,7 @@ public class SshAgentAddKey extends AgentMessage {
      * @param description
      * @param constraints
      */
-    public SshAgentAddKey(SshPrivateKey prvkey, SshPublicKey pubkey,
+    public OpenSshAgentAddKey(SshPrivateKey prvkey, SshPublicKey pubkey,
         String description, KeyConstraints constraints) {
         super(OpenSSHAgentMessages.SSH2_AGENTC_ADD_IDENTITY);
         this.prvkey = prvkey;
@@ -139,7 +140,7 @@ public class SshAgentAddKey extends AgentMessage {
         throws java.io.IOException, 
             InvalidMessageException {
         try {
-        	baw.write(OpenSSHAgentMessages.SSH2_AGENTC_ADD_IDENTITY);
+//        	baw.write(OpenSSHAgentMessages.SSH2_AGENTC_ADD_IDENTITY);
         	encodeKey(baw);
             baw.writeString(description);
             baw.write(constraints.toByteArray());
@@ -151,7 +152,51 @@ public class SshAgentAddKey extends AgentMessage {
     }
 
     protected void encodeKey(ByteArrayWriter baw) throws IOException, SshException {
-    	
+    	var type = prvkey.getAlgorithm();
+    	baw.writeString(type);
+    	switch(type) {
+		case "ssh-dss":
+		{
+			Ssh2DsaPrivateKey dssprv = (Ssh2DsaPrivateKey)prvkey;
+			Ssh2DsaPublicKey dsspub = (Ssh2DsaPublicKey)pubkey;
+			baw.writeBigInteger(dsspub.getP());
+			baw.writeBigInteger(dsspub.getQ());
+			baw.writeBigInteger(dsspub.getG());
+			baw.writeBigInteger(dsspub.getY());
+			baw.writeBigInteger(dssprv.getX());
+			break;
+		}
+		case "ssh-rsa":
+		{
+			Ssh2RsaPrivateCrtKey rsaprv = (Ssh2RsaPrivateCrtKey)prvkey;
+			Ssh2RsaPublicKey rsapub = (Ssh2RsaPublicKey)pubkey;
+			baw.writeBigInteger(rsapub.getModulus());
+			baw.writeBigInteger(rsapub.getPublicExponent());
+			baw.writeBigInteger(rsaprv.getPrivateExponent());
+			baw.writeBigInteger(rsaprv.getCrtCoefficient());
+			baw.writeBigInteger(rsaprv.getPrimeP());
+			baw.writeBigInteger(rsaprv.getPrimeQ());
+			break;
+		}
+		case "ecdsa-sha2-nistp256": {
+			Ssh2EcdsaSha2NistPrivateKey ecdsaprv = (Ssh2EcdsaSha2NistPrivateKey)prvkey;
+			Ssh2EcdsaSha2NistPublicKey ecdsapub = (Ssh2EcdsaSha2NistPublicKey)pubkey;
+			ECPrivateKey ecprv = (ECPrivateKey) ecdsaprv.getJCEPrivateKey();
+			ECPublicKey ecpub = (ECPublicKey) ecdsapub.getJCEPublicKey();
+			baw.writeString(ecdsapub.getCurve());
+			baw.writeBinaryString(ecpub.getEncoded());
+			baw.writeBigInteger(ecprv.getS());
+			break;
+		}
+		case "ecdsa-sha2-nistp384": {
+			break;
+		}
+		case "ecdsa-sha2-nistp521": {
+			break;
+		}
+		default:
+			throw new IOException(String.format("Unsupported key type %s", type));
+		}
     }
     
     protected SshKeyPair decodeKey(ByteArrayReader bar) throws IOException, SshException {
@@ -194,7 +239,8 @@ public class SshAgentAddKey extends AgentMessage {
 				BigInteger d = bar.readBigInteger();
 				
 				ECPublicKey pub = ECUtils.decodeKey(Q, curveName);
-				pair.setPrivateKey(new Ssh2EcdsaSha2NistPrivateKey(ECUtils.decodePrivateKey(d.toByteArray(), pub), curveName));
+				ECPrivateKey ecprv = ECUtils.decodePrivateKey(d.toByteArray(), pub);
+				pair.setPrivateKey(new Ssh2EcdsaSha2NistPrivateKey(ecprv, curveName));
 				pair.setPublicKey(new Ssh2EcdsaSha2NistPublicKey(pub, curveName));
 				break;
 			}

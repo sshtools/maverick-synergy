@@ -33,7 +33,7 @@ import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 
 
-public class SshAgentDeleteKey extends AgentMessage {
+public class OpenSshAgentDeleteKey extends AgentMessage {
     
     SshPublicKey pubkey;
     String description;
@@ -41,7 +41,7 @@ public class SshAgentDeleteKey extends AgentMessage {
     /**
      * Creates a new SshAgentDeleteKey object.
      */
-    public SshAgentDeleteKey() {
+    public OpenSshAgentDeleteKey() {
         super(OpenSSHAgentMessages.SSH2_AGENTC_REMOVE_IDENTITY);
     }
 
@@ -51,7 +51,7 @@ public class SshAgentDeleteKey extends AgentMessage {
      * @param pubkey
      * @param description
      */
-    public SshAgentDeleteKey(SshPublicKey pubkey, String description) {
+    public OpenSshAgentDeleteKey(SshPublicKey pubkey, String description) {
         super(OpenSSHAgentMessages.SSH2_AGENTC_REMOVE_IDENTITY);
         this.pubkey = pubkey;
         this.description = description;

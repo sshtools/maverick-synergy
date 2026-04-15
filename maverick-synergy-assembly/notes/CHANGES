@@ -24,6 +24,10 @@ Bug Fixes
   o ChannelNG will sendChannelDataAndBlock will hang if a zero length buffer is passed.
   o SSH agent when in OpenSSH mode not correctly signing RSA keys mean authentication failures.
   o SSH agent when in OpenSSH mode would not accept add and delete key requests.
+  o OpenSSH certificate key types (ed25519, rsa, ecdsa) are now correctly supported when saving private key files in OpenSSH format.
+  o Certificate key fingerprints are now correctly computed from the underlying public key, matching OpenSSH convention.
+  o Ed25519 certificate type registration no longer requires BouncyCastle; it now uses the configured JCE provider instead.
+  o NioFile.getOutputStream(boolean) was ignoring the append parameter, always opening with APPEND mode instead of truncating for non-append writes.
 
 =================
 =  HISTORY      =

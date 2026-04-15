@@ -42,6 +42,7 @@ import com.sshtools.common.ssh.components.SshCipher;
 import com.sshtools.common.ssh.components.SshDsaPrivateKey;
 import com.sshtools.common.ssh.components.SshDsaPublicKey;
 import com.sshtools.common.ssh.components.SshKeyPair;
+import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.SshRsaPrivateCrtKey;
 import com.sshtools.common.ssh.components.SshRsaPublicKey;
 import com.sshtools.common.ssh.components.jce.AES128Cbc;
@@ -204,11 +205,14 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 				privateKeyData.writeUINT32(new UnsignedInteger32(checksum));
 				privateKeyData.writeString(pair.getPrivateKey().getAlgorithm());
 
-				String algorithm = pair.getPublicKey().getEncodingAlgorithm();
+				SshPublicKey effectivePub = pair.getPublicKey() instanceof OpenSshCertificate
+						? ((OpenSshCertificate) pair.getPublicKey()).getSignedKey()
+						: pair.getPublicKey();
+				String algorithm = effectivePub.getEncodingAlgorithm();
 				switch (algorithm) {
 				case "ssh-ed448":
 				{
-					byte[] a = ((SshEd448PublicKey) pair.getPublicKey()).getA();
+					byte[] a = ((SshEd448PublicKey) effectivePub).getA();
 					privateKeyData.writeBinaryString(a);
 					byte[] sk = ((SshEd448PrivateKeyJCE) pair.getPrivateKey()).getSeed();
 					privateKeyData.writeBinaryString(sk);
@@ -216,7 +220,7 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 				}
 				case "ssh-ed25519":
 				{
-					byte[] a = ((SshEd25519PublicKey) pair.getPublicKey()).getA();
+					byte[] a = ((SshEd25519PublicKey) effectivePub).getA();
 					privateKeyData.writeBinaryString(a);
 					byte[] sk = ((SshEd25519PrivateKeyJCE) pair.getPrivateKey()).getSeed();
 					privateKeyData.writeInt(64);
@@ -226,7 +230,7 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 					break;
 				}
 				case "ssh-rsa": {
-					SshRsaPublicKey publickey = (SshRsaPublicKey) pair.getPublicKey();
+					SshRsaPublicKey publickey = (SshRsaPublicKey) effectivePub;
 					SshRsaPrivateCrtKey privatekey = (SshRsaPrivateCrtKey) pair.getPrivateKey();
 					privateKeyData.writeBigInteger(publickey.getModulus());
 					privateKeyData.writeBigInteger(publickey.getPublicExponent());
@@ -238,7 +242,7 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 					break;
 				}
 				case "ssh-dss": {
-					SshDsaPublicKey publickey = (SshDsaPublicKey) pair.getPublicKey();
+					SshDsaPublicKey publickey = (SshDsaPublicKey) effectivePub;
 					privateKeyData.writeBigInteger(publickey.getP());
 					privateKeyData.writeBigInteger(publickey.getQ());
 					privateKeyData.writeBigInteger(publickey.getG());
@@ -249,8 +253,8 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 				case "ecdsa-sha2-nistp521":
 				case "ecdsa-sha2-nistp384":
 				case "ecdsa-sha2-nistp256": {
-					privateKeyData.writeString(((Ssh2EcdsaSha2NistPublicKey) pair.getPublicKey()).getCurve());
-					privateKeyData.writeBinaryString(((Ssh2EcdsaSha2NistPublicKey) pair.getPublicKey()).getPublicOctet());
+					privateKeyData.writeString(((Ssh2EcdsaSha2NistPublicKey) effectivePub).getCurve());
+					privateKeyData.writeBinaryString(((Ssh2EcdsaSha2NistPublicKey) effectivePub).getPublicOctet());
 					privateKeyData.writeBinaryString(((ECPrivateKey) pair.getPrivateKey().getJCEPrivateKey()).getS().toByteArray());
 					break;
 				}

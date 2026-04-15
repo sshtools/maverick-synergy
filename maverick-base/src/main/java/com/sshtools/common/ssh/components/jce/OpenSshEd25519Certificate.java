@@ -151,9 +151,9 @@ public class OpenSshEd25519Certificate extends OpenSshCertificate implements Ssh
 	@Override
 	public String test() {
 		try {
-			KeyFactory factory = KeyFactory.getInstance(JCEAlgorithms.ED25519, "BC");
+			KeyFactory factory = JCEProvider.getKeyFactory(JCEAlgorithms.ED25519);
 			return factory.getProvider().getName();
-		} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException(e.getMessage(), e);
 		}
 	}

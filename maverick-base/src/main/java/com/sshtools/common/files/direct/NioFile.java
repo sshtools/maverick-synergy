@@ -633,7 +633,11 @@ public final class NioFile implements AbstractFile {
 	@Override
 	public OutputStream getOutputStream(boolean append) throws IOException, PermissionDeniedException {
 		try {
-			return Files.newOutputStream(path, StandardOpenOption.APPEND);
+			if (append) {
+				return Files.newOutputStream(path, StandardOpenOption.APPEND);
+			} else {
+				return Files.newOutputStream(path);
+			}
 		} catch (IOException ioe) {
 			throw translateException(ioe);
 		}

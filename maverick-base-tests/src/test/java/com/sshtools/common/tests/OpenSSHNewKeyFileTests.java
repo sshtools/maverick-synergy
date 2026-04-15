@@ -27,31 +27,30 @@ import java.io.IOException;
 import com.sshtools.common.publickey.InvalidPassphraseException;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.ComponentManager;
-import com.sshtools.common.ssh.components.jce.JCEProvider;
 
 public class OpenSSHNewKeyFileTests extends AbstractOpenSSHKeyFileTests {
 
 	public void testEd25519Keys() throws IOException, InvalidPassphraseException, SshException {
 		
-		JCEProvider.enableBouncyCastle(false);
+		//JCEProvider.enableBouncyCastle(false);
 		ComponentManager.reset();
 		
 		performPrivateKeyTests("openssh/new/ed25519", "ed25519-nopass.key", "ed25519.key.pub", 
 				"ed25519.fp", "ed25519.bb", "ed25519.key");
 		
-		JCEProvider.disableBouncyCastle();
+		//JCEProvider.disableBouncyCastle();
 		ComponentManager.reset();
 	}
 	
 	public void testEd448Keys() throws IOException, InvalidPassphraseException, SshException {
 		
-		JCEProvider.enableBouncyCastle(false);
+		//JCEProvider.enableBouncyCastle(false);
 		ComponentManager.reset();
 		
 		performPrivateKeyTests("openssh/new/ed448", "ed448-nopass.key", "ed448.pub", 
 				"ed448.fp", "ed448.bb", "ed448-withpass.key");
 		
-		JCEProvider.disableBouncyCastle();
+		//JCEProvider.disableBouncyCastle();
 		ComponentManager.reset();
 	}
 	

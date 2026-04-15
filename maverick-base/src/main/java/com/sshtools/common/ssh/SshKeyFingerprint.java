@@ -102,7 +102,7 @@ public class SshKeyFingerprint {
 
 	public static String getFingerprint(SshPublicKey key) {
 		try {
-			return getFingerprint(key.getEncoded(), defaultHashAlgoritm);
+			return key.getFingerprint();
 		} catch (SshException e) {
 			throw new IllegalStateException(e.getMessage(), e);
 		}

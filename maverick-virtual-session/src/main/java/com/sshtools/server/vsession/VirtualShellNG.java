@@ -24,6 +24,7 @@ package com.sshtools.server.vsession;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -46,6 +47,8 @@ import org.jline.terminal.Attributes.InputFlag;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.jline.terminal.impl.AbstractPosixTerminal;
+import org.jline.terminal.impl.ExternalTerminal;
 
 import com.sshtools.common.files.nio.AbstractFileURI;
 import com.sshtools.common.logger.Log;

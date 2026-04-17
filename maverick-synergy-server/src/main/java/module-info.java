@@ -47,6 +47,7 @@ open module com.sshtools.synergy.server {
 	requires transitive com.sshtools.maverick.base;
 	requires transitive com.sshtools.synergy.common;
 	exports com.sshtools.server;
+	exports com.sshtools.server.components.jce;
 	
 	uses ServerForwardingFactory;
 	

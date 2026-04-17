@@ -33,7 +33,7 @@ import com.sshtools.common.ssh.components.SshCipherFactory;
  * 
  * @author Lee David Painter
  */
-public class TripleDesCbc extends AbstractJCECipher {
+public class TripleDesCbc extends AbstractCBCCipher {
 
 	private static final String CIPHER = "3des-cbc";
 

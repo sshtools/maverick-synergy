@@ -23,6 +23,7 @@ package com.sshtools.server.components.jce;
  */
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -49,6 +50,7 @@ import com.sshtools.common.ssh.components.jce.JCEProvider;
 import com.sshtools.common.sshd.SshMessage;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
+import com.sshtools.common.util.Utils;
 import com.sshtools.server.SshServerContext;
 import com.sshtools.server.components.SshKeyExchangeServer;
 import com.sshtools.synergy.ssh.SshTransport;
@@ -115,10 +117,9 @@ public abstract class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 		hash.putInt(Q_S.length);
 		hash.putBytes(Q_S);
 
-		// The diffie hellman k value
 		hash.putInt(secret.length);
 		hash.putBytes(secret);
-
+		
 		// Do the final output
 		exchangeHash = hash.doFinal();
 	}
@@ -213,7 +214,14 @@ public abstract class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 					buf.putInt(tmp.length);
 					buf.put(tmp);
 
-					baw.writeString(pubkey.getAlgorithm());
+					baw.writeString(pubkey.getSigningAlgorithm());
+					if(Log.isDebugEnabled()) {
+						Log.debug("Using {} signature algorithm for host key of type {} with {} signature {}", 
+								pubkey.getSigningAlgorithm(), 
+								pubkey.getAlgorithm(), 
+								signature.length,
+								Utils.bytesToHex(signature, signature.length, true, false));
+					}
 					baw.writeBinaryString(signature);
 					tmp = baw.toByteArray();
 
@@ -290,7 +298,7 @@ public abstract class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 			tmp = tmp2;
 		}
 		
-		return tmp;
+		return new BigInteger(tmp).toByteArray();
 	}
 	
 	protected void initCrypto() throws InvalidKeyException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, SshException {

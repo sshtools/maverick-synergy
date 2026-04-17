@@ -447,7 +447,7 @@ public class ComponentFactory<T extends Component> implements Cloneable {
 		
 	}
 
-	public Class<?> getInstanceClass(String name) {
+	public ComponentInstanceFactory<? extends T> getInstanceClass(String name) {
 		return supported.get(name);
 	}
 }

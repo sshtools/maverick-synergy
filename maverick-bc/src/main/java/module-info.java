@@ -22,6 +22,8 @@
 
 module com.sshtools.common.publickey.bc {
 	requires com.sshtools.maverick.base;
+	requires com.sshtools.synergy.client;
+	requires com.sshtools.synergy.server;
 	requires org.bouncycastle.pkix;
 	requires org.bouncycastle.provider;
 }

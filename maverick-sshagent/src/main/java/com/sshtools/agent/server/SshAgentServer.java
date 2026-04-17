@@ -23,7 +23,6 @@ import java.io.Closeable;
  * <http://www.gnu.org/licenses/lgpl-3.0.html>.
  * #L%
  */
-
 import java.io.IOException;
 import java.util.ServiceLoader;
 

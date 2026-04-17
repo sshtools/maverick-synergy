@@ -28,7 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.components.SshCipherFactory;
 
-public class AES256Ctr extends AbstractJCECipher {
+public class AES256Ctr extends AbstractCTRCipher {
 
 	private static final String CIPHER = "aes256-ctr";
 

@@ -73,7 +73,7 @@ public class SessionChannelNG extends AbstractSessionChannel implements SessionC
 	public SessionChannelNG(String channelName, int maximumPacketSize, UnsignedInteger32 initialWindowSize, UnsignedInteger32 maximumWindowSpace, UnsignedInteger32 minimumWindowSpace,
 			ChannelRequestFuture closeFuture, boolean autoConsume) {
 		super(maximumPacketSize, initialWindowSize, maximumWindowSpace, minimumWindowSpace, closeFuture, autoConsume);
-		extendedData = new CachingDataWindow(maximumWindowSpace, true, this);
+		extendedData = new CachingDataWindow(maximumWindowSpace.longValue(), true, this);
 		stderrInputStream = new ChannelInputStream(extendedData);
 	}
 	

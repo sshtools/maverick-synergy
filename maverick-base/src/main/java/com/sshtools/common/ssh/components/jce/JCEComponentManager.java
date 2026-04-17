@@ -408,8 +408,6 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 				Log.info("   " + name + " will be supported using JCE Provider " + provider);
 			return true;
 		} catch (Throwable e) {
-			if(Log.isInfoEnabled())
-				Log.info("   " + name + " will not be supported: " + e.getMessage());
 			return false;
 		}
 	}

@@ -23,6 +23,7 @@ package com.sshtools.client.components;
  */
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -178,7 +179,7 @@ public abstract class DiffieHellmanEcdh extends SshKeyExchangeClient implements
         	tmp = tmp2;
         }
         
-        return tmp;
+        return new BigInteger(tmp).toByteArray();
 	}
 
 	protected byte[] decodeQS(byte[] q_s) {

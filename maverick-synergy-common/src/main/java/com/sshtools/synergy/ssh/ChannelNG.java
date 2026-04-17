@@ -546,6 +546,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 				if(isLocalEOF.get() || isClosed()) {
 					throw new IOException("Channel has been closed");
 				}
+
+				if(!buf.hasRemaining()) {
+					return;
+				}
 				
 				if(!buf.hasRemaining()) {
 					return;

@@ -21,17 +21,17 @@
 
 package com.sshtools.common.permissions;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,14 +42,14 @@ import org.junit.Test;
 public class IPPolicyTest {
 
 	private IPPolicy policy;
-	private SocketAddress testAddress;
-	private SocketAddress localAddress;
+	private InetAddress testAddress;
+	private InetAddress localAddress;
 	
 	@Before
 	public void setUp() throws UnknownHostException {
 		policy = new IPPolicy();
-		testAddress = new InetSocketAddress(InetAddress.getByName("192.168.1.100"), 22);
-		localAddress = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 22);
+		testAddress = new InetSocketAddress(InetAddress.getByName("192.168.1.100"), 22).getAddress();
+		localAddress = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 22).getAddress();
 	}
 	
 	@Test
@@ -234,10 +234,10 @@ public class IPPolicyTest {
 				policy.assertAllowed(testAddress, localAddress));
 		
 		// Test non-whitelisted address
-		SocketAddress otherAddress = new InetSocketAddress(
+		InetSocketAddress otherAddress = new InetSocketAddress(
 				InetAddress.getByName("192.168.1.101"), 22);
 		assertFalse("Non-whitelisted IP should be denied in whitelist-only mode", 
-				policy.assertAllowed(otherAddress, localAddress));
+				policy.assertAllowed(otherAddress.getAddress(), localAddress));
 	}
 	
 	@Test
@@ -261,10 +261,10 @@ public class IPPolicyTest {
 				policy.assertAllowed(testAddress, localAddress));
 		
 		// ip2 should still be allowed
-		SocketAddress address2 = new InetSocketAddress(
+		InetSocketAddress address2 = new InetSocketAddress(
 				InetAddress.getByName(ip2), 22);
 		assertTrue("Second IP should still be allowed", 
-				policy.assertAllowed(address2, localAddress));
+				policy.assertAllowed(address2.getAddress(), localAddress));
 	}
 	
 	@Test
@@ -390,7 +390,7 @@ public class IPPolicyTest {
 		policy.setFailedAuthenticationCountThreshold(3);
 		
 		String ipAddress = "192.168.1.100";
-		SocketAddress shortTestAddress = new InetSocketAddress(InetAddress.getByName(ipAddress), 22);
+		InetSocketAddress shortTestAddress = new InetSocketAddress(InetAddress.getByName(ipAddress), 22);
 		
 		// Flag to exceed threshold and trigger ban
 		for (int i = 0; i <= 3; i++) {
@@ -399,14 +399,14 @@ public class IPPolicyTest {
 		
 		// Connection should be denied due to ban
 		assertFalse("Connection should be denied due to temporary ban", 
-				policy.assertAllowed(shortTestAddress, localAddress));
+				policy.assertAllowed(shortTestAddress.getAddress(), localAddress));
 		
 		// Wait for the temporary ban to expire (2 seconds + buffer)
 		Thread.sleep(2200);
 		
 		// Connection should now be allowed again
 		assertTrue("Connection should be allowed after temporary ban expires", 
-				policy.assertAllowed(shortTestAddress, localAddress));
+				policy.assertAllowed(shortTestAddress.getAddress(), localAddress));
 	}
 	
 	@Test

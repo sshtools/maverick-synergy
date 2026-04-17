@@ -241,7 +241,7 @@ public abstract class DiffieHellmanGroup extends SshKeyExchangeServer implements
 							buf.putInt(tmp.length);
 							buf.put(tmp);
 	
-							baw.writeString(pubkey.getAlgorithm());
+							baw.writeString(pubkey.getSigningAlgorithm());
 							baw.writeBinaryString(signature);
 							tmp = baw.toByteArray();
 	

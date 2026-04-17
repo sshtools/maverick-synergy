@@ -28,9 +28,13 @@ import java.security.NoSuchAlgorithmException;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.components.SshCipherFactory;
 
-public class AES128Ctr extends AbstractJCECipher {
+public class AES128Ctr extends AbstractCTRCipher {
+
+	public static final String CIPHER = "aes128-ctr";
 	
-	private static final String CIPHER = "aes128-ctr";
+	public AES128Ctr() throws IOException {
+		super(JCEAlgorithms.JCE_AESCTRNOPADDING, "AES", 16, CIPHER, SecurityLevel.STRONG, 2000);
+	}
 
 	public static class AES128CtrFactory implements SshCipherFactory<AES128Ctr> {
 
@@ -43,9 +47,5 @@ public class AES128Ctr extends AbstractJCECipher {
 		public String[] getKeys() {
 			return new String[] {  CIPHER };
 		}
-	}
-
-	public AES128Ctr() throws IOException {
-		super(JCEAlgorithms.JCE_AESCTRNOPADDING, "AES", 16, CIPHER, SecurityLevel.STRONG, 2000);
 	}
 }

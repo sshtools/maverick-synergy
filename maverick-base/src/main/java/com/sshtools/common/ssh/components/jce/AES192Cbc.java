@@ -29,11 +29,11 @@ import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.components.SshCipherFactory;
 
 /**
- * An implementation of the AES 128 bit cipher using a JCE provider.
+ * An implementation of the AES 192 bit cipher using a JCE provider.
  *
  * @author Lee David Painter
  */
-public class AES192Cbc extends AbstractJCECipher {
+public class AES192Cbc extends AbstractCBCCipher {
 
 	private static final String CIPHER = "aes192-cbc";
 

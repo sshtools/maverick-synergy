@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -80,9 +81,25 @@ public class AdaptiveConfiguration {
 		this.configFile = new File(filename);
 		resetConfiguration();
 	}
+	
+	private AdaptiveConfiguration(Path path) throws IOException, SshException {
+		this.configFile = path.toFile();
+		resetConfiguration();
+	}
 
 	public static AdaptiveConfiguration getConfiguration(String filename) throws IOException, SshException {
 		return instances.computeIfAbsent(filename, f -> {
+			try {
+				return new AdaptiveConfiguration(f);
+			} catch (IOException | SshException e) {
+				Log.error("Failed to initialize AdaptiveConfiguration for " + f, e);
+				throw new RuntimeException(e);
+			}
+		});
+	}
+	
+	public static AdaptiveConfiguration getConfiguration(Path path) throws IOException, SshException {
+		return instances.computeIfAbsent(path.toAbsolutePath().toString(), f -> {
 			try {
 				return new AdaptiveConfiguration(f);
 			} catch (IOException | SshException e) {

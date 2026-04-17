@@ -1,5 +1,4 @@
 package com.sshtools.common.ssh.components;
-
 /*-
  * #%L
  * Base API
@@ -22,6 +21,7 @@ package com.sshtools.common.ssh.components;
  * #L%
  */
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -29,6 +29,7 @@ import java.util.Map;
 
 import com.sshtools.common.config.AdaptiveConfiguration;
 import com.sshtools.common.ssh.SecurityLevel;
+import com.sshtools.common.ssh.SshException;
 
 public class DefaultSecurityManager implements SecurityManager {
 
@@ -41,7 +42,11 @@ public class DefaultSecurityManager implements SecurityManager {
 	}
 	
 	public DefaultSecurityManager(Path path) {
-		config = new AdaptiveConfiguration(path.toFile());
+		try {
+			config = AdaptiveConfiguration.getConfiguration(path);
+		} catch (IOException | SshException e) {
+			throw new IllegalStateException("Unable to load security configuration", e);
+		}
 	}
 	@Override
 	public SecurityLevel getSecurityLevel(String algorithm) {

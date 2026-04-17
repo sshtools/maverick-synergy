@@ -34,7 +34,7 @@ import com.sshtools.common.ssh.components.SshCipherFactory;
  * 
  * @author Lee David Painter
  */
-public class BlowfishCbc extends AbstractJCECipher {
+public class BlowfishCbc extends AbstractCBCCipher {
 
 	private static final String CIPHER = "blowfish-cbc";
 

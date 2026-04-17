@@ -33,7 +33,7 @@ import com.sshtools.common.ssh.components.SshCipherFactory;
  *
  * @author Lee David Painter
  */
-public class AES128Cbc extends AbstractJCECipher {
+public class AES128Cbc extends AbstractCBCCipher {
 
 	private static final String CIPHER = "aes128-cbc";
 

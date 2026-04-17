@@ -941,8 +941,7 @@ public class SftpClient implements Closeable {
 			msg.writeString(filter);
 			msg.writeBoolean(regexFilter);
 
-			boolean localFiltering = false;
-
+			boolean localFiltering = true;
 			
 			Vector<SftpFile> children = new Vector<SftpFile>();
 			Vector<SftpFile> tmp = new Vector<SftpFile>();

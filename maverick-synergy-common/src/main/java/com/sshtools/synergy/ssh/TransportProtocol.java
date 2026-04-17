@@ -1725,7 +1725,7 @@ public abstract class TransportProtocol<T extends SshContext>
 					.list(sshContext
 							.getPreferredCipherSC());
 			
-			String localPublicKeys = sshContext.getPublicKeys();
+			String localPublicKeys = sshContext.getSupportedPublicKeys();
 			
 			String localMacsCS = sshContext
 					.supportedMacsCS()

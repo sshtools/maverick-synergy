@@ -29,7 +29,6 @@ import com.sshtools.common.publickey.SshKeyPairGenerator;
 import com.sshtools.common.ssh.SshException;
 
 public class OpenSSHED25519CertificateAuthorityTests extends AbstractCertificateAuthorityTests {
-
 	
 	protected boolean isJCETested() {
 		return false;

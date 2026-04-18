@@ -10,7 +10,7 @@
  *
  * Unauthorized copying of this file, via any medium is strictly prohibited.
  *
- * Copyright (C) 2002-2021 JADAPTIVE Limited - All Rights Reserved
+ * Copyright (C) 2002-2025 JADAPTIVE Limited - All Rights Reserved
  *
  * Use of this software may also be covered by third-party licenses depending on the choices you make about what features to use.
  *
@@ -18,7 +18,6 @@
  *
  * https://www.jadaptive.com/app/manpage/en/article/1565029/What-third-party-dependencies-does-the-Maverick-Synergy-API-have
  */
-
 package com.sshtools.common.permissions;
 
 /*-

@@ -1025,7 +1025,9 @@ public class SshClient implements Closeable {
 	}
 
 	public boolean isAuthenticated() {
-		return con.getAuthenticatedFuture().isDone() && con.getAuthenticatedFuture().isSuccess();
+		return !con.getDisconnectFuture().isDone() 
+				&&  con.getAuthenticatedFuture().isDone() 
+				&& con.getAuthenticatedFuture().isSuccess();
 	}
 
 	public <T extends Task> void runTask(T task, long timeout) throws IOException {

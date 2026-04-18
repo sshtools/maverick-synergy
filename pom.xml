@@ -60,6 +60,53 @@
 				</plugins>
 			</build>
 		</profile>
+		<profile>
+			<id>coverage</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<version>0.8.14</version>
+						<executions>
+							<!-- Coverage check disabled: report-only mode -->
+							<!--
+							<execution>
+								<id>jacoco-check</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>check</goal>
+								</goals>
+								<configuration>
+									<rules>
+										<rule>
+											<element>BUNDLE</element>
+											<limits>
+												<limit>
+													<counter>LINE</counter>
+													<value>COVEREDRATIO</value>
+													<minimum>0.90</minimum>
+												</limit>
+												<limit>
+													<counter>BRANCH</counter>
+													<value>COVEREDRATIO</value>
+													<minimum>0.85</minimum>
+												</limit>
+											</limits>
+										</rule>
+									</rules>
+									<excludes>
+										<exclude>**/module-info.class</exclude>
+										<exclude>com/sshtools/synergy/nio/PomVersion.class</exclude>
+									</excludes>
+								</configuration>
+							</execution>
+							-->
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 	</profiles>
 	<build>
 		<plugins>
@@ -194,8 +241,46 @@
 				<artifactId>spotbugs-maven-plugin</artifactId>
 				<version>3.1.12.2</version>
 			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.14</version>
+				<executions>
+					<execution>
+						<id>default-prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>default-report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.junit</groupId>
+				<artifactId>junit-bom</artifactId>
+				<version>5.10.5</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>5.14.2</version>
+				<scope>test</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<dependencies>
 		<dependency>
@@ -217,6 +302,7 @@
 		<module>maverick-synergy-client-tests</module>
 		<module>maverick-synergy-server</module>
 		<module>maverick-synergy-virtual-tests</module>
+		<module>maverick-synergy-server-tests</module>
 		<module>maverick-synergy-callback-client</module>
 		<module>maverick-synergy-callback-server</module>
 		<module>maverick-virtual-filesystem</module>
@@ -225,15 +311,21 @@
 		<module>maverick-virtual-session</module>
 		<module>maverick-virtual-session-tests</module>
 		<module>maverick-x509</module>
+		<module>maverick-x509-tests</module>
 		<module>maverick-putty</module>
+		<module>maverick-putty-tests</module>
 		<module>maverick-bc</module>
 		<module>maverick-bc-tests</module>
 		<module>maverick-bc-fips</module>
 		<module>maverick-bc-fips-tests</module>
 		<module>maverick-sshagent</module>
+		<module>maverick-sshagent-tests</module>
+		<module>maverick-sshagent-jni-sockets</module>
+		<module>maverick-sshagent-jdk16-sockets</module>
 		<module>maverick-sshagent-named-pipes</module>		
 		<module>maverick-synergy-fuse-drive</module>
 		<module>maverick-synergy</module>
+		<module>maverick-synergy-integration-tests</module>
 		<module>maverick-synergy-assembly</module>
 	</modules>
 </project>

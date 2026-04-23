@@ -1403,11 +1403,23 @@ public class SftpFileAttributes {
 					}
 				}
 
+				// v6 only: ctime (last attribute change time)
+				if (version >= 6 && isFlagSet(SSH_FILEXFER_ATTR_CTIME, version)) {
+					baw.writeUINT64(lastAttributesModifiedTime.map(a -> a.to(TimeUnit.SECONDS)).orElse(0l));
+					if (isFlagSet(SSH_FILEXFER_ATTR_SUBSECOND_TIMES, version)) {
+						baw.writeUINT32(new UnsignedInteger32(lastAttributesModifiedTime.map(this::nanosFromFileTime).orElse(0l)));
+					}
+				}
+
 			}
 
 			if (isFlagSet(SSH_FILEXFER_ATTR_ACL, version)) {
 				var tmp = new ByteArrayWriter();
 				try {
+					// v6 adds an aclFlags uint32 before the ACL binary string
+					if (version >= 6) {
+						tmp.writeInt(aclFlags.map(UnsignedInteger32::longValue).orElse(0l));
+					}
 					tmp.writeInt(acls.size());
 					for (var acl : acls) {
 						tmp.writeInt(acl.getType());
@@ -1424,8 +1436,28 @@ public class SftpFileAttributes {
 			if (version >= 5 && isFlagSet(SSH_FILEXFER_ATTR_BITS, version)) {
 				baw.writeInt(attributeBits.map(a -> supportedAttributeBits.isEmpty() ? a.longValue()
 						: a.longValue() & supportedAttributeBits.get().longValue()).orElse(0l));
+				// v6 adds attrib-bits-valid alongside attrib-bits
+				if (version >= 6) {
+					baw.writeInt(attributeBitsValid.map(UnsignedInteger32::longValue).orElse(0l));
+				}
 			}
-//
+
+			// v6-only attribute fields
+			if (version >= 6) {
+				if (isFlagSet(SSH_FILEXFER_ATTR_TEXT_HINT, version)) {
+					baw.write(textHint.orElse((byte) 0));
+				}
+				if (isFlagSet(SSH_FILEXFER_ATTR_MIME_TYPE, version)) {
+					baw.writeString(mimeType.orElse(""), charsetEncoding);
+				}
+				if (isFlagSet(SSH_FILEXFER_ATTR_LINK_COUNT, version)) {
+					baw.writeInt(linkCount.orElse(0));
+				}
+				if (isFlagSet(SSH_FILEXFER_ATTR_UNTRANSLATED, version)) {
+					baw.writeString(untranslatedName.orElse(""), charsetEncoding);
+				}
+			}
+
 			if (isFlagSet(SSH_FILEXFER_ATTR_EXTENDED, version)) {
 				baw.writeInt(extendedAttributes.size());
 				for (String key : extendedAttributes.keySet()) {

@@ -149,7 +149,7 @@ public class SshEngine {
 	 * @returns the release date of the current version.
 	 */
 	public static Date getReleaseDate() {
-		return new Date();
+		return /** RELEASE_DATE **/new Date();
 	}
 
 	public boolean isStarting() {

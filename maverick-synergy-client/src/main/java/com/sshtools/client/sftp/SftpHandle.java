@@ -154,6 +154,9 @@ public final class SftpHandle implements Closeable {
 			msg.writeUINT64(length);
 			msg.writeInt(lockflags);
 			
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_BLOCK for {} offset={} length={} lockflags={} requestId={}", file.getFilename(), offset, length, lockflags, requestId);
+			}
 			sftp.sendMessage(msg);
 
 			sftp.getOKRequestStatus(requestId, file);
@@ -175,6 +178,9 @@ public final class SftpHandle implements Closeable {
 					msg.writeUINT64(offset);
 					msg.writeUINT64(length);
 					
+					if(Log.isDebugEnabled()) {
+						Log.debug("Sending SSH_FXP_UNBLOCK for {} offset={} length={} requestId={}", file.getFilename(), offset, length, requestId);
+					}
 					sftp.sendMessage(msg);
 
 					sftp.getOKRequestStatus(requestId, file);
@@ -391,12 +397,11 @@ public final class SftpHandle implements Closeable {
 			msg.writeInt(requestId.longValue());
 			msg.writeBinaryString(handle);
 
-			sftp.sendMessage(msg);
-
 			if(Log.isDebugEnabled()) {
 				Log.debug("Sending SSH_FXP_READDIR for {} requestId={}", file.getFilename(), requestId);
 			}
-			
+			sftp.sendMessage(msg);
+
 			SftpMessage bar = sftp.getResponse(requestId);
 
 			try {
@@ -466,7 +471,7 @@ public final class SftpHandle implements Closeable {
 			msg.write(attrs.toByteArray(sftp.getVersion()));
 
 			if(Log.isDebugEnabled()) {
-				Log.debug("Sending SSH_FXP_FSETSTAT for {} requestId=", file.getFilename(), requestId);
+				Log.debug("Sending SSH_FXP_FSETSTAT for {} requestId={} attrs={}", file.getFilename(), requestId, attrs.toLogString());
 			}
 			
 			sftp.sendMessage(msg);
@@ -509,7 +514,7 @@ public final class SftpHandle implements Closeable {
 			
 
 			if(Log.isDebugEnabled()) {
-				Log.debug("Sending SSH_FXP_FSTAT for {} requestId=", file.getFilename(), requestId);
+				Log.debug("Sending SSH_FXP_FSTAT for {} requestId={}", file.getFilename(), requestId);
 			}
 			
 			sftp.sendMessage(msg);

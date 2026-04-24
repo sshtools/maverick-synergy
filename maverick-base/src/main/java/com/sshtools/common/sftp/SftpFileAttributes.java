@@ -1582,4 +1582,33 @@ public class SftpFileAttributes {
 	public String bestGroup() {
 		return bestGroupOr().orElse("nogroup");
 	}
+
+	public String toLogString() {
+		var sb = new StringBuilder("[");
+		sb.append("type=").append(typeToLogString());
+		size.ifPresent(s -> sb.append(" size=").append(s));
+		permissions.ifPresent(p -> sb.append(" perms=").append(toPermissionsString()));
+		bestUsernameOr().ifPresent(u -> sb.append(" owner=").append(u));
+		bestGroupOr().ifPresent(g -> sb.append(" group=").append(g));
+		lastModifiedTime.ifPresent(t -> sb.append(" mtime=").append(t.toInstant()));
+		lastAccessTime.ifPresent(t -> sb.append(" atime=").append(t.toInstant()));
+		createTime.ifPresent(t -> sb.append(" ctime=").append(t.toInstant()));
+		sb.append("]");
+		return sb.toString();
+	}
+
+	private String typeToLogString() {
+		switch (type) {
+		case SSH_FILEXFER_TYPE_REGULAR:      return "regular";
+		case SSH_FILEXFER_TYPE_DIRECTORY:    return "directory";
+		case SSH_FILEXFER_TYPE_SYMLINK:      return "symlink";
+		case SSH_FILEXFER_TYPE_SPECIAL:      return "special";
+		case SSH_FILEXFER_TYPE_UNKNOWN:      return "unknown";
+		case SSH_FILEXFER_TYPE_SOCKET:       return "socket";
+		case SSH_FILEXFER_TYPE_CHAR_DEVICE:  return "char-device";
+		case SSH_FILEXFER_TYPE_BLOCK_DEVICE: return "block-device";
+		case SSH_FILEXFER_TYPE_FIFO:         return "fifo";
+		default:                             return "type-" + type;
+		}
+	}
 }

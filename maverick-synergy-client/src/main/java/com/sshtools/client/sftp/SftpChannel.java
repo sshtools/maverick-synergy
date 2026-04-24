@@ -242,6 +242,9 @@ public class SftpChannel extends AbstractSubsystem {
 			packet.write(SSH_FXP_INIT);
 			packet.writeInt(MAX_VERSION);
 
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_INIT version={}", MAX_VERSION);
+			}
 			sendMessage(packet);
 
 			byte[] msg = nextMessage();
@@ -685,7 +688,7 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.write(attrs.toByteArray(getVersion()));
 
 			if(Log.isDebugEnabled()) {
-				Log.debug("Sending SSH_FXP_SETSTAT for {}", path);
+				Log.debug("Sending SSH_FXP_SETSTAT for {} attrs={}", path, attrs.toLogString());
 			}
 			
 			sendMessage(msg);
@@ -1208,9 +1211,6 @@ public class SftpChannel extends AbstractSubsystem {
 
 			try {
 
-				try {
-					attrs = getAttributes(path);
-				} catch(SftpStatusException e) { }
 				UnsignedInteger32 requestId = nextRequestId();
 				Packet msg = createPacket();
 				msg.write(SSH_FXP_OPEN);
@@ -1220,7 +1220,7 @@ public class SftpChannel extends AbstractSubsystem {
 				msg.write(attrs.toByteArray(getVersion()));
 
 				if(Log.isDebugEnabled()) {
-					Log.debug("Sending SSH_FXP_OPEN for {}", path);
+					Log.debug("Sending SSH_FXP_OPEN for {} flags={} attrs={}", path, flags, attrs.toLogString());
 				}
 				
 				sendMessage(msg);
@@ -1255,10 +1255,6 @@ public class SftpChannel extends AbstractSubsystem {
 
 		try {
 			
-			try {
-				attrs = getAttributes(path);
-			} catch(SftpStatusException e) { }
-			
 			UnsignedInteger32 requestId = nextRequestId();
 			Packet msg = createPacket();
 			msg.write(SSH_FXP_OPEN);
@@ -1269,7 +1265,7 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.write(attrs.toByteArray(getVersion()));
 
 			if(Log.isDebugEnabled()) {
-				Log.debug("Sending SSH_FXP_OPEN for {}", path);
+				Log.debug("Sending SSH_FXP_OPEN for {} accessFlags={} flags={} attrs={}", path, accessFlags, flags, attrs.toLogString());
 			}
 			
 			sendMessage(msg);
@@ -1452,7 +1448,7 @@ public class SftpChannel extends AbstractSubsystem {
 			}
 			
 			if(Log.isDebugEnabled()) {
-				Log.debug("Sending SSH_FXP_RENAME from {} to {}", oldpath, newpath);
+				Log.debug("Sending SSH_FXP_RENAME from {} to {} flags={}", oldpath, newpath, flags);
 			}
 			sendMessage(msg);
 
@@ -1578,7 +1574,7 @@ public class SftpChannel extends AbstractSubsystem {
 			
 			String debug = "handle:" + Base64.encodeBytes(handle, true);
 			if(Log.isDebugEnabled()) {
-				Log.debug("Sending SSH_SXP_FSTAT for {}", 
+				Log.debug("Sending SSH_FXP_FSTAT for {}", 
 						debug);
 			}
 
@@ -1601,10 +1597,11 @@ public class SftpChannel extends AbstractSubsystem {
 			throws SftpStatusException, SshException {
 		try {
 			if (bar.getType() == SSH_FXP_ATTRS) {
+				SftpFileAttributes result = SftpFileAttributesBuilder.of(bar, getVersion(), getCharsetEncoding()).build();
 				if(Log.isDebugEnabled()) {
-					Log.debug("Received SSH_FXP_ATTRS for {}", path);
+					Log.debug("Received SSH_FXP_ATTRS for {} attrs={}", path, result.toLogString());
 				}
-				return SftpFileAttributesBuilder.of(bar, getVersion(), getCharsetEncoding()).build();
+				return result;
 			} else if (bar.getType() == SSH_FXP_STATUS) {
 				processStatusResponse(bar, path, requestId);
 				throw new IllegalStateException("Received unexpected SSH_FX_OK in status response!");
@@ -1686,8 +1683,7 @@ public class SftpChannel extends AbstractSubsystem {
 			msg.write(attrs.toByteArray(getVersion()));
 
 			if(Log.isDebugEnabled()) {
-				Log.debug("Sending SSH_FXP_MKDIR for {}", 
-						path);
+				Log.debug("Sending SSH_FXP_MKDIR for {} attrs={}", path, attrs.toLogString());
 			}
 			
 			sendMessage(msg);
@@ -1821,7 +1817,10 @@ public class SftpChannel extends AbstractSubsystem {
 			packet.writeString(request);
 			if(requestData!=null) {
 				packet.write(requestData);
-			}		
+			}
+			if(Log.isDebugEnabled()) {
+				Log.debug("Sending SSH_FXP_EXTENDED request={} requestId={}", request, id);
+			}
 			sendMessage(packet);
 
 			return id;

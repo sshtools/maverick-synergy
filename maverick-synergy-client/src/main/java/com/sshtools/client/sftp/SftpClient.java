@@ -95,7 +95,7 @@ public class SftpClient implements Closeable {
 
 		private Optional<SshConnection> connection = Optional.empty();
 		private Optional<AbstractFileFactory<?>> fileFactory = Optional.empty();
-		private Optional<Integer> blockSize = Optional.empty();
+		private Optional<Integer> blockSize = Optional.of(32768);
 		private Optional<Integer> asyncRequests = Optional.of(16);
 		private int bufferSize = DEFAULT_BUFFER_SIZE;
 		private Optional<Path> localHome = Optional.empty();

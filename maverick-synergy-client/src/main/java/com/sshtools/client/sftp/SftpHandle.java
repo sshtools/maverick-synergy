@@ -991,7 +991,7 @@ public final class SftpHandle implements Closeable {
 
 			Vector<UnsignedInteger32> requests = new Vector<UnsignedInteger32>(outstandingRequests);
 
-			int osr = calculatedRequests;
+			int osr = outstandingRequests;
 
 			long offset = position;
 			UnsignedInteger32 requestId;

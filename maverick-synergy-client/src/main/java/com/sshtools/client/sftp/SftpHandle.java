@@ -1069,10 +1069,6 @@ public final class SftpHandle implements Closeable {
 				} finally {
 					bar.release();
 				}
-
-				if (osr < calculatedRequests) {
-					osr++;
-				}
 			}
 
 		} finally {

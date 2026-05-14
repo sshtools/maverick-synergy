@@ -10,7 +10,8 @@ Features
   o Removed all deprecated methods and classes that were marked for removal at 3.1.0. Deprecated classes removed include `DefaultSftpExtensionFactory`, `PathFile`, `PathFileFactory`, `SupportedSftpExtensions`. The methods removed were mainly those in `SftpChannel` and `SftpClient`.
   o Forwarding tests are now protocol independent.
   o `RequestFuture` now has `waitFor(Duration)` and `waitIndefinitely()` methods that throw `InterruptedException` if interrupted. The (still present) `waitFor(long)` and `waitForever()` both swallow interrupted exceptions, making it impossible to tell if the wait  was interrupted.
-  o Several methods in SFTP client for better working with `ByteBuffer` (eg. readFile, writeFile). 
+  o Several methods in SFTP client for better working with `ByteBuffer` (eg. readFile, writeFile).
+  o Complete Java NIO VFS implementation (`sftp` protocol). See `maverick-synergy-niofs/README/md`. 
  
 Bug Fixes
   o Fixed connection timeout.

@@ -216,6 +216,7 @@
 		<module>maverick-synergy-client</module>
 		<module>maverick-synergy-client-tests</module>
 		<module>maverick-synergy-server</module>
+		<module>maverick-synergy-virtual-tests</module>
 		<module>maverick-synergy-callback-client</module>
 		<module>maverick-synergy-callback-server</module>
 		<module>maverick-virtual-filesystem</module>

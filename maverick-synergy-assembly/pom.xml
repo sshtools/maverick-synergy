@@ -225,98 +225,98 @@
       <!-- Test modules must be listed so JaCoCo finds their jacoco.exec data files -->
       <dependencies>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-utils</artifactId>
           <version>${project.version}</version>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-logging</artifactId>
           <version>${project.version}</version>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-base</artifactId>
           <version>${project.version}</version>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-synergy-common</artifactId>
           <version>${project.version}</version>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-putty</artifactId>
           <version>${project.version}</version>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-base-tests</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-synergy-common-tests</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-synergy-client-tests</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-synergy-server-tests</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-virtual-filesystem-tests</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-virtual-session-tests</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-x509-tests</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-putty-tests</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-bc-tests</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-bc-fips-tests</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-sshagent-tests</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sshtools.hotfixes</groupId>
+          <groupId>com.sshtools</groupId>
           <artifactId>maverick-synergy-integration-tests</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>

@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.sshtools.hotfixes</groupId>
+		<groupId>com.sshtools</groupId>
 		<artifactId>maverick-synergy-group</artifactId>
 		<version>3.2.0-SNAPSHOT</version>
 	</parent>
@@ -41,34 +41,34 @@
 
 		<!-- SSH client/server under test -->
 		<dependency>
-			<groupId>com.sshtools.hotfixes</groupId>
+			<groupId>com.sshtools</groupId>
 			<artifactId>maverick-synergy-client</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.sshtools.hotfixes</groupId>
+			<groupId>com.sshtools</groupId>
 			<artifactId>maverick-synergy-server</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<!-- Crypto provider -->
 		<dependency>
-			<groupId>com.sshtools.hotfixes</groupId>
+			<groupId>com.sshtools</groupId>
 			<artifactId>maverick-bc</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<!-- Virtual filesystem (for SFTP server-side) -->
 		<dependency>
-			<groupId>com.sshtools.hotfixes</groupId>
+			<groupId>com.sshtools</groupId>
 			<artifactId>maverick-virtual-filesystem</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<!-- Shared test utilities (MockContext etc.) -->
 		<dependency>
-			<groupId>com.sshtools.hotfixes</groupId>
+			<groupId>com.sshtools</groupId>
 			<artifactId>maverick-base-tests</artifactId>
 			<version>${project.version}</version>
 			<classifier>tests</classifier>
@@ -76,7 +76,7 @@
 		</dependency>
 		<!-- Logging (avoid silent failures in tests) -->
 		<dependency>
-			<groupId>com.sshtools.hotfixes</groupId>
+			<groupId>com.sshtools</groupId>
 			<artifactId>maverick-logging</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>

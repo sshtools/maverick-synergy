@@ -118,4 +118,13 @@ public interface JCEAlgorithms {
 	public static final String ED25519 = "Ed25519";
 	public static final String ED448 = "Ed448";
 	public static final String JCE_X25519 = "X25519";
+
+	/** UMAC-32 message authentication code algorithm **/
+	public static final String JCE_UMAC32 = "UMAC-32";
+	/** UMAC-64 message authentication code algorithm **/
+	public static final String JCE_UMAC64 = "UMAC-64";
+	/** UMAC-96 message authentication code algorithm **/
+	public static final String JCE_UMAC96 = "UMAC-96";
+	/** UMAC-128 message authentication code algorithm **/
+	public static final String JCE_UMAC128 = "UMAC-128";
 }

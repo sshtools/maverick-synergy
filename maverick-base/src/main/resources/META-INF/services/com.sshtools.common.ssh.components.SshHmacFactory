@@ -14,3 +14,15 @@ com.sshtools.common.ssh.components.jce.HmacSha256ETM$HmacSha256ETMFactory
 com.sshtools.common.ssh.components.jce.HmacSha512$HmacSha512Factory
 com.sshtools.common.ssh.components.jce.HmacSha512_96$HmacSha512_96Factory
 com.sshtools.common.ssh.components.jce.HmacSha512ETM$HmacSha512ETMFactory
+com.sshtools.common.ssh.components.jce.Umac32$Umac32Factory
+com.sshtools.common.ssh.components.jce.Umac64$Umac64Factory
+com.sshtools.common.ssh.components.jce.Umac96$Umac96Factory
+com.sshtools.common.ssh.components.jce.Umac128$Umac128Factory
+com.sshtools.common.ssh.components.jce.Umac32OpenSsh$Umac32OpenSshFactory
+com.sshtools.common.ssh.components.jce.Umac64OpenSsh$Umac64OpenSshFactory
+com.sshtools.common.ssh.components.jce.Umac96OpenSsh$Umac96OpenSshFactory
+com.sshtools.common.ssh.components.jce.Umac128OpenSsh$Umac128OpenSshFactory
+com.sshtools.common.ssh.components.jce.Umac32OpenSshEtm$Umac32OpenSshEtmFactory
+com.sshtools.common.ssh.components.jce.Umac64OpenSshEtm$Umac64OpenSshEtmFactory
+com.sshtools.common.ssh.components.jce.Umac96OpenSshEtm$Umac96OpenSshEtmFactory
+com.sshtools.common.ssh.components.jce.Umac128OpenSshEtm$Umac128OpenSshEtmFactory

@@ -67,6 +67,18 @@ import com.sshtools.common.ssh.components.jce.HmacSha256_at_ssh_dot_com;
 import com.sshtools.common.ssh.components.jce.HmacSha512;
 import com.sshtools.common.ssh.components.jce.HmacSha512ETM;
 import com.sshtools.common.ssh.components.jce.HmacSha512_96;
+import com.sshtools.common.ssh.components.jce.Umac32;
+import com.sshtools.common.ssh.components.jce.Umac64;
+import com.sshtools.common.ssh.components.jce.Umac96;
+import com.sshtools.common.ssh.components.jce.Umac128;
+import com.sshtools.common.ssh.components.jce.Umac32OpenSsh;
+import com.sshtools.common.ssh.components.jce.Umac64OpenSsh;
+import com.sshtools.common.ssh.components.jce.Umac96OpenSsh;
+import com.sshtools.common.ssh.components.jce.Umac128OpenSsh;
+import com.sshtools.common.ssh.components.jce.Umac32OpenSshEtm;
+import com.sshtools.common.ssh.components.jce.Umac64OpenSshEtm;
+import com.sshtools.common.ssh.components.jce.Umac96OpenSshEtm;
+import com.sshtools.common.ssh.components.jce.Umac128OpenSshEtm;
 import com.sshtools.common.ssh.components.jce.MD5Digest;
 import com.sshtools.common.ssh.components.jce.OpenSshEcdsaSha2Nist256Certificate;
 import com.sshtools.common.ssh.components.jce.OpenSshEcdsaSha2Nist384Certificate;
@@ -161,7 +173,19 @@ open module com.sshtools.maverick.base {
 		HmacSha256ETM.HmacSha256ETMFactory,
 		HmacSha512.HmacSha512Factory,
 		HmacSha512_96.HmacSha512_96Factory,
-		HmacSha512ETM.HmacSha512ETMFactory;
+		HmacSha512ETM.HmacSha512ETMFactory,
+		Umac32.Umac32Factory,
+		Umac64.Umac64Factory,
+		Umac96.Umac96Factory,
+		Umac128.Umac128Factory,
+		Umac32OpenSsh.Umac32OpenSshFactory,
+		Umac64OpenSsh.Umac64OpenSshFactory,
+		Umac96OpenSsh.Umac96OpenSshFactory,
+		Umac128OpenSsh.Umac128OpenSshFactory,
+		Umac32OpenSshEtm.Umac32OpenSshEtmFactory,
+		Umac64OpenSshEtm.Umac64OpenSshEtmFactory,
+		Umac96OpenSshEtm.Umac96OpenSshEtmFactory,
+		Umac128OpenSshEtm.Umac128OpenSshEtmFactory;
 	
 	uses SshPublicKeyFactory;
 	provides SshPublicKeyFactory with

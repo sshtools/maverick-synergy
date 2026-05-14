@@ -491,11 +491,14 @@ public class JCEComponentManager extends ComponentManager implements JCEAlgorith
 			byte[] tmp = new byte[1024];
 			c.init(tmp);
 
-			if (c instanceof AbstractHmac)
+			if (c instanceof AbstractHmac) {
 				if(Log.isInfoEnabled())
 					Log.info(
 							"   " + name + " will be supported using JCE Provider " + ((AbstractHmac) c).getProvider());
-
+			} else {
+				if(Log.isInfoEnabled())
+					Log.info("   " + name + " will be supported");
+				}	
 			return true;
 		} catch (Throwable e) {
 			if(Log.isInfoEnabled()) {

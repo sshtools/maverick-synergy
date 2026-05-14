@@ -70,6 +70,7 @@ public class SshEngine {
 	SelectorThreadPool acceptThreads;
 	SelectorThreadPool connectThreads;
 	SelectorThreadPool transferThreads;
+	SelectorThreadPool virtualTransferThreads;
 	Map<String,ProtocolClientAcceptor> acceptors = new ConcurrentHashMap<String,ProtocolClientAcceptor>(50, 0.9f, 1);
 	Thread shutdownHook;
 	boolean started;
@@ -832,6 +833,51 @@ public class SshEngine {
 
 	public void setStartupRequiresListeningInterfaces(boolean startupRequiresListeningInterfaces) {
 		this.startupRequiresListeningInterfaces = startupRequiresListeningInterfaces;
+	}
+
+	/**
+	 * Create an in-memory virtual connection between a client context and a server context.
+	 * No OS socket is involved; data flows through a pair of {@link VirtualSelectableChannel}s
+	 * managed by a dedicated {@link VirtualSelectorProvider}-backed thread pool.
+	 *
+	 * @param clientCtx  the client-side protocol context (e.g. {@code SshClientContext})
+	 * @param serverCtx  the server-side protocol context (e.g. {@code SshServerContext})
+	 * @return a {@link ConnectRequestFuture} that completes once the SSH handshake finishes
+	 */
+	public ConnectRequestFuture connectVirtual(ProtocolContext clientCtx, ProtocolContext serverCtx)
+			throws IOException, SshException {
+
+		InetSocketAddress virtualAddr = new InetSocketAddress("127.0.0.1", 0);
+		VirtualSelectableChannel[] pair = VirtualSelectableChannel.createPair(virtualAddr, virtualAddr);
+
+		ConnectRequestFuture future = new ConnectRequestFuture("virtual", 0);
+
+		// -- Client side --
+		VirtualSocketConnection clientConn = new VirtualSocketConnection();
+		ProtocolEngine clientEngine = clientCtx.createEngine(future);
+		clientConn.initialize(clientEngine, this, pair[0]);
+		registerHandler(clientConn, pair[0], getOrCreateVirtualTransferThreads().selectNextThread());
+
+		// -- Server side --
+		VirtualSocketConnection serverConn = new VirtualSocketConnection();
+		ProtocolEngine serverEngine = serverCtx.createEngine(new ConnectRequestFuture());
+		serverConn.initialize(serverEngine, this, pair[1]);
+		registerHandler(serverConn, pair[1], getOrCreateVirtualTransferThreads().selectNextThread());
+
+		return future;
+	}
+
+	private synchronized SelectorThreadPool getOrCreateVirtualTransferThreads() throws IOException {
+		if (virtualTransferThreads == null) {
+			virtualTransferThreads = new SelectorThreadPool(
+					new TransferSelectorThread(),
+					context.getPermanentTransferThreads(),
+					context.getMaximumChannelsPerThread(),
+					context.getIdleServiceRunPeriod(),
+					context.getInactiveServiceRunsPerIdleEvent(),
+					VirtualSelectorProvider.getInstance());
+		}
+		return virtualTransferThreads;
 	}
 
 	private <K extends ProtocolContext> ProtocolEngine registerClientConnection(K protocolContext, SocketChannel socketChannel, ConnectRequestFuture connectFuture) throws IOException, SshException {

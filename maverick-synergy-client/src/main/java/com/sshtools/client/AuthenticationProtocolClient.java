@@ -344,7 +344,7 @@ public class AuthenticationProtocolClient implements Service {
 			boolean start = currentAuthenticator == null;
 			
 			if(authenticator instanceof PasswordAuthenticator) {
-				if(supportedAuths.contains("keyboard-interactive") &&
+				if(supportedAuths != null && supportedAuths.contains("keyboard-interactive") &&
 						(!supportedAuths.contains("password") || context.getPreferKeyboardInteractiveOverPassword())) {
 					
 					if(Log.isDebugEnabled()) {

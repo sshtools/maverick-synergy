@@ -233,12 +233,15 @@ public class SelectorThread extends Thread {
 			SelectionKey key = it.next();
 			Object obj = key.attachment();
 			if (obj instanceof SocketConnection) {
-				try {
-					((SocketConnection) obj).socketChannel.close();
-				} catch (IOException e) {
-					// don't care
+				SocketConnection sc = (SocketConnection) obj;
+				if (sc.socketChannel != null) {
+					try {
+						sc.socketChannel.close();
+					} catch (IOException e) {
+						// don't care
+					}
 				}
-				((SocketConnection) obj).protocolEngine.onSocketClose();
+				sc.protocolEngine.onSocketClose();
 			}
 
 			SelectableChannel channel = key.channel();

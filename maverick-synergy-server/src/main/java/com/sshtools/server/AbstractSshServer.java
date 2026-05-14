@@ -57,6 +57,8 @@ import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
+import com.sshtools.synergy.nio.ConnectRequestFuture;
+import com.sshtools.synergy.nio.ProtocolContext;
 import com.sshtools.synergy.nio.ProtocolContextFactory;
 import com.sshtools.synergy.nio.SshEngine;
 import com.sshtools.synergy.nio.SshEngineContext;
@@ -186,6 +188,26 @@ public abstract class AbstractSshServer implements Closeable {
 	
 	public void stop(boolean graceful, long timeout) {
 		engine.shutdownNow(graceful, timeout);
+	}
+
+	/**
+	 * Open an in-memory virtual SSH connection from the given client context to
+	 * this server.  No OS socket is created; both sides are wired together
+	 * through a pair of {@link com.sshtools.synergy.nio.VirtualSelectableChannel}s.
+	 * <p>
+	 * The server must already be started before calling this method.
+	 *
+	 * @param clientCtx the client-side protocol context (typically an
+	 *                  {@code SshClientContext} obtained from the SSH client API)
+	 * @return a {@link ConnectRequestFuture} that completes once the SSH handshake
+	 *         succeeds (or fails)
+	 * @throws IOException   if the virtual thread pool or context cannot be created
+	 * @throws SshException  if the protocol engine cannot be initialised
+	 */
+	public ConnectRequestFuture acceptVirtualConnection(ProtocolContext clientCtx)
+			throws IOException, SshException {
+		SshServerContext serverCtx = createServerContext(engine.getContext(), null);
+		return engine.connectVirtual(clientCtx, serverCtx);
 	}
 	
 	public void addHostKeys(Collection<SshKeyPair> hostKeys) {

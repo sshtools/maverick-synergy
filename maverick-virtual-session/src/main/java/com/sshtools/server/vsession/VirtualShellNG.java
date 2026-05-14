@@ -104,6 +104,11 @@ public class VirtualShellNG extends SessionChannelNG {
 		protectedEnvironmentVars.add(name.toUpperCase());
 	}
 
+	@Override
+	protected boolean executeCommand(String[] args) {
+		return executeCommand(String.join(" ", args));
+	}
+
 	protected boolean executeCommand(String cmd) {
 
 		try {

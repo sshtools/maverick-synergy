@@ -62,13 +62,6 @@ public class RootShell extends Msh {
 		this.console = console;
 		VirtualConsole.setCurrentConsole(console);
 		
-		if(!console.getContext().getPolicy(VirtualSessionPolicy.class).isDisableBanner()) {
-			writeWelcome(console.getContext().getPolicy(VirtualSessionPolicy.class).getBannerText());
-		}
-		
-		String welcomeText = console.getContext().getPolicy(VirtualSessionPolicy.class).getWelcomeText();
-		writeWelcome(welcomeText);
-		
 		try {
 			if (commands != null) {
 				runAndExit(commands, args, console);
@@ -85,9 +78,6 @@ public class RootShell extends Msh {
 		if(!console.getContext().getPolicy(VirtualSessionPolicy.class).isDisableBanner()) {
 			writeWelcome(console.getContext().getPolicy(VirtualSessionPolicy.class).getBannerText());
 		}
-		
-		String welcomeText = console.getContext().getPolicy(VirtualSessionPolicy.class).getWelcomeText();
-		writeWelcome(welcomeText);
 		
 		super.run(args, console);
 		

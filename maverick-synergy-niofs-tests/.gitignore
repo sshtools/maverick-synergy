@@ -1,0 +1,6 @@
+/target/
+*.classpath
+*.project
+/tmp/
+ssh_host_*
+/logging.properties

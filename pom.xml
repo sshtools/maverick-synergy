@@ -307,6 +307,8 @@
 		<module>maverick-synergy-callback-server</module>
 		<module>maverick-virtual-filesystem</module>
 		<module>maverick-virtual-filesystem-tests</module>
+		<module>maverick-synergy-niofs</module>
+		<module>maverick-synergy-niofs-tests</module>
 		<module>maverick-synergy-s3</module>
 		<module>maverick-virtual-session</module>
 		<module>maverick-virtual-session-tests</module>

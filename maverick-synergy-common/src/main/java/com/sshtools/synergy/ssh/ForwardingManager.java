@@ -56,7 +56,8 @@ public class ForwardingManager<T extends SshContext> {
 	 * @return handle handle
 	 */
 	public static ForwardingHandle attachToConnection(Connection<?> conn, ForwardingHandle handle) {
-		List<ForwardingHandle> hndls = conn.getProperty(handle.type().key());
+		@SuppressWarnings("unchecked")
+		List<ForwardingHandle> hndls = (List<ForwardingHandle>) conn.getProperty(handle.type().key());
 		if(hndls == null) {
 			hndls = Collections.synchronizedList(new ArrayList<>());
 			
@@ -89,12 +90,16 @@ public class ForwardingManager<T extends SshContext> {
 	 * @return handle was removed
 	 */
 	public static boolean detachFromConnection(Connection<?> conn, ForwardingHandle handle) {
-		List<ForwardingHandle> hndls = conn.getProperty(handle.type().key());
+		@SuppressWarnings("unchecked")
+		List<ForwardingHandle> hndls = (List<ForwardingHandle>) conn.getProperty(handle.type().key());
 		if(hndls != null) {
 			var removed = hndls.remove(handle);
 			if(hndls.isEmpty()) {
 				conn.removeProperty(handle.type().key());
-				conn.removeEventListener(conn.getProperty(handle.type().key() + "-listener"));
+				EventListener listener = (EventListener) conn.getProperty(handle.type().key() + "-listener");
+				if(listener != null) {
+					conn.removeEventListener(listener);
+				}
 				conn.removeProperty(handle.type().key() + "-listener");
 			}
 			return removed;
@@ -114,7 +119,8 @@ public class ForwardingManager<T extends SshContext> {
 	 * @return remote forwards for connection
 	 */
 	public static List<ForwardingHandle> attached(ForwardingRequest.ForwardingType type, ConnectionProtocol<?> con) {
-		List<ForwardingHandle> remoteForwards = con.getConnection().getProperty(type.key());
+		@SuppressWarnings("unchecked")
+		List<ForwardingHandle> remoteForwards = (List<ForwardingHandle>) con.getConnection().getProperty(type.key());
 		return remoteForwards == null ? Collections.emptyList()
 				: Collections.unmodifiableList(new ArrayList<>(remoteForwards));
 	}

@@ -38,7 +38,6 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
 import com.sshtools.common.util.IOUtils;
 import com.sshtools.common.util.UnsignedInteger32;
-import com.sshtools.synergy.ssh.ByteArrays;
 import com.sshtools.synergy.ssh.PacketPool;
 
 /**

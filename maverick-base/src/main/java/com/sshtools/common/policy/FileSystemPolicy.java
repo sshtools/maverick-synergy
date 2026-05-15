@@ -77,6 +77,7 @@ public class FileSystemPolicy extends Permissions {
 		private String sftpLongnameDateFormatWithTime = "MMM dd HH:mm";
 		private List<SftpExtensionFactory> sftpExtensionFactories = new ArrayList<>();
 		private Optional<Predicate<SftpExtension>> sftpExtensionFilter = Optional.empty();
+		private Optional<FileFactory> fileFactory = Optional.empty();
 
 		private FileSystemPolicyBuilder() { }
 		
@@ -330,6 +331,17 @@ public class FileSystemPolicy extends Permissions {
 		}
 		
 		/**
+		 * Set the file factory used to obtain an {@link AbstractFileFactory} for each connection.
+		 *
+		 * @param fileFactory file factory
+		 * @return this for chaining
+		 */
+		public FileSystemPolicyBuilder withFileFactory(FileFactory fileFactory) {
+			this.fileFactory = Optional.ofNullable(fileFactory);
+			return this;
+		}
+
+		/**
 		 * Build a new {@link ScpPolicy} given the configuration of this builder.
 		 * 
 		 * @return policy
@@ -398,6 +410,7 @@ public class FileSystemPolicy extends Permissions {
 		sftpLongnameDateFormatWithTime = bldr.sftpLongnameDateFormatWithTime;
 		sftpExtensionFactories = Collections.unmodifiableList(new ArrayList<SftpExtensionFactory>(bldr.sftpExtensionFactories));
 		sftpExtensionFilter = bldr.sftpExtensionFilter;
+		fileFactory = bldr.fileFactory.map(CachingFileFactory::new).orElse(null);
 	}
 	
 	/**
@@ -473,7 +486,9 @@ public class FileSystemPolicy extends Permissions {
 	/**
 	 * Set the file factory for this context.
 	 * @param fileFactory
+	 * @deprecated  will become immutable, use {@link FileSystemPolicyBuilder}.
 	 */
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setFileFactory(FileFactory fileFactory) {
 		this.fileFactory = new CachingFileFactory(fileFactory);
 	}

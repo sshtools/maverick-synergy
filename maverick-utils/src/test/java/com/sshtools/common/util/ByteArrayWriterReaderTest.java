@@ -22,10 +22,7 @@ package com.sshtools.common.util;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.math.BigInteger;
 
@@ -46,8 +43,9 @@ public class ByteArrayWriterReaderTest {
         for (int v : values) {
             ByteArrayWriter w = new ByteArrayWriter();
             w.writeInt(v);
-            ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-            assertEquals("roundtrip int " + v, v & 0xFFFFFFFFL, r.readInt());
+            try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+                assertEquals("roundtrip int " + v, v & 0xFFFFFFFFL, r.readInt());
+            }
         }
     }
 
@@ -57,8 +55,9 @@ public class ByteArrayWriterReaderTest {
         for (long v : values) {
             ByteArrayWriter w = new ByteArrayWriter();
             w.writeInt(v);
-            ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-            assertEquals("roundtrip long " + v, v, r.readInt());
+            try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+                assertEquals("roundtrip long " + v, v, r.readInt());
+            }
         }
     }
 
@@ -105,8 +104,9 @@ public class ByteArrayWriterReaderTest {
         for (short v : values) {
             ByteArrayWriter w = new ByteArrayWriter();
             w.writeShort(v);
-            ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-            assertEquals("roundtrip short " + v, v, r.readShort());
+            try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+                assertEquals("roundtrip short " + v, v, r.readShort());
+            }
         }
     }
 
@@ -126,8 +126,9 @@ public class ByteArrayWriterReaderTest {
         for (boolean b : new boolean[]{ true, false }) {
             ByteArrayWriter w = new ByteArrayWriter();
             w.writeBoolean(b);
-            ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-            assertEquals("roundtrip boolean " + b, b, r.readBoolean());
+            try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+                assertEquals("roundtrip boolean " + b, b, r.readBoolean());
+            }
         }
     }
 
@@ -141,8 +142,9 @@ public class ByteArrayWriterReaderTest {
         for (String s : values) {
             ByteArrayWriter w = new ByteArrayWriter();
             w.writeString(s);
-            ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-            assertEquals("roundtrip string", s, r.readString());
+            try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+                assertEquals("roundtrip string", s, r.readString());
+            }
         }
     }
 
@@ -150,8 +152,9 @@ public class ByteArrayWriterReaderTest {
     public void testWriteNullStringWritesZeroLength() throws IOException {
         ByteArrayWriter w = new ByteArrayWriter();
         w.writeString(null);
-        ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-        assertEquals("", r.readString());
+        try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+            assertEquals("", r.readString());
+        }
     }
 
     @Test
@@ -171,8 +174,9 @@ public class ByteArrayWriterReaderTest {
         byte[] data = { 0x00, 0x01, (byte) 0xFF, 0x7F };
         ByteArrayWriter w = new ByteArrayWriter();
         w.writeBinaryString(data);
-        ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-        assertArrayEquals(data, r.readBinaryString());
+        try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+            assertArrayEquals(data, r.readBinaryString());
+        }
     }
 
     @Test
@@ -180,21 +184,23 @@ public class ByteArrayWriterReaderTest {
         byte[] data = { 0x00, 0x01, (byte) 0xAB, 0x7F, 0x00 };
         ByteArrayWriter w = new ByteArrayWriter();
         w.writeBinaryString(data, 1, 3);
-        ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-        byte[] result = r.readBinaryString();
-        assertEquals(3, result.length);
-        assertEquals(data[1], result[0]);
-        assertEquals(data[2], result[1]);
-        assertEquals(data[3], result[2]);
+        try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+            byte[] result = r.readBinaryString();
+            assertEquals(3, result.length);
+            assertEquals(data[1], result[0]);
+            assertEquals(data[2], result[1]);
+            assertEquals(data[3], result[2]);
+        }
     }
 
     @Test
     public void testWriteNullBinaryStringWritesZeroLength() throws IOException {
         ByteArrayWriter w = new ByteArrayWriter();
         w.writeBinaryString((byte[]) null);
-        ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-        byte[] result = r.readBinaryString();
-        assertEquals(0, result.length);
+        try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+            byte[] result = r.readBinaryString();
+            assertEquals(0, result.length);
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -213,8 +219,9 @@ public class ByteArrayWriterReaderTest {
         for (BigInteger bi : values) {
             ByteArrayWriter w = new ByteArrayWriter();
             w.writeBigInteger(bi);
-            ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-            assertEquals("roundtrip BigInteger " + bi, bi, r.readBigInteger());
+            try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+                assertEquals("roundtrip BigInteger " + bi, bi, r.readBigInteger());
+            }
         }
     }
 
@@ -227,8 +234,9 @@ public class ByteArrayWriterReaderTest {
         UnsignedInteger32 v = new UnsignedInteger32(0xFFFFFFFEL);
         ByteArrayWriter w = new ByteArrayWriter();
         w.writeUINT32(v);
-        ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-        assertEquals(0xFFFFFFFEL, r.readUINT32().longValue());
+        try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+            assertEquals(0xFFFFFFFEL, r.readUINT32().longValue());
+        }
     }
 
     @Test
@@ -236,8 +244,9 @@ public class ByteArrayWriterReaderTest {
         UnsignedInteger64 v = new UnsignedInteger64(Long.MAX_VALUE);
         ByteArrayWriter w = new ByteArrayWriter();
         w.writeUINT64(v);
-        ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-        assertEquals(Long.MAX_VALUE, r.readUINT64().longValue());
+        try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+            assertEquals(Long.MAX_VALUE, r.readUINT64().longValue());
+        }
     }
 
     @Test
@@ -245,8 +254,9 @@ public class ByteArrayWriterReaderTest {
         long value = 123456789L;
         ByteArrayWriter w = new ByteArrayWriter();
         w.writeUINT64(value);
-        ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-        assertEquals(value, r.readUINT64().longValue());
+        try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+            assertEquals(value, r.readUINT64().longValue());
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -258,8 +268,9 @@ public class ByteArrayWriterReaderTest {
         BigInteger original = BigInteger.valueOf(12345678);
         ByteArrayWriter w = new ByteArrayWriter();
         w.writeMPINT(original);
-        ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-        assertEquals(original, r.readMPINT());
+        try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+            assertEquals(original, r.readMPINT());
+        }
     }
 
     @Test
@@ -277,8 +288,9 @@ public class ByteArrayWriterReaderTest {
         } else {
             w.write(raw, 0, bytes);
         }
-        ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-        assertEquals(original, r.readMPINT32());
+        try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+            assertEquals(original, r.readMPINT32());
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -293,11 +305,12 @@ public class ByteArrayWriterReaderTest {
         w.writeString("hello");
         w.writeBinaryString(new byte[]{ 1, 2, 3 });
 
-        ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-        assertEquals(42L, r.readInt());
-        assertTrue(r.readBoolean());
-        assertEquals("hello", r.readString());
-        assertArrayEquals(new byte[]{ 1, 2, 3 }, r.readBinaryString());
+        try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+            assertEquals(42L, r.readInt());
+            assertTrue(r.readBoolean());
+            assertEquals("hello", r.readString());
+            assertArrayEquals(new byte[]{ 1, 2, 3 }, r.readBinaryString());
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -354,51 +367,57 @@ public class ByteArrayWriterReaderTest {
     @Test
     public void testReaderArray() {
         byte[] data = { 1, 2, 3 };
-        ByteArrayReader r = new ByteArrayReader(data);
-        assertArrayEquals(data, r.array());
+        try(ByteArrayReader r = new ByteArrayReader(data)) {
+        	assertArrayEquals(data, r.array());
+        }
     }
 
     @Test
     public void testReaderGetPosition() throws IOException {
         ByteArrayWriter w = new ByteArrayWriter();
         w.writeInt(1);
-        ByteArrayReader r = new ByteArrayReader(w.toByteArray());
-        assertEquals(0, r.getPosition());
-        r.readInt();
-        assertEquals(4, r.getPosition());
+        try (ByteArrayReader r = new ByteArrayReader(w.toByteArray())) {
+            assertEquals(0, r.getPosition());
+            r.readInt();
+            assertEquals(4, r.getPosition());
+        }
     }
 
     @Test
     public void testReaderOffsetConstructor() throws IOException {
         byte[] data = { 0, 0, 0, 0, 0x00, 0x00, 0x00, 0x05 };
-        ByteArrayReader r = new ByteArrayReader(data, 4, 4);
-        assertEquals(5L, r.readInt());
+        try (ByteArrayReader r = new ByteArrayReader(data, 4, 4)) {
+            assertEquals(5L, r.readInt());
+        }
     }
 
     @Test(expected = IOException.class)
     public void testReaderThrowsOnTooShortBuffer() throws IOException {
-        ByteArrayReader r = new ByteArrayReader(new byte[]{ 0x00, 0x00, 0x10 }); // only 3 bytes
-        r.readInt(); // needs 4
+        try (ByteArrayReader r = new ByteArrayReader(new byte[]{ 0x00, 0x00, 0x10 })) {
+            r.readInt(); // needs 4
+        }
     }
 
     @Test
     public void testReaderReadFullyExact() throws IOException {
         byte[] source = { 1, 2, 3, 4, 5 };
-        ByteArrayReader r = new ByteArrayReader(source);
-        byte[] dest = new byte[5];
-        r.readFully(dest);
-        assertArrayEquals(source, dest);
+        try (ByteArrayReader r = new ByteArrayReader(source)) {
+            byte[] dest = new byte[5];
+            r.readFully(dest);
+            assertArrayEquals(source, dest);
+        }
     }
 
     @Test
     public void testReaderReadFullyWithOffset() throws IOException {
         byte[] source = { 10, 20, 30 };
-        ByteArrayReader r = new ByteArrayReader(source);
-        byte[] dest = new byte[5];
-        r.readFully(dest, 1, 3);
-        assertEquals(10, dest[1]);
-        assertEquals(20, dest[2]);
-        assertEquals(30, dest[3]);
+        try (ByteArrayReader r = new ByteArrayReader(source)) {
+            byte[] dest = new byte[5];
+            r.readFully(dest, 1, 3);
+            assertEquals(10, dest[1]);
+            assertEquals(20, dest[2]);
+            assertEquals(30, dest[3]);
+        }
     }
 
     @Test
@@ -409,13 +428,15 @@ public class ByteArrayWriterReaderTest {
 
     @Test
     public void testReaderSilentClose() {
-        ByteArrayReader r = new ByteArrayReader(new byte[]{ 1 });
-        r.silentClose(); // should not throw
+        try(ByteArrayReader r = new ByteArrayReader(new byte[]{ 1 })) {
+        	r.silentClose(); // shouldnot throw
+        }
     }
 
     @Test
     public void testReaderDispose() {
-        ByteArrayReader r = new ByteArrayReader(new byte[]{ 1 });
-        r.dispose(); // should not throw
+        try(ByteArrayReader r = new ByteArrayReader(new byte[]{ 1 })) {
+        	r.dispose(); // should not throw
+        }
     }
 }

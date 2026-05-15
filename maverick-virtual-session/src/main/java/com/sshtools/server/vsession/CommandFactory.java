@@ -31,7 +31,7 @@ import java.util.List;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.SshConnection;
 
-public abstract class CommandFactory<T extends Command> {
+public abstract class CommandFactory<T extends Command> implements CommandProvider<T> {
 
 	protected HashMap<String, Class<? extends T>> commands = new HashMap<String, Class<? extends T>>();
 	protected List<CommandConfigurator<T>> configurators = new ArrayList<CommandConfigurator<T>>();
@@ -84,25 +84,26 @@ public abstract class CommandFactory<T extends Command> {
 		return commands.containsKey(command);
 	}
 	
-	public T createCommand(String command, SshConnection con) throws UnsupportedCommandException, IllegalAccessException, InstantiationException, IOException, PermissionDeniedException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		return newInstance(command, con);
-	}
-	
-	protected T newInstance(String command, SshConnection con) throws UnsupportedCommandException, IllegalAccessException,
-			InstantiationException, IOException, PermissionDeniedException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	public T createCommand(String command, SshConnection con) throws UnsupportedCommandException {
+		
 		if (!commands.containsKey(command)) {
 			throw new UnsupportedCommandException(command + " is not a supported command");
 		}
 
-		Class<? extends T> cls = commands.get(command);
-		T c = cls.getConstructor().newInstance();
-		
-		configureCommand(c, con);
-		
-		for (CommandConfigurator<T> configurator : configurators) {
-			configurator.configure(c);
+		try {
+			Class<? extends T> cls = commands.get(command);
+			T c = cls.getConstructor().newInstance();
+			
+			configureCommand(c, con);
+			
+			for (CommandConfigurator<T> configurator : configurators) {
+				configurator.configure(c);
+			}
+			return c;
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException | IOException | PermissionDeniedException e) {
+			throw new IllegalStateException(e.getMessage(), e);
 		}
-		return c;
 	}
 
 	protected void configureCommand(T command, SshConnection con) throws IOException, PermissionDeniedException {

@@ -31,10 +31,10 @@ import com.sshtools.synergy.ssh.ChannelNG;
 
 public class VirtualChannelFactory extends DefaultServerChannelFactory {
 
-	CommandFactory<? extends ShellCommand>[] factories;
+	CommandProvider<? extends ShellCommand>[] factories;
 	String shellCommand;
 	@SafeVarargs
-	public VirtualChannelFactory(CommandFactory<? extends ShellCommand>... factories) {
+	public VirtualChannelFactory(CommandProvider<? extends ShellCommand>... factories) {
 		this.factories = factories;
 	}
 
@@ -50,7 +50,7 @@ public class VirtualChannelFactory extends DefaultServerChannelFactory {
 		return new VirtualShellNG(con,  new ShellCommandFactory(factories), shellCommand);
 	}
 	
-	protected CommandFactory<? extends ShellCommand>[] getCommandFactories() {
+	protected CommandProvider<? extends ShellCommand>[] getCommandFactories() {
 		return factories;
 	}
 }

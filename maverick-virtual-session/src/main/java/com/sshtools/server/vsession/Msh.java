@@ -57,7 +57,7 @@ public class Msh extends ShellCommand {
 
 	private boolean exit;
 	private String prompt;
-	protected CommandFactory<? extends Command> commandFactory;
+	protected CommandProvider<? extends Command> commandFactory;
 
 	protected Map<Long, Job> runningJobs = new HashMap<>();
 	private long nextJobId = 1;
@@ -65,7 +65,7 @@ public class Msh extends ShellCommand {
 
 	private List<MshListener> listeners = new ArrayList<>();
 	
-	public Msh(CommandFactory<? extends Command> commandFactory) {
+	public Msh(CommandProvider<? extends Command> commandFactory) {
 		super("msh", SUBSYSTEM_SHELL, "Usage: msh <script>", "A basic interactive shell for executing commands.");
 		setBuiltIn(false);
 		this.commandFactory = commandFactory;
@@ -80,7 +80,7 @@ public class Msh extends ShellCommand {
 		listeners.add(listener);
 	}
 	
-	protected void setCommandFactory(CommandFactory<? extends Command> commandFactory) {
+	protected void setCommandFactory(CommandProvider<? extends Command> commandFactory) {
 		this.commandFactory = commandFactory;
 	}
 
@@ -421,7 +421,7 @@ public class Msh extends ShellCommand {
 		exit = true;
 	}
 
-	public CommandFactory<? extends Command> getCommandFactory() {
+	public CommandProvider<? extends Command> getCommandFactory() {
 		return commandFactory;
 	}
 

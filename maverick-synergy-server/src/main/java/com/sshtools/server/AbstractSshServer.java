@@ -226,10 +226,12 @@ public abstract class AbstractSshServer implements Closeable {
 		providers.add(provider);
 	}
 	
+	@Deprecated(since="3.2.0", forRemoval=true)
 	public void setFileFactory(FileFactory fileFactory) {
 		this.fileFactory = fileFactory;
 	}
 	
+	@Deprecated(since="3.2.0", forRemoval=true)
 	public FileFactory getFileFactory() {
 		return fileFactory;
 	}
@@ -322,7 +324,10 @@ public abstract class AbstractSshServer implements Closeable {
 	}
 	
 	protected void configureFilesystem(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
-		sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(getFileFactory());
+		
+		if(sshContext.getPolicy(FileSystemPolicy.class).getFileFactory() == null) {
+			sshContext.getPolicy(FileSystemPolicy.class).setFileFactory(getFileFactory());
+		}
 		if(enableScp) {
 			sshContext.getChannelFactory().supportedCommands().add(new ScpCommand.ScpCommandFactory());
 		}

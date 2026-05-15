@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 
 import com.sshtools.common.publickey.SshKeyPairGenerator;
 import com.sshtools.common.ssh.SshConnection;
-import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.server.InMemoryPublicKeyAuthenticator;
 

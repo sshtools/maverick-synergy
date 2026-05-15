@@ -29,16 +29,10 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
 import org.junit.Test;
 
 import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.util.ByteArrayReader;
-import com.sshtools.common.util.ByteArrayWriter;
-import com.sshtools.common.util.UnsignedInteger64;
 
 /**
  * Tests for {@link SftpFileAttributes} and {@link SftpFileAttributesBuilder}.

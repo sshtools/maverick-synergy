@@ -54,8 +54,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
-import java.util.function.Consumer;
-
 import com.sshtools.client.SshClient;
 import com.sshtools.client.tasks.FileTransferProgress;
 import com.sshtools.common.files.AbstractFile;

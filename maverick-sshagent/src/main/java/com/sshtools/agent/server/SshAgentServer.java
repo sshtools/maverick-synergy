@@ -114,6 +114,7 @@ public class SshAgentServer implements Closeable {
 		}
 	}
 	
+	@SuppressWarnings("resource")
 	public static void main(String[] args) throws IOException {
 		new SshAgentServer(new OpenSSHConnectionFactory()).startUnixSocketListener("/private/tmp/com.sshtools.agent");
 	}

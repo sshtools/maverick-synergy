@@ -28,7 +28,6 @@ import java.nio.ByteBuffer;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.util.ByteBufferPool;
-import com.sshtools.common.util.UnsignedInteger32;
 
 /**
  * Defines the abstract attributes of an SSH Subsystem.

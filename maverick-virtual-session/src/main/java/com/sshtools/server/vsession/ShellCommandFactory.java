@@ -23,7 +23,6 @@ package com.sshtools.server.vsession;
  */
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -49,11 +48,11 @@ import com.sshtools.server.vsession.commands.Unalias;
 
 public class ShellCommandFactory extends CommandFactory<ShellCommand> {
 
-	final List<CommandFactory<? extends ShellCommand>> factories = new ArrayList<CommandFactory<? extends ShellCommand>>();
+	final List<CommandProvider<? extends ShellCommand>> factories = new ArrayList<CommandProvider<? extends ShellCommand>>();
 
 	
 	@SafeVarargs
-	public ShellCommandFactory(CommandFactory<? extends ShellCommand>... commandFactories) {
+	public ShellCommandFactory(CommandProvider<? extends ShellCommand>... commandFactories) {
 		installShellCommands();
 		factories.addAll(Arrays.asList(commandFactories));
 	}
@@ -97,29 +96,28 @@ public class ShellCommandFactory extends CommandFactory<ShellCommand> {
 	public java.util.Set<String> getSupportedCommands() {
 		Set<String> commands = new HashSet<String>();
 		commands.addAll(super.getSupportedCommands());
-		for(CommandFactory<? extends ShellCommand> factory : factories) {
+		for(CommandProvider<? extends ShellCommand> factory : factories) {
 			commands.addAll(factory.getSupportedCommands());
 		}
 		return commands;
 	}
 	
 	@Override
-	protected ShellCommand newInstance(String command, SshConnection con) throws UnsupportedCommandException,
-			IllegalAccessException, InstantiationException, IOException, PermissionDeniedException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	public ShellCommand createCommand(String command, SshConnection con) throws UnsupportedCommandException {
 		
-		for(CommandFactory<? extends ShellCommand> factory : factories) {
+		for(CommandProvider<? extends ShellCommand> factory : factories) {
 			if(factory.supportsCommand(command)) {
-				return factory.newInstance(command, con);
+				return factory.createCommand(command, con);
 			}
 		}
 		
-		return super.newInstance(command, con);
+		return super.createCommand(command, con);
 	}
 	
 	@Override
 	public boolean supportsCommand(String command) {
 		
-		for(CommandFactory<? extends ShellCommand> factory : factories) {
+		for(CommandProvider<? extends ShellCommand> factory : factories) {
 			if(factory.supportsCommand(command)) {
 				return true;
 			}

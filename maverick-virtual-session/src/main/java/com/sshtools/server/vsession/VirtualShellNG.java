@@ -23,7 +23,6 @@ package com.sshtools.server.vsession;
  */
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
@@ -319,9 +318,7 @@ public class VirtualShellNG extends SessionChannelNG {
 				try {
 					ShellCommand cmd = commandFactory.createCommand(line.words().get(0), con);
 					cmd.complete(reader, line, candidates);
-				} catch (IllegalAccessException | InstantiationException
-						| UnsupportedCommandException | IOException
-						| PermissionDeniedException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+				} catch(UnsupportedCommandException e) {
 				}
 			}
 		}

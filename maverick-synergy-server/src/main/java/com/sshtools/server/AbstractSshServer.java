@@ -113,7 +113,14 @@ public abstract class AbstractSshServer implements Closeable {
 		JCEComponentManager.getDefaultInstance();
 	}
 	
-	public abstract ProtocolContextFactory<?> getDefaultContextFactory();
+	public ProtocolContextFactory<?> getDefaultContextFactory() {
+		return new ProtocolContextFactory<SshServerContext>() {
+			@Override
+			public SshServerContext createContext(SshEngineContext daemonContext, SocketChannel sc) throws IOException, SshException {
+				return AbstractSshServer.this.createServerContext(daemonContext, sc);
+			}
+		};
+	}
 	
 	public void setConfigFolder(File confFolder) {
 		this.confFolder = confFolder;

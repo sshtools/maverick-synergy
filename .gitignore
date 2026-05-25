@@ -5,3 +5,16 @@
 /maverick-virtual-shell/
 *.DS_Store
 /maverick-synergy-client-tests/test.properties
+/.vscode/
+/ssh_host_ecdsa_256
+/ssh_host_ecdsa_256.pub
+/ssh_host_ecdsa_384
+/ssh_host_ecdsa_384.pub
+/ssh_host_ecdsa_521
+/ssh_host_ecdsa_521.pub
+/ssh_host_ed25519
+/ssh_host_ed25519.pub
+/ssh_host_ed448
+/ssh_host_ed448.pub
+/ssh_host_rsa
+/ssh_host_rsa.pub

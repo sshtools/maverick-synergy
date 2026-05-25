@@ -1,0 +1,4 @@
+target/*
+!target/simple-sshd-3.2.0-SNAPSHOT.jar
+.git
+.gitignore

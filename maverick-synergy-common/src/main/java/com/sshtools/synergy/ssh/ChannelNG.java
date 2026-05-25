@@ -1018,8 +1018,8 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	 */
 	protected void evaluateWindowSpace() {
 		synchronized (localWindow) {
-			if(Log.isDebugEnabled()) {
-				Log.debug("Checking window space on channel=" + getLocalId() + " window=" + localWindow.getWindowSpace()
+			if(Log.isTraceEnabled()) {
+				Log.trace("Checking window space on channel=" + getLocalId() + " window=" + localWindow.getWindowSpace()
 							+ " minimum=" + localWindow.getMinimumWindowSpace()
 							+ (Objects.nonNull(cache) ? " cached=" + cache.remaining() : ""));
 			}

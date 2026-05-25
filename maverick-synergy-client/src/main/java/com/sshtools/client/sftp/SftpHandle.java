@@ -948,7 +948,7 @@ public final class SftpHandle implements Closeable {
 			byte[] tmp = new byte[blocksize];
 
 			long time = System.currentTimeMillis();
-			int i = readFile(new UnsignedInteger64(0), tmp, 0, tmp.length);
+			int i = readFile(new UnsignedInteger64(position), tmp, 0, tmp.length);
 			time = System.currentTimeMillis() - time;
 
 			System.setProperty("maverick.read.blockRoundtrip", String.valueOf(time));
@@ -958,35 +958,32 @@ public final class SftpHandle implements Closeable {
 			if (i == -1) {
 				return;
 			}
-			// if the first block contains required data, write to the output
-			// buffer,
-			// write the portion of tmp needed to out
-			// change position
-			if (i > position) {
-				try {
-					out.write(tmp, (int) position, (int) (i - position));
-				} catch (IOException e) {
-					throw new TransferCancelledException();
-				}
-				length = length - (i - position);
-				transfered += (i - position);
-				if (progress != null) {
-					progress.progressed(transfered);
-				}
-				position = i;
-
+			
+			// Write the first block data that we just successfully read
+			try {
+			    out.write(tmp, 0, i);
+			} catch (IOException e) {
+			    throw new TransferCancelledException();
 			}
+			
+			position += i;
+			length = length - i;
+			transfered += i;
 
 			// if the first block contains the whole portion of the file to be
 			// read, then return
-			if ((position + length) <= i) {
+			if (length <= 0) {
 				return;
 			}
 
 			// reconfigure the blocksize if necessary
-			if (i < blocksize && length > i) {
+			if (i != blocksize && length > i) {
 				blocksize = i;
 				System.setProperty("maverick.read.optimizedBlock", String.valueOf(blocksize));
+			}
+			
+			if(Log.isDebugEnabled()) {
+				Log.debug("First block read was {} bytes, optimized blocksize set to {}", i, blocksize);
 			}
 
 			Vector<UnsignedInteger32> requests = new Vector<UnsignedInteger32>(outstandingRequests);
@@ -1001,7 +998,7 @@ public final class SftpHandle implements Closeable {
 
 				while (requests.size() < osr) {
 
-					if (i > 0 && sftp.getSession().getRemoteWindow().longValue() < 29) {
+					if (sftp.getSession().getRemoteWindow().longValue() < 29) {
 						if (Log.isDebugEnabled())
 							Log.debug("Deferring post requests due to lack of remote window");
 						break;

@@ -1,9 +1,34 @@
 package com.sshtools.synergy.tests;
 
+/*-
+ * #%L
+ * Integration Tests
+ * %%
+ * Copyright (C) 2002 - 2026 JADAPTIVE Limited
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Lesser Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * #L%
+ */
+
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -20,6 +45,7 @@ import com.sshtools.client.sftp.SftpClient;
 import com.sshtools.client.sftp.SftpClient.SftpClientBuilder;
 import com.sshtools.client.sftp.SftpFile;
 import com.sshtools.common.permissions.PermissionDeniedException;
+import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpStatusException;
 import com.sshtools.common.ssh.SshException;
 
@@ -242,6 +268,81 @@ class SftpIT extends AbstractSshIntegrationTest {
                 sftp.get("no-such-file-" + System.nanoTime() + ".txt",
                          localDir.resolve("out.txt").toString())
             );
+        }
+    }
+
+    // ------------------------------------------------------------------ //
+    //  Edge-case error handling                                           //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    @DisplayName("rm() of a non-existent file throws SftpStatusException")
+    void rmOfNonExistentFileThrows() throws Exception {
+        try (SshClient ssh = connectWithPassword();
+             SftpClient sftp = openSftp(ssh)) {
+
+            assertThrows(SftpStatusException.class,
+                    () -> sftp.rm("no-such-file-" + System.nanoTime() + ".txt"));
+        }
+    }
+
+    @Test
+    @DisplayName("rmdir() of a non-existent directory throws SftpStatusException")
+    void rmdirOfNonExistentThrows() throws Exception {
+        try (SshClient ssh = connectWithPassword();
+             SftpClient sftp = openSftp(ssh)) {
+
+            assertThrows(SftpStatusException.class,
+                    () -> sftp.rmdir("no-such-dir-" + System.nanoTime()));
+        }
+    }
+
+    // ------------------------------------------------------------------ //
+    //  File attributes                                                    //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    @DisplayName("stat() returns non-null attributes with correct size for an uploaded file")
+    void statReturnsAttributesForUploadedFile(@TempDir Path localDir) throws Exception {
+        byte[] content = "stat test content".getBytes(StandardCharsets.UTF_8);
+        Path localFile = localDir.resolve("stat-test.txt");
+        Files.write(localFile, content);
+
+        try (SshClient ssh = connectWithPassword();
+             SftpClient sftp = openSftp(ssh)) {
+
+            sftp.put(localFile.toString(), "stat-test.txt");
+            SftpFileAttributes attrs = sftp.stat("stat-test.txt");
+
+            assertNotNull(attrs, "stat() must return non-null attributes");
+            assertEquals(content.length, attrs.size().longValue(),
+                    "stat() size must match uploaded file size");
+        }
+    }
+
+    // ------------------------------------------------------------------ //
+    //  Partial download                                                   //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    @DisplayName("get() with a position offset downloads only bytes from that offset onward")
+    void partialDownloadViaOutputStreamPosition(@TempDir Path localDir) throws Exception {
+        byte[] fullContent = "ABCDE12345FGHIJ".getBytes(StandardCharsets.UTF_8);
+        long offset = 5;  // skip the first 5 bytes ("ABCDE")
+        Path localFile = localDir.resolve("partial-src.txt");
+        Files.write(localFile, fullContent);
+
+        try (SshClient ssh = connectWithPassword();
+             SftpClient sftp = openSftp(ssh)) {
+
+            sftp.put(localFile.toString(), "partial.txt");
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            sftp.get("partial.txt", out, null, offset);
+
+            byte[] expected = Arrays.copyOfRange(fullContent, (int) offset, fullContent.length);
+            assertArrayEquals(expected, out.toByteArray(),
+                    "download from offset must return only bytes from that position onward");
         }
     }
 }

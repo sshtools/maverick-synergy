@@ -73,8 +73,8 @@ import com.sshtools.synergy.ssh.Connection;
 
 public class SshClient implements Closeable {
 
-	public static final String GUEST_USERNAME = System.getProperty("maverick.guestUsername", "guest");
-	public static final long DEFAULT_CONNECT_TIMEOUT = Long.parseLong(System.getProperty("maverick.defaultConnectTimeout", "30000"));
+	public static final String GUEST_USERNAME = "guest";
+	public static final long DEFAULT_CONNECT_TIMEOUT = 30000L;
 
 	@FunctionalInterface
 	public interface OnConfiguration {

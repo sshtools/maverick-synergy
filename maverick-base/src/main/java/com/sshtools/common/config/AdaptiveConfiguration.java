@@ -90,8 +90,63 @@ public class AdaptiveConfiguration {
 	public static final String ENABLE_SCP = "EnableScp";
 	public static final String REQUIRED_AUTHENTICATION = "AuthenticationMethods";
 
+	// Server identity / presentation
+	public static final String IDENT = "Ident";
+	public static final String SOFTWARE_VERSION = "SoftwareVersionComments";
+
+	// Authentication
+	public static final String AUTHORIZED_KEYS_FILE = "AuthorizedKeysFile";
+	public static final String MAX_AUTHENTICATIONS = "MaxAuthentications";
+
+	// Virtual filesystem
+	public static final String VIRTUAL_MOUNT = "VirtualMount";
+
+	// Transport / packet
+	public static final String MAX_PACKET_LENGTH = "MaximumPacketLength";
+	public static final String DISABLE_EXTENSION_INFO = "DisableExtensionInfo";
+	public static final String PING_TIMEOUT = "PingTimeout";
+
+	// Idle / keep-alive
+	public static final String IDLE_CONNECTION_TIMEOUT = "IdleConnectionTimeout";
+	public static final String IDLE_AUTHENTICATION_TIMEOUT = "IdleAuthenticationTimeout";
+	public static final String KEEP_ALIVE_INTERVAL = "KeepAliveInterval";
+	public static final String KEEP_ALIVE_DATA_MAX_LENGTH = "KeepAliveDataMaxLength";
+	public static final String SEND_IGNORE_ON_IDLE = "SendIgnorePacketOnIdle";
+
+	// Rekey thresholds
+	public static final String MAX_NUM_BYTES_BEFORE_REKEY = "MaxNumBytesBeforeRekey";
+	public static final String MAX_NUM_PACKETS_BEFORE_REKEY = "MaxNumPacketsBeforeRekey";
+
+	// DH key exchange sizes
+	public static final String MIN_DH_GROUP_SIZE = "MinDHGroupExchangeKeySize";
+	public static final String PREFERRED_DH_GROUP_SIZE = "PreferredDHGroupExchangeKeySize";
+	public static final String MAX_DH_GROUP_SIZE = "MaxDHGroupExchangeKeySize";
+
+	// Session / channel
+	public static final String SESSION_TIMEOUT = "SessionTimeout";
+	public static final String CHANNEL_LIMIT = "ChannelLimit";
+
+	// Server-specific behaviour
+	public static final String FORCE_SERVER_PREFERENCES = "ForceServerPreferences";
+	public static final String ENSURE_GRACEFUL_DISCONNECT = "EnsureGracefulDisconnect";
+
+	// Client-specific
+	public static final String GUEST_USERNAME = "GuestUsername";
+	public static final String DEFAULT_CONNECT_TIMEOUT = "DefaultConnectTimeout";
+	public static final String SFTP_VERSION = "SftpVersion";
+	public static final String PREFER_KEYBOARD_INTERACTIVE = "PreferKeyboardInteractive";
+
+	// Algorithm isolation mode
+	public static final String ISOLATE = "Isolate";
+	public static final String ISOLATED_KEX = "IsolatedKex";
+	public static final String ISOLATED_CIPHER = "IsolatedCipher";
+	public static final String ISOLATED_MAC = "IsolatedMac";
+	public static final String ISOLATED_COMP = "IsolatedCompression";
+	public static final String ISOLATED_PUBLIC_KEY = "IsolatedPublicKey";
+
 	private static final Map<String, AdaptiveConfiguration> instances = new ConcurrentHashMap<>();
-	private static final Set<String> multipleConfigKeys = new HashSet<>(Arrays.asList(HOST_KEY, PORT, LISTEN_ADDRESS));
+	private static final Set<String> multipleConfigKeys = new HashSet<>(Arrays.asList(
+			HOST_KEY, PORT, LISTEN_ADDRESS, USER, VIRTUAL_MOUNT));
 
 	private Map<String, String> globalConfig = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 	private Map<String, String[]> multipleConfig = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);

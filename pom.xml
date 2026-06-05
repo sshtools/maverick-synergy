@@ -328,5 +328,6 @@
 		<module>maverick-synergy-integration-tests</module>
 		<module>maverick-synergy-assembly</module>
 		<module>simple-sshd</module>
+		<module>maverick-synergy-sshd</module>
 	</modules>
 </project>

@@ -318,6 +318,10 @@ public abstract class TransportProtocol<T extends SshContext>
 		this.config = AdaptiveConfiguration.getConfiguration(sshContext.getConfigName());
 	}
 
+	public AdaptiveConfiguration getConfig() {
+		return config;
+	}
+
 	public SocketConnection getSocketConnection() {
 		return socketConnection;
 	}
@@ -1923,12 +1927,12 @@ public abstract class TransportProtocol<T extends SshContext>
 	}
 
 	private void checkAlgorithms() {
-		if(Boolean.getBoolean("maverick.isolate")) {
-			String kex = System.getProperty("maverick.isolatedKex", SshContext.KEX_DIFFIE_HELLMAN_ECDH_NISTP_256);
-			String cipher = System.getProperty("maverick.isolatedCipher", SshContext.CIPHER_AES128_CTR);
-			String mac = System.getProperty("maverick.isolatedMac", SshContext.HMAC_SHA1);
-			String compression = System.getProperty("maverick.isolatedComp", SshContext.COMPRESSION_NONE);
-			String pk = System.getProperty("maverick.isolatedPublicKey", SshContext.PUBLIC_KEY_SSHRSA);
+		if(config.getBoolean(AdaptiveConfiguration.ISOLATE, false)) {
+			String kex = config.getProperty(AdaptiveConfiguration.ISOLATED_KEX, SshContext.KEX_DIFFIE_HELLMAN_ECDH_NISTP_256);
+			String cipher = config.getProperty(AdaptiveConfiguration.ISOLATED_CIPHER, SshContext.CIPHER_AES128_CTR);
+			String mac = config.getProperty(AdaptiveConfiguration.ISOLATED_MAC, SshContext.HMAC_SHA1);
+			String compression = config.getProperty(AdaptiveConfiguration.ISOLATED_COMP, SshContext.COMPRESSION_NONE);
+			String pk = config.getProperty(AdaptiveConfiguration.ISOLATED_PUBLIC_KEY, SshContext.PUBLIC_KEY_SSHRSA);
 			
 			getContext().supportedKeyExchanges().removeAllBut(kex);
 			getContext().supportedCiphersCS().removeAllBut(cipher);

@@ -714,6 +714,86 @@ public final class TerminalModes {
 		}
 		
 		/**
+		 * Apply the standard OpenSSH default terminal modes to this builder.
+		 *
+		 * @return this for chaining
+		 */
+		public TerminalModesBuilder withOpenSSHDefaults() {			return withMode(Mode.TTY_OP_OSPEED, 9600)
+				.withMode(Mode.TTY_OP_ISPEED, 9600)
+				.withMode(Mode.VINTR, 3)
+				.withMode(Mode.VQUIT, 28)
+				.withMode(Mode.VERASE, 127)
+				.withMode(Mode.VKILL, 21)
+				.withMode(Mode.VEOF, 4)
+				.withMode(Mode.VEOL, 255)
+				.withMode(Mode.VEOL2, 255)
+				.withMode(Mode.VSTART, 17)
+				.withMode(Mode.VSTOP, 19)
+				.withMode(Mode.VSUSP, 26)
+				.withMode(Mode.VDSUSP, 25)
+				.withMode(Mode.VREPRINT, 18)
+				.withMode(Mode.VWERASE, 23)
+				.withMode(Mode.VLNEXT, 22)
+				.withMode(Mode.VSTATUS, 20)
+				.withMode(Mode.VDISCARD, 15)
+				.withMode(Mode.IGNPAR, 0)
+				.withMode(Mode.PARMRK, 0)
+				.withMode(Mode.INPCK, 0)
+				.withMode(Mode.ISTRIP, 0)
+				.withMode(Mode.INLCR, 0)
+				.withMode(Mode.ICRNL, 1)
+				.withMode(Mode.IXON, 1)
+				.withMode(Mode.IXANY, 1)
+				.withMode(Mode.IXOFF, 0)
+				.withMode(Mode.IMAXBEL, 1)
+				.withMode(Mode.IUTF8, 1)
+				.withMode(Mode.ISIG, 1)
+				.withMode(Mode.ICANON, 1)
+				.withMode(Mode.ECHO, 1)
+				.withMode(Mode.ECHOE, 1)
+				.withMode(Mode.ECHOK, 0)
+				.withMode(Mode.ECHONL, 0)
+				.withMode(Mode.NOFLSH, 0)
+				.withMode(Mode.TOSTOP, 0)
+				.withMode(Mode.IEXTEN, 1)
+				.withMode(Mode.ECHOCTL, 1)
+				.withMode(Mode.ECHOKE, 1)
+				.withMode(Mode.PENDIN, 1)
+				.withMode(Mode.OPOST, 1)
+				.withMode(Mode.ONLCR, 1)
+				.withMode(Mode.OCRNL, 0)
+				.withMode(Mode.ONOCR, 0)
+				.withMode(Mode.ONLRET, 0)
+				.withMode(Mode.CS7, 1)
+				.withMode(Mode.CS8, 1)
+				.withMode(Mode.PARENB, 0)
+				.withMode(Mode.PARODD, 0);
+		}
+
+		/**
+		 * Apply PuTTY's default terminal modes to this builder.
+		 *
+		 * <p>PuTTY sends only a minimal set of modes by default (sourced from
+		 * {@code terminal/terminal.c} and {@code settings.c} in the PuTTY source):
+		 * <ul>
+		 *   <li>Baud rate (ispeed/ospeed) defaults to 38400.</li>
+		 *   <li>{@code VERASE} is set to 127 (DEL) because PuTTY's "backspace is Delete"
+		 *       option is on by default.</li>
+		 *   <li>{@code IUTF8} is set to 1, reflecting the modern UTF-8 default.</li>
+		 *   <li>All other modes are omitted — PuTTY's "auto" resolution returns
+		 *       {@code null} for every other mode, so they are not sent.</li>
+		 * </ul>
+		 *
+		 * @return this for chaining
+		 */
+		public TerminalModesBuilder withPuTTYDefaults() {
+			return withMode(Mode.TTY_OP_ISPEED, 38400)
+				.withMode(Mode.TTY_OP_OSPEED, 38400)
+				.withMode(Mode.VERASE, 127)
+				.withMode(Mode.IUTF8, 1);
+		}
+		
+		/**
 		 * Build a new {@link TerminalModes}.
 		 * 
 		 * @return modes

@@ -136,6 +136,12 @@ public class AdaptiveConfiguration {
 	public static final String SFTP_VERSION = "SftpVersion";
 	public static final String PREFER_KEYBOARD_INTERACTIVE = "PreferKeyboardInteractive";
 
+	// Signature / security options
+	public static final String SHA1_SIGNATURES_SUPPORTED = "SHA1SignaturesSupported";
+
+	// Compression behaviour
+	public static final String COMPRESSION_LEVEL = "CompressionLevel";
+
 	// Algorithm isolation mode
 	public static final String ISOLATE = "Isolate";
 	public static final String ISOLATED_KEX = "IsolatedKex";

@@ -326,8 +326,8 @@
 		<module>maverick-synergy-fuse-drive</module>
 		<module>maverick-synergy</module>
 		<module>maverick-synergy-integration-tests</module>
-		<module>maverick-synergy-assembly</module>
 		<module>simple-sshd</module>
 		<module>maverick-synergy-sshd</module>
+		<module>maverick-synergy-assembly</module>
 	</modules>
 </project>

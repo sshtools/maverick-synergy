@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceLoader;
 
+import com.sshtools.common.config.AdaptiveConfiguration;
 import com.sshtools.common.knownhosts.HostKeyVerification;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SecurityLevel;
@@ -102,6 +103,8 @@ public class SshClientContext extends SshContext {
 		forwardingManager = new ForwardingManager<>();
 		ServiceLoader.load(ClientForwardingFactory.class).forEach(forwardingManager::addForwardingFactory);
 		ServiceLoader.load(RemoteForwardRequestHandler.class).forEach(forwardingManager::addRemoteForwardRequestHandler);
+
+		configureContext(AdaptiveConfiguration.getConfiguration(getConfigName()));
 	}
 	
 	public SshClientContext(SshEngine daemon) throws IOException, SshException {
@@ -354,9 +357,90 @@ public class SshClientContext extends SshContext {
 	public boolean getPreferKeyboardInteractiveOverPassword() {
 		return preferKeyboardInteractiveOverPassword;
 	}
-	
+
 	public void setPreferKeyboardInteractiveOverPassword(boolean preferKeyboardInteractiveOverPassword) {
 		this.preferKeyboardInteractiveOverPassword = preferKeyboardInteractiveOverPassword;
+	}
+
+	/**
+	 * Applies settings from the given {@link AdaptiveConfiguration} to this context,
+	 * using the current context field values as defaults wherever the configuration
+	 * does not specify an override. Called automatically during construction.
+	 */
+	public void configureContext(AdaptiveConfiguration config) throws IOException, SshException {
+		// Software version / ident string
+		setSoftwareVersionComments(
+				config.getProperty(AdaptiveConfiguration.SOFTWARE_VERSION, getSoftwareVersionComments()));
+
+		// Idle / keep-alive
+		setIdleConnectionTimeoutSeconds(
+				config.getInt(AdaptiveConfiguration.IDLE_CONNECTION_TIMEOUT, getIdleConnectionTimeoutSeconds()));
+		setIdleAuthenticationTimeoutSeconds(
+				config.getInt(AdaptiveConfiguration.IDLE_AUTHENTICATION_TIMEOUT, getIdleAuthenticationTimeoutSeconds()));
+		setKeepAliveInterval(
+				config.getInt(AdaptiveConfiguration.KEEP_ALIVE_INTERVAL, getKeepAliveInterval()));
+		setKeepAliveDataMaxLength(
+				config.getInt(AdaptiveConfiguration.KEEP_ALIVE_DATA_MAX_LENGTH, getKeepAliveDataMaxLength()));
+		setSendIgnorePacketOnIdle(
+				config.getBoolean(AdaptiveConfiguration.SEND_IGNORE_ON_IDLE, isSendIgnorePacketOnIdle()));
+
+		// Transport / packet
+		setMaximumPacketLength(
+				config.getInt(AdaptiveConfiguration.MAX_PACKET_LENGTH, getMaximumPacketLength()));
+
+		// Rekey thresholds
+		setKeyExchangeTransferLimit(
+				config.getLong(AdaptiveConfiguration.MAX_NUM_BYTES_BEFORE_REKEY, getKeyExchangeTransferLimit()));
+		setKeyExchangePacketLimit(
+				config.getInt(AdaptiveConfiguration.MAX_NUM_PACKETS_BEFORE_REKEY, (int) getKeyExchangePacketLimit()));
+
+		// DH group sizes (SshClientContext uses parent SshContext fields directly)
+		setMinDHGroupExchangeKeySize(
+				config.getInt(AdaptiveConfiguration.MIN_DH_GROUP_SIZE, getMinDHGroupExchangeKeySize()));
+		setPreferredDHGroupExchangeKeySize(
+				config.getInt(AdaptiveConfiguration.PREFERRED_DH_GROUP_SIZE, getPreferredDHGroupExchangeKeySize()));
+		setMaxDHGroupExchangeKeySize(
+				config.getInt(AdaptiveConfiguration.MAX_DH_GROUP_SIZE, getMaxDHGroupExchangeKeySize()));
+
+		// Session / channel
+		setChannelLimit(
+				config.getInt(AdaptiveConfiguration.CHANNEL_LIMIT, getChannelLimit()));
+
+		// Signature options
+		setSHA1SignaturesSupported(
+				config.getBoolean(AdaptiveConfiguration.SHA1_SIGNATURES_SUPPORTED, isSHA1SignaturesSupported()));
+
+		// Compression
+		setCompressionLevel(
+				config.getInt(AdaptiveConfiguration.COMPRESSION_LEVEL, getCompressionLevel()));
+
+		// Algorithm preference order (absent = keep context defaults)
+		String ciphers = config.getProperty(AdaptiveConfiguration.CIPHERS, null);
+		if (ciphers != null) {
+			var arr = ciphers.split("\\s*,\\s*");
+			setPreferredCipherCS(arr);
+			setPreferredCipherSC(arr);
+		}
+		String macs = config.getProperty(AdaptiveConfiguration.MACS, null);
+		if (macs != null) {
+			var arr = macs.split("\\s*,\\s*");
+			setPreferredMacCS(arr);
+			setPreferredMacSC(arr);
+		}
+		String kex = config.getProperty(AdaptiveConfiguration.KEY_EXCHANGE, null);
+		if (kex != null) {
+			setPreferredKeyExchange(kex.split("\\s*,\\s*"));
+		}
+		String compressions = config.getProperty(AdaptiveConfiguration.COMPRESSION, null);
+		if (compressions != null) {
+			String first = compressions.split("\\s*,\\s*")[0];
+			setPreferredCompressionCS(first);
+			setPreferredCompressionSC(first);
+		}
+
+		// Client-specific
+		setPreferKeyboardInteractiveOverPassword(
+				config.getBoolean(AdaptiveConfiguration.PREFER_KEYBOARD_INTERACTIVE, getPreferKeyboardInteractiveOverPassword()));
 	}
 
 	@Override

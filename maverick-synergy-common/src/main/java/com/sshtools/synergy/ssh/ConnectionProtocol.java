@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.sshtools.common.forwarding.ForwardingRequest.Protocol;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.nio.WriteOperationRequest;
+import com.sshtools.common.config.AdaptiveConfiguration;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.ConnectionAwareTask;
@@ -1133,7 +1134,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					GlobalRequest global = new GlobalRequest(
 							"ping@sshtools.com", 
 							con, null);
-					long timeout = Long.parseLong(System.getProperty("maverick.pingTimeout", "60000"));
+					long timeout = getTransport().getConfig().getLong(AdaptiveConfiguration.PING_TIMEOUT, 60000L);
 					sendGlobalRequestAndWait(global, timeout);
 					if(!global.isDone()) {
 						if(Log.isInfoEnabled()) {

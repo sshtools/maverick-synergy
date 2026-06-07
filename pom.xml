@@ -135,7 +135,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.11.0</version>
 				<configuration>
-					<release>11</release>
+					<release>17</release>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -328,5 +328,6 @@
 		<module>maverick-synergy-integration-tests</module>
 		<module>maverick-synergy-assembly</module>
 		<module>simple-sshd</module>
+		<module>maverick-synergy-sshd</module>
 	</modules>
 </project>

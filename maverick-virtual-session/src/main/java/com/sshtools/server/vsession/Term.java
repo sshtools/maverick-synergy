@@ -23,6 +23,7 @@ package com.sshtools.server.vsession;
  */
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -33,8 +34,10 @@ import com.sshtools.synergy.ssh.TerminalModes.Mode;
 public class Term extends ShellCommand {
 
 	public Term() {
-		super("term",ShellCommand.SUBSYSTEM_SHELL, 
-				UsageHelper.build("term"),
+		super("term", ShellCommand.SUBSYSTEM_SHELL, 
+				UsageHelper.build("term [-synergy|-legacy]",
+						"  -synergy    Output Java code to replicate the terminal modes using TerminalModesBuilder",
+						"  -legacy     Output Java code to replicate the terminal modes using PseudoTerminalModes"),
 				"Output information about the pseudo terminal");
 	}
 
@@ -43,14 +46,28 @@ public class Term extends ShellCommand {
 			throws IOException, PermissionDeniedException, UsageException {
 		
 		TerminalModes modes = console.getPseudoTerminalModes();
-		console.printfln("Type: %s", console.getTerminal().getType());
-		console.println("Modes");
-		console.println("----------------");
-		for(Mode mode : modes.modes().keySet()) {
-			console.printfln("%s: 0x%s", StringUtils.rightPad(mode.name(), 13), Integer.toHexString(modes.get(mode)));
-		}
-		console.println("----------------");
+		var argList = Arrays.asList(args);
 		
+		if (argList.contains("-synergy")) {
+			console.println("TerminalModes modes = TerminalModesBuilder.create()");
+			for (Mode mode : modes.modes().keySet()) {
+				console.printfln("        .withMode(TerminalModes.Mode.%s, %d)", mode.name(), modes.get(mode));
+			}
+			console.println("        .build();");
+		} else if (argList.contains("-legacy")) {
+			console.println("PseudoTerminalModes modes = new PseudoTerminalModes(ssh);");
+			for (Mode mode : modes.modes().keySet()) {
+				console.printfln("modes.setTerminalMode(PseudoTerminalModes.%s, %d);", mode.name(), modes.get(mode));
+			}
+		} else {
+			console.printfln("Type: %s", console.getTerminal().getType());
+			console.println("Modes");
+			console.println("----------------");
+			for (Mode mode : modes.modes().keySet()) {
+				console.printfln("%s: 0x%s", StringUtils.rightPad(mode.name(), 13), Integer.toHexString(modes.get(mode)));
+			}
+			console.println("----------------");
+		}
 	}
 
 }

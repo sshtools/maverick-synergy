@@ -69,6 +69,7 @@ import com.sshtools.common.sftp.SftpFileAttributes;
 import com.sshtools.common.sftp.SftpFileAttributes.SftpFileAttributesBuilder;
 import com.sshtools.common.sftp.SftpFileFilter;
 import com.sshtools.common.sftp.SftpStatusException;
+import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.SshIOException;
@@ -102,6 +103,7 @@ public class SftpClient implements Closeable {
 		private Optional<String> localPath = Optional.empty();
 		private Optional<String> remotePath = Optional.empty();
 		private Optional<String> charset = Optional.empty();
+		private List<ChannelEventListener> eventListeners = new ArrayList<>();
 		
 		/**
 		 * Create a new {@link SftpClientBuilder}.
@@ -291,6 +293,18 @@ public class SftpClient implements Closeable {
 		}
 		
 		/**
+		 * Add one or more {@link ChannelEventListener}s to be registered on the underlying
+		 * {@link SessionChannelNG} when the SFTP channel is opened.
+		 *
+		 * @param listeners listeners to add
+		 * @return this for chaining
+		 */
+		public SftpClientBuilder withEventListener(ChannelEventListener... listeners) {
+			eventListeners.addAll(Arrays.asList(listeners));
+			return this;
+		}
+
+		/**
 		 * Build a new {@link SftpClient}.
 		 * 
 		 * @return sftp client
@@ -376,6 +390,7 @@ public class SftpClient implements Closeable {
 		this.buffersize = builder.bufferSize;
 		this.blocksize = builder.blockSize.orElse(-1);
 		this.sftp = new SftpChannel(builder.connection.orElseThrow(() -> new IllegalStateException("Either an existing connection or an existing client must be provided.")));
+		builder.eventListeners.forEach(l -> this.sftp.getSession().addEventListener(l));
 		this.lcwd = fileFactory.getFile(builder.localPath.orElse(""));
 		this.cwd = builder.remotePath.orElse("");
 		this.customRoots = Collections.unmodifiableSet(new LinkedHashSet<>(builder.customRoots));

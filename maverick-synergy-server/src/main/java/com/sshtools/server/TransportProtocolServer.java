@@ -216,7 +216,7 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	
 	private void sendExtensionInfo() {
 
-		if(config.getBoolean("disableExtensionInfo", false, con.getRemoteIPAddress(), AdaptiveConfiguration.getIdent(con.getRemoteIdentification()))) {
+		if(config.getBoolean(AdaptiveConfiguration.DISABLE_EXTENSION_INFO, false, con.getRemoteIPAddress(), AdaptiveConfiguration.getIdent(con.getRemoteIdentification()))) {
 			return;
 		}
 	

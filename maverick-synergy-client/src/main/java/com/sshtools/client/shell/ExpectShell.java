@@ -1021,8 +1021,17 @@ public class ExpectShell {
                         + "; echo \"" + endCommand + osType.exitCodeVariable() + "\"" + osType.eol();
 			} else {
 			    // Assume it's a Unix system and 'echo' works.
-                echoCmd = "echo \"" + BEGIN_COMMAND_MARKER + "\"; " + cmd
-                        + "; echo \"" + endCommand + osType.exitCodeVariable() + "\"" + osType.eol();
+			    // In interactive bash/sh, when a command in a ';' sequence is killed by
+			    // SIGINT (e.g. 0x03/Ctrl+C written to the channel), the shell detects
+			    // WTERMSIG=SIGINT from waitpid() and aborts the entire compound command,
+			    // so the end-marker echo would never run and ShellInputStream would block
+			    // forever. We set an INT trap so that when bash re-raises SIGINT on itself
+			    // after the child dies, the trap handler emits the end marker before the
+			    // sequence is aborted. The trap is cleared on both the normal and
+			    // interrupted paths so it does not persist across commands.
+                echoCmd = "trap 'echo \"" + endCommand + osType.exitCodeVariable() + "\"; trap - INT' INT; "
+                        + "echo \"" + BEGIN_COMMAND_MARKER + "\"; " + cmd
+                        + "; trap - INT; echo \"" + endCommand + osType.exitCodeVariable() + "\"" + osType.eol();
 			}
 			
 			if(Log.isDebugEnabled()) {

@@ -38,7 +38,11 @@ public class AuthenticatedFuture extends AbstractRequestFuture {
 	@Override
 	public synchronized void done(boolean success) {
 		if(Log.isDebugEnabled()) {
-			Log.debug("Authenticated connection {}", transport.getUUID());
+			if(success) {
+				Log.debug("Authenticated connection {}", transport.getUUID());
+			} else {
+				Log.debug("Authentication failed {}", transport.getUUID());
+			}
 		}
 		super.done(success);
 	}

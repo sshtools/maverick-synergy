@@ -131,6 +131,8 @@ public interface SshConnection extends EventTrigger {
 	@Deprecated
 	void sendGlobalRequest(GlobalRequest request, boolean wantReply);
 	
+	AbstractRequestFuture getConnectFuture();
+	
 	AbstractRequestFuture getAuthenticatedFuture();
 
 	AbstractRequestFuture getDisconnectFuture();

@@ -135,6 +135,10 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
             throw lastException;
     }
     
+    public AbstractRequestFuture getConnectFuture() {
+		return transport.getConnectFuture();
+	}
+    
 	public AuthenticatedFuture getAuthenticatedFuture() {
 		return transport.getAuthenticatedFuture();
 	}

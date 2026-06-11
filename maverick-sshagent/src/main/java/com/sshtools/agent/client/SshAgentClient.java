@@ -180,7 +180,7 @@ public class SshAgentClient implements SignatureGenerator, Closeable {
 			return socket;
 		} catch (IOException ex) {
 			Log.error("Agent socket error :",ex);
-			throw new AgentNotAvailableException();
+			throw ex;
 		}
 	}
 

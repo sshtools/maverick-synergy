@@ -385,4 +385,10 @@ public class MockConnection implements SshConnection {
 		return null;
 	}
 
+	@Override
+	public AbstractRequestFuture getConnectFuture() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

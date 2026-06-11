@@ -207,6 +207,8 @@ public abstract class TransportProtocol<T extends SshContext>
 	SshHmac incomingMac;
 	SshCompression outgoingCompression;
 	SshCompression incomingCompression;
+	SshCompression pendingOutgoingCompression;
+	SshCompression pendingIncomingCompression;
 	
 	protected SshPublicKey hostKey;
 	
@@ -2277,22 +2279,22 @@ public abstract class TransportProtocol<T extends SshContext>
 				}
 				
 				outgoingCompression = null;
+				pendingOutgoingCompression = null;
 
 				if (!compressionSC.equals(SshContext.COMPRESSION_NONE)) {
-					outgoingCompression = (SshCompression) sshContext
+					SshCompression comp = (SshCompression) sshContext
 							.supportedCompressionsSC().getInstance(
 									compressionSC);
-					outgoingCompression.init(SshCompression.DEFLATER,
-							getSshContext().getCompressionLevel());
+					comp.init(SshCompression.DEFLATER,
+							sshContext.getCompressionLevel());
+					if (comp.isDelayedUntilAuthenticated()) {
+						if(Log.isDebugEnabled()) Log.debug("Deferring outgoing {} compression until after authentication", comp.getAlgorithm());
+						pendingOutgoingCompression = comp;
+					} else {
+						outgoingCompression = comp;
+					}
 				}
 				
-				if(isKexStrict) {
-					if(Log.isDebugEnabled()) {
-						Log.debug("Resetting OUTGOING sequence from {} to zero for strict transport protocol requirements", outgoingSequence);
-					}
-					outgoingSequence = 0L;
-				}
-
 				if(isKexStrict) {
 					if(Log.isDebugEnabled()) {
 						Log.debug("Resetting OUTGOING sequence from {} to zero for strict transport protocol requirements", outgoingSequence);
@@ -2343,13 +2345,20 @@ public abstract class TransportProtocol<T extends SshContext>
 				}
 				
 				incomingCompression = null;
+				pendingIncomingCompression = null;
 
 				if (!compressionCS.equals(SshContext.COMPRESSION_NONE)) {
-					incomingCompression = (SshCompression) sshContext
+					SshCompression comp = (SshCompression) sshContext
 							.supportedCompressionsCS().getInstance(
 									compressionCS);
-					incomingCompression.init(SshCompression.INFLATER,
-							getSshContext().getCompressionLevel());
+					comp.init(SshCompression.INFLATER,
+							sshContext.getCompressionLevel());
+					if (comp.isDelayedUntilAuthenticated()) {
+						if(Log.isDebugEnabled()) Log.debug("Deferring incoming {} compression until after authentication", comp.getAlgorithm());
+						pendingIncomingCompression = comp;
+					} else {
+						incomingCompression = comp;
+					}
 				}
 
 				incomingCipherLength = decryption.getBlockSize();
@@ -2402,13 +2411,20 @@ public abstract class TransportProtocol<T extends SshContext>
 				}
 				
 				outgoingCompression = null;
+				pendingOutgoingCompression = null;
 
 				if (!compressionSC.equals(SshContext.COMPRESSION_NONE)) {
-					outgoingCompression = (SshCompression) sshContext
+					SshCompression comp = (SshCompression) sshContext
 							.supportedCompressionsSC().getInstance(
 									compressionCS);
-					outgoingCompression.init(SshCompression.DEFLATER,
-							getSshContext().getCompressionLevel());
+					comp.init(SshCompression.DEFLATER,
+							sshContext.getCompressionLevel());
+					if (comp.isDelayedUntilAuthenticated()) {
+						if(Log.isDebugEnabled()) Log.debug("Deferring outgoing {} compression until after authentication", comp.getAlgorithm());
+						pendingOutgoingCompression = comp;
+					} else {
+						outgoingCompression = comp;
+					}
 				}
 				
 				if(isKexStrict) {
@@ -2462,13 +2478,20 @@ public abstract class TransportProtocol<T extends SshContext>
 				}
 				
 				incomingCompression = null;
+				pendingIncomingCompression = null;
 
 				if (!compressionCS.equals(SshContext.COMPRESSION_NONE)) {
-					incomingCompression = (SshCompression) sshContext
+					SshCompression comp = (SshCompression) sshContext
 							.supportedCompressionsCS().getInstance(
 									compressionSC);
-					incomingCompression.init(SshCompression.INFLATER,
-							getSshContext().getCompressionLevel());
+					comp.init(SshCompression.INFLATER,
+							sshContext.getCompressionLevel());
+					if (comp.isDelayedUntilAuthenticated()) {
+						if(Log.isDebugEnabled()) Log.debug("Deferring incoming {} compression until after authentication", comp.getAlgorithm());
+						pendingIncomingCompression = comp;
+					} else {
+						incomingCompression = comp;
+					}
 				}
 
 				incomingCipherLength = decryption.getBlockSize();
@@ -2494,6 +2517,30 @@ public abstract class TransportProtocol<T extends SshContext>
 						TransportProtocol.PROTOCOL_ERROR,
 						"Failed to create a transport component! "
 								+ ex.getMessage());
+			}
+		}
+	}
+
+	/**
+	 * Activate any compression algorithms that were deferred until after
+	 * {@code SSH_MSG_USERAUTH_SUCCESS} (i.e. {@code zlib@openssh.com}).
+	 * Must be called by the authentication protocol layer immediately after
+	 * authentication succeeds — on the server when {@code SSH_MSG_USERAUTH_SUCCESS}
+	 * has been <em>sent</em>, and on the client when it has been <em>received</em>.
+	 */
+	public void enablePostAuthCompression() {
+		synchronized (kexlockOut) {
+			if (pendingOutgoingCompression != null) {
+				outgoingCompression = pendingOutgoingCompression;
+				pendingOutgoingCompression = null;
+				if(Log.isDebugEnabled()) Log.debug("Post-auth outgoing {} compression enabled", outgoingCompression.getAlgorithm());
+			}
+		}
+		synchronized (kexlockIn) {
+			if (pendingIncomingCompression != null) {
+				incomingCompression = pendingIncomingCompression;
+				pendingIncomingCompression = null;
+				if(Log.isDebugEnabled()) Log.debug("Post-auth incoming {} compression enabled", incomingCompression.getAlgorithm());
 			}
 		}
 	}

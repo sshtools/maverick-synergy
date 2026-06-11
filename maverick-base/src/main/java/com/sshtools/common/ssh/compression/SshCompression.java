@@ -87,4 +87,17 @@ public interface SshCompression extends SshComponent {
 	 */
 	public String getAlgorithm();
 
+	/**
+	 * Whether this compression algorithm must be held back until after
+	 * {@code SSH_MSG_USERAUTH_SUCCESS} has been exchanged, as required by the
+	 * {@code zlib@openssh.com} delayed-compression extension.  The default
+	 * implementation returns {@code false} (activate immediately after
+	 * {@code SSH_MSG_NEWKEYS}).
+	 *
+	 * @return {@code true} if compression must be deferred until post-authentication
+	 */
+	default boolean isDelayedUntilAuthenticated() {
+		return false;
+	}
+
 }

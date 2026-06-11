@@ -47,4 +47,9 @@ public class OpenSSHZLibCompression extends ZLibCompression {
 	public String getAlgorithm() {
 		return ALGORITHM;
 	}
+
+	@Override
+	public boolean isDelayedUntilAuthenticated() {
+		return true;
+	}
 }

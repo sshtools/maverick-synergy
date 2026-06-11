@@ -132,6 +132,9 @@ public abstract class SshContext extends ProtocolContext implements
 	/** ZLIB compression **/
 	public static final String COMPRESSION_ZLIB = "zlib";
 
+	/** OpenSSH delayed ZLIB compression — active only after SSH_MSG_USERAUTH_SUCCESS **/
+	public static final String COMPRESSION_ZLIB_OPENSSH = "zlib@openssh.com";
+
 	/**
 	 * Constant for the algorithm name "diffie-hellman-group1-sha1".
 	 */

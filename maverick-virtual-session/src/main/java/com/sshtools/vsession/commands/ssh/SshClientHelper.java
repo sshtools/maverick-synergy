@@ -92,8 +92,8 @@ public class SshClientHelper {
 	public static void setUpCompression(SshClientArguments arguments, SshClientContext ctx) 
 			throws IOException, SshException {
 		if (arguments.isCompression()) {
-			ctx.setPreferredCompressionCS(SshContext.COMPRESSION_ZLIB);
- 			ctx.setPreferredCompressionSC(SshContext.COMPRESSION_ZLIB);
+			ctx.setPreferredCompressionCS(SshContext.COMPRESSION_ZLIB_OPENSSH);
+ 			ctx.setPreferredCompressionSC(SshContext.COMPRESSION_ZLIB_OPENSSH);
 		}
 	}
 

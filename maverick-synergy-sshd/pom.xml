@@ -21,6 +21,11 @@
 		</dependency>
 		<dependency>
 			<groupId>com.sshtools</groupId>
+			<artifactId>maverick-synergy-client</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sshtools</groupId>
 			<artifactId>maverick-virtual-filesystem</artifactId>
 			<version>${project.version}</version>
 		</dependency>

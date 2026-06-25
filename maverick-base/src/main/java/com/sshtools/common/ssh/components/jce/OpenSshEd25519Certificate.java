@@ -36,7 +36,7 @@ import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.SshPublicKeyFactory;
 import com.sshtools.common.util.ByteArrayReader;
 
-public class OpenSshEd25519Certificate extends OpenSshCertificate implements SshPublicKey {
+public class OpenSshEd25519Certificate extends OpenSshCertificate {
 
 	public static final String CERT_TYPE = "ssh-ed25519-cert-v01@openssh.com";
 	

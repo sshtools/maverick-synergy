@@ -28,6 +28,7 @@ Bug Fixes
   o Certificate key fingerprints are now correctly computed from the underlying public key, matching OpenSSH convention.
   o Ed25519 certificate type registration no longer requires BouncyCastle; it now uses the configured JCE provider instead.
   o NioFile.getOutputStream(boolean) was ignoring the append parameter, always opening with APPEND mode instead of truncating for non-append writes.
+ o When generating SSH certificates add a reasonble one-minute buffer to valid after timestamp to allow for clock skew. 
 
 =================
 =  HISTORY      =

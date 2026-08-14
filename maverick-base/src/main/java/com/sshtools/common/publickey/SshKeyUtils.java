@@ -257,8 +257,12 @@ public class SshKeyUtils {
 		pair.setPublicKey(getPublicKey(certFile));
 		return pair;
 	}
-	
+
 	public static void savePrivateKey(SshKeyPair pair, String passphrase, String comment, File privateKeyFile) throws IOException {
+		savePrivateKey(pair, passphrase, comment, privateKeyFile, SshPrivateKeyFileFactory.OPENSSH_FORMAT);
+	}
+
+	public static void savePrivateKey(SshKeyPair pair, String passphrase, String comment, File privateKeyFile, int format) throws IOException {
 		
 		SshPrivateKeyFile privateFile = SshPrivateKeyFileFactory.create(pair, passphrase, comment, SshPrivateKeyFileFactory.OPENSSH_FORMAT);
 		

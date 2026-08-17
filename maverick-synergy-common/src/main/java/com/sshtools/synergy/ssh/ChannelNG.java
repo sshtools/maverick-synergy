@@ -103,7 +103,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	protected SshConnection con;
 	private ChannelInputStream channelIn;
 	private ChannelOutputStream channelOut = new ChannelOutputStream(this);
-	private boolean autoConsume;
+	private final boolean autoConsume;
 	protected boolean paused;
 	
 	/**
@@ -141,9 +141,10 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	public final boolean isAutoConsume() {
 		return autoConsume;
 	}
-	
+
+	@Deprecated(since = "3.2.0", forRemoval = true)
 	public void setAutoconsume(boolean autoConsume) {
-		this.autoConsume = autoConsume;
+		throw new UnsupportedOperationException("Auto consume cannot be changed after channel creation");
 	}
 	
 	public InputStream getInputStream() {
@@ -153,7 +154,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 		if(isClosed())
 			throw new IllegalStateException("Channel is closed");
 		if(Objects.isNull(cache)) {
-			throw new IllegalStateException("Channel is not configured to auto consume input, therefore, ChannelInputStream is not available");
+			throw new IllegalStateException("Channel is configured to auto consume input, therefore, ChannelInputStream is not available");
 		}
 		channelIn = new ChannelInputStream(cache);
 		return channelIn;

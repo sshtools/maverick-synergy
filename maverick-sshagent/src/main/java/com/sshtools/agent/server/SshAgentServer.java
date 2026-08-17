@@ -66,7 +66,7 @@ public class SshAgentServer implements Closeable {
 				break;
 		}
 		if(serverAcceptor == null) {
-			throw new IOException("No provider available. Do you have maverick-sshagent-jnr-sockets or maverick-sshagent-jdk16-sockets on the classpath?");
+			throw new IOException("No provider available. Do you have maverick-sshagent-jnr-sockets on the classpath?");
 		}
 		
 		ServerThread t = new ServerThread(serverAcceptor);

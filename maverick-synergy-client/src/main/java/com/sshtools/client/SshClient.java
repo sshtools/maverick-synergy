@@ -1101,13 +1101,20 @@ public class SshClient implements Closeable {
 	}
 
 	public static String resolveServerFingerprint(String host, int port) throws Exception {
+		return resolveServerFingerprint(host, port, null);	
+	}
+	
+	public static String resolveServerFingerprint(String host, int port, String alg) throws Exception {
         SshClientContext ctx = new SshClientContext();
+		if(alg!=null && !alg.isEmpty() && ctx.supportedPublicKeys().contains(alg)) {
+			ctx.setPreferredPublicKey(alg);
+		}
         ctx.setHostKeyVerification((h, key) -> true);
 
         try (SshClient probe = SshClientBuilder.create()
             .withHost(host)
             .withPort(port)
-            .withUsername("sshteam-probe")
+            .withUsername("fingerprint-probe")
             .withSshContext(ctx)
             .build()) {
             SshPublicKey hostKey = probe.getHostKey();

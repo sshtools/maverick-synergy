@@ -66,6 +66,7 @@ import com.sshtools.common.ssh.Channel;
 import com.sshtools.common.ssh.ChannelEventListener;
 import com.sshtools.common.ssh.SshConnection;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.SshKeyFingerprint;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
@@ -1098,6 +1099,24 @@ public class SshClient implements Closeable {
 	public int getPort() {
 		return port;
 	}
+
+	public static String resolveServerFingerprint(String host, int port) throws Exception {
+        SshClientContext ctx = new SshClientContext();
+        ctx.setHostKeyVerification((h, key) -> true);
+
+        try (SshClient probe = SshClientBuilder.create()
+            .withHost(host)
+            .withPort(port)
+            .withUsername("sshteam-probe")
+            .withSshContext(ctx)
+            .build()) {
+            SshPublicKey hostKey = probe.getHostKey();
+            if (hostKey == null) {
+                throw new IllegalStateException("No host key received from SSH server " + host + ":" + port);
+            }
+            return SshKeyFingerprint.getFingerprint(hostKey);
+        }
+    }
 	
 	public static void main(String[] args) throws IOException, SshException {
 		

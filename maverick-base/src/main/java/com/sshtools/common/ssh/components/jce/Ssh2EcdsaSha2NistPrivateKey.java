@@ -27,11 +27,10 @@ import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.Signature;
 
-import com.sshtools.common.ssh.components.SshPrivateKey;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.common.util.SimpleASNReader;
 
-public class Ssh2EcdsaSha2NistPrivateKey extends Ssh2BaseJCEPrivateKey implements SshPrivateKey {
+public class Ssh2EcdsaSha2NistPrivateKey extends Ssh2BaseJCEPrivateKey {
 
 	String name;
 	String spec;

@@ -38,10 +38,9 @@ import java.security.spec.ECPublicKeySpec;
 import com.sshtools.common.publickey.OpenSshCertificate;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.SshException;
-import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
 
-public class OpenSshEcdsaCertificate extends OpenSshCertificate implements SshPublicKey {
+public class OpenSshEcdsaCertificate extends OpenSshCertificate {
 
 	byte[] nonce;
 	String name;

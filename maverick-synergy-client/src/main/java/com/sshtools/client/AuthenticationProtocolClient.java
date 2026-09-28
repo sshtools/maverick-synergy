@@ -137,7 +137,12 @@ public class AuthenticationProtocolClient implements Service {
 				if(Log.isDebugEnabled()) {
 					Log.debug("SSH_MSG_USERAUTH_SUCCESS received");
 				}
-	
+
+				// Enable any compression deferred until post-authentication (e.g. zlib@openssh.com).
+				// Must be done before starting the connection protocol so that incoming
+				// server messages are decompressed and outgoing client messages are compressed.
+				transport.enablePostAuthCompression();
+
 				ConnectionProtocol<SshClientContext> con = new ConnectionProtocolClient(
 						transport, username);
 				stop();

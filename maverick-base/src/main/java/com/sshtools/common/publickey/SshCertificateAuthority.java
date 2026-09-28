@@ -151,7 +151,7 @@ public class SshCertificateAuthority {
 		Calendar c = Calendar.getInstance();
 		c.setTimeZone(timeZone);
 		
-		UnsignedInteger64 validAfter = new UnsignedInteger64(c.getTimeInMillis() / 1000);
+		UnsignedInteger64 validAfter = new UnsignedInteger64((c.getTimeInMillis() / 1000) - 60); // Allow for clock skew
 		
 		c.add(validityTimeUnit, validity);
 		UnsignedInteger64 validBefore = new UnsignedInteger64(c.getTimeInMillis() / 1000);

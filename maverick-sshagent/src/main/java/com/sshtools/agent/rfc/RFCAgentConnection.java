@@ -46,7 +46,7 @@ import com.sshtools.common.util.ByteArrayWriter;
  * Represents a single connection on the agent server.
  *
  */
-public class RFCAgentConnection implements Runnable, SshAgentConnection {
+public class RFCAgentConnection implements SshAgentConnection {
     private 
     InputStream in;
     OutputStream out;

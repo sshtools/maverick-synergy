@@ -229,9 +229,11 @@ public class Connection<T extends SshContext> implements EventTrigger, SshConnec
 			getDisconnectFuture().waitFor(60000L);
 		}
 	}
-	
-	public Object getProperty(String name) {
-		return properties.get(name);
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <O> O getProperty(String name) {
+		return (O)properties.get(name);
 	}
 	
 	@SuppressWarnings({ "unchecked", "hiding" })

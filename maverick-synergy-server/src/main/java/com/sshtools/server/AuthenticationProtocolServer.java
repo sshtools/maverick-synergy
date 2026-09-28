@@ -404,6 +404,14 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 					for(ServerConnectionStateListener listener : getContext().getStateListeners()) {
 						listener.authenticationComplete(transport.getConnection());
 					}
+
+					// Enable any compression deferred until post-authentication (e.g. zlib@openssh.com).
+					// Done after firing auth events so that event listeners observe the state
+					// transition before the transport switches to compressed mode, and before
+					// starting the connection protocol so that subsequent server-to-client
+					// messages are compressed.
+					transport.enablePostAuthCompression();
+
 					// This should be the last thing we do as this will set
 					// transport to null
 					transport.startService(new ConnectionProtocolServer(transport, username));

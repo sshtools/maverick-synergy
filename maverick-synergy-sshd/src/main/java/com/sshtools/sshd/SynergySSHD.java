@@ -33,6 +33,8 @@ import com.sshtools.server.SshServerContext;
 import com.sshtools.server.vsession.ShellCommandFactory;
 import com.sshtools.server.vsession.VirtualChannelFactory;
 import com.sshtools.server.vsession.VirtualSessionPolicy.VirtualSessionPolicyBuilder;
+import com.sshtools.vsession.commands.ssh.SshClientsCommandFactory;
+
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -86,7 +88,9 @@ public final class SynergySSHD implements Callable<Integer> {
         SshServer server = buildServer(config, resolvedPort, listenAddress);
 
         server.setFileFactory(new AdaptiveConfigFileFactory(config));
-        server.setChannelFactory(new VirtualChannelFactory(new ShellCommandFactory()));
+        server.setChannelFactory(new VirtualChannelFactory(new ShellCommandFactory(
+            new SshClientsCommandFactory()
+        )));
         server.setDefaultPolicies(VirtualSessionPolicyBuilder.create().build());
 
         if (!config.getBoolean(AdaptiveConfiguration.ALLOW_FORWARDING, false)) {

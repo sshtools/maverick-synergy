@@ -1,7 +1,5 @@
 package com.sshtools.callback.client;
 
-import java.io.Closeable;
-
 /*-
  * #%L
  * Callback Client API
@@ -60,7 +58,7 @@ import com.sshtools.synergy.ssh.ChannelFactory;
 import com.sshtools.synergy.ssh.ChannelFactoryListener;
 import com.sshtools.synergy.ssh.Connection;
 
-public final class CallbackClient implements ChannelFactoryListener<SshServerContext>, ICallbackClient<CallbackSession>, Closeable {
+public final class CallbackClient implements ChannelFactoryListener<SshServerContext>, ICallbackClient<CallbackSession> {
 	
 	public static final String CALLBACK_CLIENT = "callbackClient";
 

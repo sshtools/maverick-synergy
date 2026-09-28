@@ -42,7 +42,7 @@ import com.sshtools.common.util.ByteArrayWriter;
 /**
  * Represents a single connection on the agent server.
  */
-public class OpenSSHAgentConnection implements Runnable, SshAgentConnection {
+public class OpenSSHAgentConnection implements SshAgentConnection {
    
 	private static final int SSH_AGENT_RSA_SHA2_256 = 2;
 	private static final int SSH_AGENT_RSA_SHA2_512 = 4;

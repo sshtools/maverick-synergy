@@ -175,7 +175,7 @@ public class SshAgentClient implements SignatureGenerator, Closeable {
 					break;
 			}
 			if(socket == null) {
-				throw new IOException("No unix domain socket provider available. Check that you have a provider, such as maverick-sshagent-jnr-sockets, maverick-sshagent-jdk16-sockets or maverick-sshagent-namedpipes on the classpath and is the address in the correct format.");
+				throw new IOException("No unix domain socket provider available. Check that you have a provider, such as maverick-sshagent-jnr-sockets or maverick-sshagent-namedpipes on the classpath and is the address in the correct format.");
 			}
 			return socket;
 		} catch (IOException ex) {

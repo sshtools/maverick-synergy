@@ -38,6 +38,7 @@ import com.sshtools.server.SshServer;
 import com.sshtools.server.vsession.ShellCommandFactory;
 import com.sshtools.server.vsession.VirtualChannelFactory;
 import com.sshtools.server.vsession.VirtualSessionPolicy.VirtualSessionPolicyBuilder;
+import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.nio.ConnectRequestFuture;
 
 import junit.framework.TestCase;
@@ -217,9 +218,28 @@ public abstract class AbstractVirtualConnectionTests extends TestCase {
 	protected ConnectRequestFuture connectVirtual()
 			throws IOException, SshException, InterruptedException {
 		SshClientContext ctx = createClientContext();
-		ConnectRequestFuture future = server.acceptVirtualConnection(ctx);
+		SshServerContext serverCtx = server.createServerContext(
+				server.getEngine().getContext(), null);
+		configureServerContext(serverCtx);
+		ConnectRequestFuture future = server.getEngine()
+				.connectVirtual(ctx, serverCtx);
 		future.waitFor(connectionTimeout());
 		return future;
+	}
+
+	/**
+	 * Optional hook for configuring the per-connection {@link SshServerContext}
+	 * before it is wired to the virtual channel pair.  Override in subclasses
+	 * that need to adjust server-side settings (e.g. compression algorithm) on a
+	 * per-connection basis.
+	 *
+	 * @param ctx the freshly-created server context, not yet connected
+	 * @throws IOException  propagated
+	 * @throws SshException propagated
+	 */
+	protected void configureServerContext(SshServerContext ctx)
+			throws IOException, SshException {
+		// no-op by default
 	}
 
 	/**

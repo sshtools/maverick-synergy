@@ -29,9 +29,7 @@ import java.security.Provider;
 import java.security.Signature;
 import java.security.SignatureException;
 
-import com.sshtools.common.ssh.components.SshPrivateKey;
-
-public abstract class Ssh2BaseRsaPrivateKey extends Ssh2BaseJCEPrivateKey implements SshPrivateKey {
+public abstract class Ssh2BaseRsaPrivateKey extends Ssh2BaseJCEPrivateKey {
 
 
     public Ssh2BaseRsaPrivateKey(PrivateKey prv) {

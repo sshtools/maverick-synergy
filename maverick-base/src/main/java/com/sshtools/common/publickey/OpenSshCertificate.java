@@ -462,4 +462,8 @@ public abstract class OpenSshCertificate implements SshPublicKey {
 	public String getKeyId() {
 		return keyId;
 	}
+	
+	public boolean isCertificate() {
+		return true;
+	}
 }

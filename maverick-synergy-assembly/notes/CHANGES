@@ -15,6 +15,7 @@ Features
 Bug Fixes
   o IMPORTANT SECURITY FIX: During SSH user authentication, if a client changes username between authentication requests, the server now disconnects with ILLEGAL_USER_NAME and requires reconnect. This prevents cross-user authentication state reuse within a single connection.
   o IMPORTANT SECURITY FIX: Fixed a mount permission canonicalization bypass in Virtual File System path handling. Non-canonical path representations could be routed through a parent mount and bypass stricter child-mount policy.
+  o Fixed SSH transport negotiation to allow AEAD ciphers (aes128-gcm@openssh.com, aes256-gcm@openssh.com, and chacha20-poly1305) without requiring a separate negotiated MAC. This resolves handshake failures when there is no common MAC while AEAD is in use.
   o Fixed connection timeout.
   o Removed duplicate shutdown hook.
   o Don't pass properties file parent to register to avoid a NullPointerException on /logging.properties

@@ -29,6 +29,8 @@ import java.io.InputStreamReader;
 
 import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.publickey.SshPrivateKeyProvider;
+import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshKeyPair;
 
 public class PuTTYPrivateKeyProvider implements SshPrivateKeyProvider {
 
@@ -51,6 +53,20 @@ public class PuTTYPrivateKeyProvider implements SshPrivateKeyProvider {
 			throw new IOException("Key is not formatted in the PuTTY key format!");
 		}
 		return new PuTTYPrivateKeyFile(formattedkey);
+	}
+
+	/**
+	 * Create a PuTTY v3 (unencrypted) private key file from a key pair.
+	 *
+	 * @param keyPair the SSH key pair to encode
+	 * @param comment an optional comment (may be null or empty)
+	 * @return a {@link SshPrivateKeyFile} whose {@code getFormattedKey()} returns
+	 *         the PuTTY v3 text bytes
+	 * @throws IOException  if the key type is unsupported or encoding fails
+	 * @throws SshException if the public key cannot be encoded
+	 */
+	public SshPrivateKeyFile create(SshKeyPair keyPair, String comment) throws IOException, SshException {
+		return new PuTTYPrivateKeyFile(keyPair, comment);
 	}
 
 }

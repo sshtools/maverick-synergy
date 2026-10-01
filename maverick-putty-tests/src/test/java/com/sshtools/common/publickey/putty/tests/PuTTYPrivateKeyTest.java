@@ -1,5 +1,27 @@
 package com.sshtools.common.publickey.putty.tests;
 
+/*-
+ * #%L
+ * PuTTY Key Format Tests
+ * %%
+ * Copyright (C) 2002 - 2026 JADAPTIVE Limited
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Lesser Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * #L%
+ */
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayOutputStream;
@@ -17,7 +39,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.sshtools.common.publickey.InvalidPassphraseException;
+import com.sshtools.common.publickey.SshPrivateKeyFile;
 import com.sshtools.common.publickey.putty.PuTTYPrivateKeyProvider;
+import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
 
@@ -161,6 +185,173 @@ public class PuTTYPrivateKeyTest {
         // The factory validates format on create(); non-PPK bytes → IOException
         assertThrows(java.io.IOException.class,
                 () -> provider.create("not a ppk file".getBytes("UTF-8")));
+    }
+
+    // ---------------------------------------------------------------
+    // PuTTY v3 write round-trip tests
+    // ---------------------------------------------------------------
+
+    @Test
+    void writeV3_ed25519_roundTrip() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateEd25519KeyPair();
+        assertRoundTrip("ssh-ed25519", original);
+    }
+
+    @Test
+    void writeV3_ed448_roundTrip() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateEd448KeyPair();
+        assertRoundTrip("ssh-ed448", original);
+    }
+
+    @Test
+    void writeV3_rsa2048_roundTrip() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateRsaKeyPair(2048, 2);
+        assertRoundTrip("ssh-rsa", original);
+    }
+
+    @Test
+    void writeV3_ecdsa256_roundTrip() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateEcdsaKeyPair(256);
+        assertRoundTrip("ecdsa-sha2-nistp256", original);
+    }
+
+    @Test
+    void writeV3_ecdsa384_roundTrip() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateEcdsaKeyPair(384);
+        assertRoundTrip("ecdsa-sha2-nistp384", original);
+    }
+
+    @Test
+    void writeV3_ecdsa521_roundTrip() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateEcdsaKeyPair(521);
+        assertRoundTrip("ecdsa-sha2-nistp521", original);
+    }
+
+    @Test
+    void writeV3_dsa1024_roundTrip() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateDsaKeyPair(1024);
+        assertRoundTrip("ssh-dss", original);
+    }
+
+    @Test
+    void writeV3_commentIsPreserved() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateEd25519KeyPair();
+        SshPrivateKeyFile keyFile = provider.create(original, "my-key-comment");
+        byte[] formatted = keyFile.getFormattedKey();
+        // The comment should appear in the formatted text
+        String text = new String(formatted, "UTF-8");
+        assertTrue(text.contains("Comment: my-key-comment"), "Formatted key must contain the comment");
+        // Verify the comment survives the round-trip via getComment()
+        SshPrivateKeyFile reparsed = provider.create(formatted);
+        reparsed.toKeyPair(null); // trigger comment parsing
+        assertEquals("my-key-comment", reparsed.getComment());
+        // Public key must also survive
+        SshKeyPair roundTripped = provider.create(formatted).toKeyPair(null);
+        assertEquals(original.getPublicKey().getFingerprint(),
+                roundTripped.getPublicKey().getFingerprint());
+    }
+
+    @Test
+    void writeV3_nullComment_treatedAsEmpty() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateEd25519KeyPair();
+        SshPrivateKeyFile keyFile = provider.create(original, null);
+        byte[] formatted = keyFile.getFormattedKey();
+        String text = new String(formatted, "UTF-8");
+        assertTrue(text.contains("Comment: \n"), "Null comment must produce empty comment line");
+    }
+
+    @Test
+    void writeV3_formattedKeyStartsWithV3Header() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateEd25519KeyPair();
+        byte[] formatted = provider.create(original, "test").getFormattedKey();
+        String text = new String(formatted, "UTF-8");
+        assertTrue(text.startsWith("PuTTY-User-Key-File-3:"),
+                "Formatted key must start with PuTTY-User-Key-File-3: header");
+    }
+
+    @Test
+    void writeV3_notPassphraseProtected() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateEd25519KeyPair();
+        SshPrivateKeyFile keyFile = provider.create(original, "test");
+        // v3 unencrypted keys have Encryption: none so must not be passphrase protected
+        assertFalse(keyFile.isPassphraseProtected(), "v3 unencrypted key must not be passphrase protected");
+    }
+
+    @Test
+    void changePassphrase_v3UnencryptedToEncrypted_roundTripsAndRequiresPassphrase() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateEd25519KeyPair();
+        SshPrivateKeyFile keyFile = provider.create(original, "passphrase-change");
+
+        keyFile.changePassphrase(null, "secret-pass");
+
+        assertTrue(keyFile.supportsPassphraseChange());
+        assertTrue(keyFile.isPassphraseProtected());
+        assertThrows(IOException.class, () -> keyFile.toKeyPair("wrong-pass"));
+
+        SshKeyPair decrypted = keyFile.toKeyPair("secret-pass");
+        assertEquals(original.getPublicKey().getFingerprint(), decrypted.getPublicKey().getFingerprint());
+    }
+
+    @Test
+    void changePassphrase_v3EncryptedToEncrypted_rotatesPassphrase() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateEd25519KeyPair();
+        SshPrivateKeyFile keyFile = provider.create(original, "rotate-passphrase");
+
+        keyFile.changePassphrase(null, "old-pass");
+        keyFile.changePassphrase("old-pass", "new-pass");
+
+        assertThrows(IOException.class, () -> keyFile.toKeyPair("old-pass"));
+        SshKeyPair decrypted = keyFile.toKeyPair("new-pass");
+        assertEquals(original.getPublicKey().getFingerprint(), decrypted.getPublicKey().getFingerprint());
+    }
+
+    @Test
+    void changePassphrase_v3EncryptedToUnencrypted_removesPassphrase() throws Exception {
+        SshKeyPair original = JCEComponentManager.getDefaultInstance().generateEd25519KeyPair();
+        SshPrivateKeyFile keyFile = provider.create(original, "remove-passphrase");
+
+        keyFile.changePassphrase(null, "secret-pass");
+        keyFile.changePassphrase("secret-pass", "");
+
+        assertFalse(keyFile.isPassphraseProtected());
+        SshKeyPair decrypted = keyFile.toKeyPair(null);
+        assertEquals(original.getPublicKey().getFingerprint(), decrypted.getPublicKey().getFingerprint());
+    }
+
+    @Test
+    void changePassphrase_v2Key_throwsUnsupported() throws Exception {
+        SshPrivateKeyFile v2 = provider.create(ppkV2Ed25519Bytes);
+        assertFalse(v2.supportsPassphraseChange());
+        assertThrows(IOException.class, () -> v2.changePassphrase(null, "new-pass"));
+    }
+
+    /**
+     * Helper: encode key pair to PuTTY v3, parse it back, verify algorithm and
+     * that the private key can sign data verifiable by the round-tripped public key.
+     */
+    private void assertRoundTrip(String expectedAlgorithm, SshKeyPair original)
+            throws IOException, SshException, InvalidPassphraseException {
+
+        SshPrivateKeyFile keyFile = provider.create(original, "round-trip-test");
+        byte[] formatted = keyFile.getFormattedKey();
+        assertTrue(provider.isFormatted(formatted), "Output must be recognised as PuTTY format");
+
+        SshKeyPair roundTripped = provider.create(formatted).toKeyPair(null);
+        assertNotNull(roundTripped, "Round-tripped key pair must not be null");
+        assertEquals(expectedAlgorithm, roundTripped.getPublicKey().getAlgorithm(),
+                "Algorithm must be preserved through round-trip");
+
+        // Public key fingerprint must survive the round-trip
+        assertEquals(original.getPublicKey().getFingerprint(),
+                roundTripped.getPublicKey().getFingerprint(),
+                "Public key fingerprint must be identical after round-trip");
+
+        // Signature produced by original private key must verify with round-tripped public key
+        byte[] data = "round-trip-test-payload".getBytes("UTF-8");
+        byte[] sig = original.getPrivateKey().sign(data, expectedAlgorithm);
+        assertTrue(roundTripped.getPublicKey().verifySignature(
+                wrapSignature(expectedAlgorithm, sig), data),
+                "Signature from original key must verify with round-tripped public key");
     }
 
     // ---------------------------------------------------------------

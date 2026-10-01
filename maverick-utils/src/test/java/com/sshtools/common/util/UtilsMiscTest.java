@@ -42,6 +42,8 @@ package com.sshtools.common.util;
  * #L%
  */
 
+import java.math.BigInteger;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -247,6 +249,23 @@ public class UtilsMiscTest {
     }
 
     @Test
+    public void testUnsignedInteger32FromStringMinMaxAndInBetween() {
+        assertEquals(0L, new UnsignedInteger32("0").longValue());
+        assertEquals(4294967295L, new UnsignedInteger32("4294967295").longValue());
+        assertEquals(2147483648L, new UnsignedInteger32("2147483648").longValue());
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void testUnsignedInteger32FromStringBelowMinThrows() {
+        new UnsignedInteger32("-1");
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void testUnsignedInteger32FromStringAboveMaxThrows() {
+        new UnsignedInteger32("4294967296");
+    }
+
+    @Test
     public void testUnsignedInteger32Zero_constant() {
         assertEquals(0L, UnsignedInteger32.ZERO.longValue());
     }
@@ -271,6 +290,73 @@ public class UtilsMiscTest {
     public void testUnsignedInteger64BigIntValue() {
         UnsignedInteger64 v = new UnsignedInteger64(256L);
         assertEquals(java.math.BigInteger.valueOf(256), v.bigIntValue());
+    }
+
+    @Test
+    public void testUnsignedInteger64FromLongMinAndInBetween() {
+        assertEquals(0L, new UnsignedInteger64(0L).longValue());
+        assertEquals(42L, new UnsignedInteger64(42L).longValue());
+        assertEquals(Long.MAX_VALUE, new UnsignedInteger64(Long.MAX_VALUE).longValue());
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void testUnsignedInteger64FromLongBelowMinThrows() {
+        new UnsignedInteger64(-1L);
+    }
+
+    @Test
+    public void testUnsignedInteger64FromStringMinMaxAndInBetween() {
+        assertEquals(BigInteger.ZERO, new UnsignedInteger64("0").bigIntValue());
+        assertEquals(UnsignedInteger64.MAX_VALUE, new UnsignedInteger64("18446744073709551615").bigIntValue());
+        assertEquals(new BigInteger("9223372036854775808"), new UnsignedInteger64("9223372036854775808").bigIntValue());
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void testUnsignedInteger64FromStringBelowMinThrows() {
+        new UnsignedInteger64("-1");
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void testUnsignedInteger64FromStringAboveMaxThrows() {
+        new UnsignedInteger64("18446744073709551616");
+    }
+
+    @Test
+    public void testUnsignedInteger64FromBigIntegerMinMaxAndInBetween() {
+        assertEquals(BigInteger.ZERO, new UnsignedInteger64(BigInteger.ZERO).bigIntValue());
+        assertEquals(UnsignedInteger64.MAX_VALUE, new UnsignedInteger64(UnsignedInteger64.MAX_VALUE).bigIntValue());
+        assertEquals(new BigInteger("9223372036854775808"),
+                new UnsignedInteger64(new BigInteger("9223372036854775808")).bigIntValue());
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void testUnsignedInteger64FromBigIntegerBelowMinThrows() {
+        new UnsignedInteger64(BigInteger.valueOf(-1));
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void testUnsignedInteger64FromBigIntegerAboveMaxThrows() {
+        new UnsignedInteger64(UnsignedInteger64.MAX_VALUE.add(BigInteger.ONE));
+    }
+
+    @Test
+    public void testUnsignedInteger64FromByteArrayMinMaxAndInBetween() {
+        assertEquals(BigInteger.ZERO, new UnsignedInteger64(new byte[] { 0x00 }).bigIntValue());
+        assertEquals(BigInteger.valueOf(256L), new UnsignedInteger64(new byte[] { 0x01, 0x00 }).bigIntValue());
+        assertEquals(UnsignedInteger64.MAX_VALUE,
+                new UnsignedInteger64(new byte[] {
+                        (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+                        (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
+                }).bigIntValue());
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void testUnsignedInteger64FromByteArrayAboveMaxThrows() {
+        new UnsignedInteger64(new byte[] {
+                0x01,
+                0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00
+        });
     }
 
     // -----------------------------------------------------------------------

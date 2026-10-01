@@ -30,16 +30,16 @@ import java.math.BigInteger;
  * @author Lee David Painter
  */
 public class UnsignedInteger64 {
-
-  public final static UnsignedInteger64 ZERO = new UnsignedInteger64(0L);
-  public final static UnsignedInteger64 ONE = new UnsignedInteger64(1L);
-  
   /**  */
   public final static BigInteger MAX_VALUE = new BigInteger(
       "18446744073709551615");
        
   /**  */
   public final static BigInteger MIN_VALUE = new BigInteger("0");
+
+  public final static UnsignedInteger64 ZERO = new UnsignedInteger64(0L);
+  public final static UnsignedInteger64 ONE = new UnsignedInteger64(1L);
+
   private BigInteger bigInt;
 
   /**
@@ -66,7 +66,7 @@ public class UnsignedInteger64 {
    * @throws NumberFormatException
    */
   public UnsignedInteger64(byte[] bval) throws NumberFormatException {
-    bigInt = new BigInteger(bval);
+    bigInt = new BigInteger(1, bval);
 
     if ( (bigInt.compareTo(MIN_VALUE) < 0)
         || (bigInt.compareTo(MAX_VALUE) > 0)) {
@@ -76,6 +76,11 @@ public class UnsignedInteger64 {
 
   public UnsignedInteger64(long value) {
     bigInt = BigInteger.valueOf(value);
+
+    if ( (bigInt.compareTo(MIN_VALUE) < 0)
+        || (bigInt.compareTo(MAX_VALUE) > 0)) {
+      throw new NumberFormatException();
+    }
   }
 
   /**

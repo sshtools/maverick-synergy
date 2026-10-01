@@ -33,6 +33,7 @@ import com.sshtools.server.SshServerContext;
 import com.sshtools.server.vsession.ShellCommandFactory;
 import com.sshtools.server.vsession.VirtualChannelFactory;
 import com.sshtools.server.vsession.VirtualSessionPolicy.VirtualSessionPolicyBuilder;
+import com.sshtools.server.vsession.commands.Alias;
 import com.sshtools.vsession.commands.ssh.SshClientsCommandFactory;
 
 import picocli.CommandLine;
@@ -126,6 +127,11 @@ public final class SynergySSHD implements Callable<Integer> {
     // Inner server class — applies AdaptiveConfiguration per connection
     // -------------------------------------------------------------------------
 
+    class MyCommandFactory extends ShellCommandFactory {
+       MyCommandFactory() {
+            commands.put("alias", Alias.class);
+       }
+    }
     private static final class ConfiguredSshServer extends SshServer {
 
         private final AdaptiveConfiguration config;

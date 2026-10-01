@@ -24,15 +24,15 @@ package com.sshtools.common.files.vfs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Stack;
-import java.util.StringTokenizer;
 
 import com.sshtools.common.files.AbstractFile;
 import com.sshtools.common.files.AbstractFileFactory;
@@ -187,34 +187,43 @@ public class VirtualFileFactory implements AbstractFileFactory<VirtualFile> {
 	}
 
 	private String canonicalisePath(String path) {
-		StringTokenizer t = new StringTokenizer(path, "/", true);
-		Stack<String> pathStack = new Stack<String>();
-		while (t.hasMoreTokens()) {
-			String e = t.nextToken();
-			if (e.equals("..")) {
-				if (pathStack.size() > 1) {
-					pathStack.pop();
-					pathStack.pop();
-				}
+		String normalized = path.replace('\\', '/').trim();
+		boolean absolute = normalized.startsWith("/");
+		Deque<String> pathStack = new ArrayDeque<>();
 
-			} else {
-				if (pathStack.size() > 0 && pathStack.peek() == "/"
-						&& e.equals("/")) {
-					continue;
-				}
-				pathStack.push(e);
+		for (String segment : normalized.split("/")) {
+			if (segment.isEmpty() || ".".equals(segment)) {
+				continue;
 			}
-		}
-		String ret = "";
-		for (String e : pathStack) {
-			ret += e;
+			if ("..".equals(segment)) {
+				if (!pathStack.isEmpty()) {
+					pathStack.removeLast();
+				}
+				continue;
+			}
+			pathStack.addLast(segment);
 		}
 
-		if (!ret.startsWith("/")) {
-			ret = FileUtils
-					.addTrailingSlash(defaultMount.getMount()) + ret;
+		StringBuilder ret = new StringBuilder();
+		if (absolute) {
+			ret.append('/');
+		} else {
+			ret.append(FileUtils.addTrailingSlash(defaultMount.getMount()));
 		}
-		return ret;
+
+		boolean first = true;
+		for (String segment : pathStack) {
+			if (!first && ret.length() > 0 && ret.charAt(ret.length() - 1) != '/') {
+				ret.append('/');
+			}
+			ret.append(segment);
+			first = false;
+		}
+
+		if (ret.length() == 0) {
+			return "/";
+		}
+		return ret.toString();
 
 	}
 	

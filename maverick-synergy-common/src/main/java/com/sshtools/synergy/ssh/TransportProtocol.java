@@ -1865,13 +1865,21 @@ public abstract class TransportProtocol<T extends SshContext>
 					checkValidString("server->client cipher list",
 							remoteCiphersSC), localCiphersSC);
 
-			macCS = selectNegotiatedComponent(
-					checkValidString("client->server hmac list", remoteCSMacs),
-					localMacsCS);
+			if (usesIntegratedMac(cipherCS, true)) {
+				macCS = "<implicit>";
+			} else {
+				macCS = selectNegotiatedComponent(
+						checkValidString("client->server hmac list", remoteCSMacs),
+						localMacsCS);
+			}
 
-			macSC = selectNegotiatedComponent(
-					checkValidString("server->client hmac list", remoteSCMacs),
-					localMacsSC);
+			if (usesIntegratedMac(cipherSC, false)) {
+				macSC = "<implicit>";
+			} else {
+				macSC = selectNegotiatedComponent(
+						checkValidString("server->client hmac list", remoteSCMacs),
+						localMacsSC);
+			}
 
 			compressionCS = selectNegotiatedComponent(
 					checkValidString("client->server compression list",
@@ -2205,6 +2213,16 @@ public abstract class TransportProtocol<T extends SshContext>
 										clientlist));
 		throw new IOException(String.format("Failed to negotiate a transport component from %s and %s", originalClient, originalServer));
 
+	}
+
+	protected boolean usesIntegratedMac(String cipherName, boolean isCS) throws SshException {
+		if (cipherName == null) {
+			return false;
+		}
+		if (isCS) {
+			return ((SshCipher) getContext().supportedCiphersCS().getInstance(cipherName)).isMAC();
+		}
+		return ((SshCipher) getContext().supportedCiphersSC().getInstance(cipherName)).isMAC();
 	}
 	
 	protected void onKeyExchangeComplete() {

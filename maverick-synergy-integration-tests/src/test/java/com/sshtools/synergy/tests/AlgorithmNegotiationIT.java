@@ -26,6 +26,10 @@ package com.sshtools.synergy.tests;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.channels.SocketChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +39,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClient.SshClientBuilder;
+import com.sshtools.common.files.direct.NioFileFactory.NioFileFactoryBuilder;
+import com.sshtools.common.publickey.SshKeyPairGenerator;
 import com.sshtools.common.ssh.SshException;
+import com.sshtools.common.ssh.components.SshKeyPair;
+import com.sshtools.server.InMemoryPasswordAuthenticator;
+import com.sshtools.server.SshServer;
+import com.sshtools.server.SshServerContext;
 import com.sshtools.synergy.ssh.SshContext;
 
 /**
@@ -153,6 +163,67 @@ class AlgorithmNegotiationIT extends AbstractSshIntegrationTest {
         try (client) {
             assertTrue(client.isConnected(),     "must be connected with MAC " + mac);
             assertTrue(client.isAuthenticated(), "must be authenticated with MAC " + mac);
+        }
+    }
+
+    @Test
+    @DisplayName("AEAD cipher succeeds without common MAC")
+    void aeadCipherDoesNotRequireCommonMac() throws Exception {
+        Path tempDir = Files.createTempDirectory("ssh-it-aead-");
+        SshServer server = null;
+
+        try {
+            SshKeyPair serverHostKey = SshKeyPairGenerator.generateKeyPair(SshKeyPairGenerator.ED25519, 0);
+
+            server = new SshServer(0) {
+                @Override
+                public void configure(SshServerContext sshContext, SocketChannel sc) throws IOException, SshException {
+                    super.configure(sshContext, sc);
+                    // Force a MAC set that does not overlap with the client's configured MAC.
+                    sshContext.supportedMacsCS().removeAllBut(SshContext.HMAC_SHA256_ETM);
+                    sshContext.supportedMacsSC().removeAllBut(SshContext.HMAC_SHA512_ETM);
+                }
+            };
+
+            server.addHostKey(serverHostKey);
+            server.addAuthenticator(new InMemoryPasswordAuthenticator().addUser(
+                    SshServerExtension.TEST_USER, SshServerExtension.TEST_PASSWORD.toCharArray()));
+            server.setFileFactory(con -> NioFileFactoryBuilder.create().withHome(tempDir).withoutSandbox().build());
+            server.start();
+
+            try (SshClient client = SshClientBuilder.create()
+                    .withHostname("127.0.0.1")
+                    .withPort(server.getPort())
+                    .withUsername(SshServerExtension.TEST_USER)
+                    .withPassword(SshServerExtension.TEST_PASSWORD)
+                    .onConfigure(ctx -> {
+                        ctx.setHostKeyVerification((host, pk) -> true);
+                        try {
+                            ctx.setPreferredCipherCS(SshContext.CIPHER_AES_GCM_256);
+                            ctx.setPreferredCipherSC(SshContext.CIPHER_AES_GCM_256);
+                            // No overlap with server forced ETM-only MAC set.
+                            ctx.setPreferredMacCS(SshContext.HMAC_SHA1);
+                            ctx.setPreferredMacSC(SshContext.HMAC_SHA1);
+                        } catch (IOException | SshException e) {
+                            Assumptions.assumeTrue(false, "Could not configure AEAD regression test: " + e.getMessage());
+                        }
+                    })
+                    .build()) {
+                assertTrue(client.isConnected(), "must connect with AEAD even without common MAC");
+                assertTrue(client.isAuthenticated(), "must authenticate with AEAD even without common MAC");
+            }
+        } finally {
+            if (server != null && server.isRunning()) {
+                server.stop();
+            }
+            Files.walk(tempDir)
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(p -> {
+                        try {
+                            Files.deleteIfExists(p);
+                        } catch (IOException ignored) {
+                        }
+                    });
         }
     }
 

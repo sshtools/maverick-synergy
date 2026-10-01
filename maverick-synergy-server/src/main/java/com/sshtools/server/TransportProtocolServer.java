@@ -195,16 +195,20 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 			getContext().supportedPublicKeys().removeAllBut(
 					getContext().supportedPublicKeys().selectStrongestComponent(getRemotePublicKeys()));
 			
-			getContext().supportedCiphersCS().removeAllBut(
-					getContext().supportedCiphersCS().selectStrongestComponent(getRemoteCiphersCS()));
-			getContext().supportedCiphersCS().removeAllBut(
-					getContext().supportedCiphersCS().selectStrongestComponent(getRemoteCiphersSC()));
-			
-			getContext().supportedMacsCS().removeAllBut(
-					getContext().supportedMacsCS().selectStrongestComponent(getRemoteMacsCS()));
-			getContext().supportedMacsSC().removeAllBut(
-					getContext().supportedMacsSC().selectStrongestComponent(getRemoteMacsSC()));
+			String strongestCipherCS = getContext().supportedCiphersCS().selectStrongestComponent(getRemoteCiphersCS());
+			String strongestCipherSC = getContext().supportedCiphersSC().selectStrongestComponent(getRemoteCiphersSC());
 
+			getContext().supportedCiphersCS().removeAllBut(strongestCipherCS);
+			getContext().supportedCiphersSC().removeAllBut(strongestCipherSC);
+			
+			if (!usesIntegratedMac(strongestCipherCS, true)) {
+				getContext().supportedMacsCS().removeAllBut(
+						getContext().supportedMacsCS().selectStrongestComponent(getRemoteMacsCS()));
+			}
+			if (!usesIntegratedMac(strongestCipherSC, false)) {
+				getContext().supportedMacsSC().removeAllBut(
+						getContext().supportedMacsSC().selectStrongestComponent(getRemoteMacsSC()));
+			}
 		}
 	}
 	

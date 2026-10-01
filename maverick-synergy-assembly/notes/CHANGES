@@ -13,6 +13,8 @@ Features
   o Several methods in SFTP client for better working with `ByteBuffer` (eg. readFile, writeFile). 
  
 Bug Fixes
+  o IMPORTANT SECURITY FIX: During SSH user authentication, if a client changes username between authentication requests, the server now disconnects with ILLEGAL_USER_NAME and requires reconnect. This prevents cross-user authentication state reuse within a single connection.
+  o IMPORTANT SECURITY FIX: Fixed a mount permission canonicalization bypass in Virtual File System path handling. Non-canonical path representations could be routed through a parent mount and bypass stricter child-mount policy.
   o Fixed connection timeout.
   o Removed duplicate shutdown hook.
   o Don't pass properties file parent to register to avoid a NullPointerException on /logging.properties
@@ -30,6 +32,8 @@ Bug Fixes
   o NioFile.getOutputStream(boolean) was ignoring the append parameter, always opening with APPEND mode instead of truncating for non-append writes.
   o SshPublicKey isCertificate() method was returning false for certificate keys.
   o When generating SSH certificates add a reasonble one-minute buffer to valid after timestamp to allow for clock skew.
+  o UnsignedInteger64 bounds validation fails because byte[] constructor uses BigInteger signed, not unsigned conversion. This would only ever be triggered with UnsignedInteger64.MAX_VALUE.
+  
 =================
 =  HISTORY      =
 =================

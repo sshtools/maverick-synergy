@@ -27,15 +27,22 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.sshtools.client.AuthenticationMessage;
+import com.sshtools.client.ClientAuthenticator;
+import com.sshtools.client.SimpleClientAuthenticator;
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClient.SshClientBuilder;
+import com.sshtools.client.TransportProtocolClient;
 import com.sshtools.common.publickey.SshKeyPairGenerator;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshKeyPair;
+import com.sshtools.common.util.ByteArrayReader;
+import com.sshtools.common.util.ByteArrayWriter;
 
 /**
  * Integration tests focused specifically on the authentication layer:
@@ -43,6 +50,93 @@ import com.sshtools.common.ssh.components.SshKeyPair;
  */
 @DisplayName("Authentication")
 class AuthenticationIT extends AbstractSshIntegrationTest {
+
+    private static final int SSH_MSG_USERAUTH_REQUEST = 50;
+    private static final int SSH_MSG_USERAUTH_PK_OK = 60;
+
+    /**
+     * Intentionally crafted authenticator that probes with one username and signs with another.
+     * This test currently fails because the server incorrectly accepts the second username.
+     */
+    private static final class UsernameSwitchPublicKeyAuthenticator extends SimpleClientAuthenticator implements ClientAuthenticator {
+
+        private final SshKeyPair keyPair;
+        private final String firstUsername;
+        private final String secondUsername;
+        private TransportProtocolClient transport;
+
+        private UsernameSwitchPublicKeyAuthenticator(SshKeyPair keyPair, String firstUsername, String secondUsername) {
+            this.keyPair = keyPair;
+            this.firstUsername = firstUsername;
+            this.secondUsername = secondUsername;
+        }
+
+        @Override
+        public String getName() {
+            return "publickey";
+        }
+
+        @Override
+        public void authenticate(TransportProtocolClient transport, String username) throws IOException, SshException {
+            this.transport = transport;
+            sendRequest(firstUsername, false);
+        }
+
+        @Override
+        public boolean processMessage(ByteArrayReader msg) throws IOException, SshException {
+            int type = msg.read() & 0xFF;
+            if (type == SSH_MSG_USERAUTH_PK_OK) {
+                sendRequest(secondUsername, true);
+                return true;
+            }
+            return false;
+        }
+
+        private void sendRequest(String username, boolean withSignature) throws IOException, SshException {
+            final byte[] requestPayload = buildRequestPayload(username, withSignature);
+            transport.postMessage(new AuthenticationMessage(username, "ssh-connection", "publickey") {
+                @Override
+                public boolean writeMessageIntoBuffer(ByteBuffer buf) {
+                    super.writeMessageIntoBuffer(buf);
+                    buf.put(requestPayload);
+                    return true;
+                }
+            });
+        }
+
+        private byte[] buildRequestPayload(String username, boolean withSignature) throws IOException, SshException {
+            byte[] keyBlob = keyPair.getPublicKey().getEncoded();
+            String algorithm = keyPair.getPublicKey().getAlgorithm();
+
+            try (ByteArrayWriter baw = new ByteArrayWriter()) {
+                baw.writeBoolean(withSignature);
+                baw.writeString(algorithm);
+                baw.writeBinaryString(keyBlob);
+
+                if (withSignature) {
+                    byte[] dataToSign = buildSignatureData(username, algorithm, keyBlob);
+                    byte[] signature = keyPair.sign(keyPair.getPublicKey(), keyPair.getPublicKey().getSigningAlgorithm(), dataToSign);
+                    baw.writeBinaryString(signature);
+                }
+
+                return baw.toByteArray();
+            }
+        }
+
+        private byte[] buildSignatureData(String username, String algorithm, byte[] keyBlob) throws IOException {
+            try (ByteArrayWriter baw = new ByteArrayWriter()) {
+                baw.writeBinaryString(transport.getSessionKey());
+                baw.write(SSH_MSG_USERAUTH_REQUEST);
+                baw.writeString(username);
+                baw.writeString("ssh-connection");
+                baw.writeString("publickey");
+                baw.writeBoolean(true);
+                baw.writeString(algorithm);
+                baw.writeBinaryString(keyBlob);
+                return baw.toByteArray();
+            }
+        }
+    }
 
     // ------------------------------------------------------------------ //
     //  Password authentication                                            //
@@ -139,6 +233,30 @@ class AuthenticationIT extends AbstractSshIntegrationTest {
                 .onConfigure(ctx -> ctx.setHostKeyVerification((host, pk) -> true))
                 .build()
         );
+    }
+
+    @Test
+    @DisplayName("Regression: public key probe user must not authenticate as different username")
+    void publicKeyUsernameSwitchMustFail() throws Exception {
+        try (SshClient client = SshClientBuilder.create()
+            .withHostname("127.0.0.1")
+            .withPort(SERVER.getPort())
+            .withUsername("placeholder")
+            .onConfigure(ctx -> ctx.setHostKeyVerification((host, pk) -> true))
+            .build()) {
+
+            ClientAuthenticator exploitAuthenticator = new UsernameSwitchPublicKeyAuthenticator(
+                SERVER.getClientKeyPair(),
+                SshServerExtension.TEST_USER,
+                "otheruser");
+
+            boolean authenticated = client.authenticate(exploitAuthenticator, 30000L);
+
+            // Expected secure behavior: this must be false.
+            // Current vulnerable behavior: this becomes true, so this test fails.
+            assertFalse(authenticated, "Username switch during publickey auth must not authenticate.");
+            assertFalse(client.isAuthenticated(), "Client must remain unauthenticated after username switch attempt.");
+        }
     }
 
     // ------------------------------------------------------------------ //

@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.sshtools.common.auth.AbstractAuthenticationProtocol;
@@ -150,6 +151,9 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	public boolean processMessage(byte[] msg) throws IOException {
 
 		if (authInProgress) {
+			if (msg[0] == SSH_MSG_USERAUTH_REQUEST && disconnectOnUsernameSwitch(msg)) {
+				return true;
+			}
 			return currentAuthentication.processMessage(msg);
 		}
 
@@ -163,6 +167,23 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 			return false;
 		}
 
+	}
+
+	private boolean disconnectOnUsernameSwitch(byte[] msg) throws IOException {
+		try (ByteArrayReader bar = new ByteArrayReader(msg)) {
+			bar.skip(1);
+			String requestedUsername = bar.readString();
+			String currentUsername = transport.getConnection().getUsername();
+			if (currentUsername != null && !Objects.equals(currentUsername, requestedUsername)) {
+				if (Log.isWarnEnabled()) {
+					Log.warn("Change of username or service not allowed: {} to {}", currentUsername, requestedUsername);
+				}
+				transport.disconnect(TransportProtocol.ILLEGAL_USER_NAME,
+						"Username change during authentication requires reconnect");
+				return true;
+			}
+			return false;
+		}
 	}
 
 	public Object getParameter(String name) {
@@ -190,6 +211,15 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 
 			boolean canConnect = true;
 			Connection<SshServerContext> con = transport.getConnection();
+			String currentUsername = con.getUsername();
+			if (currentUsername != null && !Objects.equals(currentUsername, username)) {
+				if (Log.isWarnEnabled()) {
+					Log.warn("Username changed during authentication from {} to {}; disconnecting per RFC", currentUsername, username);
+				}
+				transport.disconnect(TransportProtocol.ILLEGAL_USER_NAME,
+						"Username change during authentication requires reconnect");
+				return;
+			}
 			con.setUsername(username);			
 			
 			if(firstAttempt) {

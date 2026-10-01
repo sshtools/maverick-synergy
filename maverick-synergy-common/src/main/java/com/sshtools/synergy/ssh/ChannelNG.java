@@ -549,11 +549,7 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 				}
 
 				if(!buf.hasRemaining()) {
-					return;
-				}
-				
-				if(!buf.hasRemaining()) {
-					return;
+					break;
 				}
 				
 				long window = remoteWindow.getWindowSpace().longValue();

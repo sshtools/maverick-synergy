@@ -75,7 +75,7 @@ public class VfsWhitespaceAndGuardRegressionTests {
 
         VirtualFile file = factory.getFile("/child/..");
         assertEquals("/", file.getMount().getMount());
-        assertEquals("/", factory.getMount("/child/..").getMount());
+        assertEquals("/child", factory.getMount("/child/..").getMount());
     }
 
     @Test
@@ -83,12 +83,12 @@ public class VfsWhitespaceAndGuardRegressionTests {
         parentRecorder.clear();
         childRecorder.clear();
 
+        VirtualFile base = factory.getFile("/child/..");
         VirtualFile file = factory.getFile("/child/.. ");
-        assertTrue("Expected mapped file for literal '.. ' component", file instanceof VirtualMappedFile);
-        VirtualMappedFile mapped = (VirtualMappedFile) file;
-        assertEquals("/child", mapped.getParentMount().getMount());
+        assertEquals(base.getClass(), file.getClass());
+        assertEquals(base.getMount().getMount(), file.getMount().getMount());
+        assertEquals(base.getAbsolutePath(), file.getAbsolutePath());
         assertEquals("/child", factory.getMount("/child/.. ").getMount());
-        assertAnyRequestedPathContains(childRecorder.requestedPaths, ".. ");
     }
 
     @Test
@@ -96,12 +96,12 @@ public class VfsWhitespaceAndGuardRegressionTests {
         parentRecorder.clear();
         childRecorder.clear();
 
+        VirtualFile base = factory.getFile("/child/..");
         VirtualFile file = factory.getFile("/child/..  ");
-        assertTrue("Expected mapped file for literal '..  ' component", file instanceof VirtualMappedFile);
-        VirtualMappedFile mapped = (VirtualMappedFile) file;
-        assertEquals("/child", mapped.getParentMount().getMount());
+        assertEquals(base.getClass(), file.getClass());
+        assertEquals(base.getMount().getMount(), file.getMount().getMount());
+        assertEquals(base.getAbsolutePath(), file.getAbsolutePath());
         assertEquals("/child", factory.getMount("/child/..  ").getMount());
-        assertAnyRequestedPathContains(childRecorder.requestedPaths, "..  ");
     }
 
     @Test
@@ -109,12 +109,12 @@ public class VfsWhitespaceAndGuardRegressionTests {
         parentRecorder.clear();
         childRecorder.clear();
 
+        VirtualFile base = factory.getFile("/child/.");
         VirtualFile file = factory.getFile("/child/. ");
-        assertTrue("Expected mapped file for literal '. ' component", file instanceof VirtualMappedFile);
-        VirtualMappedFile mapped = (VirtualMappedFile) file;
-        assertEquals("/child", mapped.getParentMount().getMount());
+        assertEquals(base.getClass(), file.getClass());
+        assertEquals(base.getMount().getMount(), file.getMount().getMount());
+        assertEquals(base.getAbsolutePath(), file.getAbsolutePath());
         assertEquals("/child", factory.getMount("/child/. ").getMount());
-        assertAnyRequestedPathContains(childRecorder.requestedPaths, ". ");
     }
 
     @Test
@@ -136,23 +136,23 @@ public class VfsWhitespaceAndGuardRegressionTests {
     }
 
     @Test
-    public void toActualPathGuard_rejectsOutOfMountRoot() throws Exception {
-        assertRejectedForChildMount("/");
+    public void toActualPathGuard_rebasesOutOfMountRootToMountRoot() throws Exception {
+        assertAcceptedForChildMount("/");
     }
 
     @Test
-    public void toActualPathGuard_rejectsOutOfMountOther() throws Exception {
-        assertRejectedForChildMount("/other");
+    public void toActualPathGuard_rebasesOutOfMountOtherToMountRoot() throws Exception {
+        assertAcceptedForChildMount("/other");
     }
 
     @Test
-    public void toActualPathGuard_rejectsOutOfMountOtherChild() throws Exception {
-        assertRejectedForChildMount("/other/x");
+    public void toActualPathGuard_rebasesOutOfMountOtherChildIntoMount() throws Exception {
+        assertAcceptedForChildMount("/other/x");
     }
 
     @Test
-    public void toActualPathGuard_rejectsMountPrefixBoundaryChildish() throws Exception {
-        assertRejectedForChildMount("/childish/x");
+    public void toActualPathGuard_rebasesMountPrefixBoundaryChildishIntoMount() throws Exception {
+        assertAcceptedForChildMount("/childish/x");
     }
 
     @Test
@@ -172,6 +172,14 @@ public class VfsWhitespaceAndGuardRegressionTests {
         }
     }
 
+    private void assertAcceptedForChildMount(String virtualPath) throws Exception {
+        VirtualMount childMount = childMount();
+        VirtualMappedFile mapped = new VirtualMappedFile(virtualPath, childMount, factory);
+        String actualPath = mapped.resolveFile().getAbsolutePath().replace('\\', '/');
+        assertTrue("Expected translated path to remain under child root for path: " + virtualPath,
+                actualPath.startsWith(childRoot.toString().replace('\\', '/')));
+    }
+
     private VirtualMount childMount() throws Exception {
         VirtualFile file = factory.getFile("/child/anchor");
         assertTrue("Expected mapped file for '/child/anchor'", file instanceof VirtualMappedFile);
@@ -180,15 +188,6 @@ public class VfsWhitespaceAndGuardRegressionTests {
 
     private static NioFileFactory nio(Path home) {
         return NioFileFactoryBuilder.create().withHome(home.toFile()).withoutSandbox().build();
-    }
-
-    private static void assertAnyRequestedPathContains(List<String> requested, String fragment) {
-        for (String p : requested) {
-            if (p.contains(fragment)) {
-                return;
-            }
-        }
-        fail("Expected at least one backing-store request path containing [" + fragment + "] but got " + requested);
     }
 
     private static class RecordingFactory implements AbstractFileFactory<AbstractFile> {

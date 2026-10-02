@@ -149,10 +149,11 @@ public class DirectFileTests extends AbstractFileTest {
 		
 		File file = new File(getBaseFolder(), path);
 		System.out.println("createContent " + file.getAbsolutePath());
-		OutputStream out = new FileOutputStream(file);
-		RandomInputStream in = new RandomInputStream(65535, size, false);
-		IOUtils.copy(in, out);
-		return in.digest();
+		try(OutputStream out = new FileOutputStream(file);
+				RandomInputStream in = new RandomInputStream(65535, size, false)) {
+			IOUtils.copy(in, out);
+			return in.digest();
+		}
 	}
 
 	@Override
@@ -160,13 +161,12 @@ public class DirectFileTests extends AbstractFileTest {
 		
 		File file = new File(getBaseFolder(), path);
 		System.out.println("hashContent " + file.getAbsolutePath());
-		DigestInputStream in = new DigestInputStream(
+		try(DigestInputStream in = new DigestInputStream(
 				new FileInputStream(file),
-						MessageDigest.getInstance("MD5"));
-				
-		IOUtils.copy(in, new NullOutputStream());
-		
-		return in.getMessageDigest().digest();
+						MessageDigest.getInstance("MD5"))) {
+			IOUtils.copy(in, new NullOutputStream());
+			return in.getMessageDigest().digest();
+		}
 	}
 
 }

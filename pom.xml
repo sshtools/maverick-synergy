@@ -14,7 +14,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<build.projectProperties>${basedir}/jadaptive.build.properties</build.projectProperties>
 		<build.userProperties>${user.home}/.jadaptive.build.properties</build.userProperties>
-		<test.tmp.dir>${session.executionRootDirectory}/.tmp</test.tmp.dir>
+		<test.tmp.dir>${project.build.directory}</test.tmp.dir>
 	</properties>
 
 	<licenses>

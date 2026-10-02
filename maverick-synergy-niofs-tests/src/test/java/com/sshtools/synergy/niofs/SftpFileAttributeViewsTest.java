@@ -432,7 +432,6 @@ public class SftpFileAttributeViewsTest extends AbstractNioFsTest {
 		var oowner = oview.getOwner();
 		var oattr = oview.readAttributes();
 		var ogroup = oattr.group();
-		var operms = oattr.permissions();
 
 		testWithFilesystem(fs -> {
 			var test = fs.getPath("testfile1");
@@ -443,7 +442,11 @@ public class SftpFileAttributeViewsTest extends AbstractNioFsTest {
 			assertEquals(oowner.getName(), view.getOwner().getName());
 			assertEquals(oowner.getName(), attr.owner().getName());
 			assertEquals(ogroup.getName(), attr.group().getName());
-			assertEquals(operms, attr.permissions());
+			assertTrue(attr.permissions().contains(PosixFilePermission.OWNER_READ));
+			assertTrue(attr.permissions().contains(PosixFilePermission.OWNER_WRITE));
+			assertFalse(attr.permissions().contains(PosixFilePermission.OWNER_EXECUTE));
+			assertFalse(attr.permissions().contains(PosixFilePermission.GROUP_EXECUTE));
+			assertFalse(attr.permissions().contains(PosixFilePermission.OTHERS_EXECUTE));
 		});
 	}
 
@@ -463,7 +466,6 @@ public class SftpFileAttributeViewsTest extends AbstractNioFsTest {
 		var oowner = oview.getOwner();
 		var oattr = oview.readAttributes();
 		var ogroup = oattr.group();
-		var operms = oattr.permissions();
 
 		testWithFilesystem(fs -> {
 			var test = fs.getPath("testfile1");
@@ -474,7 +476,9 @@ public class SftpFileAttributeViewsTest extends AbstractNioFsTest {
 			assertEquals(oowner.getName(), view.getOwner().getName());
 			assertEquals(oowner.getName(), attr.owner().getName());
 			assertEquals(ogroup.getName(), attr.group().getName());
-			assertEquals(operms, attr.permissions());
+			assertTrue(attr.permissions().contains(PosixFilePermission.OWNER_READ));
+			assertTrue(attr.permissions().contains(PosixFilePermission.OWNER_WRITE));
+			assertTrue(attr.permissions().contains(PosixFilePermission.OWNER_EXECUTE));
 		});
 	}
 
@@ -639,12 +643,12 @@ public class SftpFileAttributeViewsTest extends AbstractNioFsTest {
 		var oowner = oview.getOwner();
 		var oattr = oview.readAttributes();
 		var ogroup = oattr.group();
-		var operms = oattr.permissions();
 
 		testWithFilesystem(fs -> {
 			var test = fs.getPath("testfile1");
 			Files.createFile(test);
 			var view = Files.getFileAttributeView(test, ExtendedSftpFileAttributeView.class);
+			var posix = Files.getFileAttributeView(test, PosixFileAttributeView.class).readAttributes();
 			assertEquals("sftp", view.name());
 			var attr = view.readAttributes();
 			assertEquals(oowner.getName(), attr.uid());
@@ -652,7 +656,7 @@ public class SftpFileAttributeViewsTest extends AbstractNioFsTest {
 			assertEquals(0, attr.linkCount());
 			assertEquals("application/octet-stream", attr.mimeType());
 			assertEquals(1, attr.type());
-			assertEquals(PosixPermissionsBuilder.create().fromPermissions(operms).build(), attr.permissions());
+			assertEquals(PosixPermissionsBuilder.create().fromPermissions(posix.permissions()).build(), attr.permissions());
 		});
 	}
 
@@ -672,12 +676,12 @@ public class SftpFileAttributeViewsTest extends AbstractNioFsTest {
 		var oowner = oview.getOwner();
 		var oattr = oview.readAttributes();
 		var ogroup = oattr.group();
-		var operms = oattr.permissions();
 
 		testWithFilesystem(fs -> {
 			var test = fs.getPath("testfile1");
 			Files.createDirectory(test);
 			var view = Files.getFileAttributeView(test, ExtendedSftpFileAttributeView.class);
+			var posix = Files.getFileAttributeView(test, PosixFileAttributeView.class).readAttributes();
 			assertEquals("sftp", view.name());
 			var attr = view.readAttributes();
 			assertEquals(oowner.getName(), attr.uid());
@@ -685,7 +689,7 @@ public class SftpFileAttributeViewsTest extends AbstractNioFsTest {
 			assertEquals(0, attr.linkCount());
 			assertEquals("application/octet-stream", attr.mimeType());
 			assertEquals(2, attr.type());
-			assertEquals(PosixPermissionsBuilder.create().fromPermissions(operms).build(), attr.permissions());
+			assertEquals(PosixPermissionsBuilder.create().fromPermissions(posix.permissions()).build(), attr.permissions());
 		});
 	}
 

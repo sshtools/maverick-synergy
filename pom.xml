@@ -144,6 +144,24 @@
 			  <artifactId>maven-surefire-plugin</artifactId>
 			  <version>3.5.3</version>
 			  <configuration>
+				  <forkCount>1</forkCount>
+				  <reuseForks>true</reuseForks>
+				  <parallel>none</parallel>
+				  <perCoreThreadCount>false</perCoreThreadCount>
+				  <systemPropertyVariables>
+					  <java.io.tmpdir>${test.tmp.dir}</java.io.tmpdir>
+				  </systemPropertyVariables>
+			  </configuration>
+			</plugin>
+			<plugin>
+			  <groupId>org.apache.maven.plugins</groupId>
+			  <artifactId>maven-failsafe-plugin</artifactId>
+			  <version>3.5.3</version>
+			  <configuration>
+				  <forkCount>1</forkCount>
+				  <reuseForks>true</reuseForks>
+				  <parallel>none</parallel>
+				  <perCoreThreadCount>false</perCoreThreadCount>
 				  <systemPropertyVariables>
 					  <java.io.tmpdir>${test.tmp.dir}</java.io.tmpdir>
 				  </systemPropertyVariables>

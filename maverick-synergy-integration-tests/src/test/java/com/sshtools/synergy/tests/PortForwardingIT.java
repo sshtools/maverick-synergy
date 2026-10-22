@@ -32,10 +32,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.AfterEach;
@@ -288,6 +292,107 @@ class PortForwardingIT extends AbstractSshIntegrationTest {
         }
     }
 
+    @Test
+    @DisplayName("Concurrent stop on one tunnel does not block unrelated start on another connection")
+    void concurrentStopDoesNotBlockUnrelatedStart() throws Exception {
+        int echoPort = echoServerSocket.getLocalPort();
+
+        try (SshClient teardownClient = connectWithForwarding();
+             SshClient unrelatedClient = connectWithForwarding()) {
+
+            int tunnelPort = teardownClient.startLocalForwarding("127.0.0.1", 0, "127.0.0.1", echoPort);
+            assertTrue(tunnelPort > 0, "setup tunnel must bind to a positive port");
+
+            ExecutorService pool = Executors.newFixedThreadPool(2);
+            try {
+                CountDownLatch startGate = new CountDownLatch(1);
+
+                Future<?> stopFuture = pool.submit(() -> {
+                    awaitStart(startGate);
+                    teardownClient.stopLocalForwarding("127.0.0.1", tunnelPort);
+                });
+
+                Future<Integer> startFuture = pool.submit(() -> {
+                    awaitStart(startGate);
+                    return unrelatedClient.startLocalForwarding("127.0.0.1", 0, "127.0.0.1", echoPort);
+                });
+
+                startGate.countDown();
+
+                Integer unrelatedPort = startFuture.get(3, TimeUnit.SECONDS);
+                assertTrue(unrelatedPort != null && unrelatedPort > 0,
+                        "unrelated startLocalForwarding should complete quickly and bind a positive port");
+
+                stopFuture.get(3, TimeUnit.SECONDS);
+                unrelatedClient.stopLocalForwarding("127.0.0.1", unrelatedPort);
+            } finally {
+                pool.shutdownNow();
+                pool.awaitTermination(5, TimeUnit.SECONDS);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Stress: stop race does not stall unrelated starts")
+    void stressStopRaceDoesNotStallUnrelatedStarts() throws Exception {
+        int echoPort = echoServerSocket.getLocalPort();
+        final int iterations = 50;
+
+        try (SshClient teardownClient = connectWithForwarding()) {
+            for (int i = 0; i < iterations; i++) {
+                int tunnelPort = teardownClient.startLocalForwarding("127.0.0.1", 0, "127.0.0.1", echoPort);
+                assertTrue(tunnelPort > 0, "iteration " + i + ": setup tunnel must bind to a positive port");
+
+                List<SshClient> clients = new ArrayList<>();
+                ExecutorService racePool = Executors.newFixedThreadPool(6);
+                try {
+                    for (int c = 0; c < 4; c++) {
+                        clients.add(connectWithForwarding());
+                    }
+
+                    CountDownLatch startGate = new CountDownLatch(1);
+
+                    Future<?> stopFuture = racePool.submit(() -> {
+                        awaitStart(startGate);
+                        teardownClient.stopLocalForwarding("127.0.0.1", tunnelPort);
+                    });
+
+                    List<Future<Integer>> starts = new ArrayList<>();
+                    for (SshClient client : clients) {
+                        starts.add(racePool.submit(() -> {
+                            awaitStart(startGate);
+                            return client.startLocalForwarding("127.0.0.1", 0, "127.0.0.1", echoPort);
+                        }));
+                    }
+
+                    startGate.countDown();
+
+                    for (int c = 0; c < starts.size(); c++) {
+                        Integer p;
+                        try {
+                            p = starts.get(c).get(3, TimeUnit.SECONDS);
+                        } catch (TimeoutException e) {
+                            throw new AssertionError("iteration " + i + ": unrelated start " + c + " blocked too long", e);
+                        }
+                        assertTrue(p != null && p > 0,
+                                "iteration " + i + ": unrelated start " + c + " must bind positive port");
+                    }
+
+                    stopFuture.get(5, TimeUnit.SECONDS);
+                } finally {
+                    racePool.shutdownNow();
+                    racePool.awaitTermination(5, TimeUnit.SECONDS);
+                    for (SshClient client : clients) {
+                        try {
+                            client.close();
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Private utilities
     // -----------------------------------------------------------------------
@@ -307,5 +412,16 @@ class PortForwardingIT extends AbstractSshIntegrationTest {
             }
         }
         return received;
+    }
+
+    private static void awaitStart(CountDownLatch startGate) {
+        try {
+            if (!startGate.await(3, TimeUnit.SECONDS)) {
+                throw new AssertionError("timed out waiting for race start gate");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError("interrupted waiting for race start gate", e);
+        }
     }
 }

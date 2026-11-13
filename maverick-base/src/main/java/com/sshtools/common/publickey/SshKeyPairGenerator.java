@@ -75,6 +75,8 @@ public class SshKeyPairGenerator {
 	public static final String ECDSA = "ecdsa";
 	public static final String ED25519 = "ed25519";
 	public static final String ED448 = "ed448";
+	public static final String SSH_MLDSA44_ED25519 = "ssh-mldsa44-ed25519";
+	public static final String SSH_MLDSA87_P384 = "ssh-mldsa87-p384";
 
 	/**
 	 * Generate a new key pair using the default bit size.
@@ -96,7 +98,13 @@ public class SshKeyPairGenerator {
 		case SSH2_RSA:
 		case "rsa":
 		case "RSA":
-			return generateKeyPair(algorithm, 2048)	;
+			return generateKeyPair(algorithm, 2048);
+		case SSH_MLDSA44_ED25519:
+		case "mldsa44-ed25519":
+			return generateKeyPair(SSH_MLDSA44_ED25519, 0);
+		case SSH_MLDSA87_P384:
+		case "mldsa87-p384":
+			return generateKeyPair(SSH_MLDSA87_P384, 384);
 		default:
 			throw new IOException(String.format("Unexpected key algorithm %s", algorithm));
 	}
@@ -125,6 +133,12 @@ public class SshKeyPairGenerator {
 		case "rsa":
 		case "RSA":
 			return ComponentManager.getDefaultInstance().generateRsaKeyPair(bits, 2);
+		case SSH_MLDSA44_ED25519:
+		case "mldsa44-ed25519":
+			return com.sshtools.common.ssh.components.jce.SshMldsa44Ed25519PrivateKey.generateKeyPair();
+		case SSH_MLDSA87_P384:
+		case "mldsa87-p384":
+			return com.sshtools.common.ssh.components.jce.SshMldsa87P384PrivateKey.generateKeyPair();
 		default:
 			var generators = new ComponentFactory<KeyGenerator>(JCEComponentManager.getDefaultInstance());
 			for(var s : ServiceLoader.load(KeyGeneratorFactory.class, JCEComponentManager.getDefaultInstance().getClassLoader())) {

@@ -26,4 +26,18 @@ module com.sshtools.common.publickey.bc {
 	requires com.sshtools.synergy.server;
 	requires org.bouncycastle.pkix;
 	requires org.bouncycastle.provider;
+
+	provides com.sshtools.client.SshKeyExchangeClientFactory with
+			com.sshtools.client.kex.bc.Sntrup761X25519SHA512DH.Sntrup761X25519SHA512DHFactory,
+			com.sshtools.client.kex.bc.Sntrup761X25519SHA512DHatOpenSSHdotCOM.Sntrup761X25519SHA512DHatOpenSSHdotCOMFactory,
+			com.sshtools.client.kex.bc.Mlkem768X25519SHA256.Mlkem768X25519SHA256Factory,
+			com.sshtools.client.kex.bc.Mlkem768Nistp256SHA256.Mlkem768Nistp256SHA256Factory,
+			com.sshtools.client.kex.bc.Mlkem1024Nistp384SHA384.Mlkem1024Nistp384SHA384Factory;
+
+	provides com.sshtools.server.components.SshKeyExchangeServerFactory with
+			com.sshtools.server.kex.bc.Sntrup761X25519SHA512DH.Sntrup761X25519SHA512DHFactory,
+			com.sshtools.server.kex.bc.Sntrup761X25519SHA512DHatOpenSSHdotCOM.Sntrup761X25519SHA512DHatOpenSSHdotCOMFactory,
+			com.sshtools.server.kex.bc.Mlkem768X25519SHA256.Mlkem768X25519SHA256Factory,
+			com.sshtools.server.kex.bc.Mlkem768Nistp256SHA256.Mlkem768Nistp256SHA256Factory,
+			com.sshtools.server.kex.bc.Mlkem1024Nistp384SHA384.Mlkem1024Nistp384SHA384Factory;
 }

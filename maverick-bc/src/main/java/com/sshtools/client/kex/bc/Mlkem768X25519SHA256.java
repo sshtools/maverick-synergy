@@ -43,6 +43,8 @@ package com.sshtools.client.kex.bc;
  */
 
 import java.util.Arrays;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.pqc.crypto.mlkem.MLKEMExtractor;
@@ -55,10 +57,23 @@ import org.bouncycastle.pqc.crypto.mlkem.MLKEMPublicKeyParameters;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
+import com.sshtools.client.SshKeyExchangeClientFactory;
 import com.sshtools.synergy.ssh.SshContext;
 
 
 public class Mlkem768X25519SHA256 extends Abstractx25519KEMDH {
+
+	public static class Mlkem768X25519SHA256Factory implements SshKeyExchangeClientFactory<Mlkem768X25519SHA256> {
+		@Override
+		public Mlkem768X25519SHA256 create() throws NoSuchAlgorithmException, IOException {
+			return new Mlkem768X25519SHA256();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { SshContext.KEX_MLKEM768_X25519_SHA256 };
+		}
+	}
 
 	static final int MLKEM_KEY_SIZE = 1184;
 	

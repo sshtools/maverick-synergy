@@ -42,9 +42,25 @@ package com.sshtools.client.kex.bc;
  * #L%
  */
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
+import com.sshtools.client.SshKeyExchangeClientFactory;
 import com.sshtools.synergy.ssh.SshContext;
 
 public class Sntrup761X25519SHA512DHatOpenSSHdotCOM extends Sntrup761X25519SHA512DH {
+
+	public static class Sntrup761X25519SHA512DHatOpenSSHdotCOMFactory implements SshKeyExchangeClientFactory<Sntrup761X25519SHA512DHatOpenSSHdotCOM> {
+		@Override
+		public Sntrup761X25519SHA512DHatOpenSSHdotCOM create() throws NoSuchAlgorithmException, IOException {
+			return new Sntrup761X25519SHA512DHatOpenSSHdotCOM();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { SshContext.KEX_SNTRUP761_25519_SHA512_OPENSSH };
+		}
+	}
 
 	public Sntrup761X25519SHA512DHatOpenSSHdotCOM() {
 		super(SshContext.KEX_SNTRUP761_25519_SHA512_OPENSSH);

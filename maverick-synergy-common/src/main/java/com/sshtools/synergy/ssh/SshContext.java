@@ -211,6 +211,8 @@ public abstract class SshContext extends ProtocolContext implements
 
 	public static final String KEX_SNTRUP761_25519_SHA512 = "sntrup761x25519-sha512";
 	public static final String KEX_MLKEM768_X25519_SHA256 = "mlkem768x25519-sha256";
+	public static final String KEX_MLKEM768_NISTP256_SHA256 = "mlkem768nistp256-sha256";
+	public static final String KEX_MLKEM1024_NISTP384_SHA384 = "mlkem1024nistp384-sha384";
 	public static final String KEX_SNTRUP761_25519_SHA512_OPENSSH = "sntrup761x25519-sha512@openssh.com";
 
 	protected int maximumSocketsBacklogPerRemotelyForwardedConnection = 50;

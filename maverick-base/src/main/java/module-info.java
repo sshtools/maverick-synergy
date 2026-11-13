@@ -100,6 +100,8 @@ import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA256;
 import com.sshtools.common.ssh.components.jce.Ssh2RsaPublicKeySHA512;
 import com.sshtools.common.ssh.components.jce.SshEd25519PublicKeyJCE;
 import com.sshtools.common.ssh.components.jce.SshEd448PublicKeyJCE;
+import com.sshtools.common.ssh.components.jce.SshMldsa44Ed25519PublicKey;
+import com.sshtools.common.ssh.components.jce.SshMldsa87P384PublicKey;
 import com.sshtools.common.ssh.components.jce.TripleDesCbc;
 import com.sshtools.common.ssh.components.jce.TripleDesCtr;
 import com.sshtools.common.ssh.compression.NoneCompression;
@@ -204,7 +206,9 @@ open module com.sshtools.maverick.base {
 		Ssh2RsaPublicKeySHA256.Ssh2RsaPublicKeySHA256Factory,
 		Ssh2RsaPublicKeySHA512.Ssh2RsaPublicKeySHA512Factory,
 		SshEd25519PublicKeyJCE.SshEd25519PublicKeyJCEFactory,
-		SshEd448PublicKeyJCE.SshEd448PublicKeyJCEFactory;
+		SshEd448PublicKeyJCE.SshEd448PublicKeyJCEFactory,
+		SshMldsa44Ed25519PublicKey.SshMldsa44Ed25519PublicKeyFactory,
+		SshMldsa87P384PublicKey.SshMldsa87P384PublicKeyFactory;
 	
 	uses SshCipherFactory;
 	provides SshCipherFactory with

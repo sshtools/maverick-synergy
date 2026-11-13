@@ -43,6 +43,8 @@ package com.sshtools.client.kex.bc;
  */
 
 import java.util.Arrays;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.pqc.crypto.ntruprime.SNTRUPrimeKEMExtractor;
@@ -55,9 +57,22 @@ import org.bouncycastle.pqc.crypto.ntruprime.SNTRUPrimePublicKeyParameters;
 import com.sshtools.common.ssh.SecurityLevel;
 import com.sshtools.common.ssh.components.jce.JCEAlgorithms;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
+import com.sshtools.client.SshKeyExchangeClientFactory;
 import com.sshtools.synergy.ssh.SshContext;
 
 public class Sntrup761X25519SHA512DH extends Abstractx25519KEMDH {
+
+	public static class Sntrup761X25519SHA512DHFactory implements SshKeyExchangeClientFactory<Sntrup761X25519SHA512DH> {
+		@Override
+		public Sntrup761X25519SHA512DH create() throws NoSuchAlgorithmException, IOException {
+			return new Sntrup761X25519SHA512DH();
+		}
+
+		@Override
+		public String[] getKeys() {
+			return new String[] { SshContext.KEX_SNTRUP761_25519_SHA512 };
+		}
+	}
 
 	public Sntrup761X25519SHA512DH() {
 		super(SshContext.KEX_SNTRUP761_25519_SHA512, JCEAlgorithms.JCE_SHA512, SecurityLevel.PARANOID, 0);

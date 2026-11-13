@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceLoader;
@@ -74,6 +75,7 @@ import com.sshtools.synergy.ssh.components.SshKeyExchange;
 public class SshServerContext extends SshContext {
 
 	Map<String, SshKeyPair> hostkeys = new ConcurrentHashMap<String, SshKeyPair>(8, 0.9f, 1);
+	Map<String, SshKeyPair> futureHostkeys = Collections.synchronizedMap(new LinkedHashMap<String, SshKeyPair>());
 	
 	boolean ensureGracefulDisconnect = false;
 
@@ -226,6 +228,18 @@ public class SshServerContext extends SshContext {
 	}
 
 	/**
+	 * Get all configured future host keys that are advertised through host key
+	 * update requests.
+	 *
+	 * @return future host keys
+	 */
+	public SshKeyPair[] getFutureHostKeys() {
+		SshKeyPair[] keys = new SshKeyPair[futureHostkeys.size()];
+		futureHostkeys.values().toArray(keys);
+		return keys;
+	}
+
+	/**
 	 * Get the host key for a given algorithm.
 	 * 
 	 * @param algorithm
@@ -323,6 +337,113 @@ public class SshServerContext extends SshContext {
 					hostkeys.put(SshContext.PUBLIC_KEY_RSA_SHA512, SshKeyUtils.makeRSAWithSHA512Signature(keyPair));
 				}
 			}
+		}
+	}
+
+	/**
+	 * Add a future host key to the update advertisement set.
+	 *
+	 * <p>
+	 * Future host keys are not used as active server host keys. They are only
+	 * advertised by the host key update enhancement and must therefore include a
+	 * private key for ownership proof signing.
+	 * </p>
+	 *
+	 * @param keyPair key pair to advertise as a future host key
+	 * @throws IOException if the key is invalid or duplicates an existing future
+	 *                     host key algorithm
+	 */
+	public void addFutureHostKey(SshKeyPair keyPair) throws IOException {
+		if (keyPair == null || keyPair.getPublicKey() == null || keyPair.getPrivateKey() == null) {
+			throw new IOException("Future host key must include both public and private key components");
+		}
+
+		if (keyPair instanceof SshCertificate) {
+
+			SshKeyPair converted = new SshKeyPair();
+			converted.setPrivateKey(keyPair.getPrivateKey());
+			converted.setPublicKey(((SshCertificate) keyPair).getCertificate());
+
+			String algorithm = converted.getPublicKey().getAlgorithm();
+			if (futureHostkeys.containsKey(algorithm)) {
+				throw new IOException("A future host key for algorithm " + algorithm + " is already configured");
+			}
+
+			futureHostkeys.put(algorithm, converted);
+
+			if (converted.getPublicKey() instanceof OpenSshRsaCertificate) {
+				if (supportedPublicKeys().contains(OpenSshRsaSha256Certificate.SSH_RSA_SHA2_256_CERT_V01)) {
+					if (futureHostkeys.containsKey(OpenSshRsaSha256Certificate.SSH_RSA_SHA2_256_CERT_V01)) {
+						throw new IOException("A future host key for algorithm "
+								+ OpenSshRsaSha256Certificate.SSH_RSA_SHA2_256_CERT_V01 + " is already configured");
+					}
+
+					try {
+						SshKeyPair upgraded = new SshKeyPair();
+						upgraded.setPrivateKey(converted.getPrivateKey());
+						upgraded.setPublicKey(new OpenSshRsaSha256Certificate().init(converted.getPublicKey().getEncoded()));
+						futureHostkeys.put(OpenSshRsaSha256Certificate.SSH_RSA_SHA2_256_CERT_V01, upgraded);
+					} catch (SshException e) {
+						throw new IOException("Could not upgrade RSA SHA1 certificate to SHA2 based", e);
+					}
+				}
+
+				if (supportedPublicKeys().contains(OpenSshRsaSha512Certificate.SSH_RSA_SHA2_512_CERT_V01)) {
+					if (futureHostkeys.containsKey(OpenSshRsaSha512Certificate.SSH_RSA_SHA2_512_CERT_V01)) {
+						throw new IOException("A future host key for algorithm "
+								+ OpenSshRsaSha512Certificate.SSH_RSA_SHA2_512_CERT_V01 + " is already configured");
+					}
+
+					try {
+						SshKeyPair upgraded = new SshKeyPair();
+						upgraded.setPrivateKey(converted.getPrivateKey());
+						upgraded.setPublicKey(new OpenSshRsaSha512Certificate().init(converted.getPublicKey().getEncoded()));
+						futureHostkeys.put(OpenSshRsaSha512Certificate.SSH_RSA_SHA2_512_CERT_V01, upgraded);
+					} catch (SshException e) {
+						throw new IOException("Could not upgrade RSA SHA1 certificate to SHA2 based", e);
+					}
+				}
+			}
+		} else {
+
+			String algorithm = keyPair.getPublicKey().getAlgorithm();
+			if (futureHostkeys.containsKey(algorithm)) {
+				throw new IOException("A future host key for algorithm " + algorithm + " is already configured");
+			}
+
+			futureHostkeys.put(algorithm, keyPair);
+			if (keyPair.getPublicKey() instanceof Ssh2RsaPublicKey
+					&& keyPair.getPublicKey().getAlgorithm().equals(SshContext.PUBLIC_KEY_SSHRSA)) {
+				if (supportedPublicKeys().contains(SshContext.PUBLIC_KEY_RSA_SHA256)) {
+					if (futureHostkeys.containsKey(SshContext.PUBLIC_KEY_RSA_SHA256)) {
+						throw new IOException("A future host key for algorithm " + SshContext.PUBLIC_KEY_RSA_SHA256
+								+ " is already configured");
+					}
+					futureHostkeys.put(SshContext.PUBLIC_KEY_RSA_SHA256, SshKeyUtils.makeRSAWithSHA256Signature(keyPair));
+				}
+			}
+			if (keyPair.getPublicKey() instanceof Ssh2RsaPublicKey
+					&& keyPair.getPublicKey().getAlgorithm().equals(SshContext.PUBLIC_KEY_SSHRSA)) {
+				if (supportedPublicKeys().contains(SshContext.PUBLIC_KEY_RSA_SHA512)) {
+					if (futureHostkeys.containsKey(SshContext.PUBLIC_KEY_RSA_SHA512)) {
+						throw new IOException("A future host key for algorithm " + SshContext.PUBLIC_KEY_RSA_SHA512
+								+ " is already configured");
+					}
+					futureHostkeys.put(SshContext.PUBLIC_KEY_RSA_SHA512, SshKeyUtils.makeRSAWithSHA512Signature(keyPair));
+				}
+			}
+		}
+	}
+
+	/**
+	 * Add a collection of future host keys.
+	 *
+	 * @param keys future host keys
+	 * @throws IOException on validation or duplicate failures
+	 */
+	public void addFutureHostKeys(Collection<SshKeyPair> keys) throws IOException {
+		for (SshKeyPair key : keys) {
+			addFutureHostKey(key);
 		}
 	}
 	

@@ -23,18 +23,25 @@ package com.sshtools.client;
  */
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.sshtools.common.forwarding.ForwardingHandle;
 import com.sshtools.common.forwarding.ForwardingRequest;
 import com.sshtools.common.forwarding.ForwardingRequest.ForwardingRole;
 import com.sshtools.common.forwarding.ForwardingRequest.Protocol;
+import com.sshtools.common.knownhosts.HostKeyUpdater;
+import com.sshtools.common.knownhosts.HostKeyVerification;
 import com.sshtools.common.logger.Log;
+import com.sshtools.common.publickey.SshPublicKeyFileFactory;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.permissions.UnauthorizedException;
 import com.sshtools.common.ssh.ChannelOpenException;
 import com.sshtools.common.ssh.ExecutorOperationSupport;
+import com.sshtools.common.ssh.GlobalRequest;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.UnsupportedChannelException;
+import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 import com.sshtools.synergy.ssh.ChannelNG;
@@ -42,12 +49,20 @@ import com.sshtools.synergy.ssh.Connection;
 import com.sshtools.synergy.ssh.ConnectionProtocol;
 import com.sshtools.synergy.ssh.ConnectionStateListener;
 import com.sshtools.synergy.ssh.ConnectionTaskWrapper;
+import com.sshtools.synergy.ssh.GlobalRequestHandler;
 import com.sshtools.synergy.ssh.TransportProtocol;
 
 /**
  * Implements the client side of the SSH connection protocol
  */
 public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContext> {
+
+	private static final String HOSTKEYS_STANDARD_REQUEST = "hostkeys";
+	private static final String HOSTKEYS_VENDOR_REQUEST = "hostkeys-00@openssh.com";
+	private static final String HOSTKEYS_PROVE_STANDARD_REQUEST = "hostkeys-prove";
+	private static final String HOSTKEYS_PROVE_STANDARD_SIGNATURE_LABEL = "hostkeys-prove-0";
+	private static final String HOSTKEYS_PROVE_VENDOR_REQUEST = "hostkeys-prove-00@openssh.com";
+	private static final long HOSTKEYS_PROVE_TIMEOUT_MS = 30000L;
 
 	
 	public ConnectionProtocolClient(TransportProtocol<SshClientContext> transport, String username) {
@@ -64,6 +79,7 @@ public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContex
 
 		SshClientContext context = getContext();
 		con = context.getConnectionManager().registerConnection(this);
+		addGlobalRequestHandler(new HostKeysGlobalRequestHandler());
 
 		addTask(ExecutorOperationSupport.EVENTS, new ConnectionTaskWrapper(con, new Runnable() {
 			public void run() {
@@ -260,6 +276,167 @@ public class ConnectionProtocolClient extends ConnectionProtocol<SshClientContex
 	protected ChannelNG<SshClientContext> createChannel(String channeltype, Connection<SshClientContext> con)
 			throws UnsupportedChannelException, PermissionDeniedException, ChannelOpenException {
 		return getContext().getChannelFactory().createChannel(channeltype, con);
+	}
+
+	private void performHostKeysProve(List<SshPublicKey> keys, HostKeyUpdater updater, boolean standardNames)
+			throws IOException, SshException {
+
+		String proveRequestName = standardNames ? HOSTKEYS_PROVE_STANDARD_REQUEST : HOSTKEYS_PROVE_VENDOR_REQUEST;
+		String signatureLabel = standardNames ? HOSTKEYS_PROVE_STANDARD_SIGNATURE_LABEL : HOSTKEYS_PROVE_VENDOR_REQUEST;
+
+		List<SshPublicKey> verifyKeys = new ArrayList<SshPublicKey>();
+		String knownHostName = getKnownHostName();
+
+		for (SshPublicKey key : keys) {
+			if (updater.isKnownHost(knownHostName, key)) {
+				if (Log.isDebugEnabled()) {
+					Log.debug("Already trusted host key {}:{}", key.getAlgorithm(), key.getFingerprint());
+				}
+				continue;
+			}
+			verifyKeys.add(key);
+		}
+
+		if (verifyKeys.isEmpty()) {
+			return;
+		}
+
+		try (ByteArrayWriter msg = new ByteArrayWriter()) {
+			for (SshPublicKey key : verifyKeys) {
+				msg.writeBinaryString(key.getEncoded());
+			}
+
+			GlobalRequest request = new GlobalRequest(proveRequestName, con, msg.toByteArray());
+			sendGlobalRequestAndWait(request, HOSTKEYS_PROVE_TIMEOUT_MS);
+
+			if (!request.isDoneAndSuccess()) {
+				if (Log.isDebugEnabled()) {
+					Log.debug("Server rejected {} request. Not updating trust for proposed host keys.", proveRequestName);
+				}
+				return;
+			}
+
+			byte[] responseData = request.getData();
+			if (responseData == null) {
+				Log.warn("Server returned an empty {} response. Not updating trust for proposed host keys.", proveRequestName);
+				return;
+			}
+
+			try (ByteArrayReader reader = new ByteArrayReader(responseData)) {
+				for (SshPublicKey key : verifyKeys) {
+					if (reader.available() <= 0) {
+						Log.warn("Server returned fewer host key proof signatures than expected for {}.", proveRequestName);
+						break;
+					}
+
+					byte[] signature = reader.readBinaryString();
+					if (!verifyHostKeyProofSignature(signature, key, signatureLabel)) {
+						Log.warn(
+								"Server provided an invalid signature in response to {} for key {}:{}",
+								proveRequestName,
+								key.getAlgorithm(),
+								key.getFingerprint());
+					} else {
+						if (Log.isDebugEnabled()) {
+							Log.debug("Persisting verified host key {}:{}", key.getAlgorithm(), key.getFingerprint());
+						}
+						updater.updateHostKey(knownHostName, key);
+					}
+				}
+			}
+		}
+	}
+
+	private boolean verifyHostKeyProofSignature(byte[] signature, SshPublicKey key, String signatureLabel)
+			throws IOException, SshException {
+
+		try (ByteArrayWriter msg = new ByteArrayWriter()) {
+			msg.writeString(signatureLabel);
+			msg.writeBinaryString(getTransport().getSessionKey());
+			msg.writeBinaryString(key.getEncoded());
+
+			return key.verifySignature(signature, msg.toByteArray());
+		}
+	}
+
+	private String getKnownHostName() {
+		String host = getTransport().getConnectFuture().getHost();
+		if (!Boolean.getBoolean("maverick.knownHosts.disablePortValidate")
+				&& getTransport().getConnectFuture().getPort() != 22) {
+			host = "[" + host + "]:" + getTransport().getConnectFuture().getPort();
+		}
+		return host;
+	}
+
+	class HostKeysGlobalRequestHandler implements GlobalRequestHandler<SshClientContext> {
+
+		@Override
+		public String[] supportedRequests() {
+			return new String[] { HOSTKEYS_STANDARD_REQUEST, HOSTKEYS_VENDOR_REQUEST };
+		}
+
+		@Override
+		public boolean processGlobalRequest(GlobalRequest request, ConnectionProtocol<SshClientContext> connection,
+				boolean wantsReply, ByteArrayWriter response)
+				throws GlobalRequestHandler.GlobalRequestHandlerException, IOException {
+
+			HostKeyVerification hostKeyVerification = getContext().getHostKeyVerification();
+			if (!(hostKeyVerification instanceof HostKeyUpdater)) {
+				if (Log.isDebugEnabled()) {
+					Log.debug("Remote server sent updated host keys but HostKeyUpdater is not configured");
+				}
+				return false;
+			}
+
+			final boolean standardNames = HOSTKEYS_STANDARD_REQUEST.equals(request.getName());
+			final List<SshPublicKey> keys = new ArrayList<SshPublicKey>();
+
+			try (ByteArrayReader reader = new ByteArrayReader(request.getData())) {
+				while (reader.available() > 0) {
+					try {
+						SshPublicKey key = SshPublicKeyFileFactory.decodeSSH2PublicKey(reader.readBinaryString());
+						keys.add(key);
+						if (Log.isDebugEnabled()) {
+							Log.debug("Received host key for verification {}:{}", key.getAlgorithm(), key.getFingerprint());
+						}
+					} catch (Throwable t) {
+						Log.warn(
+								"Failed to parse server host key provided by {}. This may indicate an unsupported key type.",
+								request.getName(),
+								t);
+					}
+				}
+			}
+
+			if (!keys.isEmpty()) {
+				new Thread(new ProveHostKeysTask(keys, (HostKeyUpdater) hostKeyVerification, standardNames),
+						"synergy-hostkeys-prove").start();
+			}
+
+			return true;
+		}
+	}
+
+	class ProveHostKeysTask implements Runnable {
+
+		private final List<SshPublicKey> keys;
+		private final HostKeyUpdater updater;
+		private final boolean standardNames;
+
+		ProveHostKeysTask(List<SshPublicKey> keys, HostKeyUpdater updater, boolean standardNames) {
+			this.keys = keys;
+			this.updater = updater;
+			this.standardNames = standardNames;
+		}
+
+		@Override
+		public void run() {
+			try {
+				performHostKeysProve(keys, updater, standardNames);
+			} catch (IOException | SshException e) {
+				Log.error("Host key update failed", e);
+			}
+		}
 	}
 
 }

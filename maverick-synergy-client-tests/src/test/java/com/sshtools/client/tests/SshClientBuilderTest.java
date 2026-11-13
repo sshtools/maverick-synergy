@@ -49,6 +49,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
@@ -57,6 +59,8 @@ import org.junit.jupiter.api.Test;
 
 import com.sshtools.client.SshClient;
 import com.sshtools.client.SshClient.SshClientBuilder;
+import com.sshtools.client.SshClientContext;
+import com.sshtools.common.knownhosts.KnownHostsFile;
 
 /**
  * Unit tests for {@link SshClient.SshClientBuilder}.
@@ -136,6 +140,17 @@ public class SshClientBuilderTest {
         assertSame(b, b.withPassword("s3cr3t"));
     }
 
+    @Test
+    void withKnownHosts_path_returnsSameBuilder() throws Exception {
+        Path knownHostsPath = Files.createTempFile("known-hosts-", ".txt");
+        try {
+            SshClientBuilder b = SshClientBuilder.create();
+            assertSame(b, b.withKnownHosts(knownHostsPath));
+        } finally {
+            Files.deleteIfExists(knownHostsPath);
+        }
+    }
+
     // ------------------------------------------------------------------
     // Field-level assertions via reflection
     // ------------------------------------------------------------------
@@ -191,6 +206,36 @@ public class SshClientBuilderTest {
         SshClientBuilder b = SshClientBuilder.create().withTarget("srv.example.com", 22);
         assertEquals(Optional.of("srv.example.com"), getField(b, "hostname"));
         assertEquals(Optional.of(22), getField(b, "port"));
+    }
+
+    @Test
+    void withKnownHosts_path_setsKnownHostsVerifierOnContext() throws Exception {
+        Path knownHostsPath = Files.createTempFile("known-hosts-", ".txt");
+        try {
+            SshClientBuilder b = SshClientBuilder.create().withKnownHosts(knownHostsPath);
+
+            Optional<SshClientContext> context = getField(b, "sshContext");
+            assertTrue(context.isPresent(), "Builder should contain a context after withKnownHosts");
+            assertTrue(context.get().getHostKeyVerification() instanceof KnownHostsFile,
+                    "Host key verifier should be KnownHostsFile");
+        } finally {
+            Files.deleteIfExists(knownHostsPath);
+        }
+    }
+
+    @Test
+    void withKnownHosts_file_setsKnownHostsVerifierOnContext() throws Exception {
+        Path knownHostsPath = Files.createTempFile("known-hosts-", ".txt");
+        try {
+            SshClientBuilder b = SshClientBuilder.create().withKnownHosts(knownHostsPath.toFile());
+
+            Optional<SshClientContext> context = getField(b, "sshContext");
+            assertTrue(context.isPresent(), "Builder should contain a context after withKnownHosts");
+            assertTrue(context.get().getHostKeyVerification() instanceof KnownHostsFile,
+                    "Host key verifier should be KnownHostsFile");
+        } finally {
+            Files.deleteIfExists(knownHostsPath);
+        }
     }
 
     @Test

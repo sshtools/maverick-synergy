@@ -58,6 +58,7 @@ import com.sshtools.common.events.EventListener;
 import com.sshtools.common.forwarding.ForwardingHandle;
 import com.sshtools.common.forwarding.ForwardingPolicy;
 import com.sshtools.common.forwarding.ForwardingRequest;
+import com.sshtools.common.knownhosts.KnownHostsFile;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.logger.Log.Level;
 import com.sshtools.common.permissions.Permissions;
@@ -596,6 +597,46 @@ public class SshClient implements Closeable {
 		public SshClientBuilder withSshContext(SshClientContext context) {
 			this.sshContext = Optional.of(context);
 			return this;
+		}
+
+		/**
+		 * Configure host key verification against the default user known_hosts file.
+		 *
+		 * @return this for chaining
+		 */
+		public SshClientBuilder withKnownHosts() {
+			return withKnownHosts(KnownHostsFile.defaultKnownHostsFile());
+		}
+
+		/**
+		 * Configure host key verification against a specific known_hosts file.
+		 *
+		 * @param file known_hosts file
+		 * @return this for chaining
+		 */
+		public SshClientBuilder withKnownHosts(File file) {
+			return withKnownHosts(file.toPath());
+		}
+
+		/**
+		 * Configure host key verification against a specific known_hosts path.
+		 *
+		 * @param path known_hosts path
+		 * @return this for chaining
+		 */
+		public SshClientBuilder withKnownHosts(Path path) {
+			try {
+				SshClientContext context;
+				if (sshContext.isPresent()) {
+					context = sshContext.get();
+				} else {
+					context = new SshClientContext();
+				}
+				context.setHostKeyVerification(new KnownHostsFile(path));
+				return withSshContext(context);
+			} catch (IOException | SshException e) {
+				throw new IllegalStateException("Failed to load known_hosts from " + path, e);
+			}
 		}
 		
 		/**

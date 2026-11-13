@@ -959,26 +959,28 @@ public class KnownHostsKeyVerification implements HostKeyVerification, HostKeyUp
 	@Override
 	public void updateHostKey(String host, SshPublicKey key) throws SshException {
 
-		KeyEntry existingEntry = null;
 		Set<String> names = resolveNames(host);
+		boolean existingEntry = false;
 
 		for (KeyEntry e : getKeyEntries()) {
 			if (e.isHashedEntry()) {
 				if (e.matchesHash(e.getNames(), names.toArray(new String[0]))) {
-					existingEntry = e;
+					existingEntry = true;
+					if (e.getKey().equals(key)) {
+						return;
+					}
 				}
 			} else if (e.matchesHost(names.toArray(new String[0]))) {
-				existingEntry = e;
+				existingEntry = true;
+				if (e.getKey().equals(key)) {
+					return;
+				}
 			}
-		}
-
-		if (existingEntry != null) {
-			removeEntries(host);
 		}
 
 		addEntry(key, "", names.toArray(new String[0]));
 
-		if (existingEntry != null) {
+		if (existingEntry) {
 			onHostKeyUpdated(names, key);
 		}
 	}

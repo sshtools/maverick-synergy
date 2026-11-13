@@ -75,6 +75,7 @@ public abstract class AbstractSshServer implements Closeable {
 	ServerShutdownFuture shutdownFuture = new ServerShutdownFuture();
 	List<Object> defaultPolicies = new ArrayList<>();
 	Collection<SshKeyPair> hostKeys = new ArrayList<>();
+	Collection<SshKeyPair> futureHostKeys = new ArrayList<>();
 	Collection<Authenticator> providers = new ArrayList<>();
 	Collection<Authenticator> defaultProviders = 
 			Collections.unmodifiableCollection(
@@ -228,6 +229,18 @@ public abstract class AbstractSshServer implements Closeable {
 	public void addHostKey(SshKeyPair key) {
 		this.hostKeys.add(key);
 	}
+
+	public void addFutureHostKeys(Collection<SshKeyPair> futureHostKeys) {
+		this.futureHostKeys.addAll(futureHostKeys);
+	}
+
+	public void addFutureHostKeys(SshKeyPair... futureHostKeys) {
+		addFutureHostKeys(Arrays.asList(futureHostKeys));
+	}
+
+	public void addFutureHostKey(SshKeyPair key) {
+		this.futureHostKeys.add(key);
+	}
 	
 	public void addAuthenticator(Authenticator provider) {
 		providers.add(provider);
@@ -309,10 +322,18 @@ public abstract class AbstractSshServer implements Closeable {
 				throw new IOException("There are no host keys available");
 			}
 		}
+
+		if(!futureHostKeys.isEmpty()) {
+			sshContext.addFutureHostKeys(futureHostKeys);
+		}
 	}
 	
 	public Collection<SshKeyPair> getHostKeys() {
 		return hostKeys;
+	}
+
+	public Collection<SshKeyPair> getFutureHostKeys() {
+		return futureHostKeys;
 	}
 	
 	private void loadOrGenerateHostKey(SshServerContext context, File file, String type, int bitlength) {

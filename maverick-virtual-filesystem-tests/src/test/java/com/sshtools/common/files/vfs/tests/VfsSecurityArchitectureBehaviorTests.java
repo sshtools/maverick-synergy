@@ -129,9 +129,13 @@ public class VfsSecurityArchitectureBehaviorTests {
         createDirectorySymlink(sandboxRoot.resolve("link"), outsideRoot);
 
         NioFileFactory sandboxed = nio(sandboxRoot, true);
-        AbstractFile file = sandboxed.getFile("link/secret.txt");
-
-        assertEquals("outside-secret", readString(file));
+        try {
+            AbstractFile file = sandboxed.getFile("link/secret.txt");
+            readString(file);
+            org.junit.Assert.fail("Access through symlink pointing outside sandbox must be denied when sandboxed");
+        } catch (com.sshtools.common.permissions.PermissionDeniedException expected) {
+            // Expected: sandboxed NioFileFactory denies access through symlink pointing outside sandbox
+        }
     }
 
     @Test

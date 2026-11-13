@@ -30,6 +30,8 @@ import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
@@ -71,7 +73,8 @@ public final class NioFile implements AbstractFile {
 
 	public static final int SSH_FXE_STATVFS_ST_RDONLY = 0x1; /* read-only */
 	public static final int SSH_FXE_STATVFS_ST_NOSUID = 0x2; /* no setuid */
-	
+	private static final int MAX_SYMLINK_DEPTH = 32;
+
 	private Path path;
 	private Path home;
 	private final NioFileFactory fileFactory;
@@ -82,19 +85,11 @@ public final class NioFile implements AbstractFile {
 		
 		this.path = path.toAbsolutePath().normalize();
 		this.home = home.toAbsolutePath().normalize();
-
-		if (sandbox) {
-			if ((Files.exists(path) && !path.startsWith(home))
-					|| (!Files.exists(path) && !path.startsWith(home))) {
-				throw new PermissionDeniedException(
-						MessageFormat.format("You cannot access paths outside of the sandbox path {0}. The path {1} was requested.", home.toRealPath(), path));
-			}
-		}
-
-		this.home = home;
 		this.fileFactory = fileFactory;
-		
 		this.sandbox = sandbox;
+
+		checkSandbox();
+
 		if (Files.exists(this.path)) {
 			getAttributes();
 		}
@@ -105,15 +100,98 @@ public final class NioFile implements AbstractFile {
 		this(home.resolve(path), fileFactory, home, sandbox);
 	}
 
+	private Path getCanonicalHome() throws PermissionDeniedException {
+		try {
+			return Files.exists(home) ? home.toRealPath() : home.toAbsolutePath().normalize();
+		} catch (IOException ioe) {
+			throw new PermissionDeniedException(
+					MessageFormat.format("Sandbox root path {0} could not be canonicalized: {1}", home, ioe.getMessage()));
+		}
+	}
+
+	private Path toCanonicalDestination(Path target) throws IOException {
+		return toCanonicalDestination(target, 0);
+	}
+
+	private Path toCanonicalDestination(Path target, int depth) throws IOException {
+		if (depth > MAX_SYMLINK_DEPTH) {
+			throw new FileSystemException(target.toString(), null, "Too many levels of symbolic links");
+		}
+
+		Path absolute = target.toAbsolutePath().normalize();
+
+		if (Files.isSymbolicLink(absolute)) {
+			try {
+				return absolute.toRealPath();
+			} catch (NoSuchFileException nsfe) {
+				Path linkTarget = Files.readSymbolicLink(absolute);
+				Path parent = absolute.getParent();
+				Path resolvedTarget = (linkTarget.isAbsolute() ? linkTarget : (parent == null ? linkTarget : parent.resolve(linkTarget))).normalize();
+				return toCanonicalDestination(resolvedTarget, depth + 1);
+			}
+		}
+
+		if (Files.exists(absolute, LinkOption.NOFOLLOW_LINKS)) {
+			return absolute.toRealPath();
+		}
+
+		Path parent = absolute.getParent();
+		if (parent == null) {
+			return absolute;
+		}
+
+		Path canonicalParent = toCanonicalDestination(parent, depth);
+		return canonicalParent.resolve(absolute.getFileName()).normalize();
+	}
+
+	void checkSandbox() throws PermissionDeniedException {
+		checkSandbox(this.path);
+	}
+
+	void checkSandbox(Path target) throws PermissionDeniedException {
+		if (!sandbox) {
+			return;
+		}
+		Path realHome = getCanonicalHome();
+		Path canonical;
+		try {
+			canonical = toCanonicalDestination(target);
+		} catch (Exception e) {
+			throw new PermissionDeniedException(
+					MessageFormat.format("You cannot access paths outside of the sandbox path {0}. The path {1} could not be validated: {2}",
+							realHome, target, e.getMessage()));
+		}
+
+		if (!canonical.startsWith(realHome)) {
+			throw new PermissionDeniedException(
+					MessageFormat.format("You cannot access paths outside of the sandbox path {0}. The path {1} resolves to {2}.",
+							realHome, target, canonical));
+		}
+	}
+
+	private boolean isRoot() {
+		try {
+			Path realHome = getCanonicalHome();
+			Path canonical = toCanonicalDestination(path);
+			return canonical.equals(realHome);
+		} catch (Exception e) {
+			return path.equals(home);
+		}
+	}
+
 	@Override
 	public boolean existsNoFollowLinks() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		return Files.exists(path, LinkOption.NOFOLLOW_LINKS);
 	}
 
 	@Override
 	public void linkFrom(String target) throws IOException, PermissionDeniedException {
+		checkSandbox();
 		try {
-			Path targetPath = fileFactory.getFile(target).path;
+			NioFile targetFile = fileFactory.getFile(target);
+			targetFile.checkSandbox();
+			Path targetPath = targetFile.path;
 			if(target.startsWith("/")) {
 				Files.createLink(path, targetPath);				
 			}
@@ -128,8 +206,11 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public void symlinkFrom(String target) throws IOException, PermissionDeniedException {
+		checkSandbox();
 		try {
-			Path targetPath = fileFactory.getFile(target).path;
+			NioFile targetFile = fileFactory.getFile(target);
+			targetFile.checkSandbox();
+			Path targetPath = targetFile.path;
 			if(target.startsWith("/")) {
 				Files.createSymbolicLink(path, targetPath);				
 			}
@@ -144,6 +225,7 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public String readSymbolicLink() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		try {
 			return Files.readSymbolicLink(path).toString();
 		} catch (IOException ioe) {
@@ -158,6 +240,7 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public InputStream getInputStream() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		try {
 			return Files.newInputStream(path);
 		} catch (IOException ioe) {
@@ -167,11 +250,13 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public boolean exists() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		return Files.exists(path);
 	}
 
 	@Override
 	public List<AbstractFile> getChildren() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		try (var stream = Files.newDirectoryStream(path)) {
 			var l = new ArrayList<AbstractFile>();
 			for (var p : stream) {
@@ -183,40 +268,60 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public String getAbsolutePath() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		return path.toAbsolutePath().toString();
 	}
 
 	@Override
 	public AbstractFile getParentFile() throws IOException, PermissionDeniedException {
-		return path.getParent() == null ? null : new NioFile(path.getParent(), fileFactory, home, sandbox);
+		checkSandbox();
+		if (isRoot()) {
+			return null;
+		}
+		Path parent = path.getParent();
+		if (parent == null) {
+			return null;
+		}
+		if (sandbox) {
+			try {
+				Path realHome = getCanonicalHome();
+				Path canonicalParent = toCanonicalDestination(parent);
+				if (!canonicalParent.startsWith(realHome)) {
+					return null;
+				}
+			} catch (Exception e) {
+				return null;
+			}
+		}
+		return new NioFile(parent, fileFactory, home, sandbox);
 	}
 
 	@Override
 	public boolean isDirectory() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		return Files.isDirectory(path);
 	}
 
 	@Override
 	public boolean isFile() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		return Files.isRegularFile(path);
 	}
 
 	@Override
 	public OutputStream getOutputStream() throws IOException, PermissionDeniedException {
-		try {
-			return Files.newOutputStream(path);
-		} catch (IOException ioe) {
-			throw translateException(ioe);
-		}
+		return getOutputStream(false);
 	}
 
 	@Override
 	public boolean isHidden() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		return Files.isHidden(path);
 	}
 
 	@Override
 	public boolean createFolder() throws PermissionDeniedException, IOException {
+		checkSandbox();
 		if(!Files.exists(path)) {
 			try {
 				Files.createDirectories(path);
@@ -229,12 +334,18 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public boolean isReadable() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		return (!Files.exists(path) && (path.getParent() == null || Files.isReadable(path.getParent())))
 				|| Files.isReadable(path);
 	}
 
 	@Override
 	public void copyFrom(AbstractFile src) throws IOException, PermissionDeniedException {
+		checkSandbox();
+		if (src instanceof NioFile) {
+			checkSandbox(((NioFile) src).path);
+			((NioFile) src).checkSandbox();
+		}
 		try {
 			if (src instanceof NioFile) {
 				Files.copy(((NioFile) src).path, path);
@@ -249,6 +360,11 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public void moveTo(AbstractFile target) throws IOException, PermissionDeniedException {
+		checkSandbox();
+		if (target instanceof NioFile) {
+			checkSandbox(((NioFile) target).path);
+			((NioFile) target).checkSandbox(this.path);
+		}
 		try {
 			if (target instanceof NioFile) {
 				Files.move(path, ((NioFile) target).path);
@@ -262,6 +378,10 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public boolean delete(boolean recursive) throws IOException, PermissionDeniedException {
+		checkSandbox();
+		if (sandbox && isRoot()) {
+			throw new PermissionDeniedException("You cannot delete the sandbox root directory.");
+		}
 		if (recursive)
 			return IOUtils.silentRecursiveDelete(path);
 		else {
@@ -277,6 +397,7 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public SftpFileAttributes getAttributesNoFollowLinks() throws FileNotFoundException, IOException, PermissionDeniedException {
+		checkSandbox();
 		if (!existsNoFollowLinks())
 			throw new FileNotFoundException();
 		return doGetAttributes();
@@ -284,6 +405,7 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public SftpFileAttributes getAttributes() throws FileNotFoundException, IOException, PermissionDeniedException {
+		checkSandbox();
 		if (!exists())
 			throw new FileNotFoundException();
 		return doGetAttributes();
@@ -292,6 +414,7 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public OpenFile open(UnsignedInteger32 flags, Optional<UnsignedInteger32> accessFlags, byte[] handle) throws IOException, PermissionDeniedException {
+		checkSandbox();
 	    var flagVal = flags.longValue();
 	    var opts = new LinkedHashSet<>();
 	    
@@ -461,6 +584,7 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public long lastModified() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		try {
 			return Files.getLastModifiedTime(path).toMillis();
 		} catch (IOException ioe) {
@@ -470,6 +594,7 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public long length() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		try {
 			return Files.size(path);
 		} catch (IOException ioe) {
@@ -479,12 +604,14 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public boolean isWritable() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		return (Files.exists(path) && Files.isWritable(path))
 				|| (!Files.exists(path) && (path.getParent() == null || (Files.isWritable(path.getParent()))));
 	}
 
 	@Override
 	public boolean createNewFile() throws PermissionDeniedException, IOException {
+		checkSandbox();
 		try {
 			Files.createFile(path);
 			return true;
@@ -495,12 +622,18 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public void truncate() throws PermissionDeniedException, IOException {
+		checkSandbox();
 		Files.deleteIfExists(path);
 		Files.createFile(path);
 	}
 
 	@Override
 	public void setAttributes(SftpFileAttributes attrs) throws IOException {
+		try {
+			checkSandbox();
+		} catch (PermissionDeniedException pde) {
+			throw new AccessDeniedException(path.toString(), null, pde.getMessage());
+		}
 		try {
 			var basicView = Files.getFileAttributeView(path, BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS);
 			basicView.setTimes(
@@ -558,6 +691,7 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public String getCanonicalPath() throws IOException, PermissionDeniedException {
+		checkSandbox();
 		try {
 			return path.toRealPath().toString();
 		} catch (IOException ioe) {
@@ -572,6 +706,7 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public AbstractFileRandomAccess openFile(boolean writeAccess) throws IOException, PermissionDeniedException {
+		checkSandbox();
 		var channel = createChannel(writeAccess);
 		return new AbstractFileRandomAccess() {
 
@@ -617,7 +752,8 @@ public final class NioFile implements AbstractFile {
 		};
 	}
 
-	private SeekableByteChannel createChannel(boolean writeAccess) throws IOException {
+	private SeekableByteChannel createChannel(boolean writeAccess) throws IOException, PermissionDeniedException {
+		checkSandbox();
 		try {
 			SeekableByteChannel channel = null;
 			if (writeAccess)
@@ -632,6 +768,7 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public OutputStream getOutputStream(boolean append) throws IOException, PermissionDeniedException {
+		checkSandbox();
 		try {
 			if (append) {
 				return Files.newOutputStream(path, StandardOpenOption.APPEND);
@@ -645,6 +782,7 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public AbstractFile resolveFile(String child) throws IOException, PermissionDeniedException {
+		checkSandbox();
 		return new NioFile(path.resolve(child), fileFactory, home, sandbox);
 	}
 
@@ -677,6 +815,11 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public FileVolume getVolume() throws IOException {
+		try {
+			checkSandbox();
+		} catch (PermissionDeniedException pde) {
+			throw new AccessDeniedException(path.toString(), null, pde.getMessage());
+		}
 		var nativeStore = path.getFileSystem().provider().getFileStore(path);
 		return new FileVolume() {
 			

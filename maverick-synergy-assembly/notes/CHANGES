@@ -1,3 +1,16 @@
+Maverick Synergy 3.2.1 - TBC
+
+Features
+
+  o Added post-quantum hybrid key exchange algorithms `mlkem768nistp256-sha256` and `mlkem1024nistp384-sha384` for both client and server roles, with ServiceLoader/JPMS registration in the BouncyCastle module.
+  o Added support for SSH host key updates and rotation (draft-ietf-sshm-hostkey-update and OpenSSH compatibility) on both client and server. Servers advertise configured future host keys (`SshServer.addFutureHostKey()`, `SshServerContext.addFutureHostKey()`) using the `hostkeys` (or legacy `hostkeys-00@openssh.com`) global request and respond to proof requests (`hostkeys-prove` or `hostkeys-prove-00@openssh.com`) by generating proof signatures using labels `hostkeys-prove-0` or `hostkeys-prove-00@openssh.com` over the session identifier and public key. Clients configured with a `HostKeyUpdater` (such as `KnownHostsKeyVerification` via `SshClientBuilder.withKnownHosts()`) automatically receive advertised keys, request proof using `hostkeys-prove` (or `hostkeys-prove-00@openssh.com`), verify proof signatures, and add newly verified host keys to `known_hosts` while preserving existing trusted keys.
+Bug Fixes
+  o IMPORTANT SECURITY FIX: Fixed an SFTP sandbox escape vulnerability in NioFileFactory (sandbox=true). Path containment checks now enforce normalized and canonical real-path validation, preventing path traversal via relative parent segments ('..') and symbolic links pointing outside the sandbox root.
+  
+=================
+=  HISTORY      =
+=================
+
 Maverick Synergy 3.2.0 - Oct 7, 2026
 
 Features
@@ -34,11 +47,9 @@ Bug Fixes
   o SshPublicKey isCertificate() method was returning false for certificate keys.
   o When generating SSH certificates add a reasonble one-minute buffer to valid after timestamp to allow for clock skew.
   o UnsignedInteger64 bounds validation fails because byte[] constructor uses BigInteger signed, not unsigned conversion. This would only ever be triggered with UnsignedInteger64.MAX_VALUE.
-  
-=================
-=  HISTORY      =
-=================
-  
+
+-----
+
 Maverick Synergy 3.1.3 - TBC
 
 Features

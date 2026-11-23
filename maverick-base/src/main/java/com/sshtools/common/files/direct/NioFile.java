@@ -256,10 +256,19 @@ public final class NioFile implements AbstractFile {
 
 	@Override
 	public List<AbstractFile> getChildren() throws IOException, PermissionDeniedException {
+		return getChildren(Integer.MAX_VALUE);
+	}
+
+	@Override
+	public List<AbstractFile> getChildren(int maximumEntries) throws IOException, PermissionDeniedException {
 		checkSandbox();
 		try (var stream = Files.newDirectoryStream(path)) {
 			var l = new ArrayList<AbstractFile>();
 			for (var p : stream) {
+				if (l.size() >= maximumEntries) {
+					throw new IOException("Directory contains more than " + maximumEntries
+							+ " supported entries");
+				}
 				l.add(new NioFile(p, fileFactory, home, sandbox));
 			}
 			return Collections.unmodifiableList(l);

@@ -35,18 +35,19 @@ public class InMemoryFileRandomAccess implements AbstractFileRandomAccess {
 
 	private final InMemoryFileFactory.Node node;
 	private final boolean writeAccess;
-	private final Object lock;
+	private final InMemoryFileFactory factory;
 	private long position = 0;
 
-	InMemoryFileRandomAccess(InMemoryFileFactory.Node node, boolean writeAccess, Object lock) {
+	InMemoryFileRandomAccess(InMemoryFileFactory.Node node, boolean writeAccess,
+			InMemoryFileFactory factory) {
 		this.node = node;
 		this.writeAccess = writeAccess;
-		this.lock = lock;
+		this.factory = factory;
 	}
 
 	@Override
 	public int read(byte[] buf, int off, int len) throws IOException {
-		synchronized (lock) {
+		synchronized (factory) {
 			if (position >= node.content.length) return -1;
 			int toRead = (int) Math.min(len, node.content.length - position);
 			System.arraycopy(node.content, (int) position, buf, off, toRead);
@@ -57,7 +58,7 @@ public class InMemoryFileRandomAccess implements AbstractFileRandomAccess {
 
 	@Override
 	public int read() throws IOException {
-		synchronized (lock) {
+		synchronized (factory) {
 			if (position >= node.content.length) return -1;
 			return node.content[(int) position++] & 0xFF;
 		}
@@ -66,10 +67,10 @@ public class InMemoryFileRandomAccess implements AbstractFileRandomAccess {
 	@Override
 	public void write(byte[] buf, int off, int len) throws IOException {
 		if (!writeAccess) throw new IOException("File not opened for writing");
-		synchronized (lock) {
-			long endPos = position + len;
+		int endPos = checkedEndPosition(position, len);
+		synchronized (factory) {
 			if (endPos > node.content.length) {
-				byte[] grown = new byte[(int) endPos];
+				byte[] grown = new byte[endPos];
 				System.arraycopy(node.content, 0, grown, 0, node.content.length);
 				node.content = grown;
 			}
@@ -82,8 +83,9 @@ public class InMemoryFileRandomAccess implements AbstractFileRandomAccess {
 	@Override
 	public void setLength(long length) throws IOException {
 		if (!writeAccess) throw new IOException("File not opened for writing");
-		synchronized (lock) {
-			byte[] resized = new byte[(int) length];
+		int checkedLength = checkedLength(length);
+		synchronized (factory) {
+			byte[] resized = new byte[checkedLength];
 			System.arraycopy(node.content, 0, resized, 0,
 					(int) Math.min(node.content.length, length));
 			node.content = resized;
@@ -93,6 +95,7 @@ public class InMemoryFileRandomAccess implements AbstractFileRandomAccess {
 
 	@Override
 	public void seek(long position) throws IOException {
+		checkedLength(position);
 		this.position = position;
 	}
 
@@ -104,5 +107,25 @@ public class InMemoryFileRandomAccess implements AbstractFileRandomAccess {
 	@Override
 	public void close() throws IOException {
 		// All writes already reflected immediately; nothing to flush.
+	}
+
+	private int checkedEndPosition(long start, int length) throws IOException {
+		if (length < 0) {
+			throw new IOException("Invalid write length " + length);
+		}
+		if (start < 0 || start > factory.getMaximumFileSize()
+				|| length > factory.getMaximumFileSize() - start) {
+			throw new IOException("Requested in-memory file extent exceeds maximum size "
+					+ factory.getMaximumFileSize());
+		}
+		return (int) (start + length);
+	}
+
+	private int checkedLength(long length) throws IOException {
+		if (length < 0 || length > factory.getMaximumFileSize()) {
+			throw new IOException("Requested in-memory file length " + length
+					+ " exceeds maximum size " + factory.getMaximumFileSize());
+		}
+		return (int) length;
 	}
 }

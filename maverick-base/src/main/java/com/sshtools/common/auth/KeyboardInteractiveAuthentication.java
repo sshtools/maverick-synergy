@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.ConnectionAwareTask;
@@ -66,6 +67,8 @@ public class KeyboardInteractiveAuthentication<C extends Context> implements
 	String service;
 
 	KeyboardInteractiveProvider selectedProvider;
+	private final AtomicBoolean awaitingResponse = new AtomicBoolean();
+	private final AtomicBoolean initialRequestStarted = new AtomicBoolean();
 
 	public String getMethod() {
 		return "keyboard-interactive";
@@ -75,6 +78,9 @@ public class KeyboardInteractiveAuthentication<C extends Context> implements
 
 		if (msg[0] != SSH_MSG_USERAUTH_INFO_RESPONSE)
 			return false;
+		if (!awaitingResponse.compareAndSet(true, false)) {
+			throw new IOException("Duplicate or unexpected keyboard-interactive response");
+		}
 		
 		if(Log.isDebugEnabled()) {
 			Log.debug("Received SSH_MSG_USERAUTH_INFO_RESPONSE");
@@ -85,7 +91,9 @@ public class KeyboardInteractiveAuthentication<C extends Context> implements
 	}
 
 	public boolean startRequest(String username, byte[] msg) throws IOException {
-		
+		if (!initialRequestStarted.compareAndSet(false, true)) {
+			throw new IOException("Duplicate keyboard-interactive start request");
+		}
 		con.addTask(ExecutorOperationSupport.EVENTS, new StartAuthenticationTask(con, username, msg));
 		return false;
 	}
@@ -113,6 +121,7 @@ public class KeyboardInteractiveAuthentication<C extends Context> implements
 				request.writeBoolean(prompts[i].echo());
 			}
 
+			awaitingResponse.set(true);
 			transport.postMessage(new InfoRequest(request.toByteArray()));
 		} finally {
 			request.close();
@@ -219,8 +228,15 @@ public class KeyboardInteractiveAuthentication<C extends Context> implements
 
 				ArrayList<String> answers = new ArrayList<String>();
 				int count = (int) response.readInt();
+				if (count < 0 || count > 128) {
+					throw new IOException("Keyboard-interactive response count exceeds maximum 128");
+				}
 				for (int i = 0; i < count; i++) {
-					answers.add(response.readString());
+					String answer = response.readString();
+					if (answer.length() > 65536) {
+						throw new IOException("Keyboard-interactive answer exceeds maximum length 65536");
+					}
+					answers.add(answer);
 				}
 
 				List<KBIPrompt> additionalPrompts = new ArrayList<>();

@@ -261,7 +261,11 @@ public class S3AbstractFileFactory implements AbstractFileFactory<S3File> {
 		return results;
 	}
 	protected List<AbstractFile> resolveChildren(S3BucketFile bucket, String path) throws IOException, PermissionDeniedException {
-		
+		return resolveChildren(bucket, path, Integer.MAX_VALUE);
+	}
+
+	protected List<AbstractFile> resolveChildren(S3BucketFile bucket, String path,
+			int maximumEntries) throws IOException, PermissionDeniedException {
 	
 		String resolvePath;
 		if(path.startsWith(bucket.getAbsolutePath())) {
@@ -273,11 +277,16 @@ public class S3AbstractFileFactory implements AbstractFileFactory<S3File> {
 			resolvePath = FileUtils.checkEndsWithSlash(resolvePath);
 		}
 	
-		return listBucketObjects(bucket, resolvePath);
+		return listBucketObjects(bucket, resolvePath, maximumEntries);
 
 	}
 	
 	public List<AbstractFile> listBucketObjects(S3BucketFile bucket, String path) throws IOException {
+		return listBucketObjects(bucket, path, Integer.MAX_VALUE);
+	}
+
+	public List<AbstractFile> listBucketObjects(S3BucketFile bucket, String path,
+			int maximumEntries) throws IOException {
         
 		try {
         
@@ -291,25 +300,32 @@ public class S3AbstractFileFactory implements AbstractFileFactory<S3File> {
                 .build();
 
            ListObjectsV2Iterable listRes = s3.listObjectsV2Paginator(listReq);
-            
-           listRes.forEach((res)->{ 
-        	   
-        	   for(S3Object obj : res.contents()) {
-        		   String name = sanitizeName(obj.key(), path);
-        		   if(StringUtils.isBlank(name)) {
-        			   continue;
-        		   }
-        		   results.add(new S3AbstractFile(this, s3, bucket, obj));
-        	   }
 
-        	   for(CommonPrefix prefix : res.commonPrefixes()) {
-        		   String name = sanitizeName(prefix.prefix(), path);
-        		   if(StringUtils.isBlank(name)) {
-        			   continue;
-        		   }
-        		   results.add(new S3AbstractFile(this, s3, bucket, prefix.prefix()));
-        	   }
-           });
+           for(var res : listRes) {
+               for(S3Object obj : res.contents()) {
+                   if (results.size() >= maximumEntries) {
+                       throw new IOException("Directory contains more than " + maximumEntries
+                               + " supported entries");
+                   }
+                   String name = sanitizeName(obj.key(), path);
+                   if(StringUtils.isBlank(name)) {
+                       continue;
+                   }
+                   results.add(new S3AbstractFile(this, s3, bucket, obj));
+               }
+
+               for(CommonPrefix prefix : res.commonPrefixes()) {
+                   if (results.size() >= maximumEntries) {
+                       throw new IOException("Directory contains more than " + maximumEntries
+                               + " supported entries");
+                   }
+                   String name = sanitizeName(prefix.prefix(), path);
+                   if(StringUtils.isBlank(name)) {
+                       continue;
+                   }
+                   results.add(new S3AbstractFile(this, s3, bucket, prefix.prefix()));
+               }
+           }
     
            return results;
 

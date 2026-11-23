@@ -245,8 +245,10 @@ public abstract class DiffieHellmanGroupExchange extends SshKeyExchangeClient
 
 	public boolean exchangeGroup(ByteArrayReader msg) throws SshException, IOException {
 
-		switch (msg.read()) {
+		int messageId = msg.read();
+		switch (messageId) {
 		case SSH_MSG_KEY_DH_GEX_GROUP:
+			acceptKeyExchangeMessage(messageId);
 
 			p = msg.readBigInteger();
 			g = msg.readBigInteger();
@@ -413,6 +415,7 @@ public abstract class DiffieHellmanGroupExchange extends SshKeyExchangeClient
 			if (msg.read() != SSH_MSG_KEY_DH_GEX_REPLY) {
 				return false;
 			}
+			acceptKeyExchangeMessage(m);
 	
 			try {
 				hostKey = msg.readBinaryString();

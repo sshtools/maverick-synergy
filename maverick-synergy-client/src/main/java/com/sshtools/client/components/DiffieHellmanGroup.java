@@ -172,6 +172,7 @@ public abstract class DiffieHellmanGroup extends SshKeyExchangeClient {
 	    
 		switch (msgId) {
 	      case SSH_MSG_KEXDH_REPLY:
+				acceptKeyExchangeMessage(msgId);
 	    	  
 			
 				try {

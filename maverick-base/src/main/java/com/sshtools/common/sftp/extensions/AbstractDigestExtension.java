@@ -33,6 +33,7 @@ import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.AbstractFileSystem;
 import com.sshtools.common.sftp.InvalidHandleException;
 import com.sshtools.common.sftp.SftpSubsystem;
+import com.sshtools.common.sftp.SftpLimits;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.Digest;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
@@ -69,10 +70,20 @@ public abstract class AbstractDigestExtension extends AbstractSftpExtension {
 	}
 	
 	protected byte[] doHash(String algorithm, byte[] handle, long startOffset, long length, SftpSubsystem sftp) throws SshException, EOFException, InvalidHandleException, IOException, PermissionDeniedException {
-		
+		if (startOffset < 0 || length < 0
+				|| (length > 0 && length > SftpLimits.MAX_EXTENSION_WORK_BYTES)) {
+			throw new IOException("Hash range exceeds the configured extension work limit");
+		}
 		
 		byte[] tmp = new byte[32768];
 		AbstractFileSystem fs = sftp.getFileSystem();
+		if (length == 0) {
+			long size = fs.getFileForHandle(handle).length();
+			length = Math.max(0, size - startOffset);
+			if (length > SftpLimits.MAX_EXTENSION_WORK_BYTES) {
+				throw new IOException("Hash range exceeds the configured extension work limit");
+			}
+		}
 
 		Digest digest = (Digest) JCEComponentManager.getInstance().supportedDigests().getInstance(ALGOS.get(algorithm));
 		int read;
@@ -81,7 +92,7 @@ public abstract class AbstractDigestExtension extends AbstractSftpExtension {
 			read = fs.readFile(handle, new UnsignedInteger64(startOffset), 
 					tmp, 
 					0, 
-					length==0 ? tmp.length : Math.min(tmp.length, (int) (length - total)));
+					Math.min(tmp.length, (int) Math.min(Integer.MAX_VALUE, length - total)));
 			if(read > 0) {
 				digest.putBytes(tmp, 0, read);
 				total += read;

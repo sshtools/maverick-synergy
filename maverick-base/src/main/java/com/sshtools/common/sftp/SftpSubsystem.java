@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.sshtools.common.events.Event;
 import com.sshtools.common.events.EventCodes;
@@ -79,6 +80,8 @@ import com.sshtools.common.util.Version;
 public class SftpSubsystem extends Subsystem implements SftpSpecification {
 	
 	public static final Integer SFTP_QUEUE = ExecutorOperationQueues.generateUniqueQueue("Subsystem.queue");
+	private final AtomicInteger queuedOperations = new AtomicInteger();
+	private final AtomicInteger queuedOperationBytes = new AtomicInteger();
 	
 	private AbstractFileSystem nfs;
 	private List<SftpOperationWrapper> wrappers = new ArrayList<SftpOperationWrapper>();
@@ -221,6 +224,19 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 		public SftpSubsystemOperation getOp() {
 			return SftpSubsystemOperation.INIT;
 		}
+	}
+
+	@Override
+	protected void executeOperation(Integer messageQueue, ConnectionAwareTask task) {
+		if (task instanceof FileSystemOperation) {
+			FileSystemOperation operation = (FileSystemOperation) task;
+			int length = operation.reserveQueueSpace();
+			if (length < 0) {
+				session.close();
+				return;
+			}
+		}
+		super.executeOperation(messageQueue, task);
 	}
 
 	protected void onMessageReceived(byte[] msg) throws IOException {
@@ -1211,7 +1227,9 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				evt = (TransferEvent) openFileHandles.get(h);
 
 				UnsignedInteger64 offset = bar.readUINT64();
-				int count = (int) bar.readInt();
+				int maximumPacketSize = maximumSftpPacketSize();
+				int count = SftpLimits.checkedDataLength(bar.readInt(),
+						maximumPacketSize, "SFTP READ");
 
 				// Construct the correct size packet and read the file
 				Packet reply = new Packet(count + 13);
@@ -1379,7 +1397,9 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 				evt = (TransferEvent) openFileHandles.get(h);
 				
 				UnsignedInteger64 offset = bar.readUINT64();
-				int count = (int) bar.readInt();
+				int count = SftpLimits.checkedWriteLength(bar.readInt(),
+						bar.available(), maximumSftpPacketSize()
+								- SftpLimits.READ_RESPONSE_OVERHEAD, "SFTP WRITE");
 
 				if(filePolicy.hasUploadQuota()) {
 					if(!con.containsProperty("uploadQuota")) {
@@ -2043,6 +2063,11 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 
 			try {
 				id = (int) bar.readInt();
+				if (openFolderHandles.size() >= SftpLimits.MAX_DIRECTORY_HANDLES) {
+					sendStatusMessage(id, SSH_FX_QUOTA_EXCEEDED,
+							"Maximum concurrent directory handles exceeded");
+					return;
+				}
 				path = checkDefaultPath(bar.readString(charsetEncoding));
 
 				TransferEvent evt = new TransferEvent();
@@ -2236,7 +2261,8 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 	public int sendFilenameMessage(int id, SftpFile[] files, boolean isRealPath,
 			boolean isAbsolute) throws IOException {
 
-		Packet baw = new Packet(16384);
+		int maximumPacketSize = maximumSftpPacketSize();
+		Packet baw = new Packet(Math.min(16384, maximumPacketSize));
 		baw.write(SSH_FXP_NAME);
 		baw.writeInt(id);
 		baw.writeInt(files.length);
@@ -2251,11 +2277,20 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 						charsetEncoding);
 			}
 			baw.write(files[i].getAttributes().toByteArray(version));
+			if (baw.size() > maximumPacketSize) {
+				throw new IOException("SFTP NAME response exceeds maximum packet size "
+						+ maximumPacketSize);
+			}
 		}
 
 		sendMessage(baw);
 
 		return baw.size();
+	}
+
+	private int maximumSftpPacketSize() {
+		return SftpLimits.maximumPacketSize(context.getMaximumPacketLength(),
+				0);
 	}
 
 	class MakeDirectoryOperation extends FileSystemOperation {
@@ -2414,10 +2449,33 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 
 	abstract class FileSystemOperation extends ConnectionAwareTask {
 		protected byte[] msg;
+		private boolean queueReserved;
 
 		FileSystemOperation(byte[] msg) {
 			super(SftpSubsystem.this.session.getConnection());
 			this.msg = msg;
+		}
+
+		int reserveQueueSpace() {
+			int length = msg == null ? 0 : msg.length;
+			if (queuedOperations.incrementAndGet() > SftpLimits.MAX_OUTSTANDING_OPERATIONS
+					|| queuedOperationBytes.addAndGet(length) > SftpLimits.MAX_QUEUED_BYTES) {
+				queuedOperations.decrementAndGet();
+				queuedOperationBytes.addAndGet(-length);
+				onFreeMessage(msg);
+				msg = null;
+				return -1;
+			}
+			queueReserved = true;
+			return length;
+		}
+
+		void releaseQueueSpace() {
+			if (queueReserved) {
+				queuedOperations.decrementAndGet();
+				queuedOperationBytes.addAndGet(-(msg == null ? 0 : msg.length));
+				queueReserved = false;
+			}
 		}
 		
 		public abstract void doOperation();
@@ -2437,6 +2495,7 @@ public class SftpSubsystem extends Subsystem implements SftpSpecification {
 			try {
 				doOperation();	
 			} finally {
+				releaseQueueSpace();
 				if(!wrappers.isEmpty()) {
 					for(SftpOperationWrapper wrapper : wrappers) {
 						try {

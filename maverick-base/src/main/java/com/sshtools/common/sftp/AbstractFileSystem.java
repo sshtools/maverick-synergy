@@ -29,6 +29,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.FileAlreadyExistsException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -682,7 +683,11 @@ public final class AbstractFileSystem {
 		public OpenDirectory(AbstractFile f, SftpFileFilter filter) throws IOException, PermissionDeniedException {
 			this.f = f;
 			this.filter = filter;
-			this.children = f.getChildren().toArray(new AbstractFile[0]);
+			List<AbstractFile> children = f.getChildren(SftpLimits.MAX_DIRECTORY_ENTRIES + 1);
+			if (children.size() > SftpLimits.MAX_DIRECTORY_ENTRIES) {
+				throw new IOException("Directory contains too many entries for an SFTP listing");
+			}
+			this.children = children.toArray(new AbstractFile[0]);
 		}
 
 		public AbstractFile getFile() {

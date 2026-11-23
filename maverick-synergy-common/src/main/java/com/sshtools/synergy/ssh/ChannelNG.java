@@ -356,6 +356,9 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	}
 
 	void confirmOpen() {
+		if (state != CHANNEL_UNINITIALIZED) {
+			throw new IllegalStateException("Duplicate channel open confirmation");
+		}
 		state = CHANNEL_OPEN;
 		openFuture.done(true);
 		onChannelOpenConfirmation();
@@ -752,7 +755,9 @@ public abstract class ChannelNG<T extends SshContext> implements Channel {
 	}
 	
 	protected void processChannelRequestResponse(boolean success) {
-		
+		if (requests.isEmpty()) {
+			throw new IllegalStateException("Unsolicited channel request response");
+		}
 		ChannelRequestFuture future = requests.remove();
 		
 		if(Log.isDebugEnabled()) {

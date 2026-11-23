@@ -52,6 +52,7 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	int disconnectReason;
 	String disconnectText;
 	boolean denyConnection = false;
+	private boolean serviceRequested;
 	
 	public TransportProtocolServer(SshServerContext sshContext, ConnectRequestFuture connectFuture) throws IOException, SshException {
 		super(sshContext, connectFuture);
@@ -299,6 +300,12 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 	 * @throws IOException
 	 */
 	void startService(byte[] msg) throws IOException {
+		if (serviceRequested || activeService != null) {
+			disconnect(PROTOCOL_ERROR,
+					"Duplicate or out-of-sequence SSH_MSG_SERVICE_REQUEST");
+			return;
+		}
+		serviceRequested = true;
 
 		ByteArrayReader bar = new ByteArrayReader(msg);
 
@@ -342,6 +349,10 @@ public final class TransportProtocolServer extends TransportProtocol<SshServerCo
 
 	void startService(Service activeService) throws SshException {
 
+		if (this.activeService == null) {
+			throw new SshException("Connection protocol started before authentication service",
+					SshException.PROTOCOL_VIOLATION);
+		}
 		this.activeService.stop();
 		this.activeService = activeService;
 		activeService.start();

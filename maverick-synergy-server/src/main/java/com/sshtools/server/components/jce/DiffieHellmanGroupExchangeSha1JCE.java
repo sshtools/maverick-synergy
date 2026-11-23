@@ -183,13 +183,16 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 			firstPacketFollows = false;
 			return true;
 		}
+		validateKeyExchangeMessage(msg[0] & 0xff);
 
 		ByteArrayReader bar = new ByteArrayReader(msg);
 
 		try {
-			switch (bar.read()) {
+			int messageId = bar.read();
+			switch (messageId) {
 			case SSH_MSG_KEY_DH_GEX_REQUEST_OLD:
 			{
+				acceptKeyExchangeMessage(messageId);
 				
 				n = bar.readUINT32();
 
@@ -208,6 +211,7 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 			}
 			case SSH_MSG_KEY_DH_GEX_REQUEST:
 			{
+				acceptKeyExchangeMessage(messageId);
 				
 				min = bar.readUINT32();
 				n = bar.readUINT32();
@@ -320,6 +324,7 @@ public class DiffieHellmanGroupExchangeSha1JCE extends SshKeyExchangeServer
 				// this message is not for us
 				return false;
 			}
+			acceptKeyExchangeMessage(msg);
 			
 			e = bar.readBigInteger();
 			

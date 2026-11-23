@@ -200,6 +200,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	public final static int DISCONNECTED = 4;
 
 	int currentState = TransportProtocol.NEGOTIATING_PROTOCOL;
+	private final KeyExchangeState keyExchangeState = new KeyExchangeState();
 	SshKeyExchange<T> keyExchange;
 	SshCipher encryption;
 	SshCipher decryption;
@@ -295,6 +296,7 @@ public abstract class TransportProtocol<T extends SshContext>
 
 	IgnoreMessage ignoreMessage;
 	long lastKeepAlive = 0;
+	private static final int MAX_REMOTE_IDENTIFICATION_LENGTH = 8192;
 
 	protected T sshContext;
 	protected SocketConnection socketConnection;
@@ -566,6 +568,12 @@ public abstract class TransportProtocol<T extends SshContext>
 				continue;
 			}
 			
+			if (remoteIdentification.length() >= MAX_REMOTE_IDENTIFICATION_LENGTH) {
+				Log.warn("Remote identification line exceeded maximum length {} from {}",
+						MAX_REMOTE_IDENTIFICATION_LENGTH, socketConnection.getRemoteAddress());
+				socketConnection.closeConnection();
+				return;
+			}
 			remoteIdentification.append(c);
 		}
 	}
@@ -1792,10 +1800,8 @@ public abstract class TransportProtocol<T extends SshContext>
 					sshContext.getSupportedPublicKeys());
 
 			// Determine if we should use the first packet
-			boolean useFirstPacket = remoteKeyExchanges.startsWith(sshContext
-					.getPreferredKeyExchange())
-					&& remotePublicKeys.startsWith(sshContext
-							.getPreferredPublicKey());
+			boolean useFirstPacket = firstName(remoteKeyExchanges).equals(keyExchangeAlgorithm)
+					&& firstName(remotePublicKeys).equals(publicKey);
 
 			EventServiceImplementation
 					.getInstance()
@@ -1854,8 +1860,13 @@ public abstract class TransportProtocol<T extends SshContext>
 									.addAttribute(
 											EventCodes.ATTRIBUTE_LOCAL_SC_COMPRESSIONS,
 											localCompressionSC));
-			// Initialize the key exchange
-			initializeKeyExchange(keyExchange, firstPacketFollows, useFirstPacket);
+			// The transport consumes an incorrectly guessed first packet. The
+			// algorithm must not consume the next valid packet as well.
+			boolean discardFirstPacket = firstPacketFollows && !useFirstPacket;
+			initializeKeyExchange(keyExchange,
+					discardFirstPacket ? false : firstPacketFollows, useFirstPacket);
+			keyExchangeState.beginAlgorithm(keyExchangeAlgorithm, isServerMode(),
+					discardFirstPacket);
 
 			cipherCS = selectNegotiatedComponent(
 					checkValidString("client->server cipher list",
@@ -2061,6 +2072,12 @@ public abstract class TransportProtocol<T extends SshContext>
 
 			if(Log.isDebugEnabled())
 				Log.debug("Received SSH_MSG_NEWKEYS");
+
+			if (!keyExchangeState.acceptNewKeys()) {
+				disconnect(PROTOCOL_ERROR,
+						"Unexpected or duplicate SSH_MSG_NEWKEYS");
+				return;
+			}
 			
 			hasFirstNewKeys = true;
 			
@@ -2075,6 +2092,11 @@ public abstract class TransportProtocol<T extends SshContext>
 			
 			if(Log.isDebugEnabled())
 				Log.debug("Received SSH_MSG_KEX_INIT");
+			if (!keyExchangeState.acceptKexInit()) {
+				disconnect(PROTOCOL_ERROR,
+						"Unexpected or duplicate SSH_MSG_KEX_INIT");
+				return;
+			}
 			performKeyExchange(msg);
 			break;
 		}
@@ -2097,6 +2119,19 @@ public abstract class TransportProtocol<T extends SshContext>
 		}
 		default: {
 
+			if (KeyExchangeState.isKexAlgorithmMessage(msgId)) {
+				if (keyExchangeState.discardAlgorithmMessage(msgId)) {
+					break;
+				}
+				if (currentState != PERFORMING_KEYEXCHANGE
+						|| !keyExchangeState.acceptAlgorithmMessage(msgId)
+						|| !keyExchange.processMessage(msg)) {
+					disconnect(PROTOCOL_ERROR,
+							"Unexpected key exchange message " + msgId);
+					return;
+				}
+				break;
+			}
 			
 			
 			if(processTransportMessage(msgId, msg)) {
@@ -2157,6 +2192,7 @@ public abstract class TransportProtocol<T extends SshContext>
 				synchronized (keyExchange) {
 					if(Log.isDebugEnabled())
 						Log.debug("Sent SSH_MSG_NEWKEYS");
+					keyExchangeState.sentNewKeys();
 					keyExchange.setSentNewKeys(true);
 					onNewKeysSent();
 				}
@@ -2215,6 +2251,11 @@ public abstract class TransportProtocol<T extends SshContext>
 
 	}
 
+	private static String firstName(String nameList) {
+		int comma = nameList.indexOf(',');
+		return (comma < 0 ? nameList : nameList.substring(0, comma)).trim();
+	}
+
 	protected boolean usesIntegratedMac(String cipherName, boolean isCS) throws SshException {
 		if (cipherName == null) {
 			return false;
@@ -2230,7 +2271,9 @@ public abstract class TransportProtocol<T extends SshContext>
 	}
 
 	protected void completeKeyExchange(SshKeyExchange<T> keyExchange) {
-		
+		if (!keyExchangeState.complete()) {
+			return;
+		}
 		localkex = null; 
 		remotekex = null;
 		completedFirstKeyExchange = true;
@@ -2577,6 +2620,7 @@ public abstract class TransportProtocol<T extends SshContext>
 				setTransportState(PERFORMING_KEYEXCHANGE);
 
 				if (localkex == null) {
+					keyExchangeState.start();
 
 					try {
 						localkex = TransportProtocolHelper.generateKexInit(getContext(), 

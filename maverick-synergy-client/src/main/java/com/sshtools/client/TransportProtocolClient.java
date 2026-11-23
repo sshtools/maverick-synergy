@@ -88,6 +88,27 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 		try {
 			
 			hostKey = SshPublicKeyFileFactory.decodeSSH2PublicKey(keyExchange.getHostKey());
+
+			if (!hostKey.verifySignature(
+					keyExchange.getSignature(),
+					keyExchange.getExchangeHash())) {
+				EventServiceImplementation
+						.getInstance()
+						.fireEvent(
+								new Event(this, EventCodes.EVENT_HOSTKEY_REJECTED, false)
+								.addAttribute(
+										EventCodes.ATTRIBUTE_CONNECTION,
+										getConnection())
+								.addAttribute(EventCodes.ATTRIBUTE_HOST_KEY, new String(keyExchange.getHostKey()))
+								.addAttribute(EventCodes.ATTRIBUTE_HOST_PUBLIC_KEY, hostKey));
+				disconnect(
+						TransportProtocol.HOST_KEY_NOT_VERIFIABLE,
+						"Invalid host key signature");
+
+				throw new SshException(
+						"The host key signature is invalid",
+						SshException.PROTOCOL_VIOLATION);
+			}
 			
 			if(getContext().getHostKeyVerification()!=null) {
 				
@@ -123,26 +144,6 @@ public class TransportProtocolClient extends TransportProtocol<SshClientContext>
 							SshException.CANCELLED_CONNECTION);
 				}
 	
-				if (!hostKey.verifySignature(
-						keyExchange.getSignature(),
-						keyExchange.getExchangeHash())) {
-					EventServiceImplementation
-							.getInstance()
-							.fireEvent(
-									new Event(this, EventCodes.EVENT_HOSTKEY_REJECTED, false)
-									.addAttribute(
-											EventCodes.ATTRIBUTE_CONNECTION,
-											getConnection())
-									.addAttribute(EventCodes.ATTRIBUTE_HOST_KEY, new String(keyExchange.getHostKey()))
-									.addAttribute(EventCodes.ATTRIBUTE_HOST_PUBLIC_KEY, hostKey));
-					disconnect(
-							TransportProtocol.HOST_KEY_NOT_VERIFIABLE,
-							"Invalid host key signature");
-	
-					throw new SshException(
-							"The host key signature is invalid",
-							SshException.PROTOCOL_VIOLATION);
-				}
 			}
 			
 			EventServiceImplementation.getInstance().fireEvent(

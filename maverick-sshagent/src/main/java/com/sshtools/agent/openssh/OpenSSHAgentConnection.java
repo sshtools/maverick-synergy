@@ -25,10 +25,10 @@ package com.sshtools.agent.openssh;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.io.OutputStream;
 
 import com.sshtools.agent.AgentMessage;
+import com.sshtools.agent.AgentProtocol;
 import com.sshtools.agent.KeyStore;
 import com.sshtools.agent.exceptions.InvalidMessageException;
 import com.sshtools.agent.exceptions.KeyTimeoutException;
@@ -36,7 +36,6 @@ import com.sshtools.agent.server.SshAgentConnection;
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPublicKey;
-import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 
 /**
@@ -289,50 +288,10 @@ public class OpenSSHAgentConnection implements SshAgentConnection {
         try {
             Log.info("Starting agent connection thread");
 
-            byte[] lendata = new byte[4];
-            byte[] msgdata;
-            int len;
-            int read;
             boolean alive = true;
 
             while (alive) {
-                // Read the first 4 bytes to determine the length of the message
-                len = 0;
-
-                while (len < lendata.length) {
-                    try {
-                        read = 0;
-                        read = in.read(lendata, len, lendata.length - len);
-
-                        if (read >= 0) {
-                            len += read;
-                        } else {
-                            alive = false;
-
-                            break;
-                        }
-                    } catch (InterruptedIOException ex) {
-                        if (ex.bytesTransferred > 0) {
-                            len += ex.bytesTransferred;
-                        }
-                    }
-                }
-
-                if (alive) {
-                    len = (int) ByteArrayReader.readInt(lendata, 0);
-                    msgdata = new byte[len];
-                    len = 0;
-
-                    while (len < msgdata.length) {
-                        try {
-                            len += in.read(msgdata, len, msgdata.length - len);
-                        } catch (InterruptedIOException ex1) {
-                            len += ex1.bytesTransferred;
-                        }
-                    }
-
-                    onMessageReceived(msgdata);
-                }
+                onMessageReceived(AgentProtocol.readMessage(in));
             }
         } catch (IOException ex) {
             Log.info("The agent connection terminated", ex);

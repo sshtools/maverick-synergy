@@ -137,12 +137,22 @@ public class InMemoryFile extends AbstractFileImpl<InMemoryFile> {
 
 	@Override
 	public List<AbstractFile> getChildren() throws IOException, PermissionDeniedException {
+		return getChildren(Integer.MAX_VALUE);
+	}
+
+	@Override
+	public List<AbstractFile> getChildren(int maximumEntries)
+			throws IOException, PermissionDeniedException {
 		synchronized (fs) {
 			InMemoryFileFactory.Node node = fs.resolve(path);
 			if (node == null) throw new FileNotFoundException(path);
 			if (!node.directory) throw new IOException("Not a directory: " + path);
 			List<AbstractFile> result = new ArrayList<>();
 			for (String name : node.children.keySet()) {
+				if (result.size() >= maximumEntries) {
+					throw new IOException("Directory contains more than " + maximumEntries
+							+ " supported entries");
+				}
 				String childPath = "/".equals(path) ? "/" + name : path + "/" + name;
 				result.add(new InMemoryFile(childPath, fs));
 			}
@@ -174,13 +184,39 @@ public class InMemoryFile extends AbstractFileImpl<InMemoryFile> {
 				throw new IOException("Is a directory: " + path);
 			}
 			final InMemoryFileFactory.Node target = node;
-			return new ByteArrayOutputStream() {
+			return new OutputStream() {
+				private final ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+				@Override
+				public void write(int value) throws IOException {
+					checkCapacity(1);
+					output.write(value);
+				}
+
+				@Override
+				public void write(byte[] bytes, int offset, int length) throws IOException {
+					checkCapacity(length);
+					output.write(bytes, offset, length);
+				}
+
+				@Override
+				public void flush() throws IOException {
+					output.flush();
+				}
+
 				@Override
 				public void close() throws IOException {
-					super.close();
+					output.close();
 					synchronized (fs) {
-						target.content = toByteArray();
+						target.content = output.toByteArray();
 						target.lastModified = System.currentTimeMillis();
+					}
+				}
+
+				private void checkCapacity(int length) throws IOException {
+					if (length < 0 || output.size() > fs.getMaximumFileSize() - length) {
+						throw new IOException("In-memory file exceeds maximum size "
+								+ fs.getMaximumFileSize());
 					}
 				}
 			};

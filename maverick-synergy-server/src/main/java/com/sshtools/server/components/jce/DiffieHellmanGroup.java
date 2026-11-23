@@ -163,7 +163,7 @@ public abstract class DiffieHellmanGroup extends SshKeyExchangeServer implements
 		switch (msg[0]) {
 		case SSH_MSG_KEXDH_INIT:
 
-			// Discard this message if it was guessed wrong
+		// Discard this message if it was guessed wrong
 			if (firstPacketFollows && !useFirstPacket) {
 				if (Log.isDebugEnabled()) {
 					Log.debug(
@@ -172,6 +172,7 @@ public abstract class DiffieHellmanGroup extends SshKeyExchangeServer implements
 				firstPacketFollows = false;
 				return true;
 			}
+			acceptKeyExchangeMessage(msg);
 
 			// Process the actual message
 			try(ByteArrayReader bar = new ByteArrayReader(msg)) {

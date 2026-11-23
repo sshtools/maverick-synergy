@@ -150,6 +150,7 @@ public class Rsa1024Sha1 extends SshKeyExchangeClient implements AbstractKeyExch
 
 		switch(tmp[0]) {
 		case SSH_MSG_KEXRSA_PUBKEY:
+			acceptKeyExchangeMessage(tmp);
 
 			try (ByteArrayWriter msg = new ByteArrayWriter()) {
 
@@ -195,6 +196,7 @@ public class Rsa1024Sha1 extends SshKeyExchangeClient implements AbstractKeyExch
 			}
 			return true;
 		case SSH_MSG_KEXRSA_DONE:
+			acceptKeyExchangeMessage(tmp);
 			
 			if(Log.isDebugEnabled()) {
 				Log.debug("Received SSH_MSG_KEXRSA_DONE");

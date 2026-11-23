@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -113,6 +114,7 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 	long lastActivity = System.currentTimeMillis();
 	boolean agentForwardingRequested;
 	boolean singleSession = false;
+	private final AtomicBoolean terminalRequestStarted = new AtomicBoolean();
 	ChannelOutputStream stderrOutputStream = new ChannelOutputStream(this, SSH_EXTENDED_DATA_STDERR);
 	
 	public SessionChannelNG(SshConnection con) {
@@ -301,6 +303,21 @@ public abstract class SessionChannelNG extends ChannelNG<SshServerContext> imple
 			byte[] requestdata) {
 
 		boolean success = false;
+		boolean terminalRequest = type.equals("exec") || type.equals("shell")
+				|| type.equals("subsystem");
+		if (terminalRequest && !terminalRequestStarted.compareAndSet(false, true)) {
+			getConnectionProtocol().getTransport().disconnect(
+					com.sshtools.synergy.ssh.TransportProtocol.PROTOCOL_ERROR,
+					"Duplicate or unexpected session terminal request");
+			return;
+		}
+		if (terminalRequestStarted.get()
+				&& (type.equals("pty-req") || type.equals("env"))) {
+			getConnectionProtocol().getTransport().disconnect(
+					com.sshtools.synergy.ssh.TransportProtocol.PROTOCOL_ERROR,
+					"Session setup request received after terminal start");
+			return;
+		}
 
 		resetIdleState();
 

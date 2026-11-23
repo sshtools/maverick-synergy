@@ -27,6 +27,7 @@ import java.io.IOException;
 import com.sshtools.common.permissions.PermissionDeniedException;
 import com.sshtools.common.sftp.AbstractFileSystem;
 import com.sshtools.common.sftp.InvalidHandleException;
+import com.sshtools.common.sftp.SftpLimits;
 import com.sshtools.common.sftp.SftpSubsystem;
 import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.UnsignedInteger64;
@@ -49,6 +50,11 @@ public class CopyDataSftpExtension extends AbstractSftpExtension {
 		    
 		    byte[] toHandle = msg.readBinaryString();
 		    UnsignedInteger64 toOffset = msg.readUINT64();
+
+			long copyLength = length.longValue();
+			if (copyLength < 0 || copyLength > SftpLimits.MAX_EXTENSION_WORK_BYTES) {
+				throw new IOException("copy-data length exceeds the configured extension work limit");
+			}
 		    
 			AbstractFileSystem fs = sftp.getFileSystem();
 			

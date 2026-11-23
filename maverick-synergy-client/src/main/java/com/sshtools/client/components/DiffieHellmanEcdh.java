@@ -197,6 +197,7 @@ public abstract class DiffieHellmanEcdh extends SshKeyExchangeClient implements
 		if (msg[0] != SSH_MSG_KEX_ECDH_REPLY) {
 			return false;
 		}
+		acceptKeyExchangeMessage(msg);
 
 		ByteArrayReader reply = new ByteArrayReader(msg, 1, msg.length-1);
 		

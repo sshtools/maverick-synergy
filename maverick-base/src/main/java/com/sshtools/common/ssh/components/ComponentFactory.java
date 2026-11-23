@@ -161,7 +161,7 @@ public class ComponentFactory<T extends Component> implements Cloneable {
 	 *         <code>false</code>
 	 */
 	public boolean contains(String name) {
-		return supported.containsKey(name);
+		return order.contains(name);
 	}
 
 	/**
@@ -419,7 +419,7 @@ public class ComponentFactory<T extends Component> implements Cloneable {
 	}
 	
 	public boolean hasComponents() {
-		return !supported.isEmpty();
+		return !order.isEmpty();
 	}
 
 	public Collection<String> order() {
@@ -438,7 +438,7 @@ public class ComponentFactory<T extends Component> implements Cloneable {
 		Vector<String> newOrder = new Vector<String>();
 		
 		for(String alg : list.split(",")) {
-			if(supported.containsKey(alg)) {
+			if(contains(alg)) {
 				newOrder.add(alg);
 			}
 		}

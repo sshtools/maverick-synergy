@@ -150,6 +150,7 @@ public class Rsa2048Sha256 extends SshKeyExchangeClient implements AbstractKeyEx
 
 		switch(tmp[0]) {
 		case SSH_MSG_KEXRSA_PUBKEY:
+			acceptKeyExchangeMessage(tmp);
 
 			try (ByteArrayWriter msg = new ByteArrayWriter()) {
 
@@ -195,6 +196,7 @@ public class Rsa2048Sha256 extends SshKeyExchangeClient implements AbstractKeyEx
 			}
 			return true;
 		case SSH_MSG_KEXRSA_DONE:
+			acceptKeyExchangeMessage(tmp);
 			
 			if(Log.isDebugEnabled()) {
 				Log.debug("Received SSH_MSG_KEXRSA_DONE");

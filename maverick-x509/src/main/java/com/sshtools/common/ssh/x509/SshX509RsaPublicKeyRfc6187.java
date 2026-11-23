@@ -81,19 +81,25 @@ public class SshX509RsaPublicKeyRfc6187 extends Ssh2RsaPublicKey implements SshX
 						SshException.BAD_API_USAGE);
 			}
 
-			int certificateCount = (int) reader.readInt();
+			long certificateCount = reader.readInt();
 
 			if(Log.isDebugEnabled()) {
 				Log.debug("Expecting chain of " + certificateCount);
 			}
 			
-			if(certificateCount <= 0) {
+			if(certificateCount <= 0 || certificateCount > MAX_CERTIFICATE_CHAIN_LENGTH) {
 				throw new SshException( 
-						"There are no certificats present in the public key blob",
+						"Invalid certificate count in the public key blob: " + certificateCount,
+						SshException.POSSIBLE_CORRUPT_FILE);
+			}
+
+			if(certificateCount > reader.available() / 4) {
+				throw new SshException(
+						"Certificate count exceeds the data remaining in the public key blob",
 						SshException.POSSIBLE_CORRUPT_FILE);
 			}
 			
-			this.certs = new Certificate[certificateCount];
+			this.certs = new Certificate[(int)certificateCount];
 			
 			for(int i=0;i<certificateCount;i++) {
 				byte[] certBlob = reader.readBinaryString();

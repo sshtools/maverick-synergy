@@ -24,6 +24,7 @@ package com.sshtools.common.ssh;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.sshtools.common.logger.Log;
 import com.sshtools.common.permissions.PermissionDeniedException;
@@ -35,6 +36,11 @@ import com.sshtools.common.util.ByteBufferPool;
  * @author Lee David Painter
  */
 public abstract class Subsystem {
+
+	private static final int MAX_QUEUED_OUTGOING_PACKETS = 128;
+	private static final int MAX_QUEUED_OUTGOING_BYTES = 16 * 1024 * 1024;
+	private final AtomicInteger queuedOutgoingPackets = new AtomicInteger();
+	private final AtomicInteger queuedOutgoingBytes = new AtomicInteger();
 	
 	public static final Integer SUBSYSTEM_INCOMING = ExecutorOperationQueues.generateUniqueQueue("Subsystem.queue.in");
 	public static final Integer SUBSYSTEM_OUTGOING = ExecutorOperationQueues.generateUniqueQueue("Subsystem.queue.out");
@@ -318,13 +324,32 @@ public abstract class Subsystem {
 	 * @throws IOException
 	 */
 	public void sendMessage(Packet packet) throws IOException {
+		int maximum = context.getMaximumPacketLength();
+		if (packet.size() > maximum) {
+			throw new IOException("Subsystem packet length " + packet.size()
+					+ " exceeds maximum " + maximum);
+		}
 		
 		if(Boolean.getBoolean("maverick.outgoingSubsystemQueue")) {
+			int packets = queuedOutgoingPackets.incrementAndGet();
+			int bytes = queuedOutgoingBytes.addAndGet(packet.size());
+			if (packets > MAX_QUEUED_OUTGOING_PACKETS
+					|| bytes > MAX_QUEUED_OUTGOING_BYTES) {
+				queuedOutgoingPackets.decrementAndGet();
+				queuedOutgoingBytes.addAndGet(-packet.size());
+				session.close();
+				throw new IOException("Subsystem outgoing queue limit exceeded");
+			}
 			session.getConnection().addTask(SUBSYSTEM_OUTGOING, new ConnectionAwareTask(getConnection()) {
 	
 				@Override
 				protected void doTask() throws Throwable {
-					doSendMessage(packet);
+					try {
+						doSendMessage(packet);
+					} finally {
+						queuedOutgoingPackets.decrementAndGet();
+						queuedOutgoingBytes.addAndGet(-packet.size());
+					}
 				}
 			});
 		} else {

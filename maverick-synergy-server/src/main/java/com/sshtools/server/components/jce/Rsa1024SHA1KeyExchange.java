@@ -173,6 +173,7 @@ public class Rsa1024SHA1KeyExchange extends SshKeyExchangeServer implements Abst
 
     switch (msg[0]) {
       case SSH_MSG_KEXRSA_SECRET:
+		acceptKeyExchangeMessage(msg);
         if(Log.isDebugEnabled()) {
         		Log.debug("Processing SSH_MSG_KEXRSA_SECRET");
         }

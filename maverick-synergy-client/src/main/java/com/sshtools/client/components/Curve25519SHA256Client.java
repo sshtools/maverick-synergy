@@ -147,6 +147,7 @@ public class Curve25519SHA256Client extends SshKeyExchangeClient {
 		if (resp[0] != SSH_MSG_KEX_ECDH_REPLY) {
 			return false;
 		}
+		acceptKeyExchangeMessage(resp);
 
 		if (resp[0] != SSH_MSG_KEX_ECDH_REPLY) {
 			throw new SshException("Expected SSH_MSG_KEX_ECDH_REPLY but got message id " + resp[0],

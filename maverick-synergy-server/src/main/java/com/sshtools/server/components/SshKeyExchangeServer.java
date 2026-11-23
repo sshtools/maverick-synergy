@@ -72,6 +72,7 @@ public abstract class SshKeyExchangeServer implements SshKeyExchange<SshServerCo
     protected boolean useFirstPacket;
     boolean sentNewKeys = false;
     boolean receivedNewKeys = false;
+    private int keyExchangeMessageIndex;
 
     /**
      * The transport protocol for sending/receiving messages
@@ -166,6 +167,49 @@ public abstract class SshKeyExchangeServer implements SshKeyExchange<SshServerCo
      */
     public abstract boolean processMessage(byte[] msg) throws SshException, IOException;
 
+    protected final boolean acceptKeyExchangeMessage(byte[] msg) throws SshException {
+        if (msg.length == 0 || msg[0] < 30 || msg[0] > 49) {
+            return false;
+        }
+        return acceptKeyExchangeMessage(msg[0] & 0xff);
+    }
+
+    protected final boolean acceptKeyExchangeMessage(int messageId) throws SshException {
+        if (messageId < 30 || messageId > 49) {
+            return false;
+        }
+        validateKeyExchangeMessage(messageId);
+        keyExchangeMessageIndex++;
+        return true;
+    }
+
+    protected final boolean validateKeyExchangeMessage(int messageId) throws SshException {
+        if (messageId < 30 || messageId > 49) {
+            return false;
+        }
+        int[][] expected = getAlgorithm().contains("group-exchange")
+                ? new int[][] { { 30, 34 }, { 32 } }
+                : getAlgorithm().contains("rsa")
+                        ? new int[][] { { 31 } }
+                        : new int[][] { { 30 } };
+        if (keyExchangeMessageIndex >= expected.length
+                || !contains(expected[keyExchangeMessageIndex], messageId)) {
+            throw new SshException("Unexpected key exchange message " + messageId
+                    + " at server phase " + keyExchangeMessageIndex,
+                    SshException.PROTOCOL_VIOLATION);
+        }
+        return true;
+    }
+
+    private static boolean contains(int[] values, int value) {
+        for (int candidate : values) {
+            if (candidate == value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Reset the key exchange.
      */
@@ -174,6 +218,7 @@ public abstract class SshKeyExchangeServer implements SshKeyExchange<SshServerCo
         hostKey = null;
         signature = null;
         secret = null;
+        keyExchangeMessageIndex = 0;
     }
    
 }

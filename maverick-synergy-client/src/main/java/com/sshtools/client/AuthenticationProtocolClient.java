@@ -64,6 +64,8 @@ public class AuthenticationProtocolClient implements Service {
 	ClientAuthenticator currentAuthenticator;
 	Set<String> supportedAuths = null;
 	boolean authenticated = false;
+	private enum Phase { IDLE, WAIT_METHOD_RESPONSE, COMPLETE }
+	private Phase phase = Phase.IDLE;
 	int attempts;
 	NoneAuthenticator noneAuthenticator = new NoneAuthenticator();
 	Date authenticationStarted = new Date();
@@ -132,7 +134,12 @@ public class AuthenticationProtocolClient implements Service {
 			
 			switch (msg[0]) {
 			case SSH_MSG_USERAUTH_SUCCESS:
-	
+				if (phase != Phase.WAIT_METHOD_RESPONSE || currentAuthenticator == null) {
+					throw new SshException("Unexpected SSH_MSG_USERAUTH_SUCCESS",
+							SshException.PROTOCOL_VIOLATION);
+				}
+				phase = Phase.COMPLETE;
+
 				authenticated = true;
 				if(Log.isDebugEnabled()) {
 					Log.debug("SSH_MSG_USERAUTH_SUCCESS received");
@@ -184,7 +191,11 @@ public class AuthenticationProtocolClient implements Service {
 				}
 				return true;
 			case SSH_MSG_USERAUTH_FAILURE:
-	
+				if (phase != Phase.WAIT_METHOD_RESPONSE || currentAuthenticator == null) {
+					throw new SshException("Unexpected SSH_MSG_USERAUTH_FAILURE",
+							SshException.PROTOCOL_VIOLATION);
+				}
+
 				String auths = bar.readString();
 				final boolean partial = bar.readBoolean();
 				
@@ -230,6 +241,10 @@ public class AuthenticationProtocolClient implements Service {
 
 				return true;
 			case SSH_MSG_USERAUTH_BANNER:
+				if (phase == Phase.COMPLETE) {
+					throw new SshException("SSH_MSG_USERAUTH_BANNER received after authentication",
+							SshException.PROTOCOL_VIOLATION);
+				}
 	
 				String banner = bar.readString();
 				if (context.getBannerDisplay() != null) {
@@ -289,6 +304,7 @@ public class AuthenticationProtocolClient implements Service {
 		if(!authenticators.isEmpty()) {
 			
 			currentAuthenticator = authenticators.removeFirst();
+			phase = Phase.WAIT_METHOD_RESPONSE;
 			
 			if(Log.isDebugEnabled()) {
 				Log.debug("Starting {} authentication", currentAuthenticator.getName());

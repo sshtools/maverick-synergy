@@ -26,6 +26,8 @@ import java.security.cert.Certificate;
 
 public interface SshX509PublicKey {
 
+	int MAX_CERTIFICATE_CHAIN_LENGTH = 10;
+
 	Certificate getCertificate();
 	
 	Certificate[] getCertificateChain();

@@ -65,7 +65,13 @@ public class S3AbstractFolder implements S3File {
 
 	@Override
 	public List<AbstractFile> getChildren() throws IOException, PermissionDeniedException {
-		return factory.resolveChildren(bucket, prefix.prefix());
+		return getChildren(Integer.MAX_VALUE);
+	}
+
+	@Override
+	public List<AbstractFile> getChildren(int maximumEntries)
+			throws IOException, PermissionDeniedException {
+		return factory.resolveChildren(bucket, prefix.prefix(), maximumEntries);
 	}
 
 	@Override

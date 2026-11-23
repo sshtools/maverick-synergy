@@ -72,6 +72,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	String currentMethod;
 	String username;
 	String service;
+	private String authenticationService;
 	List<String> completedAuthentications = new ArrayList<String>();
 	Map<String, Object> authenticationParameters = new ConcurrentHashMap<String, Object>(8, 0.9f, 1);
 	Date authenticationStarted = new Date();
@@ -79,6 +80,8 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	String[] requiredAuthentications = null;
 	boolean authenticated = false;
 	boolean firstAttempt = true;
+	private enum Phase { IDLE, METHOD_IN_PROGRESS, AUTHENTICATED }
+	private Phase phase = Phase.IDLE;
 	
 	/** The name of this service "ssh-userauth" */
 	static final String SERVICE_NAME = "ssh-userauth";
@@ -150,16 +153,29 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	 */
 	public boolean processMessage(byte[] msg) throws IOException {
 
-		if (authInProgress) {
-			if (msg[0] == SSH_MSG_USERAUTH_REQUEST && disconnectOnUsernameSwitch(msg)) {
+		if (phase == Phase.AUTHENTICATED) {
+			transport.disconnect(TransportProtocol.PROTOCOL_ERROR,
+					"User authentication message received after authentication completed");
+			return true;
+		}
+
+		if (phase == Phase.METHOD_IN_PROGRESS) {
+			if (msg[0] == SSH_MSG_USERAUTH_REQUEST) {
+				transport.disconnect(TransportProtocol.PROTOCOL_ERROR,
+						"Duplicate user authentication request while a method is in progress");
 				return true;
 			}
-			return currentAuthentication.processMessage(msg);
+			if (currentAuthentication == null || !currentAuthentication.processMessage(msg)) {
+				transport.disconnect(TransportProtocol.PROTOCOL_ERROR,
+						"Unexpected authentication method message " + (msg[0] & 0xff));
+			}
+			return true;
 		}
 
 		switch (msg[0]) {
 		case SSH_MSG_USERAUTH_REQUEST:
 
+			phase = Phase.METHOD_IN_PROGRESS;
 			/** We have an authentication request **/
 			processRequest(msg);
 			return true;
@@ -173,10 +189,16 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 		try (ByteArrayReader bar = new ByteArrayReader(msg)) {
 			bar.skip(1);
 			String requestedUsername = bar.readString();
+			String requestedService = bar.readString();
 			String currentUsername = transport.getConnection().getUsername();
 			if (currentUsername != null && !Objects.equals(currentUsername, requestedUsername)) {
 				if (Log.isWarnEnabled()) {
 					Log.warn("Change of username or service not allowed: {} to {}", currentUsername, requestedUsername);
+				}
+				if (authenticationService != null && !Objects.equals(authenticationService, requestedService)) {
+					transport.disconnect(TransportProtocol.PROTOCOL_ERROR,
+							"Service change during authentication requires reconnect");
+					return true;
 				}
 				transport.disconnect(TransportProtocol.ILLEGAL_USER_NAME,
 						"Username change during authentication requires reconnect");
@@ -206,13 +228,20 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 
 		try {
 			bar.skip(1);
-			username = bar.readString();
-			service = bar.readString();
+			String requestedUsername = bar.readString();
+			String requestedService = bar.readString();
+			validateAuthenticationField("username", requestedUsername, 1024);
+			validateAuthenticationField("service", requestedService, 256);
+			if (authenticationService != null && !Objects.equals(authenticationService, requestedService)) {
+				transport.disconnect(TransportProtocol.PROTOCOL_ERROR,
+						"Service change during authentication requires reconnect");
+				return;
+			}
 
 			boolean canConnect = true;
 			Connection<SshServerContext> con = transport.getConnection();
 			String currentUsername = con.getUsername();
-			if (currentUsername != null && !Objects.equals(currentUsername, username)) {
+			if (currentUsername != null && !Objects.equals(currentUsername, requestedUsername)) {
 				if (Log.isWarnEnabled()) {
 					Log.warn("Username changed during authentication from {} to {}; disconnecting per RFC", currentUsername, username);
 				}
@@ -220,6 +249,9 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 						"Username change during authentication requires reconnect");
 				return;
 			}
+			username = requestedUsername;
+			service = requestedService;
+			authenticationService = requestedService;
 			con.setUsername(username);			
 			
 			if(firstAttempt) {
@@ -246,6 +278,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 			
 			methodStarted = new Date();
 			currentMethod = bar.readString();
+			validateAuthenticationField("authentication method", currentMethod, 256);
 			
 			EventServiceImplementation.getInstance().fireEvent(
 					new Event(
@@ -276,8 +309,6 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 						.getPolicy(AuthenticationMechanismFactory.class)
 						.getRequiredMechanisms(con);
 			}
-
-			
 
 			if(Log.isDebugEnabled()) {
 				Log.debug("Client is attempting " + currentMethod
@@ -325,6 +356,13 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 
 	}
 
+	private static void validateAuthenticationField(String name, String value, int maximum)
+			throws IOException {
+		if (value == null || value.length() > maximum) {
+			throw new IOException(name + " exceeds maximum length " + maximum);
+		}
+	}
+
 	/**
 	 * Each successful completion of an authentication method should call this
 	 * method. The state of the authentication is then determined and if
@@ -335,6 +373,11 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	 * @throws IOException
 	 */
 	public synchronized void completedAuthentication() {
+		if (phase != Phase.METHOD_IN_PROGRESS || currentAuthentication == null) {
+			transport.disconnect(TransportProtocol.PROTOCOL_ERROR,
+					"Unexpected authentication completion");
+			return;
+		}
 
 		if(transport==null || !transport.isConnected()) {
 			if(Log.isDebugEnabled()) {
@@ -365,6 +408,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 		if (completed) {
 
 			authenticated = true;
+			phase = Phase.AUTHENTICATED;
 			authInProgress = false;
 			
 			// Send our success message and when sent start the Connection
@@ -461,6 +505,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	 * 
 	 */
 	public void discardAuthentication() {
+		phase = Phase.IDLE;
 		authInProgress = false;
 	}
 
@@ -517,6 +562,12 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 	private synchronized void failedAuthentication(final boolean partial,
 			final boolean ignoreFailed, final String[] methodsToContinue) {
 
+		if (phase != Phase.METHOD_IN_PROGRESS) {
+			transport.disconnect(TransportProtocol.PROTOCOL_ERROR,
+					"Unexpected authentication failure");
+			return;
+		}
+
 	
 		final String[] methods;
 		if (methodsToContinue == null || methodsToContinue.length == 0) {
@@ -544,6 +595,7 @@ public class AuthenticationProtocolServer extends ExecutorOperationSupport<SshCo
 		}
 
 		authInProgress = false;
+		phase = Phase.IDLE;
 		
 		transport.postMessage(new SshMessage() {
 			public boolean writeMessageIntoBuffer(ByteBuffer buf) {

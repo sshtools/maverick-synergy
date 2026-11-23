@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.ServiceLoader;
 
 import com.sshtools.agent.AgentMessage;
+import com.sshtools.agent.AgentProtocol;
 import com.sshtools.agent.AgentProvider;
 import com.sshtools.agent.KeyConstraints;
 import com.sshtools.agent.exceptions.AgentNotAvailableException;
@@ -66,7 +67,6 @@ import com.sshtools.common.ssh.SshException;
 import com.sshtools.common.ssh.components.SshPrivateKey;
 import com.sshtools.common.ssh.components.SshPublicKey;
 import com.sshtools.common.ssh.components.jce.JCEComponentManager;
-import com.sshtools.common.util.ByteArrayReader;
 import com.sshtools.common.util.ByteArrayWriter;
 
 /** Maintain the public keys for SshConnection
@@ -389,24 +389,7 @@ public class SshAgentClient implements SignatureGenerator, Closeable {
 	 */
 	protected AgentMessage readMessage() throws InvalidMessageException {
 		try {
-			byte[] lendata = new byte[4];
-			byte[] msgdata;
-			int len;
-
-			// Read the first 4 bytes to determine the length of the message
-			len = 0;
-
-			while (len < 3) {
-				len += in.read(lendata, len, lendata.length - len);
-			}
-
-			len = (int) ByteArrayReader.readInt(lendata, 0);
-			msgdata = new byte[len];
-			len = 0;
-
-			while (len < msgdata.length) {
-				len += in.read(msgdata, len, msgdata.length - len);
-			}
+			byte[] msgdata = AgentProtocol.readMessage(in);
 
 			Integer id = Integer.valueOf((int) msgdata[0] & 0xFF);
 

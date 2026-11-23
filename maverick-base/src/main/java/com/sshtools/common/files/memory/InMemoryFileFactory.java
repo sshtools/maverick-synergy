@@ -37,6 +37,8 @@ import com.sshtools.common.permissions.PermissionDeniedException;
  */
 public class InMemoryFileFactory implements AbstractFileFactory<InMemoryFile> {
 
+	public static final long DEFAULT_MAXIMUM_FILE_SIZE = 256L * 1024 * 1024;
+
 	/** A single node in the in-memory filesystem tree. */
 	static final class Node {
 		final String name;
@@ -56,6 +58,7 @@ public class InMemoryFileFactory implements AbstractFileFactory<InMemoryFile> {
 
 	private final Node root;
 	private final String home;
+	private final long maximumFileSize;
 
 	/** Creates a factory whose home (default) path is {@code /}. */
 	public InMemoryFileFactory() {
@@ -69,8 +72,23 @@ public class InMemoryFileFactory implements AbstractFileFactory<InMemoryFile> {
 	 * @param home absolute home path, e.g. {@code "/home/user"}
 	 */
 	public InMemoryFileFactory(String home) {
+		this(home, DEFAULT_MAXIMUM_FILE_SIZE);
+	}
+
+	/**
+	 * Creates a factory with a bounded maximum size for every in-memory file.
+	 *
+	 * @param home absolute home path
+	 * @param maximumFileSize maximum allocated length of a single file
+	 */
+	public InMemoryFileFactory(String home, long maximumFileSize) {
+		if (maximumFileSize < 1 || maximumFileSize > Integer.MAX_VALUE) {
+			throw new IllegalArgumentException("maximumFileSize must be in the range 1.."
+					+ Integer.MAX_VALUE);
+		}
 		this.root = new Node("", true, null); // root node, name="" represents "/"
 		this.home = normalizePath(home);
+		this.maximumFileSize = maximumFileSize;
 		if (!"/".equals(this.home)) {
 			ensureDir(this.home);
 		}
@@ -90,6 +108,10 @@ public class InMemoryFileFactory implements AbstractFileFactory<InMemoryFile> {
 	@Override
 	public InMemoryFile getDefaultPath() throws PermissionDeniedException, IOException {
 		return getFile("");
+	}
+
+	public long getMaximumFileSize() {
+		return maximumFileSize;
 	}
 
 	// -------------------------------------------------------------------------

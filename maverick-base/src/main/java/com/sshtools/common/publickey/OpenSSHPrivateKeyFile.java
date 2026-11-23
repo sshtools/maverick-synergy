@@ -68,6 +68,7 @@ import com.sshtools.common.util.UnsignedInteger32;
 
 public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 
+	static final int MAX_BCRYPT_KDF_ROUNDS = 1024;
 	byte[] formattedkey;
 	static final String AUTH_MAGIC = "openssh-key-v1";
 	String comment = "";
@@ -364,7 +365,7 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 					}
 
 					byte[] salt = optionsReader.readBinaryString();
-					int rounds = (int) optionsReader.readInt();
+					int rounds = validateBcryptKdfRounds(optionsReader.readInt());
 
 					byte[] iv = new byte[cipher.getBlockSize()];
 					byte[] key = new byte[cipher.getKeyLength()];
@@ -786,6 +787,14 @@ public class OpenSSHPrivateKeyFile implements SshPrivateKeyFile {
 
 	public byte[] getFormattedKey() {
 		return formattedkey;
+	}
+
+	static int validateBcryptKdfRounds(long rounds) throws IOException {
+		if(rounds < 1 || rounds > MAX_BCRYPT_KDF_ROUNDS) {
+			throw new IOException("Invalid bcrypt KDF rounds " + rounds
+					+ "; maximum is " + MAX_BCRYPT_KDF_ROUNDS);
+		}
+		return (int) rounds;
 	}
 
 	public static boolean isFormatted(byte[] formattedkey) {

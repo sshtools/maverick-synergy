@@ -154,6 +154,7 @@ public abstract class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 		if (msg[0] != SSH_MSG_KEX_ECDH_INIT) {
 			return false;
 		}
+		validateKeyExchangeMessage(msg[0] & 0xff);
 
 		// Discard this message if it was guessed wrong
 		if (firstPacketFollows && !useFirstPacket) {
@@ -163,6 +164,7 @@ public abstract class DiffieHellmanEcdh extends SshKeyExchangeServer implements
 			firstPacketFollows = false;
 			return true;
 		}
+		acceptKeyExchangeMessage(msg);
 
 		ByteArrayReader reply = new ByteArrayReader(msg, 1, msg.length - 1);
 

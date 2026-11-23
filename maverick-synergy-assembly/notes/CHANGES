@@ -6,6 +6,16 @@ Features
   o Added support for SSH host key updates and rotation (draft-ietf-sshm-hostkey-update and OpenSSH compatibility) on both client and server. Servers advertise configured future host keys (`SshServer.addFutureHostKey()`, `SshServerContext.addFutureHostKey()`) using the `hostkeys` (or legacy `hostkeys-00@openssh.com`) global request and respond to proof requests (`hostkeys-prove` or `hostkeys-prove-00@openssh.com`) by generating proof signatures using labels `hostkeys-prove-0` or `hostkeys-prove-00@openssh.com` over the session identifier and public key. Clients configured with a `HostKeyUpdater` (such as `KnownHostsKeyVerification` via `SshClientBuilder.withKnownHosts()`) automatically receive advertised keys, request proof using `hostkeys-prove` (or `hostkeys-prove-00@openssh.com`), verify proof signatures, and add newly verified host keys to `known_hosts` while preserving existing trusted keys.
 Bug Fixes
   o IMPORTANT SECURITY FIX: Fixed an SFTP sandbox escape vulnerability in NioFileFactory (sandbox=true). Path containment checks now enforce normalized and canonical real-path validation, preventing path traversal via relative parent segments ('..') and symbolic links pointing outside the sandbox root.
+  o IMPORTANT SECURITY FIX: Enforced strict key-exchange state and rejected duplicate or out-of-order KEX messages. Host-key signatures are now always verified.
+  o IMPORTANT SECURITY FIX: Limited SSH agent, SSH identification, in-memory file, and legacy shell allocations controlled by remote peers.
+  o IMPORTANT SECURITY FIX: Bounded SFTP read/write, response, directory, extension, and queue resources to prevent malformed clients causing excessive allocation or service exhaustion.
+  o IMPORTANT SECURITY FIX: Enforced strict authentication, service, channel, and session request sequencing and rejected duplicate or out-of-order protocol messages.
+  o Bounded authentication, channel-data, keyboard-interactive, and connection protocol fields before allocation or processing.
+  o Fixed duplicate channel completion/close handling and invalid channel-ID cleanup.
+  o IMPORTANT SECURITY FIX: Bounded RFC 6187 X.509 certificate chains before allocation for RSA, DSA, and ECDSA public-key decoding. Invalid counts, oversized chains, and counts that cannot fit in the remaining key blob are rejected on server authentication and client host-key paths.
+  o IMPORTANT SECURITY FIX: Limited bcrypt KDF work factor when parsing OpenSSH private-key files, rejecting zero, negative, overflowed, or excessive round counts before key derivation.
+  o ComponentFactory availability checks now use the configured order while retaining registered implementations for deliberate reuse. Removing or restricting an algorithm now consistently prevents it from authentication, negotiation, filtering, and advertised-component paths without unregistering its implementation.
+  o Hardened key-exchange value parsing and SSH certificate/public-key decoder boundaries for values supplied by clients, servers, and key files.
   
 =================
 =  HISTORY      =

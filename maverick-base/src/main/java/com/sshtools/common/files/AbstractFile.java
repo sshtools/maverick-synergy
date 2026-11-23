@@ -52,6 +52,14 @@ public interface AbstractFile {
 	List<AbstractFile> getChildren() throws IOException,
 			PermissionDeniedException;
 
+	default List<AbstractFile> getChildren(int maximumEntries)
+			throws IOException, PermissionDeniedException {
+		List<AbstractFile> children = getChildren();
+		return children.size() <= maximumEntries
+				? children
+				: children.subList(0, maximumEntries);
+	}
+
 	String getAbsolutePath() throws IOException, PermissionDeniedException;
 
 	AbstractFile getParentFile() throws IOException, PermissionDeniedException;

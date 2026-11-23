@@ -414,6 +414,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			bar.skip(1);
 
 			String name = bar.readString();
+			validateField("global request name", name, 256);
 			boolean wantreply = bar.read() != 0;
 			boolean success = false;
 			ByteArrayWriter response = new ByteArrayWriter();
@@ -500,9 +501,14 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					Log.error("Channel data received with invalid channel id {}", channelid);
 				}
 			} else {
+				if (!channel.isOpen() || channel.isRemoteEOF.get()
+						|| channel.receivedClose.get()) {
+					throw new IOException("Channel data received before channel open for id " + channelid);
+				}
 				try {
 					if (messageid == SSH_MSG_CHANNEL_DATA) {
 						int count = (int) bar.readInt();
+						validateChannelData(channel, count, bar.available());
 						addTask(CHANNEL_DATA_IN, new ConnectionAwareTask(con) {
 							protected  void doTask() throws Throwable {
 								channel.processChannelData(ByteBuffer.wrap(bar.array(), bar.getPosition(), count));
@@ -512,6 +518,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					} else {
 						int type = (int) bar.readInt();
 						int count = (int) bar.readInt();
+						validateChannelData(channel, count, bar.available());
 						addTask(CHANNEL_DATA_IN, new ConnectionAwareTask(con) {
 							protected  void doTask() throws Throwable {
 								channel.processExtendedData(type,
@@ -522,6 +529,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					}
 				} catch (IOException ex) {
 					Log.error("Error processing channel data", ex);
+					transport.disconnect(TransportProtocol.PROTOCOL_ERROR, ex.getMessage());
 				}
 			}
 		} finally {
@@ -544,6 +552,9 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					Log.error("Channel window adjust received with invalid channel id {}", channelid);
 				}
 			} else {
+				if (!channel.isOpen()) {
+					throw new IOException("Channel window adjustment before channel open");
+				}
 				if(Log.isDebugEnabled())
 					Log.debug("Received SSH_MSG_CHANNEL_WINDOW_ADJUST channel="
 							+ channelid + " remote="
@@ -570,6 +581,9 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					Log.error("Channel EOF received with invalid channel id {}", channelid);
 				}
 			} else {
+				if (!channel.isOpen() || !channel.isRemoteEOF.compareAndSet(false, true)) {
+					throw new IOException("Unexpected channel EOF");
+				}
 
 				addTask(CHANNEL_DATA_IN, new ConnectionAwareTask(con) {
 					protected  void doTask() throws Throwable {
@@ -590,7 +604,12 @@ public abstract class ConnectionProtocol<T extends SshContext>
 	}
 
 	ChannelNG<T> getChannel(int channelid) {
-		return activeChannels.get(channelid);
+		ChannelNG<T> channel = activeChannels.get(channelid);
+		if (channel == null) {
+			transport.disconnect(TransportProtocol.PROTOCOL_ERROR,
+					"Message received for unknown channel id " + channelid);
+		}
+		return channel;
 	}
 
 	void processChannelClose(byte[] msg) throws IOException {
@@ -608,6 +627,9 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					Log.error("Channel close received with invalid channel id {}", channelid);
 				}
 			} else {
+				if (!channel.isOpen() || !channel.receivedClose.compareAndSet(false, true)) {
+					throw new IOException("Unexpected duplicate channel close");
+				}
 
 				/**
 				 * LDP - ensure channel is closed on the same queue as data processing
@@ -644,6 +666,9 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					Log.error("Channel confirmation received with invalid channel id {}", channelid);
 				}
 			} else {
+				if (channel.isOpen()) {
+					throw new IOException("Duplicate channel open confirmation");
+				}
 
 				int remoteid = (int) bar.readInt();
 				UnsignedInteger32 remotewindow = bar.readUINT32();
@@ -660,6 +685,8 @@ public abstract class ConnectionProtocol<T extends SshContext>
 				}
 				
 				if(remotepacket < 4096) {
+					channel.fail();
+					channel.close(true);
 					transport.postMessage(new ChannelFailureMessage(remoteid,
 							ChannelOpenException.ADMINISTRATIVIVELY_PROHIBITED,
 							"Maximum remote packet size must be >= 4096 bytes"));
@@ -691,6 +718,9 @@ public abstract class ConnectionProtocol<T extends SshContext>
 					Log.error("Channel open failure received with invalid channel id {}", channelid);
 				}
 			} else {
+				if (channel.isOpen()) {
+					throw new IOException("Channel open failure after channel was opened");
+				}
 
 				if(Log.isDebugEnabled()) {
 					Log.debug("Received SSH_MSG_CHANNEL_OPEN_FAILURE channel="
@@ -715,6 +745,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 		try {
 		
 			String channeltype = bar.readString();
+			validateField("channel type", channeltype, 256);
 			int remoteid = (int) bar.readInt();
 			UnsignedInteger32 remotewindow = bar.readUINT32();
 			int remotepacket = (int) bar.readInt();
@@ -772,6 +803,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 
 					return;
 				} catch (ChannelOpenException ex) {
+					channel.close(true);
 					transport.postMessage(new ChannelFailureMessage(
 							remoteid, ex.getReason(), 
 							ex.getMessage() == null ? "<null>" : ex.getMessage()));
@@ -903,6 +935,7 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			
 			int channelid = (int) bar.readInt();
 			String requesttype = bar.readString();
+			validateField("channel request type", requesttype, 256);
 			boolean wantreply = bar.read() != 0;
 			byte[] requestdata = null;
 			if (bar.available() > 0) {
@@ -913,6 +946,9 @@ public abstract class ConnectionProtocol<T extends SshContext>
 			ChannelNG<T> channel = getChannel(channelid);
 
 			if (channel != null) {
+				if (!channel.isOpen()) {
+					throw new IOException("Channel request before channel open");
+				}
 
 				if(Log.isDebugEnabled()) {
 					Log.debug("Received SSH_MSG_CHANNEL_REQUEST '" + requesttype + "' channel="
@@ -925,10 +961,28 @@ public abstract class ConnectionProtocol<T extends SshContext>
 				if(Log.isErrorEnabled()) {
 					Log.error("Channel request received with invalid channel id {}", channelid);
 				}
+
 			}
 
 		} finally {
 			bar.close();
+		}
+	}
+
+	private static <T extends SshContext> void validateChannelData(
+			ChannelNG<T> channel, int count, int available) throws IOException {
+		if (count <= 0 || count > available || count > channel.getLocalPacket()) {
+			throw new IOException("Invalid channel data length " + count
+					+ " (available=" + available + ", maximum="
+					+ channel.getLocalPacket() + ")");
+		}
+
+	}
+
+	private static void validateField(String name, String value, int maximum)
+			throws IOException {
+		if (value.length() > maximum) {
+			throw new IOException(name + " exceeds maximum length " + maximum);
 		}
 	}
 

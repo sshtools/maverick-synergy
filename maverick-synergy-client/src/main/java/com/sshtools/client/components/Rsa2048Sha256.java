@@ -164,7 +164,7 @@ public class Rsa2048Sha256 extends SshKeyExchangeClient implements AbstractKeyEx
 				
 				JCEComponentManager.getSecureRandom().nextBytes(s);
 				
-				cipher.init(Cipher.ENCRYPT_MODE, key.getJCEPublicKey());
+				JCEProvider.initRSAOAEPSHA256(cipher, Cipher.ENCRYPT_MODE, key.getJCEPublicKey());
 
 				try (ByteArrayWriter w = new ByteArrayWriter()) {
 					w.writeBinaryString(s);

@@ -16,6 +16,7 @@ Bug Fixes
   o IMPORTANT SECURITY FIX: Limited bcrypt KDF work factor when parsing OpenSSH private-key files, rejecting zero, negative, overflowed, or excessive round counts before key derivation.
   o ComponentFactory availability checks now use the configured order while retaining registered implementations for deliberate reuse. Removing or restricting an algorithm now consistently prevents it from authentication, negotiation, filtering, and advertised-component paths without unregistering its implementation.
   o Hardened key-exchange value parsing and SSH certificate/public-key decoder boundaries for values supplied by clients, servers, and key files.
+  o Fixed RSA key-exchange compatibility with standard JCE providers. RSA OAEP now uses `RSA/ECB/OAEPPadding` with explicit RFC 4432 SHA-256/MGF1-SHA-256 or SHA-1/MGF1-SHA-1 parameters, allowing RSA KEX to work without Bouncy Castle.
   
 =================
 =  HISTORY      =

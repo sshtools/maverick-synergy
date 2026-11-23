@@ -188,7 +188,8 @@ public class Rsa2048SHA2KeyExchange extends SshKeyExchangeServer implements Abst
 				encryptedSecret = bar.readBinaryString();
 	
 				try {
-					cipher.init(Cipher.DECRYPT_MODE, transientKey.getPrivateKey().getJCEPrivateKey());
+					JCEProvider.initRSAOAEPSHA256(
+							cipher, Cipher.DECRYPT_MODE, transientKey.getPrivateKey().getJCEPrivateKey());
 					byte[] tmp = cipher.doFinal(encryptedSecret);
 					try (ByteArrayReader r = new ByteArrayReader(tmp)) {
 						tmp = r.readBinaryString();

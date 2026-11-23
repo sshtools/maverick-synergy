@@ -164,7 +164,7 @@ public class Rsa1024Sha1 extends SshKeyExchangeClient implements AbstractKeyExch
 				
 				JCEComponentManager.getSecureRandom().nextBytes(s);
 				
-				cipher.init(Cipher.ENCRYPT_MODE, key.getJCEPublicKey());
+				JCEProvider.initRSAOAEPSHA1(cipher, Cipher.ENCRYPT_MODE, key.getJCEPublicKey());
 
 				try (ByteArrayWriter w = new ByteArrayWriter()) {
 					w.writeBinaryString(s);

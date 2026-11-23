@@ -23,6 +23,9 @@ package com.sshtools.common.ssh.components.jce;
  */
 
 import java.security.KeyFactory;
+import java.security.GeneralSecurityException;
+import java.security.Key;
+import java.security.spec.MGF1ParameterSpec;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -35,6 +38,8 @@ import java.util.Hashtable;
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.OAEPParameterSpec;
+import javax.crypto.spec.PSource;
 
 import com.sshtools.common.logger.Log;
 
@@ -321,27 +326,11 @@ public class JCEProvider implements JCEAlgorithms {
 		}
 		
 		try {
-			Cipher.getInstance("RSA/NONE/OAEPWithSHA-256AndMGF1Padding");
-			JCEProvider.setRSAOAEPSHA256AlgorithmName("RSA/None/OAEPWithSHA-256AndMGF1Padding");
+			Cipher.getInstance("RSA/ECB/OAEPPadding");
+			JCEProvider.setRSAOAEPSHA256AlgorithmName("RSA/ECB/OAEPPadding");
+			JCEProvider.setRSAOAEPSHA1AlgorithmName("RSA/ECB/OAEPPadding");
 		} catch(NoSuchAlgorithmException | NoSuchPaddingException e) {
-			try {
-			Cipher.getInstance("RSA/v/OAEPWithSHA256AndMGF1Padding");
-			JCEProvider.setRSAOAEPSHA256AlgorithmName("RSA/None/OAEPWithSHA256AndMGF1Padding");
-			} catch(NoSuchAlgorithmException | NoSuchPaddingException e1) {
-				Log.error("Unable to determine correct JCE algorithm name for RSA/None/OAEPWithSHA256AndMGF1Padding");
-			}
-		}
-
-		try {
-			Cipher.getInstance("RSA/v/OAEPWithSHA-1AndMGF1Padding");
-			JCEProvider.setRSAOAEPSHA256AlgorithmName("RSA/None/OAEPWithSHA-1AndMGF1Padding");
-		} catch(NoSuchAlgorithmException | NoSuchPaddingException e) {
-			try {
-			Cipher.getInstance("RSA/NONE/OAEPWithSHA1AndMGF1Padding");
-			JCEProvider.setRSAOAEPSHA256AlgorithmName("RSA/None/OAEPWithSHA1AndMGF1Padding");
-			} catch(NoSuchAlgorithmException | NoSuchPaddingException e1) {
-				Log.error("Unable to determine correct JCE algorithm name for RSA/None/OAEPWithSHA1AndMGF1Padding");
-			}
+			Log.error("Unable to determine correct JCE RSA OAEP algorithm name");
 		}
 		
 		if(JCEProvider.isBCEnabled()) {
@@ -388,6 +377,26 @@ public class JCEProvider implements JCEAlgorithms {
 	
 	public static void setRSAOAEPSHA1AlgorithmName(String rsaOAEPWithMG1Padding) {
 		JCEProvider.rsaOAEPSHA1WithMG1Padding = rsaOAEPWithMG1Padding;
+	}
+
+	public static void initRSAOAEPSHA256(Cipher cipher, int opmode, Key key)
+			throws GeneralSecurityException {
+		initRSAOAEP(cipher, opmode, key, MGF1ParameterSpec.SHA256, "SHA-256");
+	}
+
+	public static void initRSAOAEPSHA1(Cipher cipher, int opmode, Key key)
+			throws GeneralSecurityException {
+		initRSAOAEP(cipher, opmode, key, MGF1ParameterSpec.SHA1, "SHA-1");
+	}
+
+	private static void initRSAOAEP(Cipher cipher, int opmode, Key key,
+			MGF1ParameterSpec mgf1, String digest) throws GeneralSecurityException {
+		if("RSA/ECB/OAEPPadding".equalsIgnoreCase(cipher.getAlgorithm())) {
+			cipher.init(opmode, key, new OAEPParameterSpec(
+					digest, "MGF1", mgf1, PSource.PSpecified.DEFAULT));
+		} else {
+			cipher.init(opmode, key);
+		}
 	}
 	
 	public static KeyFactory getKeyFactory(String alg) throws NoSuchAlgorithmException {

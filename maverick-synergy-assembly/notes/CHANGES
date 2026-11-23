@@ -17,6 +17,7 @@ Bug Fixes
   o ComponentFactory availability checks now use the configured order while retaining registered implementations for deliberate reuse. Removing or restricting an algorithm now consistently prevents it from authentication, negotiation, filtering, and advertised-component paths without unregistering its implementation.
   o Hardened key-exchange value parsing and SSH certificate/public-key decoder boundaries for values supplied by clients, servers, and key files.
   o Fixed RSA key-exchange compatibility with standard JCE providers. RSA OAEP now uses `RSA/ECB/OAEPPadding` with explicit RFC 4432 SHA-256/MGF1-SHA-256 or SHA-1/MGF1-SHA-1 parameters, allowing RSA KEX to work without Bouncy Castle.
+  o IMPORTANT SECURITY FIX: Replaced repeated KEX name-list suffix copying with bounded linear parsing. Empty entries and lists with excessive entry counts are rejected before algorithm negotiation, preventing pre-authentication quadratic processing from large KEXINIT lists.
   
 =================
 =  HISTORY      =

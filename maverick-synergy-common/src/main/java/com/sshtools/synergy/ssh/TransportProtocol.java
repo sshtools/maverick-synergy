@@ -31,12 +31,12 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.StringTokenizer;
+import java.util.Set;
 import java.util.UUID;
-import java.util.Vector;
 
 import com.sshtools.common.config.AdaptiveConfiguration;
 import com.sshtools.common.events.Event;
@@ -2210,26 +2210,12 @@ public abstract class TransportProtocol<T extends SshContext>
 
 		String originalClient = clientlist;
 		String originalServer = serverlist;
-		Vector<String> r = new Vector<String>();
-		int idx;
-		String name;
-		while ((idx = serverlist.indexOf(",")) > -1) {
-			r.addElement(serverlist.substring(0, idx).trim());
-			serverlist = serverlist.substring(idx + 1).trim();
-		}
+		Set<String> supported = new HashSet<>(parseNameList(serverlist));
 
-		r.addElement(serverlist);
-
-		while ((idx = clientlist.indexOf(",")) > -1) {
-			name = clientlist.substring(0, idx).trim();
-			if (r.contains(name)) {
+		for (String name : parseNameList(clientlist)) {
+			if (supported.contains(name)) {
 				return name;
 			}
-			clientlist = clientlist.substring(idx + 1).trim();
-		}
-
-		if (r.contains(clientlist)) {
-			return clientlist;
 		}
 		EventServiceImplementation
 				.getInstance()
@@ -2249,6 +2235,26 @@ public abstract class TransportProtocol<T extends SshContext>
 										clientlist));
 		throw new IOException(String.format("Failed to negotiate a transport component from %s and %s", originalClient, originalServer));
 
+	}
+
+	static List<String> parseNameList(String list) throws IOException {
+		List<String> names = new ArrayList<>();
+		int start = 0;
+		int entries = 0;
+		for (int idx = 0; idx <= list.length(); idx++) {
+			if (idx == list.length() || list.charAt(idx) == ',') {
+				if (++entries > 256) {
+					throw new IOException("Name-list contains more than 256 entries");
+				}
+				String name = list.substring(start, idx).trim();
+				if (name.isEmpty()) {
+					throw new IOException("Name-list contains an empty entry");
+				}
+				names.add(name);
+				start = idx + 1;
+			}
+		}
+		return names;
 	}
 
 	private static String firstName(String nameList) {
@@ -2760,16 +2766,7 @@ public abstract class TransportProtocol<T extends SshContext>
 	}
 	
 	private String checkValidString(String id, String str) throws IOException {
-
-		if (str.trim().equals(""))
-			throw new IOException("Client sent invalid " + id + " value '"
-					+ str + "'");
-
-		StringTokenizer t = new StringTokenizer(str, ",");
-
-		if (!t.hasMoreElements())
-			throw new IOException("Client sent invalid " + id + " value '"
-					+ str + "'");
+		parseNameList(str);
 		return str;
 	}
 

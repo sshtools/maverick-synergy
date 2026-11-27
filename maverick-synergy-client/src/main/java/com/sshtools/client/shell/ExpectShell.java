@@ -1080,10 +1080,19 @@ public class ExpectShell {
 			Log.debug("Shell is ready for command");
 	}
 
+	/**
+	 * Creates the end marker for a command. It contains a per-command random nonce
+	 * (hex only, so it is safe to echo on every supported shell) so command output
+	 * cannot predict, and so cannot forge, the completion marker.
+	 */
 	private synchronized String nextEndMarker() {
+		byte[] nonce = new byte[16];
+		MARKER_RANDOM.nextBytes(nonce);
 		return END_COMMAND_MARKER + ";" + PROCESS_MARKER
-				+ System.currentTimeMillis() + ";" + EXIT_CODE_MARKER;
+				+ java.util.HexFormat.of().formatHex(nonce) + ";" + EXIT_CODE_MARKER;
 	}
+
+	private static final java.security.SecureRandom MARKER_RANDOM = new java.security.SecureRandom();
 
 	public int getOsType() {
 		return osType.code();

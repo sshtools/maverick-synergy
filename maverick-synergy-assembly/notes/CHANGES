@@ -48,6 +48,7 @@ Bug Fixes
   o All `jdk16` specific modules have been merged into the core (Unix Domain Sockets for forwarding and the agent)
   o All deprecated API scheduled for removal has been removed.
   o `ExpectShell` should now be created with `ExpectShellBuilder`. Constructors and setters deprecated.
+  o `ExpectShell` command end markers now contain a per-command random nonce instead of a timestamp, so command output cannot predict and forge the completion marker.
   o Channel InputStream.available() now returns zero when at EOF, not throw an Exception. If the channel is closed, an IOException is thrown.
   o ChannelNG will sendChannelDataAndBlock will hang if a zero length buffer is passed.
   o SSH agent when in OpenSSH mode not correctly signing RSA keys mean authentication failures.
